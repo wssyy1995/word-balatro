@@ -1,4 +1,6 @@
 // ===== 本地存储管理器 =====
+const { letterUpgrades } = require('./data');
+
 class StorageManager {
   constructor() {
     this.prefix = 'word_balatro_';

@@ -1,6 +1,6 @@
 // ===== Canvas 渲染器 =====
-const { formatMeaning } = require('./game');
-const { DICTIONARY, COMMON_WORDS, SHOP_POOL, onlineWordCache } = require('./data');
+const { formatMeaning, isValidWordOnline } = require('./game');
+const { WORD_DATA, SHOP_POOL, onlineWordCache, wordCheckState } = require('./data');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -181,11 +181,12 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const h = 44 * s;
+    const top = this.safeTop || 0;
+    const h = 56 * s;
 
     // HUD 背景
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(0, 0, W, h);
+    ctx.fillRect(0, top, W, h);
 
     const items = [
       { label: '回合', value: game.round },
@@ -198,8 +199,8 @@ class Renderer {
     const itemW = W / items.length;
     items.forEach((item, i) => {
       const x = i * itemW;
-      this.text(item.label, x + itemW / 2, 14 * s, 10, '#888');
-      this.text(String(item.value), x + itemW / 2, 32 * s, 14, '#fff');
+      this.text(item.label, x + itemW / 2, top + 16 * s, 10, '#888');
+      this.text(String(item.value), x + itemW / 2, top + 38 * s, 14, '#fff');
     });
 
     // 女巫牌/水晶球效果指示器
@@ -209,7 +210,7 @@ class Renderer {
       game.crystalEffects.forEach(c => badges.push({ text: `🔮 ${c.name}`, color: '#2d5a8e' }));
 
       let bx = 10 * s;
-      let by = h + 4 * s;
+      let by = top + h + 6 * s;
       badges.forEach(b => {
         const bw = ctx.measureText(b.text).width + 16 * s;
         const bh = 20 * s;
@@ -227,6 +228,7 @@ class Renderer {
   drawPlaying(game) {
     const ctx = this.ctx;
     const W = this.W;
+    const H = this.H;
     const s = this.scale;
 
     // 计算手牌布局（3x3 网格）
@@ -234,45 +236,38 @@ class Renderer {
     const rows = Math.ceil(game.hand.length / cols);
     const totalW = cols * this.cardW + (cols - 1) * this.gap;
     const startX = (W - totalW) / 2;
-    const startY = 100 * s;
+    const startY = 190 * s;
 
     this.cardRects = []; // 存储卡牌点击区域
 
-    game.hand.forEach((card, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (this.cardW + this.gap);
-      const y = startY + row * (this.cardH + this.gap);
-      this.drawCard(card, x, y, card.newCard);
-      this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
-
-      // 清除 newCard 标记（下一帧不再显示 NEW）
-      card.newCard = false;
-    });
-
-    // 预览区域
+    // 预览区域（在卡牌上方）
     const selected = game.getSelectedCards();
     if (selected.length >= 3) {
       const word = selected.map(c => c.letter.toLowerCase()).join('');
-      const preview = require('./game').calcWordScore(selected, game.jokers);
-      const inLocal = DICTIONARY.has(word) || COMMON_WORDS.includes(word);
-      const inCache = onlineWordCache.has(word);
-      const alreadyChecked = preview.valid || inCache;
+      const inLocal = WORD_DATA.has(word) || onlineWordCache.has(word);
+
+      // 触发在线检测（不在本地且未检测过）
+      if (!inLocal && !wordCheckState.has(word)) {
+        wordCheckState.set(word, 'checking');
+        isValidWordOnline(word);
+      }
+
       const state = wordCheckState.get(word);
+      const valid = inLocal || state === 'valid';
       const checking = state === 'checking';
       const invalid = state === 'invalid';
 
-      const py = startY + rows * (this.cardH + this.gap) + 10 * s;
+      const py = startY - 92 * s;
 
-      // 单词预览
-      let color = alreadyChecked ? '#2ecc71' : (inLocal ? '#e74c3c' : '#f1c40f');
-      if (invalid) color = '#e74c3c';
-      if (checking) color = '#f1c40f';
+      // 单词预览颜色：合法=绿，检测中=黄，非法=红
+      let color = '#f1c40f';
+      if (valid) color = '#2ecc71';
+      else if (invalid) color = '#e74c3c';
 
-      this.text(word.toUpperCase(), W / 2, py, 22, color);
+      this.text(word, W / 2, py, 22, color);
 
-      // 分数预览（两个方块）
-      if (alreadyChecked) {
+      // 分数预览（两个方块）—— 只在确认合法时显示
+      if (valid) {
         const baseScore = selected.reduce((sum, c) => sum + c.score, 0);
         const boxSize = 40 * s;
         const boxY = py + 24 * s;
@@ -296,10 +291,23 @@ class Renderer {
           ctx.font = `${Math.floor(11 * s)}px sans-serif`;
           ctx.fillStyle = '#aaa';
           ctx.textAlign = 'center';
-          ctx.fillText(meaningText, W / 2, boxY + boxSize + 16 * s);
+          ctx.fillText(meaningText, W / 2, boxY + boxSize + 18 * s);
         }
       }
     }
+
+    // 绘制卡牌
+    game.hand.forEach((card, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = startX + col * (this.cardW + this.gap);
+      const y = startY + row * (this.cardH + this.gap);
+      this.drawCard(card, x, y, card.newCard);
+      this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
+
+      // 清除 newCard 标记（下一帧不再显示 NEW）
+      card.newCard = false;
+    });
 
     // 按钮区域
     const btnY = H - 90 * s;
@@ -389,6 +397,7 @@ class Renderer {
   drawPotion(game) {
     const ctx = this.ctx;
     const W = this.W;
+    const H = this.H;
     const s = this.scale;
 
     // 标题

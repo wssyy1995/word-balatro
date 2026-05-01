@@ -12,11 +12,13 @@ const info = wx.getSystemInfoSync();
 const canvas = wx.createCanvas();
 const ctx = canvas.getContext('2d');
 
-// 设置画布尺寸
+// 设置画布尺寸（适配 Retina 高分屏）
 const WIDTH = info.windowWidth;
 const HEIGHT = info.windowHeight;
-canvas.width = WIDTH;
-canvas.height = HEIGHT;
+const dpr = info.pixelRatio || 1;
+canvas.width = WIDTH * dpr;
+canvas.height = HEIGHT * dpr;
+ctx.scale(dpr, dpr);
 
 // 游戏全局状态
 let game = new Game();

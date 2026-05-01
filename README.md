@@ -38,12 +38,10 @@ word-balatro-miniprogram/
 
 | 数据源 | 数量 | 用途 |
 |--------|------|------|
-| `DICTIONARY` | 1280 词 | 基础离线词典，3字母为主 |
-| `COMMON_WORDS` | 2851 词 | 高频扩展词（4-8字母） |
-| `WORD_DATA` | 200 词 | 带中文释义 + 词性前缀的缓存 |
+| `WORD_DATA` | ~200 词（用户可扩展） | 本地离线词库，含中文释义 + 词性 |
 | `onlineWordCache` | 运行时增长 | 在线 API 成功查询的缓存 |
 
-> 注意：`COMMON_WORDS` 会在初始化时自动合并到 `DICTIONARY` 中，实现统一查询。
+> 注意：`WORD_DATA` 是唯一本地词库，同时承担"合法性校验"和"释义查询"双重职责。无释义的单词存 `{meaning: '', pos: ''}` 占位。
 
 **字母分数系统**
 
@@ -115,7 +113,7 @@ S=1  T=1  U=1  V=4  W=4  X=8  Y=4  Z=10
 流程：
 1. 检查选中卡牌 ≥3 张
 2. 拼接字母成单词
-3. 本地校验（DICTIONARY / COMMON_WORDS / onlineWordCache）
+3. 本地校验（WORD_DATA / onlineWordCache）
 4. 本地不存在 → 在线 API 校验（dictionaryapi.dev）
 5. 非法 → 返回 {valid: false}
 6. 合法 → calcWordScore() 计算分数
@@ -233,7 +231,7 @@ target = Math.floor(150 × round × (round + 1) / 2)
 
 | 层级 | 来源 | 速度 | 准确性 |
 |------|------|------|--------|
-| L1 | DICTIONARY / COMMON_WORDS / onlineWordCache | 毫秒级 | 100% |
+| L1 | WORD_DATA / onlineWordCache | 毫秒级 | 100% |
 | L2 | dictionaryapi.dev API | 1-3 秒 | 100%（权威词典） |
 | L3 | MyMemory 翻译 + 中文释义 | 2-5 秒 | 翻译质量一般 |
 

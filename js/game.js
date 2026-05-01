@@ -1,13 +1,24 @@
 // ===== 游戏核心逻辑 =====
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
-  DICTIONARY, COMMON_WORDS, WORD_DATA,
+  WORD_DATA,
   SHOP_POOL, onlineWordCache, wordCheckState,
-  wordMeaningCache, letterUpgrades
+  wordMeaningCache, letterUpgrades, checkingWords
 } = require('./data');
 const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
+
+// 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
+function requestPromise(options) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      ...options,
+      success: resolve,
+      fail: reject
+    });
+  });
+}
 
 // 工具函数
 function shuffle(arr) {
@@ -50,7 +61,7 @@ function draw(deck, count) {
 }
 
 function getSeedWord(minLen = 3, maxLen = 6) {
-  const candidates = [...DICTIONARY].filter(w => w.length >= minLen && w.length <= maxLen);
+  const candidates = [...WORD_DATA.keys()].filter(w => w.length >= minLen && w.length <= maxLen);
   if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
   return 'cat';
 }
@@ -140,7 +151,7 @@ function findAllValidWordsInHand(hand) {
       const word = p.join('').toLowerCase();
       if (seen.has(word)) continue;
       seen.add(word);
-      if (DICTIONARY.has(word) || COMMON_WORDS.includes(word) || onlineWordCache.has(word)) {
+      if (WORD_DATA.has(word) || onlineWordCache.has(word)) {
         const indices = [];
         const used = new Set();
         for (const ch of p) {
@@ -204,17 +215,38 @@ function calcWordScore(cards, jokers) {
 
 function isValidWord(word) {
   word = word.toLowerCase();
-  return DICTIONARY.has(word) || COMMON_WORDS.includes(word) || onlineWordCache.has(word);
+  return WORD_DATA.has(word) || onlineWordCache.has(word);
+}
+
+// 后台调用 MyMemory 把英文定义译成中文
+async function fetchChineseTranslation(word, enDef, pos) {
+  try {
+    const transResp = await requestPromise({
+      url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(enDef.slice(0, 120))}&langpair=en|zh-CN`,
+      method: 'GET',
+      timeout: 5000
+    });
+    if (transResp.statusCode === 200 && transResp.data?.responseData?.translatedText) {
+      const zhDef = transResp.data.responseData.translatedText;
+      if (zhDef && !zhDef.includes('MYMEMORY WARNING')) {
+        wordMeaningCache.set(word, { entries: [{ pos, def: zhDef }], pos, meaning: zhDef });
+      }
+    }
+  } catch (e) {
+    // 翻译失败，保留英文定义
+  }
 }
 
 async function isValidWordOnline(word) {
   word = word.toLowerCase();
-  if (DICTIONARY.has(word)) return true;
-  if (COMMON_WORDS.includes(word)) return true;
+  if (WORD_DATA.has(word)) return true;
   if (onlineWordCache.has(word)) return true;
+  if (checkingWords.has(word)) return false; // 已在检测中，避免重复请求
+
+  checkingWords.add(word);
 
   try {
-    const resp = await wx.request({
+    const resp = await requestPromise({
       url: `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`,
       method: 'GET',
       timeout: 3000
@@ -229,15 +261,25 @@ async function isValidWordOnline(word) {
           pos: m.partOfSpeech || '',
           def: m.definitions?.[0]?.definition || ''
         }));
-        wordMeaningCache.set(word, { entries, pos: entries[0]?.pos || '', meaning: entries[0]?.def || '' });
+
+        // 如果还没有释义缓存，先存入英文定义，再后台翻译中文
+        if (!wordMeaningCache.has(word)) {
+          const enDef = entries[0]?.def || '';
+          const pos = entries[0]?.pos || '';
+          wordMeaningCache.set(word, { entries: [{ pos, def: enDef }], pos, meaning: enDef });
+          fetchChineseTranslation(word, enDef, pos);
+        }
       }
+      checkingWords.delete(word);
       return true;
     }
+    // 404 或其他状态码：单词不存在或接口异常
   } catch (e) {
-    // 网络请求失败
+    // 网络请求失败（断网、DNS 错误等）
   }
 
   wordCheckState.set(word, 'invalid');
+  checkingWords.delete(word);
   return false;
 }
 
@@ -337,13 +379,14 @@ class Game {
   async playHand() {
     if (this.selected.length < 3) return { valid: false };
     const played = this.hand.filter(c => c.selected);
-    const word = played.map(c => c.letter.toLowerCase()).join('');
+    const playedInOrder = this.getSelectedCards();
+    const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
 
     let valid = isValidWord(word);
     if (!valid) valid = await isValidWordOnline(word);
     if (!valid) {
       if (this.audioManager) this.audioManager.play('invalid');
-      return { valid: false, word: played.map(c => c.letter).join('') };
+      return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
     const result = calcWordScore(played, this.jokers);
@@ -491,7 +534,7 @@ class Game {
   }
 
   getSelectedCards() {
-    return this.hand.filter(c => this.selected.includes(c.id));
+    return this.selected.map(id => this.hand.find(c => c.id === id)).filter(Boolean);
   }
 
   update(deltaTime) {
@@ -502,4 +545,4 @@ class Game {
   }
 }
 
-module.exports = { Game, calcWordScore, isValidWord, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand };

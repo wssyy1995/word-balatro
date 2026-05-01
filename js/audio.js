@@ -9,6 +9,13 @@ class AudioManager {
 
   // 加载音效
   load(name, src) {
+    const fs = wx.getFileSystemManager();
+    try {
+      fs.accessSync(src);
+    } catch (e) {
+      // 音效文件不存在，跳过加载
+      return;
+    }
     const audio = wx.createInnerAudioContext();
     audio.src = src;
     audio.volume = 0.6;
