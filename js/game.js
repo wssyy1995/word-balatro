@@ -232,7 +232,7 @@ function calcWordScore(cards, jokers) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   let baseScore = 0;
-  let mult = 1;
+  let mult = cards.length; // 基础倍率 = 单词长度
   let hasFace = false;
 
   for (const c of cards) {
@@ -240,7 +240,6 @@ function calcWordScore(cards, jokers) {
     if (c.isFace) hasFace = true;
   }
 
-  const lengthBonus = cards.length >= 5 ? 10 + cards.length * 2 : 0;
   const word = cards.map(c => c.letter.toLowerCase()).join('');
 
   for (const j of jokers) {
@@ -257,7 +256,6 @@ function calcWordScore(cards, jokers) {
     }
   }
 
-  baseScore += lengthBonus;
   const totalScore = baseScore * mult;
   return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace };
 }
