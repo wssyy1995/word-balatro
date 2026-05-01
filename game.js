@@ -12,6 +12,14 @@ const info = wx.getSystemInfoSync();
 const canvas = wx.createCanvas();
 const ctx = canvas.getContext('2d');
 
+// 平台判断：开发者工具不震动
+const isDevTools = info.platform === 'devtools';
+function vibrate() {
+  if (!isDevTools && wx.vibrateShort) {
+    try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
+  }
+}
+
 // 设置画布尺寸（适配 Retina 高分屏）
 const WIDTH = info.windowWidth;
 const HEIGHT = info.windowHeight;
@@ -43,6 +51,7 @@ function handleInput(x, y) {
     // 检测卡牌点击
     const cardHit = renderer.hitTest(x, y, renderer.cardRects);
     if (cardHit) {
+      vibrate();
       game.toggleSelect(cardHit.cardId);
       return;
     }
@@ -51,6 +60,7 @@ function handleInput(x, y) {
     if (renderer.playBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
       if (btnHit) {
+        vibrate();
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
@@ -72,6 +82,7 @@ function handleInput(x, y) {
     if (renderer.discardBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.discardBtnRect]);
       if (btnHit) {
+        vibrate();
         renderer.pressedBtn = 'discard';
         if (game.animManager) game.animManager.buttonPress(renderer.discardBtnRect);
         game.discard();
@@ -90,28 +101,14 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测投降按钮
-    if (renderer.surrenderBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.surrenderBtnRect]);
+    // 检测清空选择按钮
+    if (renderer.resetBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.resetBtnRect]);
       if (btnHit) {
-        renderer.pressedBtn = 'surrender';
-        if (game.animManager) game.animManager.buttonPress(renderer.surrenderBtnRect);
-        wx.showModal({
-          title: '确认投降',
-          content: '确定要投降吗？当前进度将保存到报告中。',
-          success: (res) => {
-            if (res.confirm) {
-              game.state = 'gameover';
-              game.gameOverReason = 'surrender';
-              lastPlayResult = { surrendered: true, round: game.round, score: game.totalScore };
-              if (game.storageManager) {
-                game.storageManager.setHighScore(game.totalScore);
-                game.storageManager.updateStats(game);
-                game.storageManager.clearProgress();
-              }
-            }
-          }
-        });
+        vibrate();
+        renderer.pressedBtn = 'reset';
+        if (game.animManager) game.animManager.buttonPress(renderer.resetBtnRect);
+        game.clearSelection();
         return;
       }
     }

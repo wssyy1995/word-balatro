@@ -66,7 +66,7 @@ class Renderer {
     // 加载按钮图片
     this.pressedBtn = null;
     this.btnImages = {};
-    const btnNames = ['out_card', 'throw_card', 'surrender'];
+    const btnNames = ['out_card', 'throw_card', 'reset_select'];
     btnNames.forEach(name => {
       try {
         const img = wx.createImage();
@@ -323,6 +323,15 @@ class Renderer {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
 
+    // 游戏标题
+    ctx.save();
+    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+    ctx.restore();
+
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = Math.min(320 * s, W - 40 * s);
     const barH = 56 * s;
@@ -460,7 +469,7 @@ class Renderer {
         const bh = 20 * s;
         this.roundRect(bx, by, bw, bh, 4 * s, b.color);
         ctx.font = `${Math.floor(9 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
+        ctx.fillStyle = '#e0e0e0';
         ctx.textAlign = 'left';
         ctx.fillText(b.text, bx + 6 * s, by + bh / 2 + 3 * s);
         bx += bw + 4 * s;
@@ -696,16 +705,30 @@ class Renderer {
     ctx.restore();
     this.discardBtnRect = { x: discardX, y: btnY, w: btnW, h: btnH, action: 'discard' };
 
-    // 投降按钮（图片 + 阴影 + 按下偏移）
-    const surrX = btnStartX + (btnW + btnGap) * 2;
-    const surrY = btnY + (this.pressedBtn === 'surrender' ? 2 * s : 0);
+    // 清空选择按钮（图片 + 阴影 + 按下偏移）
+    const resetX = btnStartX + (btnW + btnGap) * 2;
+    const resetY = btnY + (this.pressedBtn === 'reset' ? 2 * s : 0);
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = 6 * s;
     ctx.shadowOffsetY = 3 * s;
-    this.drawBtnImage('surrender', surrX, surrY, btnW, btnH);
+    this.drawBtnImage('reset_select', resetX, resetY, btnW, btnH);
     ctx.restore();
-    this.surrenderBtnRect = { x: surrX, y: btnY, w: btnW, h: btnH, action: 'surrender' };
+    // 清空选择文字
+    ctx.save();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const resetTextY = resetY + btnH / 2 - 1 * s;
+    const resetText = '清空选择';
+    const resetTx = resetX + btnW / 2;
+    ctx.lineWidth = 2 * s;
+    ctx.strokeStyle = '#5a4a2a';
+    ctx.strokeText(resetText, resetTx, resetTextY);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(resetText, resetTx, resetTextY);
+    ctx.restore();
+    this.resetBtnRect = { x: resetX, y: btnY, w: btnW, h: btnH, action: 'reset' };
 
     // 提示按钮（右上角 emoji）
     const hintBtnSize = 44 * s;

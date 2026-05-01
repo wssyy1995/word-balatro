@@ -402,7 +402,7 @@ class Game {
     this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety);
     this.selected = [];
     this.score = 0;
-    this.target = Math.floor(150 * this.round * (this.round + 1) / 2);
+    this.target = this.round === 1 ? 80 : Math.floor(150 * this.round * (this.round + 1) / 2);
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
@@ -656,6 +656,19 @@ class Game {
 
   getSelectedCards() {
     return this.selected.map(id => this.hand.find(c => c && c.id === id)).filter(Boolean);
+  }
+
+  clearSelection() {
+    if (this.selected.length === 0) return;
+    this.selected.forEach(id => {
+      const card = this.hand.find(c => c && c.id === id);
+      if (card) {
+        card.selected = false;
+        if (this.animManager) this.animManager.cardDeselect(card);
+      }
+    });
+    this.selected = [];
+    if (this.audioManager) this.audioManager.play('deselect');
   }
 
   update(deltaTime) {
