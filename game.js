@@ -47,6 +47,27 @@ wx.onTouchEnd(() => {
 });
 
 function handleInput(x, y) {
+  // 检测调试菜单按钮（优先）
+  if (renderer.debugMenuOpen && renderer.debugMenuRects) {
+    const debugHit = renderer.hitTest(x, y, renderer.debugMenuRects);
+    if (debugHit) {
+      if (debugHit.action === 'debug_resetHands') game.resetHands();
+      if (debugHit.action === 'debug_addScore') game.addScore(100);
+      if (debugHit.action === 'debug_winRound') game.winRound();
+      renderer.debugMenuOpen = false;
+      return;
+    }
+  }
+  
+  // 检测 top_icon 点击（切换调试菜单）
+  if (renderer.topIconRect) {
+    const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
+    if (iconHit) {
+      renderer.debugMenuOpen = !renderer.debugMenuOpen;
+      return;
+    }
+  }
+
   if (game.state === 'playing') {
     // 检测卡牌点击
     const cardHit = renderer.hitTest(x, y, renderer.cardRects);
@@ -64,12 +85,9 @@ function handleInput(x, y) {
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
-        if (selected.length >= 3) {
+        if (selected.length >= 3 && !game.pendingCheck) {
           game.playHand().then(result => {
             lastPlayResult = result;
-            if (!result.valid) {
-              wx.showToast({ title: '非法单词', icon: 'none' });
-            }
           }).catch(err => {
             console.error('playHand error:', err);
           });
@@ -114,20 +132,31 @@ function handleInput(x, y) {
     }
   }
 
+  if (game.state === 'settlement') {
+    if (renderer.settlementRenderer && renderer.settlementRenderer.claimBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game.claimSettlement();
+        return;
+      }
+    }
+  }
+
   if (game.state === 'shop') {
-    if (renderer.shopRects) {
-      const itemHit = renderer.hitTest(x, y, renderer.shopRects);
+    if (renderer.shopRenderer && renderer.shopRenderer.shopItemRects) {
+      const itemHit = renderer.hitTest(x, y, renderer.shopRenderer.shopItemRects);
       if (itemHit) {
-        if (game.animManager) game.animManager.buttonPress(itemHit);
+        vibrate();
         game.buyItem(itemHit.index);
         return;
       }
     }
 
-    if (renderer.nextRoundBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.nextRoundBtnRect]);
+    if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
       if (btnHit) {
-        if (game.animManager) game.animManager.buttonPress(renderer.nextRoundBtnRect);
+        vibrate();
         game.nextRound();
         return;
       }

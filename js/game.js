@@ -381,6 +381,8 @@ class Game {
     this.animManager = new AnimationManager();
     this.flyingCards = [];
     this.hintToast = null;
+    this.pendingCheck = null;
+    this.settlementData = null;
     this.audioManager = new AudioManager();
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
@@ -411,6 +413,12 @@ class Game {
   }
 
   toggleSelect(cardId) {
+    // 如果有非法提示，先清除
+    if (this.pendingCheck && this.pendingCheck.state === 'invalid') {
+      this.pendingCheck = null;
+    }
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
     const idx = this.selected.indexOf(cardId);
     const card = this.hand.find(c => c && c.id === cardId);
     if (!card) return;
@@ -444,38 +452,114 @@ class Game {
   }
 
   async playHand() {
-    if (this.selected.length < 3) return { valid: false };
+    if (this.selected.length < 3 || this.pendingCheck) return { valid: false };
     const played = this.hand.filter(c => c && c.selected);
     const playedInOrder = this.getSelectedCards();
     const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
 
+    // 设置检测中状态
+    this.pendingCheck = {
+      word,
+      cards: played,
+      cardsInOrder: playedInOrder,
+      state: 'checking',
+      startTime: Date.now(),
+      result: null,
+      meaning: null,
+      resolveTime: null,
+    };
+
     let valid = isValidWord(word);
     if (!valid) valid = await isValidWordOnline(word);
+
     if (!valid) {
+      this.pendingCheck.state = 'invalid';
+      this.pendingCheck.resolveTime = Date.now();
       if (this.audioManager) this.audioManager.play('invalid');
+      this.handsLeft--;
+      if (this.handsLeft <= 0) {
+        this.state = 'gameover';
+        this.gameOverReason = 'out_of_hands';
+        if (this.storageManager) {
+          this.storageManager.setHighScore(this.totalScore);
+          this.storageManager.updateStats(this);
+          this.storageManager.clearProgress();
+        }
+      }
+      if (this.storageManager) this.storageManager.saveProgress(this);
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
     const result = calcWordScore(played, this.jokers);
+    this.pendingCheck.state = 'valid';
+    this.pendingCheck.result = result;
+    this.pendingCheck.meaning = getWordMeaning(word);
+    this.pendingCheck.resolveTime = Date.now();
+    this.pendingCheck.animPhase = 0;
+
+    if (this.audioManager) {
+      this.audioManager.play('valid');
+    }
+
+    // 动画时间线（ms）
+    const letterJumpDelay = 1000;
+    const letterInterval = 400;
+    const lengthShowDelay = letterJumpDelay + playedInOrder.length * letterInterval;
+    const totalShowDelay = lengthShowDelay + 400;
+    const flyEndDelay = totalShowDelay + 1000 + 800 + 300; // 停留1秒 + 飞行800ms + 延迟300ms
+    const settlementDelay = flyEndDelay + 1000; // 再等待1秒弹出结算
+
+    // 阶段1: 字母跳跃
+    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 1; }, letterJumpDelay);
+    // 阶段2: 显示长度
+    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 2; }, lengthShowDelay);
+    // 阶段3: 总分飞行
+    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 3; }, totalShowDelay);
+    // 阶段4: 分数到达，执行飞牌+计分
+    setTimeout(() => {
+      this._executePlayHand(played, playedInOrder, result);
+      this.pendingCheck = null;
+    }, flyEndDelay);
+    // 阶段5: 弹出金币结算或判断失败
+    setTimeout(() => {
+      if (this.score >= this.target) {
+        this._showSettlement();
+      } else if (this.handsLeft <= 0) {
+        this.state = 'gameover';
+        this.gameOverReason = 'out_of_hands';
+        if (this.storageManager) {
+          this.storageManager.setHighScore(this.totalScore);
+          this.storageManager.updateStats(this);
+          this.storageManager.clearProgress();
+        }
+      }
+    }, settlementDelay);
+
+    return result;
+  }
+
+  _executePlayHand(playedCards, playedInOrder, result) {
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
+    
     this.score += result.score;
     this.totalScore += result.score;
 
     if (this.audioManager) {
-      this.audioManager.play('valid');
       setTimeout(() => this.audioManager.play('score'), 200);
     }
 
     const removedIndices = [];
-    const playedCards = [];
-    this.hand.forEach((c, i) => { 
+    const finalPlayedCards = [];
+    this.hand.forEach((c, i) => {
       if (c && c.selected) {
         removedIndices.push(i);
-        playedCards.push(c);
+        finalPlayedCards.push(c);
       }
     });
 
     // 旧牌飞出
-    playedCards.forEach((card, i) => {
+    finalPlayedCards.forEach((card, i) => {
       card._flyIndex = removedIndices[i];
       card.selected = false;
       this.animManager.flyOut(card, 'left', () => {
@@ -484,15 +568,15 @@ class Game {
         card._flyIndex = undefined;
       });
     });
-    this.flyingCards.push(...playedCards);
+    this.flyingCards.push(...finalPlayedCards);
     this.selected = [];
 
-    // 用 null 占位符替换旧牌位置（其他牌索引完全不动）
-    this.hand = this.hand.map(c => playedCards.includes(c) ? null : c);
+    // 用 null 占位符替换旧牌位置
+    this.hand = this.hand.map(c => finalPlayedCards.includes(c) ? null : c);
 
-    // 1秒后补牌
+    // 0.6秒后补牌
     setTimeout(() => {
-      const need = Math.min(playedCards.length, this.deck.length);
+      const need = Math.min(finalPlayedCards.length, this.deck.length);
       const newCards = this.deck.splice(0, need);
 
       let newIdx = 0;
@@ -507,28 +591,47 @@ class Game {
         return c;
       });
 
-      // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
-
       ensureValidWordInHand(this.deck, this.hand);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
     this.handsLeft--;
-    if (this.score >= this.target) {
-      this.state = 'shop';
-      this.gold += 3 + this.round;
-    } else if (this.handsLeft <= 0) {
-      this.state = 'gameover';
-      this.gameOverReason = 'out_of_hands';
-      if (this.storageManager) {
-        this.storageManager.setHighScore(this.totalScore);
-        this.storageManager.updateStats(this);
-        this.storageManager.clearProgress();
-      }
-    }
     if (this.storageManager) this.storageManager.saveProgress(this);
-    return result;
+  }
+
+  _showSettlement() {
+    const baseGold = 3 + this.round;
+    const extraHands = this.handsLeft * 1;
+    const extraDiscards = this.discardsLeft + 1;
+    const totalGold = baseGold + extraHands + extraDiscards;
+    this.settlementData = {
+      baseGold,
+      extraHands,
+      extraDiscards,
+      totalGold,
+      round: this.round,
+    };
+    this.state = 'settlement';
+  }
+
+  claimSettlement() {
+    if (!this.settlementData) return;
+    this.gold += this.settlementData.totalGold;
+    this.settlementData = null;
+    this.state = 'shop';
+    this._generateShopItems();
+  }
+
+  _generateShopItems() {
+    if (!this.shopItems) {
+      this.shopItems = [];
+      ['witch', 'crystal', 'potion'].forEach(type => {
+        const pool = SHOP_POOL[type];
+        const shuffled = [...pool].sort(() => Math.random() - 0.5);
+        this.shopItems.push(shuffled[0], shuffled[1], shuffled[2]);
+      });
+    }
   }
 
   discard() {
@@ -645,6 +748,22 @@ class Game {
     return true;
   }
 
+  // ===== 调试功能 =====
+  resetHands() {
+    this.handsLeft = 4;
+  }
+
+  addScore(delta) {
+    this.score += delta;
+    this.totalScore += delta;
+  }
+
+  winRound() {
+    this.score = this.target;
+    this.totalScore += this.target;
+    this._showSettlement();
+  }
+
   nextRound() {
     if (this.audioManager) this.audioManager.play('levelup');
     
@@ -659,7 +778,13 @@ class Game {
   }
 
   clearSelection() {
-    if (this.selected.length === 0) return;
+    if (this.selected.length === 0 && !(this.pendingCheck && this.pendingCheck.state === 'invalid')) return;
+    // 如果有非法提示，先清除
+    if (this.pendingCheck && this.pendingCheck.state === 'invalid') {
+      this.pendingCheck = null;
+    }
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
     this.selected.forEach(id => {
       const card = this.hand.find(c => c && c.id === id);
       if (card) {

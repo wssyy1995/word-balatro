@@ -1,6 +1,8 @@
 // ===== Canvas 渲染器 =====
 const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, SHOP_POOL, onlineWordCache, wordCheckState } = require('./data');
+const { SettlementRenderer } = require('./settlement');
+const { ShopRenderer } = require('./shop');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -107,6 +109,45 @@ class Renderer {
       this.previewMarkLoaded = false;
     }
     
+    // 加载错误图标
+    this.errorIcon = null;
+    this.errorIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/error.png';
+      img.onload = () => { this.errorIconLoaded = true; };
+      img.onerror = () => { this.errorIconLoaded = false; };
+      this.errorIcon = img;
+    } catch (e) {
+      this.errorIconLoaded = false;
+    }
+    
+    // 加载搜索图标
+    this.searchIcon = null;
+    this.searchIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/search.png';
+      img.onload = () => { this.searchIconLoaded = true; };
+      img.onerror = () => { this.searchIconLoaded = false; };
+      this.searchIcon = img;
+    } catch (e) {
+      this.searchIconLoaded = false;
+    }
+    
+    // 加载金币图标
+    this.coinIcon = null;
+    this.coinIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/coin.png';
+      img.onload = () => { this.coinIconLoaded = true; };
+      img.onerror = () => { this.coinIconLoaded = false; };
+      this.coinIcon = img;
+    } catch (e) {
+      this.coinIconLoaded = false;
+    }
+    
     // 加载卡牌背景图
     this.cardTemplate = null;
     this.cardTemplateLoaded = false;
@@ -132,6 +173,19 @@ class Renderer {
     } catch (e) {
       this.cardTemplateSelectedLoaded = false;
     }
+    
+    // 动画粒子与飞行状态
+    this.sparkles = [];
+    this.flyingScore = null;
+    this.scoreRoll = null;
+    this.lastBoxScore = 0;
+    this.lastScore = 0;
+    this.scoreAnim = null;
+    this.debugMenuOpen = false;
+    
+    // 子渲染器
+    this.settlementRenderer = new SettlementRenderer(this);
+    this.shopRenderer = new ShopRenderer(this);
   }
 
   // 绘制圆角矩形
@@ -205,6 +259,9 @@ class Renderer {
 
     if (card.selectOffset) {
       drawY += card.selectOffset;
+    }
+    if (card.jumpOffsetY) {
+      drawY += card.jumpOffsetY;
     }
 
     ctx.globalAlpha = opacity;
@@ -296,8 +353,13 @@ class Renderer {
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
       this.drawPlaying(game);
+    } else if (game.state === 'settlement') {
+      // 金币结算弹窗（保留 HUD 背景）
+      this.drawHUD(game);
+      this.settlementRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
-      this.drawShop(game);
+      // 商店页面（不显示 topbar）
+      this.shopRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'gameover') {
@@ -306,6 +368,17 @@ class Renderer {
 
     // 绘制动画
     this.updateAnimations();
+    
+    // 绘制烟花粒子
+    this._updateAndDrawSparkles(ctx, s);
+    
+    // 绘制飞行中的总分
+    this._updateAndDrawFlyingScore(ctx, s, game);
+    
+    // 调试菜单（最后绘制，确保在最上层）
+    if (this.debugMenuOpen && this.topIconRect) {
+      this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
+    }
   }
 
   drawHUD(game) {
@@ -322,6 +395,8 @@ class Renderer {
     if (this.topIcon && this.topIconLoaded) {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
+    // 记录点击区域
+    this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
 
     // 游戏标题
     ctx.save();
@@ -452,9 +527,27 @@ class Renderer {
     ctx.fillStyle = darkBlue;
     ctx.fillText('当前', rightCX, barY + barH * 0.32);
 
+    // 当前分数（带变化动画）
+    if (this.lastScore !== game.score) {
+      this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+      this.lastScore = game.score;
+    }
+    let scoreScale = 1;
+    if (this.scoreAnim) {
+      const saElapsed = Date.now() - this.scoreAnim.startTime;
+      const saProgress = Math.min(saElapsed / this.scoreAnim.duration, 1);
+      scoreScale = 1 + 0.2 * Math.sin(saProgress * Math.PI);
+      if (saProgress >= 1) this.scoreAnim = null;
+    }
+    ctx.save();
+    ctx.translate(rightCX, barY + barH * 0.68);
+    ctx.scale(scoreScale, scoreScale);
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
-    ctx.fillText(String(game.score), rightCX, barY + barH * 0.68);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(game.score), 0, 0);
+    ctx.restore();
 
     // 女巫牌/水晶球效果指示器
     if (game.jokers.length > 0 || game.crystalEffects.length > 0) {
@@ -509,7 +602,7 @@ class Renderer {
       const imgW = this.previewMark.width || 200;
       const imgH = this.previewMark.height || 104;
       const markH = maskH * 0.6;
-      const markW = markH * (imgW / imgH);
+      const markW = markH * (imgW / imgH) * 0.7;
       const gap = 4 * s;
       // 左边：正常
       ctx.drawImage(this.previewMark, maskX - markW - gap, maskY + 5 * s, markW, markH);
@@ -526,67 +619,234 @@ class Renderer {
     let valid = false;
     let invalid = false;
     let baseScore = 0;
+    let showFirstBox = false;
+    let showSecondBox = false;
+    let pendingBaseScore = 0;
+    let pendingLength = 0;
+    let meaningText = null;
 
-    if (selected.length >= 1) {
-      const word = selected.map(c => c.letter.toLowerCase()).join('');
-      const inLocal = WORD_DATA.has(word) || onlineWordCache.has(word);
+    // 方块区域变量（提前定义，pendingCheck 动画需要）
+    const boxSize = 48 * s;
+    const centerX = W / 2;
+    const boxY = scoreAreaY;
+    const leftBoxX = centerX - boxSize - 10 * s - 5;
+    const rightBoxX = centerX + 10 * s + 5;
 
-      // 只有 >= 3 张才发起在线检测
-      if (selected.length >= 3) {
-        if (!inLocal && !wordCheckState.has(word)) {
-          wordCheckState.set(word, 'checking');
-          isValidWordOnline(word);
+    // === pendingCheck 状态优先 ===
+    if (game.pendingCheck) {
+      const pc = game.pendingCheck;
+      const word = pc.word;
+
+      if (pc.state === 'checking') {
+        // 检测中：橙色单词 + loading图标 + 动态点号
+        ctx.save();
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#f1c40f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word, W / 2, wordAreaY);
+        ctx.restore();
+
+        // 动态点号 ....（加粗变大）
+        const dotCount = (Math.floor(Date.now() / 400) % 4) + 1;
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.fillStyle = '#f1c40f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('.'.repeat(dotCount), W / 2, wordAreaY + 24 * s + 3 * s);
+
+      } else if (pc.state === 'valid') {
+        // 合法：深绿色单词 + 中文释义 + 动画阶段
+        const elapsed = Date.now() - pc.resolveTime;
+        const phase = pc.animPhase || 0;
+
+        // 深绿色单词
+        ctx.save();
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#2d7d32';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word, W / 2, wordAreaY);
+        ctx.restore();
+
+        // 中文释义
+        if (pc.meaning) {
+          const mText = require('./game').formatMeaning(pc.meaning);
+          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+          ctx.fillStyle = '#777';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(mText, W / 2, wordAreaY + 40 * s );
         }
+
+        // === 阶段0: 刚检测完成，触发烟花 ===
+        if (phase === 0 && !pc._sparklesSpawned) {
+          pc._sparklesSpawned = true;
+          this._spawnSparkles(W / 2 - 60 * s, wordAreaY, 12);
+          this._spawnSparkles(W / 2 + 60 * s, wordAreaY, 12);
+        }
+
+        // === 阶段1: 字母跳跃 + 第一个方块累加 ===
+        const letterInterval = 400;
+        const letterJumpStart = 1000;
+        const cardsInOrder = pc.cardsInOrder || [];
+        let accumulatedScore = 0;
+        let currentJumpIdx = -1;
+
+        if (phase >= 1) {
+          const jumpElapsed = elapsed - letterJumpStart;
+          currentJumpIdx = Math.floor(jumpElapsed / letterInterval);
+          const isAllJumped = currentJumpIdx >= cardsInOrder.length;
+          if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
+          // 计算累加分数
+          for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
+            accumulatedScore += cardsInOrder[i].score;
+          }
+          // 给跳跃中的卡牌设置偏移（所有字母跳完后不再跳跃）
+          cardsInOrder.forEach((card, i) => {
+            if (isAllJumped) {
+              card.jumpOffsetY = 0;
+            } else if (i === currentJumpIdx && jumpElapsed >= 0) {
+              const jumpProgress = ((jumpElapsed % letterInterval) / 200);
+              const jumpH = 12 * s * Math.sin(Math.min(jumpProgress, 1) * Math.PI);
+              card.jumpOffsetY = -Math.max(0, jumpH);
+            } else if (i < currentJumpIdx) {
+              card.jumpOffsetY = 0;
+            }
+          });
+        }
+
+        // === 阶段2: 显示长度 ===
+        const lengthShowTime = letterJumpStart + cardsInOrder.length * letterInterval;
+        const showLength = phase >= 2 || (phase === 1 && elapsed >= lengthShowTime);
+
+        // === 阶段3: 总分飞行 ===
+        const totalShowTime = lengthShowTime + 200;
+        if (phase >= 3 && !pc._flyingScoreStarted) {
+          pc._flyingScoreStarted = true;
+          // 启动飞行总分
+          const totalScore = pc.result.score;
+          const top = (this.safeTop || 0) + 20;
+          const barH = 56 * s;
+          this._startFlyingScore(
+            totalScore,
+            rightBoxX + boxSize + 20 * s + 3 * s,
+            boxY + boxSize / 2,
+            W * 0.75 + 3 * s,
+            top + barH * 0.68
+          );
+        }
+
+        // 渲染方块数字
+        valid = true;
+        pendingBaseScore = accumulatedScore;
+        pendingLength = cardsInOrder.length;
+        showFirstBox = phase >= 1;
+        showSecondBox = showLength;
+
+      } else if (pc.state === 'invalid') {
+        // 非法：橙色单词 + error图标 + 单词不存在
+        invalid = true;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#f1c40f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word, W / 2, wordAreaY);
+        ctx.restore();
+
+        const errText = '单词不存在';
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#e74c3c';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const errTextWidth = ctx.measureText(errText).width;
+        const errIconSize = 14 * s;
+        const errTotalWidth = errIconSize + 4 * s + errTextWidth;
+        const errBaseX = W / 2 - errTotalWidth / 2;
+        const errY = wordAreaY + 22 * s + 3 * s + 5 * s + 2 * s;
+        // 画 error 图标
+        if (this.errorIcon && this.errorIconLoaded) {
+          ctx.drawImage(this.errorIcon, errBaseX, errY - errIconSize / 2, errIconSize, errIconSize);
+        }
+        // 画文字
+        ctx.fillText(errText, errBaseX + errIconSize + 4 * s + errTextWidth / 2, errY);
       }
 
-      const state = wordCheckState.get(word);
-      valid = inLocal || state === 'valid';
-      invalid = state === 'invalid';
-      baseScore = selected.reduce((sum, c) => sum + c.score, 0);
-
-      // 颜色：<3 张或检测中 = 橙色，合法 = 绿，非法 = 红
-      let color = '#f1c40f'; // 橙色（<3 张或检测中）
-      if (valid) color = '#2ecc71';
-      else if (invalid) color = '#e74c3c';
-
+    } else if (selected.length >= 1) {
+      // 普通预览：只显示单词（橙色），不检测
+      const word = selected.map(c => c.letter.toLowerCase()).join('');
       ctx.save();
       ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
-      ctx.fillStyle = color;
+      ctx.fillStyle = '#f1c40f';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(word, W / 2, wordAreaY);
       ctx.restore();
-
-      // 中文释义 —— 只在确认合法时显示
-      if (valid) {
-        const meaningObj = require('./game').getWordMeaning(word);
-        if (meaningObj) {
-          const meaningText = require('./game').formatMeaning(meaningObj);
-          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-          ctx.fillStyle = '#777';
-          ctx.textAlign = 'center';
-          ctx.fillText(meaningText, W / 2, wordAreaY + 20 * s + 2 + 3 * s + 2 * s);
-        }
-      }
     }
 
-    // 分数预览（两个方块）—— 始终显示
-    const boxSize = 48 * s;
-    const centerX = W / 2;
-    const boxY = scoreAreaY;
+    // 分数预览（两个方块）—— 始终显示背景图
     const scoreColor = valid ? '#3498db' : (invalid ? '#e74c3c' : '#888');
     const multColor = valid ? '#2ecc71' : (invalid ? '#e74c3c' : '#888');
 
     // 左：字母分（背景图）
-    const leftBoxX = centerX - boxSize - 10 * s - 5;
     const letterScoreImg = this.scoreBoxImages['letter_score'];
     if (letterScoreImg && letterScoreImg.loaded && letterScoreImg.img) {
       ctx.drawImage(letterScoreImg.img, leftBoxX, boxY, boxSize, boxSize);
     } else {
       this.roundRect(leftBoxX, boxY, boxSize, boxSize, 4 * s, null, scoreColor);
     }
-    if (valid) {
-      this.text(String(baseScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
+    if (valid && showFirstBox) {
+      const targetScore = pendingBaseScore;
+      // 检查是否需要滚动动画
+      if (this.lastBoxScore !== targetScore) {
+        this.scoreRoll = {
+          from: this.lastBoxScore,
+          to: targetScore,
+          startTime: Date.now(),
+          duration: 300,
+        };
+        this.lastBoxScore = targetScore;
+      }
+      // 绘制滚动数字或静止数字
+      if (this.scoreRoll) {
+        const rollElapsed = Date.now() - this.scoreRoll.startTime;
+        const rollProgress = Math.min(rollElapsed / this.scoreRoll.duration, 1);
+        const ease = rollProgress * (2 - rollProgress); // easeOutQuad
+        const cx = leftBoxX + boxSize / 2;
+        const cy = boxY + boxSize / 2;
+        const offset = boxSize * 0.5;
+
+        // 旧数字向上淡出
+        ctx.save();
+        ctx.globalAlpha = 1 - ease;
+        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.fillStyle = '#f5f0e8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(this.scoreRoll.from), cx, cy - ease * offset);
+        ctx.restore();
+
+        // 新数字从下方进入
+        ctx.save();
+        ctx.globalAlpha = ease;
+        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.fillStyle = '#f5f0e8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(this.scoreRoll.to), cx, cy + (1 - ease) * offset);
+        ctx.restore();
+
+        if (rollProgress >= 1) {
+          this.scoreRoll = null;
+        }
+      } else {
+        this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
+      }
+    } else if (!game.pendingCheck) {
+      // 没有 pendingCheck 时重置
+      this.lastBoxScore = 0;
+      this.scoreRoll = null;
     }
 
     // 中：乘号（金棕色，加粗变大）
@@ -599,15 +859,14 @@ class Renderer {
     ctx.restore();
 
     // 右：长度倍率（背景图）
-    const rightBoxX = centerX + 10 * s + 5;
     const lengthImg = this.scoreBoxImages['length'];
     if (lengthImg && lengthImg.loaded && lengthImg.img) {
       ctx.drawImage(lengthImg.img, rightBoxX, boxY, boxSize, boxSize);
     } else {
       this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
     }
-    if (valid) {
-      this.text(String(selected.length), rightBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
+    if (valid && showSecondBox) {
+      this.text(String(pendingLength), rightBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
     }
 
     // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）
@@ -652,7 +911,7 @@ class Renderer {
     ctx.shadowOffsetY = 3 * s;
     this.drawBtnImage('out_card', playX, playY, btnW, btnH);
     ctx.restore();
-    // 出牌文字 + 剩余次数（金色渐变字）
+    // 出牌文字 + 剩余次数
     ctx.save();
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.textAlign = 'center';
@@ -660,17 +919,24 @@ class Renderer {
     const btnTextY = playY + btnH / 2 - 1 * s;
     const playText = `出牌 (${game.handsLeft})`;
     const playTx = playX + btnW / 2;
-    // 深色外描边
-    ctx.lineWidth = 2 * s;
-    ctx.strokeStyle = '#2a1f0d';
-    ctx.strokeText(playText, playTx, btnTextY);
-    // 金色渐变填充（上亮下暗，自然光照）
-    const grad = ctx.createLinearGradient(playTx, btnTextY - 7 * s, playTx, btnTextY + 7 * s);
-    grad.addColorStop(0, '#dfc06e');
-    grad.addColorStop(0.5, '#c9a84c');
-    grad.addColorStop(1, '#b5973e');
-    ctx.fillStyle = grad;
-    ctx.fillText(playText, playTx, btnTextY);
+    const isInvalid = game.pendingCheck && game.pendingCheck.state === 'invalid';
+    if (isInvalid) {
+      // 非法状态：深灰色文字
+      ctx.fillStyle = '#666';
+      ctx.fillText(playText, playTx, btnTextY);
+    } else {
+      // 深色外描边
+      ctx.lineWidth = 2 * s;
+      ctx.strokeStyle = '#2a1f0d';
+      ctx.strokeText(playText, playTx, btnTextY);
+      // 金色渐变填充
+      const grad = ctx.createLinearGradient(playTx, btnTextY - 7 * s, playTx, btnTextY + 7 * s);
+      grad.addColorStop(0, '#dfc06e');
+      grad.addColorStop(0.5, '#c9a84c');
+      grad.addColorStop(1, '#b5973e');
+      ctx.fillStyle = grad;
+      ctx.fillText(playText, playTx, btnTextY);
+    }
     ctx.restore();
     this.playBtnRect = { x: playX, y: btnY, w: btnW, h: btnH, action: 'play' };
 
@@ -938,6 +1204,132 @@ class Renderer {
 
   updateAnimations() {
     // 动画更新（后续实现）
+  }
+
+  // ===== 烟花粒子系统 =====
+  _spawnSparkles(cx, cy, count = 20) {
+    const s = this.scale;
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 1 + Math.random() * 2.5;
+      this.sparkles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed * s,
+        vy: Math.sin(angle) * speed * s - 1.5 * s,
+        life: 1,
+        decay: 0.015 + Math.random() * 0.02,
+        size: (1.5 + Math.random() * 2.5) * s,
+        color: Math.random() > 0.4 ? '#ffd700' : '#ffffff',
+      });
+    }
+  }
+
+  _updateAndDrawSparkles(ctx, s) {
+    if (this.sparkles.length === 0) return;
+    ctx.save();
+    this.sparkles = this.sparkles.filter(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08 * s; // 重力
+      p.life -= p.decay;
+      if (p.life > 0) {
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        return true;
+      }
+      return false;
+    });
+    ctx.restore();
+  }
+
+  // ===== 飞行总分动画 =====
+  _startFlyingScore(value, startX, startY, endX, endY) {
+    this.flyingScore = {
+      value,
+      startX, startY, endX, endY,
+      startTime: Date.now(),
+      holdDuration: 1000, // 停留 1秒
+      flyDuration: 800,   // 飞行 800ms
+    };
+  }
+
+  _updateAndDrawFlyingScore(ctx, s, game) {
+    if (!this.flyingScore) return;
+    const fs = this.flyingScore;
+    const elapsed = Date.now() - fs.startTime;
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#c4a35a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    if (elapsed < fs.holdDuration) {
+      // 阶段1: 在方块右边停留显示
+      // 淡金光晕
+      ctx.shadowColor = 'rgba(255,215,0,0.25)';
+      ctx.shadowBlur = 20 * s;
+      ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
+    } else {
+      // 阶段2: 飞向顶部
+      const flyElapsed = elapsed - fs.holdDuration;
+      const progress = Math.min(flyElapsed / fs.flyDuration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      const x = fs.startX + (fs.endX - fs.startX) * ease;
+      const y = fs.startY + (fs.endY - fs.startY) * ease;
+      // 淡金光晕
+      ctx.shadowColor = 'rgba(255,215,0,0.25)';
+      ctx.shadowBlur = 20 * s;
+      ctx.fillText(`+${fs.value}`, x, y);
+
+      if (progress >= 1) {
+        this.flyingScore = null;
+      }
+    }
+    ctx.restore();
+  }
+
+  // ===== 调试菜单 =====
+  _drawDebugMenu(ctx, game, x, y, s) {
+    const items = [
+      { label: '重置出牌次数', action: 'debug_resetHands' },
+      { label: '当前分+100', action: 'debug_addScore' },
+      { label: '直接通关', action: 'debug_winRound' },
+    ];
+    const itemW = 130 * s;
+    const itemH = 34 * s;
+    const menuW = itemW + 8 * s;
+    const menuH = items.length * itemH + 8 * s;
+    const menuX = x;
+    const menuY = y;
+    
+    // 背景
+    ctx.save();
+    ctx.fillStyle = 'rgba(30,30,40,0.92)';
+    this.roundRect(menuX, menuY, menuW, menuH, 6 * s, 'rgba(30,30,40,0.92)');
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 1 * s;
+    ctx.stroke();
+    ctx.restore();
+    
+    this.debugMenuRects = [];
+    items.forEach((item, i) => {
+      const iy = menuY + 4 * s + i * itemH;
+      const ix = menuX + 4 * s;
+      // 按钮背景
+      this.roundRect(ix, iy, itemW, itemH - 4 * s, 4 * s, '#2d2d3a');
+      // 文字
+      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#e0e0e0';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, ix + itemW / 2, iy + (itemH - 4 * s) / 2);
+      this.debugMenuRects.push({ x: ix, y: iy, w: itemW, h: itemH - 4 * s, action: item.action });
+    });
   }
 
   // 检测点击位置
