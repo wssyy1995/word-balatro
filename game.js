@@ -34,6 +34,10 @@ wx.onTouchStart((e) => {
   handleInput(x, y);
 });
 
+wx.onTouchEnd(() => {
+  renderer.pressedBtn = null;
+});
+
 function handleInput(x, y) {
   if (game.state === 'playing') {
     // 检测卡牌点击
@@ -47,6 +51,7 @@ function handleInput(x, y) {
     if (renderer.playBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
       if (btnHit) {
+        renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
         if (selected.length >= 3) {
@@ -55,6 +60,8 @@ function handleInput(x, y) {
             if (!result.valid) {
               wx.showToast({ title: '非法单词', icon: 'none' });
             }
+          }).catch(err => {
+            console.error('playHand error:', err);
           });
         }
         return;
@@ -65,8 +72,20 @@ function handleInput(x, y) {
     if (renderer.discardBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.discardBtnRect]);
       if (btnHit) {
+        renderer.pressedBtn = 'discard';
         if (game.animManager) game.animManager.buttonPress(renderer.discardBtnRect);
         game.discard();
+        return;
+      }
+    }
+
+    // 检测提示按钮
+    if (renderer.hintBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.hintBtnRect]);
+      if (btnHit) {
+        renderer.pressedBtn = 'hint';
+        if (game.animManager) game.animManager.buttonPress(renderer.hintBtnRect);
+        game.showHint();
         return;
       }
     }
@@ -75,6 +94,7 @@ function handleInput(x, y) {
     if (renderer.surrenderBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.surrenderBtnRect]);
       if (btnHit) {
+        renderer.pressedBtn = 'surrender';
         if (game.animManager) game.animManager.buttonPress(renderer.surrenderBtnRect);
         wx.showModal({
           title: '确认投降',

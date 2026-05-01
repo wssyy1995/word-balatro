@@ -19,8 +19,8 @@ class Renderer {
     // 计算卡牌尺寸（确保9张牌能放下）
     const maxCardW = Math.floor((width - 48) / 3); // 3列，左右边距24
     const maxCardH = Math.floor((height - 200) / 3); // 3行，预留上方HUD和下方按钮
-    this.cardW = Math.min(Math.floor(80 * this.scale), maxCardW);
-    this.cardH = Math.min(Math.floor(110 * this.scale), maxCardH);
+    this.cardW = Math.min(Math.floor(74 * this.scale), maxCardW);
+    this.cardH = Math.min(Math.floor(102 * this.scale), maxCardH);
     this.gap = Math.floor(8 * this.scale);
     
     // 安全区域（刘海屏适配）
@@ -36,6 +36,76 @@ class Renderer {
     }
     
     this.animations = [];
+    
+    // 加载背景图
+    this.bgImage = null;
+    this.bgLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/bg.png';
+      img.onload = () => { this.bgLoaded = true; };
+      img.onerror = () => { this.bgLoaded = false; };
+      this.bgImage = img;
+    } catch (e) {
+      this.bgLoaded = false;
+    }
+    
+    // 加载 top bar 图标
+    this.topIcon = null;
+    this.topIconLoaded = false;
+    try {
+      const icon = wx.createImage();
+      icon.src = 'images/top_icon.png';
+      icon.onload = () => { this.topIconLoaded = true; };
+      icon.onerror = () => { this.topIconLoaded = false; };
+      this.topIcon = icon;
+    } catch (e) {
+      this.topIconLoaded = false;
+    }
+    
+    // 加载按钮图片
+    this.pressedBtn = null;
+    this.btnImages = {};
+    const btnNames = ['out_card', 'throw_card', 'surrender'];
+    btnNames.forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/${name}.png`;
+        img.onload = () => { this.btnImages[name] = { img, loaded: true }; };
+        img.onerror = () => { this.btnImages[name] = { img, loaded: false }; };
+        this.btnImages[name] = { img, loaded: false };
+      } catch (e) {
+        this.btnImages[name] = { img: null, loaded: false };
+      }
+    });
+    
+    // 加载分数方块背景图
+    this.scoreBoxImages = {};
+    const boxNames = ['letter_score', 'length'];
+    boxNames.forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/${name}.png`;
+        img.onload = () => { this.scoreBoxImages[name] = { img, loaded: true }; };
+        img.onerror = () => { this.scoreBoxImages[name] = { img, loaded: false }; };
+        this.scoreBoxImages[name] = { img, loaded: false };
+      } catch (e) {
+        this.scoreBoxImages[name] = { img: null, loaded: false };
+      }
+    });
+    
+    // 加载预览区装饰图
+    this.previewMark = null;
+    this.previewMarkLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/preview_mark.png';
+      img.onload = () => { this.previewMarkLoaded = true; };
+      img.onerror = () => { this.previewMarkLoaded = false; };
+      this.previewMark = img;
+    } catch (e) {
+      this.previewMarkLoaded = false;
+    }
   }
 
   // 绘制圆角矩形
@@ -71,6 +141,18 @@ class Renderer {
     this.roundRect(x, y, w, h, 8 * this.scale, color);
     this.text(label, x + w / 2, y + h / 2, 16, textColor);
     return { x, y, w, h };
+  }
+
+  // 绘制图片按钮
+  drawBtnImage(name, x, y, w, h) {
+    const ctx = this.ctx;
+    const btn = this.btnImages[name];
+    if (btn && btn.loaded && btn.img) {
+      ctx.drawImage(btn.img, x, y, w, h);
+    } else {
+      // 图片未加载时显示占位色块
+      this.roundRect(x, y, w, h, 8 * this.scale, '#555');
+    }
   }
 
   // 绘制卡牌
@@ -154,10 +236,14 @@ class Renderer {
     const H = this.H;
     const s = this.scale;
 
-    // 清空画布
+    // 绘制背景
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0a1628';
-    ctx.fillRect(0, 0, W, H);
+    if (this.bgImage && this.bgLoaded) {
+      ctx.drawImage(this.bgImage, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#0a1628';
+      ctx.fillRect(0, 0, W, H);
+    }
 
     // 绘制 HUD
     this.drawHUD(game);
@@ -181,12 +267,19 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = this.safeTop || 0;
+    const top = (this.safeTop || 0) + 20;
     const h = 56 * s;
 
-    // HUD 背景
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fillRect(0, top, W, h);
+    // 左上角图标（压在 topbar 上方）
+    const iconSize = 40 * s;
+    const iconX = 15 * s;
+    const iconY = top - iconSize-5 ;
+    if (this.topIcon && this.topIconLoaded) {
+      ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
+    }
+
+    // 金色边框（无背景填充）
+    this.roundRect(0, top, W, h, 8 * s, null, '#d4a843');
 
     const items = [
       { label: '回合', value: game.round },
@@ -197,10 +290,11 @@ class Renderer {
     ];
 
     const itemW = W / items.length;
+    const textColor = '#0d2b4d'; // 藏蓝色
     items.forEach((item, i) => {
       const x = i * itemW;
-      this.text(item.label, x + itemW / 2, top + 16 * s, 10, '#888');
-      this.text(String(item.value), x + itemW / 2, top + 38 * s, 14, '#fff');
+      this.text(item.label, x + itemW / 2, top + 16 * s, 14, textColor);
+      this.text(String(item.value), x + itemW / 2, top + 38 * s, 16, textColor);
     });
 
     // 女巫牌/水晶球效果指示器
@@ -231,77 +325,139 @@ class Renderer {
     const H = this.H;
     const s = this.scale;
 
+    // === 三个独立可调区域 ===
+    const wordAreaY  = 120 * s + 30;   // ① 单词拼写+中文释义 整体中心基准
+    const scoreAreaY = 175 * s + 30;   // ② 分数计算区（方块）顶部基准
+    const cardAreaY  = 230 * s + 30 + 20;   // ③ 卡牌区域顶部基准
+
     // 计算手牌布局（3x3 网格）
     const cols = 3;
     const rows = Math.ceil(game.hand.length / cols);
     const totalW = cols * this.cardW + (cols - 1) * this.gap;
     const startX = (W - totalW) / 2;
-    const startY = 190 * s;
 
     this.cardRects = []; // 存储卡牌点击区域
 
+    // 单词预览区白色蒙层（常驻，固定6个字母宽度）
+    const maskW = 180 * s;
+    const maskH = 38 * s;
+    const maskX = W / 2 - maskW / 2;
+    const maskY = wordAreaY - maskH / 2;
+    this.roundRect(maskX, maskY, maskW, maskH, 8 * s, 'rgba(255,255,255,0.35)');
+
+    // 蒙层左右装饰图（保持原图宽高比，不压缩变形）
+    if (this.previewMark && this.previewMarkLoaded) {
+      const imgW = this.previewMark.width || 200;
+      const imgH = this.previewMark.height || 104;
+      const markH = maskH * 0.6;
+      const markW = markH * (imgW / imgH);
+      const gap = 4 * s;
+      // 左边：正常
+      ctx.drawImage(this.previewMark, maskX - markW - gap, maskY + 5 * s, markW, markH);
+      // 右边：水平镜像
+      ctx.save();
+      ctx.translate(maskX + maskW + gap + markW, maskY + 5 * s);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.previewMark, 0, 0, markW, markH);
+      ctx.restore();
+    }
+
     // 预览区域（在卡牌上方）
     const selected = game.getSelectedCards();
-    if (selected.length >= 3) {
+    let valid = false;
+    let invalid = false;
+    let baseScore = 0;
+
+    if (selected.length >= 1) {
       const word = selected.map(c => c.letter.toLowerCase()).join('');
       const inLocal = WORD_DATA.has(word) || onlineWordCache.has(word);
 
-      // 触发在线检测（不在本地且未检测过）
-      if (!inLocal && !wordCheckState.has(word)) {
-        wordCheckState.set(word, 'checking');
-        isValidWordOnline(word);
+      // 只有 >= 3 张才发起在线检测
+      if (selected.length >= 3) {
+        if (!inLocal && !wordCheckState.has(word)) {
+          wordCheckState.set(word, 'checking');
+          isValidWordOnline(word);
+        }
       }
 
       const state = wordCheckState.get(word);
-      const valid = inLocal || state === 'valid';
-      const checking = state === 'checking';
-      const invalid = state === 'invalid';
+      valid = inLocal || state === 'valid';
+      invalid = state === 'invalid';
+      baseScore = selected.reduce((sum, c) => sum + c.score, 0);
 
-      const py = startY - 92 * s;
-
-      // 单词预览颜色：合法=绿，检测中=黄，非法=红
-      let color = '#f1c40f';
+      // 颜色：<3 张或检测中 = 橙色，合法 = 绿，非法 = 红
+      let color = '#f1c40f'; // 橙色（<3 张或检测中）
       if (valid) color = '#2ecc71';
       else if (invalid) color = '#e74c3c';
 
-      this.text(word, W / 2, py, 22, color);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+      ctx.fillStyle = color;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(word, W / 2, wordAreaY);
+      ctx.restore();
 
-      // 分数预览（两个方块）—— 只在确认合法时显示
+      // 中文释义 —— 只在确认合法时显示
       if (valid) {
-        const baseScore = selected.reduce((sum, c) => sum + c.score, 0);
-        const boxSize = 40 * s;
-        const boxY = py + 24 * s;
-        const centerX = W / 2;
-
-        // 左：字母分（蓝色边框）
-        this.roundRect(centerX - boxSize - 8 * s, boxY, boxSize, boxSize, 4 * s, null, '#3498db');
-        this.text(String(baseScore), centerX - boxSize / 2 - 8 * s, boxY + boxSize / 2, 16, '#3498db');
-
-        // 中：乘号
-        this.text('×', centerX, boxY + boxSize / 2, 14, '#fff');
-
-        // 右：长度倍率（绿色边框）
-        this.roundRect(centerX + 8 * s, boxY, boxSize, boxSize, 4 * s, null, '#2ecc71');
-        this.text(String(selected.length), centerX + boxSize / 2 + 8 * s, boxY + boxSize / 2, 16, '#2ecc71');
-
-        // 释义
         const meaningObj = require('./game').getWordMeaning(word);
         if (meaningObj) {
           const meaningText = require('./game').formatMeaning(meaningObj);
           ctx.font = `${Math.floor(11 * s)}px sans-serif`;
           ctx.fillStyle = '#aaa';
           ctx.textAlign = 'center';
-          ctx.fillText(meaningText, W / 2, boxY + boxSize + 18 * s);
+          ctx.fillText(meaningText, W / 2, wordAreaY + 20 * s + 2);
         }
       }
     }
 
-    // 绘制卡牌
+    // 分数预览（两个方块）—— 始终显示
+    const boxSize = 48 * s;
+    const centerX = W / 2;
+    const boxY = scoreAreaY;
+    const scoreColor = valid ? '#3498db' : (invalid ? '#e74c3c' : '#888');
+    const multColor = valid ? '#2ecc71' : (invalid ? '#e74c3c' : '#888');
+
+    // 左：字母分（背景图）
+    const leftBoxX = centerX - boxSize - 10 * s - 5;
+    const letterScoreImg = this.scoreBoxImages['letter_score'];
+    if (letterScoreImg && letterScoreImg.loaded && letterScoreImg.img) {
+      ctx.drawImage(letterScoreImg.img, leftBoxX, boxY, boxSize, boxSize);
+    } else {
+      this.roundRect(leftBoxX, boxY, boxSize, boxSize, 4 * s, null, scoreColor);
+    }
+    if (valid) {
+      this.text(String(baseScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#fff');
+    }
+
+    // 中：乘号（金棕色，加粗变大）
+    ctx.save();
+    ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+    ctx.fillStyle = '#b87333';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', centerX, boxY + boxSize / 2);
+    ctx.restore();
+
+    // 右：长度倍率（背景图）
+    const rightBoxX = centerX + 10 * s + 5;
+    const lengthImg = this.scoreBoxImages['length'];
+    if (lengthImg && lengthImg.loaded && lengthImg.img) {
+      ctx.drawImage(lengthImg.img, rightBoxX, boxY, boxSize, boxSize);
+    } else {
+      this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
+    }
+    if (valid) {
+      this.text(String(selected.length), rightBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#fff');
+    }
+
+    // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）
     game.hand.forEach((card, i) => {
+      if (!card) return;
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = startX + col * (this.cardW + this.gap);
-      const y = startY + row * (this.cardH + this.gap);
+      const y = cardAreaY + row * (this.cardH + this.gap);
       this.drawCard(card, x, y, card.newCard);
       this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
 
@@ -309,27 +465,87 @@ class Renderer {
       card.newCard = false;
     });
 
-    // 按钮区域
+    // 绘制正在飞出的旧牌（基于原始索引位置 + animOffset）
+    for (const card of game.flyingCards) {
+      if (card._flyIndex !== undefined) {
+        const fCol = card._flyIndex % cols;
+        const fRow = Math.floor(card._flyIndex / cols);
+        const fx = startX + fCol * (this.cardW + this.gap);
+        const fy = cardAreaY + fRow * (this.cardH + this.gap);
+        this.drawCard(card, fx, fy);
+      }
+    }
+
+    // 底部图片按钮区域
     const btnY = H - 90 * s;
-    const btnH = 40 * s;
-    const btnW = 100 * s;
+    const btnW = 90 * s;
+    const btnH = 56 * s;
+    const btnGap = 20 * s;
+    const totalBtnW = btnW * 3 + btnGap * 2;
+    const btnStartX = (W - totalBtnW) / 2;
 
-    // 出牌按钮
-    const canPlay = selected.length >= 3;
-    const playColor = canPlay ? '#e74c3c' : '#555';
-    this.button('出牌', W / 2 - btnW - 5 * s, btnY, btnW, btnH, playColor);
-    this.playBtnRect = { x: W / 2 - btnW - 5 * s, y: btnY, w: btnW, h: btnH, action: 'play' };
+    // 出牌按钮（图片 + 阴影 + 按下偏移）
+    const playX = btnStartX;
+    const playY = btnY + (this.pressedBtn === 'play' ? 2 * s : 0);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6 * s;
+    ctx.shadowOffsetY = 3 * s;
+    this.drawBtnImage('out_card', playX, playY, btnW, btnH);
+    ctx.restore();
+    this.playBtnRect = { x: playX, y: btnY, w: btnW, h: btnH, action: 'play' };
 
-    // 弃牌按钮
-    const canDiscard = game.discardsLeft > 0 && selected.length > 0;
-    const discardColor = canDiscard ? '#3498db' : '#555';
-    this.button(`弃牌 (${game.discardsLeft})`, W / 2 + 5 * s, btnY, btnW, btnH, discardColor);
-    this.discardBtnRect = { x: W / 2 + 5 * s, y: btnY, w: btnW, h: btnH, action: 'discard' };
+    // 弃牌按钮（图片 + 阴影 + 按下偏移）
+    const discardX = btnStartX + btnW + btnGap;
+    const discardY = btnY + (this.pressedBtn === 'discard' ? 2 * s : 0);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6 * s;
+    ctx.shadowOffsetY = 3 * s;
+    this.drawBtnImage('throw_card', discardX, discardY, btnW, btnH);
+    ctx.restore();
+    this.discardBtnRect = { x: discardX, y: btnY, w: btnW, h: btnH, action: 'discard' };
 
-    // 投降按钮（白色底）
-    const surrW = 60 * s;
-    this.button('⚐ 投降', W - surrW - 10 * s, btnY, surrW, btnH, '#fff', '#333');
-    this.surrenderBtnRect = { x: W - surrW - 10 * s, y: btnY, w: surrW, h: btnH, action: 'surrender' };
+    // 投降按钮（图片 + 阴影 + 按下偏移）
+    const surrX = btnStartX + (btnW + btnGap) * 2;
+    const surrY = btnY + (this.pressedBtn === 'surrender' ? 2 * s : 0);
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6 * s;
+    ctx.shadowOffsetY = 3 * s;
+    this.drawBtnImage('surrender', surrX, surrY, btnW, btnH);
+    ctx.restore();
+    this.surrenderBtnRect = { x: surrX, y: btnY, w: btnW, h: btnH, action: 'surrender' };
+
+    // 提示按钮（右上角 emoji）
+    const hintBtnSize = 44 * s;
+    const hintX = W - hintBtnSize - 10 * s;
+    const hintY = 20 * s;
+    this.roundRect(hintX, hintY, hintBtnSize, hintBtnSize, 10 * s, '#f1c40f');
+    this.text('💡', hintX + hintBtnSize / 2, hintY + hintBtnSize / 2, 24, '#333');
+    this.hintBtnRect = { x: hintX, y: hintY, w: hintBtnSize, h: hintBtnSize, action: 'hint' };
+
+    // 提示 Toast（白色，显示在右上角提示按钮下方）
+    if (game.hintToast) {
+      const toastW = 220 * s;
+      const lineH = 18 * s;
+      const lines = game.hintToast.text.split('\n');
+      const toastH = lines.length * lineH + 16 * s;
+      const toastX = W - toastW - 10 * s;
+      const toastY = hintY + hintBtnSize + 8 * s;
+
+      ctx.save();
+      // 白色圆角背景
+      this.roundRect(toastX, toastY, toastW, toastH, 8 * s, '#fff', null);
+      // 文字
+      ctx.fillStyle = '#333';
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.textAlign = 'left';
+      lines.forEach((line, i) => {
+        ctx.fillText(line, toastX + 12 * s, toastY + 14 * s + i * lineH);
+      });
+      ctx.restore();
+    }
   }
 
   drawShop(game) {

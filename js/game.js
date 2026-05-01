@@ -98,8 +98,7 @@ function drawWithSafety(deck, count, round, safetyRounds) {
 }
 
 function ensureValidWordInHand(deck, hand) {
-  const validInHand = findAllValidWordsInHand(hand);
-  if (validInHand.length > 0) return;
+  if (hasValidWordInHand(hand)) return;
 
   const seedWord = getSeedWord(6, 3);
   const seedLetters = seedWord.toUpperCase().split('');
@@ -124,51 +123,101 @@ function ensureValidWordInHand(deck, hand) {
       id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult };
   });
 
-  hand.push(...seedCards);
+  // 用 seedCards 替换 hand 中的 null 占位符
+  let seedIdx = 0;
+  for (let i = 0; i < hand.length && seedIdx < seedCards.length; i++) {
+    if (hand[i] === null) {
+      hand[i] = seedCards[seedIdx++];
+    }
+  }
+  // 如果还有剩余的 seedCards，push 到末尾
+  while (seedIdx < seedCards.length) {
+    hand.push(seedCards[seedIdx++]);
+  }
 
+  // 如果 hand 超过 9 张，把多余的牌塞回 deck
   while (hand.length > 9 && deck.length > 0) {
-    deck.unshift(hand.pop());
+    const extra = hand.pop();
+    if (extra) deck.unshift(extra);
   }
 }
 
-function findAllValidWordsInHand(hand) {
-  const letters = hand.map(c => c.letter);
-  const results = [];
-
-  function* permute(arr, k) {
-    if (k === 1) { yield [...arr]; return; }
-    for (let i = 0; i < k; i++) {
-      yield* permute(arr, k - 1);
-      if (k % 2 === 0) [arr[i], arr[k - 1]] = [arr[k - 1], arr[i]];
-      else [arr[0], arr[k - 1]] = [arr[k - 1], arr[0]];
-    }
+// 频率表算法：O(|WORD_DATA|) 远快于全排列 O(n!)
+function hasValidWordInHand(hand) {
+  const letterCounts = {};
+  for (const card of hand) {
+    if (!card) continue;
+    const l = card.letter.toLowerCase();
+    letterCounts[l] = (letterCounts[l] || 0) + 1;
   }
 
-  for (let len = 3; len <= Math.min(9, letters.length); len++) {
-    const seen = new Set();
-    const gens = [...permute([...letters], len)];
-    for (const p of gens) {
-      const word = p.join('').toLowerCase();
-      if (seen.has(word)) continue;
-      seen.add(word);
-      if (WORD_DATA.has(word) || onlineWordCache.has(word)) {
-        const indices = [];
-        const used = new Set();
-        for (const ch of p) {
-          for (let i = 0; i < letters.length; i++) {
-            if (!used.has(i) && letters[i] === ch) {
-              used.add(i);
-              indices.push(i);
-              break;
-            }
-          }
+  for (const word of WORD_DATA.keys()) {
+    if (word.length < 3) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
+  for (const word of onlineWordCache) {
+    if (word.length < 3) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
+  return false;
+}
+
+function canFormWord(word, letterCounts) {
+  const needed = {};
+  for (const ch of word) {
+    needed[ch] = (needed[ch] || 0) + 1;
+  }
+  for (const [ch, count] of Object.entries(needed)) {
+    if ((letterCounts[ch] || 0) < count) return false;
+  }
+  return true;
+}
+
+function findAllValidWordsInHand(hand) {
+  const cards = hand.filter(Boolean);
+  const letterCounts = {};
+  for (const card of cards) {
+    const l = card.letter.toLowerCase();
+    letterCounts[l] = (letterCounts[l] || 0) + 1;
+  }
+
+  const results = [];
+  const seenWords = new Set();
+
+  function tryWord(word) {
+    if (seenWords.has(word)) return;
+    if (word.length < 3 || word.length > cards.length) return;
+
+    const needed = {};
+    for (const ch of word) {
+      needed[ch] = (needed[ch] || 0) + 1;
+    }
+    for (const [ch, count] of Object.entries(needed)) {
+      if ((letterCounts[ch] || 0) < count) return;
+    }
+
+    // 找到组成该单词的 cards
+    const used = new Set();
+    const wordCards = [];
+    for (const ch of word) {
+      for (let i = 0; i < cards.length; i++) {
+        if (!used.has(i) && cards[i].letter.toLowerCase() === ch) {
+          used.add(i);
+          wordCards.push(cards[i]);
+          break;
         }
-        const cards = indices.map(i => hand[i]);
-        const preview = calcWordScore(cards, []);
-        if (preview.valid) results.push({ word, cards, score: preview.score });
       }
     }
+
+    seenWords.add(word);
+    const preview = calcWordScore(wordCards, []);
+    if (preview.valid) {
+      results.push({ word, cards: wordCards, score: preview.score });
+    }
   }
+
+  for (const word of WORD_DATA.keys()) tryWord(word);
+  for (const word of onlineWordCache) tryWord(word);
 
   results.sort((a, b) => b.cards.length - a.cards.length || b.score - a.score);
   return results;
@@ -329,6 +378,8 @@ class Game {
     this.totalScore = 0;
     this.roundScores = [];
     this.animManager = new AnimationManager();
+    this.flyingCards = [];
+    this.hintToast = null;
     this.audioManager = new AudioManager();
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
@@ -360,7 +411,7 @@ class Game {
 
   toggleSelect(cardId) {
     const idx = this.selected.indexOf(cardId);
-    const card = this.hand.find(c => c.id === cardId);
+    const card = this.hand.find(c => c && c.id === cardId);
     if (!card) return;
     if (idx >= 0) {
       this.selected.splice(idx, 1);
@@ -376,9 +427,24 @@ class Game {
     }
   }
 
+  showHint() {
+    const words = findAllValidWordsInHand(this.hand);
+    if (words.length === 0) {
+      this.hintToast = { text: '没有可组成的单词', expireAt: Date.now() + 2000 };
+      return;
+    }
+    const topWords = words.slice(0, 10);
+    const lines = [`提示：${words.length} 个合法单词`];
+    topWords.forEach((w, i) => {
+      lines.push(`${i + 1}. ${w.word.toUpperCase()} (${w.cards.length}牌 ${w.score}分)`);
+    });
+    if (words.length > 10) lines.push('...');
+    this.hintToast = { text: lines.join('\n'), expireAt: Date.now() + 2000 };
+  }
+
   async playHand() {
     if (this.selected.length < 3) return { valid: false };
-    const played = this.hand.filter(c => c.selected);
+    const played = this.hand.filter(c => c && c.selected);
     const playedInOrder = this.getSelectedCards();
     const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
 
@@ -401,32 +467,51 @@ class Game {
     const removedIndices = [];
     const playedCards = [];
     this.hand.forEach((c, i) => { 
-      if (c.selected) {
+      if (c && c.selected) {
         removedIndices.push(i);
         playedCards.push(c);
       }
     });
 
-    this.hand = this.hand.filter(c => !c.selected);
-    ensureValidWordInHand(this.deck, this.hand);
-    const need = Math.min(9 - this.hand.length, this.deck.length);
-    const newCards = this.deck.splice(0, need);
-
-    const sortedIndices = [...removedIndices].sort((a, b) => a - b);
-    for (let i = 0; i < sortedIndices.length && i < newCards.length; i++) {
-      const idx = sortedIndices[i];
-      newCards[i].newCard = true;
-      newCards[i].flyDir = idx <= 4 ? 'left' : 'right';
-      this.hand.splice(idx, 0, newCards[i]);
-    }
-    for (let i = sortedIndices.length; i < newCards.length; i++) {
-      newCards[i].newCard = true;
-      newCards[i].flyDir = 'left';
-      this.hand.push(newCards[i]);
-    }
-
+    // 旧牌飞出
+    playedCards.forEach((card, i) => {
+      card._flyIndex = removedIndices[i];
+      card.selected = false;
+      this.animManager.flyOut(card, 'left', () => {
+        const fi = this.flyingCards.indexOf(card);
+        if (fi >= 0) this.flyingCards.splice(fi, 1);
+        card._flyIndex = undefined;
+      });
+    });
+    this.flyingCards.push(...playedCards);
     this.selected = [];
-    this.hand.forEach(c => { c.selected = false; });
+
+    // 用 null 占位符替换旧牌位置（其他牌索引完全不动）
+    this.hand = this.hand.map(c => playedCards.includes(c) ? null : c);
+
+    // 1秒后补牌
+    setTimeout(() => {
+      const need = Math.min(playedCards.length, this.deck.length);
+      const newCards = this.deck.splice(0, need);
+
+      let newIdx = 0;
+      this.hand = this.hand.map(c => {
+        if (c === null && newIdx < newCards.length) {
+          const nc = newCards[newIdx++];
+          nc.newCard = true;
+          nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
+          this.animManager.flyIn(nc, 'left', null, 0);
+          return nc;
+        }
+        return c;
+      });
+
+      // 移除未被替换的占位符
+      this.hand = this.hand.filter(c => c !== null);
+
+      ensureValidWordInHand(this.deck, this.hand);
+      this.hand.forEach(c => { if (c) c.selected = false; });
+    }, 800);
 
     if (this.score >= this.target) {
       this.state = 'shop';
@@ -442,29 +527,55 @@ class Game {
     if (this.audioManager) this.audioManager.play('discard');
     
     const removedIndices = [];
-    this.hand.forEach((c, i) => { if (c.selected) removedIndices.push(i); });
+    const discardedCards = [];
+    this.hand.forEach((c, i) => { 
+      if (c && c.selected) {
+        removedIndices.push(i);
+        discardedCards.push(c);
+      }
+    });
 
-    this.hand = this.hand.filter(c => !c.selected);
-    ensureValidWordInHand(this.deck, this.hand);
-    const need = Math.min(9 - this.hand.length, this.deck.length);
-    const newCards = this.deck.splice(0, need);
+    // 旧牌飞出
+    discardedCards.forEach((card, i) => {
+      card._flyIndex = removedIndices[i];
+      card.selected = false;
+      this.animManager.flyOut(card, 'left', () => {
+        const fi = this.flyingCards.indexOf(card);
+        if (fi >= 0) this.flyingCards.splice(fi, 1);
+        card._flyIndex = undefined;
+      });
+    });
+    this.flyingCards.push(...discardedCards);
+    this.selected = [];
 
-    const sortedIndices = [...removedIndices].sort((a, b) => a - b);
-    for (let i = 0; i < sortedIndices.length && i < newCards.length; i++) {
-      const idx = sortedIndices[i];
-      newCards[i].newCard = true;
-      newCards[i].flyDir = idx <= 4 ? 'left' : 'right';
-      this.hand.splice(idx, 0, newCards[i]);
-    }
-    for (let i = sortedIndices.length; i < newCards.length; i++) {
-      newCards[i].newCard = true;
-      newCards[i].flyDir = 'left';
-      this.hand.push(newCards[i]);
-    }
+    // 用 null 占位符替换旧牌位置（其他牌索引完全不动）
+    this.hand = this.hand.map(c => discardedCards.includes(c) ? null : c);
+
+    // 1秒后补牌
+    setTimeout(() => {
+      const need = Math.min(discardedCards.length, this.deck.length);
+      const newCards = this.deck.splice(0, need);
+
+      let newIdx = 0;
+      this.hand = this.hand.map(c => {
+        if (c === null && newIdx < newCards.length) {
+          const nc = newCards[newIdx++];
+          nc.newCard = true;
+          nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
+          this.animManager.flyIn(nc, 'left', null, 0);
+          return nc;
+        }
+        return c;
+      });
+
+      // 移除未被替换的占位符
+      this.hand = this.hand.filter(c => c !== null);
+
+      ensureValidWordInHand(this.deck, this.hand);
+      this.hand.forEach(c => { if (c) c.selected = false; });
+    }, 800);
 
     this.discardsLeft--;
-    this.selected = [];
-    this.hand.forEach(c => { c.selected = false; });
     if (this.storageManager) this.storageManager.saveProgress(this);
     return true;
   }
@@ -498,7 +609,7 @@ class Game {
 
   upgradeCard(cardId) {
     if (!this.potionMode) return false;
-    const card = this.hand.find(c => c.id === cardId);
+    const card = this.hand.find(c => c && c.id === cardId);
     if (!card) return false;
 
     const effect = this.potionMode.effect;
@@ -534,13 +645,17 @@ class Game {
   }
 
   getSelectedCards() {
-    return this.selected.map(id => this.hand.find(c => c.id === id)).filter(Boolean);
+    return this.selected.map(id => this.hand.find(c => c && c.id === id)).filter(Boolean);
   }
 
   update(deltaTime) {
     // 更新动画
     if (this.animManager) {
       this.animManager.update(Date.now());
+    }
+    // 清除过期的 hintToast
+    if (this.hintToast && Date.now() > this.hintToast.expireAt) {
+      this.hintToast = null;
     }
   }
 }

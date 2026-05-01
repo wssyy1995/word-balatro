@@ -10,6 +10,13 @@ const Easing = {
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   },
   
+  // easeOutBackStrong: 强力弹性回弹（果冻感）
+  easeOutBackStrong: (t) => {
+    const c1 = 2.5;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  },
+  
   // easeOutBounce: 弹跳效果
   easeOutBounce: (t) => {
     const n1 = 7.5625;
@@ -120,17 +127,15 @@ class AnimationManager {
     this.animations = [];
   }
   
-  // 快捷方法：卡牌飞出
-  flyOut(card, direction, onComplete) {
-    const offsetX = direction === 'left' ? -300 : 300;
-    const rotation = direction === 'left' ? -55 : 55;
-    
+  // 快捷方法：卡牌飞出（像发扑克牌一样向左滑出，不淡出）
+  flyOut(card, direction, onComplete, delay = 0) {
     return this.add({
       type: 'flyOut',
       target: card,
       from: { x: 0, y: 0, rotation: 0, opacity: 1 },
-      to: { x: offsetX, y: -50, rotation, opacity: 0 },
-      duration: 550,
+      to: { x: -400, y: 30, rotation: -20, opacity: 1 },
+      duration: 400,
+      delay,
       easing: Easing.easeOutCubic,
       onUpdate: (curr) => {
         card.animOffset = { x: curr.x, y: curr.y, rotation: curr.rotation, opacity: curr.opacity };
@@ -142,17 +147,18 @@ class AnimationManager {
     });
   }
   
-  // 快捷方法：卡牌飞入
-  flyIn(card, direction, onComplete) {
-    const fromX = direction === 'left' ? -300 : 300;
+  // 快捷方法：卡牌飞入（强力果冻回弹）
+  flyIn(card, direction, onComplete, delay = 0) {
+    const fromX = direction === 'left' ? -200 : 200;
     
     return this.add({
       type: 'flyIn',
       target: card,
-      from: { x: fromX, y: -30, rotation: direction === 'left' ? -30 : 30, opacity: 0, scale: 0.5 },
+      from: { x: fromX, y: -20, rotation: direction === 'left' ? -20 : 20, opacity: 0.4, scale: 0.6 },
       to: { x: 0, y: 0, rotation: 0, opacity: 1, scale: 1 },
-      duration: 600,
-      easing: Easing.easeOutBack,
+      duration: 550,
+      delay,
+      easing: Easing.easeOutBackStrong,
       onUpdate: (curr) => {
         card.animOffset = { 
           x: curr.x, y: curr.y, rotation: curr.rotation, 

@@ -2,9 +2,9 @@
 
 // 字母分数
 const LETTER_SCORE = {
-  A:1, B:3, C:3, D:2, E:1, F:4, G:2, H:4, I:1,
-  J:8, K:5, L:1, M:3, N:1, O:1, P:3, Q:10, R:1,
-  S:1, T:1, U:1, V:4, W:4, X:8, Y:4, Z:10
+  A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
+  J:10, K:11, L:12, M:13, N:14, O:15, P:16, Q:17, R:18,
+  S:19, T:20, U:21, V:22, W:23, X:24, Y:25, Z:26
 };
 
 // 字母分布（98张牌）
@@ -15,7 +15,7 @@ const LETTER_DISTRIBUTION = {
 };
 
 // 人头牌标记
-const FACE_CARDS = new Set(['J', 'Q', 'K']);
+const FACE_CARDS = new Set(['X', 'Y', 'Z']);
 
 
 const { WORD_DATA } = require('./words');
