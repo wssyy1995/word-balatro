@@ -376,6 +376,7 @@ class Game {
     this.extraSafety = 0;
     this.extraHands = 0;
     this.totalScore = 0;
+    this.gameOverReason = null;
     this.roundScores = [];
     this.animManager = new AnimationManager();
     this.flyingCards = [];
@@ -402,7 +403,7 @@ class Game {
     this.selected = [];
     this.score = 0;
     this.target = Math.floor(150 * this.round * (this.round + 1) / 2);
-    this.handsLeft = 999;
+    this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
     this.extraSafety = 0;
@@ -511,11 +512,20 @@ class Game {
 
       ensureValidWordInHand(this.deck, this.hand);
       this.hand.forEach(c => { if (c) c.selected = false; });
-    }, 800);
+    }, 600);
 
+    this.handsLeft--;
     if (this.score >= this.target) {
       this.state = 'shop';
       this.gold += 3 + this.round;
+    } else if (this.handsLeft <= 0) {
+      this.state = 'gameover';
+      this.gameOverReason = 'out_of_hands';
+      if (this.storageManager) {
+        this.storageManager.setHighScore(this.totalScore);
+        this.storageManager.updateStats(this);
+        this.storageManager.clearProgress();
+      }
     }
     if (this.storageManager) this.storageManager.saveProgress(this);
     return result;
@@ -573,7 +583,7 @@ class Game {
 
       ensureValidWordInHand(this.deck, this.hand);
       this.hand.forEach(c => { if (c) c.selected = false; });
-    }, 800);
+    }, 600);
 
     this.discardsLeft--;
     if (this.storageManager) this.storageManager.saveProgress(this);

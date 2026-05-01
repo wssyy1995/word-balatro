@@ -102,6 +102,7 @@ function handleInput(x, y) {
           success: (res) => {
             if (res.confirm) {
               game.state = 'gameover';
+              game.gameOverReason = 'surrender';
               lastPlayResult = { surrendered: true, round: game.round, score: game.totalScore };
               if (game.storageManager) {
                 game.storageManager.setHighScore(game.totalScore);
@@ -162,13 +163,14 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'gameover') {
-    if (renderer.restartBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.restartBtnRect]);
-      if (btnHit) {
-        if (game.animManager) game.animManager.buttonPress(renderer.restartBtnRect);
-        restartGame();
-        return;
-      }
+    const rects = [];
+    if (renderer.gameOverCloseRect) rects.push(renderer.gameOverCloseRect);
+    if (renderer.restartBtnRect) rects.push(renderer.restartBtnRect);
+    const hit = renderer.hitTest(x, y, rects);
+    if (hit) {
+      if (game.animManager) game.animManager.buttonPress(hit);
+      restartGame();
+      return;
     }
   }
 }
