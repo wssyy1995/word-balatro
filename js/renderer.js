@@ -1,8 +1,8 @@
 // ===== Canvas 渲染器 =====
 const { formatMeaning, isValidWordOnline } = require('./game');
-const { WORD_DATA, SHOP_POOL, onlineWordCache, wordCheckState } = require('./data');
+const { WORD_DATA, onlineWordCache, wordCheckState } = require('./data');
 const { SettlementRenderer } = require('./settlement');
-const { ShopRenderer } = require('./shop');
+const { ShopRenderer, ConfirmBuyRenderer } = require('./shop');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -22,7 +22,7 @@ class Renderer {
     const maxCardW = Math.floor((width - 48) / 3); // 3列，左右边距24
     const maxCardH = Math.floor((height - 200) / 3); // 3行，预留上方HUD和下方按钮
     this.cardW = Math.min(Math.floor(74 * this.scale), maxCardW);
-    this.cardH = Math.min(Math.floor(112 * this.scale), maxCardH);
+    this.cardH = Math.min(Math.floor(88 * this.scale), maxCardH);
     this.gap = Math.floor(8 * this.scale);
     
     // 安全区域（刘海屏适配）
@@ -174,6 +174,34 @@ class Renderer {
       this.cardTemplateSelectedLoaded = false;
     }
     
+    // 加载商店标题背景图
+    this.shopLabel = null;
+    this.shopLabelLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/shop_label.png';
+      img.onload = () => { this.shopLabelLoaded = true; };
+      img.onerror = () => { this.shopLabelLoaded = false; };
+      this.shopLabel = img;
+    } catch (e) {
+      this.shopLabelLoaded = false;
+    }
+    
+    // 加载道具卡牌图标
+    this.shopCardImages = {};
+    const shopCardNames = ['bonus_gold', 'extra_discard', 'extra_hands', 'has_vowel', 'letter_a', 'letter_e', 'upgrade_any', 'upgrade_face', 'upgrade_letter'];
+    shopCardNames.forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/shop_card/${name}.png`;
+        img.onload = () => { this.shopCardImages[name] = { img, loaded: true }; };
+        img.onerror = () => { this.shopCardImages[name] = { img, loaded: false }; };
+        this.shopCardImages[name] = { img, loaded: false };
+      } catch (e) {
+        this.shopCardImages[name] = { img: null, loaded: false };
+      }
+    });
+    
     // 动画粒子与飞行状态
     this.sparkles = [];
     this.flyingScore = null;
@@ -181,11 +209,32 @@ class Renderer {
     this.lastBoxScore = 0;
     this.lastScore = 0;
     this.scoreAnim = null;
+    this.lastGold = 0;
+    this.goldAnim = null;
     this.debugMenuOpen = false;
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
     this.shopRenderer = new ShopRenderer(this);
+    this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
+  }
+
+  // 绘制道具图标（商店/已购买卡牌左侧）
+  drawShopCardIcon(x, y, size, name) {
+    const ctx = this.ctx;
+    const data = this.shopCardImages[name];
+    if (data && data.loaded && data.img) {
+      ctx.drawImage(data.img, x, y, size, size);
+    } else {
+      // fallback: 装饰圆
+      ctx.beginPath();
+      ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.lineWidth = 1 * this.scale;
+      ctx.stroke();
+    }
   }
 
   // 绘制圆角矩形
@@ -347,19 +396,24 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
     }
 
-    // 绘制 HUD
-    this.drawHUD(game);
-
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
+      this.drawHUD(game);
       this.drawPlaying(game);
     } else if (game.state === 'settlement') {
       // 金币结算弹窗（保留 HUD 背景）
       this.drawHUD(game);
+      this.drawCoinCapsule(game);
       this.settlementRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
-      // 商店页面（不显示 topbar）
+      // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
+      this.drawTopHeader();
+      this.drawCoinCapsule(game);
       this.shopRenderer.draw(ctx, game, W, H, s);
+      // 确认购买弹窗（覆盖在商店上方）
+      if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+        this.confirmBuyRenderer.draw(ctx, game, W, H, s);
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'gameover') {
@@ -381,12 +435,12 @@ class Renderer {
     }
   }
 
-  drawHUD(game) {
+  // 绘制顶部图标 + 标题（商店/游戏共用）
+  drawTopHeader() {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
     const top = (this.safeTop || 0) + 20;
-    const h = 56 * s;
 
     // 左上角图标（压在 topbar 上方）
     const iconSize = 40 * s;
@@ -406,6 +460,16 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
     ctx.restore();
+  }
+
+  drawHUD(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const s = this.scale;
+    const top = (this.safeTop || 0) + 20;
+    const h = 56 * s;
+
+    this.drawTopHeader();
 
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = Math.min(320 * s, W - 40 * s);
@@ -549,26 +613,6 @@ class Renderer {
     ctx.fillText(String(game.score), 0, 0);
     ctx.restore();
 
-    // 女巫牌/水晶球效果指示器
-    if (game.jokers.length > 0 || game.crystalEffects.length > 0) {
-      let badges = [];
-      game.jokers.forEach(j => badges.push({ text: `🔮 ${j.name}`, color: '#6b2d8e' }));
-      game.crystalEffects.forEach(c => badges.push({ text: `🔮 ${c.name}`, color: '#2d5a8e' }));
-
-      let bx = 10 * s;
-      let by = top + h + 6 * s;
-      badges.forEach(b => {
-        const bw = ctx.measureText(b.text).width + 16 * s;
-        const bh = 20 * s;
-        this.roundRect(bx, by, bw, bh, 4 * s, b.color);
-        ctx.font = `${Math.floor(9 * s)}px sans-serif`;
-        ctx.fillStyle = '#e0e0e0';
-        ctx.textAlign = 'left';
-        ctx.fillText(b.text, bx + 6 * s, by + bh / 2 + 3 * s);
-        bx += bw + 4 * s;
-        if (bx > W - 60 * s) { bx = 10 * s; by += bh + 4 * s; }
-      });
-    }
   }
 
   drawPlaying(game) {
@@ -577,18 +621,108 @@ class Renderer {
     const H = this.H;
     const s = this.scale;
 
-    // === 三个独立可调区域 ===
-    const wordAreaY  = 120 * s + 30;   // ① 单词拼写+中文释义 整体中心基准
-    const scoreAreaY = 175 * s + 30;   // ② 分数计算区（方块）顶部基准
-    const cardAreaY  = 230 * s + 30 + 20 + 20 * s;   // ③ 卡牌区域顶部基准
-
     // 计算手牌布局（3x3 网格）
     const cols = 3;
     const rows = Math.ceil(game.hand.length / cols);
     const totalW = cols * this.cardW + (cols - 1) * this.gap;
     const startX = (W - totalW) / 2;
 
+    // === 从底部按钮倒推布局 ===
+    // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
+    // 改卡牌底部和按钮的间距时，上方区域自动跟随
+    const boxSize = 48 * s;
+    const top = (this.safeTop || 0) + 20;
+    const hudBottom = top + 56 * s;
+    const maxRows = 3;
+    const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
+    const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
+    const propBarH = 92 * s;
+
+    const btnTop = H - 90 * s;
+    const cardGap = 50 * s;                                    // 卡牌底部到按钮间距（约原来的一半）
+    const cardBottom = btnTop - cardGap;                      // 卡牌底部
+    const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
+    const wordAreaY = cardAreaY - 35 * s - maskHalfH;         // 预览区中心（卡牌上方 20px）
+    const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
+    const propY = hudBottom + 15 * s;                         // 道具栏顶部（固定距 HUD 15px）
+
     this.cardRects = []; // 存储卡牌点击区域
+
+    // ===== 道具卡牌栏（HUD 和 方块区 之间）=====
+    const propW = W - 20 * s;
+    const propX = 10 * s;
+    // 背景
+    this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
+    // 标题
+    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('已购买道具卡牌', W / 2, propY + 5 * s);
+    // 标题下装饰线
+    ctx.beginPath();
+    ctx.moveTo(W / 2 - 60 * s, propY + 20 * s);
+    ctx.lineTo(W / 2 + 60 * s, propY + 20 * s);
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 1 * s;
+    ctx.stroke();
+
+    if (game.jokers && game.jokers.length > 0) {
+      const jokerCardH = 58 * s;
+      // 按最多5张计算宽度
+      const jokerCardW = Math.min(130 * s, (propW - 20 * s - 4 * 8 * s) / 5);
+      const jokerGap = 8 * s;
+      const jokersTotalW = game.jokers.length * jokerCardW + (game.jokers.length - 1) * jokerGap;
+      let jx = (W - jokersTotalW) / 2;
+      const jy = propY + 28 * s;
+      game.jokers.forEach(joker => {
+        const typeColor = joker.type === 'witch' ? '#4a306d' : (joker.type === 'crystal' ? '#1e3a5f' : '#1e4a3a');
+        // 卡牌深色背景（复用商店样式）
+        this.roundRect(jx, jy, jokerCardW, jokerCardH, 6 * s, typeColor);
+
+        // 名称在图片顶部（不遮住图片）
+        ctx.save();
+        ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(joker.name, jx + jokerCardW / 2, jy + 10 * s);
+        ctx.restore();
+
+        // 道具图标（在名字下方）
+        const iconName = joker.trigger || joker.effect;
+        const iconData = this.shopCardImages[iconName];
+        const imgSize = jokerCardH - 22 * s;
+        const imgX = jx + (jokerCardW - imgSize) / 2;
+        const imgY = jy + 18 * s;
+        if (iconData && iconData.loaded && iconData.img) {
+          const origW = iconData.img.width || 200;
+          const origH = iconData.img.height || 300;
+          const aspect = origW / origH;
+          let drawW, drawH;
+          if (imgSize / imgSize > aspect) {
+            drawH = imgSize;
+            drawW = drawH * aspect;
+          } else {
+            drawW = imgSize;
+            drawH = drawW / aspect;
+          }
+          const finalImgX = jx + (jokerCardW - drawW) / 2;
+          const finalImgY = imgY + (imgSize - drawH) / 2;
+          ctx.drawImage(iconData.img, finalImgX, finalImgY, drawW, drawH);
+        } else {
+          this.drawShopCardIcon(imgX + (imgSize - 28 * s) / 2, imgY + (imgSize - 28 * s) / 2, 28 * s, iconName);
+        }
+
+        jx += jokerCardW + jokerGap;
+      });
+    } else {
+      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#999';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('暂无道具', W / 2, propY + 52 * s);
+    }
 
     // 单词预览区白色蒙层（常驻，固定6个字母宽度）
     const maskW = 180 * s;
@@ -626,7 +760,6 @@ class Renderer {
     let meaningText = null;
 
     // 方块区域变量（提前定义，pendingCheck 动画需要）
-    const boxSize = 48 * s;
     const centerX = W / 2;
     const boxY = scoreAreaY;
     const leftBoxX = centerX - boxSize - 10 * s - 5;
@@ -640,8 +773,8 @@ class Renderer {
       if (pc.state === 'checking') {
         // 检测中：橙色单词 + loading图标 + 动态点号
         ctx.save();
-        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
-        ctx.fillStyle = '#f1c40f';
+        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(word, W / 2, wordAreaY);
@@ -650,7 +783,7 @@ class Renderer {
         // 动态点号 ....（加粗变大）
         const dotCount = (Math.floor(Date.now() / 400) % 4) + 1;
         ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-        ctx.fillStyle = '#f1c40f';
+        ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('.'.repeat(dotCount), W / 2, wordAreaY + 24 * s + 3 * s);
@@ -662,7 +795,7 @@ class Renderer {
 
         // 深绿色单词
         ctx.save();
-        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#2d7d32';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -676,7 +809,7 @@ class Renderer {
           ctx.fillStyle = '#777';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(mText, W / 2, wordAreaY + 40 * s );
+          ctx.fillText(mText, W / 2, wordAreaY + 33 * s );
         }
 
         // === 阶段0: 刚检测完成，触发烟花 ===
@@ -748,7 +881,7 @@ class Renderer {
         // 非法：橙色单词 + error图标 + 单词不存在
         invalid = true;
         ctx.save();
-        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#f1c40f';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -777,8 +910,8 @@ class Renderer {
       // 普通预览：只显示单词（橙色），不检测
       const word = selected.map(c => c.letter.toLowerCase()).join('');
       ctx.save();
-      ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
-      ctx.fillStyle = '#f1c40f';
+      ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+      ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(word, W / 2, wordAreaY);
@@ -996,97 +1129,54 @@ class Renderer {
     ctx.restore();
     this.resetBtnRect = { x: resetX, y: btnY, w: btnW, h: btnH, action: 'reset' };
 
-    // 提示按钮（右上角 emoji）
-    const hintBtnSize = 44 * s;
-    const hintX = W - hintBtnSize - 10 * s;
-    const hintY = 20 * s;
-    this.roundRect(hintX, hintY, hintBtnSize, hintBtnSize, 10 * s, '#f1c40f');
-    this.text('💡', hintX + hintBtnSize / 2, hintY + hintBtnSize / 2, 24, '#333');
-    this.hintBtnRect = { x: hintX, y: hintY, w: hintBtnSize, h: hintBtnSize, action: 'hint' };
-
-    // 提示 Toast（白色，显示在右上角提示按钮下方）
-    if (game.hintToast) {
-      const toastW = 220 * s;
-      const lineH = 18 * s;
-      const lines = game.hintToast.text.split('\n');
-      const toastH = lines.length * lineH + 16 * s;
-      const toastX = W - toastW - 10 * s;
-      const toastY = hintY + hintBtnSize + 8 * s;
-
-      ctx.save();
-      // 白色圆角背景
-      this.roundRect(toastX, toastY, toastW, toastH, 8 * s, '#fff', null);
-      // 文字
-      ctx.fillStyle = '#333';
-      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-      ctx.textAlign = 'left';
-      lines.forEach((line, i) => {
-        ctx.fillText(line, toastX + 12 * s, toastY + 14 * s + i * lineH);
-      });
-      ctx.restore();
-    }
+    this.drawCoinCapsule(game);
   }
 
-  drawShop(game) {
+  drawCoinCapsule(game) {
     const ctx = this.ctx;
     const W = this.W;
-    const H = this.H;
     const s = this.scale;
 
-    // 标题
-    this.text(`第 ${game.round} 关 - 商店`, W / 2, 70 * s, 20, '#fff');
-    this.text(`金币: $${game.gold}`, W / 2, 95 * s, 14, '#f1c40f');
-
-    // 生成商店商品（如果还没生成）
-    if (!game.shopItems) {
-      game.shopItems = [];
-      ['witch', 'crystal', 'potion'].forEach(type => {
-        const pool = SHOP_POOL[type];
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        game.shopItems.push(shuffled[0], shuffled[1]);
-      });
+    const coinCapsuleH = 34 * s;
+    const coinIconSize = 22 * s;
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    const goldText = String(game.gold);
+    const goldTextW = ctx.measureText(goldText).width;
+    const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
+    const coinCapsuleX = W - coinCapsuleW - 16 * s;
+    const coinCapsuleY = 15 * s;
+    // 半透明白色胶囊背景
+    this.roundRect(coinCapsuleX, coinCapsuleY, coinCapsuleW + 6 * s, coinCapsuleH, coinCapsuleH / 2, 'rgba(255,255,255,0.35)');
+    // coin.png 图标
+    if (this.coinIcon && this.coinIconLoaded) {
+      ctx.drawImage(this.coinIcon, coinCapsuleX + 8 * s, coinCapsuleY + (coinCapsuleH - coinIconSize) / 2, coinIconSize, coinIconSize);
     }
 
-    // 绘制商品（3行 x 2列）
-    const cols = 2;
-    const itemW = (W - 48 * s) / cols;
-    const itemH = 70 * s;
-    const startX = 16 * s;
-    const startY = 120 * s;
+    // 金币变化动画
+    if (this.lastGold !== game.gold) {
+      this.goldAnim = { startTime: Date.now(), duration: 400 };
+      this.lastGold = game.gold;
+    }
+    let goldScale = 1;
+    if (this.goldAnim) {
+      const gaElapsed = Date.now() - this.goldAnim.startTime;
+      const gaProgress = Math.min(gaElapsed / this.goldAnim.duration, 1);
+      goldScale = 1 + 0.3 * Math.sin(gaProgress * Math.PI);
+      if (gaProgress >= 1) this.goldAnim = null;
+    }
 
-    this.shopRects = [];
-    game.shopItems.forEach((item, i) => {
-      if (!item) return;
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (itemW + 16 * s);
-      const y = startY + row * (itemH + 12 * s);
-
-      // 背景
-      let bg = '#1a2a4a';
-      if (item.type === 'witch') bg = '#6b2d8e';
-      if (item.type === 'crystal') bg = '#2d5a8e';
-      if (item.type === 'potion') bg = '#2d6b4e';
-
-      this.roundRect(x, y, itemW, itemH, 8 * s, bg);
-
-      // 名称
-      this.text(item.name, x + itemW / 2, y + 18 * s, 12, '#fff');
-      // 描述
-      ctx.font = `${Math.floor(10 * s)}px sans-serif`;
-      ctx.fillStyle = '#aaa';
-      ctx.textAlign = 'center';
-      ctx.fillText(item.desc, x + itemW / 2, y + 36 * s);
-      // 价格
-      this.text(`$${item.cost}`, x + itemW / 2, y + 56 * s, 14, '#f1c40f');
-
-      this.shopRects.push({ x, y, w: itemW, h: itemH, index: i });
-    });
-
-    // 下一关按钮
-    const btnY = H - 60 * s;
-    this.button('下一关', W / 2 - 60 * s, btnY, 120 * s, 40 * s, '#2ecc71');
-    this.nextRoundBtnRect = { x: W / 2 - 60 * s, y: btnY, w: 120 * s, h: 40 * s, action: 'nextRound' };
+    // 金币数量（带动画缩放）
+    ctx.save();
+    const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s;
+    const goldTextY = coinCapsuleY + coinCapsuleH / 2;
+    ctx.translate(goldTextX + goldTextW / 2, goldTextY);
+    ctx.scale(goldScale, goldScale);
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(goldText, 0, 0);
+    ctx.restore();
   }
 
   drawPotion(game) {

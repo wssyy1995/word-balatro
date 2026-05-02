@@ -2,6 +2,7 @@
 const { Game } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
+const { buyItem, upgradeCard } = require('./js/shop');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -108,17 +109,6 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测提示按钮
-    if (renderer.hintBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.hintBtnRect]);
-      if (btnHit) {
-        renderer.pressedBtn = 'hint';
-        if (game.animManager) game.animManager.buttonPress(renderer.hintBtnRect);
-        game.showHint();
-        return;
-      }
-    }
-
     // 检测清空选择按钮
     if (renderer.resetBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.resetBtnRect]);
@@ -144,11 +134,46 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'shop') {
+    // 确认购买弹窗打开时
+    if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+      // 正在按钮按下动画中，忽略重复点击
+      if (game._confirmBuyPressed) return;
+
+      // 检测确认按钮点击
+      if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.confirmBtnRect) {
+        const btnHit = renderer.hitTest(x, y, [renderer.confirmBuyRenderer.confirmBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._confirmBuyPressed = true;
+          game._confirmBuyPressTime = Date.now();
+          setTimeout(() => {
+            buyItem(game, game.confirmBuyItem);
+            game._confirmBuyPressed = false;
+            game._closingConfirmBuy = true;
+            game._closeConfirmBuyStartTime = Date.now();
+          }, 300);
+          return;
+        }
+      }
+      // 点击弹窗外区域 → 关闭弹窗（取消）
+      game._closingConfirmBuy = true;
+      game._closeConfirmBuyStartTime = Date.now();
+      return;
+    }
+
+    // 正常商店点击
     if (renderer.shopRenderer && renderer.shopRenderer.shopItemRects) {
       const itemHit = renderer.hitTest(x, y, renderer.shopRenderer.shopItemRects);
       if (itemHit) {
         vibrate();
-        game.buyItem(itemHit.index);
+        const item = game.shopItems[itemHit.index];
+        if (item && (item.type === 'witch' || item.type === 'crystal')) {
+          // 女巫/水晶球打开确认弹窗
+          game.confirmBuyItem = itemHit.index;
+        } else {
+          // 药水直接购买
+          buyItem(game, itemHit.index);
+        }
         return;
       }
     }
@@ -169,7 +194,7 @@ function handleInput(x, y) {
       if (cardHit) {
         const card = game.hand.find(c => c.id === cardHit.cardId);
         if (game.animManager && card) game.animManager.cardSelect(card);
-        game.upgradeCard(cardHit.cardId);
+        upgradeCard(game, cardHit.cardId);
         return;
       }
     }

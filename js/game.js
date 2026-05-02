@@ -2,12 +2,13 @@
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA,
-  SHOP_POOL, onlineWordCache, wordCheckState,
+  onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords
 } = require('./data');
 const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
+const { generateShopItems, applyCrystalEffects } = require('./shop');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -389,14 +390,7 @@ class Game {
 
   resetRound() {
     wordCheckState.clear();
-    this.crystalEffects.forEach(eff => {
-      if (eff.effect === 'extra_discard') this.extraDiscards += eff.value;
-      if (eff.effect === 'extra_safety') this.extraSafety += eff.value;
-      if (eff.effect === 'extra_hands') this.extraHands += eff.value;
-      if (eff.effect === 'bonus_gold') this.gold += eff.value;
-      if (eff.effect === 'reduce_target') this.target = Math.floor(this.target * eff.value);
-    });
-    this.crystalEffects = [];
+    applyCrystalEffects(this);
 
     this.deck = createDeck();
     this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety);
@@ -616,20 +610,17 @@ class Game {
   claimSettlement() {
     if (!this.settlementData) return;
     this.gold += this.settlementData.totalGold;
-    this.settlementData = null;
-    this.state = 'shop';
-    this._generateShopItems();
-  }
-
-  _generateShopItems() {
-    if (!this.shopItems) {
-      this.shopItems = [];
-      ['witch', 'crystal', 'potion'].forEach(type => {
-        const pool = SHOP_POOL[type];
-        const shuffled = [...pool].sort(() => Math.random() - 0.5);
-        this.shopItems.push(shuffled[0], shuffled[1], shuffled[2]);
-      });
-    }
+    // settlementData 暂时保留用于 closing 动画，400ms 后再清空
+    this._closingSettlement = true;
+    this._closeStartTime = Date.now();
+    setTimeout(() => {
+      this.settlementData = null;
+      this._closingSettlement = false;
+      this.state = 'shop';
+      if (!this.shopItems) {
+        this.shopItems = generateShopItems();
+      }
+    }, 300);
   }
 
   discard() {
@@ -691,60 +682,7 @@ class Game {
     return true;
   }
 
-  buyItem(idx) {
-    const item = this.shopItems[idx];
-    if (!item || this.gold < item.cost) return false;
-    this.gold -= item.cost;
 
-    if (this.audioManager) this.audioManager.play('buy');
-
-    if (item.type === 'witch') {
-      if (this.jokers.length >= 5) return false;
-      this.jokers.push({...item});
-      this.shopItems[idx] = null;
-      return true;
-    } else if (item.type === 'crystal') {
-      this.crystalEffects.push({...item});
-      this.shopItems[idx] = null;
-      if (this.storageManager) this.storageManager.saveProgress(this);
-      return true;
-    } else if (item.type === 'potion') {
-      this.potionMode = {...item};
-      this.shopItems[idx] = null;
-      this.state = 'potion';
-      if (this.storageManager) this.storageManager.saveProgress(this);
-      return true;
-    }
-    return false;
-  }
-
-  upgradeCard(cardId) {
-    if (!this.potionMode) return false;
-    const card = this.hand.find(c => c && c.id === cardId);
-    if (!card) return false;
-
-    const effect = this.potionMode.effect;
-    let mult = 2;
-    if (effect === 'upgrade_face') {
-      mult = card.isFace ? 3 : 2;
-    }
-
-    card.upgraded = true;
-    const newMult = (card.upgradeMult || 1) * mult;
-    card.upgradeMult = newMult;
-    card.score = Math.floor(card.baseScore * newMult);
-
-    if (this.audioManager) this.audioManager.play('upgrade');
-
-    const existing = letterUpgrades.get(card.letter);
-    const totalMult = existing ? existing.mult * mult : mult;
-    letterUpgrades.set(card.letter, { mult: totalMult });
-
-    this.potionMode = null;
-    this.state = 'shop';
-    if (this.storageManager) this.storageManager.saveProgress(this);
-    return true;
-  }
 
   // ===== 调试功能 =====
   resetHands() {
