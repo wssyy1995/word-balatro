@@ -342,15 +342,16 @@ class ConfirmBuyRenderer {
     this.parent = renderer;
     this.animStartTime = null;
     this.lastItemIndex = null;
+    this._successAnimStarted = false;
   }
 
   draw(ctx, game, W, H, s) {
     const itemIndex = game.confirmBuyItem;
     if (itemIndex === undefined || itemIndex === null) return;
 
-    const item = game.shopItems[itemIndex];
+    const isSuccess = game._confirmBuySuccess;
+    const item = isSuccess ? game._confirmBuyItemData : game.shopItems[itemIndex];
     if (!item) {
-      // 商品已不存在，直接关闭
       game.confirmBuyItem = null;
       game._closingConfirmBuy = false;
       return;
@@ -358,19 +359,26 @@ class ConfirmBuyRenderer {
 
     const isClosing = game._closingConfirmBuy;
     const closeElapsed = isClosing ? Date.now() - (game._closeConfirmBuyStartTime || Date.now()) : 0;
-    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
+    const closeProgress = isClosing ? Math.min(closeElapsed / 150, 1) : 0;
     if (isClosing && closeProgress >= 1) {
       game.confirmBuyItem = null;
       game._closingConfirmBuy = false;
+      game._confirmBuySuccess = false;
+      game._confirmBuyItemData = null;
+      this._successAnimStarted = false;
       return;
     }
 
-    if (!isClosing && this.lastItemIndex !== itemIndex) {
+    if (!isClosing && !isSuccess && this.lastItemIndex !== itemIndex) {
       this.animStartTime = Date.now();
       this.lastItemIndex = itemIndex;
     }
+    if (isSuccess && !this._successAnimStarted) {
+      this._successAnimStarted = true;
+    }
 
-    const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
+    const animStart = isSuccess ? (game._confirmBuySuccessTime || Date.now()) : (this.animStartTime || Date.now());
+    const elapsed = isClosing ? 99999 : Date.now() - animStart;
 
     function easeOutBack(t) {
       const c1 = 1.70158;
@@ -378,7 +386,7 @@ class ConfirmBuyRenderer {
       return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
     }
 
-    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
+    const closeSlideY = isClosing ? -closeProgress * 25 * s : 0;
     const closeAlpha = isClosing ? 1 - closeProgress : 1;
     ctx.save();
     ctx.globalAlpha = closeAlpha;
@@ -400,10 +408,29 @@ class ConfirmBuyRenderer {
     const enterEase = easeOutBack(enterProgress);
     const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
 
-    // 背景 + 边框
+    // 背景 + 金棕色边框
     this.parent.roundRect(px, py, pw, ph, r, '#faf6ee', gold);
+    // 内层细边框（更精致的金棕色）
+    ctx.save();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    const inset = 4 * s;
+    const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = r - inset;
+    ctx.moveTo(ix + ir, iy);
+    ctx.lineTo(ix + iw - ir, iy);
+    ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+    ctx.lineTo(ix + iw, iy + ih - ir);
+    ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+    ctx.lineTo(ix + ir, iy + ih);
+    ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+    ctx.lineTo(ix, iy + ir);
+    ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
 
-    // 内容统一淡入（一起出现，不逐行）
+    // 内容统一淡入
     const contentDelay = 80;
     const contentT = Math.max(0, Math.min((elapsed - contentDelay) / 250, 1));
     const contentEase = contentT * (2 - contentT);
@@ -413,9 +440,138 @@ class ConfirmBuyRenderer {
     const iconName = item.trigger || item.effect;
     const iconData = this.parent.shopCardImages[iconName];
 
+    if (isSuccess) {
+      this._drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha);
+    } else {
+      this._drawConfirmPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha);
+    }
+
+    ctx.restore();
+  }
+
+  _drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha) {
+    const gold = '#c4a35a';
+
+    // 飘带图片（购买成功）
+    if (this.parent.buySuccessImg && this.parent.buySuccessLoaded) {
+      ctx.save();
+      if (!isClosing) ctx.globalAlpha = contentAlpha;
+      const ribbonW = 220 * s;
+      const ribbonH = ribbonW * (154 / 400);
+      const ribbonX = px + (pw - ribbonW) / 2;
+      const ribbonY = py - ribbonH * 0.25 + contentYShift;
+      ctx.drawImage(this.parent.buySuccessImg, ribbonX, ribbonY, ribbonW, ribbonH);
+      ctx.restore();
+    }
+
+    // 女巫帽图片
+    if (this.parent.witchHatImg && this.parent.witchHatLoaded) {
+      ctx.save();
+      if (!isClosing) ctx.globalAlpha = contentAlpha;
+      const hatW = 70 * s;
+      const hatH = hatW * (350 / 400);
+      const hatX = px + pw - hatW + 10 * s;
+      const hatY = py - hatH * 0.3 + contentYShift;
+      ctx.drawImage(this.parent.witchHatImg, hatX, hatY, hatW, hatH);
+      ctx.restore();
+    }
+
+    // 如果没有飘带图片，用文字 fallback
+    if (!this.parent.buySuccessImg || !this.parent.buySuccessLoaded) {
+      ctx.save();
+      if (!isClosing) ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#6b3fa0';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('购买成功！', W / 2, py + 40 * s + contentYShift);
+      ctx.restore();
+    }
+
+    // 卡牌图片（居中，带金色边框）
+    let imgBottom = py + 90 * s + contentYShift;
+    let cardCX = W / 2;
+    let cardCY = py + 90 * s + contentYShift;
+    let cardW = 0, cardH = 0;
+    ctx.save();
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    if (iconData && iconData.loaded && iconData.img) {
+      const origW = iconData.img.width || 200;
+      const origH = iconData.img.height || 300;
+      const aspect = origW / origH;
+      const maxImgW = pw * 0.45;
+      const maxImgH = 120 * s;
+      let drawW, drawH;
+      if (maxImgW / maxImgH > aspect) {
+        drawH = maxImgH;
+        drawW = drawH * aspect;
+      } else {
+        drawW = maxImgW;
+        drawH = drawW / aspect;
+      }
+      cardW = drawW;
+      cardH = drawH;
+      cardCX = W / 2;
+      cardCY = py + 90 * s + drawH / 2 + contentYShift;
+      const imgX = W / 2 - drawW / 2;
+      const imgY = py + 90 * s + contentYShift;
+      imgBottom = imgY + drawH;
+
+      ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
+    }
+    ctx.restore();
+
+    // 卡牌名称
+    ctx.save();
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.name, W / 2, imgBottom + 25 * s + contentYShift);
+    ctx.restore();
+
+    // 卡牌描述
+    ctx.save();
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.desc, W / 2, imgBottom + 48 * s + contentYShift);
+    ctx.restore();
+
+    // 收取按钮（下压动效）
+    const collectBtnW = 140 * s;
+    const collectBtnH = 44 * s;
+    const collectBtnX = (W - collectBtnW) / 2;
+    const cpe = game._successBtnPressed ? Date.now() - (game._successBtnPressTime || 0) : 0;
+    let collectPressY = 0;
+    if (cpe > 0 && cpe < 150) {
+      collectPressY = 3 * s;
+    }
+    const collectBtnY = py + ph - collectBtnH - 28 * s + contentYShift + collectPressY;
+    ctx.save();
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    this.parent.roundRect(collectBtnX, collectBtnY, collectBtnW, collectBtnH, 8 * s, '#c4a35a');
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('收取', W / 2, collectBtnY + collectBtnH / 2);
+    ctx.restore();
+
+    // 存储收取按钮点击区域（固定位置）
+    const finalCollectY = py + ph - collectBtnH - 28 * s;
+    this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH };
+  }
+
+  _drawConfirmPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha) {
+    const gold = '#c4a35a';
+
     // 标题
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'center';
@@ -425,7 +581,7 @@ class ConfirmBuyRenderer {
 
     // 分隔线
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -437,7 +593,7 @@ class ConfirmBuyRenderer {
 
     // 卡牌图片（居中，变大）
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     let imgBottom = py + 70 * s + contentYShift;
     if (iconData && iconData.loaded && iconData.img) {
       const imgW = iconData.img.width || 200;
@@ -460,9 +616,9 @@ class ConfirmBuyRenderer {
     }
     ctx.restore();
 
-    // 卡牌名称（距离图片底部 +20px）
+    // 卡牌名称
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'center';
@@ -472,7 +628,7 @@ class ConfirmBuyRenderer {
 
     // 卡牌描述
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.font = `${Math.floor(12 * s)}px sans-serif`;
     ctx.fillStyle = '#555';
     ctx.textAlign = 'center';
@@ -480,15 +636,18 @@ class ConfirmBuyRenderer {
     ctx.fillText(item.desc, W / 2, imgBottom + 45 * s + contentYShift);
     ctx.restore();
 
-    // 购买按钮（按下时偏移 3px）
+    // 购买按钮（下压动效，无飘出）
     const btnW = 160 * s;
     const btnH = 44 * s;
     const btnX = (W - btnW) / 2;
-    const isPressed = game._confirmBuyPressed && (Date.now() - (game._confirmBuyPressTime || 0) < 300);
-    const pressOffsetY = isPressed ? 3 * s : 0;
-    const btnY = py + ph - btnH - 28 * s + contentYShift + pressOffsetY;
+    const pe = game._confirmBuyPressed ? Date.now() - (game._confirmBuyPressTime || 0) : 0;
+    let btnPressY = 0;
+    if (pe > 0 && pe < 150) {
+      btnPressY = 3 * s;
+    }
+    const btnY = py + ph - btnH - 28 * s + contentYShift + btnPressY;
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
     this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
 
     // coin 图标 + 金额
@@ -508,10 +667,8 @@ class ConfirmBuyRenderer {
     ctx.fillText(priceText, startX + coinSize + 6 * s, midY);
     ctx.restore();
 
-    ctx.restore();
-
-    // 存储点击区域（动画完成后固定位置，含按下偏移）
-    const finalBtnY = py + ph - btnH - 28 * s + pressOffsetY;
+    // 存储点击区域（固定位置，不含动画偏移）
+    const finalBtnY = py + ph - btnH - 28 * s;
     this.confirmBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
   }
 }

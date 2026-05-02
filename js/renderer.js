@@ -186,6 +186,31 @@ class Renderer {
     } catch (e) {
       this.shopLabelLoaded = false;
     }
+
+    // 加载购买成功弹窗装饰图
+    this.buySuccessImg = null;
+    this.buySuccessLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/buy_success.png';
+      img.onload = () => { this.buySuccessLoaded = true; };
+      img.onerror = () => { this.buySuccessLoaded = false; };
+      this.buySuccessImg = img;
+    } catch (e) {
+      this.buySuccessLoaded = false;
+    }
+
+    this.witchHatImg = null;
+    this.witchHatLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/witch_hat.png';
+      img.onload = () => { this.witchHatLoaded = true; };
+      img.onerror = () => { this.witchHatLoaded = false; };
+      this.witchHatImg = img;
+    } catch (e) {
+      this.witchHatLoaded = false;
+    }
     
     // 加载道具卡牌图标
     this.shopCardImages = {};
@@ -591,8 +616,8 @@ class Renderer {
     ctx.fillStyle = darkBlue;
     ctx.fillText('当前', rightCX, barY + barH * 0.32);
 
-    // 当前分数（带变化动画）
-    if (this.lastScore !== game.score) {
+    // 当前分数（带变化动画，飞行分数期间锁定）
+    if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
       this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
       this.lastScore = game.score;
     }
@@ -820,7 +845,7 @@ class Renderer {
         }
 
         // === 阶段1: 字母跳跃 + 第一个方块累加 ===
-        const letterInterval = 400;
+        const letterInterval = 350;
         const letterJumpStart = 1000;
         const cardsInOrder = pc.cardsInOrder || [];
         let accumulatedScore = 0;
@@ -863,7 +888,7 @@ class Renderer {
           const barH = 56 * s;
           this._startFlyingScore(
             totalScore,
-            rightBoxX + boxSize + 20 * s + 3 * s,
+            rightBoxX + boxSize + 20 * s + 3 * s + 20 * s,
             boxY + boxSize / 2,
             W * 0.75 + 3 * s,
             top + barH * 0.68
@@ -1342,9 +1367,11 @@ class Renderer {
       value,
       startX, startY, endX, endY,
       startTime: Date.now(),
-      holdDuration: 1000, // 停留 1秒
-      flyDuration: 800,   // 飞行 800ms
+      holdDuration: 800, // 停留 800ms
+      flyDuration: 800,  // 飞行 800ms
     };
+    // 锁定 HUD 分数动画，等飞行结束后再更新
+    this._scoreUpdateLocked = true;
   }
 
   _updateAndDrawFlyingScore(ctx, s, game) {
@@ -1365,19 +1392,22 @@ class Renderer {
       ctx.shadowBlur = 20 * s;
       ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
     } else {
-      // 阶段2: 飞向顶部
-      const flyElapsed = elapsed - fs.holdDuration;
-      const progress = Math.min(flyElapsed / fs.flyDuration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3); // easeOutCubic
-      const x = fs.startX + (fs.endX - fs.startX) * ease;
-      const y = fs.startY + (fs.endY - fs.startY) * ease;
-      // 淡金光晕
+      // 阶段2: 淡出（300ms）
+      const fadeElapsed = elapsed - fs.holdDuration;
+      const fadeDuration = 300;
+      const fadeProgress = Math.min(fadeElapsed / fadeDuration, 1);
+      ctx.globalAlpha = 1 - fadeProgress;
       ctx.shadowColor = 'rgba(255,215,0,0.25)';
       ctx.shadowBlur = 20 * s;
-      ctx.fillText(`+${fs.value}`, x, y);
+      ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
 
-      if (progress >= 1) {
+      if (fadeProgress >= 1) {
         this.flyingScore = null;
+        this._scoreUpdateLocked = false;
+        if (this.lastScore !== game.score) {
+          this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+          this.lastScore = game.score;
+        }
       }
     }
     ctx.restore();

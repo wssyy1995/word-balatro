@@ -136,6 +136,26 @@ function handleInput(x, y) {
   if (game.state === 'shop') {
     // 确认购买弹窗打开时
     if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+      // 购买成功弹窗：点击"收取"按钮关闭
+      if (game._confirmBuySuccess) {
+        if (game._successBtnPressed) return;
+        if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtnRect) {
+          const btnHit = renderer.hitTest(x, y, [renderer.confirmBuyRenderer.successBtnRect]);
+          if (btnHit) {
+            vibrate();
+            game._successBtnPressed = true;
+            game._successBtnPressTime = Date.now();
+            setTimeout(() => {
+              game._successBtnPressed = false;
+              game._closingConfirmBuy = true;
+              game._closeConfirmBuyStartTime = Date.now();
+            }, 300);
+            return;
+          }
+        }
+        return; // 点击外部不关闭
+      }
+
       // 正在按钮按下动画中，忽略重复点击
       if (game._confirmBuyPressed) return;
 
@@ -147,11 +167,15 @@ function handleInput(x, y) {
           game._confirmBuyPressed = true;
           game._confirmBuyPressTime = Date.now();
           setTimeout(() => {
+            // 先保存商品数据（buyItem 会将其设为 null）
+            const item = game.shopItems[game.confirmBuyItem];
+            game._confirmBuyItemData = item ? {...item} : null;
             buyItem(game, game.confirmBuyItem);
             game._confirmBuyPressed = false;
-            game._closingConfirmBuy = true;
-            game._closeConfirmBuyStartTime = Date.now();
-          }, 300);
+            game._confirmBuySuccess = true;
+            game._confirmBuySuccessTime = Date.now();
+
+          }, 500);
           return;
         }
       }
