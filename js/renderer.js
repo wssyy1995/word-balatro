@@ -242,6 +242,7 @@ class Renderer {
     this.settlementRenderer = new SettlementRenderer(this);
     this.shopRenderer = new ShopRenderer(this);
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
+    this.gameOverRenderer = new GameOverRenderer(this);
   }
 
   // 绘制道具图标（商店/已购买卡牌左侧）
@@ -442,7 +443,11 @@ class Renderer {
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'gameover') {
-      this.drawGameOver(game);
+      // 结束报告弹窗（保留游戏页面背景）
+      this.drawHUD(game);
+      this.drawCoinCapsule(game);
+      this.drawPlaying(game);
+      this.gameOverRenderer.draw(ctx, game, W, H, s);
     }
 
     // 绘制动画
@@ -580,41 +585,56 @@ class Renderer {
       ctx.restore();
     });
 
-    // 中间竖线 + 菱形
-    const midX = W / 2;
+    // 两条竖线 + 菱形（三列分隔）
     const lineTop = barY + 14 * s;
     const lineBot = barY + barH - 14 * s;
+    const line1X = barX + barW / 3;
+    const line2X = barX + barW * 2 / 3;
     ctx.strokeStyle = gold;
     ctx.lineWidth = 0.8 * s;
-    ctx.beginPath();
-    ctx.moveTo(midX, lineTop);
-    ctx.lineTo(midX, lineBot);
-    ctx.stroke();
-    // 菱形
-    ctx.save();
-    ctx.translate(midX, barY + barH / 2);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = gold;
-    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
-    ctx.restore();
+    [line1X, line2X].forEach((lx) => {
+      ctx.beginPath();
+      ctx.moveTo(lx, lineTop);
+      ctx.lineTo(lx, lineBot);
+      ctx.stroke();
+      // 菱形
+      ctx.save();
+      ctx.translate(lx, barY + barH / 2);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+      ctx.restore();
+    });
 
-    // 左侧：目标分
-    const leftCX = barX + barW * 0.25;
-    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
-    ctx.fillStyle = darkBlue;
+    // 三列文字
+    const roundCX = barX + barW / 6;
+    const targetCX = barX + barW / 2;
+    const scoreCX = barX + barW * 5 / 6;
+
+    // 左侧：回合
+    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('目标分', leftCX, barY + barH * 0.32);
+    ctx.fillText('回合', roundCX, barY + barH * 0.32);
 
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
-    ctx.fillText(String(game.target), leftCX, barY + barH * 0.68);
+    ctx.fillText(String(game.round), roundCX, barY + barH * 0.68);
+
+    // 中间：目标分
+    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.fillText('目标分', targetCX, barY + barH * 0.32);
+
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = darkBlue;
+    ctx.fillText(String(game.target), targetCX, barY + barH * 0.68);
 
     // 右侧：当前
-    const rightCX = barX + barW * 0.75;
-    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
-    ctx.fillStyle = darkBlue;
-    ctx.fillText('当前', rightCX, barY + barH * 0.32);
+    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.fillText('当前', scoreCX, barY + barH * 0.32);
 
     // 当前分数（带变化动画，飞行分数期间锁定）
     if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
@@ -629,7 +649,7 @@ class Renderer {
       if (saProgress >= 1) this.scoreAnim = null;
     }
     ctx.save();
-    ctx.translate(rightCX, barY + barH * 0.68);
+    ctx.translate(scoreCX, barY + barH * 0.68);
     ctx.scale(scoreScale, scoreScale);
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
@@ -692,56 +712,70 @@ class Renderer {
     ctx.lineWidth = 1 * s;
     ctx.stroke();
 
-    if (game.jokers && game.jokers.length > 0) {
-      const jokerCardH = 58 * s;
+    const allProps = [...(game.jokers || []), ...(game.potions || [])];
+    if (allProps.length > 0) {
+      const jokerCardH = 50 * s;
       // 按最多5张计算宽度
-      const jokerCardW = Math.min(130 * s, (propW - 20 * s - 4 * 8 * s) / 5);
+      const jokerCardW = Math.min(110 * s, (propW - 20 * s - 4 * 8 * s) / 5);
       const jokerGap = 8 * s;
-      const jokersTotalW = game.jokers.length * jokerCardW + (game.jokers.length - 1) * jokerGap;
-      let jx = (W - jokersTotalW) / 2;
-      const jy = propY + 28 * s;
-      game.jokers.forEach(joker => {
-        const typeColor = joker.type === 'witch' ? '#4a306d' : (joker.type === 'crystal' ? '#1e3a5f' : '#1e4a3a');
-        // 卡牌深色背景（复用商店样式）
-        this.roundRect(jx, jy, jokerCardW, jokerCardH, 6 * s, typeColor);
+      const propsTotalW = allProps.length * jokerCardW + (allProps.length - 1) * jokerGap;
+      let jx = (W - propsTotalW) / 2;
+      const jy = propY + 32 * s;
+      this.potionPropRects = [];
+      allProps.forEach((prop, idx) => {
+        const isPotion = prop.type === 'potion';
+        const iconName = prop.trigger || prop.effect;
+        const iconData = this.shopCardImages[iconName];
 
-        // 名称在图片顶部（不遮住图片）
+        // 直接绘制卡牌图片，cover 模式填满卡牌区域
+        if (iconData && iconData.loaded && iconData.img) {
+          const origW = iconData.img.width || 200;
+          const origH = iconData.img.height || 300;
+          const aspect = origW / origH;
+          const cardAspect = jokerCardW / jokerCardH;
+          let drawW, drawH, imgX, imgY;
+          if (aspect > cardAspect) {
+            drawH = jokerCardH;
+            drawW = drawH * aspect;
+            imgX = jx + (jokerCardW - drawW) / 2;
+            imgY = jy;
+          } else {
+            drawW = jokerCardW;
+            drawH = drawW / aspect;
+            imgX = jx;
+            imgY = jy + (jokerCardH - drawH) / 2;
+          }
+          ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
+        } else {
+          // fallback：占位背景 + 小图标
+          this.roundRect(jx, jy, jokerCardW, jokerCardH, 6 * s, '#2d2d3a');
+          this.drawShopCardIcon(jx + (jokerCardW - 28 * s) / 2, jy + (jokerCardH - 28 * s) / 2, 28 * s, iconName);
+        }
+
+        // 底部蒙层
+        const maskH = jokerCardH * 0.35;
+        const maskY = jy + jokerCardH - maskH;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.fillRect(jx, maskY, jokerCardW, maskH);
+
+        // 名字写在蒙层上
         ctx.save();
         ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(joker.name, jx + jokerCardW / 2, jy + 10 * s);
+        ctx.fillText(prop.name, jx + jokerCardW / 2, maskY + maskH / 2);
         ctx.restore();
 
-        // 道具图标（在名字下方）
-        const iconName = joker.trigger || joker.effect;
-        const iconData = this.shopCardImages[iconName];
-        const imgSize = jokerCardH - 22 * s;
-        const imgX = jx + (jokerCardW - imgSize) / 2;
-        const imgY = jy + 18 * s;
-        if (iconData && iconData.loaded && iconData.img) {
-          const origW = iconData.img.width || 200;
-          const origH = iconData.img.height || 300;
-          const aspect = origW / origH;
-          let drawW, drawH;
-          if (imgSize / imgSize > aspect) {
-            drawH = imgSize;
-            drawW = drawH * aspect;
-          } else {
-            drawW = imgSize;
-            drawH = drawW / aspect;
-          }
-          const finalImgX = jx + (jokerCardW - drawW) / 2;
-          const finalImgY = imgY + (imgSize - drawH) / 2;
-          ctx.drawImage(iconData.img, finalImgX, finalImgY, drawW, drawH);
-        } else {
-          this.drawShopCardIcon(imgX + (imgSize - 28 * s) / 2, imgY + (imgSize - 28 * s) / 2, 28 * s, iconName);
+        // 存储药水牌点击区域
+        if (isPotion) {
+          this.potionPropRects.push({ x: jx, y: jy, w: jokerCardW, h: jokerCardH, potionIndex: idx - (game.jokers || []).length });
         }
 
         jx += jokerCardW + jokerGap;
       });
     } else {
+      this.potionPropRects = [];
       ctx.font = `${Math.floor(11 * s)}px sans-serif`;
       ctx.fillStyle = '#999';
       ctx.textAlign = 'center';
@@ -1243,79 +1277,7 @@ class Renderer {
     this.cancelBtnRect = { x: W / 2 - 50 * s, y: btnY, w: 100 * s, h: 36 * s, action: 'cancelPotion' };
   }
 
-  drawGameOver(game) {
-    const ctx = this.ctx;
-    const W = this.W;
-    const H = this.H;
-    const s = this.scale;
 
-    // 半透明遮罩
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, 0, W, H);
-
-    // 弹窗尺寸
-    const panelW = 300 * s;
-    const panelH = 260 * s;
-    const panelX = (W - panelW) / 2;
-    const panelY = (H - panelH) / 2;
-
-    // 弹窗背景（深色带金色边框）
-    this.roundRect(panelX, panelY, panelW, panelH, 16 * s, '#1a2a4a', '#d4a843');
-
-    // 标题：结束报告
-    ctx.save();
-    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#f1c40f';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('结束报告', W / 2, panelY + 40 * s);
-    ctx.restore();
-
-    // 失败原因
-    const reason = game.gameOverReason === 'out_of_hands'
-      ? '出牌次数耗尽，未达目标分数'
-      : '主动选择投降';
-    ctx.save();
-    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#e74c3c';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(reason, W / 2, panelY + 75 * s);
-    ctx.restore();
-
-    // 分隔线
-    ctx.strokeStyle = 'rgba(212,168,67,0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(panelX + 30 * s, panelY + 95 * s);
-    ctx.lineTo(panelX + panelW - 30 * s, panelY + 95 * s);
-    ctx.stroke();
-
-    // 结束关卡
-    this.text('结束关卡', panelX + 40 * s, panelY + 125 * s, 13, '#888', 'left');
-    this.text(`第 ${game.round} 关`, panelX + panelW - 40 * s, panelY + 125 * s, 15, '#fff', 'right');
-
-    // 总分（大字突出）
-    this.text('总分', panelX + 40 * s, panelY + 165 * s, 13, '#888', 'left');
-    ctx.save();
-    ctx.font = `bold ${Math.floor(28 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#2ecc71';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(game.totalScore), panelX + panelW - 40 * s, panelY + 165 * s);
-    ctx.restore();
-
-    // 重新开始按钮
-    const btnW = 160 * s;
-    const btnH = 48 * s;
-    const btnX = (W - btnW) / 2;
-    const btnY = panelY + panelH - btnH - 24 * s;
-    this.button('重新开始', btnX, btnY, btnW, btnH, '#e74c3c', '#fff');
-    this.restartBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, action: 'restart' };
-
-    // 点击遮罩区域也可以关闭（全屏关闭区域，但按钮优先）
-    this.gameOverCloseRect = { x: panelX, y: panelY, w: panelW, h: panelH, action: 'gameOverClose' };
-  }
 
   updateAnimations() {
     // 动画更新（后续实现）
@@ -1419,6 +1381,7 @@ class Renderer {
       { label: '重置出牌次数', action: 'debug_resetHands' },
       { label: '当前分+100', action: 'debug_addScore' },
       { label: '直接通关', action: 'debug_winRound' },
+      { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;
     const itemH = 34 * s;
@@ -1462,6 +1425,171 @@ class Renderer {
       }
     }
     return null;
+  }
+}
+
+// ===== 游戏结束弹窗渲染 =====
+class GameOverRenderer {
+  constructor(renderer) {
+    this.parent = renderer;
+    this.animStartTime = null;
+    this.lastGameOverReason = null;
+  }
+
+  draw(ctx, game, W, H, s) {
+    const isClosing = game._closingGameOver;
+    const closeElapsed = isClosing ? Date.now() - (game._closeStartTime || Date.now()) : 0;
+    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
+    if (isClosing && closeProgress >= 1) return;
+
+    if (!isClosing && this.lastGameOverReason !== game.gameOverReason) {
+      this.animStartTime = Date.now();
+      this.lastGameOverReason = game.gameOverReason;
+    }
+
+    const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
+
+    function easeOutBack(t) {
+      const c1 = 1.70158;
+      const c3 = c1 + 1;
+      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
+
+    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
+    const closeAlpha = isClosing ? 1 - closeProgress : 1;
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+
+    // 半透明遮罩
+    const overlayAlpha = isClosing ? 0.65 * (1 - closeProgress) : Math.min(elapsed / 200, 0.65);
+    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // 弹窗尺寸
+    const pw = 300 * s;
+    const ph = 290 * s;
+    const px = (W - pw) / 2;
+    const basePy = (H - ph) / 2;
+    const r = 14 * s;
+    const gold = '#c4a35a';
+
+    // 弹窗入场：easeOutBack 从下方 25px 滑入
+    const enterProgress = Math.min(elapsed / 350, 1);
+    const enterEase = easeOutBack(enterProgress);
+    const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
+
+    // 背景 + 边框
+    this.parent.roundRect(px, py, pw, ph, r, '#faf6ee', gold);
+
+    // 内容渐入工具函数
+    function fadeIn(el, delay, offsetY = 8 * s) {
+      const t = Math.max(0, Math.min((el - delay) / 250, 1));
+      const ease = t * (2 - t); // easeOutQuad
+      return { alpha: ease, yShift: (1 - ease) * offsetY };
+    }
+
+    // 标题
+    const titleAnim = fadeIn(elapsed, 80);
+    ctx.save();
+    ctx.globalAlpha = titleAnim.alpha;
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const titleText = '游戏结束';
+    ctx.fillText(titleText, W / 2, py + 40 * s + titleAnim.yShift);
+    ctx.restore();
+
+    // 分隔线
+    const line1Anim = fadeIn(elapsed, 140, 6 * s);
+    ctx.save();
+    ctx.globalAlpha = line1Anim.alpha;
+    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const line1Y = py + 62 * s + line1Anim.yShift;
+    ctx.moveTo(px + 30 * s, line1Y);
+    ctx.lineTo(px + pw - 30 * s, line1Y);
+    ctx.stroke();
+    ctx.restore();
+
+    // 数据行
+    const lineY = py + 92 * s;
+    const lineH = 38 * s;
+
+    const items = [
+      { label: '到达关卡', value: `第 ${game.round} 关` },
+      { label: '最终得分', value: `${game.totalScore}` },
+    ];
+
+    items.forEach((item, i) => {
+      const itemAnim = fadeIn(elapsed, 180 + i * 60);
+      const y = lineY + i * lineH + itemAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = itemAnim.alpha;
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#555';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, px + 35 * s, y);
+
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'right';
+      ctx.fillText(item.value, px + pw - 35 * s, y);
+      ctx.restore();
+    });
+
+    // 分隔线 + 提示文字
+    const hintAnim = fadeIn(elapsed, 400, 6 * s);
+    const hintY = lineY + items.length * lineH + 12 * s + hintAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = hintAnim.alpha;
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(px + 30 * s, hintY);
+    ctx.lineTo(px + pw - 30 * s, hintY);
+    ctx.stroke();
+
+    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('再试一次吧，巫师学徒！', W / 2, hintY + 22 * s);
+    ctx.restore();
+
+    // 重新开始按钮
+    const btnAnim = fadeIn(elapsed, 480, 10 * s);
+    const btnW = 160 * s;
+    const btnH = 46 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = btnAnim.alpha;
+
+    // 按钮按下效果
+    const btnPressed = game._restartBtnPressed;
+    const btnScale = btnPressed ? 0.95 : 1;
+    const btnDrawX = btnX + btnW * (1 - btnScale) / 2;
+    const btnDrawY = btnY + btnH * (1 - btnScale) / 2;
+    const btnDrawW = btnW * btnScale;
+    const btnDrawH = btnH * btnScale;
+
+    this.parent.roundRect(btnDrawX, btnDrawY, btnDrawW, btnDrawH, 8 * s, '#c4a35a');
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('重新开始', W / 2, btnDrawY + btnDrawH / 2);
+    ctx.restore();
+
+    // 闭合 closing 动画的 globalAlpha
+    ctx.restore();
+
+    // 存储点击区域（动画完成后固定位置）
+    const finalBtnY = py + ph - btnH - 28 * s;
+    this.restartBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
   }
 }
 

@@ -367,6 +367,7 @@ class Game {
     this.gold = 4;
     this.jokers = [];
     this.crystalEffects = [];
+    this.potions = [];
     this.potionMode = null;
     this.state = 'playing';
     this.shopItems = null;

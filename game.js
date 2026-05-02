@@ -55,6 +55,14 @@ function handleInput(x, y) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(100);
       if (debugHit.action === 'debug_winRound') game.winRound();
+      if (debugHit.action === 'debug_endGame') {
+        game.state = 'gameover';
+        game.gameOverReason = 'debug';
+        if (game.storageManager) {
+          game.storageManager.setHighScore(game.totalScore);
+          game.storageManager.updateStats(game);
+        }
+      }
       renderer.debugMenuOpen = false;
       return;
     }
@@ -120,6 +128,21 @@ function handleInput(x, y) {
         return;
       }
     }
+
+    // 检测已购买道具栏中的药水牌点击
+    if (renderer.potionPropRects) {
+      const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
+      if (potionHit) {
+        vibrate();
+        const potion = game.potions[potionHit.potionIndex];
+        if (potion) {
+          game.potionMode = {...potion};
+          game._prePotionState = 'playing';
+          game.state = 'potion';
+        }
+        return;
+      }
+    }
   }
 
   if (game.state === 'settlement') {
@@ -136,22 +159,38 @@ function handleInput(x, y) {
   if (game.state === 'shop') {
     // 确认购买弹窗打开时
     if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
-      // 购买成功弹窗：点击"收取"按钮关闭
+      // 购买成功弹窗
       if (game._confirmBuySuccess) {
         if (game._successBtnPressed) return;
+
+        const rects = [];
         if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtnRect) {
-          const btnHit = renderer.hitTest(x, y, [renderer.confirmBuyRenderer.successBtnRect]);
-          if (btnHit) {
-            vibrate();
-            game._successBtnPressed = true;
-            game._successBtnPressTime = Date.now();
-            setTimeout(() => {
-              game._successBtnPressed = false;
-              game._closingConfirmBuy = true;
-              game._closeConfirmBuyStartTime = Date.now();
-            }, 300);
-            return;
-          }
+          rects.push(renderer.confirmBuyRenderer.successBtnRect);
+        }
+        if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtn2Rect) {
+          rects.push(renderer.confirmBuyRenderer.successBtn2Rect);
+        }
+        const btnHit = renderer.hitTest(x, y, rects);
+        if (btnHit) {
+          vibrate();
+          game._successBtnPressed = true;
+          game._successBtnPressTime = Date.now();
+          setTimeout(() => {
+            game._successBtnPressed = false;
+            // 药水牌且点击"暂存"
+            if (btnHit.action === 'stashPotion' && game._confirmBuyItemData) {
+              game.potions.push({...game._confirmBuyItemData});
+            }
+            // 药水牌且点击"立即使用"
+            if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
+              game.potionMode = {...game._confirmBuyItemData};
+              game._prePotionState = 'shop';
+              game.state = 'potion';
+            }
+            game._closingConfirmBuy = true;
+            game._closeConfirmBuyStartTime = Date.now();
+          }, 300);
+          return;
         }
         return; // 点击外部不关闭
       }
@@ -175,7 +214,7 @@ function handleInput(x, y) {
             game._confirmBuySuccess = true;
             game._confirmBuySuccessTime = Date.now();
 
-          }, 500);
+          }, 200);
           return;
         }
       }
@@ -191,12 +230,9 @@ function handleInput(x, y) {
       if (itemHit) {
         vibrate();
         const item = game.shopItems[itemHit.index];
-        if (item && (item.type === 'witch' || item.type === 'crystal')) {
-          // 女巫/水晶球打开确认弹窗
+        if (item && (item.type === 'witch' || item.type === 'crystal' || item.type === 'potion')) {
+          // 女巫/水晶球/药水 打开确认弹窗
           game.confirmBuyItem = itemHit.index;
-        } else {
-          // 药水直接购买
-          buyItem(game, itemHit.index);
         }
         return;
       }
@@ -228,29 +264,47 @@ function handleInput(x, y) {
       if (btnHit) {
         if (game.animManager) game.animManager.buttonPress(renderer.cancelBtnRect);
         if (game.potionMode) {
-          game.gold += game.potionMode.cost;
+          // 只有从商店直接购买时取消才退金币；暂存的不退
+          if (game._prePotionState !== 'playing') {
+            game.gold += game.potionMode.cost;
+          }
           game.potionMode = null;
         }
-        game.state = 'shop';
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
         return;
       }
     }
   }
 
   if (game.state === 'gameover') {
-    const rects = [];
-    if (renderer.gameOverCloseRect) rects.push(renderer.gameOverCloseRect);
-    if (renderer.restartBtnRect) rects.push(renderer.restartBtnRect);
-    const hit = renderer.hitTest(x, y, rects);
-    if (hit) {
-      if (game.animManager) game.animManager.buttonPress(hit);
-      restartGame();
-      return;
+    if (game._closingGameOver) return;
+    if (game._restartBtnPressed) return;
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.restartBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.restartBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game._restartBtnPressed = true;
+        game._restartBtnPressTime = Date.now();
+        setTimeout(() => {
+          game._restartBtnPressed = false;
+          game._closingGameOver = true;
+          game._closeStartTime = Date.now();
+          setTimeout(() => {
+            restartGame();
+          }, 300);
+        }, 150);
+        return;
+      }
     }
   }
 }
 
 function restartGame() {
+  if (renderer && renderer.gameOverRenderer) {
+    renderer.gameOverRenderer.lastGameOverReason = null;
+    renderer.gameOverRenderer.animStartTime = null;
+  }
   game = new Game();
   lastPlayResult = null;
 }
