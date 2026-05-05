@@ -35,9 +35,20 @@ const wordMeaningCache = new Map();
 // 字母升级记录（跨回合保留）
 const letterUpgrades = new Map();
 
+// 获取升级后的字母分数
+function getLetterScore(letter) {
+  const base = LETTER_SCORE[letter];
+  const upgrade = letterUpgrades.get(letter);
+  if (upgrade && upgrade.mult) {
+    return Math.floor(base * upgrade.mult);
+  }
+  return base;
+}
+
 module.exports = {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA,
   onlineWordCache, wordCheckState,
-  wordMeaningCache, letterUpgrades, checkingWords
+  wordMeaningCache, letterUpgrades, checkingWords,
+  getLetterScore
 };

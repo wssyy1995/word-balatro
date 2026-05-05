@@ -229,6 +229,28 @@ function findValidWordInHand(hand) {
   return all.length > 0 ? all[0] : null;
 }
 
+// 判断单张卡是否匹配女巫牌的 trigger 条件
+function _matchCardTrigger(card, trigger) {
+  switch (trigger) {
+    case 'letter_a': return card.letter === 'A';
+    case 'letter_e': return card.letter === 'E';
+    case 'has_vowel': return 'AEIOU'.includes(card.letter);
+    case 'high_letter': return ['J','Q','X','Z'].includes(card.letter);
+    default: return false;
+  }
+}
+
+// 判断整手牌是否匹配女巫牌的 trigger 条件
+function _matchWordTrigger(cards, trigger) {
+  switch (trigger) {
+    case 'has_face': return cards.some(c => c.isFace);
+    case 'length_3': return cards.length >= 3;
+    case 'length_5': return cards.length >= 5;
+    case 'length_6': return cards.length >= 6;
+    default: return false;
+  }
+}
+
 function calcWordScore(cards, jokers) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
@@ -245,29 +267,16 @@ function calcWordScore(cards, jokers) {
 
   for (const j of jokers) {
     if (j.type !== 'witch') continue;
-    switch (j.trigger) {
-      case 'always': break; // 在 baseScore 计算后单独处理
-      case 'letter_a':
-        cards.forEach((c, i) => { if (c.letter === 'A') cardMults[i] *= j.value; });
+    switch (j.scope) {
+      case 'per_card':
+        cards.forEach((c, i) => {
+          if (_matchCardTrigger(c, j.trigger)) cardMults[i] *= j.value;
+        });
         break;
-      case 'letter_e':
-        cards.forEach((c, i) => { if (c.letter === 'E') cardMults[i] *= j.value; });
+      case 'whole_word':
+        if (_matchWordTrigger(cards, j.trigger)) mult = Math.ceil(mult * j.value);
         break;
-      case 'has_vowel':
-        cards.forEach((c, i) => { if ('AEIOU'.includes(c.letter)) cardMults[i] *= j.value; });
-        break;
-      case 'high_letter':
-        cards.forEach((c, i) => { if (['J','Q','X','Z'].includes(c.letter)) cardMults[i] *= j.value; });
-        break;
-      case 'has_face':
-        if (hasFace) mult *= j.value;
-        break;
-      case 'length_5':
-        if (cards.length >= 5) mult *= j.value;
-        break;
-      case 'length_6':
-        if (cards.length >= 6) mult *= j.value;
-        break;
+      // flat_bonus 在 baseScore 累加后单独处理
     }
   }
 
@@ -277,12 +286,12 @@ function calcWordScore(cards, jokers) {
   }
 
   for (const j of jokers) {
-    if (j.type === 'witch' && j.trigger === 'always') {
+    if (j.type === 'witch' && j.scope === 'flat_bonus') {
       baseScore += j.value;
     }
   }
 
-  const totalScore = baseScore * mult;
+  const totalScore = Math.ceil(baseScore * mult);
   return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace };
 }
 
@@ -388,12 +397,16 @@ function formatMeaning(meaningObj) {
 // ===== 游戏主类 =====
 class Game {
   constructor() {
+    // 新游戏时清除字母升级记录
+    letterUpgrades.clear();
     this.round = 1;
     this.gold = 4;
     this.jokers = [];
     this.crystalEffects = [];
     this.potions = [];
     this.potionMode = null;
+    this._potionSelectedLetter = null;
+    this._potionUpgrading = null;
     this.state = 'playing';
     this.shopItems = null;
     this.safetyRounds = 3;
@@ -496,13 +509,16 @@ class Game {
       if (this.audioManager) this.audioManager.play('invalid');
       this.handsLeft--;
       if (this.handsLeft <= 0) {
-        this.state = 'gameover';
-        this.gameOverReason = 'out_of_hands';
-        if (this.storageManager) {
-          this.storageManager.setHighScore(this.totalScore);
-          this.storageManager.updateStats(this);
-          this.storageManager.clearProgress();
-        }
+        // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
+        setTimeout(() => {
+          this.state = 'gameover';
+          this.gameOverReason = 'out_of_hands';
+          if (this.storageManager) {
+            this.storageManager.setHighScore(this.totalScore);
+            this.storageManager.updateStats(this);
+            this.storageManager.clearProgress();
+          }
+        }, 1500);
       }
       if (this.storageManager) this.storageManager.saveProgress(this);
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
@@ -515,7 +531,7 @@ class Game {
     this.pendingCheck.resolveTime = Date.now();
     this.pendingCheck.animPhase = 0;
 
-    // 计算每个字母跳跃时触发的女巫牌索引（只对单个字母有加成的）
+    // 计算每个字母跳跃时触发的女巫牌索引（scope === 'per_card'）
     const jokers = this.jokers || [];
     const jokerTriggers = [];
     for (let i = 0; i < playedInOrder.length; i++) {
@@ -523,32 +539,31 @@ class Game {
       const triggered = [];
       for (let j = 0; j < jokers.length; j++) {
         const joker = jokers[j];
-        if (joker.type !== 'witch') continue;
-        let match = false;
-        switch (joker.trigger) {
-          case 'letter_a': if (card.letter === 'A') match = true; break;
-          case 'letter_e': if (card.letter === 'E') match = true; break;
-          case 'has_vowel': if ('AEIOU'.includes(card.letter)) match = true; break;
-          case 'high_letter': if (['J','Q','X','Z'].includes(card.letter)) match = true; break;
-        }
-        if (match) triggered.push(j);
+        if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
+        if (_matchCardTrigger(card, joker.trigger)) triggered.push(j);
       }
       jokerTriggers.push(triggered);
     }
-    // 全局触发的女巫牌（整体倍率 / 固定加分，不关联单个字母）
+    // 始终生效的女巫牌（flat_bonus），在字母跳跃阶段就显示紫色边框
     const globalTriggered = [];
     for (let j = 0; j < jokers.length; j++) {
       const joker = jokers[j];
       if (joker.type !== 'witch') continue;
-      switch (joker.trigger) {
-        case 'length_5': if (playedInOrder.length >= 5) globalTriggered.push(j); break;
-        case 'length_6': if (playedInOrder.length >= 6) globalTriggered.push(j); break;
-        case 'has_face': if (playedInOrder.some(c => c.isFace)) globalTriggered.push(j); break;
-        case 'always': globalTriggered.push(j); break;
+      if (joker.scope === 'flat_bonus') {
+        globalTriggered.push(j);
       }
     }
     this.pendingCheck.jokerTriggers = jokerTriggers;
     this.pendingCheck.globalTriggered = globalTriggered;
+
+    // 预处理 whole_word 女巫牌（用于 phase 1.5 波浪动画 + phase 2 倍率弹出）
+    const wholeWordJokers = [];
+    jokers.forEach((joker, idx) => {
+      if (joker.type === 'witch' && joker.scope === 'whole_word' && _matchWordTrigger(playedInOrder, joker.trigger)) {
+        wholeWordJokers.push({ idx, joker });
+      }
+    });
+    this.pendingCheck.wholeWordJokers = wholeWordJokers;
 
     if (this.audioManager) {
       this.audioManager.play('valid');
@@ -556,15 +571,20 @@ class Game {
 
     // 动画时间线（ms）
     const letterJumpDelay = 1000;
-    const letterInterval = 400;
-    const lengthShowDelay = letterJumpDelay + playedInOrder.length * letterInterval;
-    const totalShowDelay = lengthShowDelay + 400;
+    const letterInterval = 350;
+    const waveDuration = 200 + playedInOrder.length * 100; // 波浪持续时间
+    const baseMultDelay = 500; // 波浪完成后延迟500ms显示基础倍率
+    const wholeWordStepDelay = 700; // 每张 whole_word 触发间隔
+    const wholeWordDelay = 1000; // 全部 whole_word 完成后延迟1s
+
+    const lengthShowDelay = letterJumpDelay + playedInOrder.length * letterInterval + waveDuration;
+    const totalShowDelay = lengthShowDelay + baseMultDelay + wholeWordJokers.length * wholeWordStepDelay + wholeWordDelay;
     const flyEndDelay = totalShowDelay + 1000 + 800 + 300; // 停留1秒 + 飞行800ms + 延迟300ms
     const settlementDelay = flyEndDelay + 1000; // 再等待1秒弹出结算
 
     // 阶段1: 字母跳跃
     setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 1; }, letterJumpDelay);
-    // 阶段2: 显示长度
+    // 阶段2: 基础倍率弹出 + whole_word 依次触发
     setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 2; }, lengthShowDelay);
     // 阶段3: 总分飞行
     setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 3; }, totalShowDelay);
@@ -598,6 +618,8 @@ class Game {
     (this.jokers || []).forEach(j => {
       j._triggered = false;
       j._jumpOffsetY = 0;
+      j._wwJumpStart = null;
+      j._wwJumpDone = false;
     });
 
     this.score += result.score;
@@ -684,7 +706,7 @@ class Game {
       this._closingSettlement = false;
       this.state = 'shop';
       if (!this.shopItems) {
-        this.shopItems = generateShopItems();
+        this.shopItems = generateShopItems(this);
       }
     }, 300);
   }

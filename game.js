@@ -2,7 +2,8 @@
 const { Game } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeCard } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule } = require('./js/shop');
+const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -270,6 +271,16 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测刷新按钮点击
+    if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
+      const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
+      if (refreshHit) {
+        vibrate();
+        refreshModule(game, refreshHit.modIdx);
+        return;
+      }
+    }
+
     // 正常商店点击
     if (renderer.shopRenderer && renderer.shopRenderer.shopItemRects) {
       const itemHit = renderer.hitTest(x, y, renderer.shopRenderer.shopItemRects);
@@ -295,29 +306,62 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'potion') {
-    if (renderer.potionCardRects) {
-      const cardHit = renderer.hitTest(x, y, renderer.potionCardRects);
-      if (cardHit) {
-        const card = game.hand.find(c => c.id === cardHit.cardId);
-        if (game.animManager && card) game.animManager.cardSelect(card);
-        upgradeCard(game, cardHit.cardId);
+    // 动画进行中，忽略所有点击
+    if (game._potionUpgrading) return;
+
+    // 检测字母点击
+    if (renderer.potionLetterRects) {
+      const letterHit = renderer.hitTest(x, y, renderer.potionLetterRects);
+      if (letterHit) {
+        vibrate();
+        game._potionSelectedLetter = letterHit.letter;
         return;
       }
     }
 
-    if (renderer.cancelBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.cancelBtnRect]);
+    // 检测升级按钮
+    if (renderer.potionUpgradeBtnRect && renderer.potionUpgradeBtnRect.enabled) {
+      const btnHit = renderer.hitTest(x, y, [renderer.potionUpgradeBtnRect]);
+      if (btnHit && game._potionSelectedLetter) {
+        vibrate();
+        // 先计算升级后的分数
+        const potion = game.potionMode;
+        const mult = potion.value || 2;
+        const existing = letterUpgrades.get(game._potionSelectedLetter);
+        const totalMult = existing ? existing.mult * mult : mult;
+        const newScore = Math.floor(LETTER_SCORE[game._potionSelectedLetter] * totalMult);
+        // 执行升级
+        upgradeLetter(game, game._potionSelectedLetter);
+        // 启动弹出动画
+        game._potionUpgrading = {
+          startTime: Date.now(),
+          letter: game._potionSelectedLetter,
+          newScore: newScore,
+          upgradeMult: totalMult
+        };
+        game._potionSelectedLetter = null;
+        return;
+      }
+    }
+
+    // 检测暂存按钮
+    if (renderer.potionStashBtnRect && renderer.potionStashBtnRect.enabled) {
+      const btnHit = renderer.hitTest(x, y, [renderer.potionStashBtnRect]);
       if (btnHit) {
-        if (game.animManager) game.animManager.buttonPress(renderer.cancelBtnRect);
+        vibrate();
+        // 将药水放入道具栏（如果不在的话）
         if (game.potionMode) {
-          // 只有从商店直接购买时取消才退金币；暂存的不退
-          if (game._prePotionState !== 'playing') {
-            game.gold += game.potionMode.cost;
+          const alreadyStashed = game.potions && game.potions.some(p => p.effect === game.potionMode.effect);
+          if (!alreadyStashed) {
+            game.potions = game.potions || [];
+            game.potions.push({...game.potionMode});
           }
           game.potionMode = null;
         }
         game.state = game._prePotionState || 'shop';
         game._prePotionState = null;
+        game._potionSelectedLetter = null;
+        if (game.storageManager) game.storageManager.saveProgress(game);
         return;
       }
     }
@@ -352,6 +396,8 @@ function restartGame() {
     renderer.gameOverRenderer.animStartTime = null;
   }
   game = new Game();
+  game._potionSelectedLetter = null;
+  game._potionUpgrading = null;
   lastPlayResult = null;
 }
 

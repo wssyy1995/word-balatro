@@ -1,6 +1,6 @@
 // ===== Canvas 渲染器 =====
 const { formatMeaning, isValidWordOnline } = require('./game');
-const { WORD_DATA, onlineWordCache, wordCheckState } = require('./data');
+const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
 const { SettlementRenderer } = require('./settlement');
 const { ShopRenderer, ConfirmBuyRenderer } = require('./shop');
 
@@ -109,20 +109,7 @@ class Renderer {
       this.scoreLineLoaded = false;
     }
     
-    // 加载预览区装饰图
-    this.previewMark = null;
-    this.previewMarkLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/preview_mark.png';
-      img.onload = () => { this.previewMarkLoaded = true; };
-      img.onerror = () => { this.previewMarkLoaded = false; };
-      this.previewMark = img;
-    } catch (e) {
-      this.previewMarkLoaded = false;
-    }
-    
-    // 加载错误图标
+        // 加载错误图标
     this.errorIcon = null;
     this.errorIconLoaded = false;
     try {
@@ -226,19 +213,7 @@ class Renderer {
       this.buySuccessLoaded = false;
     }
 
-    this.witchHatImg = null;
-    this.witchHatLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/witch_hat.png';
-      img.onload = () => { this.witchHatLoaded = true; };
-      img.onerror = () => { this.witchHatLoaded = false; };
-      this.witchHatImg = img;
-    } catch (e) {
-      this.witchHatLoaded = false;
-    }
-
-    // 加载购买成功弹窗底部飘带
+        // 加载购买成功弹窗底部飘带
     this.buySuccessBandImg = null;
     this.buySuccessBandLoaded = false;
     try {
@@ -333,9 +308,25 @@ class Renderer {
     const finalY = y + offsetY;
     const r = 4 * s;
 
-    // 如果有触发状态，先画紫色边框（在 clip 之外）
+    // 如果有触发状态，先画紫色光晕 + 边框（在 clip 之外）
     if (prop._triggered) {
       ctx.save();
+
+      // 紫色径向光晕（脉动）
+      const glowCX = x + w / 2;
+      const glowCY = finalY + h / 2;
+      const glowR = Math.max(w, h) * 0.75;
+      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
+      const glowGrad = ctx.createRadialGradient(glowCX, glowCY, glowR * 0.15, glowCX, glowCY, glowR);
+      glowGrad.addColorStop(0, `rgba(155,89,182,${0.22 * pulse})`);
+      glowGrad.addColorStop(0.4, `rgba(155,89,182,${0.12 * pulse})`);
+      glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
+      ctx.fillStyle = glowGrad;
+      ctx.beginPath();
+      ctx.arc(glowCX, glowCY, glowR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 紫色边框
       ctx.strokeStyle = '#9b59b6';
       ctx.lineWidth = 2.5 * s;
       ctx.shadowColor = 'rgba(155,89,182,0.6)';
@@ -515,22 +506,12 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(card.letter, 0, -hh + h * 0.33 - 2 * s + 1 * s);
 
-    // === 3. 分数 ===
-    let scoreText = card.upgraded ? `${card.baseScore}分` : `${card.score}分`;
+    // === 3. 分数（始终显示当前实际分数）===
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(scoreText, 0, -hh + h * 0.74);
-
-    // === 5. 升级标记 ===
-    if (card.upgraded) {
-      ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
-      ctx.fillStyle = '#e74c3c';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(`x${card.upgradeMult}`, hw - 10 * s, -hh + 14 * s);
-    }
+    ctx.fillText(`${card.score}分`, 0, -hh + h * 0.74);
 
     // === 6. 新牌标记 ===
     if (isNew) {
@@ -938,8 +919,9 @@ class Renderer {
     const rightBoxX = centerX + 10 * s + 5;
 
     // === pendingCheck 状态优先 ===
+    let pc = null;
     if (game.pendingCheck) {
-      const pc = game.pendingCheck;
+      pc = game.pendingCheck;
       const word = pc.word;
 
       if (pc.state === 'checking') {
@@ -965,13 +947,28 @@ class Renderer {
         const elapsed = Date.now() - pc.resolveTime;
         const phase = pc.animPhase || 0;
 
-        // 深绿色单词
+        // 深绿色单词（逐个字母绘制，支持波浪偏移）
         ctx.save();
         ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#2d7d32';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(word, W / 2, wordAreaY);
+
+        const letters = word.split('');
+        let totalLetterW = 0;
+        const letterWidths = letters.map(l => {
+          const lw = ctx.measureText(l).width;
+          totalLetterW += lw;
+          return lw;
+        });
+        const startLX = W / 2 - totalLetterW / 2;
+        let curX = startLX;
+        letters.forEach((letter, i) => {
+          const lw = letterWidths[i];
+          const waveY = (pc._waveOffsetYs && pc._waveOffsetYs[i]) || 0;
+          ctx.fillText(letter, curX + lw / 2, wordAreaY + waveY);
+          curX += lw;
+        });
         ctx.restore();
 
         // 中文释义
@@ -1004,6 +1001,20 @@ class Renderer {
           const isAllJumped = currentJumpIdx >= cardsInOrder.length;
           if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
           const jokers = game.jokers || [];
+
+          // === per_card 倍率提示（左方块上方 "xN"）===
+          pc._perCardMultText = null;
+          if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
+            const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
+            if (triggered.length > 0) {
+              const totalMult = triggered.reduce((prod, jIdx) => {
+                const joker = jokers[jIdx];
+                return joker && joker.value ? prod * joker.value : prod;
+              }, 1);
+              if (totalMult > 1) pc._perCardMultText = `x${totalMult}`;
+            }
+          }
+
           // 计算累加分数（考虑女巫牌对单个字母的加成）
           for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
             let score = cardsInOrder[i].score;
@@ -1017,6 +1028,25 @@ class Renderer {
 
           // 先清除所有女巫牌跳跃偏移
           jokers.forEach(j => { if (j) j._jumpOffsetY = 0; });
+
+          // === phase 1.5: 波浪跳跃（所有字母跳完后，不论有无 whole_word 都走）===
+          const totalJumpTime = cardsInOrder.length * letterInterval;
+          const waveStartDelay = 150;
+          const waveInterval2 = 100;
+          if (jumpElapsed >= totalJumpTime) {
+            const waveElapsed = jumpElapsed - totalJumpTime;
+            if (!pc._waveOffsetYs) pc._waveOffsetYs = [];
+            cardsInOrder.forEach((_, i) => {
+              const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 250;
+              if (waveProgress >= 0 && waveProgress <= 1) {
+                const waveH = 5 * s * Math.sin(waveProgress * Math.PI);
+                pc._waveOffsetYs[i] = -waveH;
+              } else {
+                pc._waveOffsetYs[i] = 0;
+              }
+            });
+            // whole_word 女巫牌紫色边框在阶段2依次触发，不在此处理
+          }
 
           // 给跳跃中的卡牌设置偏移（所有字母跳完后不再跳跃）
           cardsInOrder.forEach((card, i) => {
@@ -1041,7 +1071,7 @@ class Renderer {
             }
           });
 
-          // 全局触发的女巫牌保持紫色边框激活（不跳跃）
+          // flat_bonus 女巫牌始终显示紫色边框（不跳跃）
           const globalTriggered = pc.globalTriggered || [];
           globalTriggered.forEach(jIdx => {
             const joker = jokers[jIdx];
@@ -1054,12 +1084,60 @@ class Renderer {
           }
         }
 
-        // === 阶段2: 显示长度 ===
-        const lengthShowTime = letterJumpStart + cardsInOrder.length * letterInterval;
-        const showLength = phase >= 2 || (phase === 1 && elapsed >= lengthShowTime);
+        // === 阶段2: 基础倍率弹出 + whole_word 依次触发 ===
+        showSecondBox = phase >= 2;
+
+        // 依次触发 whole_word 女巫牌：跳跃+紫色边框，完成后边框消失
+        if (phase >= 2) {
+          const _cards2 = pc.cardsInOrder || [];
+          const waveDuration2 = 200 + _cards2.length * 100;
+          const phase2Start2 = 1000 + _cards2.length * 350 + waveDuration2;
+          const phase2Elapsed2 = (Date.now() - (pc.resolveTime || 0)) - phase2Start2;
+          const baseMultDelay2 = 500;
+          const stepDuration2 = 700;
+          const wjList2 = pc.wholeWordJokers || [];
+          if (phase2Elapsed2 >= baseMultDelay2) {
+            const afterBase2 = phase2Elapsed2 - baseMultDelay2;
+            const displayStep2 = Math.floor(afterBase2 / stepDuration2);
+            wjList2.forEach(({ idx }, i) => {
+              const joker = game.jokers?.[idx];
+              if (!joker) return;
+
+              // 步骤到达该女巫牌且未跳跃过：开始跳跃
+              if (displayStep2 > i && !joker._wwJumpStart && !joker._wwJumpDone) {
+                joker._wwJumpStart = Date.now();
+                joker._triggered = true;
+              }
+
+              // 处理跳跃动画
+              if (joker._wwJumpStart) {
+                const jumpElapsed = Date.now() - joker._wwJumpStart;
+                const jumpDuration = 400;
+                const jumpProgress = Math.min(jumpElapsed / jumpDuration, 1);
+                const jumpH = 12 * s * Math.sin(jumpProgress * Math.PI);
+                joker._jumpOffsetY = -Math.max(0, jumpH);
+                if (jumpProgress >= 1) {
+                  joker._wwJumpStart = null;
+                  joker._wwJumpDone = true;
+                  joker._jumpOffsetY = 0;
+                  joker._triggered = false;
+                }
+              }
+            });
+          } else {
+            // 延迟期间重置全部 whole_word 状态
+            wjList2.forEach(({ idx }) => {
+              const joker = game.jokers?.[idx];
+              if (!joker) return;
+              joker._wwJumpStart = null;
+              joker._wwJumpDone = false;
+              joker._jumpOffsetY = 0;
+              joker._triggered = false;
+            });
+          }
+        }
 
         // === 阶段3: 总分飞行 ===
-        const totalShowTime = lengthShowTime + 200;
         if (phase >= 3 && !pc._flyingScoreStarted) {
           pc._flyingScoreStarted = true;
           // 启动飞行总分
@@ -1074,7 +1152,6 @@ class Renderer {
         pendingBaseScore = accumulatedScore;
         pendingLength = cardsInOrder.length;
         showFirstBox = phase >= 1;
-        showSecondBox = showLength;
 
       } else if (pc.state === 'invalid') {
         // 非法：橙色单词 + error图标 + 单词不存在
@@ -1182,7 +1259,7 @@ class Renderer {
         // 旧数字向上淡出
         ctx.save();
         ctx.globalAlpha = 1 - ease;
-        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
         ctx.fillStyle = '#f5f0e8';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1192,7 +1269,7 @@ class Renderer {
         // 新数字从下方进入
         ctx.save();
         ctx.globalAlpha = ease;
-        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
         ctx.fillStyle = '#f5f0e8';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1203,12 +1280,24 @@ class Renderer {
           this.scoreRoll = null;
         }
       } else {
-        this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
+        this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
+      }
+      // per_card 倍率提示（左方块上方紫色小字）
+      if (pc._perCardMultText) {
+        ctx.save();
+        ctx.font = `900 ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, boxY - 4 * s);
+        ctx.restore();
       }
     } else if (!game.pendingCheck) {
       // 没有 pendingCheck 时重置
       this.lastBoxScore = 0;
       this.scoreRoll = null;
+      this.lastMultValue = null;
+      this.multAnim = null;
     }
 
     // 中：乘号（金棕色，加粗变大）
@@ -1228,7 +1317,81 @@ class Renderer {
       this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
     }
     if (valid && showSecondBox) {
-      this.text(String(pendingLength), rightBoxX + boxSize / 2, boxY + boxSize / 2, 18, '#f5f0e8');
+      // 基础倍率 + whole_word 依次触发（变大缩小脉冲动效）
+      let displayValue = null;
+      let labelText = null;
+      const wjList = pc.wholeWordJokers || [];
+
+      // 计算 phase 2 已进行的时间
+      const _cards = pc.cardsInOrder || [];
+      const waveDuration = 200 + _cards.length * 100;
+      const phase2Start = 1000 + _cards.length * 350 + waveDuration;
+      const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
+
+      // 500ms 延迟后才开始显示
+      const baseMultDelay = 500;
+      const stepDuration = 700;
+
+      if (phase2Elapsed >= baseMultDelay) {
+        const afterBase = phase2Elapsed - baseMultDelay;
+        // displayStep = 0: 基础倍率弹出
+        // displayStep = 1: 第一张 whole_word 触发
+        // displayStep = 2: 第二张 whole_word 触发
+        const displayStep = Math.floor(afterBase / stepDuration);
+
+        // 计算当前倍率
+        let curMult = pendingLength;
+        for (let i = 0; i < Math.min(displayStep, wjList.length); i++) {
+          curMult = Math.ceil(curMult * wjList[i].joker.value);
+        }
+        displayValue = curMult;
+
+        // 标签：displayStep = 1 时显示第1张的 xValue
+        const labelIdx = displayStep - 1;
+        if (labelIdx >= 0 && labelIdx < wjList.length) {
+          const stepProgress = (afterBase % stepDuration) / stepDuration;
+          if (stepProgress < 0.75) {
+            labelText = `x${wjList[labelIdx].joker.value}`;
+          }
+        }
+
+        // 数字变化时触发一次脉冲（类似金币动画）
+        if (this.lastMultValue !== displayValue) {
+          this.lastMultValue = displayValue;
+          this.multAnim = { startTime: Date.now(), duration: 400 };
+        }
+      }
+
+      // 绘制数字（带一次变大缩小脉冲）
+      let pulseScale = 1;
+      if (this.multAnim) {
+        const maProgress = Math.min((Date.now() - this.multAnim.startTime) / this.multAnim.duration, 1);
+        pulseScale = 1 + 0.28 * Math.sin(maProgress * Math.PI);
+        if (maProgress >= 1) this.multAnim = null;
+      }
+
+      if (displayValue !== null) {
+        ctx.save();
+        ctx.translate(rightBoxX + boxSize / 2, boxY + boxSize / 2);
+        ctx.scale(pulseScale, pulseScale);
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.fillStyle = '#f5f0e8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(Math.round(displayValue)), 0, 0);
+        ctx.restore();
+      }
+
+      // 绘制 "xN" 标签（右方块上方紫色小字）
+      if (labelText) {
+        ctx.save();
+        ctx.font = `900 ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(labelText, rightBoxX + boxSize / 2, boxY - 4 * s);
+        ctx.restore();
+      }
     }
 
     // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）
@@ -1413,38 +1576,280 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
+    const top = (this.safeTop || 0) + 20;
+    // LETTER_SCORE 和 letterUpgrades 已在顶部导入
 
-    // 标题
-    this.text('选择一张牌进行强化', W / 2, 70 * s, 18, '#fff');
+    // 背景由 render() 统一绘制 bgImage，不覆盖
 
-    // 手牌布局（缩小版）
-    const cols = 3;
-    const rows = Math.ceil(game.hand.length / cols);
-    const cardW = 60 * s;
-    const cardH = 80 * s;
-    const gap = 8 * s;
-    const totalW = cols * cardW + (cols - 1) * gap;
-    const startX = (W - totalW) / 2;
-    const startY = 100 * s;
+    // === 顶部栏（参考商店页样式）===
+    this.drawTopHeader();
+    this.drawCoinCapsule(game);
 
-    this.potionCardRects = [];
-    game.hand.forEach((card, i) => {
+    // 标题区域 Y 坐标（与商店页"商店"标题位置一致）
+    const titleY = top - 10 * s;
+
+    // 标题：shop_icon.png 装饰 + "选择字母" + shop_icon.png 水平镜像
+    ctx.save();
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const titleText = '选择字母';
+    const titleTextW = ctx.measureText(titleText).width;
+    ctx.fillText(titleText, W / 2, titleY);
+    ctx.restore();
+
+    // 左右装饰图标
+    const decoIconW = 20 * s + 2;
+    const decoIconH = 20 * s;
+    const decoGap = 10 * s - 2;
+    const decoIconY = titleY - decoIconH / 2;
+    if (this.shopIcon && this.shopIconLoaded) {
+      const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
+      ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
+
+      const rightIconX = W / 2 + titleTextW / 2 + decoGap;
+      ctx.save();
+      ctx.translate(rightIconX + decoIconW, decoIconY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
+      ctx.restore();
+    }
+
+    // === 副标题 ===
+    const subTitleY = titleY + 52 * s;
+    ctx.save();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('选择一张字母牌，分数翻倍', W / 2, subTitleY);
+    ctx.restore();
+
+    // === 分隔线（两条线 + 中间菱形）===
+    const dividerY = subTitleY + 22 * s;
+    const lineW = 80 * s;
+    const lineGap = 8 * s;
+    const lineColor = '#c4a35a';
+    const centerX = W / 2;
+    // 左线
+    ctx.save();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    ctx.moveTo(centerX - lineGap - lineW, dividerY);
+    ctx.lineTo(centerX - lineGap, dividerY);
+    ctx.stroke();
+    // 右线
+    ctx.beginPath();
+    ctx.moveTo(centerX + lineGap, dividerY);
+    ctx.lineTo(centerX + lineGap + lineW, dividerY);
+    ctx.stroke();
+    // 中间菱形
+    const diamondSize = 5 * s;
+    ctx.fillStyle = lineColor;
+    ctx.beginPath();
+    ctx.moveTo(centerX, dividerY - diamondSize);
+    ctx.lineTo(centerX + diamondSize, dividerY);
+    ctx.lineTo(centerX, dividerY + diamondSize);
+    ctx.lineTo(centerX - diamondSize, dividerY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+
+    // === A-Z 字母网格 ===
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const cols = 4;
+    const btnSize = 52 * s;
+    const btnGap = 13 * s;
+    const totalGridW = cols * btnSize + (cols - 1) * btnGap;
+    const gridStartX = (W - totalGridW) / 2;
+    const gridStartY = dividerY + 30 * s;
+
+    // 王牌强化（upgrade_face）只允许选择 X/Y/Z
+    const isFaceOnly = game.potionMode && game.potionMode.effect === 'upgrade_face';
+    // 如果当前选中了不允许的字母，自动清除
+    if (isFaceOnly && game._potionSelectedLetter && !['X', 'Y', 'Z'].includes(game._potionSelectedLetter)) {
+      game._potionSelectedLetter = null;
+    }
+    const selectedLetter = game._potionSelectedLetter || null;
+
+    this.potionLetterRects = [];
+    letters.forEach((letter, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = startX + col * (cardW + gap);
-      const y = startY + row * (cardH + gap);
+      const x = gridStartX + col * (btnSize + btnGap);
+      const y = gridStartY + row * (btnSize + btnGap);
 
-      this.roundRect(x, y, cardW, cardH, 6 * s, '#1e3a5f', '#2c5a8e');
-      this.text(card.letter, x + cardW / 2, y + cardH * 0.35, 22, '#fff');
-      this.text(`${card.baseScore}分`, x + cardW / 2, y + cardH * 0.7, 10, '#bdc3c7');
+      const isSelected = selectedLetter === letter;
+      const isAllowed = !isFaceOnly || ['X', 'Y', 'Z'].includes(letter);
 
-      this.potionCardRects.push({ x, y, w: cardW, h: cardH, cardId: card.id });
+      // 背景圆角矩形（带底部阴影，微微立体感）
+      const br = 8 * s;
+      ctx.save();
+      if (isSelected && isAllowed) {
+        // 选中状态：金色背景+阴影
+        ctx.shadowColor = 'rgba(196,163,90,0.35)';
+        ctx.shadowBlur = 6 * s;
+        ctx.shadowOffsetY = 3 * s;
+        this.roundRect(x, y, btnSize, btnSize, br, '#fdf5e0', '#c4a35a', 2.5 * s);
+      } else if (!isAllowed) {
+        // 禁用状态：浅灰背景 + 淡阴影
+        ctx.shadowColor = 'rgba(0,0,0,0.06)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.roundRect(x, y, btnSize, btnSize, br, '#e8e4dc', null, 0);
+      } else {
+        // 普通状态：米色背景 + 底部阴影
+        ctx.shadowColor = 'rgba(0,0,0,0.08)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.roundRect(x, y, btnSize, btnSize, br, '#f5f0e6', '#d4c9a8', 1.5 * s);
+      }
+      ctx.restore();
+
+      // 字母
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      if (isSelected && isAllowed) {
+        ctx.fillStyle = '#8b6914';
+      } else if (!isAllowed) {
+        ctx.fillStyle = '#b0a898';
+      } else {
+        ctx.fillStyle = '#5a4a2a';
+      }
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter, x + btnSize / 2, y + btnSize / 2);
+      ctx.restore();
+
+      if (isAllowed) {
+        this.potionLetterRects.push({ x, y, w: btnSize, h: btnSize, letter });
+      }
     });
 
-    // 取消按钮
-    const btnY = H - 60 * s;
-    this.button('取消', W / 2 - 50 * s, btnY, 100 * s, 36 * s, '#7f8c8d');
-    this.cancelBtnRect = { x: W / 2 - 50 * s, y: btnY, w: 100 * s, h: 36 * s, action: 'cancelPotion' };
+    const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
+
+    // === 当前字母分提示 ===
+    if (selectedLetter) {
+      const scoreTipY = gridBottomY + 18 * s;
+      const baseScore = LETTER_SCORE[selectedLetter];
+      const upgrade = letterUpgrades.get(selectedLetter);
+      const currentScore = upgrade ? Math.floor(baseScore * upgrade.mult) : baseScore;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`当前字母分：${currentScore}`, W / 2, scoreTipY);
+      ctx.restore();
+    }
+
+    // === 底部按钮区域（升级 + 暂存）===
+    const btnAreaY = H - 75 * s;
+    const potionBtnW = 130 * s;
+    const potionBtnH = 46 * s;
+    const potionBtnGap = 16 * s;
+    const totalBtnW = potionBtnW * 2 + potionBtnGap;
+    const btnStartX = (W - totalBtnW) / 2;
+
+    // 升级按钮（需要选中字母）
+    const upgradeBtnX = btnStartX;
+    const upgradeBtnY = btnAreaY;
+    const upgradeEnabled = !!selectedLetter && !game._potionUpgrading;
+    this.roundRect(upgradeBtnX, upgradeBtnY, potionBtnW, potionBtnH, 10 * s,
+      upgradeEnabled ? '#c4a35a' : '#d4c9a8',
+      upgradeEnabled ? null : '#bbb', upgradeEnabled ? 0 : 1.5 * s);
+    ctx.save();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('升级', upgradeBtnX + potionBtnW / 2, upgradeBtnY + potionBtnH / 2);
+    ctx.restore();
+    this.potionUpgradeBtnRect = { x: upgradeBtnX, y: upgradeBtnY, w: potionBtnW, h: potionBtnH, enabled: upgradeEnabled };
+
+    // 暂存按钮（始终可点，除非正在动画中）
+    const stashBtnX = btnStartX + potionBtnW + potionBtnGap;
+    const stashBtnY = btnAreaY;
+    const stashEnabled = !game._potionUpgrading;
+    this.roundRect(stashBtnX, stashBtnY, potionBtnW, potionBtnH, 10 * s,
+      stashEnabled ? '#f5f0e6' : '#e8e4dc',
+      stashEnabled ? '#c4a35a' : '#bbb', 1.5 * s);
+    ctx.save();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = stashEnabled ? '#8b6914' : '#b0a898';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('暂存', stashBtnX + potionBtnW / 2, stashBtnY + potionBtnH / 2);
+    ctx.restore();
+    this.potionStashBtnRect = { x: stashBtnX, y: stashBtnY, w: potionBtnW, h: potionBtnH, enabled: stashEnabled };
+
+    // === 升级动画：卡牌弹出 ===
+    if (game._potionUpgrading) {
+      const anim = game._potionUpgrading;
+      const now = Date.now();
+      const elapsed = now - anim.startTime;
+
+      if (elapsed < 1800) {
+        const popDuration = 500;
+        const holdDuration = 900;
+        const shrinkDuration = 400;
+        const totalDuration = popDuration + holdDuration + shrinkDuration;
+
+        // easeOutBack：果冻回弹效果
+        function easeOutBack(t) {
+          const c1 = 1.70158;
+          const c3 = c1 + 1;
+          return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+        }
+
+        let cardScale = 1;
+        let alpha = 1;
+        if (elapsed < popDuration) {
+          // 阶段1：果冻弹出（0 → 1.1 → 1.0）
+          const t = elapsed / popDuration;
+          cardScale = easeOutBack(t);
+        } else if (elapsed < popDuration + holdDuration) {
+          // 阶段2：保持
+          cardScale = 1;
+          alpha = 1;
+        } else if (elapsed < totalDuration) {
+          // 阶段3：缩小淡出
+          const t = (elapsed - popDuration - holdDuration) / shrinkDuration;
+          cardScale = 1 - t * 0.5; // 缩到 0.5
+          alpha = 1 - t;
+        }
+
+        // 背后页面变暗遮罩
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        // 使用 drawCard 绘制，基础放大 2 倍，再通过 animOffset.scale 做果冻动效
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.scale(2, 2);
+
+        const tempCard = {
+          letter: anim.letter,
+          score: anim.newScore,
+          baseScore: LETTER_SCORE[anim.letter],
+          upgraded: true,
+          upgradeMult: anim.upgradeMult || 1,
+          animOffset: { scale: Math.max(0, cardScale), opacity: Math.max(0, alpha) }
+        };
+        this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2);
+
+        ctx.restore();
+      } else {
+        // 动画结束，清理动画状态并返回原页面
+        game._potionUpgrading = null;
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+      }
+    }
   }
 
 

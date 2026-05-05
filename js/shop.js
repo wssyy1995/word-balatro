@@ -1,3 +1,5 @@
+const { LETTER_SCORE, letterUpgrades } = require('./data');
+
 // 自动换行绘制文本，返回占用的总高度
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
   let line = '';
@@ -22,12 +24,13 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'A之强化', type:'witch', trigger:'letter_a', value:2, cost:5, desc:'字母A分数×2'},
-    {name:'E之强化', type:'witch', trigger:'letter_e', value:2, cost:5, desc:'字母E分数×2'},
-    {name:'元音强化', type:'witch', trigger:'has_vowel', value:2, cost:6, desc:'含元音时分数×2'}
-    // {name:'五字母强化', type:'witch', trigger:'length_5', value:2, cost:7, desc:'5+字母单词×2'},
-    // {name:'六字母强化', type:'witch', trigger:'length_6', value:3, cost:8, desc:'6+字母单词×3'},
-    // {name:'XYZ强化', type:'witch', trigger:'has_face', value:3, cost:6, desc:'含J/Q/Z时×3'}
+    {name:'A之强化', type:'witch', scope:'per_card', trigger:'letter_a', value:2, cost:5, desc:'字母A分数×2'},
+    {name:'E之强化', type:'witch', scope:'per_card', trigger:'letter_e', value:2, cost:5, desc:'字母E分数×2'},
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:2, cost:6, desc:'含元音时分数×2'},
+    {name:'三字母强化', type:'witch', scope:'whole_word', trigger:'length_3', value:1.2, cost:4, desc:'单词字母>=3时，倍率×1.2'},
+    {name:'五字母强化', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×2'},
+    {name:'六字母强化', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×3'},
+    {name:'XYZ强化', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -37,20 +40,64 @@ const SHOP_POOL = {
     // {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
   ],
   potion: [
-    {name:'字母强化', type:'potion', effect:'upgrade_letter', cost:4, desc:'选择一张字母牌，分数翻倍'},
-    {name:'王牌强化', type:'potion', effect:'upgrade_face', cost:5, desc:'选择XYZ任意一张，分数×3'},
-    {name:'通用强化', type:'potion', effect:'upgrade_any', cost:6, desc:'选择任意牌，分数翻倍'}
+    {name:'字母强化', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数翻倍'},
+    {name:'王牌强化', type:'potion', effect:'upgrade_face', value:3, cost:5, desc:'选择XYZ任意一张，分数×3'},
+    {name:'通用强化', type:'potion', effect:'upgrade_any', value:2, cost:6, desc:'选择任意牌，分数翻倍'}
   ]
 };
 
-function generateShopItems() {
+function _shuffle(arr) {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function generateShopItems(game) {
   const items = [];
-  ['witch', 'crystal', 'potion'].forEach(type => {
+  const equippedWitchNames = new Set((game.jokers || []).map(j => j.name));
+
+  // 女巫牌：过滤已装备的，确保有2张可展示
+  let witchPool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
+  if (witchPool.length < 2) {
+    // 过滤后不足2张，从全部池子补充（避免空位）
+    witchPool = SHOP_POOL.witch;
+  }
+  const witchShuffled = _shuffle(witchPool);
+  items.push(witchShuffled[0], witchShuffled[1]);
+
+  // 水晶球和药水（不过滤）
+  ['crystal', 'potion'].forEach(type => {
     const pool = SHOP_POOL[type];
-    const shuffled = [...pool].sort(() => Math.random() - 0.5);
+    const shuffled = _shuffle(pool);
     items.push(shuffled[0], shuffled[1]);
   });
+
   return items;
+}
+
+function refreshModule(game, modIdx) {
+  const typeMap = ['witch', 'crystal', 'potion'];
+  const type = typeMap[modIdx];
+  let pool;
+
+  if (type === 'witch') {
+    const equippedWitchNames = new Set((game.jokers || []).map(j => j.name));
+    pool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
+    if (pool.length < 2) pool = SHOP_POOL.witch;
+  } else {
+    pool = SHOP_POOL[type];
+  }
+
+  const shuffled = _shuffle(pool);
+  const startIdx = modIdx * 2;
+  game.shopItems[startIdx] = shuffled[0];
+  game.shopItems[startIdx + 1] = shuffled[1];
+
+  if (game.audioManager) game.audioManager.play('select');
+  if (game.storageManager) game.storageManager.saveProgress(game);
 }
 
 function buyItem(game, idx) {
@@ -84,27 +131,30 @@ function buyItem(game, idx) {
   return false;
 }
 
-function upgradeCard(game, cardId) {
+function upgradeLetter(game, letter) {
   if (!game.potionMode) return false;
-  const card = game.hand.find(c => c && c.id === cardId);
-  if (!card) return false;
 
-  const effect = game.potionMode.effect;
-  let mult = 2;
-  if (effect === 'upgrade_face') {
-    mult = card.isFace ? 3 : 2;
-  }
+  const potion = game.potionMode;
+  const mult = potion.value || 2;
 
-  card.upgraded = true;
-  const newMult = (card.upgradeMult || 1) * mult;
-  card.upgradeMult = newMult;
-  card.score = Math.floor(card.baseScore * newMult);
+  // 更新字母升级乘数（乘法叠加）
+  const existing = letterUpgrades.get(letter);
+  const totalMult = existing ? existing.mult * mult : mult;
+  letterUpgrades.set(letter, { mult: totalMult });
+
+  // 同步更新当前手牌中该字母的所有卡牌分数
+  const baseScore = LETTER_SCORE[letter];
+  const newScore = Math.floor(baseScore * totalMult);
+  game.hand.forEach(card => {
+    if (card && card.letter === letter) {
+      card.baseScore = baseScore;
+      card.score = newScore;
+      card.upgraded = true;
+      card.upgradeMult = totalMult;
+    }
+  });
 
   if (game.audioManager) game.audioManager.play('upgrade');
-
-  const existing = letterUpgrades.get(card.letter);
-  const totalMult = existing ? existing.mult * mult : mult;
-  letterUpgrades.set(card.letter, { mult: totalMult });
 
   // 从暂存列表中移除已使用的药水
   if (game.potions && game.potionMode) {
@@ -112,8 +162,6 @@ function upgradeCard(game, cardId) {
     if (usedIdx >= 0) game.potions.splice(usedIdx, 1);
   }
   game.potionMode = null;
-  game.state = game._prePotionState || 'shop';
-  game._prePotionState = null;
   if (game.storageManager) game.storageManager.saveProgress(game);
   return true;
 }
@@ -137,6 +185,7 @@ class ShopRenderer {
     this.shopOwnedPropRects = [];
     this.sellBtnAnimStart = null;
     this.lastSelectedOwned = null;
+    this.shopRefreshRects = [];
   }
 
   _easeOutBack(t) {
@@ -152,7 +201,7 @@ class ShopRenderer {
     // 背景已由 renderer.js 统一绘制，这里只画商店内容
     // 生成商品
     if (!game.shopItems) {
-      game.shopItems = generateShopItems();
+      game.shopItems = generateShopItems(game);
     }
 
     // 售出按钮出现动画触发（选中变化时重置）
@@ -440,6 +489,7 @@ class ShopRenderer {
     ];
 
     this.shopItemRects = [];
+    this.shopRefreshRects = [];
 
     modules.forEach((mod, modIdx) => {
       const modY = mod.y;
@@ -610,6 +660,27 @@ class ShopRenderer {
 
         this.shopItemRects.push({ x: cx, y: cy, w: cardW, h: cardH, index: itemIdx });
       }
+
+      // 刷新按钮（模块右上角）
+      const refreshBtnSize = 22 * s;
+      const refreshBtnX = modX + modW - refreshBtnSize - 8 * s;
+      const refreshBtnY = modY + 8 * s;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(refreshBtnX + refreshBtnSize / 2, refreshBtnY + refreshBtnSize / 2, refreshBtnSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(196,163,90,0.18)';
+      ctx.fill();
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('↻', refreshBtnX + refreshBtnSize / 2, refreshBtnY + refreshBtnSize / 2);
+      ctx.restore();
+
+      this.shopRefreshRects.push({ x: refreshBtnX, y: refreshBtnY, w: refreshBtnSize, h: refreshBtnSize, modIdx });
     });
 
     // 下一关按钮
@@ -1130,4 +1201,4 @@ class ConfirmBuyRenderer {
   }
 }
 
-module.exports = { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL, generateShopItems, buyItem, upgradeCard, applyCrystalEffects };
+module.exports = { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects };
