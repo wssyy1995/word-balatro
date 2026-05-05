@@ -56,14 +56,19 @@ function generateShopItems() {
 function buyItem(game, idx) {
   const item = game.shopItems[idx];
   if (!item || game.gold < item.cost) return false;
+
+  // 上限检查
+  if (item.type === 'witch' && (game.jokers || []).length >= 4) return false;
+  if (item.type === 'potion' && (game.potions || []).length >= 2) return false;
+
   game.gold -= item.cost;
 
   if (game.audioManager) game.audioManager.play('buy');
 
   if (item.type === 'witch') {
-    if (game.jokers.length >= 5) return false;
-    game.jokers.push({...item});
+    // 女巫牌：购买后不在此加入 jokers，成功弹窗点击"装备"后才加入
     game.shopItems[idx] = null;
+    if (game.storageManager) game.storageManager.saveProgress(game);
     return true;
   } else if (item.type === 'crystal') {
     game.crystalEffects.push({...item});
@@ -71,6 +76,7 @@ function buyItem(game, idx) {
     if (game.storageManager) game.storageManager.saveProgress(game);
     return true;
   } else if (item.type === 'potion') {
+    // 药水牌：购买后不在此加入 potions，成功弹窗点击"暂存"后才加入
     game.shopItems[idx] = null;
     if (game.storageManager) game.storageManager.saveProgress(game);
     return true;
@@ -126,6 +132,17 @@ function applyCrystalEffects(game) {
 class ShopRenderer {
   constructor(renderer) {
     this.parent = renderer;
+    this.shopSelectedOwned = null; // { type: 'jokers'|'potions', index: number } 或 null
+    this.shopSellBtnRect = null;
+    this.shopOwnedPropRects = [];
+    this.sellBtnAnimStart = null;
+    this.lastSelectedOwned = null;
+  }
+
+  _easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
 
   draw(ctx, game, W, H, s) {
@@ -138,26 +155,254 @@ class ShopRenderer {
       game.shopItems = generateShopItems();
     }
 
-    // 副标题：商店（在顶部标题下方 20px）
+    // 售出按钮出现动画触发（选中变化时重置）
+    const currentSelected = this.shopSelectedOwned;
+    if (currentSelected && (!this.lastSelectedOwned ||
+        this.lastSelectedOwned.type !== currentSelected.type ||
+        this.lastSelectedOwned.index !== currentSelected.index)) {
+      this.sellBtnAnimStart = Date.now();
+    }
+    this.lastSelectedOwned = currentSelected ? {...currentSelected} : null;
+
+    // 商店标题：占据原本游戏名的位置
     const top = (this.parent.safeTop || 0) + 20;
-    const subtitleY = top + 28 * s;
+    const subtitleY = top - 10 * s;
     const hudBottom = top + 56 * s;
 
-    // 商店标题背景图
-    if (this.parent.shopLabel && this.parent.shopLabelLoaded) {
-      const labelImg = this.parent.shopLabel;
-      const labelW = 160 * s;
-      const labelH = labelW * ((labelImg.height || 61) / (labelImg.width || 200));
-      ctx.drawImage(labelImg, (W - labelW) / 2, subtitleY - labelH / 2, labelW, labelH);
-    }
-
+    // 商店标题：shop_icon.png 装饰 + "商店" + shop_icon.png 水平镜像
     ctx.save();
-    ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('商店', W / 2, subtitleY);
+    const shopText = '商店';
+    const shopTextW = ctx.measureText(shopText).width;
+    ctx.fillText(shopText, W / 2, subtitleY);
     ctx.restore();
+
+    // 左右装饰图标（宽度+2px，高度不变，间距-2px）
+    const decoIconW = 20 * s + 2;
+    const decoIconH = 20 * s;
+    const decoGap = 10 * s - 2;
+    const decoIconY = subtitleY - decoIconH / 2;
+    if (this.parent.shopIcon && this.parent.shopIconLoaded) {
+      const leftIconX = W / 2 - shopTextW / 2 - decoGap - decoIconW;
+      ctx.drawImage(this.parent.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
+
+      const rightIconX = W / 2 + shopTextW / 2 + decoGap;
+      ctx.save();
+      ctx.translate(rightIconX + decoIconW, decoIconY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.parent.shopIcon, 0, 0, decoIconW, decoIconH);
+      ctx.restore();
+    }
+
+    // === 已购买道具卡牌栏（6格：左4女巫 + 右2药水，样式复用游戏页）===
+    const ownedY = subtitleY + 26 * s;
+    const ownedH = 92 * s;
+    const ownedW = W - 30 * s;
+    const ownedX = 15 * s;
+
+    this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#faf6ee', '#c4a35a');
+
+    // 6格布局（参数与游戏页 drawPlaying 完全一致）
+    const oPadX = 10 * s;
+    const oDividerW = 1.5 * s;
+    const oGap = 6 * s;
+    const oSlotTop = 28 * s;
+
+    const oSlotW = (ownedW - oPadX * 2 - 5 * oGap - oDividerW) / 6;
+    const oSlotH = ownedH - oSlotTop - 6 * s;
+
+    const oSlotY = ownedY + oSlotTop;
+    const oLeftStartX = ownedX + oPadX;
+    const oDividerX = oLeftStartX + 4 * oSlotW + 3.5 * oGap + oDividerW / 2;
+    const oRightStartX = oDividerX + oDividerW / 2 + oGap / 2;
+
+    // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
+    ctx.beginPath();
+    ctx.moveTo(oDividerX, oSlotY + 2 * s);
+    ctx.lineTo(oDividerX, oSlotY + oSlotH - 2 * s);
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 0.8 * s;
+    ctx.stroke();
+    // 菱形装饰
+    ctx.save();
+    ctx.translate(oDividerX, oSlotY + oSlotH / 2);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#c4a35a';
+    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+    ctx.restore();
+
+    // 分区小标签
+    ctx.save();
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#4a3065';
+    ctx.fillText('女巫牌', oLeftStartX + 2 * oSlotW + 1.5 * oGap, oSlotY - 6 * s - 4);
+    ctx.fillStyle = '#1e4a3a';
+    ctx.fillText('魔法药水牌', oRightStartX + oSlotW + 0.5 * oGap, oSlotY - 6 * s - 4);
+    ctx.restore();
+
+    const oJokers = game.jokers || [];
+    const oPotions = game.potions || [];
+    this.shopOwnedPropRects = [];
+    this.shopSellBtnRect = null;
+
+    // 左区4格：女巫牌
+    for (let i = 0; i < 4; i++) {
+      const sx = oLeftStartX + i * (oSlotW + oGap);
+      const joker = oJokers[i];
+
+      // 售出消失动画
+      const isSelling = game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp.index === i;
+      if (isSelling && joker) {
+        const sellElapsed = Date.now() - game._sellingProp.startTime;
+        const sellProgress = Math.min(sellElapsed / 400, 1);
+        if (sellProgress >= 1) {
+          game.jokers.splice(i, 1);
+          game._sellingProp = null;
+          continue;
+        }
+        ctx.save();
+        // 女巫牌：从屏幕左侧飞出（easeOutCubic，x:-400, y:30, rotation:-20）
+        const eased = 1 - Math.pow(1 - sellProgress, 3); // easeOutCubic
+        const flyX = -eased * 400 * s;
+        const flyY = eased * 30 * s;
+        const rotation = -eased * 20;
+        ctx.translate(sx + oSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.translate(-(sx + oSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(flyX, flyY);
+        this.parent._drawPropCard(ctx, joker, sx, oSlotY, oSlotW, oSlotH, s);
+        ctx.restore();
+      } else if (joker) {
+        this.parent._drawPropCard(ctx, joker, sx, oSlotY, oSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'jokers' });
+      } else {
+        this.parent._drawEmptySlot(ctx, sx, oSlotY, oSlotW, oSlotH, s);
+      }
+
+      // 售出按钮（选中时，带回弹出现动画）
+      if (this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i && joker && !isSelling) {
+        const sellBtnH = 16 * s;
+        const sellBtnY = oSlotY + oSlotH + 2 * s;
+
+        // 出现动画（easeOutBack：从卡牌底部向下弹出）
+        let appearScale = 1;
+        let appearOffsetY = 0;
+        if (this.sellBtnAnimStart) {
+          const ae = Date.now() - this.sellBtnAnimStart;
+          const ap = Math.min(ae / 200, 1);
+          const ease = this._easeOutBack(ap);
+          appearScale = ease;
+          appearOffsetY = -(1 - ease) * 8 * s;
+        }
+
+        const finalW = oSlotW * appearScale;
+        const finalH = sellBtnH * appearScale;
+        const finalX = sx + (oSlotW - finalW) / 2;
+        const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
+
+        ctx.save();
+        this.parent.roundRect(finalX, finalY, finalW, finalH, 3 * s * appearScale, '#c0392b');
+        ctx.font = `bold ${Math.floor(8 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const coinSize = 10 * s * appearScale;
+        const sellText = String(joker.cost);
+        const textW = ctx.measureText(sellText).width;
+        const contentW = coinSize + 2 * s + textW;
+        const startX = finalX + (finalW - contentW) / 2;
+        const midY = finalY + finalH / 2;
+        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+          ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+        }
+        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
+        ctx.restore();
+
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: oSlotW, h: sellBtnH, index: i, array: 'jokers' };
+      }
+    }
+
+    // 右区2格：药水牌
+    for (let i = 0; i < 2; i++) {
+      const sx = oRightStartX + i * (oSlotW + oGap);
+      const potion = oPotions[i];
+
+      // 售出消失动画
+      const isSelling = game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp.index === i;
+      if (isSelling && potion) {
+        const sellElapsed = Date.now() - game._sellingProp.startTime;
+        const sellProgress = Math.min(sellElapsed / 400, 1);
+        if (sellProgress >= 1) {
+          game.potions.splice(i, 1);
+          game._sellingProp = null;
+          continue;
+        }
+        ctx.save();
+        // 药水牌：从屏幕右侧飞出（easeOutCubic，x:400, y:30, rotation:20）
+        const eased = 1 - Math.pow(1 - sellProgress, 3); // easeOutCubic
+        const flyX = eased * 400 * s;
+        const flyY = eased * 30 * s;
+        const rotation = eased * 20;
+        ctx.translate(sx + oSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.rotate(rotation * Math.PI / 180);
+        ctx.translate(-(sx + oSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(flyX, flyY);
+        this.parent._drawPropCard(ctx, potion, sx, oSlotY, oSlotW, oSlotH, s);
+        ctx.restore();
+      } else if (potion) {
+        this.parent._drawPropCard(ctx, potion, sx, oSlotY, oSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'potions' });
+      } else {
+        this.parent._drawEmptySlot(ctx, sx, oSlotY, oSlotW, oSlotH, s);
+      }
+
+      // 售出按钮（选中时，带回弹出现动画）
+      if (this.shopSelectedOwned && this.shopSelectedOwned.type === 'potions' && this.shopSelectedOwned.index === i && potion && !isSelling) {
+        const sellBtnH = 16 * s;
+        const sellBtnY = oSlotY + oSlotH + 2 * s;
+
+        // 出现动画（easeOutBack：从卡牌底部向下弹出）
+        let appearScale = 1;
+        let appearOffsetY = 0;
+        if (this.sellBtnAnimStart) {
+          const ae = Date.now() - this.sellBtnAnimStart;
+          const ap = Math.min(ae / 200, 1);
+          const ease = this._easeOutBack(ap);
+          appearScale = ease;
+          appearOffsetY = -(1 - ease) * 8 * s;
+        }
+
+        const finalW = oSlotW * appearScale;
+        const finalH = sellBtnH * appearScale;
+        const finalX = sx + (oSlotW - finalW) / 2;
+        const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
+
+        ctx.save();
+        this.parent.roundRect(finalX, finalY, finalW, finalH, 3 * s * appearScale, '#c0392b');
+        ctx.font = `bold ${Math.floor(8 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const coinSize = 10 * s * appearScale;
+        const sellText = String(potion.cost);
+        const textW = ctx.measureText(sellText).width;
+        const contentW = coinSize + 2 * s + textW;
+        const startX = finalX + (finalW - contentW) / 2;
+        const midY = finalY + finalH / 2;
+        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+          ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+        }
+        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
+        ctx.restore();
+
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: oSlotW, h: sellBtnH, index: i, array: 'potions' };
+      }
+    }
 
     const modPad = 12 * s;
     const modW = W - 30 * s;
@@ -166,13 +411,13 @@ class ShopRenderer {
     const cardH = 110 * s;
 
     // 模块内部布局（动态计算模块高度）
-    const cardOffsetY = 38 * s;        // 卡牌距模块顶部的偏移（标题↔描述+2px，描述↔卡牌+2px）
-    const modBottomPad = 10 * s;       // 模块底部到卡牌底部的 padding
+    const cardOffsetY = 30 * s;        // 卡牌距模块顶部的偏移
+    const modBottomPad = 6 * s;        // 模块底部到卡牌底部的 padding
     const modHeight = cardOffsetY + cardH + modBottomPad;
-    const modGap = 11 * s;             // 模块之间间距+5px
+    const modGap = 6 * s;              // 模块之间间距
 
-    // 三个模块配置（基于 HUD 底部动态计算）
-    const modStartY = hudBottom + 40 * s;
+    // 三个模块配置（基于已购买道具栏底部动态计算）
+    const modStartY = ownedY + ownedH + 16 * s;
     const modules = [
       {
         title: '女巫牌',
@@ -202,23 +447,47 @@ class ShopRenderer {
       // 模块暖白背景卡片（高度动态：卡牌起始 + 卡牌高 + 底部padding）
       this.parent.roundRect(modX, modY, modW, modHeight, 10 * s, cream, gold);
 
-      // 标题栏装饰
+      // 标题栏装饰（shop_icon.png 缩小版 + 标题 + 水平镜像）
       const titleY = modY + 14 * s;
       ctx.save();
       ctx.font = `bold ${Math.floor(15 * s)}px Georgia, serif`;
       ctx.fillStyle = '#2a1f15';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`→  ${mod.title}  ←`, W / 2, titleY);
+
+      const modTitleText = mod.title;
+      const modTitleW = ctx.measureText(modTitleText).width;
+      const modIconSize = 14 * s;
+      const modIconGap = 6 * s;
+      const modTitleTotalW = modIconSize * 2 + modIconGap * 2 + modTitleW;
+      const modTitleStartX = (W - modTitleTotalW) / 2;
+
+      // 左侧缩小 shop_icon
+      if (this.parent.shopIcon && this.parent.shopIconLoaded) {
+        ctx.drawImage(this.parent.shopIcon, modTitleStartX, titleY - modIconSize / 2, modIconSize, modIconSize);
+      }
+
+      // 标题文字
+      ctx.fillText(modTitleText, modTitleStartX + modIconSize + modIconGap + modTitleW / 2, titleY);
+
+      // 右侧缩小 shop_icon（水平镜像）
+      if (this.parent.shopIcon && this.parent.shopIconLoaded) {
+        const rightModIconX = modTitleStartX + modIconSize + modIconGap + modTitleW + modIconGap;
+        ctx.save();
+        ctx.translate(rightModIconX + modIconSize, titleY - modIconSize / 2);
+        ctx.scale(-1, 1);
+        ctx.drawImage(this.parent.shopIcon, 0, 0, modIconSize, modIconSize);
+        ctx.restore();
+      }
+
       ctx.restore();
 
-      // 副标题
+      // 副标题（已移除文字，保留间距）
       ctx.save();
       ctx.font = `${Math.floor(10 * s)}px sans-serif`;
       ctx.fillStyle = '#8a7b6b';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(mod.subtitle, W / 2, titleY + 14 * s);
       ctx.restore();
 
       // 2 张道具牌
@@ -554,51 +823,71 @@ class ConfirmBuyRenderer {
       ctx.drawImage(iconData.img, cardX, cardY, cardW, cardH);
     }
 
-    // 旋转高光
-    ctx.save();
-    ctx.translate(cardX + cardW/2, cardY + cardH/2);
-    ctx.rotate(Math.PI/6);
-    const shineGrad = ctx.createLinearGradient(-cardW, 0, cardW, 0);
-    shineGrad.addColorStop(0, 'rgba(255,255,255,0)');
-    shineGrad.addColorStop(0.45, 'rgba(255,255,255,0)');
-    shineGrad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
-    shineGrad.addColorStop(0.55, 'rgba(255,255,255,0)');
-    shineGrad.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = shineGrad;
-    ctx.fillRect(-cardW, -cardH*2, cardW*2, cardH*4);
-    ctx.restore();
-
     ctx.restore(); // 恢复裁剪
     ctx.restore();
 
-    // === 亮晶晶效果（轻量闪烁点，围绕卡牌）===
+    // === 光彩夺目效果（金色脉动光晕 + 旋转十字光芒）===
     if (!isClosing) {
-      const now = Date.now();
+      const t = Date.now();
+      const cardCX = cardX + cardW / 2;
+      const cardCY = cardY + cardH / 2;
+
+      // 1. 金色脉动光晕（卡牌背后的径向渐变光环）
+      const haloR = Math.max(cardW, cardH) * 0.85;
+      const pulse = 0.5 + 0.5 * Math.sin(t / 400);
+      const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
+      haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse * contentAlpha})`);
+      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse * contentAlpha})`);
+      haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. 四角闪烁星（围绕卡牌，尺寸更大）
       const sparkles = [
-        { x: cardX - 6*s, y: cardY - 4*s, sz: 2.5, spd: 0.9 },
-        { x: cardX + cardW + 4*s, y: cardY + 8*s, sz: 2.0, spd: 1.2 },
-        { x: cardX + cardW + 2*s, y: cardY + cardH - 6*s, sz: 2.5, spd: 0.7 },
-        { x: cardX - 2*s, y: cardY + cardH + 2*s, sz: 2.0, spd: 1.0 },
-        { x: cardX + cardW/2, y: cardY - 8*s, sz: 3.0, spd: 0.8 },
-        { x: cardX + cardW*0.2, y: cardY - 2*s, sz: 1.8, spd: 1.3 },
+        { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
+        { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
+        { x: cardX + cardW + 6*s, y: cardY + cardH, r: 5, ph: 4.0 },
+        { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
       ];
-      ctx.save();
-      ctx.globalAlpha = contentAlpha;
       sparkles.forEach((sp, i) => {
-        const phase = (now * sp.spd / 1000 + i * 1.3) % (Math.PI * 2);
-        const alpha = 0.3 + 0.6 * Math.abs(Math.sin(phase));
-        const size = (sp.sz + 0.6 * Math.sin(phase)) * s;
-        ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
+        const blink = Math.abs(Math.sin(t / 350 + sp.ph));
+        const alpha = 0.3 + 0.7 * blink;
+        const r = sp.r * (0.6 + 0.4 * blink) * s;
+        ctx.save();
         ctx.globalAlpha = alpha * contentAlpha;
+        ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
         ctx.beginPath();
-        ctx.arc(sp.x, sp.y, Math.max(0.5*s, size), 0, Math.PI * 2);
+        ctx.moveTo(sp.x, sp.y - r);
+        ctx.lineTo(sp.x + r * 0.35, sp.y - r * 0.35);
+        ctx.lineTo(sp.x + r, sp.y);
+        ctx.lineTo(sp.x + r * 0.35, sp.y + r * 0.35);
+        ctx.lineTo(sp.x, sp.y + r);
+        ctx.lineTo(sp.x - r * 0.35, sp.y + r * 0.35);
+        ctx.lineTo(sp.x - r, sp.y);
+        ctx.lineTo(sp.x - r * 0.35, sp.y - r * 0.35);
+        ctx.closePath();
         ctx.fill();
+        ctx.restore();
       });
+    }
+
+    // === 底部飘带图片 ===
+    let bandH = 0;
+    if (this.parent.buySuccessBandImg && this.parent.buySuccessBandLoaded) {
+      ctx.save();
+      if (!isClosing) ctx.globalAlpha = contentAlpha;
+      const bandW = 160 * s;
+      bandH = bandW * (this.parent.buySuccessBandImg.height || 60) / (this.parent.buySuccessBandImg.width || 400);
+      const bandX = (W - bandW) / 2;
+      const bandY = cardY + cardH/2 + 2 * s + contentYShift;
+      ctx.drawImage(this.parent.buySuccessBandImg, bandX, bandY, bandW, bandH);
       ctx.restore();
     }
 
     // === 卡牌名称 ===
-    const nameY = cardY + cardH + 24 * s + contentYShift;
+    const nameY = cardY + cardH/2 + 8 * s + bandH + contentYShift;
     ctx.save();
     if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
@@ -643,10 +932,6 @@ class ConfirmBuyRenderer {
     const collectBtnH = 44 * s;
     const collectBtnY = py + ph - collectBtnH - 22 * s;
     const cpe = game._successBtnPressed ? Date.now() - (game._successBtnPressTime || 0) : 0;
-    let collectPressScale = 1;
-    if (cpe > 0 && cpe < 150) {
-      collectPressScale = 0.95;
-    }
 
     const isPotion = item.type === 'potion';
     ctx.save();
@@ -659,10 +944,14 @@ class ConfirmBuyRenderer {
       const totalW = btnW * 2 + btnGap;
       const startX = (W - totalW) / 2;
 
+      // 独立按下缩放
+      const btn1Scale = (game._successPressedBtn === 'usePotionNow' && cpe > 0 && cpe < 150) ? 0.95 : 1;
+      const btn2Scale = (game._successPressedBtn === 'stashPotion' && cpe > 0 && cpe < 150) ? 0.95 : 1;
+
       // 按钮1：立即使用（金色背景）
       const b1x = startX;
-      const b1w = btnW * collectPressScale;
-      const b1h = collectBtnH * collectPressScale;
+      const b1w = btnW * btn1Scale;
+      const b1h = collectBtnH * btn1Scale;
       const b1X = b1x + (btnW - b1w) / 2;
       const b1Y = collectBtnY + (collectBtnH - b1h) / 2 + contentYShift;
       this.parent.roundRect(b1X, b1Y, b1w, b1h, 8 * s, '#c4a35a');
@@ -674,8 +963,8 @@ class ConfirmBuyRenderer {
 
       // 按钮2：暂存（米色边框按钮）
       const b2x = startX + btnW + btnGap;
-      const b2w = btnW * collectPressScale;
-      const b2h = collectBtnH * collectPressScale;
+      const b2w = btnW * btn2Scale;
+      const b2h = collectBtnH * btn2Scale;
       const b2X = b2x + (btnW - b2w) / 2;
       const b2Y = collectBtnY + (collectBtnH - b2h) / 2 + contentYShift;
       this.parent.roundRect(b2X, b2Y, b2w, b2h, 8 * s, '#f5f0e6', '#c4a35a');
@@ -692,9 +981,10 @@ class ConfirmBuyRenderer {
       // 非药水牌：单个按钮
       const collectBtnW = 160 * s;
       const collectBtnX = (W - collectBtnW) / 2;
+      const singleScale = (game._successPressedBtn && cpe > 0 && cpe < 150) ? 0.95 : 1;
 
-      const finalBW = collectBtnW * collectPressScale;
-      const finalBH = collectBtnH * collectPressScale;
+      const finalBW = collectBtnW * singleScale;
+      const finalBH = collectBtnH * singleScale;
       const finalBX = collectBtnX + (collectBtnW - finalBW) / 2;
       const finalBY = collectBtnY + (collectBtnH - finalBH) / 2 + contentYShift;
 
@@ -703,12 +993,13 @@ class ConfirmBuyRenderer {
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const btnLabel = item.type === 'crystal' ? '使用' : '装备';
+      const btnLabel = item.type === 'crystal' ? '生效' : '装备';
       ctx.fillText(btnLabel, W / 2, finalBY + finalBH / 2);
       ctx.restore();
 
       const finalCollectY = collectBtnY;
-      this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH };
+      const btnAction = item.type === 'crystal' ? 'applyCrystal' : 'equipWitch';
+      this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH, action: btnAction };
       this.successBtn2Rect = null;
     }
   }
@@ -783,6 +1074,13 @@ class ConfirmBuyRenderer {
     ctx.fillText(item.desc, W / 2, imgBottom + 45 * s + contentYShift);
     ctx.restore();
 
+    // 检查是否达到上限
+    const isWitch = item.type === 'witch';
+    const isPotion = item.type === 'potion';
+    const witchFull = (game.jokers || []).length >= 4;
+    const potionFull = (game.potions || []).length >= 2;
+    const atLimit = (isWitch && witchFull) || (isPotion && potionFull);
+
     // 购买按钮（下压动效，无飘出）
     const btnW = 160 * s;
     const btnH = 44 * s;
@@ -795,28 +1093,40 @@ class ConfirmBuyRenderer {
     const btnY = py + ph - btnH - 28 * s + contentYShift + btnPressY;
     ctx.save();
     if (!isClosing) ctx.globalAlpha = contentAlpha;
-    this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
 
-    // coin 图标 + 金额
-    const coinSize = 20 * s;
-    const priceText = String(item.cost);
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-    const textW = ctx.measureText(priceText).width;
-    const contentW = coinSize + 6 * s + textW;
-    const startX = btnX + (btnW - contentW) / 2;
-    const midY = btnY + btnH / 2;
-    if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-      ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+    if (atLimit) {
+      // 已达上限：灰色禁用按钮
+      this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#a09890');
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('已达上限', W / 2, btnY + btnH / 2);
+    } else {
+      // 正常购买按钮
+      this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
+
+      // coin 图标 + 金额
+      const coinSize = 20 * s;
+      const priceText = String(item.cost);
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      const textW = ctx.measureText(priceText).width;
+      const contentW = coinSize + 6 * s + textW;
+      const startX = btnX + (btnW - contentW) / 2;
+      const midY = btnY + btnH / 2;
+      if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+        ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+      }
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(priceText, startX + coinSize + 6 * s, midY);
     }
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(priceText, startX + coinSize + 6 * s, midY);
     ctx.restore();
 
     // 存储点击区域（固定位置，不含动画偏移）
     const finalBtnY = py + ph - btnH - 28 * s;
-    this.confirmBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
+    this.confirmBtnRect = atLimit ? null : { x: btnX, y: finalBtnY, w: btnW, h: btnH };
   }
 }
 

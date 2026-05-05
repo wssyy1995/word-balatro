@@ -174,12 +174,20 @@ function handleInput(x, y) {
         if (btnHit) {
           vibrate();
           game._successBtnPressed = true;
+          game._successPressedBtn = btnHit.action;
           game._successBtnPressTime = Date.now();
           setTimeout(() => {
             game._successBtnPressed = false;
+            game._successPressedBtn = null;
+            // 女巫牌且点击"装备"
+            if (btnHit.action === 'equipWitch' && game._confirmBuyItemData) {
+              game.jokers.push({...game._confirmBuyItemData});
+              if (game.storageManager) game.storageManager.saveProgress(game);
+            }
             // 药水牌且点击"暂存"
             if (btnHit.action === 'stashPotion' && game._confirmBuyItemData) {
               game.potions.push({...game._confirmBuyItemData});
+              if (game.storageManager) game.storageManager.saveProgress(game);
             }
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
@@ -187,6 +195,7 @@ function handleInput(x, y) {
               game._prePotionState = 'shop';
               game.state = 'potion';
             }
+            // 水晶球点击"生效"（购买时已生效，无需额外处理）
             game._closingConfirmBuy = true;
             game._closeConfirmBuyStartTime = Date.now();
           }, 300);
@@ -222,6 +231,43 @@ function handleInput(x, y) {
       game._closingConfirmBuy = true;
       game._closeConfirmBuyStartTime = Date.now();
       return;
+    }
+
+    // 检测已购买道具栏点击（选中/取消选中）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopOwnedPropRects) {
+      const propHit = renderer.hitTest(x, y, renderer.shopRenderer.shopOwnedPropRects);
+      if (propHit) {
+        vibrate();
+        const prev = renderer.shopRenderer.shopSelectedOwned;
+        if (prev && prev.type === propHit.array && prev.index === propHit.index) {
+          renderer.shopRenderer.shopSelectedOwned = null;
+        } else {
+          renderer.shopRenderer.shopSelectedOwned = { type: propHit.array, index: propHit.index };
+        }
+        return;
+      }
+    }
+
+    // 检测售出按钮点击
+    if (renderer.shopRenderer && renderer.shopRenderer.shopSellBtnRect) {
+      const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
+      if (sellHit) {
+        vibrate();
+        const arr = game[sellHit.array];
+        if (arr && arr[sellHit.index]) {
+          const item = arr[sellHit.index];
+          game.gold += item.cost;
+          // 启动售出消失动画（400ms 后实际移除）
+          game._sellingProp = {
+            type: sellHit.array,
+            index: sellHit.index,
+            startTime: Date.now(),
+          };
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress(game);
+        }
+        return;
+      }
     }
 
     // 正常商店点击

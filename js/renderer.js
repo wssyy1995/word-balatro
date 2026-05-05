@@ -96,6 +96,19 @@ class Renderer {
       }
     });
     
+    // 加载计分方块装饰线
+    this.scoreLineImg = null;
+    this.scoreLineLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/score_line.png';
+      img.onload = () => { this.scoreLineLoaded = true; };
+      img.onerror = () => { this.scoreLineLoaded = false; };
+      this.scoreLineImg = img;
+    } catch (e) {
+      this.scoreLineLoaded = false;
+    }
+    
     // 加载预览区装饰图
     this.previewMark = null;
     this.previewMarkLoaded = false;
@@ -133,6 +146,19 @@ class Renderer {
       this.searchIcon = img;
     } catch (e) {
       this.searchIconLoaded = false;
+    }
+    
+    // 加载商店图标
+    this.shopIcon = null;
+    this.shopIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/shop_icon.png';
+      img.onload = () => { this.shopIconLoaded = true; };
+      img.onerror = () => { this.shopIconLoaded = false; };
+      this.shopIcon = img;
+    } catch (e) {
+      this.shopIconLoaded = false;
     }
     
     // 加载金币图标
@@ -211,6 +237,19 @@ class Renderer {
     } catch (e) {
       this.witchHatLoaded = false;
     }
+
+    // 加载购买成功弹窗底部飘带
+    this.buySuccessBandImg = null;
+    this.buySuccessBandLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/buy_succes_band.png';
+      img.onload = () => { this.buySuccessBandLoaded = true; };
+      img.onerror = () => { this.buySuccessBandLoaded = false; };
+      this.buySuccessBandImg = img;
+    } catch (e) {
+      this.buySuccessBandLoaded = false;
+    }
     
     // 加载道具卡牌图标
     this.shopCardImages = {};
@@ -263,8 +302,117 @@ class Renderer {
     }
   }
 
+  // 绘制虚线空位
+  _drawEmptySlot(ctx, x, y, w, h, s) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(196,163,90,0.3)';
+    ctx.lineWidth = 1.2 * s;
+    ctx.setLineDash([3 * s, 3 * s]);
+    ctx.beginPath();
+    const r = 4 * s;
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // 绘制已购买道具卡牌（cover模式裁剪到空位大小+底部蒙层+名字）
+  _drawPropCard(ctx, prop, x, y, w, h, s) {
+    const iconName = prop.trigger || prop.effect;
+    const iconData = this.shopCardImages[iconName];
+    const offsetY = prop._jumpOffsetY || 0;
+    const finalY = y + offsetY;
+    const r = 4 * s;
+
+    // 如果有触发状态，先画紫色边框（在 clip 之外）
+    if (prop._triggered) {
+      ctx.save();
+      ctx.strokeStyle = '#9b59b6';
+      ctx.lineWidth = 2.5 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.6)';
+      ctx.shadowBlur = 10 * s;
+      ctx.beginPath();
+      ctx.moveTo(x + r, finalY);
+      ctx.lineTo(x + w - r, finalY);
+      ctx.quadraticCurveTo(x + w, finalY, x + w, finalY + r);
+      ctx.lineTo(x + w, finalY + h - r);
+      ctx.quadraticCurveTo(x + w, finalY + h, x + w - r, finalY + h);
+      ctx.lineTo(x + r, finalY + h);
+      ctx.quadraticCurveTo(x, finalY + h, x, finalY + h - r);
+      ctx.lineTo(x, finalY + r);
+      ctx.quadraticCurveTo(x, finalY, x + r, finalY);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 圆角裁剪（与空位形状一致）
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + r, finalY);
+    ctx.lineTo(x + w - r, finalY);
+    ctx.quadraticCurveTo(x + w, finalY, x + w, finalY + r);
+    ctx.lineTo(x + w, finalY + h - r);
+    ctx.quadraticCurveTo(x + w, finalY + h, x + w - r, finalY + h);
+    ctx.lineTo(x + r, finalY + h);
+    ctx.quadraticCurveTo(x, finalY + h, x, finalY + h - r);
+    ctx.lineTo(x, finalY + r);
+    ctx.quadraticCurveTo(x, finalY, x + r, finalY);
+    ctx.closePath();
+    ctx.clip();
+
+    if (iconData && iconData.loaded && iconData.img) {
+      const origW = iconData.img.width || 200;
+      const origH = iconData.img.height || 300;
+      const aspect = origW / origH;
+      const cardAspect = w / h;
+      let drawW, drawH, imgX, imgY;
+      if (aspect > cardAspect) {
+        drawH = h;
+        drawW = drawH * aspect;
+        imgX = x + (w - drawW) / 2;
+        imgY = finalY;
+      } else {
+        drawW = w;
+        drawH = drawW / aspect;
+        imgX = x;
+        imgY = finalY + (h - drawH) / 2;
+      }
+      ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
+    } else {
+      this.roundRect(x, finalY, w, h, 4 * s, '#2d2d3a');
+      this.drawShopCardIcon(x + (w - 24 * s) / 2, finalY + (h - 24 * s) / 2, 24 * s, iconName);
+    }
+    ctx.restore();
+
+    // 底部蒙层（跟随偏移）
+    const maskH = h * 0.35;
+    const maskY = finalY + h - maskH;
+    const maskR = Math.min(r, maskH / 2);
+    this.roundRect(x + 1, maskY, w - 2, maskH, maskR, 'rgba(0,0,0,0.55)');
+
+    // 名字（自适应字号）
+    ctx.save();
+    const fontSize = Math.min(Math.floor(10 * s), Math.floor(w / 6));
+    ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(prop.name, x + w / 2, maskY + maskH / 2);
+    ctx.restore();
+  }
+
   // 绘制圆角矩形
-  roundRect(x, y, w, h, r, fill, stroke) {
+  roundRect(x, y, w, h, r, fill, stroke, lineWidth = 2) {
     const ctx = this.ctx;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -278,7 +426,7 @@ class Renderer {
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
   }
 
   // 绘制文字
@@ -481,15 +629,6 @@ class Renderer {
     }
     // 记录点击区域
     this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
-
-    // 游戏标题
-    ctx.save();
-    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#8b6914';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
-    ctx.restore();
   }
 
   drawHUD(game) {
@@ -501,11 +640,22 @@ class Renderer {
 
     this.drawTopHeader();
 
+    // 游戏标题（仅在非商店状态显示）
+    if (game.state !== 'shop') {
+      ctx.save();
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+      ctx.restore();
+    }
+
     // === 目标分 / 当前 卡片式 top bar ===
-    const barW = Math.min(320 * s, W - 40 * s);
+    const barW = W - 20 * s;
     const barH = 56 * s;
-    const barX = (W - barW) / 2;
-    const barY = top;
+    const barX = 10 * s;
+    const barY = top + 8;
     const r = 10 * s;
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
@@ -675,7 +825,7 @@ class Renderer {
     // === 从底部按钮倒推布局 ===
     // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
-    const boxSize = 48 * s;
+    const boxSize = 56 * s;
     const top = (this.safeTop || 0) + 20;
     const hudBottom = top + 56 * s;
     const maxRows = 3;
@@ -693,94 +843,74 @@ class Renderer {
 
     this.cardRects = []; // 存储卡牌点击区域
 
-    // ===== 道具卡牌栏（HUD 和 方块区 之间）=====
+    // ===== 道具卡牌栏（6格：左4女巫 + 右2药水，竖分割线）=====
     const propW = W - 20 * s;
     const propX = 10 * s;
+    const padX = 10 * s;
+    const dividerW = 1.5 * s;
+    const gap = 6 * s;
+    const slotTopPad = 28 * s;
+
+    const slotW = (propW - padX * 2 - 5 * gap - dividerW) / 6;
+    const slotH = propBarH - slotTopPad - 6 * s;
+
+    const slotY = propY + slotTopPad;
+    const leftStartX = propX + padX;
+    const dividerX = leftStartX + 4 * slotW + 3.5 * gap + dividerW / 2;
+    const rightStartX = dividerX + dividerW / 2 + gap / 2;
+
     // 背景
     this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
-    // 标题
-    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#5a4a2a';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText('已购买道具卡牌', W / 2, propY + 5 * s);
-    // 标题下装饰线
+
+    // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
     ctx.beginPath();
-    ctx.moveTo(W / 2 - 60 * s, propY + 20 * s);
-    ctx.lineTo(W / 2 + 60 * s, propY + 20 * s);
+    ctx.moveTo(dividerX, slotY + 2 * s);
+    ctx.lineTo(dividerX, slotY + slotH - 2 * s);
     ctx.strokeStyle = '#c4a35a';
-    ctx.lineWidth = 1 * s;
+    ctx.lineWidth = 0.8 * s;
     ctx.stroke();
+    // 菱形装饰
+    ctx.save();
+    ctx.translate(dividerX, slotY + slotH / 2);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#c4a35a';
+    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+    ctx.restore();
 
-    const allProps = [...(game.jokers || []), ...(game.potions || [])];
-    if (allProps.length > 0) {
-      const jokerCardH = 50 * s;
-      // 按最多5张计算宽度
-      const jokerCardW = Math.min(110 * s, (propW - 20 * s - 4 * 8 * s) / 5);
-      const jokerGap = 8 * s;
-      const propsTotalW = allProps.length * jokerCardW + (allProps.length - 1) * jokerGap;
-      let jx = (W - propsTotalW) / 2;
-      const jy = propY + 32 * s;
-      this.potionPropRects = [];
-      allProps.forEach((prop, idx) => {
-        const isPotion = prop.type === 'potion';
-        const iconName = prop.trigger || prop.effect;
-        const iconData = this.shopCardImages[iconName];
+    // 分区小标签
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#4a3065';
+    ctx.fillText('女巫牌', leftStartX + 2 * slotW + 1.5 * gap, slotY - 6 * s - 4);
+    ctx.fillStyle = '#1e4a3a';
+    ctx.fillText('魔法药水牌', rightStartX + slotW + 0.5 * gap, slotY - 6 * s - 4);
 
-        // 直接绘制卡牌图片，cover 模式填满卡牌区域
-        if (iconData && iconData.loaded && iconData.img) {
-          const origW = iconData.img.width || 200;
-          const origH = iconData.img.height || 300;
-          const aspect = origW / origH;
-          const cardAspect = jokerCardW / jokerCardH;
-          let drawW, drawH, imgX, imgY;
-          if (aspect > cardAspect) {
-            drawH = jokerCardH;
-            drawW = drawH * aspect;
-            imgX = jx + (jokerCardW - drawW) / 2;
-            imgY = jy;
-          } else {
-            drawW = jokerCardW;
-            drawH = drawW / aspect;
-            imgX = jx;
-            imgY = jy + (jokerCardH - drawH) / 2;
-          }
-          ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
-        } else {
-          // fallback：占位背景 + 小图标
-          this.roundRect(jx, jy, jokerCardW, jokerCardH, 6 * s, '#2d2d3a');
-          this.drawShopCardIcon(jx + (jokerCardW - 28 * s) / 2, jy + (jokerCardH - 28 * s) / 2, 28 * s, iconName);
-        }
+    const jokers = game.jokers || [];
+    const potions = game.potions || [];
+    this.potionPropRects = [];
 
-        // 底部蒙层
-        const maskH = jokerCardH * 0.35;
-        const maskY = jy + jokerCardH - maskH;
-        ctx.fillStyle = 'rgba(0,0,0,0.55)';
-        ctx.fillRect(jx, maskY, jokerCardW, maskH);
+    // 左区4格：女巫牌
+    for (let i = 0; i < 4; i++) {
+      const sx = leftStartX + i * (slotW + gap);
+      const joker = jokers[i];
+      if (joker) {
+        this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
+      } else {
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s);
+      }
+    }
 
-        // 名字写在蒙层上
-        ctx.save();
-        ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(prop.name, jx + jokerCardW / 2, maskY + maskH / 2);
-        ctx.restore();
-
-        // 存储药水牌点击区域
-        if (isPotion) {
-          this.potionPropRects.push({ x: jx, y: jy, w: jokerCardW, h: jokerCardH, potionIndex: idx - (game.jokers || []).length });
-        }
-
-        jx += jokerCardW + jokerGap;
-      });
-    } else {
-      this.potionPropRects = [];
-      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = '#999';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('暂无道具', W / 2, propY + 52 * s);
+    // 右区2格：药水牌
+    for (let i = 0; i < 2; i++) {
+      const sx = rightStartX + i * (slotW + gap);
+      const potion = potions[i];
+      if (potion) {
+        this._drawPropCard(ctx, potion, sx, slotY, slotW, slotH, s);
+        this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
+      } else {
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s);
+      }
     }
 
     // 单词预览区白色蒙层（常驻，固定6个字母宽度）
@@ -788,24 +918,7 @@ class Renderer {
     const maskH = 38 * s;
     const maskX = W / 2 - maskW / 2;
     const maskY = wordAreaY - maskH / 2;
-    this.roundRect(maskX, maskY, maskW, maskH, 8 * s, 'rgba(255,255,255,0.35)');
-
-    // 蒙层左右装饰图（保持原图宽高比，不压缩变形）
-    if (this.previewMark && this.previewMarkLoaded) {
-      const imgW = this.previewMark.width || 200;
-      const imgH = this.previewMark.height || 104;
-      const markH = maskH * 0.6;
-      const markW = markH * (imgW / imgH) * 0.7;
-      const gap = 4 * s;
-      // 左边：正常
-      ctx.drawImage(this.previewMark, maskX - markW - gap, maskY + 5 * s, markW, markH);
-      // 右边：水平镜像
-      ctx.save();
-      ctx.translate(maskX + maskW + gap + markW, maskY + 5 * s);
-      ctx.scale(-1, 1);
-      ctx.drawImage(this.previewMark, 0, 0, markW, markH);
-      ctx.restore();
-    }
+    this.roundRect(maskX, maskY, maskW, maskH, 10 * s, 'rgba(255,255,255,0.35)', 'rgba(196,163,90,0.5)', 1 * s);
 
     // 预览区域（在卡牌上方）
     const selected = game.getSelectedCards();
@@ -890,10 +1003,21 @@ class Renderer {
           currentJumpIdx = Math.floor(jumpElapsed / letterInterval);
           const isAllJumped = currentJumpIdx >= cardsInOrder.length;
           if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
-          // 计算累加分数
+          const jokers = game.jokers || [];
+          // 计算累加分数（考虑女巫牌对单个字母的加成）
           for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
-            accumulatedScore += cardsInOrder[i].score;
+            let score = cardsInOrder[i].score;
+            const triggered = pc.jokerTriggers?.[i] || [];
+            triggered.forEach(jIdx => {
+              const joker = jokers[jIdx];
+              if (joker && joker.value) score *= joker.value;
+            });
+            accumulatedScore += score;
           }
+
+          // 先清除所有女巫牌跳跃偏移
+          jokers.forEach(j => { if (j) j._jumpOffsetY = 0; });
+
           // 给跳跃中的卡牌设置偏移（所有字母跳完后不再跳跃）
           cardsInOrder.forEach((card, i) => {
             if (isAllJumped) {
@@ -902,10 +1026,32 @@ class Renderer {
               const jumpProgress = ((jumpElapsed % letterInterval) / 200);
               const jumpH = 12 * s * Math.sin(Math.min(jumpProgress, 1) * Math.PI);
               card.jumpOffsetY = -Math.max(0, jumpH);
+
+              // 同步触发对应的女巫牌（紫色边框 + 同步跳跃）
+              const triggered = pc.jokerTriggers?.[i] || [];
+              triggered.forEach(jIdx => {
+                const joker = jokers[jIdx];
+                if (joker) {
+                  joker._triggered = true;
+                  joker._jumpOffsetY = -Math.max(0, jumpH);
+                }
+              });
             } else if (i < currentJumpIdx) {
               card.jumpOffsetY = 0;
             }
           });
+
+          // 全局触发的女巫牌保持紫色边框激活（不跳跃）
+          const globalTriggered = pc.globalTriggered || [];
+          globalTriggered.forEach(jIdx => {
+            const joker = jokers[jIdx];
+            if (joker) joker._triggered = true;
+          });
+
+          // 所有字母跳完后，清除女巫牌跳跃偏移
+          if (isAllJumped) {
+            jokers.forEach(j => { if (j) j._jumpOffsetY = 0; });
+          }
         }
 
         // === 阶段2: 显示长度 ===
@@ -920,13 +1066,7 @@ class Renderer {
           const totalScore = pc.result.score;
           const top = (this.safeTop || 0) + 20;
           const barH = 56 * s;
-          this._startFlyingScore(
-            totalScore,
-            rightBoxX + boxSize + 20 * s + 3 * s + 20 * s,
-            boxY + boxSize / 2,
-            W * 0.75 + 3 * s,
-            top + barH * 0.68
-          );
+          this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY);
         }
 
         // 渲染方块数字
@@ -975,11 +1115,41 @@ class Renderer {
       ctx.textBaseline = 'middle';
       ctx.fillText(word, W / 2, wordAreaY);
       ctx.restore();
+    } else {
+      // 未选择任何字母牌：显示提示文字
+      ctx.save();
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = 'rgba(90,74,42,0.55)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('选择字母牌组成单词', W / 2, wordAreaY);
+      ctx.restore();
     }
 
     // 分数预览（两个方块）—— 始终显示背景图
     const scoreColor = valid ? '#3498db' : (invalid ? '#e74c3c' : '#888');
     const multColor = valid ? '#2ecc71' : (invalid ? '#e74c3c' : '#888');
+
+    // 计分方块两侧装饰线（score_line.png）
+    if (this.scoreLineImg && this.scoreLineLoaded) {
+      const lineImgW = this.scoreLineImg.width || 20;
+      const lineImgH = this.scoreLineImg.height || 80;
+      const lineAspect = lineImgW / lineImgH;
+      const lineH = boxSize * 0.4;
+      const lineW = lineH * lineAspect;
+      const lineGap = 4 * s;
+      const lineY = boxY + (boxSize - lineH) / 2;
+
+      // 左侧：第一个方块左边
+      ctx.drawImage(this.scoreLineImg, leftBoxX - lineW - lineGap, lineY, lineW, lineH);
+
+      // 右侧：第二个方块右边（水平镜像）
+      ctx.save();
+      ctx.translate(rightBoxX + boxSize + lineGap + lineW, lineY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.scoreLineImg, 0, 0, lineW, lineH);
+      ctx.restore();
+    }
 
     // 左：字母分（背景图）
     const letterScoreImg = this.scoreBoxImages['letter_score'];
@@ -1323,14 +1493,18 @@ class Renderer {
     ctx.restore();
   }
 
-  // ===== 飞行总分动画 =====
-  _startFlyingScore(value, startX, startY, endX, endY) {
+  _easeOutBackStrong(t) {
+    const c1 = 2.5;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+
+  // ===== 飞行总分动画（果冻弹出 + 停留 + 淡出） =====
+  _startFlyingScore(value, startX, startY) {
     this.flyingScore = {
       value,
-      startX, startY, endX, endY,
+      startX, startY,
       startTime: Date.now(),
-      holdDuration: 800, // 停留 800ms
-      flyDuration: 800,  // 飞行 800ms
     };
     // 锁定 HUD 分数动画，等飞行结束后再更新
     this._scoreUpdateLocked = true;
@@ -1341,35 +1515,44 @@ class Renderer {
     const fs = this.flyingScore;
     const elapsed = Date.now() - fs.startTime;
 
+    const appearDuration = 400;
+    const holdDuration = 800;
+    const fadeDuration = 300;
+    const totalDuration = appearDuration + holdDuration + fadeDuration;
+
     ctx.save();
     ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
     ctx.fillStyle = '#c4a35a';
-    ctx.textAlign = 'center';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(255,215,0,0.25)';
+    ctx.shadowBlur = 20 * s;
 
-    if (elapsed < fs.holdDuration) {
-      // 阶段1: 在方块右边停留显示
-      // 淡金光晕
-      ctx.shadowColor = 'rgba(255,215,0,0.25)';
-      ctx.shadowBlur = 20 * s;
+    if (elapsed < appearDuration) {
+      // 阶段1: 果冻弹出（easeOutBackStrong）
+      const progress = elapsed / appearDuration;
+      const ease = this._easeOutBackStrong(progress);
+      const scale = ease;
+      const offsetY = (1 - ease) * 15 * s;
+
+      ctx.translate(fs.startX, fs.startY + offsetY);
+      ctx.scale(scale, scale);
+      ctx.fillText(`+${fs.value}`, 0, 0);
+    } else if (elapsed < appearDuration + holdDuration) {
+      // 阶段2: 停留
+      ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
+    } else if (elapsed < totalDuration) {
+      // 阶段3: 淡出
+      const fadeProgress = (elapsed - appearDuration - holdDuration) / fadeDuration;
+      ctx.globalAlpha = 1 - fadeProgress;
       ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
     } else {
-      // 阶段2: 淡出（300ms）
-      const fadeElapsed = elapsed - fs.holdDuration;
-      const fadeDuration = 300;
-      const fadeProgress = Math.min(fadeElapsed / fadeDuration, 1);
-      ctx.globalAlpha = 1 - fadeProgress;
-      ctx.shadowColor = 'rgba(255,215,0,0.25)';
-      ctx.shadowBlur = 20 * s;
-      ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
-
-      if (fadeProgress >= 1) {
-        this.flyingScore = null;
-        this._scoreUpdateLocked = false;
-        if (this.lastScore !== game.score) {
-          this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
-          this.lastScore = game.score;
-        }
+      // 动画结束
+      this.flyingScore = null;
+      this._scoreUpdateLocked = false;
+      if (this.lastScore !== game.score) {
+        this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+        this.lastScore = game.score;
       }
     }
     ctx.restore();

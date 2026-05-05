@@ -232,28 +232,53 @@ function findValidWordInHand(hand) {
 function calcWordScore(cards, jokers) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
-  let baseScore = 0;
   let mult = cards.length; // 基础倍率 = 单词长度
   let hasFace = false;
-
   for (const c of cards) {
-    baseScore += c.score;
     if (c.isFace) hasFace = true;
   }
 
   const word = cards.map(c => c.letter.toLowerCase()).join('');
 
+  // 计算每个字母的倍率（女巫牌对单个字母的加成）
+  const cardMults = cards.map(() => 1);
+
   for (const j of jokers) {
     if (j.type !== 'witch') continue;
     switch (j.trigger) {
-      case 'always': baseScore += j.value; break;
-      case 'letter_a': if (cards.some(c => c.letter === 'A')) mult *= j.value; break;
-      case 'letter_e': if (cards.some(c => c.letter === 'E')) mult *= j.value; break;
-      case 'has_vowel': if (cards.some(c => 'AEIOU'.includes(c.letter))) mult *= j.value; break;
-      case 'length_5': if (cards.length >= 5) mult *= j.value; break;
-      case 'length_6': if (cards.length >= 6) mult *= j.value; break;
-      case 'has_face': if (hasFace) mult *= j.value; break;
-      case 'high_letter': if (cards.some(c => ['J','Q','X','Z'].includes(c.letter))) mult *= j.value; break;
+      case 'always': break; // 在 baseScore 计算后单独处理
+      case 'letter_a':
+        cards.forEach((c, i) => { if (c.letter === 'A') cardMults[i] *= j.value; });
+        break;
+      case 'letter_e':
+        cards.forEach((c, i) => { if (c.letter === 'E') cardMults[i] *= j.value; });
+        break;
+      case 'has_vowel':
+        cards.forEach((c, i) => { if ('AEIOU'.includes(c.letter)) cardMults[i] *= j.value; });
+        break;
+      case 'high_letter':
+        cards.forEach((c, i) => { if (['J','Q','X','Z'].includes(c.letter)) cardMults[i] *= j.value; });
+        break;
+      case 'has_face':
+        if (hasFace) mult *= j.value;
+        break;
+      case 'length_5':
+        if (cards.length >= 5) mult *= j.value;
+        break;
+      case 'length_6':
+        if (cards.length >= 6) mult *= j.value;
+        break;
+    }
+  }
+
+  let baseScore = 0;
+  for (let i = 0; i < cards.length; i++) {
+    baseScore += cards[i].score * cardMults[i];
+  }
+
+  for (const j of jokers) {
+    if (j.type === 'witch' && j.trigger === 'always') {
+      baseScore += j.value;
     }
   }
 
@@ -490,6 +515,41 @@ class Game {
     this.pendingCheck.resolveTime = Date.now();
     this.pendingCheck.animPhase = 0;
 
+    // 计算每个字母跳跃时触发的女巫牌索引（只对单个字母有加成的）
+    const jokers = this.jokers || [];
+    const jokerTriggers = [];
+    for (let i = 0; i < playedInOrder.length; i++) {
+      const card = playedInOrder[i];
+      const triggered = [];
+      for (let j = 0; j < jokers.length; j++) {
+        const joker = jokers[j];
+        if (joker.type !== 'witch') continue;
+        let match = false;
+        switch (joker.trigger) {
+          case 'letter_a': if (card.letter === 'A') match = true; break;
+          case 'letter_e': if (card.letter === 'E') match = true; break;
+          case 'has_vowel': if ('AEIOU'.includes(card.letter)) match = true; break;
+          case 'high_letter': if (['J','Q','X','Z'].includes(card.letter)) match = true; break;
+        }
+        if (match) triggered.push(j);
+      }
+      jokerTriggers.push(triggered);
+    }
+    // 全局触发的女巫牌（整体倍率 / 固定加分，不关联单个字母）
+    const globalTriggered = [];
+    for (let j = 0; j < jokers.length; j++) {
+      const joker = jokers[j];
+      if (joker.type !== 'witch') continue;
+      switch (joker.trigger) {
+        case 'length_5': if (playedInOrder.length >= 5) globalTriggered.push(j); break;
+        case 'length_6': if (playedInOrder.length >= 6) globalTriggered.push(j); break;
+        case 'has_face': if (playedInOrder.some(c => c.isFace)) globalTriggered.push(j); break;
+        case 'always': globalTriggered.push(j); break;
+      }
+    }
+    this.pendingCheck.jokerTriggers = jokerTriggers;
+    this.pendingCheck.globalTriggered = globalTriggered;
+
     if (this.audioManager) {
       this.audioManager.play('valid');
     }
@@ -534,7 +594,12 @@ class Game {
   _executePlayHand(playedCards, playedInOrder, result) {
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
-    
+    // 清除女巫牌触发状态
+    (this.jokers || []).forEach(j => {
+      j._triggered = false;
+      j._jumpOffsetY = 0;
+    });
+
     this.score += result.score;
     this.totalScore += result.score;
 
