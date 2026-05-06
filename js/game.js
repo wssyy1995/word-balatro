@@ -102,7 +102,7 @@ function drawWithSafety(deck, count, round, safetyRounds) {
 function ensureValidWordInHand(deck, hand) {
   if (hasValidWordInHand(hand)) return;
 
-  const seedWord = getSeedWord(6, 3);
+  const seedWord = getSeedWord(3, 6);
   const seedLetters = seedWord.toUpperCase().split('');
 
   for (const letter of seedLetters) {
