@@ -1,7 +1,7 @@
 // ===== 游戏核心逻辑 =====
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
-  WORD_DATA,
+  WORD_DATA, SEED_WORDS,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords
 } = require('./data');
@@ -63,7 +63,8 @@ function draw(deck, count) {
 }
 
 function getSeedWord(minLen = 3, maxLen = 6) {
-  const candidates = [...WORD_DATA.keys()].filter(w => w.length >= minLen && w.length <= maxLen);
+  // 从保底词池（500个高频常用词）中按长度过滤后随机选取
+  const candidates = SEED_WORDS.filter(w => w.length >= minLen && w.length <= maxLen);
   if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
   return 'cat';
 }
