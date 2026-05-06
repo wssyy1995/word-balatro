@@ -205,32 +205,6 @@ function handleInput(x, y) {
         return; // 点击外部不关闭
       }
 
-      // 正在按钮按下动画中，忽略重复点击
-      if (game._confirmBuyPressed) return;
-
-      // 检测确认按钮点击
-      if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.confirmBtnRect) {
-        const btnHit = renderer.hitTest(x, y, [renderer.confirmBuyRenderer.confirmBtnRect]);
-        if (btnHit) {
-          vibrate();
-          game._confirmBuyPressed = true;
-          game._confirmBuyPressTime = Date.now();
-          setTimeout(() => {
-            // 先保存商品数据（buyItem 会将其设为 null）
-            const item = game.shopItems[game.confirmBuyItem];
-            game._confirmBuyItemData = item ? {...item} : null;
-            buyItem(game, game.confirmBuyItem);
-            game._confirmBuyPressed = false;
-            game._confirmBuySuccess = true;
-            game._confirmBuySuccessTime = Date.now();
-
-          }, 200);
-          return;
-        }
-      }
-      // 点击弹窗外区域 → 关闭弹窗（取消）
-      game._closingConfirmBuy = true;
-      game._closeConfirmBuyStartTime = Date.now();
       return;
     }
 
@@ -281,16 +255,32 @@ function handleInput(x, y) {
       }
     }
 
-    // 正常商店点击
-    if (renderer.shopRenderer && renderer.shopRenderer.shopItemRects) {
-      const itemHit = renderer.hitTest(x, y, renderer.shopRenderer.shopItemRects);
-      if (itemHit) {
+    // 点击价格按钮直接购买（跳过确认弹窗）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopPriceBtnRects) {
+      const priceHit = renderer.hitTest(x, y, renderer.shopRenderer.shopPriceBtnRects);
+      if (priceHit) {
         vibrate();
-        const item = game.shopItems[itemHit.index];
-        if (item && (item.type === 'witch' || item.type === 'crystal' || item.type === 'potion')) {
-          // 女巫/水晶球/药水 打开确认弹窗
-          game.confirmBuyItem = itemHit.index;
-        }
+        const item = game.shopItems[priceHit.index];
+        if (!item) return;
+        // 金币不足或已达上限，直接忽略
+        if (game.gold < item.cost) return;
+        if (item.type === 'witch' && (game.jokers || []).length >= 4) return;
+        if (item.type === 'potion' && (game.potions || []).length >= 2) return;
+
+        // 按下动效
+        renderer.shopRenderer.priceBtnPressed = { index: priceHit.index, pressTime: Date.now() };
+
+        setTimeout(() => {
+          renderer.shopRenderer.priceBtnPressed = null;
+          // 执行购买
+          game._confirmBuyItemData = item ? {...item} : null;
+          const success = buyItem(game, priceHit.index);
+          if (success) {
+            game.confirmBuyItem = priceHit.index;
+            game._confirmBuySuccess = true;
+            game._confirmBuySuccessTime = Date.now();
+          }
+        }, 200);
         return;
       }
     }

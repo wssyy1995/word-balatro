@@ -187,6 +187,8 @@ class ShopRenderer {
     this.sellBtnAnimStart = null;
     this.lastSelectedOwned = null;
     this.shopRefreshRects = [];
+    this.shopPriceBtnRects = [];
+    this.priceBtnPressed = null; // { index, pressTime }
   }
 
   _easeOutBack(t) {
@@ -489,8 +491,8 @@ class ShopRenderer {
       },
     ];
 
-    this.shopItemRects = [];
     this.shopRefreshRects = [];
+    this.shopPriceBtnRects = [];
 
     modules.forEach((mod, modIdx) => {
       const modY = mod.y;
@@ -620,17 +622,25 @@ class ShopRenderer {
         drawWrappedText(ctx, item.desc, rightCX, cy + 42 * s, descMaxW, 12 * s);
 
         // 价格按钮（暖米色，带凸起感）
-        const priceW = cardW - 16 * s - 2;
+        const priceW = cardW - 26 * s - 2;
         const priceH = 24 * s;
         const priceX = cx + (cardW - priceW) / 2;
         const priceY = cy + cardH - priceH - 7 * s;
+
+        // 按下动效
+        let pressOffset = 0;
+        const isPressed = this.priceBtnPressed && this.priceBtnPressed.index === itemIdx;
+        if (isPressed) {
+          const pe = Date.now() - this.priceBtnPressed.pressTime;
+          if (pe < 150) pressOffset = 2 * s;
+        }
 
         // 底部投影营造凸起
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.18)';
         ctx.shadowBlur = 3 * s;
         ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(priceX, priceY, priceW, priceH, 6 * s, '#e8dcc8');
+        this.parent.roundRect(priceX, priceY + pressOffset, priceW, priceH, 6 * s, '#e8dcc8');
         ctx.restore();
 
         // 顶部高光条
@@ -638,8 +648,8 @@ class ShopRenderer {
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 1.2 * s;
         ctx.beginPath();
-        ctx.moveTo(priceX + 5 * s, priceY + 2 * s);
-        ctx.lineTo(priceX + priceW - 5 * s, priceY + 2 * s);
+        ctx.moveTo(priceX + 5 * s, priceY + 2 * s + pressOffset);
+        ctx.lineTo(priceX + priceW - 5 * s, priceY + 2 * s + pressOffset);
         ctx.stroke();
         ctx.restore();
 
@@ -650,7 +660,7 @@ class ShopRenderer {
         const textW = ctx.measureText(priceText).width;
         const contentW = coinSize + 4 * s + textW;
         const startX = priceX + (priceW - contentW) / 2;
-        const midY = priceY + priceH / 2;
+        const midY = priceY + priceH / 2 + pressOffset;
         if (this.parent.coinIcon && this.parent.coinIconLoaded) {
           ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
         }
@@ -659,7 +669,7 @@ class ShopRenderer {
         ctx.textBaseline = 'middle';
         ctx.fillText(priceText, startX + coinSize + 4 * s, midY);
 
-        this.shopItemRects.push({ x: cx, y: cy, w: cardW, h: cardH, index: itemIdx });
+        this.shopPriceBtnRects.push({ x: priceX, y: priceY, w: priceW, h: priceH, index: itemIdx });
       }
 
       // 刷新按钮（模块右上角）
