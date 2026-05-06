@@ -494,7 +494,7 @@ class ShopRenderer {
     const cardH = unitH - 20 * s;
 
     const innerPad = 6 * s;
-    const rowGap = 15;
+    const rowGap = 20;
     const containerPad = rowGap;
     const titleH = 26 * s;
     const titleGap = 6 * s;
@@ -564,18 +564,75 @@ class ShopRenderer {
       const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
       this.parent.roundRect(modX + innerPad, rowY, modW - innerPad * 2, rowH, 6 * s, mod.rowBg, rowBorderColors[mod.type], 1 * s);
 
-      // 顶部胶囊标题（半遮在行背景上方）
-      const capsuleH = 22 * s;
+      // 顶部装饰标题（半遮在行背景上方）
+      const capsuleH = 24 * s;
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
       const capsuleTitleW = ctx.measureText(mod.title).width;
-      const capsuleW = capsuleTitleW + 20 * s;
-      const capsuleX = modX + (modW - capsuleW) / 2;
+      const badgeW = capsuleTitleW + 32 * s;
       const capsuleY = rowY - capsuleH / 2;
-      this.parent.roundRect(capsuleX, capsuleY, capsuleW, capsuleH, capsuleH / 2, mod.color);
+
+      // 深色带尖角面板
+      const badgeH = capsuleH * 0.78;
+      const badgeCX = modX + modW / 2;
+      const badgeCY = capsuleY + capsuleH / 2;
+      const tipW = Math.min(7 * s, badgeH * 0.35);
+
+      ctx.save();
+      ctx.beginPath();
+      const bh2 = badgeH / 2;
+      const bw2 = badgeW / 2;
+      ctx.moveTo(badgeCX - bw2 + tipW, badgeCY - bh2);
+      ctx.lineTo(badgeCX + bw2 - tipW, badgeCY - bh2);
+      ctx.lineTo(badgeCX + bw2, badgeCY);
+      ctx.lineTo(badgeCX + bw2 - tipW, badgeCY + bh2);
+      ctx.lineTo(badgeCX - bw2 + tipW, badgeCY + bh2);
+      ctx.lineTo(badgeCX - bw2, badgeCY);
+      ctx.closePath();
+      ctx.fillStyle = mod.color;
+      ctx.fill();
+      ctx.lineWidth = 1 * s;
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. 小星星装饰（四角星）
+      const drawStar = (cx, cy, sz, innerScale = 0.5) => {
+        const starPath = (x, y, r) => {
+          ctx.moveTo(x, y - r);
+          ctx.lineTo(x + r * 0.25, y - r * 0.25);
+          ctx.lineTo(x + r, y);
+          ctx.lineTo(x + r * 0.25, y + r * 0.25);
+          ctx.lineTo(x, y + r);
+          ctx.lineTo(x - r * 0.25, y + r * 0.25);
+          ctx.lineTo(x - r, y);
+          ctx.lineTo(x - r * 0.25, y - r * 0.25);
+          ctx.closePath();
+        };
+        ctx.save();
+        // 外层：胶囊颜色边缘
+        ctx.fillStyle = mod.color;
+        ctx.beginPath();
+        starPath(cx, cy, sz);
+        ctx.fill();
+        // 内层：米白色中心
+        ctx.fillStyle = '#faf5e8';
+        ctx.beginPath();
+        starPath(cx, cy, sz * innerScale);
+        ctx.fill();
+        ctx.restore();
+      };
+
+      drawStar(badgeCX - bw2, badgeCY, 4 * s, 0.35);
+      drawStar(badgeCX + bw2, badgeCY, 4 * s, 0.35);
+      // 面板上再点缀两颗小星
+      drawStar(badgeCX - bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
+      drawStar(badgeCX + bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
+
+      // 5. 文字
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(mod.title, modX + modW / 2, capsuleY + capsuleH / 2);
+      ctx.fillText(mod.title, badgeCX, badgeCY + 0.5 * s);
 
       // 2 个商品单元（左右各一）
       for (let i = 0; i < 2; i++) {
@@ -583,7 +640,7 @@ class ShopRenderer {
         const item = game.shopItems[itemIdx];
         if (!item) continue;
 
-        const unitX = modX + modPad + i * (unitW + cardGap);
+        const unitX = modX + modPad + i * (unitW + cardGap) + (i === 1 ? 2 : 0);
         const unitY = rowY + 3;
 
         // 两个单元之间的分隔线
@@ -697,7 +754,7 @@ class ShopRenderer {
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         const priceTextW = ctx.measureText(priceText).width;
         ctx.restore();
-        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 15;
+        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 20;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -851,7 +908,8 @@ class ShopRenderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${game.target} 分`, moduleX + moduleW - 18 * s, targetY);
+    const nextTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
+    ctx.fillText(`${nextTarget} 分`, moduleX + moduleW - 18 * s, targetY);
     ctx.restore();
 
     // 虚线分隔
