@@ -681,9 +681,16 @@ class Game {
     // 用 null 占位符替换旧牌位置
     this.hand = this.hand.map(c => finalPlayedCards.includes(c) ? null : c);
 
-    // 0.6秒后补牌
+    // 0.6秒后：把打出的牌放回牌堆底部，然后重新洗牌，再补牌
     setTimeout(() => {
-      const need = Math.min(finalPlayedCards.length, this.deck.length);
+      // 1. 打出的牌回到牌堆底部
+      for (const card of finalPlayedCards) {
+        if (card) this.deck.push(card);
+      }
+      // 2. 洗牌（防止连续抽到同样的牌）
+      this.deck = shuffle([...this.deck]);
+      // 3. 从牌堆顶部补牌
+      const need = finalPlayedCards.length;
       const newCards = this.deck.splice(0, need);
 
       let newIdx = 0;
@@ -780,9 +787,16 @@ class Game {
     // 用 null 占位符替换旧牌位置（其他牌索引完全不动）
     this.hand = this.hand.map(c => discardedCards.includes(c) ? null : c);
 
-    // 1秒后补牌
+    // 1秒后：把弃掉的牌放回牌堆底部，然后重新洗牌，再补牌
     setTimeout(() => {
-      const need = Math.min(discardedCards.length, this.deck.length);
+      // 1. 弃掉的牌回到牌堆底部
+      for (const card of discardedCards) {
+        if (card) this.deck.push(card);
+      }
+      // 2. 洗牌
+      this.deck = shuffle([...this.deck]);
+      // 3. 从牌堆顶部补牌
+      const need = discardedCards.length;
       const newCards = this.deck.splice(0, need);
 
       let newIdx = 0;
