@@ -18,7 +18,7 @@ const LETTER_DISTRIBUTION = {
 const FACE_CARDS = new Set(['X', 'Y', 'Z']);
 
 
-const { WORD_DATA } = require('./words');
+const { WORD_DATA, SEED_WORDS } = require('./words');
 
 // 在线校验缓存
 const onlineWordCache = new Set();
@@ -47,7 +47,7 @@ function getLetterScore(letter) {
 
 module.exports = {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
-  WORD_DATA,
+  WORD_DATA, SEED_WORDS,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords,
   getLetterScore
