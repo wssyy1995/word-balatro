@@ -1,31 +1,40 @@
-# Word Balatro - 单词卡牌小游戏 技术文档
+# Word Balatro — 单词卡牌小游戏 技术文档
 
 ## 1. 项目概述
 
-**Word Balatro** 是一款基于 Canvas 的微信小程序游戏，灵感来自独立游戏《Balatro》（小丑牌）。核心玩法是：玩家从手牌中选取字母卡牌拼出合法英文单词，根据字母分数和单词长度计算得分，在有限次数内达到目标分数进入下一关。游戏融合了 Roguelike 元素（女巫牌、水晶球、魔法药水）让每局体验不同。
+**Word Balatro**（游戏内标题 `Words Witch Game`）是一款基于 **Canvas 2D** 的微信小游戏。玩家从 3×3 手牌中选取字母卡牌拼出合法英文单词，根据字母分数和单词长度计算得分，在限定出牌次数内达到目标分数即可进入下一关。游戏融合了 Roguelike 元素（女巫牌、水晶球、魔法药水），每局体验各不相同。
 
 | 属性 | 说明 |
 |------|------|
 | 平台 | 微信小游戏（Canvas 2D） |
-| 主包大小 | ~120KB（含 4000+ 词库） |
-| 适配基准 | iPhone 6/7/8（375pt 宽度），自动缩放 |
-| 最低微信版本 | 基础库 3.0.0 |
+| 适配基准 | iPhone 6/7/8（375×667），自动缩放 |
+| 缩放范围 | `scale` 限制在 0.8 ~ 1.4，防止过大/过小 |
+| 最低基础库 | 3.0.0 |
+| 词库 | 本地高频词 + 在线 dictionaryapi.dev 校验 |
 
 ---
 
 ## 2. 目录结构
 
 ```
-word-balatro-miniprogram/
-├── game.js                    # 游戏入口：初始化 + 主循环
-├── game.json                  # 小游戏配置（竖屏、无状态栏）
-├── project.config.json        # 项目配置（需替换 appid）
-├── README.md                  # 本文档
+word-balatro/
+├── game.js              # 游戏入口：初始化、主循环、触摸输入分发
+├── game.json            # 小游戏配置（竖屏、无状态栏）
+├── project.config.json  # 微信项目配置（需替换 appid）
+├── README.md            # 本文档
+├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标等）
 └── js/
-    ├── data.js                # 静态数据：词库 + 字母分数 + 商店池
-    ├── game.js                # Game 核心类 + 工具函数
-    ├── renderer.js            # Canvas 渲染器：绘制所有 UI 元素
-    └── input.js               # 触摸输入处理器
+    ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
+    ├── words.js         # 本地词库（高频词含中文释义）+ 保底种子词 SEED_WORDS
+    ├── game.js          # Game 核心类 + 工具函数（计分、校验、保底、发牌）
+    ├── renderer.js      # Canvas 主渲染器：所有 UI、动画、粒子、HUD
+    ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
+    ├── settlement.js    # 回合金币结算弹窗渲染
+    ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
+    ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
+    ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
+    ├── witch_skills.js  # 女巫技能约束与奖励
+    └── input.js         # InputHandler 类（备用，入口未直接使用）
 ```
 
 ---
@@ -34,239 +43,182 @@ word-balatro-miniprogram/
 
 ### 3.1 data.js — 静态数据层
 
-**词库系统（三层）**
+**字母分数**
 
-| 数据源 | 数量 | 用途 |
-|--------|------|------|
-| `WORD_DATA` | ~200 词（用户可扩展） | 本地离线词库，含中文释义 + 词性 |
-| `onlineWordCache` | 运行时增长 | 在线 API 成功查询的缓存 |
+| A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 |
 
-> 注意：`WORD_DATA` 是唯一本地词库，同时承担"合法性校验"和"释义查询"双重职责。无释义的单词存 `{meaning: '', pos: ''}` 占位。
+**字母分布（98 张牌）**
 
-**字母分数系统**
-
-```
-A=1  B=3  C=3  D=2  E=1  F=4  G=2  H=4  I=1
-J=8  K=5  L=1  M=3  N=1  O=1  P=3  Q=10 R=1
-S=1  T=1  U=1  V=4  W=4  X=8  Y=4  Z=10
-```
-
-**字母分布（98张牌）**
-
-总牌数 98 张，模拟拼字游戏标准分布。每局创建一副新牌，洗牌后发给玩家。
+模拟拼字游戏标准分布，每局创建一副新牌并洗牌。
 
 **人头牌（FACE_CARDS）**
 
-`J`、`Q`、`K` 被标记为人头牌（Face Card），触发特殊倍率效果。
+`X`、`Y`、`Z` 被标记为人头牌（Face Card），在女巫牌倍率中触发特殊效果。
 
-> 实际上当前实现中 FACE_CARDS 包含 `J`、`Q`、`Z`（王牌），用于女巫牌和药水升级逻辑。
+**商店池引用**
 
-**商店池（SHOP_POOL）**
-
-三类卡牌，每类 2 款商品，共 6 款：
-
-| 类型 | 数量 | 价格区间 | 生效时机 | 标识颜色 |
-|------|------|---------|---------|---------|
-| 女巫牌（witch） | 8 种效果池，每回合随机 2 款 | 5-8 金币 | 每回合每次出牌生效 | 紫色 #6b2d8e |
-| 水晶球（crystal） | 5 种效果池，每回合随机 2 款 | 3-5 金币 | 下一回合开始时生效 | 蓝色 #2d5a8e |
-| 魔法药水（potion） | 3 种效果池，每回合随机 2 款 | 4-6 金币 | 购买后立即选手牌升级 | 绿色 #2d6b4e |
+实际商品池定义在 `js/shop.js` 的 `SHOP_POOL` 中。
 
 ---
 
 ### 3.2 game.js — 核心逻辑层
 
-#### 3.2.1 Game 类
-
-**字段说明**
+#### 3.2.1 Game 类关键字段
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `round` | number | 当前关卡（从 1 开始） |
 | `gold` | number | 金币（商店消费） |
 | `score` | number | 当前回合已获分数 |
-| `totalScore` | number | 历史总分（跨回合累加，投降时报告用） |
-| `roundScores` | Array | 每回合得分记录 `[{round, score}, ...]` |
+| `totalScore` | number | 历史总分（跨回合累加） |
 | `target` | number | 当前回合目标分数 |
 | `deck` | Array | 牌堆（剩余未发牌） |
-| `hand` | Array | 手牌（9 张） |
+| `hand` | Array | 手牌（9 张，3×3 网格） |
 | `selected` | Array | 已选卡牌 ID 列表 |
-| `jokers` | Array | 女巫牌栏（最多 5 张） |
+| `jokers` | Array | 女巫牌栏（最多 4 张） |
+| `potions` | Array | 魔法药水栏（最多 2 张） |
 | `crystalEffects` | Array | 已购买的水晶球效果（下一回合结算） |
-| `potionMode` | Object | 当前药水购买状态（进入选牌模式） |
-| `shopItems` | Array | 当前回合的 6 款商品（`null` 表示已购买） |
-| `state` | string | 当前状态：`playing`/`shop`/`potion`/`gameover` |
-| `handsLeft` | number | 出牌次数（已设为 999，无限制） |
-| `discardsLeft` | number | 剩余弃牌次数 |
-| `extraDiscards` | number | 水晶球额外弃牌次数 |
-| `extraSafety` | number | 水晶球保底延长回合数 |
+| `potionMode` | Object | 当前药水购买/使用状态 |
+| `shopItems` | Array | 当前回合 6 款商品（`null` 表示已购买） |
+| `state` | string | `playing` / `settlement` / `shop` / `potion` / `gameover` |
+| `handsLeft` | number | 剩余出牌次数（初始 4 + 水晶球加成） |
+| `discardsLeft` | number | 剩余弃牌次数（初始 3 + 水晶球加成） |
+| `extraDiscards` | number | 水晶球额外弃牌次数（跨回合清零） |
+| `extraHands` | number | 水晶球额外出牌次数（跨回合清零） |
+| `extraSafety` | number | 水晶球延长保底回合数 |
 | `safetyRounds` | number | 前 3 回合保底（手牌必有合法单词） |
+| `settlementData` | Object | 回合结算弹窗数据 |
+| `pendingCheck` | Object | 单词校验状态机（checking / valid / invalid / witch_failed） |
+| `animManager` | AnimationManager | 动画管理器实例 |
+| `audioManager` | AudioManager | 音效管理器实例 |
+| `storageManager` | StorageManager | 本地存储管理器实例 |
 
 #### 3.2.2 核心方法
 
 **`toggleSelect(cardId)`**
 - 选中/取消选中单张卡牌
 - 限制最多选 9 张
-- 切换 `card.selected` 布尔值
+- 触发 `cardSelect` / `cardDeselect` 动画
+- 播放选牌/取消音效
 
 **`playHand()` — 出牌（异步）**
 ```
 流程：
-1. 检查选中卡牌 ≥3 张
+1. 检查选中卡牌 ≥3 张，且不在 pendingCheck 中
 2. 拼接字母成单词
 3. 本地校验（WORD_DATA / onlineWordCache）
 4. 本地不存在 → 在线 API 校验（dictionaryapi.dev）
-5. 非法 → 返回 {valid: false}
-6. 合法 → calcWordScore() 计算分数
-7. score += result.score，totalScore += result.score
-8. 移除打出的牌，确保手牌仍有合法单词
-9. 从牌堆抽新牌填补空位（按原索引插入）
-10. 若 score ≥ target → 进入商店
+5. 非法 → pendingCheck.state = 'invalid'，handsLeft--，可能触发 gameover
+6. 女巫技能约束检查（如 need_letter_4）→ 不满足则 witch_failed
+7. 合法 → calcWordScore() 计算分数
+8. 启动完整动画时间线：
+   - 阶段1（1s后）：字母依次跳跃 + per_card 女巫牌触发
+   - 阶段1.5：波浪动画 + whole_word 女巫牌依次触发
+   - 阶段2：基础倍率弹出
+   - 阶段3：总分飞行
+   - 阶段4：执行计分、旧牌飞出、新牌飞入
+   - 阶段5：score≥target 进入 settlement，或 handsLeft≤0 进入 gameover
 ```
 
 **`discard()` — 弃牌**
-```
-流程：
-1. 检查 discardsLeft > 0 且 selected.length > 0
-2. 记录被弃牌的索引位置
-3. 移除选中牌
-4. 确保手牌仍有合法单词
-5. 按原索引从小到大插入新牌
-6. discardsLeft--
-```
+- 检查 `discardsLeft > 0` 且 `selected.length > 0`
+- 弃掉的牌飞出动画，0.6 秒后回牌堆底部、洗牌、补新牌
+- 补牌后确保手牌仍有合法单词
+- `discardsLeft--`
 
-**`buyItem(idx)` — 购买商品**
-```
-类型分流：
-- witch → 加入 jokers[]（上限 5），标记 shopItems[idx] = null
-- crystal → 加入 crystalEffects[]，标记 shopItems[idx] = null
-- potion → 设置 potionMode，切换 state = 'potion'，标记 shopItems[idx] = null
-```
-
-**`upgradeCard(cardId)` — 药水升级**
-```
-效果：
-- upgrade_letter / upgrade_any → 分数 ×2
-- upgrade_face → 王牌 ×3，普通牌 ×2
-
-跨回合持久化：
-1. 更新 card.upgradeMult（累乘）
-2. card.score = baseScore × upgradeMult
-3. letterUpgrades.set(letter, {mult: totalMult}) // 全局 Map
-4. createDeck() 时自动应用 letterUpgrades
-```
+**`claimSettlement()` — 领取结算**
+- 将结算金币加入 `gold`
+- 300ms 关闭动画后进入 `shop` 状态
 
 **`nextRound()` — 进入下一关**
-```
-流程：
-1. roundScores.push({round, score}) // 保存本回合得分
-2. round++
-3. shopItems = null // 清空商店
-4. resetRound() // 重置回合状态
-```
+- 保存本回合得分到 `roundScores`
+- `round++`，清空 `shopItems`
+- 调用 `resetRound()`
 
 **`resetRound()` — 回合重置**
 ```
-保留的字段（跨回合）：
-- round, gold, jokers, totalScore, roundScores
-
-重置的字段（每回合）：
-- score=0, handsLeft=999, discardsLeft=3+extra, target=三角数公式
+保留字段：round, gold, jokers, potions, totalScore, roundScores, letterUpgrades
+重置字段：
+- score=0, handsLeft=4+extraHands, discardsLeft=3+extraDiscards
+- target = 150 + 50 × round × (round - 1)
 - deck=createDeck(), hand=drawWithSafety()
-- selected=[], crystalEffects=[], extraHands=0, extraDiscards=0
+- selected=[], crystalEffects 生效后清空
+- extraDiscards=0, extraSafety=0, extraHands=0
 ```
-
----
 
 #### 3.2.3 计分系统（calcWordScore）
 
-**基础分** = 所选卡牌字母分数之和
-
-**长度加成** = 单词 ≥5 字母 ? `10 + 长度×2` : 0
-
-**女巫牌倍率**（按 trigger 条件）：
-
-| Trigger | 条件 | 效果 |
-|---------|------|------|
-| `always` | 无条件 | 基础分 +20 |
-| `letter_a` | 含字母 A | ×2 |
-| `letter_e` | 含字母 E | ×2 |
-| `has_vowel` | 含元音 | ×2 |
-| `length_5` | ≥5 字母 | ×2 |
-| `length_6` | ≥6 字母 | ×3 |
-| `has_face` | 含 J/Q/Z | ×3 |
-| `high_letter` | 含 J/Q/X/Z | ×2 |
-
-**最终得分** = (基础分 + 长度加成 + 筹码加成) × 倍率乘积
-
-**目标分数公式**（三角数增长）：
 ```
-target = Math.floor(150 × round × (round + 1) / 2)
+基础分 = Σ(每张卡牌的 score × 该卡牌对应的女巫牌倍率)
+
+mult = 单词长度（即卡牌数量）
+
+for each whole_word 女巫牌:
+  若 trigger 满足 → mult = ceil(mult × 女巫牌 value)
+
+for each flat_bonus 女巫牌:
+  基础分 += 女巫牌 value
+
+总分 = ceil(基础分 × mult)
+```
+
+**女巫牌触发条件（per_card / whole_word）**
+
+| Trigger | 条件 | 效果类型 |
+|---------|------|---------|
+| `letter_a` | 卡牌为 A | per_card：该卡 score ×2 |
+| `letter_e` | 卡牌为 E | per_card：该卡 score ×2 |
+| `has_vowel` | 卡牌为元音 | per_card：该卡 score ×2 |
+| `has_face` | 整词含 X/Y/Z | whole_word：mult ×3 |
+| `length_3` | 单词 ≥3 字母 | whole_word：mult ×1.2 |
+| `length_5` | 单词 ≥5 字母 | whole_word：mult ×2 |
+| `length_6` | 单词 ≥6 字母 | whole_word：mult ×3 |
+
+**目标分数公式**
+```
+target = 150 + 50 × round × (round - 1)
 ```
 
 | 关卡 | 目标分数 |
 |------|---------|
 | 1 | 150 |
-| 2 | 450 |
-| 3 | 900 |
-| 4 | 1500 |
-| 5 | 2250 |
-
----
+| 2 | 250 |
+| 3 | 450 |
+| 4 | 750 |
+| 5 | 1150 |
 
 #### 3.2.4 保底机制（Safety）
 
-**每回合发牌时**：
-1. 从牌堆中"偷"走一个 3-6 字母合法单词所需的字母
-2. 将这些字母作为"种子词"连续块插入随机位置
-3. 若手牌已有合法单词，跳过此步骤
-4. 若种子词导致手牌超过 9 张，把多余牌还回牌堆
-
-> 确保前 3 回合（或水晶球延长后）手牌中必有至少一个合法单词。
-
----
+- **发牌时**：从 `SEED_WORDS`（500 个高频常用词，3-6 字母）中随机选一个，将其所需字母从牌堆中抽出并插入随机位置
+- **弃牌/出牌后补牌**：若补牌后手牌无合法单词，再次用种子词替换空位
+- **生效范围**：前 `safetyRounds + extraSafety` 回合（默认前 3 回合）
+- **手牌上限**：始终不超过 9 张
 
 #### 3.2.5 单词检测系统
 
-**三层检测**：
+**三层检测**
 
-| 层级 | 来源 | 速度 | 准确性 |
-|------|------|------|--------|
-| L1 | WORD_DATA / onlineWordCache | 毫秒级 | 100% |
-| L2 | dictionaryapi.dev API | 1-3 秒 | 100%（权威词典） |
-| L3 | MyMemory 翻译 + 中文释义 | 2-5 秒 | 翻译质量一般 |
+| 层级 | 来源 | 速度 |
+|------|------|------|
+| L1 | `WORD_DATA` / `onlineWordCache` | 毫秒级 |
+| L2 | `dictionaryapi.dev` API | 1-3 秒 |
+| L3 | `MyMemory` 翻译（后台） | 异步 |
 
-**在线检测状态机**（`wordCheckState` Map）：
-- `checking` → 黄色（检测中）
-- `valid` → 绿色（合法，已缓存）
-- `invalid` → 红色（非法）
+**校验状态机（`pendingCheck`）**
+- `checking` → 显示橙色单词 + loading 动态点号
+- `valid` → 深绿色单词 + 中文释义 + 烟花 + 字母跳跃动画
+- `invalid` → 红色单词 + 错误图标
+- `witch_failed` → 显示女巫约束失败提示
 
-> 修复记录：早期版本存在 Promise 回调直接操作 DOM 导致"先红后绿"闪烁的竞态 bug，已改为统一由 render() 根据 wordCheckState 渲染。
+#### 3.2.6 女巫技能系统
 
----
+特定回合会出现女巫约束，必须满足才能算合法出牌：
 
-#### 3.2.6 中文释义系统
-
-**数据来源优先级**：
-1. `wordMeaningCache` — 已查询过的缓存
-2. `WORD_DATA` — 200 个高频词本地释义（带词性）
-3. dictionaryapi.dev — 获取英文定义 + 词性，再翻译为中文
-
-**显示格式**：
-```
-n. 名词释义；v. 动词释义
-```
-
-**词性缩写**：
-- `n.` noun（名词）
-- `v.` verb（动词）
-- `adj.` adjective（形容词）
-- `adv.` adverb（副词）
-- `pron.` pronoun（代词）
-- `prep.` preposition（介词）
-- `conj.` conjunction（连词）
-- `int.` interjection（感叹词）
-- `det.` determiner（限定词）
-- `art.` article（冠词）
+| 回合 | 约束 | 说明 | 奖励 |
+|------|------|------|------|
+| 第 2 关 | `need_letter_4` | 每次出牌必须不少于 4 个字母 | 字母强化药水 |
 
 ---
 
@@ -274,324 +226,410 @@ n. 名词释义；v. 动词释义
 
 #### 3.3.1 渲染架构
 
-采用**按帧渲染**模式，无 DOM，全部使用 Canvas 2D API：
+采用**按帧渲染**，全部使用 Canvas 2D API，无 DOM。
 
 ```
 render(game)
-├── 清空画布 → 填充背景色 #0a1628
-├── drawHUD(game) → 顶部状态栏
-└── 状态分流
-    ├── playing → drawPlaying(game)
-    ├── shop → drawShop(game)
-    ├── potion → drawPotion(game)
-    └── gameover → drawGameOver(game)
+├── 清空画布 → 绘制背景图（bg.png）或纯色 #0a1628
+├── 状态分流
+│   ├── playing  → drawHUD() + drawPlaying()
+│   ├── settlement → drawHUD() + drawCoinCapsule() + settlementRenderer.draw()
+│   ├── shop     → drawTopHeader() + drawCoinCapsule() + shopRenderer.draw()
+│   │              └── confirmBuyRenderer.draw()（如有购买弹窗）
+│   ├── potion   → drawPotion()
+│   └── gameover → drawHUD() + drawPlaying() + gameOverRenderer.draw()
+├── updateAnimations()
+├── _updateAndDrawSparkles()    # 烟花粒子
+├── _updateAndDrawFlyingScore() # 飞行总分
+├── _shopToGameTransition()     # 页面过渡遮罩
+└── _drawDebugMenu()            # 调试菜单（如需）
 ```
 
-#### 3.3.2 坐标系
+#### 3.3.2 坐标系与适配
 
-- 基准宽度：375pt（iPhone 6/7/8）
-- `scale = windowWidth / 375`
-- 所有尺寸、位置均乘以 `scale`
+```
+baseScale = min(windowWidth / 375, windowHeight / 667)
+scale = clamp(baseScale, 0.8, 1.4)
+
+卡牌尺寸动态计算：
+cardW = min(74 * scale, (width - 48) / 3)
+cardH = min(88 * scale, (height - 200) / 3)
+gap = 8 * scale
+```
 
 #### 3.3.3 卡牌渲染
 
-```
-卡牌尺寸：80pt × 110pt（乘以 scale）
-圆角：10pt
+使用 `card_template.png` / `card_template_selected.png` 作为背景，叠加文字：
+- 大写字母（Georgia 粗体，32px，深蓝 `#1a2f4a`）
+- 当前分数（11px，底部）
+- Face 牌标记 `★`（右下角，金色）
+- 新牌标记 `NEW`（绿色，首次渲染）
 
-视觉层次：
-┌─────────────────────┐
-│        A            │  ← 大字母（白色，28px）
-│        a            │  ← 小写字母（40%透明度，14px）
-│       1分           │  ← 分数（升级前显示 baseScore）
-│      x2             │  ← 升级倍率（黄色，仅升级后显示）
-└─────────────────────┘
+卡牌支持动画偏移：`animOffset`（飞入/飞出）、`selectOffset`（选中上移）、`jumpOffsetY`（字母跳跃）。
 
-颜色：
-- 默认：#1e3a5f（深蓝）
-- 选中：#f39c12（橙色）
-- 王牌：#8e44ad（紫色）
-- 升级标记：#f1c40f（金色）
-```
-
-**新牌标记**：首次渲染显示绿色 "NEW" 标签，下一帧自动清除。
-
-#### 3.3.4 手牌布局
+#### 3.3.4 手牌与道具栏布局
 
 ```
-3 × 3 网格（最多 9 张）
-水平居中，垂直从 100pt 开始
+┌─────────────────────────────┐
+│  [HUD: 回合 | 目标分 | 当前]  │  ← 顶部状态栏
+├─────────────────────────────┤
+│  [女巫牌×4] |[药水瓶×2]      │  ← 道具栏（6格，金色竖线分隔）
+├─────────────────────────────┤
+│                              │
+│      预 览 区 域              │  ← 单词预览 + 分数方块
+│                              │
+├─────────────────────────────┤
+│  ┌──┐ ┌──┐ ┌──┐             │
+│  │A │ │B │ │C │  ... 3×3    │  ← 手牌网格
+│  └──┘ └──┘ └──┘             │
+├─────────────────────────────┤
+│  [出牌] [弃牌] [清空]        │  ← 底部操作按钮（图片按钮）
+└─────────────────────────────┘
 ```
 
-#### 3.3.5 分数预览
+#### 3.3.5 分数预览方块
 
-选中 ≥3 张牌时显示：
+选中 ≥3 张牌时显示两个方块：
+- 左方块（蓝色背景）：字母基础分累加
+- 右方块（绿色背景）：单词长度（即倍率）
 
-```
-┌──────┐     ┌──────┐
-│  44  │  ×  │   3  │
-└──────┘     └──────┘
-  蓝色边框      绿色边框
-  字母分        单词长度
-```
+出牌合法后，左方块上方可能显示 `xN`（per_card 女巫牌倍率提示）。
 
-不显示最终计算结果，只展示两个因子。
-
-#### 3.3.6 HUD 布局
-
-顶部状态栏（44pt 高）：
-```
-[回合] [金币] [目标] [当前] [弃牌]
-  1     $4     150     0      3
-```
-
-女巫牌/水晶球效果以 badge 形式显示在 HUD 下方。
-
-#### 3.3.7 商店布局
+#### 3.3.6 商店页面布局
 
 ```
-          第 1 关 - 商店
-          金币: $4
+        Words Witch Game
+        💰 金币胶囊
 
-┌──────────┐  ┌──────────┐
-│ 女巫·A   │  │ 女巫·E   │
-│ 字母A×2  │  │ 字母E×2  │
-│   $5     │  │   $5     │
-└──────────┘  └──────────┘
-
-┌──────────┐  ┌──────────┐
-│ 水晶球·  │  │ 水晶球·  │
-│ 额外弃牌 │  │ 保底守护 │
-│   $3     │  │   $4     │
-└──────────┘  └──────────┘
-
-┌──────────┐  ┌──────────┐
-│ 药水·字母│  │ 药水·王牌│
-│ 分数翻倍 │  │ 分数×3  │
-│   $4     │  │   $5     │
-└──────────┘  └──────────┘
-
-      [下一关]
+┌─────────────────────────────┐
+│ [女巫×4] |[药水×2]  已装备栏  │
+├─────────────────────────────┤
+│      ⚜️ 卡牌商店 ⚜️          │
+├─────────────────────────────┤
+│ 🧙 女巫牌  │ [商品1] [商品2]  │
+├───────────┤─────────────────┤
+│ 🔮 水晶球  │ [商品3] [商品4]  │
+├───────────┤─────────────────┤
+│ 🧪 魔法药水│ [商品5] [商品6]  │
+├─────────────────────────────┤
+│        ⚜️ 下一回合 ⚜️        │
+│  🎯 目标分数: xxx            │
+│  🧙 女巫技能 / [挑战按钮]    │
+└─────────────────────────────┘
 ```
 
-每行 2 款，共 3 行（女巫 / 水晶球 / 药水）。
+- 每行 2 款商品，左侧分类标签带 emoji 图标
+- 价格按钮：暖米色，带金币图标
+- 商品售完后显示"刷新"按钮（5 金币刷新该行）
+- 已装备栏支持点击选中 + 售出（红色按钮，easeOutBack 弹出动画）
 
-#### 3.3.8 投降报告
+#### 3.3.7 购买成功弹窗
 
+点击价格按钮 → 扣除金币 → 显示成功弹窗：
+- **女巫牌**：展示"装备"按钮 → 加入 `jokers[]`
+- **药水牌**：展示"暂存"（加入 `potions[]`）和"立即使用"（进入 `potion` 状态）
+- **水晶球**：展示"生效"（立即加入 `crystalEffects[]`）
+
+弹窗动画：easeOutBack 入场 + 内容渐入 + 关闭时上滑淡出。
+
+#### 3.3.8 回合金币结算弹窗
+
+达到目标分数后弹出：
 ```
-         🏳️ 已投降
-       主动选择投降
-
 ┌──────────────────┐
-│ 结束关卡  第 3 关│
-│                  │
-│ 总分      2680   │  ← 绿色加粗
+│  第 N 关结算      │
+│  ─────────────   │
+│  基础金币    +x   │
+│  剩余出牌×1  +x   │
+│  剩余弃牌×1  +x   │
+│  ─────────────   │
+│  总计       +xx  │
+│     [领取]       │
 └──────────────────┘
-
-      [重新开始]
 ```
+
+#### 3.3.9 药水升级页面（potion 状态）
+
+进入后显示 A-Z 字母矩阵，选中字母后点击升级：
+- 字母强化：指定字母分数 ×2（全局，跨回合保留）
+- 王牌强化：X/Y/Z 分数 ×3
+- 通用强化：任意字母分数 ×2
+- 字母置换：将手牌中选中的一张牌替换为指定字母（游戏中直接使用）
+
+升级后启动弹出动画（oldScore → newScore），播放升级音效。
 
 ---
 
-### 3.4 input.js — 输入处理层
+### 3.4 animation.js — 动画系统
 
-#### 3.4.1 触摸事件映射
+**缓动函数**
 
-```
-wx.onTouchStart
-└── handleInput(x, y)
-    ├── 状态：playing
-    │   ├── hitTest(cardRects) → toggleSelect(cardId)
-    │   ├── hitTest(playBtnRect) → playHand()（异步）
-    │   ├── hitTest(discardBtnRect) → discard()
-    │   └── hitTest(surrenderBtnRect) → wx.showModal() → gameover
-    ├── 状态：shop
-    │   ├── hitTest(shopRects) → buyItem(index)
-    │   └── hitTest(nextRoundBtnRect) → nextRound()
-    ├── 状态：potion
-    │   ├── hitTest(potionCardRects) → upgradeCard(cardId)
-    │   └── hitTest(cancelBtnRect) → 退还金币 + 返回商店
-    └── 状态：gameover
-        └── hitTest(restartBtnRect) → restartGame()
-```
+| 名称 | 用途 |
+|------|------|
+| `easeOutCubic` | 通用减速（飞牌、分数弹出） |
+| `easeOutBack` | 轻微回弹（按钮按压恢复） |
+| `easeOutBackStrong` | 强力回弹（卡牌飞入果冻感） |
+| `easeOutBounce` | 弹跳效果 |
+| `linear` | 线性 |
+| `easeInOutQuad` | 缓入缓出 |
 
-#### 3.4.2 碰撞检测
+**快捷动画**
 
-```js
-hitTest(x, y, rects) {
-  for (let i = rects.length - 1; i >= 0; i--) {
-    const r = rects[i];
-    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
-      return r; // 返回命中的区域对象
-    }
-  }
-  return null;
-}
-```
-
-> 采用**逆序遍历**，确保上层元素优先被命中（如按钮覆盖在卡牌上时优先触发按钮）。
+- `flyOut(card, direction)`：卡牌向左/右飞出（400ms，旋转+位移）
+- `flyIn(card, direction)`：卡牌从侧边飞入（550ms，强力回弹）
+- `scorePop(text, x, y)`：分数向上弹出并淡出（800ms）
+- `buttonPress(target)`：按钮按下缩放至 0.92 后回弹
+- `cardSelect(card)`：卡牌上移 8px（保持）
+- `cardDeselect(card)`：卡牌回落原位
 
 ---
 
-## 4. 游戏状态机
+### 3.5 audio.js — 音效系统
+
+使用 `wx.createInnerAudioContext()` 管理音效：
+
+| 音效名 | 文件 | 触发时机 |
+|--------|------|---------|
+| `select` | audio/select.mp3 | 选牌 |
+| `deselect` | audio/deselect.mp3 | 取消选牌 |
+| `play` | audio/play.mp3 | 点击出牌 |
+| `discard` | audio/discard.mp3 | 弃牌 |
+| `valid` | audio/valid.mp3 | 单词合法 |
+| `invalid` | audio/invalid.mp3 | 单词非法/约束失败 |
+| `score` | audio/score.mp3 | 分数计入 |
+| `upgrade` | audio/upgrade.mp3 | 药水升级 |
+| `buy` | audio/buy.mp3 | 商店购买 |
+| `levelup` | audio/levelup.mp3 | 进入下一关 |
+| `surrender` | audio/surrender.mp3 | 投降 |
+| `button` | audio/button.mp3 | 按钮点击 |
+
+BGM 支持循环播放，音量 0.3。
+
+---
+
+### 3.6 storage.js — 本地存储
+
+| 键 | 内容 |
+|----|------|
+| `word_balatro_progress` | 游戏进度（回合、金币、女巫牌、药水、字母升级） |
+| `word_balatro_high_score` | 历史最高分 |
+| `word_balatro_stats` | 统计（总局数、总分、最高关卡） |
+| `word_balatro_settings` | 设置（音效、音乐、震动开关） |
+
+---
+
+## 4. 商店系统（Shop）
+
+### 4.1 商品池（SHOP_POOL）
+
+| 类型 | 数量 | 价格 | 上限 | 标识色 |
+|------|------|------|------|--------|
+| **女巫牌**（witch） | 7 种 | 4-8 金币 | 装备栏 4 格 | 紫色 |
+| **水晶球**（crystal） | 3 种 | 3-5 金币 | 购买即生效 | 蓝色 |
+| **魔法药水**（potion） | 4 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
+
+每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复。
+
+### 4.2 药水种类
+
+| 名称 | 效果 | value |
+|------|------|-------|
+| 字母强化 | 指定字母分数 ×2 | 2 |
+| 王牌强化 | X/Y/Z 分数 ×3 | 3 |
+| 通用强化 | 任意字母分数 ×2 | 2 |
+| 字母置换 | 将手牌中一张替换为指定字母 | - |
+
+### 4.3 水晶球种类
+
+| 名称 | 效果 |
+|------|------|
+| 额外弃牌 | 下一回合弃牌次数 +1 |
+| 额外出牌 | 下一回合出牌次数 +1 |
+| 金币祝福 | 下一回合开始时获得 3 金币 |
+
+### 4.4 购买与售出流程
 
 ```
-[playing] ──score≥target──→ [shop]
-    │                           │
-    │←────────nextRound()─────┘
-    │                           │
-    │                    buy potion
-    │                           ↓
-    │←────────upgradeCard()── [potion]
-    │                           │
-    │                    cancel / confirm
-    │                           │
-    └───────────────────────────┘
+点击价格按钮
+  → 扣除金币
+  → 显示购买成功弹窗
+     ├── 女巫牌 → 点击"装备" → 加入 jokers[]
+     ├── 水晶球 → 点击"生效" → 加入 crystalEffects[]
+     └── 药水牌 → 点击"暂存" → 加入 potions[]
+                → 点击"立即使用" → 进入 potion 状态
+
+点击已装备道具 → 选中（紫色边框）
+  → 显示"售出"按钮（easeOutBack 弹出）
+  → 点击售出 → 卡牌飞出动画 → 获得金币 → 补位滑动
+```
+
+### 4.5 刷新
+
+当某行两款商品均售罄时，显示"刷新"按钮，消耗 5 金币重新随机生成该行的 2 款商品。
+
+---
+
+## 5. 游戏状态机
+
+```
+[playing] ──score≥target──→ [settlement] ──claim──→ [shop]
+    │                                                    │
+    │←────────────nextRound()───────────────────────────┘
+    │                                                    │
+    │←──upgradeCard()── [potion] ←── buy potion →───────┘
+    │       (暂存/升级后返回)
     │
- surrender ──→ [gameover] ──restart()──→ [playing] (round=1)
+    └── out_of_hands / surrender ──→ [gameover] ──restart()──→ [playing]
 ```
 
 ---
 
-## 5. 关键数据结构
+## 6. 关键数据结构
 
-### 5.1 卡牌对象（Card）
+### 6.1 卡牌对象（Card）
 
 ```js
 {
   letter: "S",           // 字母（大写）
-  baseScore: 1,          // 原始字母分数
-  score: 1,              // 当前有效分数（升级后 = baseScore × mult）
-  isFace: false,         // 是否王牌（J/Q/Z）
+  baseScore: 19,         // 原始字母分数
+  score: 19,             // 当前有效分数（升级后 = baseScore × upgradeMult）
+  isFace: false,         // 是否人头牌（X/Y/Z）
   id: "faxdakqgq",       // 唯一标识
   selected: false,       // 是否被选中
   upgraded: false,       // 是否被药水升级过
-  upgradeMult: 1,        // 升级倍率（2, 3, 4, 6, ...）
-  newCard: false,        // 是否是刚抽到的新牌（显示 NEW 标记）
-  flyDir: "left"         // 动画方向（left/right）
+  upgradeMult: 1,        // 升级倍率（累乘）
+  newCard: false,        // 是否是刚抽到的新牌
+  animOffset: null,      // 动画偏移 {x, y, rotation, opacity, scale}
+  selectOffset: 0,       // 选中上移偏移
+  jumpOffsetY: 0,        // 字母跳跃偏移
+  _flyIndex: undefined   // 飞出时的原始索引
 }
 ```
 
-### 5.2 商店商品对象（ShopItem）
+### 6.2 商店商品对象（ShopItem）
 
 ```js
 // 女巫牌
-{ name: "女巫·字母A强化", type: "witch", trigger: "letter_a",
+{ name: "A之强化", type: "witch", scope: "per_card", trigger: "letter_a",
   value: 2, cost: 5, desc: "字母A分数×2" }
 
 // 水晶球
-{ name: "水晶球·额外弃牌", type: "crystal", effect: "extra_discard",
+{ name: "额外弃牌", type: "crystal", effect: "extra_discard",
   value: 1, cost: 3, desc: "下一回合弃牌次数+1" }
 
 // 魔法药水
-{ name: "魔法药水·字母强化", type: "potion", effect: "upgrade_letter",
-  cost: 4, desc: "选择一张字母牌，分数翻倍" }
+{ name: "字母强化", type: "potion", effect: "upgrade_letter",
+  value: 2, cost: 4, desc: "选择一张字母牌，分数翻倍" }
 ```
 
-### 5.3 回合得分记录（RoundScore）
-
-```js
-{ round: 1, score: 1280 }
-```
-
-### 5.4 字母升级记录（LetterUpgrade）
+### 6.3 字母升级记录（LetterUpgrade）
 
 ```js
 letterUpgrades = Map {
   "T" => { mult: 2 },   // T 牌所有实例分数 ×2
-  "S" => { mult: 6 },   // S 牌先×2再×3 = ×6
+  "S" => { mult: 6 },   // S 牌先×2再×3 = ×6（累乘）
 }
 ```
 
+创建新牌时自动应用 `letterUpgrades`，实现跨回合持久化。
+
 ---
 
-## 6. 外部 API 依赖
+## 7. 外部 API 依赖
 
-### 6.1 dictionaryapi.dev
+### 7.1 dictionaryapi.dev
 
 - **用途**：在线单词合法性校验 + 获取英文定义/词性
 - **Endpoint**：`https://api.dictionaryapi.dev/api/v2/entries/en/{word}`
-- **限制**：免费，无需 API Key，但请求频率不宜过高
 - **缓存**：成功结果存入 `onlineWordCache` 和 `wordMeaningCache`
 
-### 6.2 微信小游戏 API
+### 7.2 MyMemory 翻译
+
+- **用途**：将英文定义翻译为中文
+- **Endpoint**：`https://api.mymemory.translated.net/get?q=...&langpair=en|zh-CN`
+- **特点**：后台异步调用，不影响主流程
+
+### 7.3 微信小游戏 API
 
 | API | 用途 |
 |-----|------|
 | `wx.createCanvas()` | 创建 Canvas |
-| `wx.getSystemInfoSync()` | 获取屏幕尺寸 |
+| `wx.getSystemInfoSync()` | 获取屏幕尺寸、DPR |
 | `wx.onTouchStart()` | 触摸事件 |
+| `wx.createImage()` | 加载图片资源 |
+| `wx.createInnerAudioContext()` | 音效/BGM |
+| `wx.setStorageSync()` / `wx.getStorageSync()` | 本地存储 |
+| `wx.request()` | 在线词典/翻译请求 |
 | `wx.showModal()` | 投降确认弹窗 |
-| `wx.showToast()` | 非法单词提示 |
-| `wx.request()` | 在线词典请求 |
+| `wx.vibrateShort()` | 触觉反馈 |
 
 ---
 
-## 7. 部署指南
+## 8. 部署指南
 
-### 7.1 前置条件
+### 8.1 前置条件
 
 1. 注册微信小程序账号
-2. 下载并安装「微信开发者工具」
-3. 在微信公众平台 → 开发 → 开发设置 中获取 **AppID**
+2. 下载「微信开发者工具」
+3. 在微信公众平台获取 **AppID**
 
-### 7.2 配置步骤
+### 8.2 配置步骤
 
-1. 打开微信开发者工具
-2. 选择「导入项目」
-3. 选择 `word-balatro-miniprogram` 目录
-4. 填入你的 AppID（测试号也可）
-5. 替换 `project.config.json` 中的 `appid`：
-   ```json
-   "appid": "你的真实AppID"
-   ```
+1. 打开微信开发者工具 → 导入项目
+2. 选择本项目目录
+3. 填入你的 AppID（测试号也可）
+4. 替换 `project.config.json` 中的 `appid`
 
-### 7.3 配置合法域名（可选）
-
-如果不配置，在线单词检测会失效（仅离线 4000 词可用）。
+### 8.3 配置合法域名
 
 在微信公众平台 → 开发 → 开发设置 → 服务器域名：
-- **request 合法域名**：添加 `https://api.dictionaryapi.dev`
+- **request 合法域名**：添加 `https://api.dictionaryapi.dev` 和 `https://api.mymemory.translated.net`
 
-### 7.4 真机调试
-
-1. 开发者工具中点击「真机调试」
-2. 用微信扫描二维码
-3. 在真机上测试触摸、性能、布局适配
+> 若不配置，在线单词检测和翻译会失效，仅本地词库可用。
 
 ---
 
-## 8. 已知限制
+## 9. 调试功能
 
-1. **在线词库有限**：仅 4000 词有离线校验，生僻词需要联网。网络不佳时可能误判合法单词为非法。
-2. **中文释义有限**：仅 200 个高频词有本地中文释义，其余需在线查询。
-3. **动画系统待完善**：当前版本无飞入飞出动画（CSS 动画无法迁移到 Canvas，需用 requestAnimationFrame 重新实现）。
-4. **音效缺失**：原版有出牌/弃牌/升级的音效，Canvas 版尚未添加。
-5. **iPhone 刘海适配**：需要额外处理 `safeArea` 避免按钮被刘海遮挡。
+点击游戏左上角图标（`top_icon.png`）可打开调试菜单：
+- 重置出牌次数
+- 增加 100 分
+- 直接通关（进入 settlement）
+- 结束游戏（进入 gameover）
 
----
-
-## 9. 后续优化方向
-
-| 优先级 | 功能 | 说明 |
-|--------|------|------|
-| P0 | 动画系统 | 卡牌飞入飞出、分数跳动、按钮反馈 |
-| P1 | 音效 | 出牌声、弃牌声、升级声、BGM |
-| P1 | 本地存储 | `wx.setStorageSync` 保存最高分、游戏进度 |
-| P2 | 分享功能 | `wx.shareAppMessage` 分享成绩到群聊 |
-| P2 | 排行榜 | 微信开放数据域实现好友排行榜 |
-| P2 | 新手引导 | 首次进入游戏时的交互教程 |
-| P3 | 皮肤系统 | 多种卡牌主题风格 |
+> 调试功能仅在开发阶段使用，上线前应移除或隐藏入口。
 
 ---
 
-## 10. 版本历史
+## 10. 已知限制与优化方向
+
+### 当前限制
+
+1. **在线词库依赖**：网络不佳时生僻词可能误判为非法
+2. **中文释义有限**：仅本地高频词有中文释义，其余需在线查询
+3. **音效文件缺失**：代码已预留音频接口，但 `audio/` 目录下文件需自行准备
+4. **iPhone 刘海适配**：已通过 `safeTop` 做了基础适配，极端机型可能需要微调
+
+### 后续优化方向
+
+| 优先级 | 功能 |
+|--------|------|
+| P1 | 动画系统持续完善（更多粒子效果、过渡动画） |
+| P1 | 音效资源补充与 BGM |
+| P2 | 分享功能（`wx.shareAppMessage`） |
+| P2 | 新手引导 |
+| P3 | 皮肤系统 / 多种卡牌主题 |
+
+---
+
+## 11. 版本历史
 
 | 版本 | 日期 | 变更 |
 |------|------|------|
-| v1.0.0 | 2026-04-30 | 初始版本，DOM 版完成 |
+| v1.0.0 | 2026-04-30 | 初始版本 |
 | v1.1.0 | 2026-04-30 | 转为微信小游戏 Canvas 版 |
+| v1.2.0+ | 2026-05 | 新增动画系统、音效系统、本地存储、女巫技能、售出/刷新、药水升级、调试菜单等 |
 
 ---
 
-*文档生成时间：2026-04-30 18:52 CST*
+*文档基于实际代码整理，最后更新：2026-05-06*

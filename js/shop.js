@@ -43,8 +43,7 @@ const SHOP_POOL = {
   potion: [
     {name:'字母强化', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数翻倍'},
     {name:'王牌强化', type:'potion', effect:'upgrade_face', value:3, cost:5, desc:'选择XYZ任意一张，分数×3'},
-    {name:'通用强化', type:'potion', effect:'upgrade_any', value:2, cost:6, desc:'选择任意牌，分数翻倍'},
-    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'选择一张字母手牌,切换为指定字母。游戏中使用'}
+    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
 };
 
@@ -489,12 +488,10 @@ class ShopRenderer {
     const modX = 15 * s;
     const unitH = 100 * s;
     const rowH = unitH + 8 * s;
-    const labelW = Math.floor(62 * s * rowH / unitH);
-    const labelGap = 10 * s;
     const cardGap = 8 * s;
-    const unitW = (modW - modPad * 2 - labelW - labelGap - cardGap) / 2;
-    const cardW = Math.floor(unitW * 0.40);
-    const cardH = unitH - 12 * s;
+    const unitW = (modW - modPad * 2 - cardGap) / 2;
+    const cardW = Math.floor(unitW * 0.35);
+    const cardH = unitH - 20 * s;
 
     const innerPad = 6 * s;
     const rowGap = 15;
@@ -541,16 +538,14 @@ class ShopRenderer {
       ctx.restore();
     }
 
-    // 左右米色细线装饰（加深、加长、与icon重叠、层级在icon之上）
+    // 左右米色细线装饰
     const decoLineW = 50 * s;
     ctx.strokeStyle = '#b8a078';
     ctx.lineWidth = 1.2 * s;
-    // 左侧细线：从左延伸至左icon内部
     ctx.beginPath();
     ctx.moveTo(titleStartX - decoLineW, titleMidY);
     ctx.lineTo(titleStartX + titleIconSize * 0.6, titleMidY);
     ctx.stroke();
-    // 右侧细线：从右icon内部延伸至右
     const rightIconX = titleStartX + titleIconSize + titleIconGap + titleTextW + titleIconGap;
     ctx.beginPath();
     ctx.moveTo(rightIconX + titleIconSize * 0.4, titleMidY);
@@ -569,46 +564,27 @@ class ShopRenderer {
       const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
       this.parent.roundRect(modX + innerPad, rowY, modW - innerPad * 2, rowH, 6 * s, mod.rowBg, rowBorderColors[mod.type], 1 * s);
 
-
-      // 分类标签卡片（左侧）
-      const labelX = modX + innerPad;
-      const labelY = rowY;
-      this.parent.roundRect(labelX, labelY, labelW, rowH, 10 * s, mod.color);
-
-      // 标签内部圆形图标区域
-      const circleR = 22 * s;
-      const circleCX = labelX + labelW / 2;
-      const circleCY = labelY + rowH / 2 - 12 * s;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(circleCX, circleCY, circleR, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-      ctx.lineWidth = 1.5 * s;
-      ctx.stroke();
-
-      // 分类图标 emoji
-      const typeEmojis = { witch: '🧙', crystal: '🔮', potion: '🧪' };
-      ctx.font = `${Math.floor(24 * s)}px sans-serif`;
+      // 顶部胶囊标题（半遮在行背景上方）
+      const capsuleH = 22 * s;
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      const capsuleTitleW = ctx.measureText(mod.title).width;
+      const capsuleW = capsuleTitleW + 20 * s;
+      const capsuleX = modX + (modW - capsuleW) / 2;
+      const capsuleY = rowY - capsuleH / 2;
+      this.parent.roundRect(capsuleX, capsuleY, capsuleW, capsuleH, capsuleH / 2, mod.color);
+      ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(typeEmojis[mod.type] || '✨', circleCX, circleCY);
+      ctx.fillText(mod.title, modX + modW / 2, capsuleY + capsuleH / 2);
 
-      // 分类名称
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
-      ctx.fillText(mod.title, circleCX, labelY + rowH - 18 * s);
-      ctx.restore();
-
-      // 2 个商品单元（左侧竖向卡牌 + 右侧文字区域）
+      // 2 个商品单元（左右各一）
       for (let i = 0; i < 2; i++) {
         const itemIdx = modIdx * 2 + i;
         const item = game.shopItems[itemIdx];
         if (!item) continue;
 
-        const unitX = labelX + labelW + labelGap + i * (unitW + cardGap);
-        const unitY = labelY + 3;
+        const unitX = modX + modPad + i * (unitW + cardGap);
+        const unitY = rowY + 3;
 
         // 两个单元之间的分隔线
         if (i === 1) {
@@ -645,10 +621,10 @@ class ShopRenderer {
         const iconName = item.trigger || item.effect;
         const iconData = this.parent.shopCardImages[iconName];
         if (iconData && iconData.loaded && iconData.img) {
-          const origW = iconData.img.width || 200;
-          const origH = iconData.img.height || 300;
-          const aspect = origW / origH;
           const cardAspect = cardW / cardH;
+          const aspect = (iconData.width > 0 && iconData.height > 0)
+            ? iconData.width / iconData.height
+            : cardAspect;
           let drawW, drawH, imgX, imgY;
           if (aspect > cardAspect) {
             drawH = cardH;
@@ -721,7 +697,7 @@ class ShopRenderer {
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         const priceTextW = ctx.measureText(priceText).width;
         ctx.restore();
-        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 12;
+        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 15;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -781,9 +757,7 @@ class ShopRenderer {
         const contentW = coinSize + 4 * s + costTextW + 8 * s + refreshTextW;
         const refreshBtnW = contentW + 16 * s;
 
-        const rightAreaX = labelX + labelW + labelGap;
-        const rightAreaW = unitW * 2 + cardGap;
-        const refreshBtnX = rightAreaX + (rightAreaW - refreshBtnW) / 2;
+        const refreshBtnX = modX + (modW - refreshBtnW) / 2;
 
         this.parent.roundRect(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH, 6 * s, '#e8dcc8');
 
@@ -1137,10 +1111,11 @@ class ConfirmBuyRenderer {
     const cardMaxH = 110 * s;
     let cardW = cardMaxW, cardH = cardMaxH;
     if (iconData && iconData.loaded && iconData.img) {
-      const origW = iconData.img.width || 200;
-      const origH = iconData.img.height || 300;
-      const aspect = origW / origH;
-      if (cardMaxW / cardMaxH > aspect) {
+      const containerAspect = cardMaxW / cardMaxH;
+      const aspect = (iconData.width > 0 && iconData.height > 0)
+        ? iconData.width / iconData.height
+        : containerAspect;
+      if (containerAspect > aspect) {
         cardH = cardMaxH;
         cardW = cardH * aspect;
       } else {
@@ -1413,9 +1388,10 @@ class ConfirmBuyRenderer {
     if (!isClosing) ctx.globalAlpha = contentAlpha;
     let imgBottom = py + 70 * s + contentYShift;
     if (iconData && iconData.loaded && iconData.img) {
-      const imgW = iconData.img.width || 200;
-      const imgH = iconData.img.height || 300;
-      const aspect = imgW / imgH;
+      const containerAspect = (pw * 0.65) / (130 * s);
+      const aspect = (iconData.width > 0 && iconData.height > 0)
+        ? iconData.width / iconData.height
+        : containerAspect;
       const maxImgW = pw * 0.65;
       const maxImgH = 130 * s;
       let drawW, drawH;

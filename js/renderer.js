@@ -2,7 +2,7 @@
 const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
 const { SettlementRenderer } = require('./settlement');
-const { ShopRenderer, ConfirmBuyRenderer } = require('./shop');
+const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('./shop');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -226,16 +226,44 @@ class Renderer {
       this.buySuccessBandLoaded = false;
     }
     
-    // 加载道具卡牌图标
+    // 加载道具卡牌图标（从 SHOP_POOL 动态提取所有 trigger/effect）
     this.shopCardImages = {};
-    const shopCardNames = ['bonus_gold', 'extra_discard', 'extra_hands', 'has_vowel', 'letter_a', 'letter_e', 'upgrade_any', 'upgrade_face', 'upgrade_letter'];
+    const shopCardNames = new Set();
+    Object.values(SHOP_POOL).forEach(pool => {
+      pool.forEach(item => {
+        const iconName = item.trigger || item.effect;
+        if (iconName) shopCardNames.add(iconName);
+      });
+    });
     shopCardNames.forEach(name => {
       try {
         const img = wx.createImage();
         img.src = `images/shop_card/${name}.png`;
-        img.onload = () => { this.shopCardImages[name] = { img, loaded: true }; };
-        img.onerror = () => { this.shopCardImages[name] = { img, loaded: false }; };
-        this.shopCardImages[name] = { img, loaded: false };
+        img.onload = () => {
+          const w = img.width || 0;
+          const h = img.height || 0;
+          const data = this.shopCardImages[name];
+          if (data) {
+            data.loaded = true;
+            data.width = w;
+            data.height = h;
+          }
+        };
+        img.onerror = () => { this.shopCardImages[name] = { img: null, loaded: false }; };
+        // getImageInfo 兜底（部分基础库支持本地路径）
+        try {
+          wx.getImageInfo({
+            src: `/images/shop_card/${name}.png`,
+            success: (res) => {
+              const data = this.shopCardImages[name];
+              if (data) {
+                data.width = res.width;
+                data.height = res.height;
+              }
+            }
+          });
+        } catch (e) {}
+        this.shopCardImages[name] = { img, loaded: false, width: 0, height: 0 };
       } catch (e) {
         this.shopCardImages[name] = { img: null, loaded: false };
       }
@@ -362,10 +390,10 @@ class Renderer {
     ctx.clip();
 
     if (iconData && iconData.loaded && iconData.img) {
-      const origW = iconData.img.width || 200;
-      const origH = iconData.img.height || 300;
-      const aspect = origW / origH;
       const cardAspect = w / h;
+      const aspect = (iconData.width > 0 && iconData.height > 0)
+        ? iconData.width / iconData.height
+        : cardAspect;
       let drawW, drawH, imgX, imgY;
       if (aspect > cardAspect) {
         drawH = h;
@@ -1701,6 +1729,12 @@ class Renderer {
 
     const { LETTER_SCORE } = require('./data');
 
+    // 关闭动画
+    const isClosing = game._closingChangeLetter;
+    const closeElapsed = isClosing ? Date.now() - (game._closeChangeLetterStartTime || Date.now()) : 0;
+    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
+    if (isClosing && closeProgress >= 1) return;
+
     // 弹出动效（easeOutBack）
     const elapsed = Date.now() - (popup.startTime || Date.now());
     const enterDuration = 350;
@@ -1709,11 +1743,16 @@ class Renderer {
     const c3 = c1 + 1;
     const enterEase = 1 + c3 * Math.pow(enterProgress - 1, 3) + c1 * Math.pow(enterProgress - 1, 2);
     const panelOffsetY = (1 - enterEase) * 30 * s;
-    const contentAlpha = enterProgress;
+    const baseAlpha = enterProgress;
 
-    // 遮罩（带淡入）
+    // 关闭动画偏移
+    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
+    const closeAlpha = isClosing ? 1 - closeProgress : 1;
+
+    // 遮罩（带淡入，关闭时淡出）
     ctx.save();
-    ctx.fillStyle = `rgba(0,0,0,${0.5 * Math.min(elapsed / 200, 1)})`;
+    const overlayAlpha = isClosing ? 0.5 * (1 - closeProgress) : 0.5 * Math.min(elapsed / 200, 1);
+    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
 
@@ -1721,16 +1760,19 @@ class Renderer {
     const pw = 300 * s;
     const ph = 460 * s;
     const px = (W - pw) / 2;
-    const py = (H - ph) / 2 + panelOffsetY;
+    const py = (H - ph) / 2 + panelOffsetY + closeSlideY;
     const r = 12 * s;
     const gold = '#c4a35a';
 
     // 弹窗背景
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
     this.roundRect(px, py, pw, ph, r, '#faf6ee', gold, 2 * s);
+    ctx.restore();
 
     // 标题：字母置换
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = baseAlpha * closeAlpha;
     ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'center';
@@ -1740,7 +1782,7 @@ class Renderer {
 
     // 标题分隔线
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = baseAlpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
     ctx.lineWidth = 1 * s;
     ctx.beginPath();
@@ -1749,15 +1791,14 @@ class Renderer {
     ctx.stroke();
     ctx.restore();
 
-    // 选中的字母卡牌（游戏页面卡牌大小的一半，强制不使用 selected.png）
+    // 选中的字母卡牌（放大到 0.7，保留选中态以显示 selected.png）
     const selectedCard = game.hand.find(c => c && c.id === popup.cardId);
     if (selectedCard) {
       ctx.save();
-      ctx.globalAlpha = contentAlpha;
+      ctx.globalAlpha = baseAlpha * closeAlpha;
       ctx.translate(W / 2, py + 100 * s);
-      ctx.scale(0.5, 0.5);
-      const tempCard = { ...selectedCard, selected: false };
-      this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2);
+      ctx.scale(0.7, 0.7);
+      this.drawCard(selectedCard, -this.cardW / 2, -this.cardH / 2);
       ctx.restore();
     }
 
@@ -1780,7 +1821,7 @@ class Renderer {
       const isSelected = popup.targetLetter === letter;
 
       ctx.save();
-      ctx.globalAlpha = contentAlpha;
+      ctx.globalAlpha = baseAlpha * closeAlpha;
       if (isOriginal) {
         // 置灰禁用
         this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#e8e4dc');
@@ -1809,7 +1850,7 @@ class Renderer {
     if (popup.targetLetter) {
       const arrowY = lStartY + Math.ceil(letters.length / lCols) * (lBtnSize + lGap) + 12 * s;
       ctx.save();
-      ctx.globalAlpha = contentAlpha;
+      ctx.globalAlpha = baseAlpha * closeAlpha;
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
       ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
@@ -1825,7 +1866,7 @@ class Renderer {
     const btnY = py + ph - btnH - 20 * s;
     const canSwap = !!popup.targetLetter;
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = baseAlpha * closeAlpha;
     this.roundRect(btnX, btnY, btnW, btnH, 8 * s,
       canSwap ? '#c4a35a' : '#d4c9a8',
       canSwap ? null : '#bbb', canSwap ? 0 : 1.5 * s);
@@ -1842,7 +1883,7 @@ class Renderer {
     const closeX = px + pw - closeSize - 8 * s;
     const closeY = py + 8 * s;
     ctx.save();
-    ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = baseAlpha * closeAlpha;
     ctx.beginPath();
     ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
     ctx.fillStyle = 'rgba(0,0,0,0.08)';

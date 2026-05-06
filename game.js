@@ -104,34 +104,42 @@ function handleInput(x, y) {
         const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
         if (btnHit) {
           vibrate();
+          if (game._closingChangeLetter) return;
           const popup = game._changeLetterPopup;
           const card = game.hand.find(c => c && c.id === popup.cardId);
           if (card && popup.targetLetter) {
-            // 执行字母置换
-            const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./data');
-            card.letter = popup.targetLetter;
-            card.baseScore = LETTER_SCORE[popup.targetLetter];
-            const upgrade = letterUpgrades.get(popup.targetLetter);
-            card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
-            card.upgraded = !!upgrade;
-            card.upgradeMult = upgrade ? upgrade.mult : 1;
-            card.isFace = FACE_CARDS.has(popup.targetLetter);
-            // 清除选择状态
-            card.selected = false;
-            const selIdx = game.selected.indexOf(card.id);
-            if (selIdx >= 0) game.selected.splice(selIdx, 1);
-            // 消耗药水
-            if (game.potions && game.potions[popup.potionIndex]) {
-              game.potions.splice(popup.potionIndex, 1);
-            }
-            if (game.audioManager) game.audioManager.play('upgrade');
-            if (game.storageManager) game.storageManager.saveProgress(game);
+            // 启动关闭动画，动画结束后执行置换
+            game._closingChangeLetter = true;
+            game._closeChangeLetterStartTime = Date.now();
+            setTimeout(() => {
+              // 执行字母置换
+              const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./js/data');
+              card.letter = popup.targetLetter;
+              card.baseScore = LETTER_SCORE[popup.targetLetter];
+              const upgrade = letterUpgrades.get(popup.targetLetter);
+              card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
+              card.upgraded = !!upgrade;
+              card.upgradeMult = upgrade ? upgrade.mult : 1;
+              card.isFace = FACE_CARDS.has(popup.targetLetter);
+              // 保持卡牌选中状态，不移除 game.selected
+              // 消耗药水
+              if (game.potions && game.potions[popup.potionIndex]) {
+                game.potions.splice(popup.potionIndex, 1);
+              }
+              if (game.audioManager) game.audioManager.play('upgrade');
+              if (game.storageManager) game.storageManager.saveProgress(game);
+              game._changeLetterPopup = null;
+              game._closingChangeLetter = false;
+            }, 300);
+          } else {
+            // 条件不满足，直接关闭（无动画）
+            game._changeLetterPopup = null;
           }
-          game._changeLetterPopup = null;
           return;
         }
       }
-      // 点击遮罩关闭
+      // 点击遮罩关闭（关闭动画中不响应）
+      if (game._closingChangeLetter) return;
       game._changeLetterPopup = null;
       return;
     }
@@ -484,6 +492,8 @@ function restartGame() {
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
   game._changeLetterPopup = null;
+  game._closingChangeLetter = false;
+  game._closeChangeLetterStartTime = null;
   game._changeLetterHint = null;
   lastPlayResult = null;
 }
