@@ -1,7 +1,7 @@
 // ===== 女巫技能配置 =====
 
 const WITCH_SKILLS = [
-  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter', desc: '每次出牌必须不少于4个字母' },
+  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter',reward_desc: '魔法药水牌: 通用强化', desc: '每次出牌必须不少于4个字母' },
 ];
 
 // 获取指定回合的女巫技能

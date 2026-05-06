@@ -287,9 +287,16 @@ function handleInput(x, y) {
 
     if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
-      if (btnHit) {
+      if (btnHit && !game._challengeBtnPressed) {
         vibrate();
-        game.nextRound();
+        game._challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressTime = Date.now();
+        // 启动页面过渡动画
+        game._shopToGameTransition = { startTime: Date.now() };
+        setTimeout(() => {
+          game.nextRound();
+        }, 400);
         return;
       }
     }
@@ -320,12 +327,14 @@ function handleInput(x, y) {
         const existing = letterUpgrades.get(game._potionSelectedLetter);
         const totalMult = existing ? existing.mult * mult : mult;
         const newScore = Math.floor(LETTER_SCORE[game._potionSelectedLetter] * totalMult);
+        const oldScore = existing ? Math.floor(LETTER_SCORE[game._potionSelectedLetter] * existing.mult) : LETTER_SCORE[game._potionSelectedLetter];
         // 执行升级
         upgradeLetter(game, game._potionSelectedLetter);
         // 启动弹出动画
         game._potionUpgrading = {
           startTime: Date.now(),
           letter: game._potionSelectedLetter,
+          oldScore: oldScore,
           newScore: newScore,
           upgradeMult: totalMult
         };

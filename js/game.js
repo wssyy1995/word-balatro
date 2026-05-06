@@ -447,8 +447,8 @@ class Game {
   }
 
   toggleSelect(cardId) {
-    // 如果有非法提示，先清除
-    if (this.pendingCheck && this.pendingCheck.state === 'invalid') {
+    // 如果有非法提示或女巫约束失败提示，先清除
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
       this.pendingCheck = null;
     }
     // 清除字母跳跃偏移
@@ -698,9 +698,16 @@ class Game {
         if (c === null && newIdx < newCards.length) {
           const nc = newCards[newIdx++];
           nc.newCard = true;
+          nc.selectOffset = 0;
+          nc.jumpOffsetY = 0;
           nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
           this.animManager.flyIn(nc, 'left', null, 0);
           return nc;
+        }
+        // 清除保留旧卡牌的各种偏移，避免与新牌位置不对齐
+        if (c) {
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
         }
         return c;
       });
@@ -804,9 +811,16 @@ class Game {
         if (c === null && newIdx < newCards.length) {
           const nc = newCards[newIdx++];
           nc.newCard = true;
+          nc.selectOffset = 0;
+          nc.jumpOffsetY = 0;
           nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
           this.animManager.flyIn(nc, 'left', null, 0);
           return nc;
+        }
+        // 清除保留旧卡牌的各种偏移，避免与新牌位置不对齐
+        if (c) {
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
         }
         return c;
       });

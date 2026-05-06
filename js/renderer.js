@@ -68,7 +68,7 @@ class Renderer {
     // 加载按钮图片
     this.pressedBtn = null;
     this.btnImages = {};
-    const btnNames = ['out_card', 'throw_card', 'reset_select'];
+    const btnNames = ['out_card', 'throw_card', 'reset_select', 'challenge_button'];
     btnNames.forEach(name => {
       try {
         const img = wx.createImage();
@@ -389,7 +389,7 @@ class Renderer {
     const maskH = h * 0.35;
     const maskY = finalY + h - maskH;
     const maskR = Math.min(r, maskH / 2);
-    this.roundRect(x + 1, maskY, w - 2, maskH, maskR, 'rgba(0,0,0,0.55)');
+    this.roundRect(x + 2, maskY, w - 4, maskH, maskR, 'rgba(0,0,0,0.55)');
 
     // 名字（自适应字号）
     ctx.save();
@@ -507,11 +507,19 @@ class Renderer {
     ctx.fillText(card.letter, 0, -hh + h * 0.33 - 2 * s + 1 * s);
 
     // === 3. 分数（始终显示当前实际分数）===
+    ctx.save();
+    const scoreX = 0;
+    const scoreY = -hh + h * 0.74;
+    ctx.translate(scoreX, scoreY);
+    if (card._scoreScale && card._scoreScale !== 1) {
+      ctx.scale(card._scoreScale, card._scoreScale);
+    }
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${card.score}分`, 0, -hh + h * 0.74);
+    ctx.fillText(`${card.score}分`, 0, 0);
+    ctx.restore();
 
     // === 6. 新牌标记 ===
     if (isNew) {
@@ -588,6 +596,29 @@ class Renderer {
     // 绘制飞行中的总分
     this._updateAndDrawFlyingScore(ctx, s, game);
     
+    // 商店 → 游戏 页面过渡遮罩
+    if (game._shopToGameTransition) {
+      const elapsed = Date.now() - game._shopToGameTransition.startTime;
+      const duration = 800;
+      if (elapsed < duration) {
+        const progress = elapsed / duration;
+        let alpha = 0;
+        if (progress < 0.5) {
+          // 前半段：商店淡出（遮罩淡入）
+          alpha = progress * 2 * 0.35;
+        } else {
+          // 后半段：游戏淡入（遮罩淡出）
+          alpha = (1 - progress) * 2 * 0.35;
+        }
+        ctx.fillStyle = `rgba(10, 22, 40, ${alpha})`;
+        ctx.fillRect(0, 0, W, H);
+      } else {
+        game._shopToGameTransition = null;
+        game._challengeBtnPressed = false;
+        if (this.shopRenderer) this.shopRenderer.challengeBtnPressed = false;
+      }
+    }
+
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
@@ -1810,13 +1841,19 @@ class Renderer {
       const now = Date.now();
       const elapsed = now - anim.startTime;
 
-      if (elapsed < 1800) {
+      if (elapsed < 2600) {
+        // 时间线：
+        // 0-500ms:    卡牌弹出（旧分数）
+        // 500-1000ms:  保持（旧分数）
+        // 1000-1300ms: 分数变大缩小，更新为新分数
+        // 1300-2300ms: 保持（新分数）
+        // 2300-2600ms: 卡牌缩小淡出
         const popDuration = 500;
-        const holdDuration = 900;
-        const shrinkDuration = 400;
-        const totalDuration = popDuration + holdDuration + shrinkDuration;
+        const holdOldDuration = 500;
+        const scoreChangeDuration = 300;
+        const holdNewDuration = 1000;
+        const fadeOutDuration = 300;
 
-        // easeOutBack：果冻回弹效果
         function easeOutBack(t) {
           const c1 = 1.70158;
           const c3 = c1 + 1;
@@ -1825,19 +1862,31 @@ class Renderer {
 
         let cardScale = 1;
         let alpha = 1;
+        let showNewScore = false;
+        let scoreScale = 1;
+
         if (elapsed < popDuration) {
-          // 阶段1：果冻弹出（0 → 1.1 → 1.0）
+          // 阶段1：弹出
           const t = elapsed / popDuration;
           cardScale = easeOutBack(t);
-        } else if (elapsed < popDuration + holdDuration) {
-          // 阶段2：保持
+        } else if (elapsed < popDuration + holdOldDuration) {
+          // 阶段2：保持旧分数
           cardScale = 1;
-          alpha = 1;
-        } else if (elapsed < totalDuration) {
-          // 阶段3：缩小淡出
-          const t = (elapsed - popDuration - holdDuration) / shrinkDuration;
-          cardScale = 1 - t * 0.5; // 缩到 0.5
+        } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
+          // 阶段3：分数变化动画（变大缩小）
+          const t = (elapsed - popDuration - holdOldDuration) / scoreChangeDuration;
+          showNewScore = true;
+          scoreScale = 1 + 0.2 * Math.sin(t * Math.PI);
+        } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration + holdNewDuration) {
+          // 阶段4：保持新分数
+          showNewScore = true;
+          cardScale = 1;
+        } else {
+          // 阶段5：缩小淡出
+          const t = (elapsed - popDuration - holdOldDuration - scoreChangeDuration - holdNewDuration) / fadeOutDuration;
+          cardScale = 1 - t * 0.5;
           alpha = 1 - t;
+          showNewScore = true;
         }
 
         // 背后页面变暗遮罩
@@ -1846,19 +1895,25 @@ class Renderer {
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
 
-        // 使用 drawCard 绘制，基础放大 2 倍，再通过 animOffset.scale 做果冻动效
+        // 使用 drawCard 绘制
         ctx.save();
         ctx.translate(W / 2, H / 2);
         ctx.scale(2, 2);
 
         const tempCard = {
           letter: anim.letter,
-          score: anim.newScore,
+          score: showNewScore ? anim.newScore : anim.oldScore,
           baseScore: LETTER_SCORE[anim.letter],
-          upgraded: true,
-          upgradeMult: anim.upgradeMult || 1,
+          upgraded: showNewScore,
+          upgradeMult: showNewScore ? (anim.upgradeMult || 1) : 1,
           animOffset: { scale: Math.max(0, cardScale), opacity: Math.max(0, alpha) }
         };
+
+        // 分数变化阶段的额外缩放
+        if (elapsed >= popDuration + holdOldDuration && elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
+          tempCard._scoreScale = scoreScale;
+        }
+
         this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2);
 
         ctx.restore();

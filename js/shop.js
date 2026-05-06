@@ -189,6 +189,8 @@ class ShopRenderer {
     this.shopRefreshRects = [];
     this.shopPriceBtnRects = [];
     this.priceBtnPressed = null; // { index, pressTime }
+    this.challengeBtnPressed = false;
+    this.challengeBtnPressTime = 0;
   }
 
   _easeOutBack(t) {
@@ -303,23 +305,51 @@ class ShopRenderer {
     this.shopSellBtnRect = null;
 
     // 左区4格：女巫牌
+    // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
+    if (game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp._shouldRemove) {
+      game.jokers.splice(game._sellingProp.index, 1);
+      game._sellingProp = null;
+    }
     for (let i = 0; i < 4; i++) {
       const sx = oLeftStartX + i * (oSlotW + oGap);
       const joker = oJokers[i];
 
       // 售出消失动画
       const isSelling = game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp.index === i;
+
+      // 补位滑动偏移（右侧卡牌依次左移，带果冻感 easeOutBack）
+      let slideOffsetX = 0;
+      if (game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp.index < i && joker) {
+        const sellElapsed = Date.now() - game._sellingProp.startTime;
+        const shiftStart = 200;
+        const shiftDuration = 500;
+        const stagger = (i - game._sellingProp.index - 1) * 80;
+        const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
+        if (tRaw > 0) {
+          const t = Math.min(tRaw, 1);
+          const c1 = 1.70158;
+          const c3 = c1 + 1;
+          const ease = 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+          slideOffsetX = -(oSlotW + oGap) * ease;
+        }
+      }
+
       if (isSelling && joker) {
         const sellElapsed = Date.now() - game._sellingProp.startTime;
-        const sellProgress = Math.min(sellElapsed / 400, 1);
-        if (sellProgress >= 1) {
-          game.jokers.splice(i, 1);
-          game._sellingProp = null;
+        const flyDuration = 700;
+        const totalDuration = 900;
+        const sellProgress = Math.min(sellElapsed / flyDuration, 1);
+
+        if (sellElapsed >= totalDuration) {
+          game._sellingProp._shouldRemove = true;
           continue;
         }
+
+        if (sellProgress >= 1) continue;
+
         ctx.save();
         // 女巫牌：从屏幕左侧飞出（easeOutCubic，x:-400, y:30, rotation:-20）
-        const eased = 1 - Math.pow(1 - sellProgress, 3); // easeOutCubic
+        const eased = 1 - Math.pow(1 - sellProgress, 3);
         const flyX = -eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = -eased * 20;
@@ -330,10 +360,10 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, joker, sx, oSlotY, oSlotW, oSlotH, s);
         ctx.restore();
       } else if (joker) {
-        this.parent._drawPropCard(ctx, joker, sx, oSlotY, oSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'jokers' });
+        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -380,23 +410,51 @@ class ShopRenderer {
     }
 
     // 右区2格：药水牌
+    // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
+    if (game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp._shouldRemove) {
+      game.potions.splice(game._sellingProp.index, 1);
+      game._sellingProp = null;
+    }
     for (let i = 0; i < 2; i++) {
       const sx = oRightStartX + i * (oSlotW + oGap);
       const potion = oPotions[i];
 
       // 售出消失动画
       const isSelling = game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp.index === i;
+
+      // 补位滑动偏移（右侧卡牌依次左移，带果冻感 easeOutBack）
+      let slideOffsetX = 0;
+      if (game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp.index < i && potion) {
+        const sellElapsed = Date.now() - game._sellingProp.startTime;
+        const shiftStart = 200;
+        const shiftDuration = 500;
+        const stagger = (i - game._sellingProp.index - 1) * 80;
+        const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
+        if (tRaw > 0) {
+          const t = Math.min(tRaw, 1);
+          const c1 = 1.70158;
+          const c3 = c1 + 1;
+          const ease = 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+          slideOffsetX = -(oSlotW + oGap) * ease;
+        }
+      }
+
       if (isSelling && potion) {
         const sellElapsed = Date.now() - game._sellingProp.startTime;
-        const sellProgress = Math.min(sellElapsed / 400, 1);
-        if (sellProgress >= 1) {
-          game.potions.splice(i, 1);
-          game._sellingProp = null;
+        const flyDuration = 700;
+        const totalDuration = 900;
+        const sellProgress = Math.min(sellElapsed / flyDuration, 1);
+
+        if (sellElapsed >= totalDuration) {
+          game._sellingProp._shouldRemove = true;
           continue;
         }
+
+        if (sellProgress >= 1) continue;
+
         ctx.save();
         // 药水牌：从屏幕右侧飞出（easeOutCubic，x:400, y:30, rotation:20）
-        const eased = 1 - Math.pow(1 - sellProgress, 3); // easeOutCubic
+        const eased = 1 - Math.pow(1 - sellProgress, 3);
         const flyX = eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = eased * 20;
@@ -407,10 +465,10 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, potion, sx, oSlotY, oSlotW, oSlotH, s);
         ctx.restore();
       } else if (potion) {
-        this.parent._drawPropCard(ctx, potion, sx, oSlotY, oSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'potions' });
+        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'potions' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -698,14 +756,43 @@ class ShopRenderer {
     const nextRound = game.round + 1;
     const witchSkill = getSkillForLevel(nextRound);
     if (witchSkill) {
-      const witchCardH = 56 * s;
-      const witchCardY = H - 48 * s - witchCardH - 10 * s;
-      const witchCardX = 20 * s;
-      const witchCardW = W - 40 * s;
+      const witchCardH = 100 * s;
+      const witchCardY = H - 30 - witchCardH;
+      const witchCardX = 15 * s;
+      const witchCardW = W - 30 * s;
+
+      // —— 下一回合 —— 标题
+      const titleText = '下一回合';
+      ctx.save();
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b7d5a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleY = witchCardY - 14 * s;
+      const titleW = ctx.measureText(titleText).width;
+      const lineW = 40 * s;
+      const lineGap = 8 * s;
+      const centerX = W / 2;
+      // 左线
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(centerX - titleW / 2 - lineGap - lineW, titleY);
+      ctx.lineTo(centerX - titleW / 2 - lineGap, titleY);
+      ctx.stroke();
+      // 右线
+      ctx.beginPath();
+      ctx.moveTo(centerX + titleW / 2 + lineGap, titleY);
+      ctx.lineTo(centerX + titleW / 2 + lineGap + lineW, titleY);
+      ctx.stroke();
+      ctx.fillText(titleText, centerX, titleY);
+      ctx.restore();
+
+      // 卡片背景
       this.parent.roundRect(witchCardX, witchCardY, witchCardW, witchCardH, 10 * s, '#f5f0e6', '#c4a35a', 1.5 * s);
 
-      // 女巫头像占位（左侧圆形）
-      const avatarSize = 36 * s;
+      // 左侧：女巫头像（圆形）
+      const avatarSize = 54 * s;
       const avatarX = witchCardX + 14 * s;
       const avatarY = witchCardY + (witchCardH - avatarSize) / 2;
       ctx.save();
@@ -716,45 +803,103 @@ class ShopRenderer {
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 2 * s;
       ctx.stroke();
-      // 帽子图标
       ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🧙', avatarX + avatarSize / 2, avatarY + avatarSize / 2);
       ctx.restore();
 
-      // 技能描述
+      // 中间文字区域
+      const textX = avatarX + avatarSize + 14 * s;
+      // 右侧按钮占用的空间
+      const challengeBtnW = 90 * s;
+      const challengeBtnX = witchCardX + witchCardW - challengeBtnW - 14 * s;
+      const textMaxW = challengeBtnX - textX - 10 * s;
+      const lineHeight = 15 * s;
+
+      let currentY = witchCardY + 18 * s;
+
+      // 女巫技能（标题）
       ctx.save();
-      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#6b3a7d';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('女巫技能', textX, currentY);
+      ctx.restore();
+      currentY += 20 * s;
+
+      // 技能描述（自动换行）
+      ctx.save();
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`第${nextRound}关女巫技能：${witchSkill.desc}`, avatarX + avatarSize + 12 * s, witchCardY + witchCardH * 0.35);
+      const descH = drawWrappedText(ctx, witchSkill.desc, textX, currentY, textMaxW, lineHeight);
       ctx.restore();
+      currentY += descH + 6 * s;
 
-      // 奖励描述
+      // 奖励小标题（🎁 + 奖励）
       ctx.save();
-      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-      ctx.fillStyle = '#8b7d5a';
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#6b3a7d';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`通关奖励：${getRewardName(witchSkill.reward)}`, avatarX + avatarSize + 12 * s, witchCardY + witchCardH * 0.68);
+      ctx.fillText('🎁 奖励', textX, currentY);
       ctx.restore();
-    }
+      currentY += 18 * s;
 
-    // 下一关按钮
-    const btnW = 130 * s;
-    const btnH = 42 * s;
-    const btnX = (W - btnW) / 2;
-    const btnY = H - 48 * s;
-    this.parent.roundRect(btnX, btnY, btnW, btnH, 10 * s, '#c0392b');
-    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('下一关', W / 2, btnY + btnH / 2);
-    this.nextRoundBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+      // 奖励文案（自动换行，使用 reward_desc）
+      if (witchSkill.reward_desc) {
+        ctx.save();
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b7d5a';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const rewardH = drawWrappedText(ctx, witchSkill.reward_desc, textX, currentY, textMaxW, lineHeight);
+        ctx.restore();
+      }
+
+      // 右侧：挑战按钮
+      const challengeBtnH = 38 * s;
+      const challengeBtnY = witchCardY + (witchCardH - challengeBtnH) / 2;
+
+      // 按下效果偏移
+      let pressOffset = 0;
+      if (this.challengeBtnPressed) {
+        const pe = Date.now() - this.challengeBtnPressTime;
+        if (pe < 200) pressOffset = 2 * s;
+      }
+
+      const challengeBtnData = this.parent.btnImages['challenge_button'];
+      if (challengeBtnData && challengeBtnData.loaded && challengeBtnData.img) {
+        ctx.drawImage(challengeBtnData.img, challengeBtnX, challengeBtnY + pressOffset, challengeBtnW, challengeBtnH);
+      } else {
+        this.parent.roundRect(challengeBtnX, challengeBtnY + pressOffset, challengeBtnW, challengeBtnH, 8 * s, '#6b3a7d');
+      }
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('挑战', challengeBtnX + challengeBtnW / 2, challengeBtnY + challengeBtnH / 2 + pressOffset);
+      ctx.restore();
+      this.nextRoundBtnRect = { x: challengeBtnX, y: challengeBtnY, w: challengeBtnW, h: challengeBtnH };
+    } else {
+      // 无女巫技能时，保留原来的下一关按钮
+      const btnW = 130 * s;
+      const btnH = 42 * s;
+      const btnX = (W - btnW) / 2;
+      const btnY = H - 48 * s;
+      this.parent.roundRect(btnX, btnY, btnW, btnH, 10 * s, '#c0392b');
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('下一关', W / 2, btnY + btnH / 2);
+      this.nextRoundBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+    }
   }
 }
 
