@@ -1180,6 +1180,25 @@ class Renderer {
         }
         // 画文字
         ctx.fillText(errText, errBaseX + errIconSize + 4 * s + errTextWidth / 2, errY);
+      } else if (pc.state === 'witch_failed') {
+        // 女巫约束失败：橙色单词 + 紫色提示
+        invalid = true;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#f1c40f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word, W / 2, wordAreaY);
+        ctx.restore();
+
+        const failText = pc.witchFailText || '女巫约束未满足';
+        ctx.save();
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(failText, W / 2, wordAreaY + 32 * s);
+        ctx.restore();
       }
 
     } else if (selected.length >= 1) {

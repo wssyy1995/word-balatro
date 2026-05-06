@@ -9,6 +9,7 @@ const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects } = require('./shop');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -440,6 +441,7 @@ class Game {
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
     this.extraSafety = 0;
+    this.witchSkillPassed = true;
     this.state = 'playing';
   }
 
@@ -510,6 +512,30 @@ class Game {
       this.handsLeft--;
       if (this.handsLeft <= 0) {
         // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
+        setTimeout(() => {
+          this.state = 'gameover';
+          this.gameOverReason = 'out_of_hands';
+          if (this.storageManager) {
+            this.storageManager.setHighScore(this.totalScore);
+            this.storageManager.updateStats(this);
+            this.storageManager.clearProgress();
+          }
+        }, 1500);
+      }
+      if (this.storageManager) this.storageManager.saveProgress(this);
+      return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
+    }
+
+    // === 女巫技能约束检查 ===
+    const witchSkill = getSkillForLevel(this.round);
+    if (witchSkill && !checkSkill(witchSkill.skill, this, playedInOrder)) {
+      this.witchSkillPassed = false;
+      this.pendingCheck.state = 'witch_failed';
+      this.pendingCheck.resolveTime = Date.now();
+      this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
+      if (this.audioManager) this.audioManager.play('invalid');
+      this.handsLeft--;
+      if (this.handsLeft <= 0) {
         setTimeout(() => {
           this.state = 'gameover';
           this.gameOverReason = 'out_of_hands';
@@ -685,12 +711,24 @@ class Game {
     const extraHands = this.handsLeft * 1;
     const extraDiscards = this.discardsLeft + 1;
     const totalGold = baseGold + extraHands + extraDiscards;
+
+    // 女巫技能奖励
+    let witchReward = null;
+    const witchSkill = getSkillForLevel(this.round);
+    if (witchSkill && this.witchSkillPassed) {
+      const rewarded = giveReward(witchSkill.reward, this);
+      if (rewarded) {
+        witchReward = witchSkill.reward;
+      }
+    }
+
     this.settlementData = {
       baseGold,
       extraHands,
       extraDiscards,
       totalGold,
       round: this.round,
+      witchReward,
     };
     this.state = 'settlement';
   }

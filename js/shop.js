@@ -1,4 +1,5 @@
 const { LETTER_SCORE, letterUpgrades } = require('./data');
+const { getSkillForLevel, getRewardName } = require('./witch_skills');
 
 // 自动换行绘制文本，返回占用的总高度
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -682,6 +683,55 @@ class ShopRenderer {
 
       this.shopRefreshRects.push({ x: refreshBtnX, y: refreshBtnY, w: refreshBtnSize, h: refreshBtnSize, modIdx });
     });
+
+    // === 下一回合女巫技能模块 ===
+    const nextRound = game.round + 1;
+    const witchSkill = getSkillForLevel(nextRound);
+    if (witchSkill) {
+      const witchCardH = 56 * s;
+      const witchCardY = H - 48 * s - witchCardH - 10 * s;
+      const witchCardX = 20 * s;
+      const witchCardW = W - 40 * s;
+      this.parent.roundRect(witchCardX, witchCardY, witchCardW, witchCardH, 10 * s, '#f5f0e6', '#c4a35a', 1.5 * s);
+
+      // 女巫头像占位（左侧圆形）
+      const avatarSize = 36 * s;
+      const avatarX = witchCardX + 14 * s;
+      const avatarY = witchCardY + (witchCardH - avatarSize) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#9b59b6';
+      ctx.fill();
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 2 * s;
+      ctx.stroke();
+      // 帽子图标
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🧙', avatarX + avatarSize / 2, avatarY + avatarSize / 2);
+      ctx.restore();
+
+      // 技能描述
+      ctx.save();
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`第${nextRound}关女巫技能：${witchSkill.desc}`, avatarX + avatarSize + 12 * s, witchCardY + witchCardH * 0.35);
+      ctx.restore();
+
+      // 奖励描述
+      ctx.save();
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b7d5a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`通关奖励：${getRewardName(witchSkill.reward)}`, avatarX + avatarSize + 12 * s, witchCardY + witchCardH * 0.68);
+      ctx.restore();
+    }
 
     // 下一关按钮
     const btnW = 130 * s;
