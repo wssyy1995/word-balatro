@@ -421,6 +421,8 @@ class Game {
     this.animManager = new AnimationManager();
     this.flyingCards = [];
     this.hintToast = null;
+    this._changeLetterPopup = null;
+    this._changeLetterHint = null;
     this.pendingCheck = null;
     this.settlementData = null;
     this.audioManager = new AudioManager();
@@ -437,7 +439,7 @@ class Game {
     this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety);
     this.selected = [];
     this.score = 0;
-    this.target = this.round === 1 ? 80 : Math.floor(150 * this.round * (this.round + 1) / 2);
+    this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
@@ -450,6 +452,10 @@ class Game {
     // 如果有非法提示或女巫约束失败提示，先清除
     if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
       this.pendingCheck = null;
+    }
+    // 清除字母置换提示
+    if (this._changeLetterHint) {
+      this._changeLetterHint = null;
     }
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
@@ -895,6 +901,10 @@ class Game {
     // 清除过期的 hintToast
     if (this.hintToast && Date.now() > this.hintToast.expireAt) {
       this.hintToast = null;
+    }
+    // 字母置换提示按钮 2.5s 后自动隐藏
+    if (this._changeLetterHint && Date.now() - this._changeLetterHint.startTime > 2500) {
+      this._changeLetterHint = null;
     }
   }
 }

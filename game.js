@@ -79,6 +79,63 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'playing') {
+    // 字母置换弹窗打开时，优先处理弹窗点击
+    if (game._changeLetterPopup) {
+      // 检测关闭按钮
+      if (renderer.changeLetterCloseRect) {
+        const closeHit = renderer.hitTest(x, y, [renderer.changeLetterCloseRect]);
+        if (closeHit) {
+          vibrate();
+          game._changeLetterPopup = null;
+          return;
+        }
+      }
+      // 检测字母块点击
+      if (renderer.changeLetterRects) {
+        const letterHit = renderer.hitTest(x, y, renderer.changeLetterRects);
+        if (letterHit) {
+          vibrate();
+          game._changeLetterPopup.targetLetter = letterHit.letter;
+          return;
+        }
+      }
+      // 检测置换按钮
+      if (renderer.changeLetterSwapBtnRect && renderer.changeLetterSwapBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
+        if (btnHit) {
+          vibrate();
+          const popup = game._changeLetterPopup;
+          const card = game.hand.find(c => c && c.id === popup.cardId);
+          if (card && popup.targetLetter) {
+            // 执行字母置换
+            const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./data');
+            card.letter = popup.targetLetter;
+            card.baseScore = LETTER_SCORE[popup.targetLetter];
+            const upgrade = letterUpgrades.get(popup.targetLetter);
+            card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
+            card.upgraded = !!upgrade;
+            card.upgradeMult = upgrade ? upgrade.mult : 1;
+            card.isFace = FACE_CARDS.has(popup.targetLetter);
+            // 清除选择状态
+            card.selected = false;
+            const selIdx = game.selected.indexOf(card.id);
+            if (selIdx >= 0) game.selected.splice(selIdx, 1);
+            // 消耗药水
+            if (game.potions && game.potions[popup.potionIndex]) {
+              game.potions.splice(popup.potionIndex, 1);
+            }
+            if (game.audioManager) game.audioManager.play('upgrade');
+            if (game.storageManager) game.storageManager.saveProgress(game);
+          }
+          game._changeLetterPopup = null;
+          return;
+        }
+      }
+      // 点击遮罩关闭
+      game._changeLetterPopup = null;
+      return;
+    }
+
     // 检测卡牌点击
     const cardHit = renderer.hitTest(x, y, renderer.cardRects);
     if (cardHit) {
@@ -130,17 +187,43 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测字母置换提示按钮点击
+    if (renderer.changeLetterHintRect) {
+      const hintHit = renderer.hitTest(x, y, [renderer.changeLetterHintRect]);
+      if (hintHit) {
+        vibrate();
+        game._changeLetterHint = null;
+        return;
+      }
+    }
+
     // 检测已购买道具栏中的药水牌点击
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
       if (potionHit) {
         vibrate();
         const potion = game.potions[potionHit.potionIndex];
-        if (potion) {
-          game.potionMode = {...potion};
-          game._prePotionState = 'playing';
-          game.state = 'potion';
+        if (!potion) return;
+        // 字母置换药水：游戏中直接使用，弹出选择弹窗
+        if (potion.effect === 'change_letter') {
+          const selectedCards = game.getSelectedCards();
+          if (selectedCards.length !== 1) {
+            game._changeLetterHint = { potionIndex: potionHit.potionIndex, startTime: Date.now() };
+            return;
+          }
+          game._changeLetterPopup = {
+            potionIndex: potionHit.potionIndex,
+            cardId: selectedCards[0].id,
+            originalLetter: selectedCards[0].letter,
+            targetLetter: null,
+            startTime: Date.now(),
+          };
+          return;
         }
+        // 其他药水：进入 potion 状态
+        game.potionMode = {...potion};
+        game._prePotionState = 'playing';
+        game.state = 'potion';
         return;
       }
     }
@@ -245,12 +328,15 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测刷新按钮点击
+    // 检测刷新按钮点击（扣除 5 金币）
     if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
       const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
       if (refreshHit) {
-        vibrate();
-        refreshModule(game, refreshHit.modIdx);
+        if (game.gold >= 5) {
+          game.gold -= 5;
+          vibrate();
+          refreshModule(game, refreshHit.modIdx);
+        }
         return;
       }
     }
@@ -397,6 +483,8 @@ function restartGame() {
   game = new Game();
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
+  game._changeLetterPopup = null;
+  game._changeLetterHint = null;
   lastPlayResult = null;
 }
 

@@ -563,6 +563,12 @@ class Renderer {
     if (game.state === 'playing') {
       this.drawHUD(game);
       this.drawPlaying(game);
+      // 字母置换弹窗（覆盖在游戏页面上方）
+      if (game._changeLetterPopup) {
+        this.drawChangeLetterPopup(game);
+      }
+      // hintToast 提示
+      this._drawHintToast(game);
     } else if (game.state === 'settlement') {
       // 金币结算弹窗（保留 HUD 背景）
       this.drawHUD(game);
@@ -571,6 +577,17 @@ class Renderer {
     } else if (game.state === 'shop') {
       // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
       this.drawTopHeader();
+
+      // 游戏标题
+      const top = (this.safeTop || 0) + 20;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+      ctx.restore();
+
       this.drawCoinCapsule(game);
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
@@ -605,10 +622,10 @@ class Renderer {
         let alpha = 0;
         if (progress < 0.5) {
           // 前半段：商店淡出（遮罩淡入）
-          alpha = progress * 2 * 0.35;
+          alpha = progress * 2 * 0.2;
         } else {
           // 后半段：游戏淡入（遮罩淡出）
-          alpha = (1 - progress) * 2 * 0.35;
+          alpha = (1 - progress) * 2 * 0.2;
         }
         ctx.fillStyle = `rgba(10, 22, 40, ${alpha})`;
         ctx.fillRect(0, 0, W, H);
@@ -652,16 +669,14 @@ class Renderer {
 
     this.drawTopHeader();
 
-    // 游戏标题（仅在非商店状态显示）
-    if (game.state !== 'shop') {
-      ctx.save();
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#8b6914';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
-      ctx.restore();
-    }
+    // 游戏标题
+    ctx.save();
+    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+    ctx.restore();
 
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = W - 20 * s;
@@ -914,6 +929,7 @@ class Renderer {
     }
 
     // 右区2格：药水牌
+    this.changeLetterHintRect = null;
     for (let i = 0; i < 2; i++) {
       const sx = rightStartX + i * (slotW + gap);
       const potion = potions[i];
@@ -922,6 +938,36 @@ class Renderer {
         this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
       } else {
         this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s);
+      }
+
+      // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）
+      if (game._changeLetterHint && game._changeLetterHint.potionIndex === i && potion && potion.effect === 'change_letter') {
+        const hintBtnH = 16 * s;
+        const hintBtnW = slotW + 5;
+        const hintBtnY = slotY + slotH + 2 * s;
+        const hintElapsed = Date.now() - game._changeLetterHint.startTime;
+        const hintProgress = Math.min(hintElapsed / 200, 1);
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        const hintEase = 1 + c3 * Math.pow(hintProgress - 1, 3) + c1 * Math.pow(hintProgress - 1, 2);
+        const hintScale = hintEase;
+        const hintOffsetY = -(1 - hintEase) * 6 * s;
+
+        const finalW = hintBtnW * hintScale;
+        const finalH = hintBtnH * hintScale;
+        const finalX = sx + (slotW - finalW) / 2;
+        const finalY = hintBtnY + hintOffsetY + (hintBtnH - finalH) / 2;
+
+        ctx.save();
+        this.roundRect(finalX, finalY, finalW, finalH, 3 * s * Math.max(hintScale, 0.5), '#c0392b');
+        ctx.font = `bold ${Math.floor(8 * s * Math.max(hintScale, 0.5))}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('选择一张字母牌', sx + slotW / 2, finalY + finalH / 2);
+        ctx.restore();
+
+        this.changeLetterHintRect = { x: sx, y: hintBtnY, w: hintBtnW, h: hintBtnH, potionIndex: i };
       }
     }
 
@@ -1619,6 +1665,195 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(goldText, 0, 0);
     ctx.restore();
+  }
+
+  _drawHintToast(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const s = this.scale;
+    if (!game.hintToast || !game.hintToast.text) return;
+    const toastH = 36 * s;
+    const toastY = this.H - 120 * s;
+    const padding = 16 * s;
+    ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+    const textW = ctx.measureText(game.hintToast.text).width;
+    const toastW = textW + padding * 2;
+    const toastX = (W - toastW) / 2;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    this.roundRect(toastX, toastY, toastW, toastH, 18 * s, null, null, 0);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(game.hintToast.text, W / 2, toastY + toastH / 2);
+    ctx.restore();
+  }
+
+  drawChangeLetterPopup(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+    const popup = game._changeLetterPopup;
+    if (!popup) return;
+
+    const { LETTER_SCORE } = require('./data');
+
+    // 弹出动效（easeOutBack）
+    const elapsed = Date.now() - (popup.startTime || Date.now());
+    const enterDuration = 350;
+    const enterProgress = Math.min(elapsed / enterDuration, 1);
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    const enterEase = 1 + c3 * Math.pow(enterProgress - 1, 3) + c1 * Math.pow(enterProgress - 1, 2);
+    const panelOffsetY = (1 - enterEase) * 30 * s;
+    const contentAlpha = enterProgress;
+
+    // 遮罩（带淡入）
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${0.5 * Math.min(elapsed / 200, 1)})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // 弹窗尺寸
+    const pw = 300 * s;
+    const ph = 460 * s;
+    const px = (W - pw) / 2;
+    const py = (H - ph) / 2 + panelOffsetY;
+    const r = 12 * s;
+    const gold = '#c4a35a';
+
+    // 弹窗背景
+    this.roundRect(px, py, pw, ph, r, '#faf6ee', gold, 2 * s);
+
+    // 标题：字母置换
+    ctx.save();
+    ctx.globalAlpha = contentAlpha;
+    ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('字母置换', W / 2, py + 30 * s);
+    ctx.restore();
+
+    // 标题分隔线
+    ctx.save();
+    ctx.globalAlpha = contentAlpha;
+    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+    ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.moveTo(px + 30 * s, py + 48 * s);
+    ctx.lineTo(px + pw - 30 * s, py + 48 * s);
+    ctx.stroke();
+    ctx.restore();
+
+    // 选中的字母卡牌（游戏页面卡牌大小的一半，强制不使用 selected.png）
+    const selectedCard = game.hand.find(c => c && c.id === popup.cardId);
+    if (selectedCard) {
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.translate(W / 2, py + 100 * s);
+      ctx.scale(0.5, 0.5);
+      const tempCard = { ...selectedCard, selected: false };
+      this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2);
+      ctx.restore();
+    }
+
+    // 字母块区域
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const lCols = 7;
+    const lBtnSize = 30 * s;
+    const lGap = 6 * s;
+    const lTotalW = lCols * lBtnSize + (lCols - 1) * lGap;
+    const lStartX = (W - lTotalW) / 2;
+    const lStartY = py + 160 * s;
+
+    this.changeLetterRects = [];
+    letters.forEach((letter, i) => {
+      const col = i % lCols;
+      const row = Math.floor(i / lCols);
+      const lx = lStartX + col * (lBtnSize + lGap);
+      const ly = lStartY + row * (lBtnSize + lGap);
+      const isOriginal = letter === popup.originalLetter;
+      const isSelected = popup.targetLetter === letter;
+
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      if (isOriginal) {
+        // 置灰禁用
+        this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#e8e4dc');
+        ctx.fillStyle = '#b0a898';
+      } else if (isSelected) {
+        // 选中态：金色背景
+        this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#fdf5e0', '#c4a35a', 2 * s);
+        ctx.fillStyle = '#8b6914';
+      } else {
+        // 普通态
+        this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#f5f0e6', '#d4c9a8', 1 * s);
+        ctx.fillStyle = '#5a4a2a';
+      }
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter, lx + lBtnSize / 2, ly + lBtnSize / 2);
+      ctx.restore();
+
+      if (!isOriginal) {
+        this.changeLetterRects.push({ x: lx, y: ly, w: lBtnSize, h: lBtnSize, letter });
+      }
+    });
+
+    // 选中的转换提示 "A → B"（金棕色）
+    if (popup.targetLetter) {
+      const arrowY = lStartY + Math.ceil(letters.length / lCols) * (lBtnSize + lGap) + 12 * s;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${popup.originalLetter} → ${popup.targetLetter}`, W / 2, arrowY);
+      ctx.restore();
+    }
+
+    // 置换按钮
+    const btnW = 130 * s;
+    const btnH = 42 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = py + ph - btnH - 20 * s;
+    const canSwap = !!popup.targetLetter;
+    ctx.save();
+    ctx.globalAlpha = contentAlpha;
+    this.roundRect(btnX, btnY, btnW, btnH, 8 * s,
+      canSwap ? '#c4a35a' : '#d4c9a8',
+      canSwap ? null : '#bbb', canSwap ? 0 : 1.5 * s);
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('置换', W / 2, btnY + btnH / 2);
+    ctx.restore();
+    this.changeLetterSwapBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, enabled: canSwap };
+
+    // 关闭按钮（右上角 X）
+    const closeSize = 28 * s;
+    const closeX = px + pw - closeSize - 8 * s;
+    const closeY = py + 8 * s;
+    ctx.save();
+    ctx.globalAlpha = contentAlpha;
+    ctx.beginPath();
+    ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.fill();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 + 1 * s);
+    ctx.restore();
+    this.changeLetterCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
   }
 
   drawPotion(game) {
