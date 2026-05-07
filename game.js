@@ -274,36 +274,56 @@ function handleInput(x, y) {
       }
     } else if (data.phase === 'result') {
       if (data.result) {
-        // 中了：暂存 / 立即使用
-        const rects = [];
-        if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
-        if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
-        const btnHit = renderer.hitTest(x, y, rects);
-        if (btnHit) {
-          vibrate();
-          if (btnHit.action === 'stash') {
-            // 放入道具栏
-            if (!game.potions) game.potions = [];
-            if (game.potions.length < 2 && data.rewardItem) {
-              game.potions.push({ ...data.rewardItem });
-            }
-            game.witchRewardData = null;
-            game.state = 'shop';
-            if (!game.shopItems) {
-              game.shopItems = generateShopItems(game);
-            }
-            if (game.storageManager) game.storageManager.saveProgress(game);
-          } else if (btnHit.action === 'use') {
-            // 立即使用药水
-            if (data.rewardItem) {
-              game.potionMode = { ...data.rewardItem };
-              game._prePotionState = 'shop';
+        if (data.rewardItem && data.rewardItem.type === 'buff') {
+          // buff 类奖励（如 global_hand_1）：领取按钮
+          if (wr.okBtnRect) {
+            const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+            if (hit) {
+              vibrate();
+              if (data.rewardItem.effect === 'extra_hand') {
+                game.extraHands += 1;
+              }
               game.witchRewardData = null;
-              game.state = 'potion';
+              game.state = 'shop';
+              if (!game.shopItems) {
+                game.shopItems = generateShopItems(game);
+              }
               if (game.storageManager) game.storageManager.saveProgress(game);
+              return;
             }
           }
-          return;
+        } else {
+          // 药水类奖励：暂存 / 立即使用
+          const rects = [];
+          if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
+          if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
+          const btnHit = renderer.hitTest(x, y, rects);
+          if (btnHit) {
+            vibrate();
+            if (btnHit.action === 'stash') {
+              // 放入道具栏
+              if (!game.potions) game.potions = [];
+              if (game.potions.length < 2 && data.rewardItem) {
+                game.potions.push({ ...data.rewardItem });
+              }
+              game.witchRewardData = null;
+              game.state = 'shop';
+              if (!game.shopItems) {
+                game.shopItems = generateShopItems(game);
+              }
+              if (game.storageManager) game.storageManager.saveProgress(game);
+            } else if (btnHit.action === 'use') {
+              // 立即使用药水
+              if (data.rewardItem) {
+                game.potionMode = { ...data.rewardItem };
+                game._prePotionState = 'shop';
+                game.witchRewardData = null;
+                game.state = 'potion';
+                if (game.storageManager) game.storageManager.saveProgress(game);
+              }
+            }
+            return;
+          }
         }
       } else {
         // 没中：确定按钮

@@ -69,8 +69,8 @@ function getSeedWord(minLen = 3, maxLen = 6) {
   return 'cat';
 }
 
-function drawWithSafety(deck, count, round, safetyRounds) {
-  const seedWord = getSeedWord();
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6) {
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen);
   const seedLetters = seedWord.toUpperCase().split('');
 
   const seedCards = seedLetters.map(letter => {
@@ -100,10 +100,10 @@ function drawWithSafety(deck, count, round, safetyRounds) {
   return hand;
 }
 
-function ensureValidWordInHand(deck, hand) {
+function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6) {
   if (hasValidWordInHand(hand)) return;
 
-  const seedWord = getSeedWord(3, 6);
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen);
   const seedLetters = seedWord.toUpperCase().split('');
 
   for (const letter of seedLetters) {
@@ -436,8 +436,21 @@ class Game {
     wordCheckState.clear();
     applyCrystalEffects(this);
 
+    // 根据女巫技能设置保底词长度
+    const witchSkill = getSkillForLevel(this.round);
+    if (witchSkill && witchSkill.skill === 'force_letter_3') {
+      this._seedMinLen = 3;
+      this._seedMaxLen = 3;
+    } else if (witchSkill && witchSkill.skill === 'force_letter_4') {
+      this._seedMinLen = 4;
+      this._seedMaxLen = 4;
+    } else {
+      this._seedMinLen = 3;
+      this._seedMaxLen = 6;
+    }
+
     this.deck = createDeck();
-    this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety);
+    this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
     this.selected = [];
     this.score = 0;
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
@@ -721,7 +734,7 @@ class Game {
       });
 
       this.hand = this.hand.filter(c => c !== null);
-      ensureValidWordInHand(this.deck, this.hand);
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
@@ -855,7 +868,7 @@ class Game {
       // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
 
-      ensureValidWordInHand(this.deck, this.hand);
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
@@ -896,9 +909,9 @@ class Game {
   }
 
   clearSelection() {
-    if (this.selected.length === 0 && !(this.pendingCheck && this.pendingCheck.state === 'invalid')) return;
-    // 如果有非法提示，先清除
-    if (this.pendingCheck && this.pendingCheck.state === 'invalid') {
+    if (this.selected.length === 0 && !(this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed'))) return;
+    // 如果有非法提示或女巫约束失败提示，先清除
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
       this.pendingCheck = null;
     }
     // 清除字母跳跃偏移

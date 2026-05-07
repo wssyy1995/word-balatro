@@ -3,6 +3,7 @@ const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
 const { SettlementRenderer, WitchRewardRenderer } = require('./settlement');
 const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('./shop');
+const { getSkillForLevel } = require('./witch_skills');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -174,6 +175,21 @@ class Renderer {
       this.witchGiftWindowIconLoaded = false;
     }
     
+    // 加载女巫头像
+    this.witchAvatars = {};
+    [2, 3, 4].forEach(level => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/witch/witch_${level}.png`;
+        const data = { img, loaded: false };
+        img.onload = () => { data.loaded = true; };
+        img.onerror = () => { data.loaded = false; };
+        this.witchAvatars[level] = data;
+      } catch (e) {
+        this.witchAvatars[level] = { img: null, loaded: false };
+      }
+    });
+    
     // 加载金币图标
     this.coinIcon = null;
     this.coinIconLoaded = false;
@@ -295,6 +311,38 @@ class Renderer {
       }
     });
     
+    // 加载空位替代图片
+    ['empty_witch_card', 'empty_potion_card'].forEach((name) => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/${name}.png`;
+        img.onload = () => {
+          const data = this.shopCardImages[name];
+          if (data) {
+            data.loaded = true;
+            data.width = img.width || 0;
+            data.height = img.height || 0;
+          }
+        };
+        img.onerror = () => { this.shopCardImages[name] = { img: null, loaded: false }; };
+        try {
+          wx.getImageInfo({
+            src: `/images/${name}.png`,
+            success: (res) => {
+              const data = this.shopCardImages[name];
+              if (data) {
+                data.width = res.width;
+                data.height = res.height;
+              }
+            }
+          });
+        } catch (e) {}
+        this.shopCardImages[name] = { img, loaded: false, width: 0, height: 0 };
+      } catch (e) {
+        this.shopCardImages[name] = { img: null, loaded: false };
+      }
+    });
+    
     // 动画粒子与飞行状态
     this.sparkles = [];
     this.flyingScore = null;
@@ -333,7 +381,50 @@ class Renderer {
   }
 
   // 绘制虚线空位
-  _drawEmptySlot(ctx, x, y, w, h, s) {
+  _drawEmptySlot(ctx, x, y, w, h, s, type = null) {
+    // 如果有对应的空位图片，优先使用（cover 模式裁剪到圆角矩形）
+    if (type) {
+      const imgName = type === 'witch' ? 'empty_witch_card' : 'empty_potion_card';
+      const data = this.shopCardImages[imgName];
+      if (data && data.loaded && data.img) {
+        const r = 4 * s;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.clip();
+
+        const cardAspect = w / h;
+        const aspect = (data.width > 0 && data.height > 0)
+          ? data.width / data.height
+          : cardAspect;
+        let drawW, drawH, imgX, imgY;
+        if (aspect > cardAspect) {
+          drawH = h;
+          drawW = drawH * aspect;
+          imgX = x + (w - drawW) / 2;
+          imgY = y;
+        } else {
+          drawW = w;
+          drawH = drawW / aspect;
+          imgX = x;
+          imgY = y + (h - drawH) / 2;
+        }
+        ctx.drawImage(data.img, imgX, imgY, drawW, drawH);
+        ctx.restore();
+        return;
+      }
+    }
+
+    // 兜底：虚线框
     ctx.save();
     ctx.strokeStyle = 'rgba(196,163,90,0.3)';
     ctx.lineWidth = 1.2 * s;
@@ -740,85 +831,60 @@ class Renderer {
 
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = W - 20 * s;
-    const barH = 56 * s;
+    const barH = 56 * s + 5;
     const barX = 10 * s;
-    const barY = top + 8;
+    const barY = top + 11;
     const r = 10 * s;
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
 
-    const bg = '#faf6ee';
+    const witchSkill = getSkillForLevel(game.round);
+    const bg = '#f0e0c8';
+    const outerStroke = '#c5a059';
+    const innerStroke = '#c9a96e';
+
     // === 背景填充 ===
     this.roundRect(barX, barY, barW, barH, r, bg);
 
-    // === 外层粗边框（金色，圆角矩形） ===
-    ctx.lineWidth = 2.5 * s;
-    ctx.strokeStyle = gold;
-    ctx.beginPath();
-    ctx.moveTo(barX + r, barY);
-    ctx.lineTo(barX + barW - r, barY);
-    ctx.quadraticCurveTo(barX + barW, barY, barX + barW, barY + r);
-    ctx.lineTo(barX + barW, barY + barH - r);
-    ctx.quadraticCurveTo(barX + barW, barY + barH, barX + barW - r, barY + barH);
-    ctx.lineTo(barX + r, barY + barH);
-    ctx.quadraticCurveTo(barX, barY + barH, barX, barY + barH - r);
-    ctx.lineTo(barX, barY + r);
-    ctx.quadraticCurveTo(barX, barY, barX + r, barY);
-    ctx.closePath();
-    ctx.stroke();
+    // === 外层边框（淡金棕，轻盈轮廓） ===
+    this.roundRect(barX, barY, barW, barH, r, null, outerStroke, 2 * s);
 
-    // === 内层细边框（浅金色，内缩） ===
-    const inset = 3 * s;
-    const ix = barX + inset;
-    const iy = barY + inset;
-    const iw = barW - inset * 2;
-    const ih = barH - inset * 2;
-    const ir = Math.max(0, r - inset);
+    // === 中层过渡线（间隙中的微光，柔化两层衔接） ===
+    const midInset = 2 * s;
+    this.roundRect(barX + midInset, barY + midInset, barW - midInset * 2, barH - midInset * 2, Math.max(0, r - s), null, 'rgba(190,165,120,0.3)', 0.5 * s);
 
-    ctx.lineWidth = 1 * s;
-    ctx.strokeStyle = 'rgba(196,163,90,0.6)';
-    ctx.beginPath();
-    ctx.moveTo(ix + ir, iy);
-    ctx.lineTo(ix + iw - ir, iy);
-    ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
-    ctx.lineTo(ix + iw, iy + ih - ir);
-    ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
-    ctx.lineTo(ix + ir, iy + ih);
-    ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
-    ctx.lineTo(ix, iy + ir);
-    ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
-    ctx.closePath();
-    ctx.stroke();
+    // === 内层细边框（亮金色，内缩） ===
+    const inset = 4 * s;
+    this.roundRect(barX + inset, barY + inset, barW - inset * 2, barH - inset * 2, Math.max(0, r - 2 * s), null, innerStroke, 1.2 * s);
 
-    // === 四角精致装饰（八角星） ===
-    const decorOff = 3.5 * s;
-    const decorSize = 4 * s;
+    // === 四角精致装饰（英式卷草角标）===
+    const cornerOff = 6 * s;
+    const cSize = 8 * s;
     [
-      [barX + decorOff, barY + decorOff],
-      [barX + barW - decorOff, barY + decorOff],
-      [barX + barW - decorOff, barY + barH - decorOff],
-      [barX + decorOff, barY + barH - decorOff],
-    ].forEach(([cx, cy]) => {
+      { x: barX + cornerOff, y: barY + cornerOff, sx: 1, sy: 1 },
+      { x: barX + barW - cornerOff, y: barY + cornerOff, sx: -1, sy: 1 },
+      { x: barX + barW - cornerOff, y: barY + barH - cornerOff, sx: -1, sy: -1 },
+      { x: barX + cornerOff, y: barY + barH - cornerOff, sx: 1, sy: -1 },
+    ].forEach(({ x, y, sx, sy }) => {
       ctx.save();
-      ctx.translate(cx, cy);
-      // 外层八角星
+      ctx.translate(x, y);
+      ctx.strokeStyle = outerStroke;
+      ctx.lineWidth = 1.2 * s;
+      ctx.lineCap = 'round';
+
+      // 外弧
       ctx.beginPath();
-      for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2 - Math.PI / 2;
-        const r = i % 2 === 0 ? decorSize : decorSize * 0.35;
-        const px = Math.cos(angle) * r;
-        const py = Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fillStyle = gold;
-      ctx.fill();
-      // 内层小圆点
+      ctx.moveTo(0, sy * cSize * 0.5);
+      ctx.quadraticCurveTo(sx * cSize * 0.1, sy * cSize * 0.6, sx * cSize * 0.5, sy * cSize * 0.1);
+      ctx.quadraticCurveTo(sx * cSize * 0.6, 0, sx * cSize * 0.4, 0);
+      ctx.stroke();
+
+      // 内卷
       ctx.beginPath();
-      ctx.arc(0, 0, decorSize * 0.22, 0, Math.PI * 2);
-      ctx.fillStyle = '#faf6ee';
-      ctx.fill();
+      ctx.moveTo(sx * cSize * 0.15, sy * cSize * 0.15);
+      ctx.quadraticCurveTo(sx * cSize * 0.25, sy * cSize * 0.05, sx * cSize * 0.2, sy * cSize * 0.25);
+      ctx.stroke();
+
       ctx.restore();
     });
 
@@ -827,7 +893,7 @@ class Renderer {
     const lineBot = barY + barH - 14 * s;
     const line1X = barX + barW / 3;
     const line2X = barX + barW * 2 / 3;
-    ctx.strokeStyle = gold;
+    ctx.strokeStyle = outerStroke;
     ctx.lineWidth = 0.8 * s;
     [line1X, line2X].forEach((lx) => {
       ctx.beginPath();
@@ -838,7 +904,7 @@ class Renderer {
       ctx.save();
       ctx.translate(lx, barY + barH / 2);
       ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = gold;
+      ctx.fillStyle = outerStroke;
       ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
       ctx.restore();
     });
@@ -848,16 +914,54 @@ class Renderer {
     const targetCX = barX + barW / 2;
     const scoreCX = barX + barW * 5 / 6;
 
+    // 检查本关是否有女巫技能
+    let roundLabelX = roundCX;
+    let roundNumX = roundCX;
+
+    if (witchSkill) {
+      // 第一列绘制女巫头像
+      const avatarSize = 47 * s;
+      const avatarX = barX + 10 * s;
+      const avatarY = barY + (barH - avatarSize) / 2;
+      const witchAvatar = this.witchAvatars[witchSkill.level];
+
+      // 圆形裁剪绘制头像
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+      ctx.clip();
+      if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
+        ctx.drawImage(witchAvatar.img, avatarX, avatarY, avatarSize, avatarSize);
+      } else {
+        ctx.fillStyle = '#9b59b6';
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 头像边框
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.5 * s;
+      ctx.stroke();
+      ctx.restore();
+
+      // 文字右移，在头像和竖线之间居中
+      roundLabelX = (avatarX + avatarSize + line1X) / 2;
+      roundNumX = roundLabelX;
+    }
+
     // 左侧：回合
     ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('回合', roundCX, barY + barH * 0.32);
+    ctx.fillText('回合', roundLabelX, barY + barH * 0.32);
 
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
-    ctx.fillText(String(game.round), roundCX, barY + barH * 0.68);
+    ctx.fillText(String(game.round), roundNumX, barY + barH * 0.68);
 
     // 中间：目标分
     ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
@@ -926,7 +1030,7 @@ class Renderer {
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
     const wordAreaY = cardAreaY - 35 * s - maskHalfH;         // 预览区中心（卡牌上方 20px）
     const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
-    const propY = hudBottom + 15 * s;                         // 道具栏顶部（固定距 HUD 15px）
+    const propY = hudBottom + 22 * s;                         // 道具栏顶部（固定距 HUD 15px）
 
     this.cardRects = []; // 存储卡牌点击区域
 
@@ -936,10 +1040,10 @@ class Renderer {
     const padX = 10 * s;
     const dividerW = 1.5 * s;
     const gap = 6 * s;
-    const slotTopPad = 28 * s;
+    const slotTopPad = 10 * s;
 
     const slotW = (propW - padX * 2 - 5 * gap - dividerW) / 6;
-    const slotH = propBarH - slotTopPad - 6 * s;
+    const slotH = propBarH - slotTopPad - 10 * s;
 
     const slotY = propY + slotTopPad;
     const leftStartX = propX + padX;
@@ -947,7 +1051,7 @@ class Renderer {
     const rightStartX = dividerX + dividerW / 2 + gap / 2;
 
     // 背景
-    this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
+    this.roundRect(propX, propY, propW, propBarH, 10 * s, '#f0e0c8', '#c4a35a');
 
     // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
     ctx.beginPath();
@@ -964,15 +1068,6 @@ class Renderer {
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
     ctx.restore();
 
-    // 分区小标签
-    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#4a3065';
-    ctx.fillText('女巫牌', leftStartX + 2 * slotW + 1.5 * gap, slotY - 6 * s - 4);
-    ctx.fillStyle = '#1e4a3a';
-    ctx.fillText('魔法药水牌', rightStartX + slotW + 0.5 * gap, slotY - 6 * s - 4);
-
     const jokers = game.jokers || [];
     const potions = game.potions || [];
     this.potionPropRects = [];
@@ -984,7 +1079,7 @@ class Renderer {
       if (joker) {
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s);
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
       }
     }
 
@@ -997,7 +1092,7 @@ class Renderer {
         this._drawPropCard(ctx, potion, sx, slotY, slotW, slotH, s);
         this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s);
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');
       }
 
       // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）

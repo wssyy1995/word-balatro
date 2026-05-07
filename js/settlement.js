@@ -223,11 +223,30 @@ class WitchRewardRenderer {
 
     if (data.phase === 'gift') {
       // 标题
-      ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫奖励', W / 2, py + 70 * s);
+      ctx.fillText('女巫奖励', W / 2, py + 70 * s + 3 * s);
+
+      // 标题下装饰线（横线 + 中间菱形）
+      ctx.save();
+      ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+      ctx.lineWidth = 1 * s;
+      const titleDecoY = py + 70 * s + 3 * s + 14 * s;
+      const titleDecoW = pw * 0.45;
+      const titleDecoX = px + (pw - titleDecoW) / 2;
+      ctx.beginPath();
+      ctx.moveTo(titleDecoX, titleDecoY);
+      ctx.lineTo(titleDecoX + titleDecoW, titleDecoY);
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(W / 2, titleDecoY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+      ctx.restore();
+      ctx.restore();
 
       // 礼物盒绘制（默认呼吸，点击后闪烁）
       let pulse = 1;
@@ -267,7 +286,33 @@ class WitchRewardRenderer {
       ctx.fillStyle = '#999';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('点击礼盒揭晓', W / 2, py + ph - 30 * s - 10 * s);
+      ctx.fillText('点击礼盒揭晓', W / 2, py + ph - 30 * s - 10 * s - 3 * s);
+
+      // 提示文字下装饰线（两根横线 + 中间菱形）
+      const hintDecoY = py + ph - 30 * s - 10 * s - 3 * s + 14 * s;
+      const hintDecoW = 36 * s;
+      const hintDecoGap = 8 * s;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 1 * s;
+      // 左侧横线
+      ctx.beginPath();
+      ctx.moveTo(W / 2 - hintDecoGap - hintDecoW, hintDecoY);
+      ctx.lineTo(W / 2 - hintDecoGap, hintDecoY);
+      ctx.stroke();
+      // 右侧横线
+      ctx.beginPath();
+      ctx.moveTo(W / 2 + hintDecoGap, hintDecoY);
+      ctx.lineTo(W / 2 + hintDecoGap + hintDecoW, hintDecoY);
+      ctx.stroke();
+      // 中间小菱形
+      ctx.save();
+      ctx.translate(W / 2, hintDecoY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-2 * s, -2 * s, 4 * s, 4 * s);
+      ctx.restore();
+      ctx.restore();
 
       // 整屏可点击跳过
       this.skipRect = { x: 0, y: 0, w: W, h: H };
@@ -304,154 +349,209 @@ class WitchRewardRenderer {
         ctx.restore();
         ctx.restore();
 
-        // === 卡牌尺寸计算 ===
-        const cardMaxW = pw * 0.4;
-        const cardMaxH = 110 * s;
-        let cardW = cardMaxW, cardH = cardMaxH;
-        const iconName = data.rewardItem.effect;
-        const iconData = this.parent.shopCardImages[iconName];
-        if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
-          const containerAspect = cardMaxW / cardMaxH;
-          const aspect = iconData.width / iconData.height;
-          if (containerAspect > aspect) {
-            cardH = cardMaxH;
-            cardW = cardH * aspect;
-          } else {
-            cardW = cardMaxW;
-            cardH = cardW / aspect;
-          }
-        }
-        const cardCX = W / 2;
-        const cardCY = py + 72 * s + cardH / 2;
-        const cardX = cardCX - cardW / 2;
-        const cardY = cardCY - cardH / 2;
+        const rewardItem = data.rewardItem;
 
-        // === 卡牌图片（圆角裁剪）===
-        ctx.save();
-        ctx.beginPath();
-        const cr = 4 * s;
-        ctx.moveTo(cardX + cr, cardY);
-        ctx.lineTo(cardX + cardW - cr, cardY);
-        ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cr);
-        ctx.lineTo(cardX + cardW, cardY + cardH - cr);
-        ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cr, cardY + cardH);
-        ctx.lineTo(cardX + cr, cardY + cardH);
-        ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cr);
-        ctx.lineTo(cardX, cardY + cr);
-        ctx.quadraticCurveTo(cardX, cardY, cardX + cr, cardY);
-        ctx.closePath();
-        ctx.clip();
-
-        if (iconData && iconData.loaded && iconData.img) {
-          ctx.drawImage(iconData.img, cardX, cardY, cardW, cardH);
-        }
-        ctx.restore();
-
-        // === 光彩效果（金色脉动光晕 + 闪烁星）===
-        const t = Date.now();
-        const haloR = Math.max(cardW, cardH) * 0.85;
-        const pulse = 0.5 + 0.5 * Math.sin(t / 400);
-        const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-        haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
-        haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
-        haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
-        ctx.fillStyle = haloGrad;
-        ctx.beginPath();
-        ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
-        ctx.fill();
-
-        const sparkles = [
-          { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
-          { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
-          { x: cardX + cardW + 6*s, y: cardY + cardH, r: 5, ph: 4.0 },
-          { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
-        ];
-        sparkles.forEach((sp, i) => {
-          const blink = Math.abs(Math.sin(t / 350 + sp.ph));
-          const alpha = 0.3 + 0.7 * blink;
-          const r = sp.r * (0.6 + 0.4 * blink) * s;
+        if (rewardItem && rewardItem.type === 'buff') {
+          // === global_hand_1 奖励布局 ===
+          // 圆形占位图标
+          const iconCY = py + 120 * s;
+          const iconR = 35 * s;
           ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
           ctx.beginPath();
-          ctx.moveTo(sp.x, sp.y - r);
-          ctx.lineTo(sp.x + r * 0.35, sp.y - r * 0.35);
-          ctx.lineTo(sp.x + r, sp.y);
-          ctx.lineTo(sp.x + r * 0.35, sp.y + r * 0.35);
-          ctx.lineTo(sp.x, sp.y + r);
-          ctx.lineTo(sp.x - r * 0.35, sp.y + r * 0.35);
-          ctx.lineTo(sp.x - r, sp.y);
-          ctx.lineTo(sp.x - r * 0.35, sp.y - r * 0.35);
-          ctx.closePath();
+          ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5f0e6';
           ctx.fill();
+          ctx.lineWidth = 2 * s;
+          ctx.strokeStyle = '#c4a35a';
+          ctx.stroke();
           ctx.restore();
-        });
 
-        // === 卡牌名称 ===
-        const nameY = cardY + cardH + 20 * s;
-        ctx.save();
-        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-        ctx.fillStyle = darkBlue;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(data.rewardItem.name, W / 2, nameY);
-        ctx.restore();
+          // 图标内部居中文字 "+1"
+          ctx.save();
+          ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+          ctx.fillStyle = '#c4a35a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('+1', W / 2, iconCY);
+          ctx.restore();
 
-        // === 卡牌描述 ===
-        const descY = nameY + 24 * s;
-        ctx.save();
-        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#555';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(data.rewardItem.desc, W / 2, descY);
-        ctx.restore();
+          // 下方文字 rewardItem.desc
+          const descY = iconCY + iconR + 28 * s;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.fillStyle = darkBlue;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(rewardItem.desc, W / 2, descY);
+          ctx.restore();
 
-        // === 底部分隔线 ===
-        const bottomLineY = descY + 28 * s;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-        ctx.lineWidth = 1 * s;
-        const blW = pw * 0.55;
-        const blX = px + (pw - blW) / 2;
-        ctx.beginPath();
-        ctx.moveTo(blX, bottomLineY);
-        ctx.lineTo(blX + blW, bottomLineY);
-        ctx.stroke();
-        ctx.save();
-        ctx.translate(W / 2, bottomLineY);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillStyle = gold;
-        ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
-        ctx.restore();
-        ctx.restore();
+          // 底部单个按钮"领取"
+          const btnW = 130 * s;
+          const btnH = 44 * s;
+          const btnX = (W - btnW) / 2;
+          const btnY = py + ph - btnH - 28 * s;
+          this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('领取', W / 2, btnY + btnH / 2);
 
-        // === 按钮 ===
-        const collectBtnH = 44 * s;
-        const btnW = 120 * s;
-        const btnGap = 12 * s;
-        const totalW = btnW * 2 + btnGap;
-        const startX = (W - totalW) / 2;
-        const btnY = py + ph - collectBtnH - 22 * s;
+          this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+          this.stashBtnRect = null;
+          this.useBtnRect = null;
+          this.skipRect = null;
+        } else {
 
-        // 立即使用（金色背景）
-        this.parent.roundRect(startX, btnY, btnW, collectBtnH, 8 * s, '#c4a35a');
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('立即使用', startX + btnW / 2, btnY + collectBtnH / 2);
+          // === 卡牌尺寸计算 ===
+          const cardMaxW = pw * 0.4;
+          const cardMaxH = 110 * s;
+          let cardW = cardMaxW, cardH = cardMaxH;
+          const iconName = data.rewardItem.effect;
+          const iconData = this.parent.shopCardImages[iconName];
+          if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
+            const containerAspect = cardMaxW / cardMaxH;
+            const aspect = iconData.width / iconData.height;
+            if (containerAspect > aspect) {
+              cardH = cardMaxH;
+              cardW = cardH * aspect;
+            } else {
+              cardW = cardMaxW;
+              cardH = cardW / aspect;
+            }
+          }
+          const cardCX = W / 2;
+          const cardCY = py + 72 * s + cardH / 2;
+          const cardX = cardCX - cardW / 2;
+          const cardY = cardCY - cardH / 2;
 
-        // 暂存（米色边框按钮）
-        const stashX = startX + btnW + btnGap;
-        this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
-        ctx.fillStyle = '#5a4a2a';
-        ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
+          // === 卡牌图片（圆角裁剪）===
+          ctx.save();
+          ctx.beginPath();
+          const cr = 4 * s;
+          ctx.moveTo(cardX + cr, cardY);
+          ctx.lineTo(cardX + cardW - cr, cardY);
+          ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cr);
+          ctx.lineTo(cardX + cardW, cardY + cardH - cr);
+          ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cr, cardY + cardH);
+          ctx.lineTo(cardX + cr, cardY + cardH);
+          ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cr);
+          ctx.lineTo(cardX, cardY + cr);
+          ctx.quadraticCurveTo(cardX, cardY, cardX + cr, cardY);
+          ctx.closePath();
+          ctx.clip();
 
-        this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
-        this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
-        this.okBtnRect = null;
-        this.skipRect = null;
+          if (iconData && iconData.loaded && iconData.img) {
+            ctx.drawImage(iconData.img, cardX, cardY, cardW, cardH);
+          }
+          ctx.restore();
+
+          // === 光彩效果（金色脉动光晕 + 闪烁星）===
+          const t = Date.now();
+          const haloR = Math.max(cardW, cardH) * 0.85;
+          const pulse = 0.5 + 0.5 * Math.sin(t / 400);
+          const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
+          haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
+          haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
+          haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
+          ctx.fillStyle = haloGrad;
+          ctx.beginPath();
+          ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
+          ctx.fill();
+
+          const sparkles = [
+            { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
+            { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
+            { x: cardX + cardW + 6*s, y: cardY + cardH, r: 5, ph: 4.0 },
+            { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
+          ];
+          sparkles.forEach((sp, i) => {
+            const blink = Math.abs(Math.sin(t / 350 + sp.ph));
+            const alpha = 0.3 + 0.7 * blink;
+            const r = sp.r * (0.6 + 0.4 * blink) * s;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(sp.x, sp.y - r);
+            ctx.lineTo(sp.x + r * 0.35, sp.y - r * 0.35);
+            ctx.lineTo(sp.x + r, sp.y);
+            ctx.lineTo(sp.x + r * 0.35, sp.y + r * 0.35);
+            ctx.lineTo(sp.x, sp.y + r);
+            ctx.lineTo(sp.x - r * 0.35, sp.y + r * 0.35);
+            ctx.lineTo(sp.x - r, sp.y);
+            ctx.lineTo(sp.x - r * 0.35, sp.y - r * 0.35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          });
+
+          // === 卡牌名称 ===
+          const nameY = cardY + cardH + 20 * s;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.fillStyle = darkBlue;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(data.rewardItem.name, W / 2, nameY);
+          ctx.restore();
+
+          // === 卡牌描述 ===
+          const descY = nameY + 24 * s;
+          ctx.save();
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#555';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(data.rewardItem.desc, W / 2, descY);
+          ctx.restore();
+
+          // === 底部分隔线 ===
+          const bottomLineY = descY + 28 * s;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+          ctx.lineWidth = 1 * s;
+          const blW = pw * 0.55;
+          const blX = px + (pw - blW) / 2;
+          ctx.beginPath();
+          ctx.moveTo(blX, bottomLineY);
+          ctx.lineTo(blX + blW, bottomLineY);
+          ctx.stroke();
+          ctx.save();
+          ctx.translate(W / 2, bottomLineY);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = gold;
+          ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+          ctx.restore();
+          ctx.restore();
+
+          // === 按钮 ===
+          const collectBtnH = 44 * s;
+          const btnW = 120 * s;
+          const btnGap = 12 * s;
+          const totalW = btnW * 2 + btnGap;
+          const startX = (W - totalW) / 2;
+          const btnY = py + ph - collectBtnH - 22 * s;
+
+          // 立即使用（金色背景）
+          this.parent.roundRect(startX, btnY, btnW, collectBtnH, 8 * s, '#c4a35a');
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('立即使用', startX + btnW / 2, btnY + collectBtnH / 2);
+
+          // 暂存（米色边框按钮）
+          const stashX = startX + btnW + btnGap;
+          this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
+          ctx.fillStyle = '#5a4a2a';
+          ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
+
+          this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+          this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
+          this.okBtnRect = null;
+          this.skipRect = null;
+        }
       } else {
         // 没中
         ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;

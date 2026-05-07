@@ -226,16 +226,16 @@ class ShopRenderer {
     const ownedW = W - 30 * s;
     const ownedX = 15 * s;
 
-    this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#faf6ee', '#c4a35a');
+    this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#f0e0c8', '#c4a35a');
 
     // 6格布局（参数与游戏页 drawPlaying 完全一致）
     const oPadX = 10 * s;
     const oDividerW = 1.5 * s;
     const oGap = 6 * s;
-    const oSlotTop = 28 * s;
+    const oSlotTop = 10 * s;
 
     const oSlotW = (ownedW - oPadX * 2 - 5 * oGap - oDividerW) / 6;
-    const oSlotH = ownedH - oSlotTop - 6 * s;
+    const oSlotH = ownedH - oSlotTop - 10 * s;
 
     const oSlotY = ownedY + oSlotTop;
     const oLeftStartX = ownedX + oPadX;
@@ -255,17 +255,6 @@ class ShopRenderer {
     ctx.rotate(Math.PI / 4);
     ctx.fillStyle = '#c4a35a';
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
-    ctx.restore();
-
-    // 分区小标签
-    ctx.save();
-    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#4a3065';
-    ctx.fillText('女巫牌', oLeftStartX + 2 * oSlotW + 1.5 * oGap, oSlotY - 6 * s - 4);
-    ctx.fillStyle = '#1e4a3a';
-    ctx.fillText('魔法药水牌', oRightStartX + oSlotW + 0.5 * oGap, oSlotY - 6 * s - 4);
     ctx.restore();
 
     const oJokers = game.jokers || [];
@@ -332,7 +321,7 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s, 'witch');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -437,7 +426,7 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'potions' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s, 'potion');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -496,7 +485,7 @@ class ShopRenderer {
     const innerPad = 6 * s;
     const rowGap = 20;
     const containerPad = rowGap;
-    const titleH = 26 * s;
+    const titleH = 50 * s;
     const titleGap = 6 * s;
 
     const rowConfigs = [
@@ -506,7 +495,7 @@ class ShopRenderer {
     ];
 
     const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2;
-    const containerY = ownedY + ownedH + 10 * s + titleH + titleGap;
+    const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s;
 
     this.shopRefreshRects = [];
     this.shopPriceBtnRects = [];
@@ -539,14 +528,14 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const decoLineW = 50 * s;
+    const decoLineW = 100 * s;
     const lineY = titleMidY - 1 * s;
     ctx.lineWidth = 0.8 * s;
 
     // 左侧横线：外端淡 → 内端浓
     const leftGrad = ctx.createLinearGradient(titleStartX - decoLineW, lineY, titleStartX + titleIconSize * 0.6, lineY);
-    leftGrad.addColorStop(0, 'rgba(184,160,120,0)');
-    leftGrad.addColorStop(1, 'rgba(184,160,120,0.6)');
+    leftGrad.addColorStop(0, 'rgba(184,160,120,0.5)');
+    leftGrad.addColorStop(1, 'rgba(184,160,120,1)');
     ctx.strokeStyle = leftGrad;
     ctx.beginPath();
     ctx.moveTo(titleStartX - decoLineW, lineY);
@@ -556,8 +545,8 @@ class ShopRenderer {
     // 右侧横线：内端浓 → 外端淡
     const rightIconX = titleStartX + titleIconSize + titleIconGap + titleTextW + titleIconGap;
     const rightGrad = ctx.createLinearGradient(rightIconX + titleIconSize * 0.4, lineY, rightIconX + titleIconSize + decoLineW, lineY);
-    rightGrad.addColorStop(0, 'rgba(184,160,120,0.6)');
-    rightGrad.addColorStop(1, 'rgba(184,160,120,0)');
+    rightGrad.addColorStop(0, 'rgba(184,160,120,1)');
+    rightGrad.addColorStop(1, 'rgba(184,160,120,0.5)');
     ctx.strokeStyle = rightGrad;
     ctx.beginPath();
     ctx.moveTo(rightIconX + titleIconSize * 0.4, lineY);
@@ -860,7 +849,7 @@ class ShopRenderer {
 
     // === 下一回合模块（始终显示）===
     const moduleH = witchSkill ? 120 * s : 100 * s;
-    const moduleY = containerY + containerH + 60 * s;
+    const moduleY = containerY + containerH + 50 * s;
     const moduleX = 15 * s;
     const moduleW = W - 30 * s;
 
@@ -892,14 +881,14 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const nrDecoLineW = 40 * s;
+    const nrDecoLineW = 80 * s;
     const nrLineY = nrTitleY - 1 * s;
     ctx.lineWidth = 0.8 * s;
 
     // 左侧横线：外端淡 → 内端浓
     const nrLeftGrad = ctx.createLinearGradient(nrTitleStartX - nrDecoLineW, nrLineY, nrTitleStartX + nrTitleIconSize * 0.6, nrLineY);
-    nrLeftGrad.addColorStop(0, 'rgba(184,160,120,0)');
-    nrLeftGrad.addColorStop(1, 'rgba(184,160,120,0.6)');
+    nrLeftGrad.addColorStop(0, 'rgba(184,160,120,0.5)');
+    nrLeftGrad.addColorStop(1, 'rgba(184,160,120,1)');
     ctx.strokeStyle = nrLeftGrad;
     ctx.beginPath();
     ctx.moveTo(nrTitleStartX - nrDecoLineW, nrLineY);
@@ -909,8 +898,8 @@ class ShopRenderer {
     // 右侧横线：内端浓 → 外端淡
     const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
     const nrRightGrad = ctx.createLinearGradient(nrRightIconX + nrTitleIconSize * 0.4, nrLineY, nrRightIconX + nrTitleIconSize + nrDecoLineW, nrLineY);
-    nrRightGrad.addColorStop(0, 'rgba(184,160,120,0.6)');
-    nrRightGrad.addColorStop(1, 'rgba(184,160,120,0)');
+    nrRightGrad.addColorStop(0, 'rgba(184,160,120,1)');
+    nrRightGrad.addColorStop(1, 'rgba(184,160,120,0.5)');
     ctx.strokeStyle = nrRightGrad;
     ctx.beginPath();
     ctx.moveTo(nrRightIconX + nrTitleIconSize * 0.4, nrLineY);
@@ -957,22 +946,31 @@ class ShopRenderer {
 
     if (witchSkill) {
       // 女巫头像
-      const avatarSize = 40 * s;
+      const avatarSize = 56 * s;
       const avatarX = moduleX + 18 * s;
-      const avatarY = dividerY + 14 * s;
+      const avatarY = dividerY + 12 * s;
+      const witchAvatar = this.parent.witchAvatars[witchSkill.level];
+
+      // 圆形裁剪绘制头像
       ctx.save();
       ctx.beginPath();
       ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.fillStyle = '#9b59b6';
-      ctx.fill();
+      ctx.clip();
+      if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
+        ctx.drawImage(witchAvatar.img, avatarX, avatarY, avatarSize, avatarSize);
+      } else {
+        ctx.fillStyle = '#9b59b6';
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 头像边框
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 2 * s;
       ctx.stroke();
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🧙', avatarX + avatarSize / 2, avatarY + avatarSize / 2);
       ctx.restore();
 
       // 文字区域
@@ -1251,6 +1249,9 @@ class ConfirmBuyRenderer {
 
     // === 光彩夺目效果（金色脉动光晕 + 旋转十字光芒）===
     if (!isClosing) {
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+
       const t = Date.now();
       const cardCX = cardX + cardW / 2;
       const cardCY = cardY + cardH / 2;
@@ -1259,8 +1260,8 @@ class ConfirmBuyRenderer {
       const haloR = Math.max(cardW, cardH) * 0.85;
       const pulse = 0.5 + 0.5 * Math.sin(t / 400);
       const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-      haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse * contentAlpha})`);
-      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse * contentAlpha})`);
+      haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
+      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
       haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
       ctx.fillStyle = haloGrad;
       ctx.beginPath();
@@ -1279,7 +1280,7 @@ class ConfirmBuyRenderer {
         const alpha = 0.3 + 0.7 * blink;
         const r = sp.r * (0.6 + 0.4 * blink) * s;
         ctx.save();
-        ctx.globalAlpha = alpha * contentAlpha;
+        ctx.globalAlpha = alpha;
         ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
         ctx.beginPath();
         ctx.moveTo(sp.x, sp.y - r);
@@ -1294,6 +1295,8 @@ class ConfirmBuyRenderer {
         ctx.fill();
         ctx.restore();
       });
+
+      ctx.restore();
     }
 
     // === 底部飘带图片 ===
