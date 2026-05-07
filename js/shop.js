@@ -685,15 +685,15 @@ class ShopRenderer {
             : cardAspect;
           let drawW, drawH, imgX, imgY;
           if (aspect > cardAspect) {
-            drawH = cardH;
-            drawW = drawH * aspect;
-            imgX = cardX + (cardW - drawW) / 2;
-            imgY = cardY;
-          } else {
             drawW = cardW;
             drawH = drawW / aspect;
             imgX = cardX;
             imgY = cardY + (cardH - drawH) / 2;
+          } else {
+            drawH = cardH;
+            drawW = drawH * aspect;
+            imgX = cardX + (cardW - drawW) / 2;
+            imgY = cardY;
           }
           ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
         } else {

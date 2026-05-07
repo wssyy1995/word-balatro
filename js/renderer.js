@@ -408,15 +408,15 @@ class Renderer {
           : cardAspect;
         let drawW, drawH, imgX, imgY;
         if (aspect > cardAspect) {
-          drawH = h;
-          drawW = drawH * aspect;
-          imgX = x + (w - drawW) / 2;
-          imgY = y;
-        } else {
           drawW = w;
           drawH = drawW / aspect;
           imgX = x;
           imgY = y + (h - drawH) / 2;
+        } else {
+          drawH = h;
+          drawW = drawH * aspect;
+          imgX = x + (w - drawW) / 2;
+          imgY = y;
         }
         ctx.drawImage(data.img, imgX, imgY, drawW, drawH);
         ctx.restore();
@@ -514,15 +514,15 @@ class Renderer {
         : cardAspect;
       let drawW, drawH, imgX, imgY;
       if (aspect > cardAspect) {
-        drawH = h;
-        drawW = drawH * aspect;
-        imgX = x + (w - drawW) / 2;
-        imgY = finalY;
-      } else {
         drawW = w;
         drawH = drawW / aspect;
         imgX = x;
         imgY = finalY + (h - drawH) / 2;
+      } else {
+        drawH = h;
+        drawW = drawH * aspect;
+        imgX = x + (w - drawW) / 2;
+        imgY = finalY;
       }
       ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
     } else {
