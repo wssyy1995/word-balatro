@@ -2,7 +2,7 @@
 const { Game } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeLetter, refreshModule } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 
 // 获取 Canvas 上下文
@@ -244,6 +244,73 @@ function handleInput(x, y) {
         vibrate();
         game.claimSettlement();
         return;
+      }
+    }
+  }
+
+  if (game.state === 'witch_reward') {
+    const wr = renderer.witchRewardRenderer;
+    if (!wr) return;
+    const data = game.witchRewardData;
+    if (!data) return;
+
+    if (data.phase === 'gift') {
+      // 点击屏幕跳过礼物动画，直接揭晓结果
+      if (wr.skipRect) {
+        const hit = renderer.hitTest(x, y, [wr.skipRect]);
+        if (hit) {
+          vibrate();
+          game.resolveWitchReward();
+          return;
+        }
+      }
+    } else if (data.phase === 'result') {
+      if (data.result) {
+        // 中了：暂存 / 立即使用
+        const rects = [];
+        if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
+        if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
+        const btnHit = renderer.hitTest(x, y, rects);
+        if (btnHit) {
+          vibrate();
+          if (btnHit.action === 'stash') {
+            // 放入道具栏
+            if (!game.potions) game.potions = [];
+            if (game.potions.length < 2 && data.rewardItem) {
+              game.potions.push({ ...data.rewardItem });
+            }
+            game.witchRewardData = null;
+            game.state = 'shop';
+            if (!game.shopItems) {
+              game.shopItems = generateShopItems(game);
+            }
+            if (game.storageManager) game.storageManager.saveProgress(game);
+          } else if (btnHit.action === 'use') {
+            // 立即使用药水
+            if (data.rewardItem) {
+              game.potionMode = { ...data.rewardItem };
+              game._prePotionState = 'shop';
+              game.witchRewardData = null;
+              game.state = 'potion';
+              if (game.storageManager) game.storageManager.saveProgress(game);
+            }
+          }
+          return;
+        }
+      } else {
+        // 没中：确定按钮
+        if (wr.okBtnRect) {
+          const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+          if (hit) {
+            vibrate();
+            game.witchRewardData = null;
+            game.state = 'shop';
+            if (!game.shopItems) {
+              game.shopItems = generateShopItems(game);
+            }
+            return;
+          }
+        }
       }
     }
   }
@@ -495,6 +562,7 @@ function restartGame() {
   game._closingChangeLetter = false;
   game._closeChangeLetterStartTime = null;
   game._changeLetterHint = null;
+  game.witchRewardData = null;
   lastPlayResult = null;
 }
 

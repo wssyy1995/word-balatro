@@ -847,7 +847,7 @@ class ShopRenderer {
     const witchSkill = getSkillForLevel(nextRound);
 
     // === 下一回合模块（始终显示）===
-    const moduleH = 100 * s;
+    const moduleH = witchSkill ? 120 * s : 100 * s;
     const moduleY = containerY + containerH + 60 * s;
     const moduleX = 15 * s;
     const moduleW = W - 30 * s;
@@ -975,6 +975,15 @@ class ShopRenderer {
       skillY += descH + 4 * s;
 
       if (witchSkill.reward_desc) {
+        ctx.save();
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('奖励', textX, skillY);
+        ctx.restore();
+        skillY += 16 * s;
+
         ctx.save();
         ctx.font = `${Math.floor(11 * s)}px sans-serif`;
         ctx.fillStyle = '#8b7d5a';

@@ -1,7 +1,7 @@
 // ===== Canvas 渲染器 =====
 const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
-const { SettlementRenderer } = require('./settlement');
+const { SettlementRenderer, WitchRewardRenderer } = require('./settlement');
 const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('./shop');
 
 class Renderer {
@@ -282,6 +282,7 @@ class Renderer {
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
+    this.witchRewardRenderer = new WitchRewardRenderer(this);
     this.shopRenderer = new ShopRenderer(this);
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
     this.gameOverRenderer = new GameOverRenderer(this);
@@ -602,6 +603,11 @@ class Renderer {
       this.drawHUD(game);
       this.drawCoinCapsule(game);
       this.settlementRenderer.draw(ctx, game, W, H, s);
+    } else if (game.state === 'witch_reward') {
+      // 女巫奖励弹窗
+      this.drawHUD(game);
+      this.drawCoinCapsule(game);
+      this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
       // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
       this.drawTopHeader();

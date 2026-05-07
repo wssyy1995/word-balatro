@@ -9,7 +9,7 @@ const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -425,6 +425,7 @@ class Game {
     this._changeLetterHint = null;
     this.pendingCheck = null;
     this.settlementData = null;
+    this.witchRewardData = null;
     this.audioManager = new AudioManager();
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
@@ -733,15 +734,9 @@ class Game {
     const extraDiscards = this.discardsLeft + 1;
     const totalGold = baseGold + extraHands + extraDiscards;
 
-    // 女巫技能奖励
-    let witchReward = null;
+    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放）
     const witchSkill = getSkillForLevel(this.round);
-    if (witchSkill && this.witchSkillPassed) {
-      const rewarded = giveReward(witchSkill.reward, this);
-      if (rewarded) {
-        witchReward = witchSkill.reward;
-      }
-    }
+    const hasWitchReward = witchSkill && this.witchSkillPassed;
 
     this.settlementData = {
       baseGold,
@@ -749,7 +744,7 @@ class Game {
       extraDiscards,
       totalGold,
       round: this.round,
-      witchReward,
+      witchSkill: hasWitchReward ? witchSkill : null,
     };
     this.state = 'settlement';
   }
@@ -757,17 +752,41 @@ class Game {
   claimSettlement() {
     if (!this.settlementData) return;
     this.gold += this.settlementData.totalGold;
-    // settlementData 暂时保留用于 closing 动画，400ms 后再清空
+    // settlementData 暂时保留用于 closing 动画，300ms 后再处理
     this._closingSettlement = true;
     this._closeStartTime = Date.now();
     setTimeout(() => {
+      const witchSkill = this.settlementData ? this.settlementData.witchSkill : null;
       this.settlementData = null;
       this._closingSettlement = false;
-      this.state = 'shop';
-      if (!this.shopItems) {
-        this.shopItems = generateShopItems(this);
+      if (witchSkill) {
+        // 进入女巫奖励阶段
+        this.witchRewardData = {
+          skill: witchSkill,
+          phase: 'gift',
+          giftStartTime: Date.now(),
+          result: null,
+          rewardItem: null,
+        };
+        this.state = 'witch_reward';
+      } else {
+        this.state = 'shop';
+        if (!this.shopItems) {
+          this.shopItems = generateShopItems(this);
+        }
       }
     }, 300);
+  }
+
+  resolveWitchReward() {
+    if (!this.witchRewardData || this.witchRewardData.phase !== 'gift') return;
+    const skill = this.witchRewardData.skill;
+    const hit = Math.random() < (skill.rate || 1);
+    this.witchRewardData.result = hit;
+    if (hit) {
+      this.witchRewardData.rewardItem = createRewardItem(skill.reward);
+    }
+    this.witchRewardData.phase = 'result';
   }
 
   discard() {

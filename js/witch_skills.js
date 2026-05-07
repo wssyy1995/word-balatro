@@ -1,7 +1,7 @@
 // ===== 女巫技能配置 =====
 
 const WITCH_SKILLS = [
-  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter',reward_desc: '魔法药水牌: 通用强化', desc: '每次出牌必须不少于4个字母' },
+  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter',rate:0.5,reward_desc: '50%概率获得一张: 子母强化', desc: '每次出牌必须不少于4个字母' },
 ];
 
 // 获取指定回合的女巫技能
@@ -37,6 +37,23 @@ function getRewardName(rewardType) {
   return map[rewardType] || rewardType;
 }
 
+// 创建奖励物品（不直接加入 potions）
+function createRewardItem(rewardType) {
+  switch (rewardType) {
+    case 'card_upgrade_letter':
+      return {
+        name: '字母强化',
+        type: 'potion',
+        effect: 'upgrade_letter',
+        value: 2,
+        cost: 4,
+        desc: '选择一张字母牌，分数翻倍'
+      };
+    default:
+      return null;
+  }
+}
+
 // 发放奖励
 function giveReward(rewardType, game) {
   switch (rewardType) {
@@ -44,14 +61,7 @@ function giveReward(rewardType, game) {
       if (!game.potions) game.potions = [];
       // 如果道具栏已满（2格），不发放
       if (game.potions.length >= 2) return false;
-      game.potions.push({
-        name: '字母强化',
-        type: 'potion',
-        effect: 'upgrade_letter',
-        value: 2,
-        cost: 4,
-        desc: '选择一张字母牌，分数翻倍'
-      });
+      game.potions.push(createRewardItem(rewardType));
       return true;
     }
     default:
@@ -65,5 +75,6 @@ module.exports = {
   checkSkill,
   getSkillFailText,
   getRewardName,
+  createRewardItem,
   giveReward
 };
