@@ -529,26 +529,43 @@ class WitchRewardRenderer {
           const collectBtnH = 44 * s;
           const btnW = 120 * s;
           const btnGap = 12 * s;
-          const totalW = btnW * 2 + btnGap;
-          const startX = (W - totalW) / 2;
           const btnY = py + ph - collectBtnH - 22 * s;
 
-          // 立即使用（金色背景）
-          this.parent.roundRect(startX, btnY, btnW, collectBtnH, 8 * s, '#c4a35a');
-          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('立即使用', startX + btnW / 2, btnY + collectBtnH / 2);
+          const isGameScope = data.rewardItem.scope === 'game';
+          if (isGameScope) {
+            // scope:game 的奖励只展示"暂存"按钮（居中）
+            const stashX = (W - btnW) / 2;
+            this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
+            ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+            ctx.fillStyle = '#5a4a2a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
 
-          // 暂存（米色边框按钮）
-          const stashX = startX + btnW + btnGap;
-          this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
-          ctx.fillStyle = '#5a4a2a';
-          ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
+            this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+            this.useBtnRect = null;
+          } else {
+            // 默认：立即使用 + 暂存
+            const totalW = btnW * 2 + btnGap;
+            const startX = (W - totalW) / 2;
 
-          this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
-          this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
+            // 立即使用（金色背景）
+            this.parent.roundRect(startX, btnY, btnW, collectBtnH, 8 * s, '#c4a35a');
+            ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('立即使用', startX + btnW / 2, btnY + collectBtnH / 2);
+
+            // 暂存（米色边框按钮）
+            const stashX = startX + btnW + btnGap;
+            this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
+            ctx.fillStyle = '#5a4a2a';
+            ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
+
+            this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+            this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
+          }
           this.okBtnRect = null;
           this.skipRect = null;
         }

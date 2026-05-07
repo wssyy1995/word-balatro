@@ -535,7 +535,7 @@ class Renderer {
     const maskH = h * 0.35;
     const maskY = finalY + h - maskH;
     const maskR = Math.min(r, maskH / 2);
-    this.roundRect(x + 2, maskY, w - 4, maskH, maskR, 'rgba(0,0,0,0.55)');
+    this.roundRect(x + 3, maskY, w - 6, maskH, maskR, 'rgba(0,0,0,0.55)');
 
     // 名字（自适应字号）
     ctx.save();
@@ -1026,9 +1026,9 @@ class Renderer {
 
     const btnTop = H - 90 * s;
     const cardGap = 50 * s;                                    // 卡牌底部到按钮间距（约原来的一半）
-    const cardBottom = btnTop - cardGap;                      // 卡牌底部
+    const cardBottom = btnTop - cardGap + 3;                  // 卡牌底部
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
-    const wordAreaY = cardAreaY - 35 * s - maskHalfH;         // 预览区中心（卡牌上方 20px）
+    const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2;         // 预览区中心（卡牌上方 20px）
     const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
     const propY = hudBottom + 22 * s;                         // 道具栏顶部（固定距 HUD 15px）
 
@@ -1258,8 +1258,8 @@ class Renderer {
             accumulatedScore += score;
           }
 
-          // 先清除所有女巫牌跳跃偏移
-          jokers.forEach(j => { if (j) j._jumpOffsetY = 0; });
+          // 先清除所有女巫牌跳跃偏移和触发状态
+          jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
 
           // === phase 1.5: 波浪跳跃（所有字母跳完后，不论有无 whole_word 都走）===
           const totalJumpTime = cardsInOrder.length * letterInterval;
@@ -1303,16 +1303,23 @@ class Renderer {
             }
           });
 
-          // flat_bonus 女巫牌始终显示紫色边框（不跳跃）
+          // flat_bonus 女巫牌显示紫色边框，并和当前字母同步跳跃
           const globalTriggered = pc.globalTriggered || [];
           globalTriggered.forEach(jIdx => {
             const joker = jokers[jIdx];
-            if (joker) joker._triggered = true;
+            if (joker) {
+              joker._triggered = true;
+              if (!isAllJumped && currentJumpIdx >= 0) {
+                const jumpProgress = ((jumpElapsed % letterInterval) / 200);
+                const jumpH = 12 * s * Math.sin(Math.min(jumpProgress, 1) * Math.PI);
+                joker._jumpOffsetY = -Math.max(0, jumpH);
+              }
+            }
           });
 
-          // 所有字母跳完后，清除女巫牌跳跃偏移
+          // 所有字母跳完后，清除女巫牌跳跃偏移和触发状态
           if (isAllJumped) {
-            jokers.forEach(j => { if (j) j._jumpOffsetY = 0; });
+            jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
           }
         }
 
@@ -1536,11 +1543,11 @@ class Renderer {
       // per_card 倍率提示（左方块上方紫色小字）
       if (pc._perCardMultText) {
         ctx.save();
-        ctx.font = `900 ${Math.floor(12 * s)}px sans-serif`;
+        ctx.font = `900 ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, boxY - 4 * s);
+        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, boxY - 3 * s);
         ctx.restore();
       }
     } else if (!game.pendingCheck) {
