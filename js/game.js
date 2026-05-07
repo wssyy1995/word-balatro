@@ -247,6 +247,7 @@ function _matchWordTrigger(cards, trigger) {
   switch (trigger) {
     case 'has_face': return cards.some(c => c.isFace);
     case 'length_3': return cards.length >= 3;
+    case 'length_4': return cards.length >= 4;
     case 'length_5': return cards.length >= 5;
     case 'length_6': return cards.length >= 6;
     default: return false;
@@ -434,7 +435,6 @@ class Game {
 
   resetRound() {
     wordCheckState.clear();
-    applyCrystalEffects(this);
 
     // 根据女巫技能设置保底词长度
     const witchSkill = getSkillForLevel(this.round);
@@ -454,6 +454,8 @@ class Game {
     this.selected = [];
     this.score = 0;
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
+    applyCrystalEffects(this);
+    this._reduceTargetAnim = null;
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraHands = 0;

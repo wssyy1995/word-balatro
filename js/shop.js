@@ -25,20 +25,20 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'A之强化', type:'witch', scope:'per_card', trigger:'letter_a', value:2, cost:5, desc:'字母A分数×2'},
-    {name:'E之强化', type:'witch', scope:'per_card', trigger:'letter_e', value:2, cost:5, desc:'字母E分数×2'},
-    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:2, cost:6, desc:'含元音时分数×2'},
-    {name:'三字母强化', type:'witch', scope:'whole_word', trigger:'length_3', value:1.2, cost:4, desc:'单词字母>=3时，倍率×1.2'},
-    {name:'五字母强化', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×2'},
-    {name:'六字母强化', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×3'},
+    {name:'A之强化', type:'witch', scope:'per_card', trigger:'letter_a', value:10, cost:5, desc:'字母A分数×10'},
+    {name:'E之强化', type:'witch', scope:'per_card', trigger:'letter_e', value:5, cost:5, desc:'字母E分数×5'},
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
+    {name:'四字母强化', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'五字母强化', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×3'},
+    {name:'六字母强化', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×4'},
     {name:'XYZ强化', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
     {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:5, desc:'下一回合出牌次数+1'},
     {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
-    // ,
-    // {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
+    ,
+    {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
   ],
   potion: [
     {name:'字母强化', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数翻倍'},
@@ -120,6 +120,9 @@ function buyItem(game, idx) {
     return true;
   } else if (item.type === 'crystal') {
     game.crystalEffects.push({...item});
+    if (item.effect === 'reduce_target') {
+      game._reduceTargetAnim = { value: item.value };
+    }
     game.shopItems[idx] = null;
     if (game.storageManager) game.storageManager.saveProgress(game);
     return true;
@@ -922,8 +925,36 @@ class ShopRenderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    const nextTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
-    ctx.fillText(`${nextTarget} 分`, moduleX + moduleW - 18 * s, targetY);
+    const baseTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
+    const targetTextX = moduleX + moduleW - 18 * s;
+
+    // 目标减免：放大缩小过程中数字从旧值变为新值
+    let displayTarget = baseTarget;
+    let targetScale = 1;
+    if (game._reduceTargetAnim) {
+      const reducedTarget = Math.floor(baseTarget * game._reduceTargetAnim.value);
+      if (game._reduceTargetAnim.startTime) {
+        const elapsed = Date.now() - game._reduceTargetAnim.startTime;
+        const duration = 500;
+        const progress = Math.min(elapsed / duration, 1);
+        // 先放大（0~0.5 显示旧值），后缩小（0.5~1 显示新值）
+        targetScale = 1 + 0.3 * Math.sin(progress * Math.PI);
+        displayTarget = progress >= 0.5 ? reducedTarget : baseTarget;
+      } else {
+        displayTarget = reducedTarget;
+      }
+    }
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.translate(targetTextX, targetY);
+    ctx.scale(targetScale, targetScale);
+    ctx.fillText(`${displayTarget} 分`, 0, 0);
+    ctx.restore();
+
     ctx.restore();
 
     // 虚线分隔
@@ -1076,6 +1107,9 @@ class ConfirmBuyRenderer {
       game._confirmBuySuccess = false;
       game._confirmBuyItemData = null;
       this._successAnimStarted = false;
+      if (game._reduceTargetAnim && !game._reduceTargetAnim.startTime) {
+        game._reduceTargetAnim.startTime = Date.now();
+      }
       return;
     }
 
