@@ -148,6 +148,32 @@ class Renderer {
       this.shopIconLoaded = false;
     }
     
+    // 加载女巫礼物图标
+    this.witchGiftIcon = null;
+    this.witchGiftIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/witch_gift.png';
+      img.onload = () => { this.witchGiftIconLoaded = true; };
+      img.onerror = () => { this.witchGiftIconLoaded = false; };
+      this.witchGiftIcon = img;
+    } catch (e) {
+      this.witchGiftIconLoaded = false;
+    }
+    
+    // 加载女巫奖励弹窗背景
+    this.witchGiftWindowIcon = null;
+    this.witchGiftWindowIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/witch_gift_window.png';
+      img.onload = () => { this.witchGiftWindowIconLoaded = true; };
+      img.onerror = () => { this.witchGiftWindowIconLoaded = false; };
+      this.witchGiftWindowIcon = img;
+    } catch (e) {
+      this.witchGiftWindowIconLoaded = false;
+    }
+    
     // 加载金币图标
     this.coinIcon = null;
     this.coinIconLoaded = false;
@@ -1764,7 +1790,7 @@ class Renderer {
 
     // 弹窗尺寸
     const pw = 300 * s;
-    const ph = 460 * s;
+    const ph = 410 * s;
     const px = (W - pw) / 2;
     const py = (H - ph) / 2 + panelOffsetY + closeSlideY;
     const r = 12 * s;
@@ -1802,8 +1828,8 @@ class Renderer {
     if (selectedCard) {
       ctx.save();
       ctx.globalAlpha = baseAlpha * closeAlpha;
-      ctx.translate(W / 2, py + 100 * s);
-      ctx.scale(0.7, 0.7);
+      ctx.translate(W / 2, py + 96 * s);
+      ctx.scale(0.8, 0.8);
       this.drawCard(selectedCard, -this.cardW / 2, -this.cardH / 2);
       ctx.restore();
     }
@@ -1898,7 +1924,7 @@ class Renderer {
     ctx.fillStyle = '#888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 + 1 * s);
+    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s);
     ctx.restore();
     this.changeLetterCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
   }
@@ -2325,6 +2351,7 @@ class Renderer {
       { label: '重置出牌次数', action: 'debug_resetHands' },
       { label: '当前分+100', action: 'debug_addScore' },
       { label: '直接通关', action: 'debug_winRound' },
+      { label: '刷新商店', action: 'debug_refreshShop' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;

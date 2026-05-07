@@ -56,6 +56,15 @@ function handleInput(x, y) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(100);
       if (debugHit.action === 'debug_winRound') game.winRound();
+      if (debugHit.action === 'debug_refreshShop') {
+        if (!game.shopItems) {
+          game.shopItems = generateShopItems(game);
+        } else {
+          refreshModule(game, 0);
+          refreshModule(game, 1);
+          refreshModule(game, 2);
+        }
+      }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';
         game.gameOverReason = 'debug';
@@ -138,9 +147,7 @@ function handleInput(x, y) {
           return;
         }
       }
-      // 点击遮罩关闭（关闭动画中不响应）
-      if (game._closingChangeLetter) return;
-      game._changeLetterPopup = null;
+      // 弹窗空白区域点击不关闭，仅允许点击右上角 X
       return;
     }
 
@@ -255,12 +262,13 @@ function handleInput(x, y) {
     if (!data) return;
 
     if (data.phase === 'gift') {
-      // 点击屏幕跳过礼物动画，直接揭晓结果
-      if (wr.skipRect) {
+      // 点击礼物盒开始打开动画
+      if (wr.skipRect && !data._opening) {
         const hit = renderer.hitTest(x, y, [wr.skipRect]);
         if (hit) {
           vibrate();
-          game.resolveWitchReward();
+          game.witchRewardData._opening = true;
+          game.witchRewardData._openingStartTime = Date.now();
           return;
         }
       }

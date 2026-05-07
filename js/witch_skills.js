@@ -1,7 +1,8 @@
 // ===== 女巫技能配置 =====
 
 const WITCH_SKILLS = [
-  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter',rate:0.5,reward_desc: '50%概率获得一张: 子母强化', desc: '每次出牌必须不少于4个字母' },
+  { level: 2, skill: 'need_letter_4', reward: 'card_upgrade_letter',rate:0.5,reward_desc: '50%概率获得一张: 字母强化', desc: '每次出牌必须不少于4个字母' },
+  { level: 4, skill: 'need_letter_a', reward: 'change_letter',rate:0.5,reward_desc: '30%概率获得一张: 字母置换', desc: '每次出牌必须包含字母A' },
 ];
 
 // 获取指定回合的女巫技能

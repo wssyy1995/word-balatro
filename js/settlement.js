@@ -190,28 +190,36 @@ class WitchRewardRenderer {
     const data = game.witchRewardData;
     if (!data) return;
 
-    // 自动从 gift 切换到 result（1.5秒后）
-    if (data.phase === 'gift') {
-      const elapsed = Date.now() - data.giftStartTime;
-      if (elapsed > 1500) {
-        game.resolveWitchReward();
-      }
-    }
+    // 弹出动效（easeOutBack）
+    const elapsed = Date.now() - (data.startTime || Date.now());
+    const enterDuration = 350;
+    const enterProgress = Math.min(elapsed / enterDuration, 1);
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    const enterEase = 1 + c3 * Math.pow(enterProgress - 1, 3) + c1 * Math.pow(enterProgress - 1, 2);
+    const panelOffsetY = (1 - enterEase) * 30 * s;
+    const contentAlpha = enterProgress;
 
-    // 画遮罩
+    // 画遮罩（带淡入）
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillStyle = `rgba(0,0,0,${0.6 * Math.min(elapsed / 200, 1)})`;
     ctx.fillRect(0, 0, W, H);
+
+    ctx.globalAlpha = contentAlpha;
 
     // 弹窗背景
     const pw = 300 * s;
-    const ph = data.phase === 'gift' ? 220 * s : 340 * s;
+    const ph = data.phase === 'gift' ? 300 * s : 340 * s;
     const px = (W - pw) / 2;
-    const py = (H - ph) / 2;
+    const py = (H - ph) / 2 + panelOffsetY;
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
 
-    this.parent.roundRect(px, py, pw, ph, 14 * s, '#faf6ee', gold, 1.5 * s);
+    if (data.phase === 'gift' && this.parent.witchGiftWindowIcon && this.parent.witchGiftWindowIconLoaded) {
+      ctx.drawImage(this.parent.witchGiftWindowIcon, px, py, pw, ph);
+    } else {
+      this.parent.roundRect(px, py, pw, ph, 14 * s, '#faf6ee', gold, 1.5 * s);
+    }
 
     if (data.phase === 'gift') {
       // 标题
@@ -219,14 +227,27 @@ class WitchRewardRenderer {
       ctx.fillStyle = darkBlue;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫奖励', W / 2, py + 45 * s);
+      ctx.fillText('女巫奖励', W / 2, py + 70 * s);
 
-      // 礼物图标闪烁动画
-      const elapsed = Date.now() - data.giftStartTime;
-      const pulse = Math.sin(elapsed / 150) * 0.15 + 1;
-      const alpha = 0.7 + Math.sin(elapsed / 100) * 0.3;
+      // 礼物盒绘制（默认呼吸，点击后闪烁）
+      let pulse = 1;
+      let alpha = 1;
+      if (data._opening) {
+        const openElapsed = Date.now() - data._openingStartTime;
+        if (openElapsed < 800) {
+          pulse = Math.sin(openElapsed / 80) * 0.2 + 1.1;
+          alpha = 0.6 + Math.sin(openElapsed / 60) * 0.4;
+        } else if (!data._resolved) {
+          data._resolved = true;
+          game.resolveWitchReward();
+        }
+      } else {
+        // 缓慢呼吸（周期约 5s，幅度 ±5%）
+        const breath = Math.sin(Date.now() / 800) * 0.05;
+        pulse = 1 + breath;
+      }
 
-      const giftSize = 55 * s;
+      const giftSize = 80 * s;
       const giftX = W / 2;
       const giftY = py + ph / 2 + 5 * s;
 
@@ -234,7 +255,11 @@ class WitchRewardRenderer {
       ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
       ctx.translate(giftX, giftY);
       ctx.scale(pulse, pulse);
-      this._drawGiftBox(ctx, 0, 0, giftSize, s);
+      if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+        ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+      } else {
+        this._drawGiftBox(ctx, 0, 0, 55 * s, s);
+      }
       ctx.restore();
 
       // 点击跳过提示
@@ -242,7 +267,7 @@ class WitchRewardRenderer {
       ctx.fillStyle = '#999';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('点击屏幕揭晓', W / 2, py + ph - 30 * s);
+      ctx.fillText('点击礼盒揭晓', W / 2, py + ph - 30 * s - 10 * s);
 
       // 整屏可点击跳过
       this.skipRect = { x: 0, y: 0, w: W, h: H };
@@ -440,7 +465,7 @@ class WitchRewardRenderer {
         const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
         const btnY = py + ph - btnH - 40 * s;
-        this.parent.roundRect(btnX, btnY, btnW, btnH, 6 * s, '#8a8a8a');
+        this.parent.roundRect(btnX, btnY, btnW, btnH, 6 * s, '#c4a35a');
         ctx.fillStyle = '#fff';
         ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
         ctx.fillText('确定', W / 2, btnY + btnH / 2);

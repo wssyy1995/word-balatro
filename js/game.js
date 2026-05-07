@@ -443,6 +443,7 @@ class Game {
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
+    this.extraHands = 0;
     this.extraDiscards = 0;
     this.extraSafety = 0;
     this.witchSkillPassed = true;
@@ -765,6 +766,7 @@ class Game {
           skill: witchSkill,
           phase: 'gift',
           giftStartTime: Date.now(),
+          startTime: Date.now(),
           result: null,
           rewardItem: null,
         };

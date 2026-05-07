@@ -526,30 +526,42 @@ class ShopRenderer {
     const titleMidY = ownedY + ownedH + 10 * s + titleH / 2;
 
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
-      ctx.drawImage(this.parent.shopIcon, titleStartX, titleMidY - titleIconSize / 2, titleIconSize, titleIconSize);
+      ctx.drawImage(this.parent.shopIcon, titleStartX, titleMidY - titleIconSize / 2 - 1 * s, titleIconSize, titleIconSize);
     }
     ctx.fillText(shopTitleText, titleStartX + titleIconSize + titleIconGap + titleTextW / 2, titleMidY);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const rightIconX = titleStartX + titleIconSize + titleIconGap + titleTextW + titleIconGap;
       ctx.save();
-      ctx.translate(rightIconX + titleIconSize, titleMidY - titleIconSize / 2);
+      ctx.translate(rightIconX + titleIconSize, titleMidY - titleIconSize / 2 - 1 * s);
       ctx.scale(-1, 1);
       ctx.drawImage(this.parent.shopIcon, 0, 0, titleIconSize, titleIconSize);
       ctx.restore();
     }
 
-    // 左右米色细线装饰
+    // 左右米色细线装饰（内浓外淡渐变）
     const decoLineW = 50 * s;
-    ctx.strokeStyle = '#b8a078';
-    ctx.lineWidth = 1.2 * s;
+    const lineY = titleMidY - 1 * s;
+    ctx.lineWidth = 0.8 * s;
+
+    // 左侧横线：外端淡 → 内端浓
+    const leftGrad = ctx.createLinearGradient(titleStartX - decoLineW, lineY, titleStartX + titleIconSize * 0.6, lineY);
+    leftGrad.addColorStop(0, 'rgba(184,160,120,0)');
+    leftGrad.addColorStop(1, 'rgba(184,160,120,0.6)');
+    ctx.strokeStyle = leftGrad;
     ctx.beginPath();
-    ctx.moveTo(titleStartX - decoLineW, titleMidY);
-    ctx.lineTo(titleStartX + titleIconSize * 0.6, titleMidY);
+    ctx.moveTo(titleStartX - decoLineW, lineY);
+    ctx.lineTo(titleStartX + titleIconSize * 0.6, lineY);
     ctx.stroke();
+
+    // 右侧横线：内端浓 → 外端淡
     const rightIconX = titleStartX + titleIconSize + titleIconGap + titleTextW + titleIconGap;
+    const rightGrad = ctx.createLinearGradient(rightIconX + titleIconSize * 0.4, lineY, rightIconX + titleIconSize + decoLineW, lineY);
+    rightGrad.addColorStop(0, 'rgba(184,160,120,0.6)');
+    rightGrad.addColorStop(1, 'rgba(184,160,120,0)');
+    ctx.strokeStyle = rightGrad;
     ctx.beginPath();
-    ctx.moveTo(rightIconX + titleIconSize * 0.4, titleMidY);
-    ctx.lineTo(rightIconX + titleIconSize + decoLineW, titleMidY);
+    ctx.moveTo(rightIconX + titleIconSize * 0.4, lineY);
+    ctx.lineTo(rightIconX + titleIconSize + decoLineW, lineY);
     ctx.stroke();
 
     ctx.restore();
@@ -867,29 +879,42 @@ class ShopRenderer {
     const nrTitleStartX = (W - nrTitleTotalW) / 2;
 
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
-      ctx.drawImage(this.parent.shopIcon, nrTitleStartX, nrTitleY - nrTitleIconSize / 2, nrTitleIconSize, nrTitleIconSize);
+      ctx.drawImage(this.parent.shopIcon, nrTitleStartX, nrTitleY - nrTitleIconSize / 2 - 1 * s, nrTitleIconSize, nrTitleIconSize);
     }
     ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
-      ctx.translate(nrRightIconX + nrTitleIconSize, nrTitleY - nrTitleIconSize / 2);
+      ctx.translate(nrRightIconX + nrTitleIconSize, nrTitleY - nrTitleIconSize / 2 - 1 * s);
       ctx.scale(-1, 1);
       ctx.drawImage(this.parent.shopIcon, 0, 0, nrTitleIconSize, nrTitleIconSize);
       ctx.restore();
     }
 
+    // 左右米色细线装饰（内浓外淡渐变）
     const nrDecoLineW = 40 * s;
-    ctx.strokeStyle = '#b8a078';
-    ctx.lineWidth = 1.2 * s;
+    const nrLineY = nrTitleY - 1 * s;
+    ctx.lineWidth = 0.8 * s;
+
+    // 左侧横线：外端淡 → 内端浓
+    const nrLeftGrad = ctx.createLinearGradient(nrTitleStartX - nrDecoLineW, nrLineY, nrTitleStartX + nrTitleIconSize * 0.6, nrLineY);
+    nrLeftGrad.addColorStop(0, 'rgba(184,160,120,0)');
+    nrLeftGrad.addColorStop(1, 'rgba(184,160,120,0.6)');
+    ctx.strokeStyle = nrLeftGrad;
     ctx.beginPath();
-    ctx.moveTo(nrTitleStartX - nrDecoLineW, nrTitleY);
-    ctx.lineTo(nrTitleStartX + nrTitleIconSize * 0.6, nrTitleY);
+    ctx.moveTo(nrTitleStartX - nrDecoLineW, nrLineY);
+    ctx.lineTo(nrTitleStartX + nrTitleIconSize * 0.6, nrLineY);
     ctx.stroke();
+
+    // 右侧横线：内端浓 → 外端淡
     const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
+    const nrRightGrad = ctx.createLinearGradient(nrRightIconX + nrTitleIconSize * 0.4, nrLineY, nrRightIconX + nrTitleIconSize + nrDecoLineW, nrLineY);
+    nrRightGrad.addColorStop(0, 'rgba(184,160,120,0.6)');
+    nrRightGrad.addColorStop(1, 'rgba(184,160,120,0)');
+    ctx.strokeStyle = nrRightGrad;
     ctx.beginPath();
-    ctx.moveTo(nrRightIconX + nrTitleIconSize * 0.4, nrTitleY);
-    ctx.lineTo(nrRightIconX + nrTitleIconSize + nrDecoLineW, nrTitleY);
+    ctx.moveTo(nrRightIconX + nrTitleIconSize * 0.4, nrLineY);
+    ctx.lineTo(nrRightIconX + nrTitleIconSize + nrDecoLineW, nrLineY);
     ctx.stroke();
     ctx.restore();
 
