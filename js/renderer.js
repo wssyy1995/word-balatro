@@ -459,25 +459,43 @@ class Renderer {
     if (prop._triggered) {
       ctx.save();
 
-      // 紫色径向光晕（脉动）
+      // 紫色径向光晕（脉动，范围更大、更明显）
       const glowCX = x + w / 2;
       const glowCY = finalY + h / 2;
-      const glowR = Math.max(w, h) * 0.75;
+      const glowR = Math.max(w, h) * 0.95;
       const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
-      const glowGrad = ctx.createRadialGradient(glowCX, glowCY, glowR * 0.15, glowCX, glowCY, glowR);
-      glowGrad.addColorStop(0, `rgba(155,89,182,${0.22 * pulse})`);
-      glowGrad.addColorStop(0.4, `rgba(155,89,182,${0.12 * pulse})`);
+      const glowGrad = ctx.createRadialGradient(glowCX, glowCY, glowR * 0.1, glowCX, glowCY, glowR);
+      glowGrad.addColorStop(0, `rgba(155,89,182,${0.35 * pulse})`);
+      glowGrad.addColorStop(0.5, `rgba(155,89,182,${0.2 * pulse})`);
       glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
       ctx.arc(glowCX, glowCY, glowR, 0, Math.PI * 2);
       ctx.fill();
 
-      // 紫色边框
+      // 外层扩散光晕（粗轮廓向外冒光）
+      ctx.strokeStyle = 'rgba(155,89,182,0.25)';
+      ctx.lineWidth = 10 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.7)';
+      ctx.shadowBlur = 24 * s;
+      ctx.beginPath();
+      ctx.moveTo(x + r, finalY);
+      ctx.lineTo(x + w - r, finalY);
+      ctx.quadraticCurveTo(x + w, finalY, x + w, finalY + r);
+      ctx.lineTo(x + w, finalY + h - r);
+      ctx.quadraticCurveTo(x + w, finalY + h, x + w - r, finalY + h);
+      ctx.lineTo(x + r, finalY + h);
+      ctx.quadraticCurveTo(x, finalY + h, x, finalY + h - r);
+      ctx.lineTo(x, finalY + r);
+      ctx.quadraticCurveTo(x, finalY, x + r, finalY);
+      ctx.closePath();
+      ctx.stroke();
+
+      // 紫色粗边框
       ctx.strokeStyle = '#9b59b6';
-      ctx.lineWidth = 2.5 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.6)';
-      ctx.shadowBlur = 10 * s;
+      ctx.lineWidth = 4.5 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.9)';
+      ctx.shadowBlur = 16 * s;
       ctx.beginPath();
       ctx.moveTo(x + r, finalY);
       ctx.lineTo(x + w - r, finalY);
@@ -1535,14 +1553,27 @@ class Renderer {
       } else {
         this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
       }
-      // per_card 倍率提示（左方块上方紫色小字）
+      // per_card 倍率提示（左方块上方紫色大字 + 白色底色）
       if (pc._perCardMultText) {
         ctx.save();
-        ctx.font = `900 ${Math.floor(14 * s)}px sans-serif`;
+        const multFontSize = Math.floor(18 * s);
+        ctx.font = `900 ${multFontSize}px sans-serif`;
+        const textW = ctx.measureText(pc._perCardMultText).width;
+        const padX = 5 * s;
+        const padY = 2 * s;
+        const bgW = textW + padX * 2;
+        const bgH = multFontSize + padY * 2;
+        const bgX = leftBoxX + boxSize / 2 - bgW / 2;
+        const bgY = boxY - bgH - 2 * s;
+
+        // 白色圆角底色
+        this.roundRect(bgX, bgY, bgW, bgH, 4 * s, 'rgba(255,255,255,0.92)');
+
+        // 紫色大字（居中）
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, boxY - 3 * s);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, bgY + bgH / 2);
         ctx.restore();
       }
     } else if (!game.pendingCheck) {
