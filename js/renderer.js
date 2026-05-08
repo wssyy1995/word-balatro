@@ -2507,7 +2507,7 @@ class Renderer {
 
     const appearDuration = 350;
     const holdDuration = 600;
-    const fadeDuration = 200;
+    const fadeDuration = 150;
     const totalDuration = appearDuration + holdDuration + fadeDuration;
 
     ctx.save();
