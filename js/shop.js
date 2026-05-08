@@ -1116,12 +1116,6 @@ class ConfirmBuyRenderer {
     const animStart = isSuccess ? (game._confirmBuySuccessTime || Date.now()) : (this.animStartTime || Date.now());
     const elapsed = isClosing ? 99999 : Date.now() - animStart;
 
-    function easeOutBack(t) {
-      const c1 = 1.70158;
-      const c3 = c1 + 1;
-      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-    }
-
     const closeSlideY = isClosing ? -closeProgress * 25 * s : 0;
     const closeAlpha = isClosing ? 1 - closeProgress : 1;
     ctx.save();
@@ -1143,7 +1137,7 @@ class ConfirmBuyRenderer {
     const gold = '#c4a35a';
 
     const enterProgress = Math.min(elapsed / 350, 1);
-    const enterEase = easeOutBack(enterProgress);
+    const enterEase = Easing.easeOutBack(enterProgress);
     const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
 
     // 背景 + 金棕色边框
