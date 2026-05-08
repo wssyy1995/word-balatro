@@ -1567,7 +1567,7 @@ class Renderer {
         const bgY = boxY - bgH - 2 * s;
 
         // 白色圆角底色（更淡、更大圆角）
-        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.78)');
+        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.72)');
 
         // 紫色大字（居中）
         ctx.fillStyle = '#9b59b6';
