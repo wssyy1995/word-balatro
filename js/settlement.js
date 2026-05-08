@@ -12,45 +12,23 @@ class SettlementRenderer {
     const settlement = game.settlementData;
     if (!settlement) return;
 
-    const isClosing = game._closingSettlement;
-    const closeElapsed = isClosing ? Date.now() - (game._closeStartTime || Date.now()) : 0;
-    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
-    if (isClosing && closeProgress >= 1) return;
-
     // 新的弹窗出现时重置动画
+    const isClosing = game._closingSettlement;
     if (!isClosing && this.lastSettlementData !== settlement) {
       this.animStartTime = Date.now();
       this.lastSettlementData = settlement;
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
-
-    // closing 时整体向上滑出 + 淡出
-    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
-    const closeAlpha = isClosing ? 1 - closeProgress : 1;
-    ctx.save();
-    ctx.globalAlpha = closeAlpha;
-
-    // 遮罩
-    const overlayAlpha = isClosing ? 0.65 * (1 - closeProgress) : Math.min(elapsed / 200, 0.65);
-    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
-    ctx.fillRect(0, 0, W, H);
-
-    // 弹窗尺寸
-    const pw = 300 * s;
-    const ph = 340 * s;
-    const px = (W - pw) / 2;
-    const basePy = (H - ph) / 2;
-    const r = 14 * s;
-    const gold = '#c4a35a';
-
-    // 弹窗入场：从下方 25px 滑入 + easeOutBack
-    const enterProgress = Math.min(elapsed / 350, 1);
-    const enterEase = Easing.easeOutBack(enterProgress);
-    const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
-
-    // 背景 + 边框
-    this.parent.roundRect(px, py, pw, ph, r, '#faf6ee', gold);
+    const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+      isClosing,
+      closeStartTime: game._closeStartTime,
+      width: 300, height: 340, enterOffset: 25, closeOffset: 40,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, elapsed: panelElapsed } = panel;
 
     // 标题（带金币图标）
     const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);

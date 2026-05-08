@@ -55,7 +55,7 @@
 
 ---
 
-## ⏳ P1-1: 提取弹窗基类 `PopupRenderer`（待开始）
+## 🔄 P1-1: 提取弹窗通用方法 `_drawModalPanel`（进行中）
 
 **问题**：5 个弹窗共用同一套"弹出-消失"模板，每处手写 80~120 行：
 - SettlementRenderer
@@ -63,6 +63,19 @@
 - WitchRewardRenderer
 - ConfirmBuyRenderer
 - drawChangeLetterPopup
+
+**修复**：
+1. 在 `js/renderer.js` 中新增 `_drawModalPanel(ctx, W, H, s, config)` 方法
+2. 支持配置：尺寸、入场距离/时长、关闭距离/时长、遮罩 alpha、背景色/边框色等
+3. 已替换：
+   - ✅ SettlementRenderer
+   - ✅ GameOverRenderer
+   - ⏳ WitchRewardRenderer（待替换）
+   - ⏳ ConfirmBuyRenderer（待替换）
+   - ⏳ drawChangeLetterPopup（待替换）
+
+**删除代码量**：每处减少约 30 行
+**风险**：中（涉及多个文件，需确保 ctx.save/restore 配对正确）
 
 ## ✅ P1-2: 统一数字脉冲动画 `_calcPulseScale`（已完成）
 

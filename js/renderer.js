@@ -2423,6 +2423,63 @@ class Renderer {
     return { scale, progress };
   }
 
+  // ===== 绘制带按压缩放的按钮（pressed 时整体缩小到 0.95）=====
+  _drawScaledButton(ctx, label, x, y, w, h, s, pressed, options = {}) {
+    const { color = '#c4a35a', textColor = '#fff', radius = 8 } = options;
+    const scale = pressed ? 0.95 : 1;
+    ctx.save();
+    ctx.translate(x + w / 2, y + h / 2);
+    ctx.scale(scale, scale);
+    this.roundRect(-w / 2, -h / 2, w, h, radius * s, color);
+    this.text(label, 0, 0, 16, textColor);
+    ctx.restore();
+  }
+
+  // ===== 绘制弹窗面板（遮罩 + 入场 + 背景 + 关闭动画）=====
+  _drawModalPanel(ctx, W, H, s, config) {
+    const {
+      isClosing, closeStartTime, closeDuration = 300, closeOffset = 40,
+      width = 300, height = 340, enterOffset = 25, enterDuration = 350,
+      overlayAlpha = 0.65, overlayFadeInDuration = 200,
+      bgColor = '#faf6ee', borderColor = '#c4a35a', borderRadius = 14, borderWidth = 1.5,
+      onCloseComplete, elapsed
+    } = config;
+
+    const closeElapsed = isClosing ? Date.now() - (closeStartTime || Date.now()) : 0;
+    const closeProgress = isClosing ? Math.min(closeElapsed / closeDuration, 1) : 0;
+
+    if (isClosing && closeProgress >= 1) {
+      onCloseComplete?.();
+      return null;
+    }
+
+    const closeSlideY = isClosing ? -closeProgress * closeOffset * s : 0;
+    const closeAlpha = isClosing ? 1 - closeProgress : 1;
+
+    ctx.save();
+
+    // 遮罩
+    const overlayA = isClosing
+      ? overlayAlpha * (1 - closeProgress)
+      : overlayAlpha * Math.min(elapsed / overlayFadeInDuration, 1);
+    ctx.fillStyle = `rgba(0,0,0,${overlayA})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // 面板入场
+    const enterProgress = Math.min(elapsed / enterDuration, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+    const pw = width * s;
+    const ph = height * s;
+    const px = (W - pw) / 2;
+    const basePy = (H - ph) / 2;
+    const py = basePy + (1 - enterEase) * enterOffset * s + closeSlideY;
+
+    ctx.globalAlpha = closeAlpha;
+    this.roundRect(px, py, pw, ph, borderRadius * s, bgColor, borderColor, borderWidth * s);
+
+    return { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha };
+  }
+
   // ===== 飞行总分动画（果冻弹出 + 停留 + 淡出） =====
   _startFlyingScore(value, startX, startY) {
     this.flyingScore = {
@@ -2546,42 +2603,21 @@ class GameOverRenderer {
 
   draw(ctx, game, W, H, s) {
     const isClosing = game._closingGameOver;
-    const closeElapsed = isClosing ? Date.now() - (game._closeStartTime || Date.now()) : 0;
-    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
-    if (isClosing && closeProgress >= 1) return;
-
     if (!isClosing && this.lastGameOverReason !== game.gameOverReason) {
       this.animStartTime = Date.now();
       this.lastGameOverReason = game.gameOverReason;
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
-
-    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
-    const closeAlpha = isClosing ? 1 - closeProgress : 1;
-    ctx.save();
-    ctx.globalAlpha = closeAlpha;
-
-    // 半透明遮罩
-    const overlayAlpha = isClosing ? 0.65 * (1 - closeProgress) : Math.min(elapsed / 200, 0.65);
-    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
-    ctx.fillRect(0, 0, W, H);
-
-    // 弹窗尺寸
-    const pw = 300 * s;
-    const ph = 290 * s;
-    const px = (W - pw) / 2;
-    const basePy = (H - ph) / 2;
-    const r = 14 * s;
-    const gold = '#c4a35a';
-
-    // 弹窗入场：easeOutBack 从下方 25px 滑入
-    const enterProgress = Math.min(elapsed / 350, 1);
-    const enterEase = Easing.easeOutBack(enterProgress);
-    const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
-
-    // 背景 + 边框
-    this.parent.roundRect(px, py, pw, ph, r, '#faf6ee', gold);
+    const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+      isClosing,
+      closeStartTime: game._closeStartTime,
+      width: 300, height: 290, enterOffset: 25, closeOffset: 40,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, elapsed: panelElapsed } = panel;
 
     // 标题
     const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
@@ -2663,21 +2699,8 @@ class GameOverRenderer {
     ctx.save();
     ctx.globalAlpha = btnAnim.alpha;
 
-    // 按钮按下效果
-    const btnPressed = game._restartBtnPressed;
-    const btnScale = btnPressed ? 0.95 : 1;
-    const btnDrawX = btnX + btnW * (1 - btnScale) / 2;
-    const btnDrawY = btnY + btnH * (1 - btnScale) / 2;
-    const btnDrawW = btnW * btnScale;
-    const btnDrawH = btnH * btnScale;
-
-    this.parent.roundRect(btnDrawX, btnDrawY, btnDrawW, btnDrawH, 8 * s, '#c4a35a');
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('重新开始', W / 2, btnDrawY + btnDrawH / 2);
-    ctx.restore();
+    // 重新开始按钮
+    this._drawScaledButton(ctx, '重新开始', btnX, btnY, btnW, btnH, s, game._restartBtnPressed, { color: '#c4a35a', radius: 8 });
 
     // 闭合 closing 动画的 globalAlpha
     ctx.restore();
