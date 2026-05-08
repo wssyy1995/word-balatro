@@ -43,8 +43,8 @@ const SHOP_POOL = {
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
   ],
   potion: [
-    {name:'字母强化', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数翻倍'},
-    {name:'王牌强化', type:'potion', effect:'upgrade_face', value:3, cost:5, desc:'选择XYZ任意一张，分数×3'},
+    {name:'字母升级', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数x2'},
+    {name:'王牌升级', type:'potion', effect:'upgrade_face', value:3, cost:5, desc:'选择XYZ任意一张，分数×3'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
 };

@@ -172,6 +172,13 @@ class WitchRewardRenderer {
     ctx.globalAlpha = contentAlpha;
 
     const gold = '#c4a35a';
+    const darkBlue = '#1a2f4a';
+
+    // result 阶段仍需要弹窗面板尺寸
+    const pw = 300 * s;
+    const ph = data.phase === 'gift' ? 300 * s : 340 * s;
+    const px = (W - pw) / 2;
+    const py = (H - ph) / 2 + panelOffsetY;
 
     if (data.phase === 'gift') {
       // 礼物盒绘制（默认呼吸，点击后闪烁）— 直接居中浮在遮罩上
