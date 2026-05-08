@@ -164,10 +164,12 @@ class WitchRewardRenderer {
     const panelOffsetY = (1 - enterEase) * 30 * s;
     const contentAlpha = enterProgress;
 
-    // 画遮罩（带淡入）
+    // 画遮罩（带淡入）— gift 阶段全屏变暗，result 阶段恢复亮度
     ctx.save();
-    ctx.fillStyle = `rgba(0,0,0,${0.65 * Math.min(elapsed / 200, 1)})`;
-    ctx.fillRect(0, 0, W, H);
+    if (data.phase === 'gift') {
+      ctx.fillStyle = `rgba(0,0,0,${0.65 * Math.min(elapsed / 200, 1)})`;
+      ctx.fillRect(0, 0, W, H);
+    }
 
     ctx.globalAlpha = contentAlpha;
 
@@ -227,6 +229,9 @@ class WitchRewardRenderer {
       this.useBtnRect = null;
       this.okBtnRect = null;
     } else if (data.phase === 'result') {
+      // result 阶段恢复弹窗背景
+      this.parent.roundRect(px, py, pw, ph, 14 * s, '#faf6ee', gold, 1.5 * s);
+
       if (data.result) {
         // === 标题：获得奖励 ===
         ctx.save();
