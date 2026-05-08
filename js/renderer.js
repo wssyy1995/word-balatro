@@ -1853,46 +1853,22 @@ class Renderer {
 
     const { LETTER_SCORE } = require('./data');
 
-    // 关闭动画
-    const isClosing = game._closingChangeLetter;
-    const closeElapsed = isClosing ? Date.now() - (game._closeChangeLetterStartTime || Date.now()) : 0;
-    const closeProgress = isClosing ? Math.min(closeElapsed / 300, 1) : 0;
-    if (isClosing && closeProgress >= 1) return;
-
-    // 弹出动效（easeOutBack）
     const elapsed = Date.now() - (popup.startTime || Date.now());
-    const enterDuration = 350;
-    const enterProgress = Math.min(elapsed / enterDuration, 1);
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    const enterEase = 1 + c3 * Math.pow(enterProgress - 1, 3) + c1 * Math.pow(enterProgress - 1, 2);
-    const panelOffsetY = (1 - enterEase) * 30 * s;
+    const panel = this._drawModalPanel(ctx, W, H, s, {
+      isClosing: game._closingChangeLetter,
+      closeStartTime: game._closeChangeLetterStartTime,
+      width: 300, height: 410,
+      borderRadius: 12, borderWidth: 2,
+      overlayAlpha: 0.5, overlayFadeInDuration: 200,
+      enterOffset: 30,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, enterProgress, closeAlpha } = panel;
+
     const baseAlpha = enterProgress;
-
-    // 关闭动画偏移
-    const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
-    const closeAlpha = isClosing ? 1 - closeProgress : 1;
-
-    // 遮罩（带淡入，关闭时淡出）
-    ctx.save();
-    const overlayAlpha = isClosing ? 0.5 * (1 - closeProgress) : 0.5 * Math.min(elapsed / 200, 1);
-    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
-
-    // 弹窗尺寸
-    const pw = 300 * s;
-    const ph = 410 * s;
-    const px = (W - pw) / 2;
-    const py = (H - ph) / 2 + panelOffsetY + closeSlideY;
-    const r = 12 * s;
     const gold = '#c4a35a';
-
-    // 弹窗背景
-    ctx.save();
-    ctx.globalAlpha = closeAlpha;
-    this.roundRect(px, py, pw, ph, r, '#faf6ee', gold, 2 * s);
-    ctx.restore();
 
     // 标题：字母置换
     ctx.save();
@@ -2476,6 +2452,7 @@ class Renderer {
 
     ctx.globalAlpha = closeAlpha;
     this.roundRect(px, py, pw, ph, borderRadius * s, bgColor, borderColor, borderWidth * s);
+    ctx.restore();
 
     return { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha };
   }
