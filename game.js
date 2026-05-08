@@ -38,13 +38,21 @@ const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
 // 云存储管理器
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
-cloudStorage.init();
 
-// 云存储 shop_card 图片延迟到第一回合页面加载后再预加载
+// 云存储初始化 + shop_card 预加载，延迟到第一回合页面渲染完成后
 let cloudPreloadTriggered = false;
 function triggerCloudPreload() {
-  if (cloudPreloadTriggered || !cloudStorage.hasUploaded()) return;
+  if (cloudPreloadTriggered) return;
   cloudPreloadTriggered = true;
+
+  // 延迟初始化云环境，避免阻塞游戏启动
+  cloudStorage.init();
+
+  if (!cloudStorage.hasUploaded()) {
+    console.log('[Game] 没有云存储映射，跳过 shop_card 云加载');
+    return;
+  }
+
   console.log('[Game] 第一回合已显示，开始后台预加载 shop_card 云图片');
   cloudStorage.preloadShopCardImages().then(() => {
     cloudStorage.injectToRenderer(renderer);
