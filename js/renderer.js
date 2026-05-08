@@ -2677,6 +2677,7 @@ class Renderer {
       { label: '当前分+100', action: 'debug_addScore' },
       { label: '直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
+      { label: '上传shop_card', action: 'debug_upload_shop_card' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;

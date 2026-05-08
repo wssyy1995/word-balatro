@@ -4,6 +4,7 @@ const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { CloudStorageManager } = require('./js/cloud_storage');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -35,6 +36,20 @@ let game = new Game();
 let lastPlayResult = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
+// 云存储管理器
+const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
+cloudStorage.init();
+
+// 后台预加载云存储的 shop_card 图片（如果有映射）
+if (cloudStorage.hasUploaded()) {
+  cloudStorage.preloadShopCardImages().then(() => {
+    cloudStorage.injectToRenderer(renderer);
+    console.log('云图片已注入 renderer');
+  }).catch(err => {
+    console.error('云图片预加载失败:', err);
+  });
+}
+
 // 触摸事件处理
 wx.onTouchStart((e) => {
   const touch = e.touches[0];
@@ -64,6 +79,17 @@ function handleInput(x, y) {
           refreshModule(game, 1);
           refreshModule(game, 2);
         }
+      }
+      if (debugHit.action === 'debug_upload_shop_card') {
+        cloudStorage.uploadShopCards().then(res => {
+          console.log('上传完成:', res.success.length, '张成功,', res.failed.length, '张失败');
+          return cloudStorage.preloadShopCardImages();
+        }).then(() => {
+          cloudStorage.injectToRenderer(renderer);
+          console.log('云图片已注入 renderer');
+        }).catch(err => {
+          console.error('上传失败:', err);
+        });
       }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';
