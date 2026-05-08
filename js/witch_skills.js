@@ -2,9 +2,9 @@
 
 const WITCH_SKILLS = [
   { level: 2, skill: 'force_letter_3', reward: 'card_change_letter',rate:0.5,reward_desc: '50%概率获得一张: 字母置换', desc: '每次出牌只能出3张字母牌' },
-  { level: 3, skill: 'need_letter_4', reward: 'card_upgrade_letter',rate:0.5,reward_desc: '50%概率获得一张: 字母强化', desc: '每次出牌必须不少于4个字母' },
-  { level: 4, skill: 'force_letter_4', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1', desc: '每次出牌只能出4张字母牌' },
-  { level: 5, skill: 'force_letter_4', reward: 'global_letter_1',rate:1,reward_desc: '本赛局字母手牌+1', desc: '每次出牌只能出4张字母牌' },
+  { level: 4, skill: 'need_letter_4', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1', desc: '每次出牌不能少于4个字母' },
+  // { level: 4, skill: 'force_letter_4', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1', desc: '每次出牌只能出4张字母牌' },
+  { level: 6, skill: 'force_letter_4', reward: 'global_letter_1',rate:1,reward_desc: '本赛局字母手牌+1', desc: '每次出牌只能出4张字母牌' },
 
 ];
 

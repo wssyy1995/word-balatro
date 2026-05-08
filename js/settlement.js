@@ -166,53 +166,15 @@ class WitchRewardRenderer {
 
     // 画遮罩（带淡入）
     ctx.save();
-    ctx.fillStyle = `rgba(0,0,0,${0.6 * Math.min(elapsed / 200, 1)})`;
+    ctx.fillStyle = `rgba(0,0,0,${0.65 * Math.min(elapsed / 200, 1)})`;
     ctx.fillRect(0, 0, W, H);
 
     ctx.globalAlpha = contentAlpha;
 
-    // 弹窗背景
-    const pw = 300 * s;
-    const ph = data.phase === 'gift' ? 300 * s : 340 * s;
-    const px = (W - pw) / 2;
-    const py = (H - ph) / 2 + panelOffsetY;
     const gold = '#c4a35a';
-    const darkBlue = '#1a2f4a';
-
-    if (data.phase === 'gift' && this.parent.witchGiftWindowIcon && this.parent.witchGiftWindowIconLoaded) {
-      ctx.drawImage(this.parent.witchGiftWindowIcon, px, py, pw, ph);
-    } else {
-      this.parent.roundRect(px, py, pw, ph, 14 * s, '#faf6ee', gold, 1.5 * s);
-    }
 
     if (data.phase === 'gift') {
-      // 标题
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-      ctx.fillStyle = darkBlue;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('女巫奖励', W / 2, py + 70 * s + 3 * s);
-
-      // 标题下装饰线（横线 + 中间菱形）
-      ctx.save();
-      ctx.strokeStyle = 'rgba(196,163,90,0.5)';
-      ctx.lineWidth = 1 * s;
-      const titleDecoY = py + 70 * s + 3 * s + 14 * s;
-      const titleDecoW = pw * 0.45;
-      const titleDecoX = px + (pw - titleDecoW) / 2;
-      ctx.beginPath();
-      ctx.moveTo(titleDecoX, titleDecoY);
-      ctx.lineTo(titleDecoX + titleDecoW, titleDecoY);
-      ctx.stroke();
-      ctx.save();
-      ctx.translate(W / 2, titleDecoY);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = gold;
-      ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
-      ctx.restore();
-      ctx.restore();
-
-      // 礼物盒绘制（默认呼吸，点击后闪烁）
+      // 礼物盒绘制（默认呼吸，点击后闪烁）— 直接居中浮在遮罩上
       let pulse = 1;
       let alpha = 1;
       if (data._opening) {
@@ -230,9 +192,9 @@ class WitchRewardRenderer {
         pulse = 1 + breath;
       }
 
-      const giftSize = 80 * s;
+      const giftSize = 100 * s;
       const giftX = W / 2;
-      const giftY = py + ph / 2 + 5 * s;
+      const giftY = H / 2 + panelOffsetY;
 
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
@@ -241,42 +203,16 @@ class WitchRewardRenderer {
       if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
         ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
       } else {
-        this._drawGiftBox(ctx, 0, 0, 55 * s, s);
+        this._drawGiftBox(ctx, 0, 0, 70 * s, s);
       }
       ctx.restore();
 
-      // 点击跳过提示
-      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = '#999';
+      // 点击揭晓提示
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('点击礼盒揭晓', W / 2, py + ph - 30 * s - 10 * s - 3 * s);
-
-      // 提示文字下装饰线（两根横线 + 中间菱形）
-      const hintDecoY = py + ph - 30 * s - 10 * s - 3 * s + 14 * s;
-      const hintDecoW = 36 * s;
-      const hintDecoGap = 8 * s;
-      ctx.save();
-      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-      ctx.lineWidth = 1 * s;
-      // 左侧横线
-      ctx.beginPath();
-      ctx.moveTo(W / 2 - hintDecoGap - hintDecoW, hintDecoY);
-      ctx.lineTo(W / 2 - hintDecoGap, hintDecoY);
-      ctx.stroke();
-      // 右侧横线
-      ctx.beginPath();
-      ctx.moveTo(W / 2 + hintDecoGap, hintDecoY);
-      ctx.lineTo(W / 2 + hintDecoGap + hintDecoW, hintDecoY);
-      ctx.stroke();
-      // 中间小菱形
-      ctx.save();
-      ctx.translate(W / 2, hintDecoY);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = gold;
-      ctx.fillRect(-2 * s, -2 * s, 4 * s, 4 * s);
-      ctx.restore();
-      ctx.restore();
+      ctx.fillText('点击揭晓', W / 2, giftY + giftSize / 2 + 25 * s);
 
       // 整屏可点击跳过
       this.skipRect = { x: 0, y: 0, w: W, h: H };

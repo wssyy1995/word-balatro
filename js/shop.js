@@ -29,10 +29,10 @@ const SHOP_POOL = {
     {name:'A之强化', type:'witch', scope:'per_card', trigger:'letter_a', value:10, cost:5, desc:'字母A分数×10'},
     {name:'E之强化', type:'witch', scope:'per_card', trigger:'letter_e', value:5, cost:5, desc:'字母E分数×5'},
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
-    {name:'四字母强化', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
-    {name:'五字母强化', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×3'},
-    {name:'六字母强化', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×4'},
-    {name:'XYZ强化', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'}
+    {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×3'},
+    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×4'},
+    {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
