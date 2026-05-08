@@ -2505,7 +2505,7 @@ class Renderer {
     const fs = this.flyingScore;
     const elapsed = Date.now() - fs.startTime;
 
-    const appearDuration = 350;
+    const appearDuration = 300;
     const holdDuration = 600;
     const fadeDuration = 150;
     const totalDuration = appearDuration + holdDuration + fadeDuration;
