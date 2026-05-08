@@ -82,12 +82,13 @@ function handleInput(x, y) {
       }
       if (debugHit.action === 'debug_upload_shop_card') {
         cloudStorage.uploadShopCards().then(res => {
-          console.log('上传完成:', res.success.length, '张成功,', res.failed.length, '张失败');
+          game.hintToast = { text: `上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
           return cloudStorage.preloadShopCardImages();
         }).then(() => {
           cloudStorage.injectToRenderer(renderer);
-          console.log('云图片已注入 renderer');
+          game.hintToast = { text: '云图片已加载到游戏', expireAt: Date.now() + 2000 };
         }).catch(err => {
+          game.hintToast = { text: '上传失败', expireAt: Date.now() + 2000 };
           console.error('上传失败:', err);
         });
       }
