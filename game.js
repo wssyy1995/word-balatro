@@ -4,6 +4,7 @@ const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { CloudStorageManager } = require('./js/cloud_storage');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -35,6 +36,32 @@ let game = new Game();
 let lastPlayResult = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
+// 云存储管理器
+const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
+
+// 云存储初始化 + shop_card 预加载，延迟到第一回合页面渲染完成后
+let cloudPreloadTriggered = false;
+function triggerCloudPreload() {
+  if (cloudPreloadTriggered) return;
+  cloudPreloadTriggered = true;
+
+  // 延迟初始化云环境，避免阻塞游戏启动
+  cloudStorage.init();
+
+  if (!cloudStorage.hasUploaded()) {
+    console.log('[Game] 没有云存储映射，跳过 shop_card 云加载');
+    return;
+  }
+
+  console.log('[Game] 第一回合已显示，开始后台预加载 shop_card 云图片');
+  cloudStorage.preloadShopCardImages().then(() => {
+    cloudStorage.injectToRenderer(renderer);
+    console.log('[Game] shop_card 云图片已注入 renderer');
+  }).catch(err => {
+    console.error('[Game] 云图片预加载失败:', err);
+  });
+}
+
 // 触摸事件处理
 wx.onTouchStart((e) => {
   const touch = e.touches[0];
@@ -64,6 +91,18 @@ function handleInput(x, y) {
           refreshModule(game, 1);
           refreshModule(game, 2);
         }
+      }
+      if (debugHit.action === 'debug_upload_shop_card') {
+        cloudStorage.uploadShopCards().then(res => {
+          game.hintToast = { text: `上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadShopCardImages();
+        }).then(() => {
+          cloudStorage.injectToRenderer(renderer);
+          game.hintToast = { text: '云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: '上传失败', expireAt: Date.now() + 2000 };
+          console.error('上传失败:', err);
+        });
       }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';
@@ -616,6 +655,11 @@ function gameLoop(timestamp) {
 
   game.update(deltaTime);
   renderer.render(game);
+
+  // 第一回合页面渲染后，触发云存储图片后台预加载
+  if (game.state === 'playing' && !cloudPreloadTriggered) {
+    triggerCloudPreload();
+  }
 
   requestAnimationFrame(gameLoop);
 }

@@ -124,19 +124,7 @@ class Renderer {
       this.errorIconLoaded = false;
     }
     
-    // 加载搜索图标
-    this.searchIcon = null;
-    this.searchIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/search.png';
-      img.onload = () => { this.searchIconLoaded = true; };
-      img.onerror = () => { this.searchIconLoaded = false; };
-      this.searchIcon = img;
-    } catch (e) {
-      this.searchIconLoaded = false;
-    }
-    
+    // 加载商店图标
     // 加载商店图标
     this.shopIcon = null;
     this.shopIconLoaded = false;
@@ -162,20 +150,6 @@ class Renderer {
     } catch (e) {
       this.witchGiftIconLoaded = false;
     }
-    
-    // 加载女巫奖励弹窗背景
-    this.witchGiftWindowIcon = null;
-    this.witchGiftWindowIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/witch_gift_window.png';
-      img.onload = () => { this.witchGiftWindowIconLoaded = true; };
-      img.onerror = () => { this.witchGiftWindowIconLoaded = false; };
-      this.witchGiftWindowIcon = img;
-    } catch (e) {
-      this.witchGiftWindowIconLoaded = false;
-    }
-    
     // 加载女巫头像
     this.witchAvatars = {};
     [2, 3, 4].forEach(level => {
@@ -229,20 +203,6 @@ class Renderer {
     } catch (e) {
       this.cardTemplateSelectedLoaded = false;
     }
-    
-    // 加载商店标题背景图
-    this.shopLabel = null;
-    this.shopLabelLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/shop_label.png';
-      img.onload = () => { this.shopLabelLoaded = true; };
-      img.onerror = () => { this.shopLabelLoaded = false; };
-      this.shopLabel = img;
-    } catch (e) {
-      this.shopLabelLoaded = false;
-    }
-
     // 加载游戏进度栏背景图
     this.gameProgressImage = null;
     this.gameProgressLoaded = false;
@@ -254,19 +214,6 @@ class Renderer {
       this.gameProgressImage = img;
     } catch (e) {
       this.gameProgressLoaded = false;
-    }
-
-    // 加载购买成功弹窗装饰图
-    this.buySuccessImg = null;
-    this.buySuccessLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/buy_success.png';
-      img.onload = () => { this.buySuccessLoaded = true; };
-      img.onerror = () => { this.buySuccessLoaded = false; };
-      this.buySuccessImg = img;
-    } catch (e) {
-      this.buySuccessLoaded = false;
     }
 
         // 加载购买成功弹窗底部飘带
@@ -282,7 +229,7 @@ class Renderer {
       this.buySuccessBandLoaded = false;
     }
     
-    // 加载道具卡牌图标（从 SHOP_POOL 动态提取所有 trigger/effect）
+    // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）
     this.shopCardImages = {};
     const shopCardNames = new Set();
     Object.values(SHOP_POOL).forEach(pool => {
@@ -292,37 +239,7 @@ class Renderer {
       });
     });
     shopCardNames.forEach(name => {
-      try {
-        const img = wx.createImage();
-        img.src = `images/shop_card/${name}.png`;
-        img.onload = () => {
-          const w = img.width || 0;
-          const h = img.height || 0;
-          const data = this.shopCardImages[name];
-          if (data) {
-            data.loaded = true;
-            data.width = w;
-            data.height = h;
-          }
-        };
-        img.onerror = () => { this.shopCardImages[name] = { img: null, loaded: false }; };
-        // getImageInfo 兜底（部分基础库支持本地路径）
-        try {
-          wx.getImageInfo({
-            src: `/images/shop_card/${name}.png`,
-            success: (res) => {
-              const data = this.shopCardImages[name];
-              if (data) {
-                data.width = res.width;
-                data.height = res.height;
-              }
-            }
-          });
-        } catch (e) {}
-        this.shopCardImages[name] = { img, loaded: false, width: 0, height: 0 };
-      } catch (e) {
-        this.shopCardImages[name] = { img: null, loaded: false };
-      }
+      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
     
     // 加载空位替代图片
@@ -2677,6 +2594,7 @@ class Renderer {
       { label: '当前分+100', action: 'debug_addScore' },
       { label: '直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
+      { label: '上传shop_card', action: 'debug_upload_shop_card' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;
