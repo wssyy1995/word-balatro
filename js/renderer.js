@@ -1099,9 +1099,7 @@ class Renderer {
         const hintBtnY = slotY + slotH + 2 * s;
         const hintElapsed = Date.now() - game._changeLetterHint.startTime;
         const hintProgress = Math.min(hintElapsed / 200, 1);
-        const c1 = 1.70158;
-        const c3 = c1 + 1;
-        const hintEase = 1 + c3 * Math.pow(hintProgress - 1, 3) + c1 * Math.pow(hintProgress - 1, 2);
+        const hintEase = Easing.easeOutBack(hintProgress);
         const hintScale = hintEase;
         const hintOffsetY = -(1 - hintEase) * 6 * s;
 

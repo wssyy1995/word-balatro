@@ -283,10 +283,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          const c1 = 1.70158;
-          const c3 = c1 + 1;
-          const ease = 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-          slideOffsetX = -(oSlotW + oGap) * ease;
+          slideOffsetX = -(oSlotW + oGap) * Easing.easeOutBack(t);
         }
       }
 
@@ -388,10 +385,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          const c1 = 1.70158;
-          const c3 = c1 + 1;
-          const ease = 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-          slideOffsetX = -(oSlotW + oGap) * ease;
+          slideOffsetX = -(oSlotW + oGap) * Easing.easeOutBack(t);
         }
       }
 
