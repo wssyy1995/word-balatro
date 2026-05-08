@@ -302,7 +302,7 @@ class ShopRenderer {
 
         ctx.save();
         // 女巫牌：从屏幕左侧飞出（easeOutCubic，x:-400, y:30, rotation:-20）
-        const eased = 1 - Math.pow(1 - sellProgress, 3);
+        const eased = Easing.easeOutCubic(sellProgress);
         const flyX = -eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = -eased * 20;
@@ -404,7 +404,7 @@ class ShopRenderer {
 
         ctx.save();
         // 药水牌：从屏幕右侧飞出（easeOutCubic，x:400, y:30, rotation:20）
-        const eased = 1 - Math.pow(1 - sellProgress, 3);
+        const eased = Easing.easeOutCubic(sellProgress);
         const flyX = eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = eased * 20;
