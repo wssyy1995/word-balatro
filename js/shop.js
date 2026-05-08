@@ -37,8 +37,8 @@ const SHOP_POOL = {
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
     {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:5, desc:'下一回合出牌次数+1'},
-    {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:5, desc:'下一回合,增加一张字母手牌'},
-    {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
+    {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:5, desc:'下一回合,增加一张字母手牌'}
+    // {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
   ],
@@ -742,15 +742,36 @@ class ShopRenderer {
         const btnH = 22 * s;
         const btnY = unitY + unitH - btnH - 10 * s;
         const coinSize = 14 * s;
-        const priceText = String(item.cost);
         const canAfford = game.gold >= item.cost;
+
+        // 检查槽位上限
+        const isWitch = item.type === 'witch';
+        const isPotion = item.type === 'potion';
+        const witchFull = (game.jokers || []).length >= 4;
+        const potionFull = (game.potions || []).length >= 2;
+        const atLimit = (isWitch && witchFull) || (isPotion && potionFull);
+
+        // 确定按钮文案和是否显示金币图标
+        let btnText, showCoin;
+        if (atLimit) {
+          btnText = '已达上限';
+          showCoin = false;
+        } else if (!canAfford) {
+          btnText = '余额不足';
+          showCoin = true;
+        } else {
+          btnText = String(item.cost);
+          showCoin = true;
+        }
+        const isActive = canAfford && !atLimit;
 
         // 先计算按钮宽度
         ctx.save();
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-        const priceTextW = ctx.measureText(priceText).width;
+        const priceTextW = ctx.measureText(btnText).width;
         ctx.restore();
-        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 23;
+        const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
+        const btnW = contentW + 16 * s + 23;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -762,16 +783,16 @@ class ShopRenderer {
 
         // 按钮投影 + 背景
         ctx.save();
-        if (canAfford) {
+        if (isActive) {
           ctx.shadowColor = 'rgba(0,0,0,0.25)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
         }
-        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, canAfford ? '#FFF1D4' : '#e0e0e0');
+        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, isActive ? '#FFF1D4' : '#e0e0e0');
         ctx.restore();
 
-        // 顶部高光条（只有买得起时才画）
-        if (canAfford) {
+        // 顶部高光条（只有可购买时才画）
+        if (isActive) {
           ctx.save();
           ctx.strokeStyle = 'rgba(255,255,255,0.45)';
           ctx.lineWidth = 1.2 * s;
@@ -782,17 +803,17 @@ class ShopRenderer {
           ctx.restore();
         }
 
-        // 金币图标 + 价格（整体居中）
-        const contentW = coinSize + 4 * s + priceTextW;
+        // 金币图标 + 文案（整体居中）
         const contentStartX = btnX + (btnW - contentW) / 2;
         const midY = btnY + btnH / 2 + pressOffset;
-        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+        if (showCoin && this.parent.coinIcon && this.parent.coinIconLoaded) {
           ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
         }
-        ctx.fillStyle = canAfford ? '#8b6914' : '#999';
+        ctx.fillStyle = isActive ? '#8b6914' : '#999';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(priceText, contentStartX + coinSize + 4 * s, midY);
+        const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
+        ctx.fillText(btnText, btnTextX, midY);
 
         this.shopPriceBtnRects.push({ x: btnX, y: btnY, w: btnW, h: btnH, index: itemIdx });
       }

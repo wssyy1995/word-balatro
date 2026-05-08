@@ -1714,7 +1714,13 @@ class Renderer {
       if (!card) return;
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const x = startX + col * (this.cardW + this.gap);
+      // 最后一行不满时，该行单独居中
+      const cardsInRow = (row === rows - 1 && game.hand.length % cols !== 0)
+        ? game.hand.length % cols
+        : cols;
+      const rowTotalW = cardsInRow * this.cardW + (cardsInRow - 1) * this.gap;
+      const rowStartX = (W - rowTotalW) / 2;
+      const x = rowStartX + col * (this.cardW + this.gap);
       const y = cardAreaY + row * (this.cardH + this.gap);
       this.drawCard(card, x, y, card.newCard);
       this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
@@ -1728,7 +1734,12 @@ class Renderer {
       if (card._flyIndex !== undefined) {
         const fCol = card._flyIndex % cols;
         const fRow = Math.floor(card._flyIndex / cols);
-        const fx = startX + fCol * (this.cardW + this.gap);
+        const fCardsInRow = (fRow === rows - 1 && game.hand.length % cols !== 0)
+          ? game.hand.length % cols
+          : cols;
+        const fRowTotalW = fCardsInRow * this.cardW + (fCardsInRow - 1) * this.gap;
+        const fRowStartX = (W - fRowTotalW) / 2;
+        const fx = fRowStartX + fCol * (this.cardW + this.gap);
         const fy = cardAreaY + fRow * (this.cardH + this.gap);
         this.drawCard(card, fx, fy);
       }

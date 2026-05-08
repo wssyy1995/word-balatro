@@ -322,7 +322,7 @@ class WitchRewardRenderer {
           this.stashBtnRect = null;
           this.useBtnRect = null;
           this.skipRect = null;
-        } else {
+        } else if (rewardItem) {
           // === 卡牌尺寸计算 ===
           const cardMaxW = pw * 0.4;
           const cardMaxH = 110 * s;
