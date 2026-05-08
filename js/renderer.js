@@ -1556,18 +1556,18 @@ class Renderer {
       // per_card 倍率提示（左方块上方紫色大字 + 白色底色）
       if (pc._perCardMultText) {
         ctx.save();
-        const multFontSize = Math.floor(18 * s);
+        const multFontSize = Math.floor(22 * s);
         ctx.font = `900 ${multFontSize}px sans-serif`;
         const textW = ctx.measureText(pc._perCardMultText).width;
-        const padX = 5 * s;
-        const padY = 2 * s;
+        const padX = 6 * s;
+        const padY = 3 * s;
         const bgW = textW + padX * 2;
         const bgH = multFontSize + padY * 2;
         const bgX = leftBoxX + boxSize / 2 - bgW / 2;
         const bgY = boxY - bgH - 2 * s;
 
-        // 白色圆角底色
-        this.roundRect(bgX, bgY, bgW, bgH, 4 * s, 'rgba(255,255,255,0.92)');
+        // 白色圆角底色（更淡、更大圆角）
+        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.78)');
 
         // 紫色大字（居中）
         ctx.fillStyle = '#9b59b6';
