@@ -863,9 +863,9 @@ class Renderer {
 
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = W - 20 * s;
-    const barH = 56 * s + 5;
+    const barH = 56 * s + 7;
     const barX = 10 * s;
-    const barY = top + 11;
+    const barY = top + 9;
     const r = 10 * s;
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
@@ -1011,7 +1011,7 @@ class Renderer {
     const maxRows = 3;
     const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
     const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
-    const propBarH = 92 * s;
+    const propBarH = 88 * s;
 
     const btnTop = H - 90 * s;
     const cardGap = 50 * s;                                    // 卡牌底部到按钮间距（约原来的一半）
@@ -1029,10 +1029,10 @@ class Renderer {
     const padX = 10 * s;
     const dividerW = 1.5 * s;
     const gap = 6 * s;
-    const slotTopPad = 10 * s;
+    const slotTopPad = 8 * s;
 
     const slotW = (propW - padX * 2 - 5 * gap - dividerW) / 6;
-    const slotH = propBarH - slotTopPad - 10 * s;
+    const slotH = propBarH - slotTopPad - 8 * s;
 
     const slotY = propY + slotTopPad;
     const leftStartX = propX + padX;
