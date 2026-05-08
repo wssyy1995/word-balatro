@@ -90,12 +90,19 @@ class CloudStorageManager {
       const fileID = this.cloudFileMap[name];
       if (!fileID) { resolve(); return; }
 
-      // 优先尝试用 downloadFile 下载到本地缓存
-      wx.cloud.downloadFile({
-        fileID,
+      // 获取临时 URL 后用 wx.createImage 直接加载
+      wx.cloud.getTempFileURL({
+        fileList: [fileID],
         success: (res) => {
+          const urlData = res.fileList[0];
+          if (!urlData || urlData.status !== 0 || !urlData.tempFileURL) {
+            console.error('获取临时URL失败:', name, urlData);
+            this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+            resolve();
+            return;
+          }
           const img = wx.createImage();
-          img.src = res.tempFilePath;
+          img.src = urlData.tempFileURL;
           img.onload = () => {
             this.shopCardImages[name] = {
               img,
@@ -106,12 +113,13 @@ class CloudStorageManager {
             resolve();
           };
           img.onerror = () => {
+            console.error('图片加载失败:', name);
             this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
             resolve();
           };
         },
         fail: (err) => {
-          console.error('下载失败:', name, err);
+          console.error('获取临时URL失败:', name, err);
           this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
           resolve();
         },
