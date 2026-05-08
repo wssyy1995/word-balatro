@@ -367,6 +367,7 @@ class Renderer {
     this.lastGold = 0;
     this.goldAnim = null;
     this.debugMenuOpen = false;
+    this.witchPropRects = [];
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
@@ -392,6 +393,146 @@ class Renderer {
       ctx.lineWidth = 1 * this.scale;
       ctx.stroke();
     }
+  }
+
+  // 获取女巫牌可作用字母
+  _getWitchLetters(trigger) {
+    switch (trigger) {
+      case 'letter_a': return ['A'];
+      case 'letter_e': return ['E'];
+      case 'has_vowel': return ['A', 'E', 'I', 'O', 'U'];
+      case 'has_face': return ['X', 'Y', 'Z'];
+      default: return null;
+    }
+  }
+
+  // 绘制女巫牌详情弹窗
+  _drawWitchDetailPopup(ctx, game, s) {
+    const popup = game._witchDetailPopup;
+    if (!popup) return;
+
+    const jokers = game.jokers || [];
+    const joker = jokers[popup.jokerIndex];
+    if (!joker) return;
+
+    const rect = this.witchPropRects[popup.jokerIndex];
+    if (!rect) return;
+
+    const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
+
+    const popupW = cardW + 20 * s;
+    const popupX = cardX + (cardW - popupW) / 2;
+    const pad = 10 * s;
+    const lineH = 16 * s;
+
+    // 计算内容高度
+    let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+    const letters = this._getWitchLetters(joker.trigger);
+    const hasLetters = letters && letters.length > 0;
+    if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
+    const popupH = contentH;
+    const popupY = cardY + cardH + 6 * s;
+
+    ctx.save();
+
+    // 小三角
+    const triW = 8 * s;
+    const triH = 6 * s;
+    const triX = cardX + cardW / 2;
+    ctx.beginPath();
+    ctx.moveTo(triX - triW, popupY);
+    ctx.lineTo(triX, popupY - triH);
+    ctx.lineTo(triX + triW, popupY);
+    ctx.closePath();
+    ctx.fillStyle = '#faf6ee';
+    ctx.fill();
+
+    // 弹窗面板
+    const r = 8 * s;
+    this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 1.2 * s);
+    ctx.restore();
+
+    let cy = popupY + pad + lineH / 2;
+    const cx = popupX + popupW / 2;
+
+    // 名称（带星星装饰）
+    ctx.save();
+    ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`✦ ${joker.name} ✦`, cx, cy);
+    ctx.restore();
+
+    cy += lineH + 4 * s;
+
+    // 效果标签
+    ctx.save();
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('效果', popupX + pad, cy);
+    ctx.restore();
+
+    cy += lineH;
+
+    // 效果描述
+    ctx.save();
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(joker.desc, popupX + pad, cy);
+    ctx.restore();
+
+    // 可作用字母
+    if (hasLetters) {
+      cy += lineH + 8 * s;
+
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('可作用字母', popupX + pad, cy);
+      ctx.restore();
+
+      cy += lineH + 4 * s;
+
+      const circleR = 12 * s;
+      const circleGap = 8 * s;
+      const totalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
+      let lx = popupX + (popupW - totalW) / 2 + circleR;
+
+      letters.forEach(letter => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(lx, cy, circleR, 0, Math.PI * 2);
+        ctx.fillStyle = '#9b59b6';
+        ctx.fill();
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, lx, cy);
+        ctx.restore();
+        lx += circleR * 2 + circleGap;
+      });
+    }
+
+    // 底部装饰线
+    const decoY = popupY + popupH - 10 * s;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(155,89,182,0.3)';
+    ctx.lineWidth = 1 * s;
+    const decoW = popupW * 0.5;
+    const decoX = popupX + (popupW - decoW) / 2;
+    ctx.beginPath();
+    ctx.moveTo(decoX, decoY);
+    ctx.lineTo(decoX + decoW, decoY);
+    ctx.stroke();
+    ctx.restore();
   }
 
   // 绘制虚线空位
@@ -1060,6 +1201,7 @@ class Renderer {
     const jokers = game.jokers || [];
     const potions = game.potions || [];
     this.potionPropRects = [];
+    this.witchPropRects = [];
 
     // 左区4格：女巫牌
     for (let i = 0; i < 4; i++) {
@@ -1067,6 +1209,7 @@ class Renderer {
       const joker = jokers[i];
       if (joker) {
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
+        this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
       } else {
         this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
       }
@@ -1777,6 +1920,9 @@ class Renderer {
     this.resetBtnRect = { x: resetX, y: btnY, w: btnW, h: btnH, action: 'reset' };
 
     this.drawCoinCapsule(game);
+
+    // 女巫牌详情弹窗
+    this._drawWitchDetailPopup(ctx, game, s);
   }
 
   drawCoinCapsule(game) {

@@ -212,6 +212,26 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
+    if (renderer.witchPropRects) {
+      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
+      if (witchHit) {
+        vibrate();
+        if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
+          game._witchDetailPopup = null;
+        } else {
+          game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex };
+        }
+        return;
+      }
+    }
+
+    // 点击弹窗外部关闭女巫详情弹窗
+    if (game._witchDetailPopup) {
+      game._witchDetailPopup = null;
+      return;
+    }
+
     // 检测已购买道具栏中的药水牌点击
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);

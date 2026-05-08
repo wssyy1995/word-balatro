@@ -424,6 +424,7 @@ class Game {
     this.hintToast = null;
     this._changeLetterPopup = null;
     this._changeLetterHint = null;
+    this._witchDetailPopup = null;
     this.pendingCheck = null;
     this.settlementData = null;
     this.witchRewardData = null;
@@ -465,6 +466,7 @@ class Game {
     this.extraSafety = 0;
     this.extraLetters = 0;
     this.witchSkillPassed = true;
+    this._witchDetailPopup = null;
     this.state = 'playing';
   }
 

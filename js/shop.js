@@ -743,13 +743,14 @@ class ShopRenderer {
         const btnY = unitY + unitH - btnH - 10 * s;
         const coinSize = 14 * s;
         const priceText = String(item.cost);
+        const canAfford = game.gold >= item.cost;
 
         // 先计算按钮宽度
         ctx.save();
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         const priceTextW = ctx.measureText(priceText).width;
         ctx.restore();
-        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 20;
+        const btnW = coinSize + 4 * s + priceTextW + 16 * s + 23;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -759,23 +760,27 @@ class ShopRenderer {
           if (pe < 150) pressOffset = 2 * s;
         }
 
-        // 按钮投影
+        // 按钮投影 + 背景
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, '#FFF1D4');
+        if (canAfford) {
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+        }
+        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, canAfford ? '#FFF1D4' : '#e0e0e0');
         ctx.restore();
 
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(btnX + 4 * s, btnY + 2 * s + pressOffset);
-        ctx.lineTo(btnX + btnW - 4 * s, btnY + 2 * s + pressOffset);
-        ctx.stroke();
-        ctx.restore();
+        // 顶部高光条（只有买得起时才画）
+        if (canAfford) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          ctx.moveTo(btnX + 4 * s, btnY + 2 * s + pressOffset);
+          ctx.lineTo(btnX + btnW - 4 * s, btnY + 2 * s + pressOffset);
+          ctx.stroke();
+          ctx.restore();
+        }
 
         // 金币图标 + 价格（整体居中）
         const contentW = coinSize + 4 * s + priceTextW;
@@ -784,7 +789,7 @@ class ShopRenderer {
         if (this.parent.coinIcon && this.parent.coinIconLoaded) {
           ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
         }
-        ctx.fillStyle = '#8b6914';
+        ctx.fillStyle = canAfford ? '#8b6914' : '#999';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         ctx.fillText(priceText, contentStartX + coinSize + 4 * s, midY);
