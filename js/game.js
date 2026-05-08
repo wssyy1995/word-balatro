@@ -629,7 +629,13 @@ class Game {
 
     const lengthShowDelay = letterJumpDelay + playedInOrder.length * letterInterval + waveDuration;
     const totalShowDelay = lengthShowDelay + baseMultDelay + wholeWordJokers.length * wholeWordStepDelay + wholeWordDelay;
-    const flyEndDelay = totalShowDelay + 1000 + 800 + 300; // 停留1秒 + 飞行800ms + 延迟300ms
+    // 飞行总分动画时长（与 renderer.js 保持一致：弹出300ms + 停留600ms + 淡出150ms）
+    const flyAppearDuration = 300;
+    const flyHoldDuration = 600;
+    const flyFadeDuration = 150;
+    const flyTotalDuration = flyAppearDuration + flyHoldDuration + flyFadeDuration;
+    const flyEndDelay = totalShowDelay + flyTotalDuration;
+    const scoreApplyDelay = totalShowDelay + flyAppearDuration; // 弹出结束时计分
     const settlementDelay = flyEndDelay + 1000; // 再等待1秒弹出结算
 
     // 阶段1: 字母跳跃
@@ -638,10 +644,16 @@ class Game {
     setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 2; }, lengthShowDelay);
     // 阶段3: 总分飞行
     setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 3; }, totalShowDelay);
-    // 阶段4: 分数到达，执行飞牌+计分
+    // 阶段4a: 弹出结束时计分（HUD 提前更新）
     setTimeout(() => {
-      this._executePlayHand(played, playedInOrder, result);
-      this.pendingCheck = null;
+      if (this.pendingCheck) this._applyScore(result);
+    }, scoreApplyDelay);
+    // 阶段4b: 淡出结束时飞牌
+    setTimeout(() => {
+      if (this.pendingCheck) {
+        this._executePlayHand(played, playedInOrder, result);
+        this.pendingCheck = null;
+      }
     }, flyEndDelay);
     // 阶段5: 弹出金币结算或判断失败
     setTimeout(() => {
@@ -661,6 +673,14 @@ class Game {
     return result;
   }
 
+  _applyScore(result) {
+    this.score += result.score;
+    this.totalScore += result.score;
+    if (this.audioManager) {
+      setTimeout(() => this.audioManager.play('score'), 200);
+    }
+  }
+
   _executePlayHand(playedCards, playedInOrder, result) {
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
@@ -671,13 +691,6 @@ class Game {
       j._wwJumpStart = null;
       j._wwJumpDone = false;
     });
-
-    this.score += result.score;
-    this.totalScore += result.score;
-
-    if (this.audioManager) {
-      setTimeout(() => this.audioManager.play('score'), 200);
-    }
 
     const removedIndices = [];
     const finalPlayedCards = [];

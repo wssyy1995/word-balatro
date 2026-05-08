@@ -2529,10 +2529,12 @@ class Renderer {
       ctx.scale(scale, scale);
       ctx.fillText(`+${fs.value}`, 0, 0);
     } else if (elapsed < appearDuration + holdDuration) {
-      // 阶段2: 停留
+      // 阶段2: 停留（弹出结束时解锁 HUD）
+      this._scoreUpdateLocked = false;
       ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
     } else if (elapsed < totalDuration) {
       // 阶段3: 淡出
+      this._scoreUpdateLocked = false;
       const fadeProgress = (elapsed - appearDuration - holdDuration) / fadeDuration;
       ctx.globalAlpha = 1 - fadeProgress;
       ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
