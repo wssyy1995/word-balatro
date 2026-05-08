@@ -459,25 +459,25 @@ class Renderer {
     if (prop._triggered) {
       ctx.save();
 
-      // 紫色径向光晕（脉动，范围更大、更明显）
+      // 紫色径向光晕（脉动）
       const glowCX = x + w / 2;
       const glowCY = finalY + h / 2;
-      const glowR = Math.max(w, h) * 0.95;
+      const glowR = Math.max(w, h) * 0.9;
       const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
       const glowGrad = ctx.createRadialGradient(glowCX, glowCY, glowR * 0.1, glowCX, glowCY, glowR);
-      glowGrad.addColorStop(0, `rgba(155,89,182,${0.35 * pulse})`);
-      glowGrad.addColorStop(0.5, `rgba(155,89,182,${0.2 * pulse})`);
+      glowGrad.addColorStop(0, `rgba(155,89,182,${0.3 * pulse})`);
+      glowGrad.addColorStop(0.5, `rgba(155,89,182,${0.15 * pulse})`);
       glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
       ctx.arc(glowCX, glowCY, glowR, 0, Math.PI * 2);
       ctx.fill();
 
-      // 外层扩散光晕（粗轮廓向外冒光）
-      ctx.strokeStyle = 'rgba(155,89,182,0.25)';
-      ctx.lineWidth = 10 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.7)';
-      ctx.shadowBlur = 24 * s;
+      // 外层扩散光晕（轮廓向外冒光）
+      ctx.strokeStyle = 'rgba(155,89,182,0.22)';
+      ctx.lineWidth = 8 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.6)';
+      ctx.shadowBlur = 20 * s;
       ctx.beginPath();
       ctx.moveTo(x + r, finalY);
       ctx.lineTo(x + w - r, finalY);
@@ -493,9 +493,9 @@ class Renderer {
 
       // 紫色粗边框
       ctx.strokeStyle = '#9b59b6';
-      ctx.lineWidth = 4.5 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.9)';
-      ctx.shadowBlur = 16 * s;
+      ctx.lineWidth = 4 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.8)';
+      ctx.shadowBlur = 14 * s;
       ctx.beginPath();
       ctx.moveTo(x + r, finalY);
       ctx.lineTo(x + w - r, finalY);
