@@ -8,6 +8,26 @@ class CloudStorageManager {
     this.cloudFileMap = {};   // { name: fileID }
     this.initialized = false;
     this.uploading = false;
+
+    // 默认云文件映射（已上传的 shop_card 图片，fileID 固定）
+    this.defaultFileMap = {
+      'bonus_gold': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/bonus_gold.png',
+      'change_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/change_letter.png',
+      'extra_discard': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_discard.png',
+      'extra_hands': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_hands.png',
+      'extra_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_letter.png',
+      'has_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_face.png',
+      'has_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
+      'length_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_4.png',
+      'length_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_5.png',
+      'length_6': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_6.png',
+      'letter_a': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_a.png',
+      'letter_e': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_e.png',
+      'reduce_target': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/reduce_target.png',
+      'upgrade_any': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_any.png',
+      'upgrade_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_face.png',
+      'upgrade_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_letter.png',
+    };
   }
 
   init() {
@@ -15,16 +35,24 @@ class CloudStorageManager {
       wx.cloud.init({ env: this.env, traceUser: false });
       this.initialized = true;
     } catch (e) {
-      console.warn('云开发初始化失败:', e);
+      console.warn('[Cloud] 云开发初始化失败:', e);
     }
-    // 从本地缓存读取已上传的文件映射
+
+    // 先用硬编码的默认映射兜底
+    this.cloudFileMap = { ...this.defaultFileMap };
+
+    // 再用本地缓存覆盖（如果用户重新上传过）
     try {
       const stored = wx.getStorageSync('cloud_shop_card_map');
       if (stored) {
-        this.cloudFileMap = JSON.parse(stored);
+        const localMap = JSON.parse(stored);
+        this.cloudFileMap = { ...this.cloudFileMap, ...localMap };
+        console.log('[Cloud] 本地缓存映射已加载，共', Object.keys(localMap).length, '张');
+      } else {
+        console.log('[Cloud] 无本地缓存，使用默认云映射，共', Object.keys(this.defaultFileMap).length, '张');
       }
     } catch (e) {
-      this.cloudFileMap = {};
+      console.log('[Cloud] 本地缓存读取失败，使用默认云映射');
     }
   }
 
