@@ -475,61 +475,37 @@ class WitchRewardRenderer {
   }
 
   _drawStarburst(ctx, cx, cy, size, s) {
-    const maxRayLen = size * 1.2;
-    const breath = 0.5 + 0.5 * Math.sin(Date.now() / 800);
+    const now = Date.now();
+    const breath = 0.5 + 0.5 * Math.sin(now / 800);
 
     ctx.save();
     ctx.translate(cx, cy);
 
-    // === 主光芒（12条渐变光柱）===
-    for (let i = 0; i < 12; i++) {
-      const angle = (i * Math.PI * 2) / 12 + Date.now() / 800;
-      const rayLen = maxRayLen * (0.8 + 0.2 * Math.sin(Date.now() / 400 + i));
-      const grad = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
-      grad.addColorStop(0, `rgba(196,163,90,${0.32 * breath})`);
-      grad.addColorStop(0.3, `rgba(196,163,90,${0.18 * breath})`);
-      grad.addColorStop(1, 'rgba(196,163,90,0)');
+    // === 金色径向光晕（礼盒背后，呼吸脉动）===
+    const glowR = size * 1.15;
+    const glowAlpha = 0.4 * breath;
+    const glowGrad = ctx.createRadialGradient(0, 0, size * 0.25, 0, 0, glowR);
+    glowGrad.addColorStop(0, `rgba(255,215,100,${glowAlpha})`);
+    glowGrad.addColorStop(0.4, `rgba(196,163,90,${glowAlpha * 0.6})`);
+    glowGrad.addColorStop(1, 'rgba(196,163,90,0)');
 
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle - 0.07) * rayLen, Math.sin(angle - 0.07) * rayLen);
-      ctx.lineTo(Math.cos(angle + 0.07) * rayLen, Math.sin(angle + 0.07) * rayLen);
-      ctx.closePath();
-      ctx.fill();
-    }
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
 
-    // === 次光芒（12条夹缝光柱）===
-    for (let i = 0; i < 12; i++) {
-      const angle = ((i + 0.5) * Math.PI * 2) / 12 + Date.now() / 800;
-      const rayLen = maxRayLen * 0.55 * (0.8 + 0.2 * Math.sin(Date.now() / 500 + i));
-      const grad = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
-      grad.addColorStop(0, `rgba(196,163,90,${0.12 * breath})`);
-      grad.addColorStop(1, 'rgba(196,163,90,0)');
-
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle - 0.04) * rayLen, Math.sin(angle - 0.04) * rayLen);
-      ctx.lineTo(Math.cos(angle + 0.04) * rayLen, Math.sin(angle + 0.04) * rayLen);
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    // === 闪烁小星星 ===
-    const starCount = 18;
+    // === 散落小星星（固定位置，闪烁）===
+    const starCount = 14;
     for (let i = 0; i < starCount; i++) {
       const seed = i * 137.5;
-      const dist = size * (0.25 + 0.4 * Math.abs(Math.sin(seed)));
+      const dist = size * (0.3 + 0.45 * Math.abs(Math.sin(seed)));
       const angle = seed;
-      const sx = Math.cos(angle) * dist;
-      const sy = Math.sin(angle) * dist;
-      const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 350 + i * 2.5);
-      const starSize = (1.2 + 0.8 * Math.sin(i * 3)) * s;
+      const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
+      const starSize = (1 + 0.6 * Math.sin(i * 3)) * s;
 
-      ctx.fillStyle = `rgba(255,220,120,${0.9 * twinkle})`;
+      ctx.fillStyle = `rgba(255,230,150,${0.9 * twinkle})`;
       ctx.beginPath();
-      ctx.arc(sx, sy, starSize, 0, Math.PI * 2);
+      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, starSize, 0, Math.PI * 2);
       ctx.fill();
     }
 
