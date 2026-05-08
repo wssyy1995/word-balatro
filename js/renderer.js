@@ -2244,9 +2244,12 @@ class Renderer {
           cardScale = 1;
         } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
           // 阶段3：分数变化动画（变大缩小）
-          const t = (elapsed - popDuration - holdOldDuration) / scoreChangeDuration;
           showNewScore = true;
-          scoreScale = 1 + 0.2 * Math.sin(t * Math.PI);
+          const pulseState = {
+            startTime: anim.startTime + popDuration + holdOldDuration,
+            duration: scoreChangeDuration
+          };
+          scoreScale = this._calcPulseScale(pulseState, 0.2).scale;
         } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration + holdNewDuration) {
           // 阶段4：保持新分数
           showNewScore = true;
