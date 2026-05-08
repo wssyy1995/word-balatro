@@ -100,7 +100,7 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   return hand;
 }
 
-function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6) {
+function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHandSize = 9) {
   if (hasValidWordInHand(hand)) return;
 
   const seedWord = getSeedWord(seedMinLen, seedMaxLen);
@@ -138,8 +138,8 @@ function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6) {
     hand.push(seedCards[seedIdx++]);
   }
 
-  // 如果 hand 超过 9 张，把多余的牌塞回 deck
-  while (hand.length > 9 && deck.length > 0) {
+  // 如果 hand 超过最大限制，把多余的牌塞回 deck
+  while (hand.length > maxHandSize && deck.length > 0) {
     const extra = hand.pop();
     if (extra) deck.unshift(extra);
   }
@@ -450,17 +450,20 @@ class Game {
     }
 
     this.deck = createDeck();
-    this.hand = drawWithSafety(this.deck, 9, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
+    applyCrystalEffects(this);
+    const handSize = 9 + (this._globalExtraLetters || 0) + (this.extraLetters || 0);
+    this._maxHandSize = handSize;
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
     this.selected = [];
     this.score = 0;
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
-    applyCrystalEffects(this);
     this._reduceTargetAnim = null;
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraHands = 0;
     this.extraDiscards = 0;
     this.extraSafety = 0;
+    this.extraLetters = 0;
     this.witchSkillPassed = true;
     this.state = 'playing';
   }
@@ -749,7 +752,7 @@ class Game {
       });
 
       this.hand = this.hand.filter(c => c !== null);
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen);
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
@@ -883,7 +886,7 @@ class Game {
       // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
 
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen);
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 

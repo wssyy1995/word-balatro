@@ -20,9 +20,9 @@ class Renderer {
     // 限制最小缩放，避免在小屏幕上元素过小
     this.scale = Math.max(this.scale, 0.8);
     
-    // 计算卡牌尺寸（确保9张牌能放下）
-    const maxCardW = Math.floor((width - 48) / 3); // 3列，左右边距24
-    const maxCardH = Math.floor((height - 200) / 3); // 3行，预留上方HUD和下方按钮
+    // 计算卡牌尺寸（支持最多4列）
+    const maxCardW = Math.floor((width - 48) / 4); // 4列，左右边距24
+    const maxCardH = Math.floor((height - 200) / 3); // 最多3行，预留上方HUD和下方按钮
     this.cardW = Math.min(Math.floor(74 * this.scale), maxCardW);
     this.cardH = Math.min(Math.floor(88 * this.scale), maxCardH);
     this.gap = Math.floor(8 * this.scale);
@@ -1022,8 +1022,8 @@ class Renderer {
     const H = this.H;
     const s = this.scale;
 
-    // 计算手牌布局（3x3 网格）
-    const cols = 3;
+    // 计算手牌布局（≤9张用3列，≥10张用4列）
+    const cols = game.hand.length <= 9 ? 3 : 4;
     const rows = Math.ceil(game.hand.length / cols);
     const totalW = cols * this.cardW + (cols - 1) * this.gap;
     const startX = (W - totalW) / 2;

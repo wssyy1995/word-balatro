@@ -37,6 +37,7 @@ const SHOP_POOL = {
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
     {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:5, desc:'下一回合出牌次数+1'},
+    {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:5, desc:'下一回合,增加一张字母手牌'},
     {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
@@ -176,6 +177,7 @@ function applyCrystalEffects(game) {
     if (eff.effect === 'extra_discard') game.extraDiscards += eff.value;
     if (eff.effect === 'extra_safety') game.extraSafety += eff.value;
     if (eff.effect === 'extra_hands') game.extraHands += eff.value;
+    if (eff.effect === 'extra_letter') game.extraLetters = (game.extraLetters || 0) + eff.value;
     if (eff.effect === 'bonus_gold') game.gold += eff.value;
     if (eff.effect === 'reduce_target') game.target = Math.floor(game.target * eff.value);
   });

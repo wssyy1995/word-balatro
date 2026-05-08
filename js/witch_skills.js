@@ -4,6 +4,8 @@ const WITCH_SKILLS = [
   { level: 2, skill: 'force_letter_3', reward: 'card_change_letter',rate:0.5,reward_desc: '50%概率获得一张: 字母置换', desc: '每次出牌只能出3张字母牌' },
   { level: 3, skill: 'need_letter_4', reward: 'card_upgrade_letter',rate:0.5,reward_desc: '50%概率获得一张: 字母强化', desc: '每次出牌必须不少于4个字母' },
   { level: 4, skill: 'force_letter_4', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1', desc: '每次出牌只能出4张字母牌' },
+  { level: 5, skill: 'force_letter_4', reward: 'global_letter_1',rate:1,reward_desc: '本赛局字母手牌+1', desc: '每次出牌只能出4张字母牌' },
+
 ];
 
 // 获取指定回合的女巫技能
@@ -45,6 +47,7 @@ function getRewardName(rewardType) {
     'card_upgrade_letter': '字母强化药水',
     'card_change_letter': '字母置换药水',
     'global_hand_1': '额外出牌',
+    'global_letter_1': '额外字母',
   };
   return map[rewardType] || rewardType;
 }
@@ -92,6 +95,14 @@ function giveReward(rewardType, game) {
       // 如果道具栏已满（2格），不发放
       if (game.potions.length >= 2) return false;
       game.potions.push(createRewardItem(rewardType));
+      return true;
+    }
+    case 'global_hand_1': {
+      game.extraHands = (game.extraHands || 0) + 1;
+      return true;
+    }
+    case 'global_letter_1': {
+      game._globalExtraLetters = (game._globalExtraLetters || 0) + 1;
       return true;
     }
     default:
