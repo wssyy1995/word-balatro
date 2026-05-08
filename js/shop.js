@@ -1088,7 +1088,7 @@ class ConfirmBuyRenderer {
 
     const isClosing = game._closingConfirmBuy;
     const closeElapsed = isClosing ? Date.now() - (game._closeConfirmBuyStartTime || Date.now()) : 0;
-    const closeProgress = isClosing ? Math.min(closeElapsed / 150, 1) : 0;
+    const closeProgress = isClosing ? Math.min(closeElapsed / 200, 1) : 0;
     if (isClosing && closeProgress >= 1) {
       game.confirmBuyItem = null;
       game._closingConfirmBuy = false;

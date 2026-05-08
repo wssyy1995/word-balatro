@@ -139,7 +139,7 @@ function handleInput(x, y) {
               if (game.storageManager) game.storageManager.saveProgress(game);
               game._changeLetterPopup = null;
               game._closingChangeLetter = false;
-            }, 300);
+            }, 200);
           } else {
             // 条件不满足，直接关闭（无动画）
             game._changeLetterPopup = null;
@@ -249,7 +249,11 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
       if (btnHit) {
         vibrate();
-        game.claimSettlement();
+        renderer.settlementRenderer.claimBtnPressed = true;
+        setTimeout(() => {
+          renderer.settlementRenderer.claimBtnPressed = false;
+          game.claimSettlement();
+        }, 150);
         return;
       }
     }
@@ -273,22 +277,21 @@ function handleInput(x, y) {
         }
       }
     } else if (data.phase === 'result') {
+      // 防止重复触发
+      if (wr.okBtnPressed || wr.stashBtnPressed || wr.useBtnPressed) return;
+
       if (data.result) {
         if (data.rewardItem && data.rewardItem.type === 'buff') {
-          // buff 类奖励（如 global_hand_1）：领取按钮
+          // buff 类奖励：领取按钮
           if (wr.okBtnRect) {
             const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
             if (hit) {
               vibrate();
-              if (data.rewardItem.effect === 'extra_hand') {
-                game.extraHands += 1;
-              }
-              game.witchRewardData = null;
-              game.state = 'shop';
-              if (!game.shopItems) {
-                game.shopItems = generateShopItems(game);
-              }
-              if (game.storageManager) game.storageManager.saveProgress(game);
+              wr.okBtnPressed = true;
+              setTimeout(() => {
+                wr.okBtnPressed = false;
+                game.closeWitchReward('ok');
+              }, 150);
               return;
             }
           }
@@ -301,26 +304,17 @@ function handleInput(x, y) {
           if (btnHit) {
             vibrate();
             if (btnHit.action === 'stash') {
-              // 放入道具栏
-              if (!game.potions) game.potions = [];
-              if (game.potions.length < 2 && data.rewardItem) {
-                game.potions.push({ ...data.rewardItem });
-              }
-              game.witchRewardData = null;
-              game.state = 'shop';
-              if (!game.shopItems) {
-                game.shopItems = generateShopItems(game);
-              }
-              if (game.storageManager) game.storageManager.saveProgress(game);
+              wr.stashBtnPressed = true;
+              setTimeout(() => {
+                wr.stashBtnPressed = false;
+                game.closeWitchReward('stash');
+              }, 150);
             } else if (btnHit.action === 'use') {
-              // 立即使用药水
-              if (data.rewardItem) {
-                game.potionMode = { ...data.rewardItem };
-                game._prePotionState = 'shop';
-                game.witchRewardData = null;
-                game.state = 'potion';
-                if (game.storageManager) game.storageManager.saveProgress(game);
-              }
+              wr.useBtnPressed = true;
+              setTimeout(() => {
+                wr.useBtnPressed = false;
+                game.closeWitchReward('use');
+              }, 150);
             }
             return;
           }
@@ -331,11 +325,11 @@ function handleInput(x, y) {
           const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
           if (hit) {
             vibrate();
-            game.witchRewardData = null;
-            game.state = 'shop';
-            if (!game.shopItems) {
-              game.shopItems = generateShopItems(game);
-            }
+            wr.okBtnPressed = true;
+            setTimeout(() => {
+              wr.okBtnPressed = false;
+              game.closeWitchReward('ok');
+            }, 150);
             return;
           }
         }

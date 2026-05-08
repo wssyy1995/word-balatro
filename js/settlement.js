@@ -6,6 +6,7 @@ class SettlementRenderer {
     this.parent = renderer;
     this.animStartTime = null;
     this.lastSettlementData = null;
+    this.claimBtnPressed = false;
   }
 
   draw(ctx, game, W, H, s) {
@@ -28,12 +29,12 @@ class SettlementRenderer {
       onCloseComplete: () => {}
     });
     if (!panel) return;
-    const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+    const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
 
     // 标题（带金币图标）
     const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
     ctx.save();
-    ctx.globalAlpha = titleAnim.alpha;
+    ctx.globalAlpha = titleAnim.alpha * closeAlpha;
     const titleText = `第 ${settlement.round} 关结算`;
     ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
     const titleW = ctx.measureText(titleText).width;
@@ -56,7 +57,7 @@ class SettlementRenderer {
     // 分隔线
     const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
     ctx.save();
-    ctx.globalAlpha = line1Anim.alpha;
+    ctx.globalAlpha = line1Anim.alpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -79,7 +80,7 @@ class SettlementRenderer {
       const itemAnim = Easing.fadeIn(elapsed, 180 + i * 60, 250, 8 * s);
       const y = lineY + i * lineH + itemAnim.yShift;
       ctx.save();
-      ctx.globalAlpha = itemAnim.alpha;
+      ctx.globalAlpha = itemAnim.alpha * closeAlpha;
       ctx.font = `${Math.floor(14 * s)}px sans-serif`;
       ctx.fillStyle = '#555';
       ctx.textAlign = 'left';
@@ -97,7 +98,7 @@ class SettlementRenderer {
     const totalAnim = Easing.fadeIn(elapsed, 400, 250, 6 * s);
     const totalY = lineY + items.length * lineH + 10 * s + totalAnim.yShift;
     ctx.save();
-    ctx.globalAlpha = totalAnim.alpha;
+    ctx.globalAlpha = totalAnim.alpha * closeAlpha;
     ctx.strokeStyle = '#c4a35a';
     ctx.lineWidth = 1.2 * s;
     ctx.beginPath();
@@ -124,13 +125,8 @@ class SettlementRenderer {
     const btnX = (W - btnW) / 2;
     const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
     ctx.save();
-    ctx.globalAlpha = btnAnim.alpha;
-    this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('领取', W / 2, btnY + btnH / 2);
+    ctx.globalAlpha = btnAnim.alpha * closeAlpha;
+    this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.claimBtnPressed, { color: '#c4a35a', radius: 8 });
     ctx.restore();
 
     // 闭合 closing 动画的 globalAlpha
@@ -150,6 +146,9 @@ class WitchRewardRenderer {
     this.useBtnRect = null;
     this.okBtnRect = null;
     this.skipRect = null;
+    this.okBtnPressed = false;
+    this.stashBtnPressed = false;
+    this.useBtnPressed = false;
   }
 
   draw(ctx, game, W, H, s) {
@@ -231,8 +230,22 @@ class WitchRewardRenderer {
       this.useBtnRect = null;
       this.okBtnRect = null;
     } else if (data.phase === 'result') {
-      // result 阶段恢复弹窗背景
-      this.parent.roundRect(px, py, pw, ph, 14 * s, '#faf6ee', gold, 1.5 * s);
+      // result 阶段使用 _drawModalPanel（自带遮罩+面板+关闭动画）
+      ctx.restore();
+
+      const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+        isClosing: game._closingWitchReward,
+        closeStartTime: game._closeWitchRewardStartTime,
+        width: 300, height: 340,
+        overlayAlpha: 0.45,
+        elapsed: Date.now() - (data.startTime || Date.now()),
+        onCloseComplete: () => {}
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
 
       if (data.result) {
         // === 标题：获得奖励 ===
@@ -304,19 +317,12 @@ class WitchRewardRenderer {
           const btnH = 44 * s;
           const btnX = (W - btnW) / 2;
           const btnY = py + ph - btnH - 28 * s;
-          this.parent.roundRect(btnX, btnY, btnW, btnH, 8 * s, '#c4a35a');
-          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('领取', W / 2, btnY + btnH / 2);
-
+          this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
           this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
           this.stashBtnRect = null;
           this.useBtnRect = null;
           this.skipRect = null;
         } else {
-
           // === 卡牌尺寸计算 ===
           const cardMaxW = pw * 0.4;
           const cardMaxH = 110 * s;
@@ -412,13 +418,7 @@ class WitchRewardRenderer {
           if (isGameScope) {
             // scope:game 的奖励只展示"暂存"按钮（居中）
             const stashX = (W - btnW) / 2;
-            this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
-            ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-            ctx.fillStyle = '#5a4a2a';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
-
+            this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
             this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
             this.useBtnRect = null;
           } else {
@@ -427,18 +427,11 @@ class WitchRewardRenderer {
             const startX = (W - totalW) / 2;
 
             // 立即使用（金色背景）
-            this.parent.roundRect(startX, btnY, btnW, collectBtnH, 8 * s, '#c4a35a');
-            ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-            ctx.fillStyle = '#fff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('立即使用', startX + btnW / 2, btnY + collectBtnH / 2);
+            this.parent._drawScaledButton(ctx, '立即使用', startX, btnY, btnW, collectBtnH, s, this.useBtnPressed, { color: '#c4a35a', radius: 8 });
 
             // 暂存（米色边框按钮）
             const stashX = startX + btnW + btnGap;
-            this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#f5f0e6', '#c4a35a');
-            ctx.fillStyle = '#5a4a2a';
-            ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2);
+            this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
 
             this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
             this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
@@ -448,27 +441,28 @@ class WitchRewardRenderer {
         }
       } else {
         // 没中
+        ctx.save();
         ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
         ctx.fillStyle = '#888';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('什么都没有', W / 2, py + ph / 2 - 15 * s);
+        ctx.restore();
 
         // 确定按钮
         const btnW = 120 * s;
         const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
         const btnY = py + ph - btnH - 40 * s;
-        this.parent.roundRect(btnX, btnY, btnW, btnH, 6 * s, '#c4a35a');
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
-        ctx.fillText('确定', W / 2, btnY + btnH / 2);
-
+        this.parent._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
         this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
         this.stashBtnRect = null;
         this.useBtnRect = null;
         this.skipRect = null;
       }
+
+      ctx.restore();
+      return;
     }
 
     ctx.restore();
@@ -482,9 +476,9 @@ class WitchRewardRenderer {
     ctx.translate(cx, cy);
 
     // === 金色径向光晕（礼盒背后，呼吸脉动）===
-    const glowR = size * 1.15;
-    const glowAlpha = 0.4 * breath;
-    const glowGrad = ctx.createRadialGradient(0, 0, size * 0.25, 0, 0, glowR);
+    const glowR = size * 0.9;
+    const glowAlpha = 0.3 * breath;
+    const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
     glowGrad.addColorStop(0, `rgba(255,215,100,${glowAlpha})`);
     glowGrad.addColorStop(0.4, `rgba(196,163,90,${glowAlpha * 0.6})`);
     glowGrad.addColorStop(1, 'rgba(196,163,90,0)');

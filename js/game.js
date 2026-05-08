@@ -784,7 +784,7 @@ class Game {
   claimSettlement() {
     if (!this.settlementData) return;
     this.gold += this.settlementData.totalGold;
-    // settlementData 暂时保留用于 closing 动画，300ms 后再处理
+    // settlementData 暂时保留用于 closing 动画，200ms 后再处理
     this._closingSettlement = true;
     this._closeStartTime = Date.now();
     setTimeout(() => {
@@ -808,7 +808,7 @@ class Game {
           this.shopItems = generateShopItems(this);
         }
       }
-    }, 300);
+    }, 200);
   }
 
   resolveWitchReward() {
@@ -820,6 +820,46 @@ class Game {
       this.witchRewardData.rewardItem = createRewardItem(skill.reward);
     }
     this.witchRewardData.phase = 'result';
+  }
+
+  closeWitchReward(action) {
+    this._closingWitchReward = true;
+    this._closeWitchRewardStartTime = Date.now();
+    setTimeout(() => {
+      const data = this.witchRewardData;
+      this.witchRewardData = null;
+      this._closingWitchReward = false;
+
+      switch (action) {
+        case 'ok':
+          if (data && data.rewardItem && data.rewardItem.effect === 'extra_hand') {
+            this.extraHands += 1;
+          }
+          this.state = 'shop';
+          if (!this.shopItems) this.shopItems = generateShopItems(this);
+          if (this.storageManager) this.storageManager.saveProgress(this);
+          break;
+        case 'stash':
+          if (data && data.rewardItem) {
+            if (!this.potions) this.potions = [];
+            if (this.potions.length < 2) {
+              this.potions.push({ ...data.rewardItem });
+            }
+          }
+          this.state = 'shop';
+          if (!this.shopItems) this.shopItems = generateShopItems(this);
+          if (this.storageManager) this.storageManager.saveProgress(this);
+          break;
+        case 'use':
+          if (data && data.rewardItem) {
+            this.potionMode = { ...data.rewardItem };
+            this._prePotionState = 'shop';
+            this.state = 'potion';
+            if (this.storageManager) this.storageManager.saveProgress(this);
+          }
+          break;
+      }
+    }, 200);
   }
 
   discard() {

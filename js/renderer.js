@@ -243,6 +243,19 @@ class Renderer {
       this.shopLabelLoaded = false;
     }
 
+    // 加载游戏进度栏背景图
+    this.gameProgressImage = null;
+    this.gameProgressLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/game_progress.png';
+      img.onload = () => { this.gameProgressLoaded = true; };
+      img.onerror = () => { this.gameProgressLoaded = false; };
+      this.gameProgressImage = img;
+    } catch (e) {
+      this.gameProgressLoaded = false;
+    }
+
     // 加载购买成功弹窗装饰图
     this.buySuccessImg = null;
     this.buySuccessLoaded = false;
@@ -860,52 +873,13 @@ class Renderer {
     const witchSkill = getSkillForLevel(game.round);
     const bg = '#f0e0c8';
     const outerStroke = '#c5a059';
-    const innerStroke = '#c9a96e';
 
-    // === 背景填充 ===
-    this.roundRect(barX, barY, barW, barH, r, bg);
-
-    // === 外层边框（淡金棕，轻盈轮廓） ===
-    this.roundRect(barX, barY, barW, barH, r, null, outerStroke, 2 * s);
-
-    // === 中层过渡线（间隙中的微光，柔化两层衔接） ===
-    const midInset = 2 * s;
-    this.roundRect(barX + midInset, barY + midInset, barW - midInset * 2, barH - midInset * 2, Math.max(0, r - s), null, 'rgba(190,165,120,0.3)', 0.5 * s);
-
-    // === 内层细边框（亮金色，内缩） ===
-    const inset = 4 * s;
-    this.roundRect(barX + inset, barY + inset, barW - inset * 2, barH - inset * 2, Math.max(0, r - 2 * s), null, innerStroke, 1.2 * s);
-
-    // === 四角精致装饰（英式卷草角标）===
-    const cornerOff = 6 * s;
-    const cSize = 8 * s;
-    [
-      { x: barX + cornerOff, y: barY + cornerOff, sx: 1, sy: 1 },
-      { x: barX + barW - cornerOff, y: barY + cornerOff, sx: -1, sy: 1 },
-      { x: barX + barW - cornerOff, y: barY + barH - cornerOff, sx: -1, sy: -1 },
-      { x: barX + cornerOff, y: barY + barH - cornerOff, sx: 1, sy: -1 },
-    ].forEach(({ x, y, sx, sy }) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.strokeStyle = outerStroke;
-      ctx.lineWidth = 1.2 * s;
-      ctx.lineCap = 'round';
-
-      // 外弧
-      ctx.beginPath();
-      ctx.moveTo(0, sy * cSize * 0.5);
-      ctx.quadraticCurveTo(sx * cSize * 0.1, sy * cSize * 0.6, sx * cSize * 0.5, sy * cSize * 0.1);
-      ctx.quadraticCurveTo(sx * cSize * 0.6, 0, sx * cSize * 0.4, 0);
-      ctx.stroke();
-
-      // 内卷
-      ctx.beginPath();
-      ctx.moveTo(sx * cSize * 0.15, sy * cSize * 0.15);
-      ctx.quadraticCurveTo(sx * cSize * 0.25, sy * cSize * 0.05, sx * cSize * 0.2, sy * cSize * 0.25);
-      ctx.stroke();
-
-      ctx.restore();
-    });
+    // === 背景图（game_progress.png）===
+    if (this.gameProgressImage && this.gameProgressLoaded) {
+      ctx.drawImage(this.gameProgressImage, barX, barY, barW, barH);
+    } else {
+      this.roundRect(barX, barY, barW, barH, r, bg);
+    }
 
     // 两条竖线 + 菱形（三列分隔）
     const lineTop = barY + 14 * s;
@@ -2433,12 +2407,12 @@ class Renderer {
 
   // ===== 绘制带按压缩放的按钮（pressed 时整体缩小到 0.95）=====
   _drawScaledButton(ctx, label, x, y, w, h, s, pressed, options = {}) {
-    const { color = '#c4a35a', textColor = '#fff', radius = 8 } = options;
+    const { color = '#c4a35a', textColor = '#fff', radius = 8, stroke = null, lineWidth = 1.5 } = options;
     const scale = pressed ? 0.95 : 1;
     ctx.save();
     ctx.translate(x + w / 2, y + h / 2);
     ctx.scale(scale, scale);
-    this.roundRect(-w / 2, -h / 2, w, h, radius * s, color);
+    this.roundRect(-w / 2, -h / 2, w, h, radius * s, color, stroke, stroke ? lineWidth * s : null);
     this.text(label, 0, 0, 16, textColor);
     ctx.restore();
   }
@@ -2446,7 +2420,7 @@ class Renderer {
   // ===== 绘制弹窗面板（遮罩 + 入场 + 背景 + 关闭动画）=====
   _drawModalPanel(ctx, W, H, s, config) {
     const {
-      isClosing, closeStartTime, closeDuration = 300, closeOffset = 40,
+      isClosing, closeStartTime, closeDuration = 200, closeOffset = 40,
       width = 300, height = 340, enterOffset = 25, enterDuration = 350,
       overlayAlpha = 0.65, overlayFadeInDuration = 200,
       bgColor = '#faf6ee', borderColor = '#c4a35a', borderRadius = 14, borderWidth = 1.5,
