@@ -164,12 +164,11 @@ class WitchRewardRenderer {
     const panelOffsetY = (1 - enterEase) * 30 * s;
     const contentAlpha = enterProgress;
 
-    // 画遮罩（带淡入）— gift 阶段全屏变暗，result 阶段恢复亮度
+    // 画遮罩（带淡入）— gift 阶段深黑，result 阶段浅遮罩
     ctx.save();
-    if (data.phase === 'gift') {
-      ctx.fillStyle = `rgba(0,0,0,${0.65 * Math.min(elapsed / 200, 1)})`;
-      ctx.fillRect(0, 0, W, H);
-    }
+    const overlayAlpha = data.phase === 'gift' ? 0.65 : 0.45;
+    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha * Math.min(elapsed / 200, 1)})`;
+    ctx.fillRect(0, 0, W, H);
 
     ctx.globalAlpha = contentAlpha;
 
