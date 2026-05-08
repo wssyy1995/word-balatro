@@ -204,8 +204,8 @@ class WitchRewardRenderer {
       const giftX = W / 2;
       const giftY = H / 2 + panelOffsetY;
 
-      // 魔法阵符文圈（礼盒背后，缓慢旋转+呼吸）
-      this._drawMagicCircle(ctx, giftX, giftY, giftSize, s);
+      // 八角星芒光芒（礼盒背后，金色射线呼吸）
+      this._drawStarburst(ctx, giftX, giftY, giftSize, s);
 
       ctx.save();
       ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
@@ -474,49 +474,28 @@ class WitchRewardRenderer {
     ctx.restore();
   }
 
-  _drawMagicCircle(ctx, cx, cy, size, s) {
-    const magicR = size * 0.85;
-    const breath = 0.5 + 0.5 * Math.sin(Date.now() / 800);
+  _drawStarburst(ctx, cx, cy, size, s) {
+    const rayCount = 16;
+    const maxRayLen = size * 1.3;
+    const minRayLen = size * 0.5;
+    const breath = 0.5 + 0.5 * Math.sin(Date.now() / 600);
 
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate(Date.now() / 3000); // 每 3 秒转一圈
 
-    ctx.strokeStyle = `rgba(155,89,182,${0.35 * breath})`;
-    ctx.lineWidth = 1.2 * s;
+    for (let i = 0; i < rayCount; i++) {
+      const angle = (i * Math.PI * 2) / rayCount;
+      const isMain = i % 2 === 0;
+      const rayLen = isMain ? maxRayLen : minRayLen;
+      const lineWidth = isMain ? 2.2 * s : 1 * s;
+      const alpha = isMain ? 0.4 * breath : 0.2 * breath;
 
-    // 外圈
-    ctx.beginPath();
-    ctx.arc(0, 0, magicR, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 内圈
-    ctx.beginPath();
-    ctx.arc(0, 0, magicR * 0.55, 0, Math.PI * 2);
-    ctx.stroke();
-
-    // 六芒星
-    const starPoints = 6;
-    const outerR = magicR * 0.72;
-    const innerR = magicR * 0.32;
-    ctx.beginPath();
-    for (let i = 0; i < starPoints * 2; i++) {
-      const angle = (i * Math.PI) / starPoints - Math.PI / 2;
-      const r = i % 2 === 0 ? outerR : innerR;
-      const sx = Math.cos(angle) * r;
-      const sy = Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(sx, sy);
-      else ctx.lineTo(sx, sy);
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    // 外圈到内圈的连接线（6条）
-    for (let i = 0; i < starPoints; i++) {
-      const angle = (i * 2 * Math.PI) / starPoints - Math.PI / 2;
+      ctx.strokeStyle = `rgba(196,163,90,${alpha})`;
+      ctx.lineWidth = lineWidth;
+      ctx.lineCap = 'round';
       ctx.beginPath();
-      ctx.moveTo(Math.cos(angle) * magicR, Math.sin(angle) * magicR);
-      ctx.lineTo(Math.cos(angle) * magicR * 0.55, Math.sin(angle) * magicR * 0.55);
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
       ctx.stroke();
     }
 
