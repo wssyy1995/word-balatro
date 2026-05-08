@@ -40,16 +40,18 @@ const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
 cloudStorage.init();
 
-// 后台预加载云存储的 shop_card 图片（如果有映射）
-if (cloudStorage.hasUploaded()) {
-  console.log('[Game] 检测到云存储映射，开始预加载 shop_card 图片');
+// 云存储 shop_card 图片延迟到第一回合页面加载后再预加载
+let cloudPreloadTriggered = false;
+function triggerCloudPreload() {
+  if (cloudPreloadTriggered || !cloudStorage.hasUploaded()) return;
+  cloudPreloadTriggered = true;
+  console.log('[Game] 第一回合已显示，开始后台预加载 shop_card 云图片');
   cloudStorage.preloadShopCardImages().then(() => {
     cloudStorage.injectToRenderer(renderer);
+    console.log('[Game] shop_card 云图片已注入 renderer');
   }).catch(err => {
     console.error('[Game] 云图片预加载失败:', err);
   });
-} else {
-  console.log('[Game] 没有云存储映射，shop_card 图片将从本地加载（如有）');
 }
 
 // 触摸事件处理
@@ -645,6 +647,11 @@ function gameLoop(timestamp) {
 
   game.update(deltaTime);
   renderer.render(game);
+
+  // 第一回合页面渲染后，触发云存储图片后台预加载
+  if (game.state === 'playing' && !cloudPreloadTriggered) {
+    triggerCloudPreload();
+  }
 
   requestAnimationFrame(gameLoop);
 }
