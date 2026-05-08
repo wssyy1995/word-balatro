@@ -124,19 +124,7 @@ class Renderer {
       this.errorIconLoaded = false;
     }
     
-    // 加载搜索图标
-    this.searchIcon = null;
-    this.searchIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/search.png';
-      img.onload = () => { this.searchIconLoaded = true; };
-      img.onerror = () => { this.searchIconLoaded = false; };
-      this.searchIcon = img;
-    } catch (e) {
-      this.searchIconLoaded = false;
-    }
-    
+    // 加载商店图标
     // 加载商店图标
     this.shopIcon = null;
     this.shopIconLoaded = false;
@@ -162,20 +150,6 @@ class Renderer {
     } catch (e) {
       this.witchGiftIconLoaded = false;
     }
-    
-    // 加载女巫奖励弹窗背景
-    this.witchGiftWindowIcon = null;
-    this.witchGiftWindowIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/witch_gift_window.png';
-      img.onload = () => { this.witchGiftWindowIconLoaded = true; };
-      img.onerror = () => { this.witchGiftWindowIconLoaded = false; };
-      this.witchGiftWindowIcon = img;
-    } catch (e) {
-      this.witchGiftWindowIconLoaded = false;
-    }
-    
     // 加载女巫头像
     this.witchAvatars = {};
     [2, 3, 4].forEach(level => {
@@ -229,20 +203,6 @@ class Renderer {
     } catch (e) {
       this.cardTemplateSelectedLoaded = false;
     }
-    
-    // 加载商店标题背景图
-    this.shopLabel = null;
-    this.shopLabelLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/shop_label.png';
-      img.onload = () => { this.shopLabelLoaded = true; };
-      img.onerror = () => { this.shopLabelLoaded = false; };
-      this.shopLabel = img;
-    } catch (e) {
-      this.shopLabelLoaded = false;
-    }
-
     // 加载游戏进度栏背景图
     this.gameProgressImage = null;
     this.gameProgressLoaded = false;
@@ -254,19 +214,6 @@ class Renderer {
       this.gameProgressImage = img;
     } catch (e) {
       this.gameProgressLoaded = false;
-    }
-
-    // 加载购买成功弹窗装饰图
-    this.buySuccessImg = null;
-    this.buySuccessLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/buy_success.png';
-      img.onload = () => { this.buySuccessLoaded = true; };
-      img.onerror = () => { this.buySuccessLoaded = false; };
-      this.buySuccessImg = img;
-    } catch (e) {
-      this.buySuccessLoaded = false;
     }
 
         // 加载购买成功弹窗底部飘带
