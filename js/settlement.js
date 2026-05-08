@@ -483,11 +483,11 @@ class WitchRewardRenderer {
 
     // === 主光芒（12条渐变光柱）===
     for (let i = 0; i < 12; i++) {
-      const angle = (i * Math.PI * 2) / 12;
+      const angle = (i * Math.PI * 2) / 12 + Date.now() / 800;
       const rayLen = maxRayLen * (0.8 + 0.2 * Math.sin(Date.now() / 400 + i));
       const grad = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
-      grad.addColorStop(0, `rgba(196,163,90,${0.22 * breath})`);
-      grad.addColorStop(0.3, `rgba(196,163,90,${0.12 * breath})`);
+      grad.addColorStop(0, `rgba(196,163,90,${0.32 * breath})`);
+      grad.addColorStop(0.3, `rgba(196,163,90,${0.18 * breath})`);
       grad.addColorStop(1, 'rgba(196,163,90,0)');
 
       ctx.fillStyle = grad;
@@ -501,7 +501,7 @@ class WitchRewardRenderer {
 
     // === 次光芒（12条夹缝光柱）===
     for (let i = 0; i < 12; i++) {
-      const angle = ((i + 0.5) * Math.PI * 2) / 12;
+      const angle = ((i + 0.5) * Math.PI * 2) / 12 + Date.now() / 800;
       const rayLen = maxRayLen * 0.55 * (0.8 + 0.2 * Math.sin(Date.now() / 500 + i));
       const grad = ctx.createLinearGradient(0, 0, Math.cos(angle) * rayLen, Math.sin(angle) * rayLen);
       grad.addColorStop(0, `rgba(196,163,90,${0.12 * breath})`);
@@ -520,8 +520,8 @@ class WitchRewardRenderer {
     const starCount = 18;
     for (let i = 0; i < starCount; i++) {
       const seed = i * 137.5;
-      const dist = size * (0.35 + 0.55 * Math.abs(Math.sin(seed)));
-      const angle = seed + Date.now() / 1500;
+      const dist = size * (0.25 + 0.4 * Math.abs(Math.sin(seed)));
+      const angle = seed;
       const sx = Math.cos(angle) * dist;
       const sy = Math.sin(angle) * dist;
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 350 + i * 2.5);
