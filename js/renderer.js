@@ -1276,13 +1276,13 @@ class Renderer {
 
           // === phase 1.5: 波浪跳跃（所有字母跳完后，不论有无 whole_word 都走）===
           const totalJumpTime = cardsInOrder.length * letterInterval;
-          const waveStartDelay = 150;
-          const waveInterval2 = 100;
+          const waveStartDelay = 100;
+          const waveInterval2 = 80;
           if (jumpElapsed >= totalJumpTime) {
             const waveElapsed = jumpElapsed - totalJumpTime;
             if (!pc._waveOffsetYs) pc._waveOffsetYs = [];
             cardsInOrder.forEach((_, i) => {
-              const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 250;
+              const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 200;
               if (waveProgress >= 0 && waveProgress <= 1) {
                 const waveH = 5 * s * Math.sin(waveProgress * Math.PI);
                 pc._waveOffsetYs[i] = -waveH;
