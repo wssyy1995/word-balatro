@@ -1556,7 +1556,7 @@ class Renderer {
       // per_card 倍率提示（左方块上方紫色大字 + 白色底色）
       if (pc._perCardMultText) {
         ctx.save();
-        const multFontSize = Math.floor(26 * s);
+        const multFontSize = Math.floor(22 * s);
         ctx.font = `900 ${multFontSize}px sans-serif`;
         const textW = ctx.measureText(pc._perCardMultText).width;
         const padX = 6 * s;
