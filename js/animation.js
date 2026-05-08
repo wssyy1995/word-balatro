@@ -37,6 +37,13 @@ const Easing = {
   
   // easeInOutQuad: 缓入缓出
   easeInOutQuad: (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2,
+
+  // fadeIn: 内容渐入（alpha 从 0→1，带 Y 轴偏移回弹）
+  fadeIn: (elapsed, delay, duration = 250, offsetY = 0) => {
+    const t = Math.max(0, Math.min((elapsed - delay) / duration, 1));
+    const ease = t * (2 - t); // easeOutQuad
+    return { alpha: ease, yShift: (1 - ease) * offsetY };
+  },
 };
 
 // 动画类

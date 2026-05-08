@@ -1,3 +1,5 @@
+const { Easing } = require('./animation');
+
 // ===== 金币结算弹窗渲染 =====
 class SettlementRenderer {
   constructor(renderer) {
@@ -23,13 +25,6 @@ class SettlementRenderer {
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
 
-    // easeOutBack 缓动（轻微回弹）
-    function easeOutBack(t) {
-      const c1 = 1.70158;
-      const c3 = c1 + 1;
-      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-    }
-
     // closing 时整体向上滑出 + 淡出
     const closeSlideY = isClosing ? -closeProgress * 40 * s : 0;
     const closeAlpha = isClosing ? 1 - closeProgress : 1;
@@ -51,21 +46,14 @@ class SettlementRenderer {
 
     // 弹窗入场：从下方 25px 滑入 + easeOutBack
     const enterProgress = Math.min(elapsed / 350, 1);
-    const enterEase = easeOutBack(enterProgress);
+    const enterEase = Easing.easeOutBack(enterProgress);
     const py = basePy + (1 - enterEase) * 25 * s + closeSlideY;
 
     // 背景 + 边框
     this.parent.roundRect(px, py, pw, ph, r, '#faf6ee', gold);
 
-    // 内容渐入工具函数
-    function fadeIn(el, delay, offsetY = 8 * s) {
-      const t = Math.max(0, Math.min((el - delay) / 250, 1));
-      const ease = t * (2 - t); // easeOutQuad
-      return { alpha: ease, yShift: (1 - ease) * offsetY };
-    }
-
     // 标题（带金币图标）
-    const titleAnim = fadeIn(elapsed, 80);
+    const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
     ctx.save();
     ctx.globalAlpha = titleAnim.alpha;
     const titleText = `第 ${settlement.round} 关结算`;
@@ -88,7 +76,7 @@ class SettlementRenderer {
     ctx.restore();
 
     // 分隔线
-    const line1Anim = fadeIn(elapsed, 140, 6 * s);
+    const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
     ctx.save();
     ctx.globalAlpha = line1Anim.alpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
@@ -110,7 +98,7 @@ class SettlementRenderer {
     ];
 
     items.forEach((item, i) => {
-      const itemAnim = fadeIn(elapsed, 180 + i * 60);
+      const itemAnim = Easing.fadeIn(elapsed, 180 + i * 60, 250, 8 * s);
       const y = lineY + i * lineH + itemAnim.yShift;
       ctx.save();
       ctx.globalAlpha = itemAnim.alpha;
@@ -128,7 +116,7 @@ class SettlementRenderer {
     });
 
     // 总分隔线 + 总计
-    const totalAnim = fadeIn(elapsed, 400, 6 * s);
+    const totalAnim = Easing.fadeIn(elapsed, 400, 250, 6 * s);
     const totalY = lineY + items.length * lineH + 10 * s + totalAnim.yShift;
     ctx.save();
     ctx.globalAlpha = totalAnim.alpha;
@@ -152,7 +140,7 @@ class SettlementRenderer {
     ctx.restore();
 
     // 领取按钮
-    const btnAnim = fadeIn(elapsed, 480, 10 * s);
+    const btnAnim = Easing.fadeIn(elapsed, 480, 250, 10 * s);
     const btnW = 140 * s;
     const btnH = 44 * s;
     const btnX = (W - btnW) / 2;
@@ -194,9 +182,7 @@ class WitchRewardRenderer {
     const elapsed = Date.now() - (data.startTime || Date.now());
     const enterDuration = 350;
     const enterProgress = Math.min(elapsed / enterDuration, 1);
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    const enterEase = 1 + c3 * Math.pow(enterProgress - 1, 3) + c1 * Math.pow(enterProgress - 1, 2);
+    const enterEase = Easing.easeOutBack(enterProgress);
     const panelOffsetY = (1 - enterEase) * 30 * s;
     const contentAlpha = enterProgress;
 
@@ -447,44 +433,7 @@ class WitchRewardRenderer {
           ctx.restore();
 
           // === 光彩效果（金色脉动光晕 + 闪烁星）===
-          const t = Date.now();
-          const haloR = Math.max(cardW, cardH) * 0.85;
-          const pulse = 0.5 + 0.5 * Math.sin(t / 400);
-          const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-          haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
-          haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
-          haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
-          ctx.fillStyle = haloGrad;
-          ctx.beginPath();
-          ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
-          ctx.fill();
-
-          const sparkles = [
-            { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
-            { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
-            { x: cardX + cardW + 6*s, y: cardY + cardH, r: 5, ph: 4.0 },
-            { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
-          ];
-          sparkles.forEach((sp, i) => {
-            const blink = Math.abs(Math.sin(t / 350 + sp.ph));
-            const alpha = 0.3 + 0.7 * blink;
-            const r = sp.r * (0.6 + 0.4 * blink) * s;
-            ctx.save();
-            ctx.globalAlpha = alpha;
-            ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
-            ctx.beginPath();
-            ctx.moveTo(sp.x, sp.y - r);
-            ctx.lineTo(sp.x + r * 0.35, sp.y - r * 0.35);
-            ctx.lineTo(sp.x + r, sp.y);
-            ctx.lineTo(sp.x + r * 0.35, sp.y + r * 0.35);
-            ctx.lineTo(sp.x, sp.y + r);
-            ctx.lineTo(sp.x - r * 0.35, sp.y + r * 0.35);
-            ctx.lineTo(sp.x - r, sp.y);
-            ctx.lineTo(sp.x - r * 0.35, sp.y - r * 0.35);
-            ctx.closePath();
-            ctx.fill();
-            ctx.restore();
-          });
+          this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
 
           // === 卡牌名称 ===
           const nameY = cardY + cardH + 20 * s;

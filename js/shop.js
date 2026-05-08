@@ -1,5 +1,6 @@
 const { LETTER_SCORE, letterUpgrades } = require('./data');
 const { getSkillForLevel, getRewardName } = require('./witch_skills');
+const { Easing } = require('./animation');
 
 // 自动换行绘制文本，返回占用的总高度
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -196,12 +197,6 @@ class ShopRenderer {
     this.challengeBtnPressTime = 0;
   }
 
-  _easeOutBack(t) {
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
-  }
-
   draw(ctx, game, W, H, s) {
     const gold = '#c4a35a';
     const cream = '#f5f0e6';
@@ -338,7 +333,7 @@ class ShopRenderer {
         if (this.sellBtnAnimStart) {
           const ae = Date.now() - this.sellBtnAnimStart;
           const ap = Math.min(ae / 200, 1);
-          const ease = this._easeOutBack(ap);
+          const ease = Easing.easeOutBack(ap);
           appearScale = ease;
           appearOffsetY = -(1 - ease) * 8 * s;
         }
@@ -443,7 +438,7 @@ class ShopRenderer {
         if (this.sellBtnAnimStart) {
           const ae = Date.now() - this.sellBtnAnimStart;
           const ap = Math.min(ae / 200, 1);
-          const ease = this._easeOutBack(ap);
+          const ease = Easing.easeOutBack(ap);
           appearScale = ease;
           appearOffsetY = -(1 - ease) * 8 * s;
         }
@@ -1178,10 +1173,9 @@ class ConfirmBuyRenderer {
 
     // 内容统一淡入（成功弹窗立即开始，无延迟）
     const contentDelay = isSuccess ? 0 : 80;
-    const contentT = Math.max(0, Math.min((elapsed - contentDelay) / 250, 1));
-    const contentEase = contentT * (2 - contentT);
-    const contentAlpha = contentEase;
-    const contentYShift = (1 - contentEase) * 10 * s;
+    const contentFade = Easing.fadeIn(elapsed, contentDelay, 250, 10 * s);
+    const contentAlpha = contentFade.alpha;
+    const contentYShift = contentFade.yShift;
 
     const iconName = item.trigger || item.effect;
     const iconData = this.parent.shopCardImages[iconName];
@@ -1281,55 +1275,11 @@ class ConfirmBuyRenderer {
     ctx.restore(); // 恢复裁剪
     ctx.restore();
 
-    // === 光彩夺目效果（金色脉动光晕 + 旋转十字光芒）===
+    // === 光彩夺目效果（金色脉动光晕 + 四角闪烁星）===
     if (!isClosing) {
       ctx.save();
       ctx.globalAlpha = contentAlpha;
-
-      const t = Date.now();
-      const cardCX = cardX + cardW / 2;
-      const cardCY = cardY + cardH / 2;
-
-      // 1. 金色脉动光晕（卡牌背后的径向渐变光环）
-      const haloR = Math.max(cardW, cardH) * 0.85;
-      const pulse = 0.5 + 0.5 * Math.sin(t / 400);
-      const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-      haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
-      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
-      haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
-      ctx.fillStyle = haloGrad;
-      ctx.beginPath();
-      ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 2. 四角闪烁星（围绕卡牌，尺寸更大）
-      const sparkles = [
-        { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
-        { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
-        { x: cardX + cardW + 6*s, y: cardY + cardH, r: 5, ph: 4.0 },
-        { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
-      ];
-      sparkles.forEach((sp, i) => {
-        const blink = Math.abs(Math.sin(t / 350 + sp.ph));
-        const alpha = 0.3 + 0.7 * blink;
-        const r = sp.r * (0.6 + 0.4 * blink) * s;
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(sp.x, sp.y - r);
-        ctx.lineTo(sp.x + r * 0.35, sp.y - r * 0.35);
-        ctx.lineTo(sp.x + r, sp.y);
-        ctx.lineTo(sp.x + r * 0.35, sp.y + r * 0.35);
-        ctx.lineTo(sp.x, sp.y + r);
-        ctx.lineTo(sp.x - r * 0.35, sp.y + r * 0.35);
-        ctx.lineTo(sp.x - r, sp.y);
-        ctx.lineTo(sp.x - r * 0.35, sp.y - r * 0.35);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      });
-
+      this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
       ctx.restore();
     }
 
