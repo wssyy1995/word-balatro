@@ -2656,7 +2656,7 @@ class GameOverRenderer {
     const hintY = lineY + items.length * lineH + 12 * s + hintAnim.yShift;
     ctx.save();
     ctx.globalAlpha = hintAnim.alpha;
-    ctx.strokeStyle = gold;
+    ctx.strokeStyle = '#c4a35a';
     ctx.lineWidth = 1.2 * s;
     ctx.beginPath();
     ctx.moveTo(px + 30 * s, hintY);
