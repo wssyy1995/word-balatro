@@ -929,12 +929,9 @@ class ShopRenderer {
     if (game._reduceTargetAnim) {
       const reducedTarget = Math.floor(baseTarget * game._reduceTargetAnim.value);
       if (game._reduceTargetAnim.startTime) {
-        const elapsed = Date.now() - game._reduceTargetAnim.startTime;
-        const duration = 500;
-        const progress = Math.min(elapsed / duration, 1);
-        // 先放大（0~0.5 显示旧值），后缩小（0.5~1 显示新值）
-        targetScale = 1 + 0.3 * Math.sin(progress * Math.PI);
-        displayTarget = progress >= 0.5 ? reducedTarget : baseTarget;
+        const pulse = this.parent._calcPulseScale(game._reduceTargetAnim, 0.3);
+        targetScale = pulse.scale;
+        displayTarget = pulse.progress >= 0.5 ? reducedTarget : baseTarget;
       } else {
         displayTarget = reducedTarget;
       }

@@ -64,9 +64,40 @@
 - ConfirmBuyRenderer
 - drawChangeLetterPopup
 
-## ⏳ P1-2: 统一数字动画 `animatedNumber`（待开始）
+## ✅ P1-2: 统一数字脉冲动画 `_calcPulseScale`（已完成）
 
-**问题**：数字脉冲/滚动/切换动画以不同形式出现 6 次：
+**问题**：数字脉冲强调动画在 4 个地方重复出现，核心公式都是 `scale = 1 + maxScale * sin(progress * π)`：
+- `js/renderer.js:990` — HUD 当前分数（maxScale=0.2, duration=400）
+- `js/renderer.js:1628` — 倍率方块（maxScale=0.28, duration=400）
+- `js/renderer.js:1815` — 金币胶囊（maxScale=0.3, duration=400）
+- `js/shop.js:936` — 目标分数减免（maxScale=0.3, duration=500）
+
+**修复**：
+1. 在 `js/renderer.js` 中新增 `_calcPulseScale(animState, maxScale)` 方法
+2. 4 处重复代码统一替换为该方法调用
+3. 调用者只需根据返回的 `progress` 判断是否结束并清理状态
+
+**删除代码量**：约 20 行重复公式
+**风险**：低（逻辑复用，接口简单）
+
+---
+
+## ⏳ P1-3: 统一按钮按压（待开始）
+
+**问题**：按钮按压反馈实现不统一，有的用 Y 轴位移 2px，有的用 scale 0.95：
+- Y 轴位移：底部按钮（出牌/弃牌/重置）、商店价格按钮、挑战按钮
+- Scale 缩放：成功弹窗按钮、结算按钮、游戏结束按钮
+
+---
+
+## ⏳ P1-1: 提取弹窗基类 `PopupRenderer`（待开始）
+
+**问题**：5 个弹窗共用同一套"弹出-消失"模板，每处手写 80~120 行：
+- SettlementRenderer
+- GameOverRenderer
+- WitchRewardRenderer
+- ConfirmBuyRenderer
+- drawChangeLetterPopup
 - HUD 当前分数
 - 金币胶囊
 - 倍率方块

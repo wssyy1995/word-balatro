@@ -983,13 +983,9 @@ class Renderer {
       this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
       this.lastScore = game.score;
     }
-    let scoreScale = 1;
-    if (this.scoreAnim) {
-      const saElapsed = Date.now() - this.scoreAnim.startTime;
-      const saProgress = Math.min(saElapsed / this.scoreAnim.duration, 1);
-      scoreScale = 1 + 0.2 * Math.sin(saProgress * Math.PI);
-      if (saProgress >= 1) this.scoreAnim = null;
-    }
+    const scorePulse = this._calcPulseScale(this.scoreAnim, 0.2);
+    let scoreScale = scorePulse.scale;
+    if (scorePulse.progress >= 1) this.scoreAnim = null;
     ctx.save();
     ctx.translate(scoreCX, barY + barH * 0.68);
     ctx.scale(scoreScale, scoreScale);
@@ -1622,12 +1618,9 @@ class Renderer {
       }
 
       // 绘制数字（带一次变大缩小脉冲）
-      let pulseScale = 1;
-      if (this.multAnim) {
-        const maProgress = Math.min((Date.now() - this.multAnim.startTime) / this.multAnim.duration, 1);
-        pulseScale = 1 + 0.28 * Math.sin(maProgress * Math.PI);
-        if (maProgress >= 1) this.multAnim = null;
-      }
+      const multPulse = this._calcPulseScale(this.multAnim, 0.28);
+      let pulseScale = multPulse.scale;
+      if (multPulse.progress >= 1) this.multAnim = null;
 
       if (displayValue !== null) {
         ctx.save();
@@ -1808,13 +1801,9 @@ class Renderer {
       this.goldAnim = { startTime: Date.now(), duration: 400 };
       this.lastGold = game.gold;
     }
-    let goldScale = 1;
-    if (this.goldAnim) {
-      const gaElapsed = Date.now() - this.goldAnim.startTime;
-      const gaProgress = Math.min(gaElapsed / this.goldAnim.duration, 1);
-      goldScale = 1 + 0.3 * Math.sin(gaProgress * Math.PI);
-      if (gaProgress >= 1) this.goldAnim = null;
-    }
+    const goldPulse = this._calcPulseScale(this.goldAnim, 0.3);
+    let goldScale = goldPulse.scale;
+    if (goldPulse.progress >= 1) this.goldAnim = null;
 
     // 金币数量（带动画缩放）
     ctx.save();
@@ -2423,6 +2412,15 @@ class Renderer {
     ctx.lineTo(x - r * 0.35, y - r * 0.35);
     ctx.closePath();
     ctx.fill();
+  }
+
+  // ===== 计算脉冲缩放值（数字强调动画：放大→缩小回弹）=====
+  _calcPulseScale(animState, maxScale = 0.3) {
+    if (!animState || !animState.startTime) return { scale: 1, progress: 1 };
+    const elapsed = Date.now() - animState.startTime;
+    const progress = Math.min(elapsed / animState.duration, 1);
+    const scale = 1 + maxScale * Math.sin(progress * Math.PI);
+    return { scale, progress };
   }
 
   // ===== 飞行总分动画（果冻弹出 + 停留 + 淡出） =====
