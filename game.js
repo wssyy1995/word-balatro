@@ -42,12 +42,14 @@ cloudStorage.init();
 
 // 后台预加载云存储的 shop_card 图片（如果有映射）
 if (cloudStorage.hasUploaded()) {
+  console.log('[Game] 检测到云存储映射，开始预加载 shop_card 图片');
   cloudStorage.preloadShopCardImages().then(() => {
     cloudStorage.injectToRenderer(renderer);
-    console.log('云图片已注入 renderer');
   }).catch(err => {
-    console.error('云图片预加载失败:', err);
+    console.error('[Game] 云图片预加载失败:', err);
   });
+} else {
+  console.log('[Game] 没有云存储映射，shop_card 图片将从本地加载（如有）');
 }
 
 // 触摸事件处理

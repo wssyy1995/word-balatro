@@ -282,7 +282,7 @@ class Renderer {
       this.buySuccessBandLoaded = false;
     }
     
-    // 加载道具卡牌图标（从 SHOP_POOL 动态提取所有 trigger/effect）
+    // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）
     this.shopCardImages = {};
     const shopCardNames = new Set();
     Object.values(SHOP_POOL).forEach(pool => {
@@ -292,37 +292,7 @@ class Renderer {
       });
     });
     shopCardNames.forEach(name => {
-      try {
-        const img = wx.createImage();
-        img.src = `images/shop_card/${name}.png`;
-        img.onload = () => {
-          const w = img.width || 0;
-          const h = img.height || 0;
-          const data = this.shopCardImages[name];
-          if (data) {
-            data.loaded = true;
-            data.width = w;
-            data.height = h;
-          }
-        };
-        img.onerror = () => { this.shopCardImages[name] = { img: null, loaded: false }; };
-        // getImageInfo 兜底（部分基础库支持本地路径）
-        try {
-          wx.getImageInfo({
-            src: `/images/shop_card/${name}.png`,
-            success: (res) => {
-              const data = this.shopCardImages[name];
-              if (data) {
-                data.width = res.width;
-                data.height = res.height;
-              }
-            }
-          });
-        } catch (e) {}
-        this.shopCardImages[name] = { img, loaded: false, width: 0, height: 0 };
-      } catch (e) {
-        this.shopCardImages[name] = { img: null, loaded: false };
-      }
+      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
     
     // 加载空位替代图片

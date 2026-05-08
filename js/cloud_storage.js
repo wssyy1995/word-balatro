@@ -76,13 +76,15 @@ class CloudStorageManager {
   async preloadShopCardImages() {
     const names = Object.keys(this.cloudFileMap);
     if (names.length === 0) {
-      console.log('没有云存储图片映射，跳过预加载');
+      console.log('[Cloud] 没有云存储图片映射，跳过预加载');
       return;
     }
 
+    console.log('[Cloud] 开始从云端下载 shop_card 图片，共', names.length, '张');
     const promises = names.map(name => this._loadCloudImage(name));
     await Promise.all(promises);
-    console.log('云图片预加载完成:', Object.keys(this.shopCardImages));
+    const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
+    console.log('[Cloud] 云端图片下载完成:', loaded.length, '/', names.length, '张成功');
   }
 
   _loadCloudImage(name) {
@@ -96,7 +98,7 @@ class CloudStorageManager {
         success: (res) => {
           const urlData = res.fileList[0];
           if (!urlData || urlData.status !== 0 || !urlData.tempFileURL) {
-            console.error('获取临时URL失败:', name, urlData);
+            console.error('[Cloud] 获取临时URL失败:', name, urlData);
             this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
             resolve();
             return;
@@ -104,6 +106,7 @@ class CloudStorageManager {
           const img = wx.createImage();
           img.src = urlData.tempFileURL;
           img.onload = () => {
+            console.log('[Cloud] 下载完成:', name);
             this.shopCardImages[name] = {
               img,
               loaded: true,
@@ -113,13 +116,13 @@ class CloudStorageManager {
             resolve();
           };
           img.onerror = () => {
-            console.error('图片加载失败:', name);
+            console.error('[Cloud] 图片加载失败:', name);
             this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
             resolve();
           };
         },
         fail: (err) => {
-          console.error('获取临时URL失败:', name, err);
+          console.error('[Cloud] 获取临时URL失败:', name, err);
           this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
           resolve();
         },
@@ -132,14 +135,17 @@ class CloudStorageManager {
     return this.shopCardImages[name] || null;
   }
 
-  // 将云缓存图片注入到 renderer 的 shopCardImages（覆盖本地图片）
+  // 将云缓存图片注入到 renderer 的 shopCardImages
   injectToRenderer(renderer) {
+    let count = 0;
     Object.keys(this.shopCardImages).forEach(name => {
       const data = this.shopCardImages[name];
       if (data && data.loaded && renderer.shopCardImages[name]) {
         renderer.shopCardImages[name] = data;
+        count++;
       }
     });
+    console.log('[Cloud] 已注入 renderer:', count, '张');
   }
 }
 
