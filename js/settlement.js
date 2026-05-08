@@ -98,7 +98,7 @@ class SettlementRenderer {
     const totalY = lineY + items.length * lineH + 10 * s + totalAnim.yShift;
     ctx.save();
     ctx.globalAlpha = totalAnim.alpha;
-    ctx.strokeStyle = gold;
+    ctx.strokeStyle = '#c4a35a';
     ctx.lineWidth = 1.2 * s;
     ctx.beginPath();
     ctx.moveTo(px + 30 * s, totalY);
