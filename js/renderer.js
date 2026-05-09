@@ -291,6 +291,7 @@ class Renderer {
     this.cloudLogDragStartScrollY = 0;
     this.cloudLogRect = null;
     this.cloudLogScrollBarRect = null;
+    this.showCloudDebugLogs = false; // 调试日志开关，需要排查时设为 true
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
@@ -2609,6 +2610,7 @@ class Renderer {
 
   // ===== 云存储调试日志（真机排查用） =====
   _drawCloudDebugLogs(ctx, game, s) {
+    if (!this.showCloudDebugLogs) return;
     const logs = game.cloudStorage && game.cloudStorage.debugLogs;
     if (!logs || logs.length === 0) return;
 
