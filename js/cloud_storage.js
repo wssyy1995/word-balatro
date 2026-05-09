@@ -28,7 +28,8 @@ class CloudStorageManager {
       'upgrade_any': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_any.png',
       'upgrade_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_face.png',
       'upgrade_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_letter.png',
-      'shield_illegal':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/shield_illegal.png'
+      'shield_illegal':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/shield_illegal.png',
+      'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png'
     };
   }
 
@@ -76,41 +77,57 @@ class CloudStorageManager {
     if (this.uploading) return { success: false, message: '正在上传中...' };
     this.uploading = true;
 
-    const shopCardNames = [
-      'bonus_gold', 'change_letter', 'extra_discard', 'extra_hands', 'extra_letter',
-      'has_face', 'has_vowel', 'length_4', 'length_5', 'length_6',
-      'letter_a', 'letter_e', 'reduce_target',
-      'upgrade_any', 'upgrade_face', 'upgrade_letter',
-      'shield_illegal'
-    ];
-
     const results = { success: [], failed: [] };
     const fs = wx.getFileSystemManager();
 
-    for (const name of shopCardNames) {
-      const localPath = `images/shop_card/${name}.png`;
-      const cloudPath = `shop_card/${name}.png`;
+    // 动态扫描目录下所有 .png 文件
+    let files = [];
+    try {
+      files = fs.readdirSync('images/shop_card/');
+    } catch (e) {
+      this.log('读取目录失败: ' + (e && e.message ? e.message : String(e)));
+      this.uploading = false;
+      return { success: false, message: '读取目录失败', error: e };
+    }
 
-      // 跳过本地不存在的文件
-      try {
-        fs.accessSync(localPath);
-      } catch (e) {
-        this.log('本地文件不存在，跳过: ' + name);
-        continue;
+    const pngFiles = files.filter(f => f.endsWith('.png'));
+    this.log('扫描 images/shop_card/ 目录下');
+    this.log('扫描到 ' + pngFiles.length + ' 张本地图片');
+
+    for (const fileName of pngFiles) {
+      const name = fileName.replace(/\.png$/i, '');
+      const localPath = `images/shop_card/${fileName}`;
+      const cloudPath = `shop_card/${fileName}`;
+
+      this.log('新增图片 ' + name);
+      this.log('开始上传 ' + name);
+
+      let uploadRes = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: localPath,
+          });
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            this.log('上传失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
       }
 
-      try {
-        const uploadRes = await wx.cloud.uploadFile({
-          cloudPath,
-          filePath: localPath,
-        });
+      if (uploadRes) {
         this.cloudFileMap[name] = uploadRes.fileID;
         results.success.push({ name, fileID: uploadRes.fileID });
-        this.log('上传成功: ' + name);
-      } catch (e) {
-        console.error('上传失败:', name, e);
-        this.log('上传失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
-        results.failed.push({ name, error: e });
+        this.log('上传成功 ' + name);
+      } else {
+        console.error('上传失败:', name, lastError);
+        this.log('上传失败: ' + name + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        results.failed.push({ name, error: lastError });
       }
     }
 
@@ -142,47 +159,63 @@ class CloudStorageManager {
     }
   }
 
-  _loadCloudImage(name) {
-    return new Promise((resolve) => {
-      const fileID = this.cloudFileMap[name];
-      if (!fileID) { resolve(); return; }
+  async _loadCloudImage(name) {
+    const fileID = this.cloudFileMap[name];
+    if (!fileID) return;
 
-      // 获取临时 URL 后用 wx.createImage 直接加载
-      wx.cloud.getTempFileURL({
-        fileList: [fileID],
-        success: (res) => {
-          const urlData = res.fileList[0];
-          if (!urlData || urlData.status !== 0 || !urlData.tempFileURL) {
-            const detail = urlData ? (urlData.errMsg || JSON.stringify(urlData)) : 'urlData=null';
-            this.log('获取临时URL失败: ' + name + ' status=' + (urlData ? urlData.status : 'null') + ' detail=' + detail);
-            this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-            resolve();
-            return;
-          }
-          const img = wx.createImage();
-          img.src = urlData.tempFileURL;
-          img.onload = () => {
-            this.log('下载完成: ' + name);
-            this.shopCardImages[name] = {
-              img,
-              loaded: true,
-              width: img.width || 0,
-              height: img.height || 0,
-            };
-            resolve();
-          };
-          img.onerror = (e) => {
-            this.log('图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-            this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-            resolve();
-          };
-        },
-        fail: (err) => {
-          this.log('获取临时URL失败: ' + name + ' ' + (err && err.errMsg ? err.errMsg : JSON.stringify(err)));
-          this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-          resolve();
-        },
-      });
+    // getTempFileURL 重试3次
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if (!urlData) {
+      const detail = lastError ? lastError.message : 'unknown';
+      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
+      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+      return;
+    }
+
+    // wx.createImage 加载图片
+    const img = wx.createImage();
+    img.src = urlData.tempFileURL;
+    await new Promise((resolve) => {
+      img.onload = () => {
+        this.log('下载完成: ' + name);
+        this.shopCardImages[name] = {
+          img,
+          loaded: true,
+          width: img.width || 0,
+          height: img.height || 0,
+        };
+        resolve();
+      };
+      img.onerror = (e) => {
+        this.log('图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+        this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+        resolve();
+      };
     });
   }
 

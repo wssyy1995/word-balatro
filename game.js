@@ -618,8 +618,10 @@ function handleInput(x, y) {
         const totalMult = existing ? existing.mult * mult : mult;
         const newScore = Math.floor(LETTER_SCORE[game._potionSelectedLetter] * totalMult);
         const oldScore = existing ? Math.floor(LETTER_SCORE[game._potionSelectedLetter] * existing.mult) : LETTER_SCORE[game._potionSelectedLetter];
-        // 执行升级
+        // 执行升级（保留 potionMode 让字母选择页面继续显示）
+        const savedPotionMode = game.potionMode;
         upgradeLetter(game, game._potionSelectedLetter);
+        game.potionMode = savedPotionMode;
         // 启动弹出动画
         game._potionUpgrading = {
           startTime: Date.now(),

@@ -1482,7 +1482,7 @@ class Renderer {
         ctx.restore();
 
         const errText = '单词不存在';
-        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
         ctx.fillStyle = '#e74c3c';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -2161,8 +2161,9 @@ class Renderer {
         showNewScore = true;
       }
 
+      // 遮罩保留，但让背景转盘依然可见
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
 
@@ -2187,21 +2188,26 @@ class Renderer {
       ctx.restore();
     } else {
       game._potionUpgrading = null;
+      game._randomUpgradePopup = null;
+      game.potionMode = null; // 动画结束后才真正清除药水
       game.state = game._prePotionState || 'shop';
       game._prePotionState = null;
     }
   }
 
   drawPotion(game) {
-    // 如果正在播放升级动画，优先处理
-    if (game._potionUpgrading) {
-      this._drawPotionUpgradeAnim(game);
+    // 随机强化药水：先画转盘背景，再叠加升级动画
+    if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+      this.drawRandomUpgradePopup(game);
+      if (game._potionUpgrading) {
+        this._drawPotionUpgradeAnim(game);
+      }
       return;
     }
 
-    // 随机强化药水：老虎机弹窗
-    if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
-      this.drawRandomUpgradePopup(game);
+    // 其他药水：如果 potionMode 已清除，只剩动画，直接处理
+    if (game._potionUpgrading && !game.potionMode) {
+      this._drawPotionUpgradeAnim(game);
       return;
     }
 
@@ -2227,7 +2233,7 @@ class Renderer {
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const titleText = '选择字母';
+    const titleText = '字母升级';
     const titleTextW = ctx.measureText(titleText).width;
     ctx.fillText(titleText, W / 2, titleY);
     ctx.restore();
@@ -2256,7 +2262,7 @@ class Renderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('选择一张字母牌，分数翻倍', W / 2, subTitleY);
+    ctx.fillText('选择一张字母牌升级，本赛局内有效', W / 2, subTitleY);
     ctx.restore();
 
     // === 分隔线（两条线 + 中间菱形）===
@@ -2418,6 +2424,10 @@ class Renderer {
     ctx.restore();
     this.potionStashBtnRect = { x: stashBtnX, y: stashBtnY, w: potionBtnW, h: potionBtnH, enabled: stashEnabled };
 
+    // 如果正在播放升级动画，叠加在字母选择页面上方
+    if (game._potionUpgrading) {
+      this._drawPotionUpgradeAnim(game);
+    }
   }
 
   // ===== 随机强化药水：老虎机弹窗 =====
@@ -2435,14 +2445,33 @@ class Renderer {
 
     const titleY = top - 10 * s;
 
-    // 标题
+    // 标题：shop_icon.png 装饰 + "随机强化" + shop_icon.png 水平镜像
     ctx.save();
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('随机强化', W / 2, titleY);
+    const titleText = '随机强化';
+    const titleTextW = ctx.measureText(titleText).width;
+    ctx.fillText(titleText, W / 2, titleY);
     ctx.restore();
+
+    // 左右装饰图标
+    const decoIconW = 20 * s + 2;
+    const decoIconH = 20 * s;
+    const decoGap = 10 * s - 2;
+    const decoIconY = titleY - decoIconH / 2;
+    if (this.shopIcon && this.shopIconLoaded) {
+      const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
+      ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
+
+      const rightIconX = W / 2 + titleTextW / 2 + decoGap;
+      ctx.save();
+      ctx.translate(rightIconX + decoIconW, decoIconY);
+      ctx.scale(-1, 1);
+      ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
+      ctx.restore();
+    }
 
     // 副标题
     const subTitleY = titleY + 52 * s;
@@ -2482,78 +2511,208 @@ class Renderer {
     ctx.fill();
     ctx.restore();
 
-    // === A-Z 字母网格（7列）===
+    // === 圆形转盘 ===
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-    const lCols = 7;
-    const lBtnSize = 30 * s;
-    const lGap = 6 * s;
-    const lTotalW = lCols * lBtnSize + (lCols - 1) * lGap;
-    const lStartX = (W - lTotalW) / 2;
-    const lStartY = dividerY + 30 * s;
-
     const isSpinning = popup && popup.phase === 'spinning';
-    const isPaused = popup && popup.phase === 'paused';
-    const currentLetter = popup ? popup.currentLetter : null;
+    const isPaused = popup && (popup.phase === 'paused' || popup.phase === 'done');
     const targetLetter = popup ? popup.targetLetter : null;
 
-    // paused 阶段的脉冲效果
-    let pausedPulse = 1;
-    if (isPaused && popup.pauseStartTime) {
-      pausedPulse = 1 + 0.08 * Math.sin(Date.now() / 200);
+    const wheelRadius = 160 * s;
+    const wheelCenterY = dividerY + 30 * s + wheelRadius + 50;
+    const anglePerSector = 360 / 26;
+
+    // 计算当前旋转角度和高亮字母
+    let currentAngle = 0;
+    let highlightIdx = -1;
+
+    if (isSpinning || isPaused) {
+      const targetIdx = letters.indexOf(targetLetter);
+      const targetCenterAngle = targetIdx * anglePerSector + anglePerSector / 2;
+      const rotations = 3;
+      const finalAngle = 360 * rotations + (360 - targetCenterAngle);
+
+      if (isSpinning) {
+        const elapsed = Date.now() - popup.spinStartTime;
+        const progress = Math.min(elapsed / 3000, 1);
+        const ease = Easing.easeOutCubic(progress);
+        currentAngle = finalAngle * ease;
+      } else {
+        currentAngle = finalAngle;
+      }
+
+      const normalized = ((-currentAngle) % 360 + 360) % 360;
+      highlightIdx = Math.floor(normalized / anglePerSector) % 26;
     }
 
-    letters.forEach((letter, i) => {
-      const col = i % lCols;
-      const row = Math.floor(i / lCols);
-      const lx = lStartX + col * (lBtnSize + lGap);
-      const ly = lStartY + row * (lBtnSize + lGap);
+    // paused 阶段：扇形闪烁2次（浅金色 ↔ 金色，周期1000ms）
+    let pausedPulse = 1;
+    let currentHighlightColor = '#ffe8a0';
+    if (isPaused && popup.pauseStartTime && !game._potionUpgrading) {
+      const pauseElapsed = Date.now() - popup.pauseStartTime;
+      pausedPulse = 1 + 0.08 * Math.sin(Date.now() / 200);
+      const flash = Math.sin(pauseElapsed / 400 * Math.PI); // 周期800ms，2秒内闪烁2.5次
+      currentHighlightColor = flash > 0 ? '#f5c542' : '#ffe8a0';
+    }
 
-      const isHighlighted = (isSpinning || isPaused) && currentLetter === letter;
+    // 绘制转盘外圈圆环
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, wheelCenterY, wheelRadius + 4 * s, 0, Math.PI * 2);
+    ctx.fillStyle = '#c4a35a';
+    ctx.fill();
+    ctx.restore();
+
+    // 绘制转盘扇形（随转盘旋转）
+    ctx.save();
+    ctx.translate(centerX, wheelCenterY);
+    ctx.rotate(currentAngle * Math.PI / 180);
+
+    const sectorColors = ['#f5f0e6', '#fdf5e0'];
+    const anglePerSectorRad = (Math.PI * 2) / 26;
+    const startOffset = -Math.PI / 2; // A 从 12 点钟开始
+
+    for (let i = 0; i < 26; i++) {
+      const startAngle = startOffset + i * anglePerSectorRad;
+      const endAngle = startOffset + (i + 1) * anglePerSectorRad;
+      const isHighlighted = i === highlightIdx;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, wheelRadius, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = isHighlighted ? currentHighlightColor : sectorColors[i % 2];
+      ctx.fill();
+      ctx.lineWidth = 0.8 * s;
+      ctx.strokeStyle = '#d4c9a8';
+      ctx.stroke();
+
+      // 高亮扇形加金色边框
+      if (isHighlighted) {
+        ctx.save();
+        ctx.strokeStyle = '#c4a35a';
+        ctx.lineWidth = 2.5 * s * pausedPulse;
+        ctx.shadowColor = 'rgba(196,163,90,0.5)';
+        ctx.shadowBlur = 10 * s * pausedPulse;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // 绘制字母（径向排列，从外向内）
+    for (let i = 0; i < 26; i++) {
+      const midAngle = startOffset + i * anglePerSectorRad + anglePerSectorRad / 2;
+      const textRadius = wheelRadius * 0.72;
+      const tx = Math.cos(midAngle) * textRadius;
+      const ty = Math.sin(midAngle) * textRadius;
+      const isHighlighted = i === highlightIdx;
 
       ctx.save();
-      if (isHighlighted) {
-        // 高亮态：金色背景 + 阴影 + 脉冲
-        ctx.shadowColor = 'rgba(196,163,90,0.5)';
-        ctx.shadowBlur = 8 * s * pausedPulse;
-        ctx.shadowOffsetY = 3 * s;
-        this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#fdf5e0', '#c4a35a', 2.5 * s);
-        ctx.fillStyle = '#8b6914';
-      } else {
-        // 普通态
-        ctx.shadowColor = 'rgba(0,0,0,0.08)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#f5f0e6', '#d4c9a8', 1.5 * s);
-        ctx.fillStyle = '#5a4a2a';
-      }
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.translate(tx, ty);
+      // 文字沿半径方向，底部朝向中心 → 旋转 midAngle + PI/2
+      ctx.rotate(midAngle + Math.PI / 2);
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = isHighlighted ? '#8b6914' : '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(letter, lx + lBtnSize / 2, ly + lBtnSize / 2);
+      ctx.fillText(letters[i], 0, 0);
       ctx.restore();
-    });
+    }
 
-    // === 底部按钮区域 ===
-    const btnAreaY = H - 75 * s;
-    const spinBtnW = 130 * s;
-    const spinBtnH = 46 * s;
-    const spinBtnX = (W - spinBtnW) / 2;
+    // 外圈装饰圆点
+    const dotCount = 26;
+    const dotRadius = 2.5 * s;
+    const dotR = wheelRadius + 8 * s;
+    for (let i = 0; i < dotCount; i++) {
+      const angle = i * (Math.PI * 2 / dotCount) - Math.PI / 2;
+      const dx = Math.cos(angle) * dotR;
+      const dy = Math.sin(angle) * dotR;
+      ctx.beginPath();
+      ctx.arc(dx, dy, dotRadius, 0, Math.PI * 2);
+      ctx.fillStyle = '#f5c542';
+      ctx.fill();
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 0.5 * s;
+      ctx.stroke();
+    }
 
+    ctx.restore(); // 结束转盘旋转
+
+    // === 中心"抽选"按钮（不旋转）===
+    const btnRadius = 36 * s;
     const isIdle = !popup || popup.phase === 'idle';
     const spinEnabled = isIdle;
 
-    // 抽选按钮
     ctx.save();
-    this.roundRect(spinBtnX, btnAreaY, spinBtnW, spinBtnH, 10 * s,
-      spinEnabled ? '#c4a35a' : '#d4c9a8',
-      spinEnabled ? null : '#bbb', spinEnabled ? 0 : 1.5 * s);
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.beginPath();
+    ctx.arc(centerX, wheelCenterY, btnRadius, 0, Math.PI * 2);
+    ctx.fillStyle = spinEnabled ? '#c0392b' : '#d4c9a8';
+    ctx.fill();
+    ctx.strokeStyle = spinEnabled ? '#a93226' : '#bbb';
+    ctx.lineWidth = 2 * s;
+    ctx.stroke();
+
+    // 按钮内阴影
+    ctx.beginPath();
+    ctx.arc(centerX, wheelCenterY, btnRadius - 2 * s, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+    ctx.lineWidth = 1 * s;
+    ctx.stroke();
+
     ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('抽选', spinBtnX + spinBtnW / 2, btnAreaY + spinBtnH / 2);
+    ctx.fillText('抽选', centerX, wheelCenterY);
     ctx.restore();
-    this.randomSpinBtnRect = { x: spinBtnX, y: btnAreaY, w: spinBtnW, h: spinBtnH, enabled: spinEnabled };
+
+    // 中心按钮点击区域（圆形）
+    this.randomSpinBtnRect = {
+      x: centerX - btnRadius,
+      y: wheelCenterY - btnRadius,
+      w: btnRadius * 2,
+      h: btnRadius * 2,
+      enabled: spinEnabled,
+      isCircle: true,
+      cx: centerX,
+      cy: wheelCenterY,
+      r: btnRadius
+    };
+
+    // === 顶部指针（不旋转）===
+    const ptrY = wheelCenterY - wheelRadius - 18 * s;
+    const ptrW = 18 * s;
+    const ptrH = 22 * s;
+    ctx.save();
+    ctx.fillStyle = '#e74c3c';
+    ctx.beginPath();
+    ctx.moveTo(centerX, ptrY + ptrH); // 顶点指向转盘
+    ctx.lineTo(centerX - ptrW / 2, ptrY);
+    ctx.lineTo(centerX + ptrW / 2, ptrY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = '#c0392b';
+    ctx.lineWidth = 1.5 * s;
+    ctx.stroke();
+
+    // 指针底部小圆点
+    ctx.beginPath();
+    ctx.arc(centerX, ptrY, 3 * s, 0, Math.PI * 2);
+    ctx.fillStyle = '#e74c3c';
+    ctx.fill();
+    ctx.restore();
+
+    // === 当前高亮字母提示 ===
+    if ((isSpinning || isPaused) && highlightIdx >= 0) {
+      const hintY = wheelCenterY + wheelRadius + 28 * s;
+      const hlLetter = letters[highlightIdx];
+      ctx.save();
+      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+      ctx.fillStyle = isPaused ? '#c0392b' : '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`当前：${hlLetter}`, centerX, hintY);
+      ctx.restore();
+    }
 
     // 关闭按钮（右上角 X）
     const closeSize = 28 * s;

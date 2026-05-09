@@ -65,7 +65,7 @@ function createRewardItem(rewardType) {
         effect: 'upgrade_letter',
         value: 2,
         cost: 4,
-        desc: '选择一张字母牌，分数翻倍'
+        desc: '选择一张字母牌升级，本赛局内有效'
       };
     case 'card_change_letter':
       return {

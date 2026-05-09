@@ -8,7 +8,7 @@ const {
 const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
-const { generateShopItems, applyCrystalEffects } = require('./shop');
+const { generateShopItems, applyCrystalEffects, upgradeLetter } = require('./shop');
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
@@ -1045,17 +1045,12 @@ class Game {
       this._changeLetterHint = null;
     }
 
-    // 随机强化药水：老虎机状态转换
+    // 随机强化药水：转盘抽奖状态转换
     if (this._randomUpgradePopup) {
       const popup = this._randomUpgradePopup;
       if (popup.phase === 'spinning') {
         const elapsed = Date.now() - popup.spinStartTime;
-        const stepDuration = 60;
-        const step = Math.floor(elapsed / stepDuration);
-        if (step < popup.sequence.length) {
-          popup.currentLetter = popup.sequence[step];
-        } else {
-          popup.currentLetter = popup.targetLetter;
+        if (elapsed >= 3000) {
           popup.phase = 'paused';
           popup.pauseStartTime = Date.now();
         }
@@ -1070,7 +1065,9 @@ class Game {
           const newScore = Math.floor(LETTER_SCORE[letter] * totalMult);
           const oldScore = existing ? Math.floor(LETTER_SCORE[letter] * existing.mult) : LETTER_SCORE[letter];
 
+          const savedPotionMode = this.potionMode;
           upgradeLetter(this, letter);
+          this.potionMode = savedPotionMode; // 保留 potionMode 让转盘背景继续显示
 
           this._potionUpgrading = {
             startTime: Date.now(),
@@ -1079,7 +1076,7 @@ class Game {
             newScore,
             upgradeMult: totalMult
           };
-          this._randomUpgradePopup = null;
+          popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
         }
       }
     }
@@ -1088,25 +1085,15 @@ class Game {
   startRandomSpin() {
     if (this._randomUpgradePopup && this._randomUpgradePopup.phase !== 'idle') return;
 
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const handLetters = [...new Set(this.hand.filter(c => c).map(c => c.letter))];
     const targetLetter = handLetters.length > 0
       ? handLetters[Math.floor(Math.random() * handLetters.length)]
-      : letters[Math.floor(Math.random() * 26)];
-
-    const sequence = [];
-    const totalSteps = 25;
-    for (let i = 0; i < totalSteps - 1; i++) {
-      sequence.push(letters[Math.floor(Math.random() * 26)]);
-    }
-    sequence.push(targetLetter);
+      : 'A';
 
     this._randomUpgradePopup = {
       phase: 'spinning',
       targetLetter,
-      sequence,
       spinStartTime: Date.now(),
-      currentLetter: null,
     };
   }
 }
