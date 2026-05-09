@@ -2127,12 +2127,12 @@ class Renderer {
     const now = Date.now();
     const elapsed = now - anim.startTime;
 
-    if (elapsed < 2600) {
-      const popDuration = 500;
-      const holdOldDuration = 500;
+    if (elapsed < 2100) {
+      const popDuration = 400;
+      const holdOldDuration = 400;
       const scoreChangeDuration = 300;
-      const holdNewDuration = 1000;
-      const fadeOutDuration = 300;
+      const holdNewDuration = 800;
+      const fadeOutDuration = 200;
 
       let cardScale = 1;
       let alpha = 1;
@@ -2163,7 +2163,7 @@ class Renderer {
 
       // 遮罩保留，但让背景转盘依然可见
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.fillRect(0, 0, W, H);
       ctx.restore();
 
