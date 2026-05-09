@@ -535,7 +535,24 @@ class Renderer {
   _drawPropCard(ctx, prop, x, y, w, h, s) {
     const iconName = prop.trigger || prop.effect;
     const iconData = this.shopCardImages[iconName];
-    const offsetY = prop._jumpOffsetY || 0;
+    let offsetY = prop._jumpOffsetY || 0;
+
+    // shield_illegal 触发动画（非法单词时的跳跃+光晕）
+    if (prop._shieldAnimStart) {
+      const elapsed = Date.now() - prop._shieldAnimStart;
+      const duration = 600;
+      if (elapsed < duration) {
+        const progress = elapsed / duration;
+        const jumpH = 12 * s * Math.sin(Math.min(progress, 1) * Math.PI);
+        offsetY = -Math.max(0, jumpH);
+        prop._triggered = true;
+      } else {
+        prop._shieldAnimStart = null;
+        prop._triggered = false;
+        offsetY = 0;
+      }
+    }
+
     const finalY = y + offsetY;
     const r = 4 * s;
 

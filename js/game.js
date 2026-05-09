@@ -468,6 +468,16 @@ class Game {
     this.extraLetters = 0;
     this.witchSkillPassed = true;
     this._witchDetailPopup = null;
+    // 清除所有女巫牌的动画状态，防止上一回合的动画残留
+    (this.jokers || []).forEach(j => {
+      if (j) {
+        j._triggered = false;
+        j._jumpOffsetY = 0;
+        j._shieldAnimStart = null;
+        j._wwJumpStart = null;
+        j._wwJumpDone = false;
+      }
+    });
     this.state = 'playing';
   }
 
@@ -558,8 +568,12 @@ class Game {
       }
 
       // 检查是否有"容错咒文"女巫牌（非法单词不扣出牌次数）
-      const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
-      if (!hasShield) {
+      const shieldJoker = (this.jokers || []).find(j => j.trigger === 'shield_illegal');
+      if (shieldJoker) {
+        // 触发容错咒文动画：跳跃 + 紫色光晕
+        shieldJoker._triggered = true;
+        shieldJoker._shieldAnimStart = Date.now();
+      } else {
         this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
