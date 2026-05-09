@@ -29,7 +29,8 @@ class CloudStorageManager {
       'upgrade_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_face.png',
       'upgrade_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_letter.png',
       'shield_illegal':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/shield_illegal.png',
-      'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png'
+      'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png',
+      'letter_god':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_god.png'
     };
   }
 

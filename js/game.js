@@ -265,11 +265,20 @@ function calcWordScore(cards, jokers) {
 
   const word = cards.map(c => c.letter.toLowerCase()).join('');
 
+  // === 先处理 limit 型女巫牌（字母之神）：所有字母基础分变为最高分 ===
+  const letterGod = (jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
+  let maxBaseScore = 0;
+  if (letterGod) {
+    maxBaseScore = Math.max(...cards.map(c => c.score));
+  }
+
   // 计算每个字母的倍率（女巫牌对单个字母的加成）
   const cardMults = cards.map(() => 1);
 
   for (const j of jokers) {
     if (j.type !== 'witch') continue;
+    // limit 型女巫牌不参与常规倍率计算
+    if (j.scope === 'limit') continue;
     switch (j.scope) {
       case 'per_card':
         cards.forEach((c, i) => {
@@ -285,7 +294,8 @@ function calcWordScore(cards, jokers) {
 
   let baseScore = 0;
   for (let i = 0; i < cards.length; i++) {
-    baseScore += cards[i].score * cardMults[i];
+    const cardScore = letterGod ? maxBaseScore : cards[i].score;
+    baseScore += cardScore * cardMults[i];
   }
 
   for (const j of jokers) {
@@ -477,6 +487,9 @@ class Game {
         j._triggered = false;
         j._jumpOffsetY = 0;
         j._shieldAnimStart = null;
+        j._letterGodAnimStart = null;
+        j._destroying = false;
+        j._destroyStart = null;
         j._wwJumpStart = null;
         j._wwJumpDone = false;
       }
@@ -620,7 +633,32 @@ class Game {
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
+    // === 字母之神触发（limit 型女巫牌，优先处理）===
+    const letterGod = (this.jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
+    let letterGodTriggered = false;
+    if (letterGod && (letterGod.usesLeft === undefined || letterGod.usesLeft > 0)) {
+      letterGodTriggered = true;
+      // 递减剩余次数
+      letterGod.usesLeft = (letterGod.usesLeft === undefined ? letterGod.limit : letterGod.usesLeft) - 1;
+      // 触发专用动画：跳起保持1.5s + 呼吸光晕，然后落下（总1.9s）
+      letterGod._triggered = true;
+      letterGod._letterGodAnimStart = Date.now();
+      // 保存原始分数，实际分数立即更新为最高分（供 calcWordScore 使用）
+      // 视觉过渡通过 _oldScore + _scoreAnimStart 实现
+      const maxScore = Math.max(...played.map(c => c.score));
+      played.forEach(c => {
+        if (c._originalScore === undefined) c._originalScore = c.score;
+        c._oldScore = c.score;
+        c.score = maxScore;
+        c._scoreAnimStart = Date.now();
+        c._scorePulseAnim = { startTime: Date.now(), duration: 500 };
+      });
+      if (this.storageManager) this.storageManager.saveProgress(this);
+    }
+
     const result = calcWordScore(played, this.jokers);
+    this.pendingCheck.letterGodTriggered = letterGodTriggered;
+    this.pendingCheck.letterGodIndex = letterGodTriggered ? this.jokers.indexOf(letterGod) : -1;
     this.pendingCheck.state = 'valid';
     this.pendingCheck.result = result;
     this.pendingCheck.meaning = getWordMeaning(word);
@@ -732,11 +770,41 @@ class Game {
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
     // 清除女巫牌触发状态
     (this.jokers || []).forEach(j => {
-      j._triggered = false;
-      j._jumpOffsetY = 0;
-      j._wwJumpStart = null;
-      j._wwJumpDone = false;
+      if (j) {
+        j._triggered = false;
+        j._jumpOffsetY = 0;
+        j._letterGodAnimStart = null;
+        j._wwJumpStart = null;
+        j._wwJumpDone = false;
+      }
     });
+
+    // 恢复字母之神修改过的卡牌分数，清除视觉过渡状态
+    playedCards.forEach(c => {
+      if (c && c._originalScore !== undefined) {
+        c.score = c._originalScore;
+        delete c._originalScore;
+      }
+      delete c._oldScore;
+      delete c._scoreAnimStart;
+      delete c._scorePulseAnim;
+    });
+
+    // 检查字母之神是否次数耗尽，触发撕裂自毁动画
+    const letterGodIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
+    if (letterGodIdx >= 0) {
+      const letterGod = this.jokers[letterGodIdx];
+      if (letterGod.usesLeft !== undefined && letterGod.usesLeft <= 0) {
+        letterGod._destroying = true;
+        letterGod._destroyStart = Date.now();
+        // 延迟从数组中移除（给动画留出 900ms）
+        setTimeout(() => {
+          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
+          if (idx >= 0) this.jokers.splice(idx, 1);
+          if (this.storageManager) this.storageManager.saveProgress(this);
+        }, 900);
+      }
+    }
 
     const removedIndices = [];
     const finalPlayedCards = [];

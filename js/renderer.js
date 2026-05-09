@@ -372,7 +372,9 @@ class Renderer {
     popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
 
     // 计算内容高度
+    const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+    if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
     const letters = this._getWitchLetters(joker.trigger);
     const hasLetters = letters && letters.length > 0;
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
@@ -445,6 +447,18 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(joker.desc, popupX + pad, cy);
     ctx.restore();
+
+    // 剩余次数（limit 型女巫牌）
+    if (joker.limit !== undefined && joker.usesLeft !== undefined) {
+      cy += lineH + 2 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = joker.usesLeft > 0 ? '#e74c3c' : '#7f8c8d';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`剩余次数：${joker.usesLeft} / ${joker.limit}`, popupX + pad, cy);
+      ctx.restore();
+    }
 
     // 可作用字母
     if (hasLetters) {
@@ -711,7 +725,7 @@ class Renderer {
     let offsetY = prop._jumpOffsetY || 0;
 
     // shield_illegal 触发动画（非法单词时的跳跃+光晕，跳2次每次200ms）
-    if (prop._shieldAnimStart) {
+    if (prop._shieldAnimStart && prop.trigger === 'shield_illegal') {
       const elapsed = Date.now() - prop._shieldAnimStart;
       const totalDuration = 400; // 2次 × 200ms
       if (elapsed < totalDuration) {
@@ -726,8 +740,42 @@ class Renderer {
       }
     }
 
+    // letter_god 专用动画：跳起（200ms）→ 保持+呼吸（1500ms）→ 落下（200ms）
+    if (prop._letterGodAnimStart && prop.trigger === 'letter_god') {
+      const elapsed = Date.now() - prop._letterGodAnimStart;
+      const jumpUpDuration = 200;
+      const holdDuration = 1500;
+      const jumpDownDuration = 200;
+      const totalDuration = jumpUpDuration + holdDuration + jumpDownDuration;
+
+      if (elapsed >= totalDuration) {
+        prop._letterGodAnimStart = null;
+        prop._triggered = false;
+        offsetY = 0;
+      } else {
+        prop._triggered = true;
+        if (elapsed < jumpUpDuration) {
+          const t = elapsed / jumpUpDuration;
+          offsetY = -Easing.easeOutCubic(t) * 14 * s;
+        } else if (elapsed < jumpUpDuration + holdDuration) {
+          offsetY = -14 * s;
+        } else {
+          const t = (elapsed - jumpUpDuration - holdDuration) / jumpDownDuration;
+          offsetY = -14 * s * (1 - Easing.easeOutCubic(t));
+        }
+      }
+    }
+
     const finalY = y + offsetY;
     const r = 4 * s;
+
+    // === 自毁动画（撕裂效果）===
+    let destroyProgress = 0;
+    if (prop._destroying && prop._destroyStart) {
+      const destroyElapsed = Date.now() - prop._destroyStart;
+      const destroyDuration = 900;
+      destroyProgress = Math.min(destroyElapsed / destroyDuration, 1);
+    }
 
     // 如果有触发状态，先画紫色光晕 + 边框（在 clip 之外）
     if (prop._triggered) {
@@ -785,6 +833,19 @@ class Renderer {
       ctx.restore();
     }
 
+    // 自毁动画变换
+    if (destroyProgress > 0) {
+      ctx.save();
+      const centerX = x + w / 2;
+      const centerY = finalY + h / 2;
+      const eased = Easing.easeOutCubic(destroyProgress);
+      ctx.translate(centerX, centerY);
+      ctx.rotate(eased * 0.3);
+      ctx.scale(1 - eased * 0.5, 1 - eased * 0.5);
+      ctx.translate(-centerX, -centerY);
+      ctx.globalAlpha = 1 - eased;
+    }
+
     // 圆角裁剪（与空位形状一致）
     ctx.save();
     ctx.beginPath();
@@ -839,6 +900,54 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(prop.name, x + w / 2, maskY + maskH / 2);
     ctx.restore();
+
+    // 剩余次数标签（limit 型女巫牌，右上角）
+    if (prop.limit !== undefined && prop.usesLeft !== undefined) {
+      ctx.save();
+      const badgeSize = 14 * s;
+      const badgeX = x + w - badgeSize - 2 * s;
+      const badgeY = finalY + 2 * s;
+      const badgeColor = prop.usesLeft > 0 ? '#e74c3c' : '#7f8c8d';
+      ctx.beginPath();
+      ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = badgeColor;
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+      ctx.font = `bold ${Math.max(7, Math.floor(8 * s))}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${prop.usesLeft}`, badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 0.5 * s);
+      ctx.restore();
+    }
+
+    // 撕裂线条效果（自毁动画期间）
+    if (destroyProgress > 0) {
+      ctx.save();
+      const tearAlpha = Math.min(destroyProgress * 2, 1);
+      ctx.strokeStyle = `rgba(0,0,0,${tearAlpha})`;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      // 左下到右上的斜线
+      ctx.moveTo(x + w * 0.1, finalY + h * 0.9);
+      ctx.lineTo(x + w * 0.3, finalY + h * 0.7);
+      ctx.moveTo(x + w * 0.7, finalY + h * 0.3);
+      ctx.lineTo(x + w * 0.9, finalY + h * 0.1);
+      // 横向裂缝
+      ctx.moveTo(x + w * 0.2, finalY + h * 0.5);
+      ctx.lineTo(x + w * 0.5, finalY + h * 0.45);
+      ctx.moveTo(x + w * 0.5, finalY + h * 0.55);
+      ctx.lineTo(x + w * 0.8, finalY + h * 0.5);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // 恢复自毁动画变换
+    if (destroyProgress > 0) {
+      ctx.restore();
+    }
   }
 
   // 绘制圆角矩形
@@ -945,19 +1054,45 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(card.letter, 0, -hh + h * 0.33 - 2 * s + 1 * s);
 
-    // === 3. 分数（始终显示当前实际分数）===
+    // === 3. 分数（支持过渡动画 + 脉冲强调）===
     ctx.save();
     const scoreX = 0;
     const scoreY = -hh + h * 0.74;
     ctx.translate(scoreX, scoreY);
-    if (card._scoreScale && card._scoreScale !== 1) {
-      ctx.scale(card._scoreScale, card._scoreScale);
+
+    // 字母之神分数脉冲动画（放大→回弹，与 HUD 分数更新一致）
+    let scoreScale = 1;
+    if (card._scorePulseAnim) {
+      const pulse = this._calcPulseScale(card._scorePulseAnim, 0.35);
+      scoreScale = pulse.scale;
+      if (pulse.progress >= 1) {
+        delete card._scorePulseAnim;
+      }
     }
+    ctx.scale(scoreScale, scoreScale);
+
+    // 字母之神分数值过渡：1.5s 内从旧值过渡到新值
+    let displayScore = card.score;
+    if (card._oldScore !== undefined && card._scoreAnimStart) {
+      const elapsed = Date.now() - card._scoreAnimStart;
+      const duration = 1500;
+      if (elapsed < duration) {
+        const t = elapsed / duration;
+        const eased = Easing.easeOutCubic(t);
+        displayScore = Math.round(card._oldScore + (card.score - card._oldScore) * eased);
+      } else {
+        displayScore = card.score;
+        delete card._oldScore;
+        delete card._scoreAnimStart;
+      }
+    }
+
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
-    ctx.fillStyle = darkBlue;
+    // 脉冲期间使用金色强调，与 HUD 分数更新风格一致
+    ctx.fillStyle = (card._scorePulseAnim) ? '#c4a35a' : darkBlue;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${card.score}分`, 0, 0);
+    ctx.fillText(`${displayScore}分`, 0, 0);
     ctx.restore();
 
     // === 6. 新牌标记 ===
@@ -1339,7 +1474,10 @@ class Renderer {
       const joker = jokers[i];
       if (joker) {
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
-        this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
+        // 自毁动画期间不响应点击
+        if (!joker._destroying) {
+          this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
+        }
       } else {
         this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
       }
@@ -3238,6 +3376,7 @@ class Renderer {
     const items = [
       { label: '重置出牌次数', action: 'debug_resetHands' },
       { label: '当前分+100', action: 'debug_addScore' },
+      { label: '增加10金币', action: 'debug_addGold' },
       { label: '直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
       { label: '上传shop_card', action: 'debug_upload_shop_card' },

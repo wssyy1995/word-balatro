@@ -103,6 +103,10 @@ function handleInput(x, y) {
     if (debugHit) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(100);
+      if (debugHit.action === 'debug_addGold') {
+        game.gold += 10;
+        if (game.storageManager) game.storageManager.saveProgress(game);
+      }
       if (debugHit.action === 'debug_winRound') game.winRound();
       if (debugHit.action === 'debug_refreshShop') {
         if (!game.shopItems) {
@@ -462,7 +466,11 @@ function handleInput(x, y) {
             game._successPressedBtn = null;
             // 女巫牌且点击"装备"
             if (btnHit.action === 'equipWitch' && game._confirmBuyItemData) {
-              game.jokers.push({...game._confirmBuyItemData});
+              const item = {...game._confirmBuyItemData};
+              if (item.limit !== undefined && item.usesLeft === undefined) {
+                item.usesLeft = item.limit;
+              }
+              game.jokers.push(item);
               if (game.storageManager) game.storageManager.saveProgress(game);
             }
             // 药水牌且点击"暂存"
