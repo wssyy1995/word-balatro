@@ -557,7 +557,11 @@ class Game {
         return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
       }
 
-      this.handsLeft--;
+      // 检查是否有"容错咒文"女巫牌（非法单词不扣出牌次数）
+      const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
+      if (!hasShield) {
+        this.handsLeft--;
+      }
       if (this.handsLeft <= 0) {
         // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
         setTimeout(() => {
