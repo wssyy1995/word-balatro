@@ -1373,7 +1373,7 @@ class Renderer {
                 const joker = jokers[jIdx];
                 if (joker) {
                   joker._triggered = true;
-                  joker._jumpOffsetY = -Math.max(0, jumpH);
+                  joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
                 }
               });
             } else if (i < currentJumpIdx) {
