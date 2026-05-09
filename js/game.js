@@ -416,6 +416,7 @@ class Game {
     this.extraDiscards = 0;
     this.extraSafety = 0;
     this.extraHands = 0;
+    this.baseHandSize = 9;
     this.totalScore = 0;
     this.gameOverReason = null;
     this.roundScores = [];
@@ -452,7 +453,7 @@ class Game {
 
     this.deck = createDeck();
     applyCrystalEffects(this);
-    const handSize = 9 + (this._globalExtraLetters || 0) + (this.extraLetters || 0);
+    const handSize = this.baseHandSize + (this.extraLetters || 0);
     this._maxHandSize = handSize;
     this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
     this.selected = [];
@@ -834,8 +835,12 @@ class Game {
 
       switch (action) {
         case 'ok':
-          if (data && data.rewardItem && data.rewardItem.effect === 'extra_hand') {
-            this.extraHands += 1;
+          if (data && data.rewardItem) {
+            if (data.rewardItem.effect === 'extra_hand') {
+              this.extraHands += 1;
+            } else if (data.rewardItem.effect === 'extra_letter') {
+              this.baseHandSize += 1;
+            }
           }
           this.state = 'shop';
           if (!this.shopItems) this.shopItems = generateShopItems(this);
