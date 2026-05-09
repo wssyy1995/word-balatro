@@ -772,7 +772,8 @@ class ShopRenderer {
         const priceTextW = ctx.measureText(btnText).width;
         ctx.restore();
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
-        const btnW = contentW + 16 * s + 23;
+        const btnExtraW = isActive ? 23 : 13; // 灰色状态左右各-5px
+        const btnW = contentW + 16 * s + btnExtraW;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -782,27 +783,23 @@ class ShopRenderer {
           if (pe < 150) pressOffset = 2 * s;
         }
 
-        // 按钮投影 + 背景
+        // 按钮投影 + 背景（所有状态都有阴影）
         ctx.save();
-        if (isActive) {
-          ctx.shadowColor = 'rgba(0,0,0,0.25)';
-          ctx.shadowBlur = 4 * s;
-          ctx.shadowOffsetY = 2 * s;
-        }
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
         this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, isActive ? '#FFF1D4' : '#e0e0e0');
         ctx.restore();
 
-        // 顶部高光条（只有可购买时才画）
-        if (isActive) {
-          ctx.save();
-          ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-          ctx.lineWidth = 1.2 * s;
-          ctx.beginPath();
-          ctx.moveTo(btnX + 4 * s, btnY + 2 * s + pressOffset);
-          ctx.lineTo(btnX + btnW - 4 * s, btnY + 2 * s + pressOffset);
-          ctx.stroke();
-          ctx.restore();
-        }
+        // 顶部高光条（所有状态都有）
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(btnX + 4 * s, btnY + 2 * s + pressOffset);
+        ctx.lineTo(btnX + btnW - 4 * s, btnY + 2 * s + pressOffset);
+        ctx.stroke();
+        ctx.restore();
 
         // 金币图标 + 文案（整体居中）
         const contentStartX = btnX + (btnW - contentW) / 2;
