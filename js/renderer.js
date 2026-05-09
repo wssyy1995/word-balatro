@@ -537,13 +537,14 @@ class Renderer {
     const iconData = this.shopCardImages[iconName];
     let offsetY = prop._jumpOffsetY || 0;
 
-    // shield_illegal 触发动画（非法单词时的跳跃+光晕）
+    // shield_illegal 触发动画（非法单词时的跳跃+光晕，跳2次每次200ms）
     if (prop._shieldAnimStart) {
       const elapsed = Date.now() - prop._shieldAnimStart;
-      const duration = 200;
-      if (elapsed < duration) {
-        const progress = elapsed / duration;
-        offsetY = Easing.jump(progress, 12 * s);
+      const totalDuration = 400; // 2次 × 200ms
+      if (elapsed < totalDuration) {
+        const cycle = 200;
+        const cycleProgress = (elapsed % cycle) / cycle;
+        offsetY = Easing.jump(cycleProgress, 12 * s);
         prop._triggered = true;
       } else {
         prop._shieldAnimStart = null;
