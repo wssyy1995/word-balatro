@@ -686,8 +686,16 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
-// 启动游戏循环
-requestAnimationFrame(gameLoop);
+// 等待 bg.png 加载完成后再启动游戏循环，避免蓝色 fallback 背景一闪而过
+function waitForBgAndStart() {
+  if (renderer.bgLoaded || !renderer.bgImage) {
+    // bg.png 已加载，或加载失败，都可以开始渲染
+    requestAnimationFrame(gameLoop);
+  } else {
+    requestAnimationFrame(waitForBgAndStart);
+  }
+}
+requestAnimationFrame(waitForBgAndStart);
 
 // 暴露到全局（调试用）
 wx.game = game;
