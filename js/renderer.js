@@ -345,10 +345,15 @@ class Renderer {
 
     const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
 
-    const popupW = cardW + 20 * s;
-    const popupX = cardX + (cardW - popupW) / 2;
     const pad = 10 * s;
     const lineH = 16 * s;
+
+    // 根据效果描述文字长度动态计算弹窗宽度
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    const descW = ctx.measureText(joker.desc).width;
+    const minPopupW = cardW + 20 * s;
+    const popupW = Math.max(minPopupW, descW + pad * 2 + 20 * s);
+    const popupX = cardX + (cardW - popupW) / 2;
 
     // 计算内容高度
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
@@ -1708,14 +1713,27 @@ class Renderer {
         ctx.restore();
       }
 
-      // 绘制 "xN" 标签（右方块上方紫色小字）
+      // 绘制 "xN" 标签（右方块上方，样式与 per_card 一致：白底紫字）
       if (labelText) {
         ctx.save();
-        ctx.font = `900 ${Math.floor(12 * s)}px sans-serif`;
+        const multFontSize = Math.floor(22 * s);
+        ctx.font = `900 ${multFontSize}px sans-serif`;
+        const textW = ctx.measureText(labelText).width;
+        const padX = 6 * s;
+        const padY = 3 * s;
+        const bgW = textW + padX * 2;
+        const bgH = multFontSize + padY * 2;
+        const bgX = rightBoxX + boxSize / 2 - bgW / 2;
+        const bgY = boxY - bgH - 2 * s;
+
+        // 白色圆角底色
+        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.72)');
+
+        // 紫色大字
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText(labelText, rightBoxX + boxSize / 2, boxY - 4 * s);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labelText, rightBoxX + boxSize / 2, bgY + bgH / 2);
         ctx.restore();
       }
     }
