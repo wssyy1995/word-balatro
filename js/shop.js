@@ -26,8 +26,6 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'A之强化', type:'witch', scope:'per_card', trigger:'letter_a', value:10, cost:5, desc:'字母A分数×10'},
-    {name:'E之强化', type:'witch', scope:'per_card', trigger:'letter_e', value:5, cost:5, desc:'字母E分数×5'},
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
     {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×3'},
