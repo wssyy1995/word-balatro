@@ -3,7 +3,7 @@ const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
 const { SettlementRenderer, WitchRewardRenderer } = require('./settlement');
 const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('./shop');
-const { getSkillForLevel } = require('./witch_skills');
+const { getSkillForLevel, WITCH_SKILLS } = require('./witch_skills');
 const { Easing } = require('./animation');
 
 class Renderer {
@@ -150,9 +150,10 @@ class Renderer {
     } catch (e) {
       this.witchGiftIconLoaded = false;
     }
-    // 加载女巫头像
+    // 加载女巫头像（动态按 WITCH_SKILLS 中的 level）
     this.witchAvatars = {};
-    [2, 3, 4].forEach(level => {
+    const witchLevels = [...new Set(WITCH_SKILLS.map(s => s.level))];
+    witchLevels.forEach(level => {
       try {
         const img = wx.createImage();
         img.src = `images/witch/witch_${level}.png`;
