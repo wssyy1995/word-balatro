@@ -543,8 +543,7 @@ class Renderer {
       const duration = 600;
       if (elapsed < duration) {
         const progress = elapsed / duration;
-        const jumpH = 12 * s * Math.sin(Math.min(progress, 1) * Math.PI);
-        offsetY = -Math.max(0, jumpH);
+        offsetY = Easing.jump(progress, 12 * s);
         prop._triggered = true;
       } else {
         prop._shieldAnimStart = null;
@@ -1366,8 +1365,7 @@ class Renderer {
               card.jumpOffsetY = 0;
             } else if (i === currentJumpIdx && jumpElapsed >= 0) {
               const jumpProgress = ((jumpElapsed % letterInterval) / 200);
-              const jumpH = 12 * s * Math.sin(Math.min(jumpProgress, 1) * Math.PI);
-              card.jumpOffsetY = -Math.max(0, jumpH);
+              card.jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
 
               // 同步触发对应的女巫牌（紫色边框 + 同步跳跃）
               const triggered = pc.jokerTriggers?.[i] || [];
@@ -1391,8 +1389,7 @@ class Renderer {
               joker._triggered = true;
               if (!isAllJumped && currentJumpIdx >= 0) {
                 const jumpProgress = ((jumpElapsed % letterInterval) / 200);
-                const jumpH = 12 * s * Math.sin(Math.min(jumpProgress, 1) * Math.PI);
-                joker._jumpOffsetY = -Math.max(0, jumpH);
+                joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
               }
             }
           });

@@ -44,6 +44,13 @@ const Easing = {
     const ease = t * (2 - t); // easeOutQuad
     return { alpha: ease, yShift: (1 - ease) * offsetY };
   },
+
+  // jump: 单次跳跃偏移，progress 0→1 时返回 0→-maxHeight→0
+  // 使用正弦波模拟自然跳跃，适用于卡牌/女巫牌的上下跳动
+  jump: (progress, maxHeight = 1) => {
+    const t = Math.min(progress, 1);
+    return -maxHeight * Math.sin(t * Math.PI);
+  },
 };
 
 // 动画类
