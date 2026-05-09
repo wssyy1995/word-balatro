@@ -79,14 +79,25 @@ class CloudStorageManager {
       'bonus_gold', 'change_letter', 'extra_discard', 'extra_hands', 'extra_letter',
       'has_face', 'has_vowel', 'length_4', 'length_5', 'length_6',
       'letter_a', 'letter_e', 'reduce_target',
-      'upgrade_any', 'upgrade_face', 'upgrade_letter'
+      'upgrade_any', 'upgrade_face', 'upgrade_letter',
+      'shield_illegal'
     ];
 
     const results = { success: [], failed: [] };
+    const fs = wx.getFileSystemManager();
 
     for (const name of shopCardNames) {
       const localPath = `images/shop_card/${name}.png`;
       const cloudPath = `shop_card/${name}.png`;
+
+      // 跳过本地不存在的文件
+      try {
+        fs.accessSync(localPath);
+      } catch (e) {
+        this.log('本地文件不存在，跳过: ' + name);
+        continue;
+      }
+
       try {
         const uploadRes = await wx.cloud.uploadFile({
           cloudPath,
@@ -94,8 +105,10 @@ class CloudStorageManager {
         });
         this.cloudFileMap[name] = uploadRes.fileID;
         results.success.push({ name, fileID: uploadRes.fileID });
+        this.log('上传成功: ' + name);
       } catch (e) {
         console.error('上传失败:', name, e);
+        this.log('上传失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
         results.failed.push({ name, error: e });
       }
     }
