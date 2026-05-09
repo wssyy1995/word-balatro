@@ -540,7 +540,7 @@ class Renderer {
     // shield_illegal 触发动画（非法单词时的跳跃+光晕）
     if (prop._shieldAnimStart) {
       const elapsed = Date.now() - prop._shieldAnimStart;
-      const duration = 600;
+      const duration = 200;
       if (elapsed < duration) {
         const progress = elapsed / duration;
         offsetY = Easing.jump(progress, 12 * s);
