@@ -149,6 +149,7 @@ class WitchRewardRenderer {
     this.okBtnPressed = false;
     this.stashBtnPressed = false;
     this.useBtnPressed = false;
+    this.coinFlipStartTime = null;
   }
 
   draw(ctx, game, W, H, s) {
@@ -279,31 +280,89 @@ class WitchRewardRenderer {
         const rewardItem = data.rewardItem;
 
         if (rewardItem && rewardItem.type === 'buff') {
-          // === global_hand_1 奖励布局 ===
-          // 圆形占位图标
           const iconCY = py + 120 * s;
-          const iconR = 35 * s;
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
-          ctx.fillStyle = '#f5f0e6';
-          ctx.fill();
-          ctx.lineWidth = 2 * s;
-          ctx.strokeStyle = '#c4a35a';
-          ctx.stroke();
-          ctx.restore();
 
-          // 图标内部居中文字 "+1"
-          ctx.save();
-          ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-          ctx.fillStyle = '#c4a35a';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('+1', W / 2, iconCY);
-          ctx.restore();
+          if (rewardItem.effect === 'double_coin') {
+            // === double_coin: 大金币翻面动画 ===
+            if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();
+            const flipElapsed = Date.now() - this.coinFlipStartTime;
+            const flipDuration = 1500;
+            const flipProgress = Math.min(flipElapsed / flipDuration, 1);
+            const rotations = 2;
+            const angle = rotations * Math.PI * 2 * Easing.easeOutCubic(flipProgress);
+            const scaleX = Math.cos(angle);
+            const coinSize = 80 * s;
+
+            ctx.save();
+            ctx.translate(W / 2, iconCY);
+            ctx.scale(scaleX, 1);
+            if (scaleX > 0) {
+              // 正面：coin.png
+              if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+                ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
+              } else {
+                ctx.beginPath();
+                ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
+                ctx.fillStyle = '#f5c542';
+                ctx.fill();
+                ctx.strokeStyle = '#c4a35a';
+                ctx.lineWidth = 3 * s;
+                ctx.stroke();
+              }
+            } else {
+              // 背面：金色圆形 + ¥
+              ctx.beginPath();
+              ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
+              ctx.fillStyle = '#d4a017';
+              ctx.fill();
+              ctx.strokeStyle = '#c4a35a';
+              ctx.lineWidth = 3 * s;
+              ctx.stroke();
+              ctx.fillStyle = '#fff';
+              ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('¥', 0, 0);
+            }
+            ctx.restore();
+
+            // 闪光效果（翻转结束时）
+            if (flipProgress < 1) {
+              const shineAlpha = (1 - flipProgress) * 0.4;
+              ctx.save();
+              ctx.globalAlpha = shineAlpha;
+              ctx.beginPath();
+              ctx.arc(W / 2, iconCY, coinSize * 0.7, 0, Math.PI * 2);
+              ctx.fillStyle = '#fff';
+              ctx.fill();
+              ctx.restore();
+            }
+          } else {
+            // === global_hand_1 / global_letter_1 奖励布局 ===
+            // 圆形占位图标
+            const iconR = 35 * s;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+            ctx.fillStyle = '#f5f0e6';
+            ctx.fill();
+            ctx.lineWidth = 2 * s;
+            ctx.strokeStyle = '#c4a35a';
+            ctx.stroke();
+            ctx.restore();
+
+            // 图标内部居中文字 "+1"
+            ctx.save();
+            ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+            ctx.fillStyle = '#c4a35a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+1', W / 2, iconCY);
+            ctx.restore();
+          }
 
           // 下方文字 rewardItem.desc
-          const descY = iconCY + iconR + 28 * s;
+          const descY = iconCY + 50 * s;
           ctx.save();
           ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
           ctx.fillStyle = darkBlue;
