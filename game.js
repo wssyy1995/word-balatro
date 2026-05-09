@@ -38,6 +38,7 @@ const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
 // 云存储管理器
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
+game.cloudStorage = cloudStorage;
 
 // 云存储初始化 + shop_card 预加载，延迟到第一回合页面渲染完成后
 let cloudPreloadTriggered = false;
@@ -68,10 +69,30 @@ wx.onTouchStart((e) => {
   const x = touch.clientX;
   const y = touch.clientY;
 
+  // 日志区域触摸（优先处理滚动）
+  if (renderer.cloudLogRect) {
+    const r = renderer.cloudLogRect;
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+      renderer.cloudLogDragging = true;
+      renderer.cloudLogDragStartY = y;
+      renderer.cloudLogDragStartScrollY = renderer.cloudLogScrollY;
+      return;
+    }
+  }
+
   handleInput(x, y);
 });
 
+wx.onTouchMove((e) => {
+  if (!renderer.cloudLogDragging) return;
+  const touch = e.touches[0];
+  const y = touch.clientY;
+  const deltaY = renderer.cloudLogDragStartY - y;
+  renderer.cloudLogScrollY = renderer.cloudLogDragStartScrollY + deltaY;
+});
+
 wx.onTouchEnd(() => {
+  renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
 });
 

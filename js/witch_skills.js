@@ -82,6 +82,14 @@ function createRewardItem(rewardType) {
         value: 1,
         desc: '本赛局出牌次数+1'
       };
+    case 'global_letter_1':
+      return {
+        name: '额外字母',
+        type: 'buff',
+        effect: 'extra_letter',
+        value: 1,
+        desc: '本赛局字母手牌+1'
+      };
     default:
       return null;
   }

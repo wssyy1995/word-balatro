@@ -8,6 +8,7 @@ class CloudStorageManager {
     this.cloudFileMap = {};   // { name: fileID }
     this.initialized = false;
     this.uploading = false;
+    this.debugLogs = [];
 
     // 默认云文件映射（已上传的 shop_card 图片，fileID 固定）
     this.defaultFileMap = {
@@ -34,8 +35,9 @@ class CloudStorageManager {
     try {
       wx.cloud.init({ env: this.env, traceUser: false });
       this.initialized = true;
+      this.log('云开发初始化成功，env=' + this.env);
     } catch (e) {
-      console.warn('[Cloud] 云开发初始化失败:', e);
+      this.log('云开发初始化失败: ' + (e && e.message ? e.message : String(e)));
     }
 
     // 先用硬编码的默认映射兜底
@@ -47,13 +49,20 @@ class CloudStorageManager {
       if (stored) {
         const localMap = JSON.parse(stored);
         this.cloudFileMap = { ...this.cloudFileMap, ...localMap };
-        console.log('[Cloud] 本地缓存映射已加载，共', Object.keys(localMap).length, '张');
+        this.log('本地缓存映射已加载，共' + Object.keys(localMap).length + '张');
       } else {
-        console.log('[Cloud] 无本地缓存，使用默认云映射，共', Object.keys(this.defaultFileMap).length, '张');
+        this.log('无本地缓存，使用默认云映射，共' + Object.keys(this.defaultFileMap).length + '张');
       }
     } catch (e) {
-      console.log('[Cloud] 本地缓存读取失败，使用默认云映射');
+      this.log('本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
+  }
+
+  log(msg) {
+    const line = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+    this.debugLogs.push(line);
+    if (this.debugLogs.length > 30) this.debugLogs.shift();
+    console.log('[Cloud]', msg);
   }
 
   // 是否已上传过 shop_card 图片
@@ -104,15 +113,19 @@ class CloudStorageManager {
   async preloadShopCardImages() {
     const names = Object.keys(this.cloudFileMap);
     if (names.length === 0) {
-      console.log('[Cloud] 没有云存储图片映射，跳过预加载');
+      this.log('没有云存储图片映射，跳过预加载');
       return;
     }
 
-    console.log('[Cloud] 开始从云端下载 shop_card 图片，共', names.length, '张');
+    this.log('开始下载 shop_card 图片，共' + names.length + '张');
     const promises = names.map(name => this._loadCloudImage(name));
     await Promise.all(promises);
     const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
-    console.log('[Cloud] 云端图片下载完成:', loaded.length, '/', names.length, '张成功');
+    const failed = names.filter(n => !this.shopCardImages[n] || !this.shopCardImages[n].loaded);
+    this.log('下载完成：' + loaded.length + '/' + names.length + '张成功');
+    if (failed.length > 0) {
+      this.log('失败：' + failed.join(', '));
+    }
   }
 
   _loadCloudImage(name) {
@@ -126,7 +139,8 @@ class CloudStorageManager {
         success: (res) => {
           const urlData = res.fileList[0];
           if (!urlData || urlData.status !== 0 || !urlData.tempFileURL) {
-            console.error('[Cloud] 获取临时URL失败:', name, urlData);
+            const detail = urlData ? (urlData.errMsg || JSON.stringify(urlData)) : 'urlData=null';
+            this.log('获取临时URL失败: ' + name + ' status=' + (urlData ? urlData.status : 'null') + ' detail=' + detail);
             this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
             resolve();
             return;
@@ -134,7 +148,7 @@ class CloudStorageManager {
           const img = wx.createImage();
           img.src = urlData.tempFileURL;
           img.onload = () => {
-            console.log('[Cloud] 下载完成:', name);
+            this.log('下载完成: ' + name);
             this.shopCardImages[name] = {
               img,
               loaded: true,
@@ -143,14 +157,14 @@ class CloudStorageManager {
             };
             resolve();
           };
-          img.onerror = () => {
-            console.error('[Cloud] 图片加载失败:', name);
+          img.onerror = (e) => {
+            this.log('图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
             this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
             resolve();
           };
         },
         fail: (err) => {
-          console.error('[Cloud] 获取临时URL失败:', name, err);
+          this.log('获取临时URL失败: ' + name + ' ' + (err && err.errMsg ? err.errMsg : JSON.stringify(err)));
           this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
           resolve();
         },
@@ -173,7 +187,7 @@ class CloudStorageManager {
         count++;
       }
     });
-    console.log('[Cloud] 已注入 renderer:', count, '张');
+    this.log('已注入 renderer: ' + count + '张');
   }
 }
 

@@ -285,6 +285,12 @@ class Renderer {
     this.goldAnim = null;
     this.debugMenuOpen = false;
     this.witchPropRects = [];
+    this.cloudLogScrollY = 0;
+    this.cloudLogDragging = false;
+    this.cloudLogDragStartY = 0;
+    this.cloudLogDragStartScrollY = 0;
+    this.cloudLogRect = null;
+    this.cloudLogScrollBarRect = null;
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
@@ -876,6 +882,9 @@ class Renderer {
         if (this.shopRenderer) this.shopRenderer.challengeBtnPressed = false;
       }
     }
+
+    // 云存储调试日志（真机排查用）
+    this._drawCloudDebugLogs(ctx, game, s);
 
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
@@ -2598,6 +2607,75 @@ class Renderer {
     ctx.restore();
   }
 
+  // ===== 云存储调试日志（真机排查用） =====
+  _drawCloudDebugLogs(ctx, game, s) {
+    const logs = game.cloudStorage && game.cloudStorage.debugLogs;
+    if (!logs || logs.length === 0) return;
+
+    const lineH = 13 * s;
+    const visibleLines = 10;
+    const pad = 6 * s;
+    const boxW = 280 * s;
+    const viewportH = visibleLines * lineH + pad * 2;
+    const contentH = logs.length * lineH + pad * 2;
+    const boxX = this.W - boxW - 8 * s;
+    const boxY = this.H - viewportH - 8 * s;
+
+    const maxScrollY = Math.max(0, contentH - viewportH);
+    this.cloudLogScrollY = Math.max(0, Math.min(this.cloudLogScrollY, maxScrollY));
+    const startLine = Math.floor(this.cloudLogScrollY / lineH);
+
+    ctx.save();
+    // 日志框背景（限制在视口内）
+    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillRect(boxX, boxY, boxW, viewportH);
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(boxX, boxY, boxW, viewportH);
+
+    // 裁剪到内容区域
+    ctx.beginPath();
+    ctx.rect(boxX + 1, boxY + 1, boxW - 2, viewportH - 2);
+    ctx.clip();
+
+    ctx.font = `${Math.floor(10 * s)}px monospace`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const offsetY = this.cloudLogScrollY % lineH;
+    for (let i = 0; i < visibleLines + 1; i++) {
+      const lineIdx = startLine + i;
+      if (lineIdx >= logs.length) break;
+      ctx.fillText(logs[lineIdx], boxX + pad, boxY + pad + i * lineH - offsetY);
+    }
+    ctx.restore();
+
+    // 滚动条
+    if (contentH > viewportH) {
+      const scrollBarW = 6 * s;
+      const scrollBarX = boxX + boxW - scrollBarW - 2 * s;
+      const trackY = boxY + 2 * s;
+      const trackH = viewportH - 4 * s;
+      const thumbH = Math.max(trackH * viewportH / contentH, 16 * s);
+      const thumbY = trackY + (this.cloudLogScrollY / maxScrollY) * (trackH - thumbH);
+
+      ctx.save();
+      // 轨道
+      ctx.fillStyle = 'rgba(255,255,255,0.12)';
+      ctx.fillRect(scrollBarX, trackY, scrollBarW, trackH);
+      ctx.restore();
+      // thumb（使用项目内的 roundRect，只填充不描边）
+      const thumbColor = this.cloudLogDragging ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)';
+      this.roundRect(scrollBarX, thumbY, scrollBarW, thumbH, scrollBarW / 2, thumbColor, null);
+
+      this.cloudLogScrollBarRect = { x: scrollBarX, y: thumbY, w: scrollBarW, h: thumbH };
+    } else {
+      this.cloudLogScrollBarRect = null;
+    }
+
+    this.cloudLogRect = { x: boxX, y: boxY, w: boxW, h: viewportH };
+  }
+
   // ===== 调试菜单 =====
   _drawDebugMenu(ctx, game, x, y, s) {
     const items = [
@@ -2760,7 +2838,7 @@ class GameOverRenderer {
     ctx.globalAlpha = btnAnim.alpha;
 
     // 重新开始按钮
-    this._drawScaledButton(ctx, '重新开始', btnX, btnY, btnW, btnH, s, game._restartBtnPressed, { color: '#c4a35a', radius: 8 });
+    this.parent._drawScaledButton(ctx, '重新开始', btnX, btnY, btnW, btnH, s, game._restartBtnPressed, { color: '#c4a35a', radius: 8 });
 
     // 闭合 closing 动画的 globalAlpha
     ctx.restore();
