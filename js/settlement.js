@@ -345,7 +345,7 @@ class WitchRewardRenderer {
           }
 
           // 下方文字 rewardItem.desc
-          const descY = iconCY + 50 * s;
+          const descY = iconCY + 65 * s;
           ctx.save();
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
           ctx.fillStyle = darkBlue;
