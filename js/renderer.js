@@ -150,6 +150,19 @@ class Renderer {
     } catch (e) {
       this.witchGiftIconLoaded = false;
     }
+
+    // 加载女巫帽子图标（用于女巫约束提示）
+    this.witchHatIcon = null;
+    this.witchHatIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/witch_hat.png';
+      img.onload = () => { this.witchHatIconLoaded = true; };
+      img.onerror = () => { this.witchHatIconLoaded = false; };
+      this.witchHatIcon = img;
+    } catch (e) {
+      this.witchHatIconLoaded = false;
+    }
     // 加载女巫头像（动态按 WITCH_SKILLS 中的 level）
     this.witchAvatars = {};
     const witchLevels = [...new Set(WITCH_SKILLS.map(s => s.level))];
@@ -353,7 +366,10 @@ class Renderer {
     const descW = ctx.measureText(joker.desc).width;
     const minPopupW = cardW + 20 * s;
     const popupW = Math.max(minPopupW, descW + pad * 2 + 20 * s);
-    const popupX = cardX + (cardW - popupW) / 2;
+    let popupX = cardX + (cardW - popupW) / 2;
+    // 确保弹窗不超出屏幕边缘
+    const edgePad = 5 * s;
+    popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
 
     // 计算内容高度
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
@@ -361,9 +377,24 @@ class Renderer {
     const hasLetters = letters && letters.length > 0;
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
-    const popupY = cardY + cardH + 6 * s;
+    const popupY = cardY + cardH + 6 * s + 2;
+
+    // 出现动画（easeOutBack：从卡牌底部向下弹出）
+    let appearScale = 1;
+    let appearOffsetY = 0;
+    if (popup.animStartTime) {
+      const ae = Date.now() - popup.animStartTime;
+      const ap = Math.min(ae / 200, 1);
+      const ease = Easing.easeOutBack(ap);
+      appearScale = 0.5 + 0.5 * ease;
+      appearOffsetY = (1 - ease) * 12 * s;
+    }
 
     ctx.save();
+    ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
+    ctx.scale(appearScale, appearScale);
+    ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
+    ctx.translate(0, appearOffsetY);
 
     // 小三角
     const triW = 8 * s;
@@ -374,13 +405,12 @@ class Renderer {
     ctx.lineTo(triX, popupY - triH);
     ctx.lineTo(triX + triW, popupY);
     ctx.closePath();
-    ctx.fillStyle = '#faf6ee';
+    ctx.fillStyle = '#9b59b6';
     ctx.fill();
 
     // 弹窗面板
     const r = 8 * s;
-    this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 1.2 * s);
-    ctx.restore();
+    this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
 
     let cy = popupY + pad + lineH / 2;
     const cx = popupX + popupW / 2;
@@ -462,6 +492,149 @@ class Renderer {
     ctx.moveTo(decoX, decoY);
     ctx.lineTo(decoX + decoW, decoY);
     ctx.stroke();
+    ctx.restore();
+
+    // 关闭弹窗整体变换
+    ctx.restore();
+  }
+
+  // ===== HUD 女巫技能详情弹窗 =====
+  _drawHudWitchPopup(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const s = this.scale;
+    const popup = game._hudWitchPopup;
+    if (!popup) return;
+
+    const witchSkill = getSkillForLevel(game.round);
+    if (!witchSkill) return;
+
+    const rect = this.hudWitchAvatarRect;
+    if (!rect) return;
+
+    const { x: avatarX, y: avatarY, w: avatarW, h: avatarH } = rect;
+
+    const pad = 10 * s;
+    const lineH = 16 * s;
+
+    // 计算弹窗宽度
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    const descW = ctx.measureText(witchSkill.desc).width;
+    const rewardW = ctx.measureText(witchSkill.reward_desc).width;
+    const minPopupW = avatarW + 20 * s;
+    const popupW = Math.max(minPopupW, Math.max(descW, rewardW) + pad * 2 + 20 * s);
+    let popupX = avatarX + (avatarW - popupW) / 2;
+
+    // 左边缘防溢出
+    const edgePad = 5 * s;
+    popupX = Math.max(edgePad, Math.min(popupX, W - popupW - edgePad));
+
+    // 计算内容高度
+    const popupH = pad * 2 + lineH * 4 + 8 * s;
+    const popupY = avatarY + avatarH + 6 * s + 2;
+
+    // 出现动画（easeOutBack：从头像下方弹出）
+    let appearScale = 1;
+    let appearOffsetY = 0;
+    if (popup.animStartTime) {
+      const ae = Date.now() - popup.animStartTime;
+      const ap = Math.min(ae / 200, 1);
+      const ease = Easing.easeOutBack(ap);
+      appearScale = 0.5 + 0.5 * ease;
+      appearOffsetY = (1 - ease) * 12 * s;
+    }
+
+    ctx.save();
+    ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
+    ctx.scale(appearScale, appearScale);
+    ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
+    ctx.translate(0, appearOffsetY);
+
+    // 小三角
+    const triW = 8 * s;
+    const triH = 6 * s;
+    const triX = avatarX + avatarW / 2;
+    ctx.beginPath();
+    ctx.moveTo(triX - triW, popupY);
+    ctx.lineTo(triX, popupY - triH);
+    ctx.lineTo(triX + triW, popupY);
+    ctx.closePath();
+    ctx.fillStyle = '#9b59b6';
+    ctx.fill();
+
+    // 弹窗面板
+    const r = 8 * s;
+    this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
+
+    let cy = popupY + pad + lineH / 2;
+    const cx = popupX + popupW / 2;
+
+    // 名称（带星星装饰）
+    ctx.save();
+    ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`✦ ${witchSkill.name} ✦`, cx, cy);
+    ctx.restore();
+
+    cy += lineH + 4 * s;
+
+    // 效果标签
+    ctx.save();
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('效果', popupX + pad, cy);
+    ctx.restore();
+
+    cy += lineH;
+
+    // 效果描述
+    ctx.save();
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(witchSkill.desc, popupX + pad, cy);
+    ctx.restore();
+
+    cy += lineH + 4 * s;
+
+    // 奖励标签
+    ctx.save();
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.fillStyle = '#888';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('奖励', popupX + pad, cy);
+    ctx.restore();
+
+    cy += lineH;
+
+    // 奖励描述
+    ctx.save();
+    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+    ctx.fillStyle = '#c4a35a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(witchSkill.reward_desc, popupX + pad, cy);
+    ctx.restore();
+
+    // 底部装饰线
+    const decoY = popupY + popupH - 10 * s;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(155,89,182,0.3)';
+    ctx.lineWidth = 1 * s;
+    const decoW = popupW * 0.5;
+    const decoX = popupX + (popupW - decoW) / 2;
+    ctx.beginPath();
+    ctx.moveTo(decoX, decoY);
+    ctx.lineTo(decoX + decoW, decoY);
+    ctx.stroke();
+    ctx.restore();
+
     ctx.restore();
   }
 
@@ -829,6 +1002,10 @@ class Renderer {
     if (game.state === 'playing') {
       this.drawHUD(game);
       this.drawPlaying(game);
+      // HUD 女巫技能详情弹窗
+      if (game._hudWitchPopup) {
+        this._drawHudWitchPopup(game);
+      }
       // 字母置换弹窗（覆盖在游戏页面上方）
       if (game._changeLetterPopup) {
         this.drawChangeLetterPopup(game);
@@ -1030,6 +1207,9 @@ class Renderer {
       ctx.lineWidth = 1.5 * s;
       ctx.stroke();
       ctx.restore();
+
+      // 保存头像点击区域
+      this.hudWitchAvatarRect = { x: avatarX, y: avatarY, w: avatarSize, h: avatarSize };
 
       // 文字右移，在头像和竖线之间居中
       roundLabelX = (avatarX + avatarSize + line1X) / 2;
@@ -1509,12 +1689,41 @@ class Renderer {
         ctx.restore();
 
         const failText = pc.witchFailText || '女巫约束未满足';
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        const failTextWidth = ctx.measureText(failText).width;
+        const hatSize = 14 * s;
+        const totalW = hatSize + 4 * s + failTextWidth;
+        const baseX = W / 2 - totalW / 2;
+        const baseY = wordAreaY + 32 * s;
+
+        // 出现动画（easeOutBack：从单词预览区下方弹出）
+        let appearScale = 1;
+        let appearOffsetY = 0;
+        if (pc._witchFailAnimStart) {
+          const ae = Date.now() - pc._witchFailAnimStart;
+          const ap = Math.min(ae / 300, 1);
+          const ease = Easing.easeOutBack(ap);
+          appearScale = ease;
+          appearOffsetY = -(1 - ease) * 10 * s;
+        }
+
         ctx.save();
+        ctx.translate(baseX + totalW / 2, baseY);
+        ctx.scale(appearScale, appearScale);
+        ctx.translate(-(baseX + totalW / 2), -baseY);
+        ctx.translate(0, appearOffsetY);
+
+        // 女巫帽子图标
+        if (this.witchHatIcon && this.witchHatIconLoaded) {
+          ctx.drawImage(this.witchHatIcon, baseX, baseY - hatSize / 2, hatSize, hatSize);
+        }
+
+        // 文字
         ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         ctx.fillStyle = '#9b59b6';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(failText, W / 2, wordAreaY + 32 * s);
+        ctx.fillText(failText, baseX + hatSize + 4 * s, baseY);
         ctx.restore();
       }
 

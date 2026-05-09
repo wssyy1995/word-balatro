@@ -272,23 +272,43 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
-    if (renderer.witchPropRects) {
-      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
-      if (witchHit) {
+    // 检测 HUD 女巫头像点击（显示/关闭技能详情弹窗）
+    if (renderer.hudWitchAvatarRect) {
+      const avatarHit = renderer.hitTest(x, y, [renderer.hudWitchAvatarRect]);
+      if (avatarHit) {
         vibrate();
-        if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
-          game._witchDetailPopup = null;
+        game._witchDetailPopup = null; // 关闭女巫牌详情弹窗
+        if (game._hudWitchPopup) {
+          game._hudWitchPopup = null;
         } else {
-          game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex };
+          game._hudWitchPopup = { animStartTime: Date.now() };
         }
         return;
       }
     }
 
-    // 点击弹窗外部关闭女巫详情弹窗
+    // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
+    if (renderer.witchPropRects) {
+      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
+      if (witchHit) {
+        vibrate();
+        game._hudWitchPopup = null; // 关闭 HUD 女巫弹窗
+        if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
+          game._witchDetailPopup = null;
+        } else {
+          game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex, animStartTime: Date.now() };
+        }
+        return;
+      }
+    }
+
+    // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗
     if (game._witchDetailPopup) {
       game._witchDetailPopup = null;
+      return;
+    }
+    if (game._hudWitchPopup) {
+      game._hudWitchPopup = null;
       return;
     }
 
@@ -503,6 +523,12 @@ function handleInput(x, y) {
         }
         return;
       }
+    }
+
+    // 点击商店页面其他地方，关闭售出按钮
+    if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
+      renderer.shopRenderer.shopSelectedOwned = null;
+      return;
     }
 
     // 检测刷新按钮点击（扣除 5 金币）

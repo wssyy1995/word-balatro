@@ -220,6 +220,12 @@ class ShopRenderer {
     }
     this.lastSelectedOwned = currentSelected ? {...currentSelected} : null;
 
+    // 3秒后自动消失
+    if (this.sellBtnAnimStart && Date.now() - this.sellBtnAnimStart > 3000) {
+      this.shopSelectedOwned = null;
+      this.sellBtnAnimStart = null;
+    }
+
     const top = (this.parent.safeTop || 0) + 20;
 
     // === 已购买道具卡牌栏（6格：左4女巫 + 右2药水，样式复用游戏页）===

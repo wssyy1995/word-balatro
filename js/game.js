@@ -427,6 +427,7 @@ class Game {
     this._changeLetterPopup = null;
     this._changeLetterHint = null;
     this._witchDetailPopup = null;
+    this._hudWitchPopup = null;
     this.pendingCheck = null;
     this.settlementData = null;
     this.witchRewardData = null;
@@ -469,6 +470,7 @@ class Game {
     this.extraLetters = 0;
     this.witchSkillPassed = true;
     this._witchDetailPopup = null;
+    this._hudWitchPopup = null;
     // 清除所有女巫牌的动画状态，防止上一回合的动画残留
     (this.jokers || []).forEach(j => {
       if (j) {
@@ -600,6 +602,7 @@ class Game {
       this.pendingCheck.state = 'witch_failed';
       this.pendingCheck.resolveTime = Date.now();
       this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
+      this.pendingCheck._witchFailAnimStart = Date.now();
       if (this.audioManager) this.audioManager.play('invalid');
       this.handsLeft--;
       if (this.handsLeft <= 0) {
