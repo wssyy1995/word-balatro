@@ -569,6 +569,33 @@ function handleInput(x, y) {
     // 动画进行中，忽略所有点击
     if (game._potionUpgrading) return;
 
+    // === 随机强化药水（老虎机）===
+    if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+      // 检测关闭按钮
+      if (renderer.randomUpgradeCloseRect) {
+        const closeHit = renderer.hitTest(x, y, [renderer.randomUpgradeCloseRect]);
+        if (closeHit) {
+          vibrate();
+          game.potionMode = null;
+          game._randomUpgradePopup = null;
+          game.state = game._prePotionState || 'shop';
+          game._prePotionState = null;
+          if (game.storageManager) game.storageManager.saveProgress(game);
+          return;
+        }
+      }
+      // 检测抽选按钮（只在 idle 阶段可点）
+      if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
+        const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
+        if (spinHit) {
+          vibrate();
+          game.startRandomSpin();
+          return;
+        }
+      }
+      return;
+    }
+
     // 检测字母点击
     if (renderer.potionLetterRects) {
       const letterHit = renderer.hitTest(x, y, renderer.potionLetterRects);
@@ -660,6 +687,7 @@ function restartGame() {
   game = new Game();
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
+  game._randomUpgradePopup = null;
   game._changeLetterPopup = null;
   game._closingChangeLetter = false;
   game._closeChangeLetterStartTime = null;

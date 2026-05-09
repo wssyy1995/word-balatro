@@ -410,6 +410,7 @@ class Game {
     this.potionMode = null;
     this._potionSelectedLetter = null;
     this._potionUpgrading = null;
+    this._randomUpgradePopup = null;
     this.state = 'playing';
     this.shopItems = null;
     this.safetyRounds = 3;
@@ -1043,6 +1044,70 @@ class Game {
     if (this._changeLetterHint && Date.now() - this._changeLetterHint.startTime > 2500) {
       this._changeLetterHint = null;
     }
+
+    // 随机强化药水：老虎机状态转换
+    if (this._randomUpgradePopup) {
+      const popup = this._randomUpgradePopup;
+      if (popup.phase === 'spinning') {
+        const elapsed = Date.now() - popup.spinStartTime;
+        const stepDuration = 60;
+        const step = Math.floor(elapsed / stepDuration);
+        if (step < popup.sequence.length) {
+          popup.currentLetter = popup.sequence[step];
+        } else {
+          popup.currentLetter = popup.targetLetter;
+          popup.phase = 'paused';
+          popup.pauseStartTime = Date.now();
+        }
+      } else if (popup.phase === 'paused') {
+        const pauseElapsed = Date.now() - popup.pauseStartTime;
+        if (pauseElapsed >= 2000) {
+          const letter = popup.targetLetter;
+          const potion = this.potionMode;
+          const mult = potion ? (potion.value || 4) : 4;
+          const existing = letterUpgrades.get(letter);
+          const totalMult = existing ? existing.mult * mult : mult;
+          const newScore = Math.floor(LETTER_SCORE[letter] * totalMult);
+          const oldScore = existing ? Math.floor(LETTER_SCORE[letter] * existing.mult) : LETTER_SCORE[letter];
+
+          upgradeLetter(this, letter);
+
+          this._potionUpgrading = {
+            startTime: Date.now(),
+            letter,
+            oldScore,
+            newScore,
+            upgradeMult: totalMult
+          };
+          this._randomUpgradePopup = null;
+        }
+      }
+    }
+  }
+
+  startRandomSpin() {
+    if (this._randomUpgradePopup && this._randomUpgradePopup.phase !== 'idle') return;
+
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const handLetters = [...new Set(this.hand.filter(c => c).map(c => c.letter))];
+    const targetLetter = handLetters.length > 0
+      ? handLetters[Math.floor(Math.random() * handLetters.length)]
+      : letters[Math.floor(Math.random() * 26)];
+
+    const sequence = [];
+    const totalSteps = 25;
+    for (let i = 0; i < totalSteps - 1; i++) {
+      sequence.push(letters[Math.floor(Math.random() * 26)]);
+    }
+    sequence.push(targetLetter);
+
+    this._randomUpgradePopup = {
+      phase: 'spinning',
+      targetLetter,
+      sequence,
+      spinStartTime: Date.now(),
+      currentLetter: null,
+    };
   }
 }
 
