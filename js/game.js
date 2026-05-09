@@ -539,6 +539,24 @@ class Game {
       this.pendingCheck.state = 'invalid';
       this.pendingCheck.resolveTime = Date.now();
       if (this.audioManager) this.audioManager.play('invalid');
+
+      // 检查是否有"出现非法单词，游戏结束"的女巫技能
+      const witchSkill = getSkillForLevel(this.round);
+      if (witchSkill && witchSkill.skill === 'forbid_illegal_words') {
+        this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
+        setTimeout(() => {
+          this.state = 'gameover';
+          this.gameOverReason = 'forbidden_word';
+          if (this.storageManager) {
+            this.storageManager.setHighScore(this.totalScore);
+            this.storageManager.updateStats(this);
+            this.storageManager.clearProgress();
+          }
+        }, 1000);
+        if (this.storageManager) this.storageManager.saveProgress(this);
+        return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
+      }
+
       this.handsLeft--;
       if (this.handsLeft <= 0) {
         // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
@@ -840,6 +858,8 @@ class Game {
               this.extraHands += 1;
             } else if (data.rewardItem.effect === 'extra_letter') {
               this.baseHandSize += 1;
+            } else if (data.rewardItem.effect === 'double_coin') {
+              this.gold *= 2;
             }
           }
           this.state = 'shop';
