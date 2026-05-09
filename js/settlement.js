@@ -280,13 +280,13 @@ class WitchRewardRenderer {
         const rewardItem = data.rewardItem;
 
         if (rewardItem && rewardItem.type === 'buff') {
-          const iconCY = py + 120 * s;
+          const iconCY = py + 135 * s;
 
           if (rewardItem.effect === 'double_coin') {
             // === double_coin: 大金币翻面动画 ===
             if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();
             const flipElapsed = Date.now() - this.coinFlipStartTime;
-            const flipDuration = 1500;
+            const flipDuration = 2500;
             const flipProgress = Math.min(flipElapsed / flipDuration, 1);
             const rotations = 2;
             const angle = rotations * Math.PI * 2 * Easing.easeOutCubic(flipProgress);
@@ -296,33 +296,16 @@ class WitchRewardRenderer {
             ctx.save();
             ctx.translate(W / 2, iconCY);
             ctx.scale(scaleX, 1);
-            if (scaleX > 0) {
-              // 正面：coin.png
-              if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-                ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
-              } else {
-                ctx.beginPath();
-                ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
-                ctx.fillStyle = '#f5c542';
-                ctx.fill();
-                ctx.strokeStyle = '#c4a35a';
-                ctx.lineWidth = 3 * s;
-                ctx.stroke();
-              }
+            if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+              ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
             } else {
-              // 背面：金色圆形 + ¥
               ctx.beginPath();
               ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
-              ctx.fillStyle = '#d4a017';
+              ctx.fillStyle = '#f5c542';
               ctx.fill();
               ctx.strokeStyle = '#c4a35a';
               ctx.lineWidth = 3 * s;
               ctx.stroke();
-              ctx.fillStyle = '#fff';
-              ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText('¥', 0, 0);
             }
             ctx.restore();
 
@@ -364,7 +347,7 @@ class WitchRewardRenderer {
           // 下方文字 rewardItem.desc
           const descY = iconCY + 50 * s;
           ctx.save();
-          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
           ctx.fillStyle = darkBlue;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
