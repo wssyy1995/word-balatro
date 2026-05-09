@@ -680,7 +680,6 @@ function gameLoop(timestamp) {
   // 第一回合页面渲染后，触发云存储图片后台预加载
   // 用 setTimeout 把云初始化从 RAF 回调中脱出来，避免 Failed to fetch
   if (game.state === 'playing' && !cloudPreloadTriggered) {
-    cloudPreloadTriggered = true;
     setTimeout(triggerCloudPreload, 0);
   }
 
