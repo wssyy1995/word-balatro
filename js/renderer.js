@@ -523,7 +523,7 @@ class Renderer {
     const elapsed = Date.now() - anim.startTime;
     const flyDuration = 1000;
     const stayDuration = 350;
-    const jumpDuration = 400;
+    const jumpDuration = 300;
     const maxCardId = anim.maxCardId;
     const orderedIds = anim.playedCardIds;
     const sequence = [maxCardId, ...orderedIds.filter(id => id !== maxCardId)];
