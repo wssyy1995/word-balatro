@@ -1440,40 +1440,41 @@ class Renderer {
       this.roundRect(barX, barY, barW, barH, r, bg);
     }
 
-    // 两条竖线 + 菱形（三列分隔）
+    // 分隔线 + 列绘制
     const lineTop = barY + 14 * s;
     const lineBot = barY + barH - 14 * s;
-    const line1X = barX + barW / 3;
-    const line2X = barX + barW * 2 / 3;
     ctx.strokeStyle = outerStroke;
     ctx.lineWidth = 0.8 * s;
-    [line1X, line2X].forEach((lx) => {
-      ctx.beginPath();
-      ctx.moveTo(lx, lineTop);
-      ctx.lineTo(lx, lineBot);
-      ctx.stroke();
-      // 菱形
-      ctx.save();
-      ctx.translate(lx, barY + barH / 2);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = outerStroke;
-      ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
-      ctx.restore();
-    });
-
-    // 三列文字
-    const roundCX = barX + barW / 6;
-    const targetCX = barX + barW / 2;
-    const scoreCX = barX + barW * 5 / 6;
-
-    // 检查本关是否有女巫技能
-    let roundLabelX = roundCX;
-    let roundNumX = roundCX;
 
     if (witchSkill) {
-      // 第一列绘制女巫头像
-      const avatarSize = 47 * s;
-      const avatarX = barX + 10 * s;
+      // === 四列布局（女巫技能 + 回合 + 目标分 + 当前）===
+      const colW = barW / 4;
+      const linePositions = [barX + colW, barX + colW * 2, barX + colW * 3];
+
+      // 绘制三条分隔线
+      linePositions.forEach((lx) => {
+        ctx.beginPath();
+        ctx.moveTo(lx, lineTop);
+        ctx.lineTo(lx, lineBot);
+        ctx.stroke();
+        // 菱形
+        ctx.save();
+        ctx.translate(lx, barY + barH / 2);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = outerStroke;
+        ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+        ctx.restore();
+      });
+
+      // 列中心
+      const c1 = barX + colW * 0.5;
+      const c2 = barX + colW * 1.5;
+      const c3 = barX + colW * 2.5;
+      const c4 = barX + colW * 3.5;
+
+      // === 列1：女巫技能 ===
+      const avatarSize = 32 * s;
+      const avatarX = barX + 4 * s;
       const avatarY = barY + (barH - avatarSize) / 2;
       const witchAvatar = this.witchAvatars[witchSkill.level];
 
@@ -1502,53 +1503,143 @@ class Renderer {
       // 保存头像点击区域
       this.hudWitchAvatarRect = { x: avatarX, y: avatarY, w: avatarSize, h: avatarSize };
 
-      // 文字右移，在头像和竖线之间居中
-      roundLabelX = (avatarX + avatarSize + line1X) / 2;
-      roundNumX = roundLabelX;
+      // 文字区域（头像右侧）
+      const textX = avatarX + avatarSize + 3 * s;
+      const textMaxW = colW - avatarSize - 7 * s;
+
+      // "女巫技能"标题
+      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('女巫技能', textX, barY + barH * 0.35);
+
+      // 描述（自动换行）
+      ctx.font = `${Math.floor(8 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      const desc = witchSkill.desc;
+      const chars = desc.split('');
+      let line = '';
+      let lineY = barY + barH * 0.62;
+      const lineHeight = 10 * s;
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        if (ctx.measureText(testLine).width > textMaxW && line !== '') {
+          ctx.fillText(line, textX, lineY);
+          line = chars[i];
+          lineY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, textX, lineY);
+
+      // === 列2：回合 ===
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('回合', c2, barY + barH * 0.32);
+
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s);
+
+      // === 列3：目标分 ===
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText('目标分', c3, barY + barH * 0.32);
+
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s);
+
+      // === 列4：当前 ===
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText('当前', c4, barY + barH * 0.32);
+
+      // 当前分数（带变化动画）
+      if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
+        this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+        this.lastScore = game.score;
+      }
+      const scorePulse = this._calcPulseScale(this.scoreAnim, 0.2);
+      let scoreScale = scorePulse.scale;
+      if (scorePulse.progress >= 1) this.scoreAnim = null;
+      ctx.save();
+      ctx.translate(c4, barY + barH * 0.68 - 2 * s);
+      ctx.scale(scoreScale, scoreScale);
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(game.score), 0, 0);
+      ctx.restore();
+
+    } else {
+      // === 无女巫技能：保持原有3列布局 ===
+      const line1X = barX + barW / 3;
+      const line2X = barX + barW * 2 / 3;
+      [line1X, line2X].forEach((lx) => {
+        ctx.beginPath();
+        ctx.moveTo(lx, lineTop);
+        ctx.lineTo(lx, lineBot);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(lx, barY + barH / 2);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = outerStroke;
+        ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+        ctx.restore();
+      });
+
+      const roundCX = barX + barW / 6;
+      const targetCX = barX + barW / 2;
+      const scoreCX = barX + barW * 5 / 6;
+
+      // 左侧：回合
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('回合', roundCX, barY + barH * 0.32);
+
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.fillText(String(game.round), roundCX, barY + barH * 0.68 - 2 * s);
+
+      // 中间：目标分
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText('目标分', targetCX, barY + barH * 0.32);
+
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.fillText(String(game.target), targetCX, barY + barH * 0.68 - 2 * s);
+
+      // 右侧：当前
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText('当前', scoreCX, barY + barH * 0.32);
+
+      if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
+        this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+        this.lastScore = game.score;
+      }
+      const scorePulse = this._calcPulseScale(this.scoreAnim, 0.2);
+      let scoreScale = scorePulse.scale;
+      if (scorePulse.progress >= 1) this.scoreAnim = null;
+      ctx.save();
+      ctx.translate(scoreCX, barY + barH * 0.68 - 2 * s);
+      ctx.scale(scoreScale, scoreScale);
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(game.score), 0, 0);
+      ctx.restore();
     }
-
-    // 左侧：回合
-    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#5a4a2a';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('回合', roundLabelX, barY + barH * 0.32);
-
-    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
-    ctx.fillStyle = darkBlue;
-    ctx.fillText(String(game.round), roundNumX, barY + barH * 0.68 - 2 * s);
-
-    // 中间：目标分
-    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#5a4a2a';
-    ctx.fillText('目标分', targetCX, barY + barH * 0.32);
-
-    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
-    ctx.fillStyle = darkBlue;
-    ctx.fillText(String(game.target), targetCX, barY + barH * 0.68 - 2 * s);
-
-    // 右侧：当前
-    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#5a4a2a';
-    ctx.fillText('当前', scoreCX, barY + barH * 0.32);
-
-    // 当前分数（带变化动画，飞行分数期间锁定）
-    if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
-      this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
-      this.lastScore = game.score;
-    }
-    const scorePulse = this._calcPulseScale(this.scoreAnim, 0.2);
-    let scoreScale = scorePulse.scale;
-    if (scorePulse.progress >= 1) this.scoreAnim = null;
-    ctx.save();
-    ctx.translate(scoreCX, barY + barH * 0.68 - 2 * s);
-    ctx.scale(scoreScale, scoreScale);
-    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
-    ctx.fillStyle = darkBlue;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(game.score), 0, 0);
-    ctx.restore();
 
   }
 
