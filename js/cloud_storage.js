@@ -34,6 +34,19 @@ class CloudStorageManager {
       'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png',
       'letter_god':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_god.png'
     };
+
+    // 默认 witch 图片云文件映射
+    this.defaultWitchFileMap = {
+      'Image 519_副本': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本.png',
+      'Image 519_副本2': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本2.png',
+      'Image 519_副本3': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本3.png',
+      'witch_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_11.png',
+      'witch_2': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_2.png',
+      'witch_2_upper': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_2_upper.png',
+      'witch_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_4.png',
+      'witch_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_5.png',
+      'witch_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_8.png',
+    };
   }
 
   init() {
@@ -62,6 +75,9 @@ class CloudStorageManager {
       this.log('本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
 
+    // 先用默认 witch 映射兜底
+    this.witchFileMap = { ...this.defaultWitchFileMap };
+
     // 加载 witch 图片的本地缓存映射
     try {
       const witchStored = wx.getStorageSync('cloud_witch_map');
@@ -70,7 +86,7 @@ class CloudStorageManager {
         this.witchFileMap = { ...this.witchFileMap, ...witchLocalMap };
         this.log('witch 本地缓存映射已加载，共' + Object.keys(witchLocalMap).length + '张');
       } else {
-        this.log('无 witch 本地缓存');
+        this.log('无 witch 本地缓存，使用默认云映射，共' + Object.keys(this.defaultWitchFileMap).length + '张');
       }
     } catch (e) {
       this.log('witch 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
