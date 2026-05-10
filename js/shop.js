@@ -997,7 +997,7 @@ class ShopRenderer {
       const avatarSize = 56 * s;
       const avatarX = moduleX + 18 * s;
       const avatarY = dividerY + 12 * s;
-      const witchAvatar = this.parent.witchAvatars[witchSkill.level];
+      const witchAvatar = this.parent.witchAvatars[`witch_${witchSkill.level}`];
 
       // 圆形裁剪绘制头像
       ctx.save();
