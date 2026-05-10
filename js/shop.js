@@ -1041,7 +1041,7 @@ class ShopRenderer {
       ctx.fillStyle = '#9b59b6';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 2 * s, textMaxW, 15 * s);
+      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 4 * s, textMaxW, 15 * s);
       ctx.restore();
       skillY += descH + 4 * s;
 
