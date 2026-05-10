@@ -191,20 +191,26 @@ class WitchRewardRenderer {
       const startX = (W - totalWidth) / 2;
       const giftY = H / 2 + panelOffsetY - giftSize / 2;
 
-      this.giftRects = [];
+      // === 标题：女巫奖励 ===
+      const titleY = giftY - 35 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('女巫奖励', W / 2, titleY);
+      ctx.restore();
 
-      // 八角星芒光芒（被选中的礼盒背后）
-      if (data._selectedGiftIndex !== undefined) {
-        const selectedCx = startX + data._selectedGiftIndex * (giftSize + giftGap) + giftSize / 2;
-        const selectedCy = giftY + giftSize / 2;
-        this._drawStarburst(ctx, selectedCx, selectedCy, giftSize, s);
-      }
+      this.giftRects = [];
 
       for (let i = 0; i < 3; i++) {
         const gx = startX + i * (giftSize + giftGap);
         const gy = giftY;
         const cx = gx + giftSize / 2;
         const cy = gy + giftSize / 2;
+
+        // 每个礼盒背后都有淡淡的金色光晕+旋转小星星
+        this._drawStarburst(ctx, cx, cy, giftSize, s);
 
         if (data._selectedGiftIndex !== undefined) {
           if (i === data._selectedGiftIndex) {
@@ -680,12 +686,12 @@ class WitchRewardRenderer {
     ctx.arc(0, 0, glowR, 0, Math.PI * 2);
     ctx.fill();
 
-    // === 散落小星星（固定位置，闪烁）===
+    // === 散落小星星（绕中心缓慢旋转+闪烁）===
     const starCount = 14;
     for (let i = 0; i < starCount; i++) {
       const seed = i * 137.5;
       const dist = size * (0.3 + 0.45 * Math.abs(Math.sin(seed)));
-      const angle = seed;
+      const angle = seed + now / 1500;
       const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
       const starSize = (1 + 0.6 * Math.sin(i * 3)) * s;
 
