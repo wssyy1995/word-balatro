@@ -1447,9 +1447,14 @@ class Renderer {
     ctx.lineWidth = 0.8 * s;
 
     if (witchSkill) {
-      // === 四列布局（女巫技能 + 回合 + 目标分 + 当前）===
-      const colW = barW / 4;
-      const linePositions = [barX + colW, barX + colW * 2, barX + colW * 3];
+      // === 四列布局（女巫技能 30% + 回合/目标分/当前 各 23.3%）===
+      const col1W = barW * 0.30;
+      const colOtherW = barW * 0.70 / 3;
+      const linePositions = [
+        barX + col1W,
+        barX + col1W + colOtherW,
+        barX + col1W + colOtherW * 2,
+      ];
 
       // 绘制三条分隔线
       linePositions.forEach((lx) => {
@@ -1467,10 +1472,10 @@ class Renderer {
       });
 
       // 列中心
-      const c1 = barX + colW * 0.5;
-      const c2 = barX + colW * 1.5;
-      const c3 = barX + colW * 2.5;
-      const c4 = barX + colW * 3.5;
+      const c1 = barX + col1W * 0.5;
+      const c2 = barX + col1W + colOtherW * 0.5;
+      const c3 = barX + col1W + colOtherW * 1.5;
+      const c4 = barX + col1W + colOtherW * 2.5;
 
       // === 列1：女巫技能 ===
       const avatarSize = 32 * s;
@@ -1505,7 +1510,7 @@ class Renderer {
 
       // 文字区域（头像右侧）
       const textX = avatarX + avatarSize + 3 * s;
-      const textMaxW = colW - avatarSize - 7 * s;
+      const textMaxW = col1W - avatarSize - 7 * s;
 
       // "女巫技能"标题
       ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
