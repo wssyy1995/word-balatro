@@ -3681,6 +3681,7 @@ class Renderer {
       { label: '直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
       { label: '上传shop_card', action: 'debug_upload_shop_card' },
+      { label: '上传witch', action: 'debug_upload_witch' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;
