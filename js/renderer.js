@@ -1472,11 +1472,11 @@ class Renderer {
         ctx.restore();
       });
 
-      // 列中心（回合右移、当前左移，都往目标分靠近）
+      // 列中心（各自在分割线之间居中）
       const c1 = barX + (col1W + line1Offset) * 0.5;
-      const c2 = barX + col1W + line1Offset + colOtherW * 0.65;
+      const c2 = barX + col1W + line1Offset + colOtherW * 0.5;
       const c3 = barX + col1W + line1Offset + colOtherW * 1.5;
-      const c4 = barX + col1W + line1Offset + colOtherW * 2.35;
+      const c4 = barX + col1W + line1Offset + colOtherW * 2.5;
 
       // === 列1：女巫技能 ===
       const avatarSize = 32 * s;
