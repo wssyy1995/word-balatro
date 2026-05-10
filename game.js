@@ -215,12 +215,14 @@ function handleInput(x, y) {
       return;
     }
 
-    // 检测卡牌点击
-    const cardHit = renderer.hitTest(x, y, renderer.cardRects);
-    if (cardHit) {
-      vibrate();
-      game.toggleSelect(cardHit.cardId);
-      return;
+    // 检测卡牌点击（动画播放期间禁用）
+    if (!game.pendingCheck) {
+      const cardHit = renderer.hitTest(x, y, renderer.cardRects);
+      if (cardHit) {
+        vibrate();
+        game.toggleSelect(cardHit.cardId);
+        return;
+      }
     }
 
     // 检测出牌按钮

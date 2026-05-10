@@ -27,12 +27,12 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
-    {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
-    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×3'},
-    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×4'},
+    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×2'},
+    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×3'},
     {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
-    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'每次出牌，所有字母基础分变为最高分（限3次）'}
+    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -124,7 +124,7 @@ function buyItem(game, idx) {
   } else if (item.type === 'crystal') {
     game.crystalEffects.push({...item});
     if (item.effect === 'reduce_target') {
-      game._reduceTargetAnim = { value: item.value };
+      game._reduceTargetAnim = { value: item.value, duration: 400 };
     }
     game.shopItems[idx] = null;
     if (game.storageManager) game.storageManager.saveProgress(game);
@@ -955,11 +955,11 @@ class ShopRenderer {
     if (game._reduceTargetAnim) {
       const reducedTarget = Math.floor(baseTarget * game._reduceTargetAnim.value);
       if (game._reduceTargetAnim.startTime) {
-        const pulse = this.parent._calcPulseScale(game._reduceTargetAnim, 0.3);
+        const pulse = this.parent._calcPulseScale(game._reduceTargetAnim, 0.2);
         targetScale = pulse.scale;
         displayTarget = pulse.progress >= 0.5 ? reducedTarget : baseTarget;
       } else {
-        displayTarget = reducedTarget;
+        displayTarget = baseTarget;
       }
     }
 

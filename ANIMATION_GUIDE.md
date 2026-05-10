@@ -200,6 +200,25 @@ ctx.fillText(String(game.score), 0, 0);
 ctx.restore();
 ```
 
+### ⚠️ 跨方法传递脉冲（如药水升级分数）
+
+若脉冲发生在动画时间线内部，且最终由 `drawCard()` 绘制，可将计算好的 scale 写入 `card._scoreScale`：
+
+```javascript
+// 在动画方法中计算脉冲并挂载到卡牌对象
+const pulseState = { startTime: Date.now(), duration: 400 };
+const scoreScale = this._calcPulseScale(pulseState, 0.2).scale;
+tempCard._scoreScale = scoreScale;
+
+// 在 drawCard() 分数绘制段消费
+let scoreScale = 1;
+if (card._scorePulseAnim) { /* ... */ }
+if (card._scoreScale) {
+  scoreScale = card._scoreScale;
+}
+ctx.scale(scoreScale, scoreScale);
+```
+
 ### 已统一的使用场景
 
 | 场景 | 文件 | maxScale | 说明 |
@@ -207,8 +226,8 @@ ctx.restore();
 | HUD 当前分数 | renderer.js | 0.20 | 分数变化时 |
 | 金币胶囊 | renderer.js | 0.30 | 金币变化时 |
 | 基础倍率 | renderer.js | 0.28 | 倍率变化时 |
-| 目标分数减免 | shop.js | 0.30 | 购买 reduce_target 后 |
-| 药水升级分数 | renderer.js | 0.20 | 升级分数变化时 |
+| 目标分数减免 | shop.js | 0.20 | 购买 reduce_target 后，目标数字放大回弹 |
+| 药水升级分数 | renderer.js | 0.20 | `_drawPotionUpgradeAnim` 计算脉冲后写入 `card._scoreScale`，`drawCard` 读取并应用缩放 |
 
 ### 返回值
 

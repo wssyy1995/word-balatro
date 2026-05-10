@@ -29,8 +29,9 @@ word-balatro/
     ├── game.js          # Game 核心类 + 工具函数（计分、校验、保底、发牌）
     ├── renderer.js      # Canvas 主渲染器：所有 UI、动画、粒子、HUD
     ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
-    ├── settlement.js    # 回合金币结算弹窗渲染
+    ├── settlement.js    # 回合金币结算弹窗 + 女巫奖励渲染
     ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
+    ├── cloud_storage.js # 微信云存储：shop_card 图片上传/下载/注入
     ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
     ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
     ├── witch_skills.js  # 女巫技能约束与奖励
@@ -90,7 +91,10 @@ word-balatro/
 | `extraSafety` | number | 水晶球延长保底回合数 |
 | `safetyRounds` | number | 前 3 回合保底（手牌必有合法单词） |
 | `settlementData` | Object | 回合结算弹窗数据 |
+| `witchRewardData` | Object | 女巫奖励阶段数据（gift / result） |
 | `pendingCheck` | Object | 单词校验状态机（checking / valid / invalid / witch_failed） |
+| `_reduceTargetAnim` | Object | 目标分数减免动画状态 |
+| `_changeLetterPopup` | Object | 字母置换弹窗状态 |
 | `animManager` | AnimationManager | 动画管理器实例 |
 | `audioManager` | AudioManager | 音效管理器实例 |
 | `storageManager` | StorageManager | 本地存储管理器实例 |
@@ -111,8 +115,8 @@ word-balatro/
 3. 本地校验（WORD_DATA / onlineWordCache）
 4. 本地不存在 → 在线 API 校验（dictionaryapi.dev）
 5. 非法 → pendingCheck.state = 'invalid'，handsLeft--，可能触发 gameover
-6. 女巫技能约束检查（如 need_letter_4）→ 不满足则 witch_failed
-7. 合法 → calcWordScore() 计算分数
+6. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
+7. 合法 → calcWordScore() 计算分数（含 letter_god 特殊处理）
 8. 启动完整动画时间线：
    - 阶段1（1s后）：字母依次跳跃 + per_card 女巫牌触发
    - 阶段1.5：波浪动画 + whole_word 女巫牌依次触发
@@ -145,7 +149,8 @@ word-balatro/
 - target = 150 + 50 × round × (round - 1)
 - deck=createDeck(), hand=drawWithSafety()
 - selected=[], crystalEffects 生效后清空
-- extraDiscards=0, extraSafety=0, extraHands=0
+- extraDiscards=0, extraSafety=0, extraHands=0, extraLetters=0
+- _reduceTargetAnim=null, witchSkillPassed=true
 ```
 
 #### 3.2.3 计分系统（calcWordScore）
@@ -161,6 +166,10 @@ for each whole_word 女巫牌:
 for each flat_bonus 女巫牌:
   基础分 += 女巫牌 value
 
+// letter_god（字母之神）：计分时，本单词所有字母按最高分字母算分
+if 存在 letter_god 女巫牌:
+  每张卡 score = 本单词最高分字母的 score
+
 总分 = ceil(基础分 × mult)
 ```
 
@@ -173,8 +182,11 @@ for each flat_bonus 女巫牌:
 | `has_vowel` | 卡牌为元音 | per_card：该卡 score ×2 |
 | `has_face` | 整词含 X/Y/Z | whole_word：mult ×3 |
 | `length_3` | 单词 ≥3 字母 | whole_word：mult ×1.2 |
+| `length_4` | 单词 ≥4 字母 | whole_word：mult ×1.5 |
 | `length_5` | 单词 ≥5 字母 | whole_word：mult ×2 |
 | `length_6` | 单词 ≥6 字母 | whole_word：mult ×3 |
+| `letter_god` | 每次计分（限3次） | limit：本单词所有字母按最高分字母算分 |
+| `shield_illegal` | — | 打出非法单词不扣除出牌次数 |
 
 **目标分数公式**
 ```
@@ -218,7 +230,10 @@ target = 150 + 50 × round × (round - 1)
 
 | 回合 | 约束 | 说明 | 奖励 |
 |------|------|------|------|
-| 第 2 关 | `need_letter_4` | 每次出牌必须不少于 4 个字母 | 字母强化药水 |
+| 第 2 关 | `force_letter_3` | 每次出牌只能出 3 张字母牌 | 字母置换药水（50%） |
+| 第 5 关 | `need_letter_4` | 每次出牌必须不少于 4 个字母 | 额外出牌（100%） |
+| 第 8 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 金币翻倍（50%） |
+| 第 11 关 | `force_letter_4` | 每次出牌只能出 4 张字母牌 | 额外字母（100%） |
 
 ---
 
@@ -416,6 +431,17 @@ BGM 支持循环播放，音量 0.3。
 | `word_balatro_stats` | 统计（总局数、总分、最高关卡） |
 | `word_balatro_settings` | 设置（音效、音乐、震动开关） |
 
+### 3.7 cloud_storage.js — 微信云存储
+
+用于管理 `shop_card` 系列图片的上传、下载与运行时注入：
+
+- **上传**：`uploadShopCards()` 将 `images/shop_card/` 目录下所有图片批量上传到微信云存储
+- **下载**：`preloadShopCardImages()` 根据 `cloudFileMap` 获取临时 URL 并缓存为 `Image` 对象
+- **注入**：`injectToRenderer(renderer)` 将云缓存图片覆盖到 `renderer.shopCardImages`，实现无版本更新替换商店图标
+- **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
+
+> 云存储初始化延迟到第一回合渲染完成后执行，避免阻塞游戏启动。
+
 ---
 
 ## 4. 商店系统（Shop）
@@ -424,8 +450,8 @@ BGM 支持循环播放，音量 0.3。
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 7 种 | 4-8 金币 | 装备栏 4 格 | 紫色 |
-| **水晶球**（crystal） | 3 种 | 3-5 金币 | 购买即生效 | 蓝色 |
+| **女巫牌**（witch） | 10 种 | 4-10 金币 | 装备栏 4 格 | 紫色 |
+| **水晶球**（crystal） | 4 种 | 3-5 金币 | 购买即生效 | 蓝色 |
 | **魔法药水**（potion） | 4 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复。
@@ -438,6 +464,7 @@ BGM 支持循环播放，音量 0.3。
 | 王牌强化 | X/Y/Z 分数 ×3 | 3 |
 | 通用强化 | 任意字母分数 ×2 | 2 |
 | 字母置换 | 将手牌中一张替换为指定字母 | - |
+| 随机强化 | 随机强化 1 个字母，分数 ×4 | 4 |
 
 ### 4.3 水晶球种类
 
@@ -445,7 +472,8 @@ BGM 支持循环播放，音量 0.3。
 |------|------|
 | 额外弃牌 | 下一回合弃牌次数 +1 |
 | 额外出牌 | 下一回合出牌次数 +1 |
-| 金币祝福 | 下一回合开始时获得 3 金币 |
+| 额外手牌 | 下一回合手牌数量 +1 |
+| 目标减免 | 下一回合目标分数 ×0.8 |
 
 ### 4.4 购买与售出流程
 
@@ -472,11 +500,11 @@ BGM 支持循环播放，音量 0.3。
 ## 5. 游戏状态机
 
 ```
-[playing] ──score≥target──→ [settlement] ──claim──→ [shop]
-    │                                                    │
-    │←────────────nextRound()───────────────────────────┘
-    │                                                    │
-    │←──upgradeCard()── [potion] ←── buy potion →───────┘
+[playing] ──score≥target──→ [settlement] ──claim──→ [witch_reward] ──→ [shop]
+    │                                                              │
+    │←──────────────────nextRound()───────────────────────────────┘
+    │                                                              │
+    │←──upgradeCard()── [potion] ←── buy potion →─────────────────┘
     │       (暂存/升级后返回)
     │
     └── out_of_hands / surrender ──→ [gameover] ──restart()──→ [playing]
@@ -628,8 +656,9 @@ letterUpgrades = Map {
 |------|------|------|
 | v1.0.0 | 2026-04-30 | 初始版本 |
 | v1.1.0 | 2026-04-30 | 转为微信小游戏 Canvas 版 |
-| v1.2.0+ | 2026-05 | 新增动画系统、音效系统、本地存储、女巫技能、售出/刷新、药水升级、调试菜单等 |
+| v1.2.0 | 2026-05-01 | 新增动画系统、音效系统、本地存储、女巫技能、售出/刷新、药水升级、调试菜单 |
+| v1.3.0 | 2026-05-06 | 新增女巫奖励阶段、云存储系统、字母置换、目标减免、额外手牌、字母之神、容错咒文等 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-05-06*
+*文档基于实际代码整理，最后更新：2026-05-09*

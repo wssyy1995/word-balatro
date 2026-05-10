@@ -493,23 +493,206 @@ class Renderer {
         ctx.restore();
         lx += circleR * 2 + circleGap;
       });
-    }
 
-    // 底部装饰线
-    const decoY = popupY + popupH - 10 * s;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(155,89,182,0.3)';
-    ctx.lineWidth = 1 * s;
-    const decoW = popupW * 0.5;
-    const decoX = popupX + (popupW - decoW) / 2;
-    ctx.beginPath();
-    ctx.moveTo(decoX, decoY);
-    ctx.lineTo(decoX + decoW, decoY);
-    ctx.stroke();
-    ctx.restore();
+      // 底部装饰线（仅在有可作用字母时显示）
+      const decoY = popupY + popupH - 10 * s;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(155,89,182,0.3)';
+      ctx.lineWidth = 1 * s;
+      const decoW = popupW * 0.5;
+      const decoX = popupX + (popupW - decoW) / 2;
+      ctx.beginPath();
+      ctx.moveTo(decoX, decoY);
+      ctx.lineTo(decoX + decoW, decoY);
+      ctx.stroke();
+      ctx.restore();
+    }
 
     // 关闭弹窗整体变换
     ctx.restore();
+  }
+
+  // ===== 字母之神专属星星飞行动画 =====
+  _drawLetterGodAnim(game) {
+    const ctx = this.ctx;
+    const s = this.scale;
+    const anim = game._letterGodAnim;
+    if (!anim) return;
+
+    if (!anim.hitCardIds) anim.hitCardIds = {};
+    const elapsed = Date.now() - anim.startTime;
+    const flyDuration = 1000;
+    const stayDuration = 500;
+    const jumpDuration = 400;
+    const maxCardId = anim.maxCardId;
+    const orderedIds = anim.playedCardIds;
+    const sequence = [maxCardId, ...orderedIds.filter(id => id !== maxCardId)];
+
+    // 计算总时长
+    let totalDuration = flyDuration + stayDuration;
+    for (let i = 1; i < sequence.length; i++) {
+      totalDuration += jumpDuration + stayDuration;
+    }
+
+    // 动画完成
+    if (elapsed >= totalDuration) {
+      game._letterGodAnim = null;
+      if (game.pendingCheck && game.pendingCheck.state === 'valid') {
+        // 字母之神完成后，重置时间基准并进入阶段1（字母跳跃）
+        // resolveTime 设为当前时间减去 letterJumpStart(1000ms)，
+        // 这样 jumpElapsed 从 0 开始，第一个字母立即开始跳跃，不会显示 0
+        game.pendingCheck.resolveTime = Date.now() - 1000;
+        game.pendingCheck.animPhase = 1;
+      }
+      const letterGodIdx = game.pendingCheck?.letterGodIndex ?? -1;
+      if (letterGodIdx >= 0 && game.jokers[letterGodIdx]) {
+        game.jokers[letterGodIdx]._triggered = false;
+        game.jokers[letterGodIdx]._letterGodAnimStart = null;
+      }
+      return;
+    }
+
+    // 获取女巫牌位置
+    const letterGodIdx = game.pendingCheck?.letterGodIndex ?? -1;
+    const witchRect = this.witchPropRects?.find(r => r.jokerIndex === letterGodIdx);
+    const cardRects = this.cardRects || [];
+    const getCardRect = (cardId) => cardRects.find(r => r.cardId === cardId);
+
+    // ===== 烟花等待期：只绘制呼吸光晕 =====
+    if (elapsed < 0) {
+      if (witchRect) {
+        const breath = 0.5 + 0.5 * Math.sin((Date.now() - (anim.startTime - 1000)) / 250);
+        ctx.save();
+        ctx.shadowColor = 'rgba(155,89,182,0.6)';
+        ctx.shadowBlur = (10 + 10 * breath) * s;
+        const strokeColor = `rgba(155,89,182,${0.4 + 0.4 * breath})`;
+        const lineW = (2 + 2 * breath) * s;
+        this.roundRect(witchRect.x, witchRect.y, witchRect.w, witchRect.h, 4 * s, null, strokeColor, lineW);
+        ctx.restore();
+      }
+      return;
+    }
+
+    // ===== 绘制女巫牌呼吸光晕 =====
+    if (witchRect) {
+      const breath = 0.5 + 0.5 * Math.sin(elapsed / 250);
+      ctx.save();
+      ctx.shadowColor = 'rgba(155,89,182,0.6)';
+      ctx.shadowBlur = (10 + 10 * breath) * s;
+      const strokeColor = `rgba(155,89,182,${0.4 + 0.4 * breath})`;
+      const lineW = (2 + 2 * breath) * s;
+      this.roundRect(witchRect.x, witchRect.y, witchRect.w, witchRect.h, 4 * s, null, strokeColor, lineW);
+      ctx.restore();
+    }
+
+    // ===== 计算星星位置 =====
+    let starX, starY;
+    let currentCardId = null;
+
+    if (elapsed < flyDuration) {
+      const t = elapsed / flyDuration;
+      const eased = Easing.easeOutCubic(t);
+      const maxRect = getCardRect(maxCardId);
+      if (witchRect && maxRect) {
+        starX = witchRect.x + witchRect.w / 2 + (maxRect.x + maxRect.w / 2 - witchRect.x - witchRect.w / 2) * eased;
+        starY = witchRect.y + witchRect.h / 2 + (maxRect.y + maxRect.h / 2 - witchRect.y - witchRect.h / 2) * eased;
+      }
+    } else {
+      let t0 = flyDuration;
+      if (elapsed < t0 + stayDuration) {
+        const maxRect = getCardRect(maxCardId);
+        if (maxRect) {
+          starX = maxRect.x + maxRect.w / 2;
+          starY = maxRect.y + maxRect.h / 2;
+        }
+        currentCardId = maxCardId;
+        anim.hitCardIds[maxCardId] = true;
+      } else {
+        t0 += stayDuration;
+        for (let i = 1; i < sequence.length; i++) {
+          const fromId = sequence[i - 1];
+          const toId = sequence[i];
+          if (elapsed < t0 + jumpDuration) {
+            const t = (elapsed - t0) / jumpDuration;
+            const fromRect = getCardRect(fromId);
+            const toRect = getCardRect(toId);
+            if (fromRect && toRect) {
+              const fromX = fromRect.x + fromRect.w / 2;
+              const fromY = fromRect.y + fromRect.h / 2;
+              const toX = toRect.x + toRect.w / 2;
+              const toY = toRect.y + toRect.h / 2;
+              starX = fromX + (toX - fromX) * t;
+              const jumpHeight = 40 * s;
+              starY = fromY + (toY - fromY) * t - Math.sin(t * Math.PI) * jumpHeight;
+            }
+            currentCardId = toId;
+            break;
+          }
+          t0 += jumpDuration;
+          if (elapsed < t0 + stayDuration) {
+            const toRect = getCardRect(toId);
+            if (toRect) {
+              starX = toRect.x + toRect.w / 2;
+              starY = toRect.y + toRect.h / 2;
+            }
+            currentCardId = toId;
+            anim.hitCardIds[toId] = true;
+            break;
+          }
+          t0 += stayDuration;
+        }
+      }
+    }
+
+    // 设置当前停留卡牌的分数脉冲
+    if (currentCardId) {
+      let card = null;
+      if (game.hand) card = game.hand.find(c => c && c.id === currentCardId);
+      if (!card && game.pendingCheck && game.pendingCheck.cards) {
+        card = game.pendingCheck.cards.find(c => c.id === currentCardId);
+      }
+      if (card && !card._scorePulseAnim) {
+        card._scorePulseAnim = { startTime: Date.now(), duration: 500 };
+      }
+    }
+
+    // ===== 绘制星星 =====
+    if (starX !== undefined && starY !== undefined) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(155,89,182,0.9)';
+      ctx.shadowBlur = 20 * s;
+      ctx.fillStyle = '#9b59b6';
+      this._drawStar(ctx, starX, starY, 10 * s, 5 * s, 5);
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.beginPath();
+      ctx.arc(starX, starY, 3 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  // ===== 绘制五角星 =====
+  _drawStar(ctx, cx, cy, outerR, innerR, spikes = 5) {
+    let rot = Math.PI / 2 * 3;
+    let x = cx;
+    let y = cy;
+    let step = Math.PI / spikes;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - outerR);
+    for (let i = 0; i < spikes; i++) {
+      x = cx + Math.cos(rot) * outerR;
+      y = cy + Math.sin(rot) * outerR;
+      ctx.lineTo(x, y);
+      rot += step;
+      x = cx + Math.cos(rot) * innerR;
+      y = cy + Math.sin(rot) * innerR;
+      ctx.lineTo(x, y);
+      rot += step;
+    }
+    ctx.lineTo(cx, cy - outerR);
+    ctx.closePath();
+    ctx.fill();
   }
 
   // ===== HUD 女巫技能详情弹窗 =====
@@ -740,30 +923,9 @@ class Renderer {
       }
     }
 
-    // letter_god 专用动画：跳起（200ms）→ 保持+呼吸（1500ms）→ 落下（200ms）
+    // letter_god 呼吸光晕（由 _drawLetterGodAnim 统一管理时长）
     if (prop._letterGodAnimStart && prop.trigger === 'letter_god') {
-      const elapsed = Date.now() - prop._letterGodAnimStart;
-      const jumpUpDuration = 200;
-      const holdDuration = 1500;
-      const jumpDownDuration = 200;
-      const totalDuration = jumpUpDuration + holdDuration + jumpDownDuration;
-
-      if (elapsed >= totalDuration) {
-        prop._letterGodAnimStart = null;
-        prop._triggered = false;
-        offsetY = 0;
-      } else {
-        prop._triggered = true;
-        if (elapsed < jumpUpDuration) {
-          const t = elapsed / jumpUpDuration;
-          offsetY = -Easing.easeOutCubic(t) * 14 * s;
-        } else if (elapsed < jumpUpDuration + holdDuration) {
-          offsetY = -14 * s;
-        } else {
-          const t = (elapsed - jumpUpDuration - holdDuration) / jumpDownDuration;
-          offsetY = -14 * s * (1 - Easing.easeOutCubic(t));
-        }
-      }
+      prop._triggered = true;
     }
 
     const finalY = y + offsetY;
@@ -796,10 +958,10 @@ class Renderer {
       ctx.fill();
 
       // 外层扩散光晕（轮廓向外冒光）
-      ctx.strokeStyle = 'rgba(155,89,182,0.22)';
-      ctx.lineWidth = 8 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.6)';
-      ctx.shadowBlur = 20 * s;
+      ctx.strokeStyle = 'rgba(155,89,182,0.15)';
+      ctx.lineWidth = 6 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.5)';
+      ctx.shadowBlur = 14 * s;
       ctx.beginPath();
       ctx.moveTo(x + r, finalY);
       ctx.lineTo(x + w - r, finalY);
@@ -815,9 +977,9 @@ class Renderer {
 
       // 紫色粗边框
       ctx.strokeStyle = '#9b59b6';
-      ctx.lineWidth = 4 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.8)';
-      ctx.shadowBlur = 14 * s;
+      ctx.lineWidth = 2.5 * s;
+      ctx.shadowColor = 'rgba(155,89,182,0.6)';
+      ctx.shadowBlur = 8 * s;
       ctx.beginPath();
       ctx.moveTo(x + r, finalY);
       ctx.lineTo(x + w - r, finalY);
@@ -998,7 +1160,7 @@ class Renderer {
   }
 
   // 绘制卡牌（使用 card_template.png 背景图 + 文字叠加）
-  drawCard(card, x, y, isNew = false) {
+  drawCard(card, x, y, isNew = false, displayScoreOverride = null) {
     const ctx = this.ctx;
     const w = this.cardW;
     const h = this.cardH;
@@ -1069,23 +1231,12 @@ class Renderer {
         delete card._scorePulseAnim;
       }
     }
+    if (card._scoreScale) {
+      scoreScale = card._scoreScale;
+    }
     ctx.scale(scoreScale, scoreScale);
 
-    // 字母之神分数值过渡：1.5s 内从旧值过渡到新值
-    let displayScore = card.score;
-    if (card._oldScore !== undefined && card._scoreAnimStart) {
-      const elapsed = Date.now() - card._scoreAnimStart;
-      const duration = 1500;
-      if (elapsed < duration) {
-        const t = elapsed / duration;
-        const eased = Easing.easeOutCubic(t);
-        displayScore = Math.round(card._oldScore + (card.score - card._oldScore) * eased);
-      } else {
-        displayScore = card.score;
-        delete card._oldScore;
-        delete card._scoreAnimStart;
-      }
-    }
+    let displayScore = displayScoreOverride !== null ? displayScoreOverride : card.score;
 
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
     // 脉冲期间使用金色强调，与 HUD 分数更新风格一致
@@ -1137,6 +1288,10 @@ class Renderer {
     if (game.state === 'playing') {
       this.drawHUD(game);
       this.drawPlaying(game);
+      // 字母之神专属星星飞行动画（在其他女巫牌动画之前）
+      if (game._letterGodAnim) {
+        this._drawLetterGodAnim(game);
+      }
       // HUD 女巫技能详情弹窗
       if (game._hudWitchPopup) {
         this._drawHudWitchPopup(game);
@@ -1573,11 +1728,10 @@ class Renderer {
         ctx.fillText('.'.repeat(dotCount), W / 2, wordAreaY + 24 * s + 3 * s);
 
       } else if (pc.state === 'valid') {
-        // 合法：深绿色单词 + 中文释义 + 动画阶段
-        const elapsed = Date.now() - pc.resolveTime;
+        // === 公共部分：深绿色单词（支持波浪）和释义 ===
         const phase = pc.animPhase || 0;
+        const elapsed = Date.now() - (pc.resolveTime || 0);
 
-        // 深绿色单词（逐个字母绘制，支持波浪偏移）
         ctx.save();
         ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#2d7d32';
@@ -1601,150 +1755,187 @@ class Renderer {
         });
         ctx.restore();
 
-        // 中文释义
         if (pc.meaning) {
           const mText = require('./game').formatMeaning(pc.meaning);
           ctx.font = `${Math.floor(11 * s)}px sans-serif`;
           ctx.fillStyle = '#777';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(mText, W / 2, wordAreaY + 33 * s );
+          ctx.fillText(mText, W / 2, wordAreaY + 33 * s);
         }
 
-        // === 阶段0: 刚检测完成，触发烟花 ===
+        // === 阶段0: 烟花（始终触发）===
         if (phase === 0 && !pc._sparklesSpawned) {
           pc._sparklesSpawned = true;
           this._spawnSparkles(W / 2 - 60 * s, wordAreaY, 12);
           this._spawnSparkles(W / 2 + 60 * s, wordAreaY, 12);
         }
 
-        // === 阶段1: 字母跳跃 + 第一个方块累加 ===
-        const letterInterval = 350;
-        const letterJumpStart = 1000;
-        const cardsInOrder = pc.cardsInOrder || [];
-        let accumulatedScore = 0;
-        let currentJumpIdx = -1;
-
-        if (phase >= 1) {
-          const jumpElapsed = elapsed - letterJumpStart;
-          currentJumpIdx = Math.floor(jumpElapsed / letterInterval);
-          const isAllJumped = currentJumpIdx >= cardsInOrder.length;
-          if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
-          const jokers = game.jokers || [];
-
-          // === per_card 倍率提示（左方块上方 "xN"）===
-          pc._perCardMultText = null;
-          if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
-            const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
-            if (triggered.length > 0) {
-              const totalMult = triggered.reduce((prod, jIdx) => {
-                const joker = jokers[jIdx];
-                return joker && joker.value ? prod * joker.value : prod;
-              }, 1);
-              if (totalMult > 1) pc._perCardMultText = `x${totalMult}`;
-            }
-          }
-
-          // 计算累加分数（考虑女巫牌对单个字母的加成）
-          for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
-            let score = cardsInOrder[i].score;
-            const triggered = pc.jokerTriggers?.[i] || [];
-            triggered.forEach(jIdx => {
-              const joker = jokers[jIdx];
-              if (joker && joker.value) score *= joker.value;
-            });
-            accumulatedScore += score;
-          }
-
-          // 先清除所有女巫牌跳跃偏移和触发状态
-          jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
-
-          // === phase 1.5: 波浪跳跃（所有字母跳完后，不论有无 whole_word 都走）===
-          const totalJumpTime = cardsInOrder.length * letterInterval;
-          const waveStartDelay = 100;
-          const waveInterval2 = 80;
-          if (jumpElapsed >= totalJumpTime) {
-            const waveElapsed = jumpElapsed - totalJumpTime;
-            if (!pc._waveOffsetYs) pc._waveOffsetYs = [];
-            cardsInOrder.forEach((_, i) => {
-              const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 200;
-              if (waveProgress >= 0 && waveProgress <= 1) {
-                const waveH = 5 * s * Math.sin(waveProgress * Math.PI);
-                pc._waveOffsetYs[i] = -waveH;
-              } else {
-                pc._waveOffsetYs[i] = 0;
-              }
-            });
-            // whole_word 女巫牌紫色边框在阶段2依次触发，不在此处理
-          }
-
-          // 给跳跃中的卡牌设置偏移（所有字母跳完后不再跳跃）
-          cardsInOrder.forEach((card, i) => {
-            if (isAllJumped) {
-              card.jumpOffsetY = 0;
-            } else if (i === currentJumpIdx && jumpElapsed >= 0) {
-              const jumpProgress = ((jumpElapsed % letterInterval) / 200);
-              card.jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
-
-              // 同步触发对应的女巫牌（紫色边框 + 同步跳跃）
-              const triggered = pc.jokerTriggers?.[i] || [];
-              triggered.forEach(jIdx => {
-                const joker = jokers[jIdx];
-                if (joker) {
-                  joker._triggered = true;
-                  joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
-                }
-              });
-            } else if (i < currentJumpIdx) {
-              card.jumpOffsetY = 0;
-            }
-          });
-
-          // flat_bonus 女巫牌显示紫色边框，并和当前字母同步跳跃
-          const globalTriggered = pc.globalTriggered || [];
-          globalTriggered.forEach(jIdx => {
-            const joker = jokers[jIdx];
-            if (joker) {
-              joker._triggered = true;
-              if (!isAllJumped && currentJumpIdx >= 0) {
-                const jumpProgress = ((jumpElapsed % letterInterval) / 200);
-                joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
-              }
-            }
-          });
-
-          // 所有字母跳完后，清除女巫牌跳跃偏移和触发状态
-          if (isAllJumped) {
-            jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
+        // === 阶段0→1 过渡（无字母之神时自动推进）===
+        if (phase === 0 && !game._letterGodAnim) {
+          if (!pc._phase0StartTime) pc._phase0StartTime = Date.now();
+          if (Date.now() - pc._phase0StartTime >= 1000) {
+            pc.animPhase = 1;
           }
         }
 
-        // === 阶段2: 基础倍率弹出 + whole_word 依次触发 ===
-        showSecondBox = phase >= 2;
+        if (game._letterGodAnim) {
+          // 字母之神动画期间：跳过计分方块、倍率、总分飞行
+          valid = true;
+          pendingBaseScore = 0;
+          pendingLength = (pc.cardsInOrder || []).length;
+          showFirstBox = false;
+          showSecondBox = false;
+        } else {
+          // === 正常计分动画（事件驱动）===
+          const letterInterval = 350;
+          const letterJumpStart = 1000;
+          const cardsInOrder = pc.cardsInOrder || [];
+          let accumulatedScore = 0;
+          let currentJumpIdx = -1;
+          let isAllJumped = false;
 
-        // 依次触发 whole_word 女巫牌：跳跃+紫色边框，完成后边框消失
-        if (phase >= 2) {
-          const _cards2 = pc.cardsInOrder || [];
-          const waveDuration2 = 200 + _cards2.length * 100;
-          const phase2Start2 = 1000 + _cards2.length * 350 + waveDuration2;
-          const phase2Elapsed2 = (Date.now() - (pc.resolveTime || 0)) - phase2Start2;
-          const baseMultDelay2 = 500;
-          const stepDuration2 = 700;
-          const wjList2 = pc.wholeWordJokers || [];
-          if (phase2Elapsed2 >= baseMultDelay2) {
-            const afterBase2 = phase2Elapsed2 - baseMultDelay2;
-            const displayStep2 = Math.floor(afterBase2 / stepDuration2);
-            wjList2.forEach(({ idx }, i) => {
+          // === 阶段1: 字母跳跃 ===
+          if (phase >= 1) {
+            const jumpElapsed = elapsed - letterJumpStart;
+            currentJumpIdx = Math.floor(jumpElapsed / letterInterval);
+            isAllJumped = currentJumpIdx >= cardsInOrder.length;
+            if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
+            const jokers = game.jokers || [];
+
+            // per_card 倍率提示
+            pc._perCardMultText = null;
+            if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
+              const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
+              if (triggered.length > 0) {
+                const totalMult = triggered.reduce((prod, jIdx) => {
+                  const joker = jokers[jIdx];
+                  return joker && joker.value ? prod * joker.value : prod;
+                }, 1);
+                if (totalMult > 1) pc._perCardMultText = `x${totalMult}`;
+              }
+            }
+
+            // 计算累加分数
+            for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
+              let score = cardsInOrder[i].score;
+              const triggered = pc.jokerTriggers?.[i] || [];
+              triggered.forEach(jIdx => {
+                const joker = jokers[jIdx];
+                if (joker && joker.value) score *= joker.value;
+              });
+              accumulatedScore += score;
+            }
+
+            // 清除女巫牌状态
+            jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
+
+            // 波浪跳跃
+            const totalJumpTime = cardsInOrder.length * letterInterval;
+            const waveStartDelay = 100;
+            const waveInterval2 = 80;
+            if (jumpElapsed >= totalJumpTime) {
+              const waveElapsed = jumpElapsed - totalJumpTime;
+              if (!pc._waveOffsetYs) pc._waveOffsetYs = [];
+              cardsInOrder.forEach((_, i) => {
+                const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 200;
+                if (waveProgress >= 0 && waveProgress <= 1) {
+                  const waveH = 5 * s * Math.sin(waveProgress * Math.PI);
+                  pc._waveOffsetYs[i] = -waveH;
+                } else {
+                  pc._waveOffsetYs[i] = 0;
+                }
+              });
+            }
+
+            // 卡牌跳跃偏移
+            cardsInOrder.forEach((card, i) => {
+              if (isAllJumped) {
+                card.jumpOffsetY = 0;
+              } else if (i === currentJumpIdx && jumpElapsed >= 0) {
+                const jumpProgress = ((jumpElapsed % letterInterval) / 200);
+                card.jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
+                const triggered = pc.jokerTriggers?.[i] || [];
+                triggered.forEach(jIdx => {
+                  const joker = jokers[jIdx];
+                  if (joker) {
+                    joker._triggered = true;
+                    joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
+                  }
+                });
+              } else if (i < currentJumpIdx) {
+                card.jumpOffsetY = 0;
+              }
+            });
+
+            // flat_bonus 女巫牌
+            const globalTriggered = pc.globalTriggered || [];
+            globalTriggered.forEach(jIdx => {
+              const joker = jokers[jIdx];
+              if (joker) {
+                joker._triggered = true;
+                if (!isAllJumped && currentJumpIdx >= 0) {
+                  const jumpProgress = ((jumpElapsed % letterInterval) / 200);
+                  joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
+                }
+              }
+            });
+
+            // 清除女巫牌状态
+            if (isAllJumped) {
+              jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
+            }
+
+            // 检测阶段1完成 → 进入阶段2
+            if (isAllJumped && phase < 2) {
+              const totalJumpTime = cardsInOrder.length * letterInterval;
+              const waveDuration = 200 + cardsInOrder.length * 100;
+              const waveElapsed = jumpElapsed - totalJumpTime;
+              if (waveElapsed >= waveDuration + 100) {
+                pc.animPhase = 2;
+              }
+            }
+          }
+
+          // === 阶段2: 基础倍率弹出 + whole_word 依次触发 ===
+          showSecondBox = phase >= 2;
+
+          if (phase >= 2) {
+            const wjList = pc.wholeWordJokers || [];
+
+            // 基础倍率显示等待期
+            if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
+            const elapsedSincePhase2 = Date.now() - pc._phase2StartTime;
+            const baseMultDelay = 500;
+
+            // 依次触发 whole_word 女巫牌（事件驱动：前一个完成后触发下一个）
+            if (elapsedSincePhase2 >= baseMultDelay) {
+              for (let i = 0; i < wjList.length; i++) {
+                const { idx } = wjList[i];
+                const joker = game.jokers?.[idx];
+                if (!joker) continue;
+
+                if (!joker._wwJumpDone) {
+                  if (!joker._wwJumpStart) {
+                    // 检查前面的是否都完成了
+                    const prevAllDone = wjList.slice(0, i).every(({ idx: pIdx }) => {
+                      const prevJoker = game.jokers?.[pIdx];
+                      return !prevJoker || prevJoker._wwJumpDone;
+                    });
+                    if (prevAllDone) {
+                      joker._wwJumpStart = Date.now();
+                      joker._triggered = true;
+                    }
+                  }
+                  break; // 一次只处理一个
+                }
+              }
+            }
+
+            // 处理跳跃动画
+            wjList.forEach(({ idx }) => {
               const joker = game.jokers?.[idx];
               if (!joker) return;
-
-              // 步骤到达该女巫牌且未跳跃过：开始跳跃
-              if (displayStep2 > i && !joker._wwJumpStart && !joker._wwJumpDone) {
-                joker._wwJumpStart = Date.now();
-                joker._triggered = true;
-              }
-
-              // 处理跳跃动画
               if (joker._wwJumpStart) {
                 const jumpElapsed = Date.now() - joker._wwJumpStart;
                 const jumpDuration = 400;
@@ -1759,34 +1950,38 @@ class Renderer {
                 }
               }
             });
-          } else {
-            // 延迟期间重置全部 whole_word 状态
-            wjList2.forEach(({ idx }) => {
-              const joker = game.jokers?.[idx];
-              if (!joker) return;
-              joker._wwJumpStart = null;
-              joker._wwJumpDone = false;
-              joker._jumpOffsetY = 0;
-              joker._triggered = false;
-            });
+
+            // 检测阶段2完成 → 进入阶段3
+            if (phase < 3) {
+              const allDone = wjList.every(({ idx }) => {
+                const joker = game.jokers?.[idx];
+                return !joker || joker._wwJumpDone;
+              });
+              if (allDone && elapsedSincePhase2 >= baseMultDelay + 200) {
+                pc.animPhase = 3;
+              }
+            }
           }
-        }
 
-        // === 阶段3: 总分飞行 ===
-        if (phase >= 3 && !pc._flyingScoreStarted) {
-          pc._flyingScoreStarted = true;
-          // 启动飞行总分
-          const totalScore = pc.result.score;
-          const top = (this.safeTop || 0) + 20;
-          const barH = 56 * s;
-          this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY);
-        }
+          // === 阶段3: 总分飞行 ===
+          if (phase >= 3 && !pc._flyingScoreStarted) {
+            pc._flyingScoreStarted = true;
+            const totalScore = pc.result.score;
+            this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY);
+          }
 
-        // 渲染方块数字
-        valid = true;
-        pendingBaseScore = accumulatedScore;
-        pendingLength = cardsInOrder.length;
-        showFirstBox = phase >= 1;
+          // 检测全部动画完成，调用 game.completePlayHand()
+          if (phase >= 3 && pc._flyingScoreStarted && !this.flyingScore && !game._playHandAnimCompleted) {
+            game._playHandAnimCompleted = true;
+            if (game.completePlayHand) game.completePlayHand();
+          }
+
+          // 渲染方块数字
+          valid = true;
+          pendingBaseScore = accumulatedScore;
+          pendingLength = cardsInOrder.length;
+          showFirstBox = phase >= 1;
+        }
 
       } else if (pc.state === 'invalid') {
         // 非法：橙色单词 + error图标 + 单词不存在
@@ -2113,7 +2308,12 @@ class Renderer {
       const rowStartX = (W - rowTotalW) / 2;
       const x = rowStartX + col * (this.cardW + this.gap);
       const y = cardAreaY + row * (this.cardH + this.gap);
-      this.drawCard(card, x, y, card.newCard);
+      // 字母之神动画期间，未击中的卡牌显示旧分数
+      let displayScore = null;
+      if (game._letterGodAnim && card._originalScore !== undefined && !game._letterGodAnim.hitCardIds?.[card.id]) {
+        displayScore = card._originalScore;
+      }
+      this.drawCard(card, x, y, card.newCard, displayScore);
       this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
 
       // 清除 newCard 标记（下一帧不再显示 NEW）
@@ -2477,8 +2677,8 @@ class Renderer {
     if (elapsed < 2100) {
       const popDuration = 400;
       const holdOldDuration = 400;
-      const scoreChangeDuration = 300;
-      const holdNewDuration = 800;
+      const scoreChangeDuration = 400;
+      const holdNewDuration = 700;
       const fadeOutDuration = 200;
 
       let cardScale = 1;

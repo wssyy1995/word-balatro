@@ -464,14 +464,14 @@ class Game {
     }
 
     this.deck = createDeck();
+    this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
+    this._reduceTargetAnim = null;
     applyCrystalEffects(this);
     const handSize = this.baseHandSize + (this.extraLetters || 0);
     this._maxHandSize = handSize;
     this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
     this.selected = [];
     this.score = 0;
-    this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
-    this._reduceTargetAnim = null;
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraHands = 0;
@@ -545,6 +545,10 @@ class Game {
     const played = this.hand.filter(c => c && c.selected);
     const playedInOrder = this.getSelectedCards();
     const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
+
+    // 重置动画完成标志
+    this._playHandAnimCompleted = false;
+    this._playHandCompleting = false;
 
     // 设置检测中状态
     this.pendingCheck = {
@@ -640,19 +644,21 @@ class Game {
       letterGodTriggered = true;
       // 递减剩余次数
       letterGod.usesLeft = (letterGod.usesLeft === undefined ? letterGod.limit : letterGod.usesLeft) - 1;
-      // 触发专用动画：跳起保持1.5s + 呼吸光晕，然后落下（总1.9s）
       letterGod._triggered = true;
       letterGod._letterGodAnimStart = Date.now();
       // 保存原始分数，实际分数立即更新为最高分（供 calcWordScore 使用）
-      // 视觉过渡通过 _oldScore + _scoreAnimStart 实现
       const maxScore = Math.max(...played.map(c => c.score));
+      const maxCard = played.find(c => c.score === maxScore) || played[0];
       played.forEach(c => {
         if (c._originalScore === undefined) c._originalScore = c.score;
-        c._oldScore = c.score;
         c.score = maxScore;
-        c._scoreAnimStart = Date.now();
-        c._scorePulseAnim = { startTime: Date.now(), duration: 500 };
       });
+      // 设置字母之神动画状态，由 renderer 播放星星飞行动画
+      this._letterGodAnim = {
+        startTime: Date.now() + 1000, // 延迟1秒，等烟花放完后再开始
+        maxCardId: maxCard.id,
+        playedCardIds: played.map(c => c.id),
+      };
       if (this.storageManager) this.storageManager.saveProgress(this);
     }
 
@@ -662,6 +668,7 @@ class Game {
     this.pendingCheck.state = 'valid';
     this.pendingCheck.result = result;
     this.pendingCheck.meaning = getWordMeaning(word);
+    // 始终设置 resolveTime 和 animPhase = 0（烟花立即开始）
     this.pendingCheck.resolveTime = Date.now();
     this.pendingCheck.animPhase = 0;
 
@@ -703,58 +710,38 @@ class Game {
       this.audioManager.play('valid');
     }
 
-    // 动画时间线（ms）
-    const letterJumpDelay = 1000;
-    const letterInterval = 350;
-    const waveDuration = 200 + playedInOrder.length * 100; // 波浪持续时间
-    const baseMultDelay = 500; // 波浪完成后延迟500ms显示基础倍率
-    const wholeWordStepDelay = 700; // 每张 whole_word 触发间隔
-    const wholeWordDelay = 1000; // 全部 whole_word 完成后延迟1s
-
-    const lengthShowDelay = letterJumpDelay + playedInOrder.length * letterInterval + waveDuration;
-    const totalShowDelay = lengthShowDelay + baseMultDelay + wholeWordJokers.length * wholeWordStepDelay + wholeWordDelay;
-    // 飞行总分动画时长（与 renderer.js 保持一致：弹出300ms + 停留600ms + 淡出150ms）
-    const flyAppearDuration = 300;
-    const flyHoldDuration = 600;
-    const flyFadeDuration = 150;
-    const flyTotalDuration = flyAppearDuration + flyHoldDuration + flyFadeDuration;
-    const flyEndDelay = totalShowDelay + flyTotalDuration;
-    const scoreApplyDelay = totalShowDelay + flyAppearDuration; // 弹出结束时计分
-    const settlementDelay = flyEndDelay + 1000; // 再等待1秒弹出结算
-
-    // 阶段1: 字母跳跃
-    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 1; }, letterJumpDelay);
-    // 阶段2: 基础倍率弹出 + whole_word 依次触发
-    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 2; }, lengthShowDelay);
-    // 阶段3: 总分飞行
-    setTimeout(() => { if (this.pendingCheck) this.pendingCheck.animPhase = 3; }, totalShowDelay);
-    // 阶段4a: 弹出结束时计分（HUD 提前更新）
-    setTimeout(() => {
-      if (this.pendingCheck) this._applyScore(result);
-    }, scoreApplyDelay);
-    // 阶段4b: 淡出结束时飞牌
-    setTimeout(() => {
-      if (this.pendingCheck) {
-        this._executePlayHand(played, playedInOrder, result);
-        this.pendingCheck = null;
-      }
-    }, flyEndDelay);
-    // 阶段5: 弹出金币结算或判断失败
-    setTimeout(() => {
-      if (this.score >= this.target) {
-        this._showSettlement();
-      } else if (this.handsLeft <= 0) {
-        this.state = 'gameover';
-        this.gameOverReason = 'out_of_hands';
-        if (this.storageManager) {
-          this.storageManager.setHighScore(this.totalScore);
-          this.storageManager.updateStats(this);
-          this.storageManager.clearProgress();
-        }
-      }
-    }, settlementDelay);
-
+    // 计分动画由 renderer.js 事件驱动推进，不再使用固定时间轴
     return result;
+  }
+
+  completePlayHand() {
+    if (this._playHandCompleting) return;
+    if (!this.pendingCheck || this.pendingCheck.state !== 'valid') return;
+    this._playHandCompleting = true;
+
+    const result = this.pendingCheck.result;
+    const played = this.pendingCheck.cards;
+    const playedInOrder = this.pendingCheck.cardsInOrder;
+    this._applyScore(result);
+    this._executePlayHand(played, playedInOrder, result);
+
+    // 清除 pendingCheck，重置单词预览区
+    this.pendingCheck = null;
+
+    // 结算判断
+    if (this.score >= this.target) {
+      this._showSettlement();
+    } else if (this.handsLeft <= 0) {
+      this.state = 'gameover';
+      this.gameOverReason = 'out_of_hands';
+      if (this.storageManager) {
+        this.storageManager.setHighScore(this.totalScore);
+        this.storageManager.updateStats(this);
+        this.storageManager.clearProgress();
+      }
+    }
+
+    this._playHandCompleting = false;
   }
 
   _applyScore(result) {
@@ -785,8 +772,6 @@ class Game {
         c.score = c._originalScore;
         delete c._originalScore;
       }
-      delete c._oldScore;
-      delete c._scoreAnimStart;
       delete c._scorePulseAnim;
     });
 
@@ -806,12 +791,13 @@ class Game {
       }
     }
 
+    // 使用传入的 playedCards 而不是依赖 this.hand 的 selected 状态
+    //（防止动画期间 selected 被意外清除导致 finalPlayedCards 为空）
+    const finalPlayedCards = playedCards.filter(c => c);
     const removedIndices = [];
-    const finalPlayedCards = [];
     this.hand.forEach((c, i) => {
-      if (c && c.selected) {
+      if (c && finalPlayedCards.includes(c)) {
         removedIndices.push(i);
-        finalPlayedCards.push(c);
       }
     });
 
