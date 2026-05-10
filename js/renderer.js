@@ -1164,9 +1164,9 @@ class Renderer {
       // HUD 女巫头像温柔旋转星星
       if (game._witchStarBurst) {
         const elapsed = Date.now() - game._witchStarBurst.startTime;
-        const duration = 2500;
+        const duration = 4500;
         if (elapsed < duration) {
-          const fade = elapsed > 2000 ? 1 - (elapsed - 2000) / 500 : 1;
+          const fade = elapsed > 3500 ? 1 - (elapsed - 3500) / 1000 : 1;
           this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 90 * s, s, fade);
         } else {
           game._witchStarBurst = null;
@@ -3435,13 +3435,40 @@ class Renderer {
     for (let i = 0; i < starCount; i++) {
       const seed = i * 137.5;
       const dist = size * (0.3 + 0.45 * Math.abs(Math.sin(seed)));
-      const angle = seed + now / 1500;
+      const angle = seed + now / 1000;
       const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
       const starSize = (1.6 + 1.0 * Math.sin(i * 3)) * s;
 
       ctx.fillStyle = `rgba(220,190,255,${0.9 * twinkle})`;
       ctx.beginPath();
       ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, starSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // === 紫色五角星（复用字母之神同款）===
+    const pentagramCount = 6;
+    for (let i = 0; i < pentagramCount; i++) {
+      const seed = i * 213.7 + 50;
+      const dist = size * (0.25 + 0.5 * Math.abs(Math.sin(seed)));
+      const angle = seed + now / 800;
+      const twinkle = 0.5 + 0.5 * Math.sin(now / 400 + i * 3.1);
+      const px = Math.cos(angle) * dist;
+      const py = Math.sin(angle) * dist;
+      const starOuterR = (2.5 + 1.5 * Math.sin(i * 2.7)) * s;
+      const starInnerR = starOuterR * 0.4;
+      const starRot = now / 550 + i * 1.3;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(155,89,182,0.85)';
+      ctx.shadowBlur = 10 * s * twinkle;
+      ctx.fillStyle = `rgba(155,89,182,${0.85 * twinkle})`;
+      this._drawStar(ctx, px, py, starOuterR, starInnerR, 5, starRot);
+      ctx.restore();
+
+      // 中心高光点
+      ctx.fillStyle = `rgba(255,255,255,${0.6 * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.2 * s, 0, Math.PI * 2);
       ctx.fill();
     }
 

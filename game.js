@@ -231,8 +231,8 @@ function handleInput(x, y) {
       return;
     }
 
-    // 检测卡牌点击（动画播放期间禁用）
-    if (!game.pendingCheck) {
+    // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
+    if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
       const cardHit = renderer.hitTest(x, y, renderer.cardRects);
       if (cardHit) {
         vibrate();
