@@ -233,7 +233,7 @@ function handleInput(x, y) {
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
-        if (selected.length >= 3 && !game.pendingCheck) {
+        if (selected.length >= 2 && !game.pendingCheck) {
           game.playHand().then(result => {
             lastPlayResult = result;
           }).catch(err => {

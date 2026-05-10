@@ -155,11 +155,11 @@ function hasValidWordInHand(hand) {
   }
 
   for (const word of WORD_DATA.keys()) {
-    if (word.length < 3) continue;
+    if (word.length < 2) continue;
     if (canFormWord(word, letterCounts)) return true;
   }
   for (const word of onlineWordCache) {
-    if (word.length < 3) continue;
+    if (word.length < 2) continue;
     if (canFormWord(word, letterCounts)) return true;
   }
   return false;
@@ -189,7 +189,7 @@ function findAllValidWordsInHand(hand) {
 
   function tryWord(word) {
     if (seenWords.has(word)) return;
-    if (word.length < 3 || word.length > cards.length) return;
+    if (word.length < 2 || word.length > cards.length) return;
 
     const needed = {};
     for (const ch of word) {
@@ -541,7 +541,7 @@ class Game {
   }
 
   async playHand() {
-    if (this.selected.length < 3 || this.pendingCheck) return { valid: false };
+    if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
     const played = this.hand.filter(c => c && c.selected);
     const playedInOrder = this.getSelectedCards();
     const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');

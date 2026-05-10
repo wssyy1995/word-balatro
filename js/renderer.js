@@ -659,27 +659,30 @@ class Renderer {
     // ===== 绘制星星 =====
     if (starX !== undefined && starY !== undefined) {
       ctx.save();
-      ctx.shadowColor = 'rgba(155,89,182,0.9)';
-      ctx.shadowBlur = 20 * s;
+      // 星星自转角度（飞行过程中缓慢旋转）
+      const starRot = elapsed / 800;
+      ctx.shadowColor = 'rgba(155,89,182,0.85)';
+      ctx.shadowBlur = 14 * s;
       ctx.fillStyle = '#9b59b6';
-      this._drawStar(ctx, starX, starY, 10 * s, 5 * s, 5);
+      this._drawStar(ctx, starX, starY, 7 * s, 3 * s, 5, starRot);
       ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      // 中心高光点
+      ctx.fillStyle = 'rgba(255,255,255,0.7)';
       ctx.beginPath();
-      ctx.arc(starX, starY, 3 * s, 0, Math.PI * 2);
+      ctx.arc(starX, starY, 2 * s, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
   }
 
   // ===== 绘制五角星 =====
-  _drawStar(ctx, cx, cy, outerR, innerR, spikes = 5) {
-    let rot = Math.PI / 2 * 3;
+  _drawStar(ctx, cx, cy, outerR, innerR, spikes = 5, rotation = 0) {
+    let rot = Math.PI / 2 * 3 + rotation;
     let x = cx;
     let y = cy;
     let step = Math.PI / spikes;
     ctx.beginPath();
-    ctx.moveTo(cx, cy - outerR);
+    ctx.moveTo(cx + Math.cos(rot) * outerR, cy + Math.sin(rot) * outerR);
     for (let i = 0; i < spikes; i++) {
       x = cx + Math.cos(rot) * outerR;
       y = cy + Math.sin(rot) * outerR;
@@ -690,7 +693,6 @@ class Renderer {
       ctx.lineTo(x, y);
       rot += step;
     }
-    ctx.lineTo(cx, cy - outerR);
     ctx.closePath();
     ctx.fill();
   }
@@ -2360,9 +2362,10 @@ class Renderer {
     const btnTextY = playY + btnH / 2 - 1 * s;
     const playText = `出牌 (${game.handsLeft})`;
     const playTx = playX + btnW / 2;
+    const selectedCount = game.getSelectedCards ? game.getSelectedCards().length : 0;
     const isInvalid = game.pendingCheck && game.pendingCheck.state === 'invalid';
-    if (isInvalid) {
-      // 非法状态：深灰色文字
+    if (isInvalid || selectedCount < 2) {
+      // 非法状态或牌数不足：深灰色文字
       ctx.fillStyle = '#666';
       ctx.fillText(playText, playTx, btnTextY);
     } else {

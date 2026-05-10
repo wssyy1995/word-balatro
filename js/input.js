@@ -31,7 +31,7 @@ class InputHandler {
         const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
         if (btnHit) {
           const selected = game.getSelectedCards();
-          if (selected.length >= 3) {
+          if (selected.length >= 2) {
             game.playHand().then(result => {
               if (result.valid) {
                 // 出牌成功
