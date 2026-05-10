@@ -191,23 +191,77 @@ class WitchRewardRenderer {
       const startX = (W - totalWidth) / 2;
       const giftY = H / 2 + panelOffsetY - giftSize / 2;
 
-      // === 标题：女巫奖励（图片）===
-      const titleW = 260 * s;
-      const titleH = titleW * (298 / 1352);
-      const titleX = (W - titleW) / 2;
-      const titleY = giftY - titleH - 12 * s;
-      if (this.parent.witchRewardTitleIcon && this.parent.witchRewardTitleIconLoaded) {
-        ctx.drawImage(this.parent.witchRewardTitleIcon, titleX, titleY, titleW, titleH);
-      } else {
-        // 降级：文字
+      // === 标题：女巫奖励（Canvas 绘制）===
+      const titleText = '女巫奖励';
+      const titleFontSize = 20 * s;
+      const titleY = giftY - 30 * s;
+      const titleBarW = 240 * s;
+      const titleBarH = 40 * s;
+      const titleBarX = (W - titleBarW) / 2;
+      const titleBarY = titleY - titleBarH / 2;
+
+      // 深色圆角矩形背景
+      ctx.save();
+      this.parent.roundRect(titleBarX, titleBarY, titleBarW, titleBarH, 8 * s, '#2a2520');
+      ctx.restore();
+
+      // 先设置字体以测量文字宽度
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      const textMetrics = ctx.measureText(titleText);
+      const textWidth = textMetrics.width;
+
+      // 文字两侧装饰线参数
+      const lineLength = 50 * s;
+      const lineGap = 10 * s;
+      const lineY = titleY;
+      const leftLineStartX = W / 2 - textWidth / 2 - lineGap - lineLength;
+      const leftLineEndX = W / 2 - textWidth / 2 - lineGap;
+      const rightLineStartX = W / 2 + textWidth / 2 + lineGap;
+      const rightLineEndX = W / 2 + textWidth / 2 + lineGap + lineLength;
+
+      // 绘制细线
+      ctx.save();
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(leftLineStartX, lineY);
+      ctx.lineTo(leftLineEndX, lineY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(rightLineStartX, lineY);
+      ctx.lineTo(rightLineEndX, lineY);
+      ctx.stroke();
+
+      // 绘制菱形（线的末端和文字侧）
+      ctx.fillStyle = '#c4a35a';
+      const diamondSize = 3 * s;
+      // 左侧：线起点菱形 + 线终点（靠近文字）菱形
+      [
+        { x: leftLineStartX, y: lineY },
+        { x: leftLineEndX + lineGap * 0.3, y: lineY },
+        { x: rightLineStartX - lineGap * 0.3, y: lineY },
+        { x: rightLineEndX, y: lineY },
+      ].forEach(p => {
         ctx.save();
-        ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-        ctx.fillStyle = '#c4a35a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('女巫奖励', W / 2, titleY + titleH / 2);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillRect(-diamondSize, -diamondSize, diamondSize * 2, diamondSize * 2);
         ctx.restore();
-      }
+      });
+      ctx.restore();
+
+      // 金色渐变文字
+      ctx.save();
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textGrad = ctx.createLinearGradient(W / 2, titleY - 10 * s, W / 2, titleY + 10 * s);
+      textGrad.addColorStop(0, '#f5d78e');
+      textGrad.addColorStop(0.5, '#dfc06e');
+      textGrad.addColorStop(1, '#b5973e');
+      ctx.fillStyle = textGrad;
+      ctx.fillText(titleText, W / 2, titleY);
+      ctx.restore();
 
       this.giftRects = [];
 
