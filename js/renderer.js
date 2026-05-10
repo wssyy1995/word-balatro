@@ -1524,8 +1524,8 @@ class Renderer {
       const tagY = barY - 18 * s;
       const tagR = 6 * s;
 
-      // 标签背景（深紫色圆角）
-      this.roundRect(tagX, tagY, tagW, tagH, tagR, '#5a3a6e');
+      // 标签背景（深紫色圆角 + 金色边框）
+      this.roundRect(tagX, tagY, tagW, tagH, tagR, '#5a3a6e', '#c4a35a', 1.2 * s);
 
       // 标签文字（白色）
       ctx.save();
