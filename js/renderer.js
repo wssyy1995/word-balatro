@@ -1449,11 +1449,12 @@ class Renderer {
     if (witchSkill) {
       // === 四列布局（女巫技能 32%+10px + 后三列等分剩余）===
       const col1W = barW * 0.32 + 10 * s;
-      const colOtherW = (barW - col1W) / 3;
+      const line1Offset = 15 * s;  // 第一根分割线额外右移
+      const colOtherW = (barW - col1W - line1Offset) / 3;
       const linePositions = [
-        barX + col1W,
-        barX + col1W + colOtherW,
-        barX + col1W + colOtherW * 2,
+        barX + col1W + line1Offset,
+        barX + col1W + line1Offset + colOtherW,
+        barX + col1W + line1Offset + colOtherW * 2,
       ];
 
       // 绘制三条分隔线
@@ -1472,10 +1473,10 @@ class Renderer {
       });
 
       // 列中心（回合右移、当前左移，都往目标分靠近）
-      const c1 = barX + col1W * 0.5;
-      const c2 = barX + col1W + colOtherW * 0.65;
-      const c3 = barX + col1W + colOtherW * 1.5;
-      const c4 = barX + col1W + colOtherW * 2.35;
+      const c1 = barX + (col1W + line1Offset) * 0.5;
+      const c2 = barX + col1W + line1Offset + colOtherW * 0.65;
+      const c3 = barX + col1W + line1Offset + colOtherW * 1.5;
+      const c4 = barX + col1W + line1Offset + colOtherW * 2.35;
 
       // === 列1：女巫技能 ===
       const avatarSize = 32 * s;
