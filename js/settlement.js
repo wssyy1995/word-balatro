@@ -204,10 +204,11 @@ class WitchRewardRenderer {
       // 文字两侧装饰线参数
       const lineY = titleY;
       const solidSize = 2.5 * s;
-      const hollowSize = 4 * s;
+      const hollowSize = 3 * s;
       const gap = 8 * s;             // 文字到实心菱形
       const solidToHollow = 8 * s;   // 实心菱形到空心菱形
-      const lineLength = 45 * s;     // 空心菱形到线末端
+      const lineOffset = 3 * s;      // 线与空心菱形之间的间距
+      const lineLength = 45 * s;     // 线起点到线末端
 
       const leftSolidX = W / 2 - textWidth / 2 - gap;
       const leftHollowX = leftSolidX - solidToHollow;
@@ -236,14 +237,15 @@ class WitchRewardRenderer {
       ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
       ctx.restore();
 
-      // 3. 渐变线（从空心菱形向外变淡）
-      const leftGrad = ctx.createLinearGradient(leftHollowX, lineY, leftLineEndX, lineY);
+      // 3. 渐变线（从空心菱形外侧向外变淡）
+      const leftLineStartX = leftHollowX - lineOffset;
+      const leftGrad = ctx.createLinearGradient(leftLineStartX, lineY, leftLineEndX, lineY);
       leftGrad.addColorStop(0, '#c4a35a');
       leftGrad.addColorStop(1, 'rgba(196,163,90,0)');
       ctx.strokeStyle = leftGrad;
       ctx.lineWidth = 1 * s;
       ctx.beginPath();
-      ctx.moveTo(leftHollowX, lineY);
+      ctx.moveTo(leftLineStartX, lineY);
       ctx.lineTo(leftLineEndX, lineY);
       ctx.stroke();
 
@@ -265,14 +267,15 @@ class WitchRewardRenderer {
       ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
       ctx.restore();
 
-      // 3. 渐变线（从空心菱形向外变淡）
-      const rightGrad = ctx.createLinearGradient(rightHollowX, lineY, rightLineEndX, lineY);
+      // 3. 渐变线（从空心菱形外侧向外变淡）
+      const rightLineStartX = rightHollowX + lineOffset;
+      const rightGrad = ctx.createLinearGradient(rightLineStartX, lineY, rightLineEndX, lineY);
       rightGrad.addColorStop(0, '#c4a35a');
       rightGrad.addColorStop(1, 'rgba(196,163,90,0)');
       ctx.strokeStyle = rightGrad;
       ctx.lineWidth = 1 * s;
       ctx.beginPath();
-      ctx.moveTo(rightHollowX, lineY);
+      ctx.moveTo(rightLineStartX, lineY);
       ctx.lineTo(rightLineEndX, lineY);
       ctx.stroke();
 
