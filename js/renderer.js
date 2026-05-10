@@ -1489,7 +1489,7 @@ class Renderer {
       // 女巫呼吸 + 轻微摇摆动画
       const now = Date.now();
       const breath = Math.sin(now / 1500) * 0.03;
-      const sway = Math.sin(now / 2000) * 1.5 * s;
+      const sway = Math.sin(now / 1200) * 4 * s;
       const scale = 1 + breath;
       const drawW = avatarW * scale;
       const drawH = avatarH * scale;
