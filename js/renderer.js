@@ -1479,67 +1479,24 @@ class Renderer {
       const c3 = barX + col1W + line1Offset + colOtherW * 1.5;
       const c4 = barX + col1W + line1Offset + colOtherW * 2.5;
 
-      // === 列1：女巫技能 ===
-      const avatarSize = 32 * s;
-      const avatarX = barX + 4 * s;
-      const avatarY = barY + (barH - avatarSize) / 2;
+      // === 列1：女巫头像（大图直接显示，不裁剪） ===
+      const avatarH = barH - 10 * s;
+      const avatarW = Math.min(avatarH, col1W - 10 * s);
+      const avatarX = barX + 5 * s;
+      const avatarY = barY + (barH - avatarH) / 2;
       const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
-      // 圆形裁剪绘制头像
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.clip();
       if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
-        ctx.drawImage(witchAvatar.img, avatarX, avatarY, avatarSize, avatarSize);
+        ctx.drawImage(witchAvatar.img, avatarX, avatarY, avatarW, avatarH);
       } else {
+        ctx.save();
         ctx.fillStyle = '#9b59b6';
-        ctx.fill();
+        ctx.fillRect(avatarX, avatarY, avatarW, avatarH);
+        ctx.restore();
       }
-      ctx.restore();
-
-      // 头像边框
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.strokeStyle = '#c4a35a';
-      ctx.lineWidth = 1.5 * s;
-      ctx.stroke();
-      ctx.restore();
 
       // 保存头像点击区域
-      this.hudWitchAvatarRect = { x: avatarX, y: avatarY, w: avatarSize, h: avatarSize };
-
-      // 文字区域（头像右侧）
-      const textX = avatarX + avatarSize + 3 * s;
-      const textMaxW = col1W - avatarSize - 7 * s;
-
-      // "女巫技能"标题
-      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('女巫技能', textX, barY + barH * 0.35);
-
-      // 描述（自动换行）
-      ctx.font = `${Math.floor(8 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
-      const desc = witchSkill.desc;
-      const chars = desc.split('');
-      let line = '';
-      let lineY = barY + barH * 0.62;
-      const lineHeight = 10 * s;
-      for (let i = 0; i < chars.length; i++) {
-        const testLine = line + chars[i];
-        if (ctx.measureText(testLine).width > textMaxW && line !== '') {
-          ctx.fillText(line, textX, lineY);
-          line = chars[i];
-          lineY += lineHeight;
-        } else {
-          line = testLine;
-        }
-      }
-      ctx.fillText(line, textX, lineY);
+      this.hudWitchAvatarRect = { x: avatarX, y: avatarY, w: avatarW, h: avatarH };
 
       // === 列2：回合 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
