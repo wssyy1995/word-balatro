@@ -1447,9 +1447,9 @@ class Renderer {
     ctx.lineWidth = 0.8 * s;
 
     if (witchSkill) {
-      // === 四列布局（女巫技能 30% + 回合/目标分/当前 各 23.3%）===
-      const col1W = barW * 0.30;
-      const colOtherW = barW * 0.70 / 3;
+      // === 四列布局（女巫技能 32% + 回合/目标分/当前 各 22.67%）===
+      const col1W = barW * 0.32;
+      const colOtherW = barW * 0.68 / 3;
       const linePositions = [
         barX + col1W,
         barX + col1W + colOtherW,
