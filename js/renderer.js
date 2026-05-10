@@ -1407,7 +1407,7 @@ class Renderer {
     const W = this.W;
     const s = this.scale;
     const top = (this.safeTop || 0) + 20;
-    const h = 66 * s;
+    const h = 68 * s;
 
     this.drawTopHeader();
 
@@ -1569,7 +1569,7 @@ class Renderer {
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
     const top = (this.safeTop || 0) + 20;
-    const h = 66 * s;  // 与 drawHUD 中的 h 保持一致
+    const h = 68 * s;  // 与 drawHUD 中的 h 保持一致
     const hudBottom = top + 9 + h;
     const maxRows = 3;
     const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
@@ -1582,7 +1582,7 @@ class Renderer {
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
     const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2;         // 预览区中心（卡牌上方 20px）
     const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
-    const propY = hudBottom + 16 * s;                         // 道具栏顶部（固定距 HUD 15px）
+    const propY = hudBottom + 14 * s;                         // 道具栏顶部（固定距 HUD 15px）
 
     this.cardRects = []; // 存储卡牌点击区域
 
