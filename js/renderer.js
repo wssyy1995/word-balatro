@@ -1239,8 +1239,7 @@ class Renderer {
     let displayScore = displayScoreOverride !== null ? displayScoreOverride : card.score;
 
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
-    // 脉冲期间使用金色强调，与 HUD 分数更新风格一致
-    ctx.fillStyle = (card._scorePulseAnim) ? '#c4a35a' : darkBlue;
+    ctx.fillStyle = darkBlue;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${displayScore}分`, 0, 0);

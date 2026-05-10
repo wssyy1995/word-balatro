@@ -459,6 +459,129 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
 
 ---
 
+### Bug 4：串行动画的时间基准错位（`letter_god` 重构案）⭐⭐⭐
+
+**影响范围**：`js/game.js` `playHand()`、`js/renderer.js` `_drawLetterGodAnim()` / `drawPlaying()`
+
+#### 问题描述
+
+`letter_god`（字母之神）女巫牌触发时，需要在单词验证成功后插入一段专属动画（星星从女巫牌飞到各字母牌），然后再继续正常的计分动画（字母跳跃→倍率→总分飞行）。
+
+原始实现用固定 `setTimeout` 时间轴推进 `animPhase`，导致：
+- 字母之神动画期间跳过了烟花
+- 总分飞行动画比倍率/字母跳跃还早触发
+- 时间轴计算复杂且容易出错
+
+#### 重构方案：事件驱动 + 串行时间基准重置
+
+**核心原则**：
+1. **事件驱动推进**：前一阶段动画完成后，由 renderer 主动设置下一 `animPhase`，不用 `setTimeout`
+2. **每个阶段独立计时**：串行动画切换时必须重置 `resolveTime`，否则 `elapsed` 会累积到下一阶段，导致动画瞬间完成或计算错乱
+
+**正确做法**：
+
+```javascript
+// === game.js playHand() ===
+// 始终设置 resolveTime 和 animPhase = 0，让烟花立即开始
+this.pendingCheck.resolveTime = Date.now();
+this.pendingCheck.animPhase = 0;
+
+// 字母之神动画延迟 startTime，等烟花放完（1000ms）后再开始
+this._letterGodAnim = {
+  startTime: Date.now() + 1000,  // ← 关键：延迟启动
+  maxCardId: maxCard.id,
+  playedCardIds: played.map(c => c.id),
+};
+
+// 不再使用 setTimeout 推进 animPhase！
+
+// === renderer.js _drawLetterGodAnim() ===
+// 动画完成后：
+if (elapsed >= totalDuration) {
+  game._letterGodAnim = null;
+  if (game.pendingCheck && game.pendingCheck.state === 'valid') {
+    // 关键：重置 resolveTime，让后续字母跳跃从当前时间开始计时
+    // 减去 letterJumpStart(1000ms)，使 jumpElapsed 从 0 开始，
+    // 第一个字母立即跳跃，方块不会显示 "0"
+    game.pendingCheck.resolveTime = Date.now() - 1000;
+    game.pendingCheck.animPhase = 1;  // 直接进入字母跳跃阶段
+  }
+  return;
+}
+
+// === renderer.js drawPlaying() ===
+// 阶段0→1 过渡（事件驱动）
+if (phase === 0 && !game._letterGodAnim) {
+  if (!pc._phase0StartTime) pc._phase0StartTime = Date.now();
+  if (Date.now() - pc._phase0StartTime >= 1000) {
+    pc.animPhase = 1;  // 烟花放完后主动推进
+  }
+}
+
+// 阶段1 完成后主动推进到阶段2
+if (isAllJumped && phase < 2) {
+  const totalJumpTime = cardsInOrder.length * letterInterval;
+  const waveDuration = 200 + cardsInOrder.length * 100;
+  const waveElapsed = jumpElapsed - totalJumpTime;
+  if (waveElapsed >= waveDuration + 100) {
+    pc.animPhase = 2;
+  }
+}
+
+// 阶段2 完成后主动推进到阶段3
+if (phase >= 2 && phase < 3) {
+  const wjList = pc.wholeWordJokers || [];
+  const allDone = wjList.every(({ idx }) => {
+    const joker = game.jokers?.[idx];
+    return !joker || joker._wwJumpDone;
+  });
+  if (allDone && elapsedSincePhase2 >= baseMultDelay + 200) {
+    pc.animPhase = 3;
+  }
+}
+
+// 全部完成后统一回调
+if (phase >= 3 && pc._flyingScoreStarted && !this.flyingScore && !game._playHandAnimCompleted) {
+  game._playHandAnimCompleted = true;
+  if (game.completePlayHand) game.completePlayHand();
+}
+```
+
+#### 踩过的坑
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| 字母之神动画期间烟花被跳过 | `drawPlaying` 中 `_letterGodAnim` 存在时直接跳过了 `else` 块（包含烟花） | 把烟花逻辑提到 `if/else` 外面，始终触发 |
+| 字母之神完成后字母跳跃/波浪看不到 | `resolveTime` 未重置，`elapsed` 已 3000+ms，所有字母瞬间判定为跳完 | 完成时设置 `resolveTime = Date.now() - 1000` |
+| 第一个方块显示 "0" | `resolveTime` 重置为 `Date.now()` 后 `jumpElapsed = -1000`，`accumulatedScore = 0` | 重置时减去 `letterJumpStart`，让 `jumpElapsed` 从 0 开始 |
+| 总分飞行结束后没重置预览区、没飞牌 | `completePlayHand()` 未清 `pendingCheck`；`_executePlayHand` 依赖 `selected` 状态，动画期间用户点击会清除 `selected` | `completePlayHand()` 末尾加 `this.pendingCheck = null`；`_executePlayHand` 改用传入的 `playedCards` 参数；动画期间禁用卡牌点击 |
+| 总分飞行比倍率还早 | `game.js` 中 `letter_god` 触发时 setTimeout 仍在执行，提前把 `animPhase` 推到 3 | 移除所有 setTimeout，完全由 renderer 事件驱动 |
+
+#### 铁律（以后加新动画必须遵守）
+
+1. **串行动画 = 必须重置时间基准**
+   - 每个阶段的 `resolveTime` 或 `startTime` 必须在阶段开始时重新设置
+   - 如果新动画插在现有动画中间，要么让新动画自己独立计时，要么把后续动画的计时起点后移
+
+2. **事件驱动 > 固定时间轴**
+   - 用 "前一动画完成标志" 或 "状态检测" 推进阶段，不要用 `setTimeout(() => animPhase = N, delay)`
+   - 例外：仅适用于不依赖动画完成的纯延迟（如音效播放）
+
+3. **动画完成回调里清理所有状态**
+   - `pendingCheck = null`
+   - `_playHandAnimCompleted = false`（下一轮开始前的重置）
+   - 任何挂载在 `game` 或 `renderer` 上的临时动画状态都要清理
+
+4. **动画期间必须禁用相关交互**
+   - `handleInput` 中检查 `game.pendingCheck`，存在时跳过卡牌点击
+   - 否则用户误触会修改动画依赖的状态（如 `selected`）
+
+5. **后端逻辑不要依赖前端 UI 状态**
+   - `_executePlayHand` 之前通过 `this.hand` 遍历找 `selected` 牌，这非常脆弱
+   - 后端方法应该接收明确的参数（如 `playedCards` 数组），不依赖 `selected` / `cardRects` 等 UI 状态
+
+---
+
 ## 十三、附录：通用 API 速查
 
 ### `Easing`（`js/animation.js`）
