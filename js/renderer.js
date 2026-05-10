@@ -1486,24 +1486,29 @@ class Renderer {
       const baseY = barY + (barH - avatarH) / 2-5*s;
       const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
-      // 女巫呼吸 + 轻微摇摆动画
+      // 女巫呼吸 + 不倒翁式旋转摇摆
       const now = Date.now();
       const breath = Math.sin(now / 1500) * 0.03;
-      const sway = Math.sin(now / 1200) * 4 * s;
+      const tilt = Math.sin(now / 1200) * 0.06;  // 倾斜角度 ±0.06 rad（约 ±3.4°）
       const scale = 1 + breath;
       const drawW = avatarW * scale;
       const drawH = avatarH * scale;
-      const drawX = baseX + sway + (avatarW - drawW) / 2;
-      const drawY = baseY + (avatarH - drawH) / 2;
 
+      ctx.save();
+      // 移动到旋转中心（头像底部中心）
+      ctx.translate(baseX + avatarW / 2, baseY + avatarH);
+      // 不倒翁式左右摇摆
+      ctx.rotate(tilt);
+      // 绘制头像（以底部中心为原点）
       if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
-        ctx.drawImage(witchAvatar.img, drawX, drawY, drawW, drawH);
+        ctx.drawImage(witchAvatar.img, -drawW / 2, -drawH, drawW, drawH);
       } else {
         ctx.save();
         ctx.fillStyle = '#9b59b6';
-        ctx.fillRect(drawX, drawY, drawW, drawH);
+        ctx.fillRect(-drawW / 2, -drawH, drawW, drawH);
         ctx.restore();
       }
+      ctx.restore();
 
       // 保存头像点击区域（用基础位置，不随动画变）
       this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
