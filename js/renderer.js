@@ -1524,8 +1524,59 @@ class Renderer {
       const tagY = barY - 18 * s;
       const tagR = 6 * s;
 
-      // 标签背景（深紫色圆角 + 金色边框）
-      this.roundRect(tagX, tagY, tagW, tagH, tagR, '#5a3a6e', '#c4a35a', 1.2 * s);
+      // 标签背景（深紫色圆角 + 金色边框 + 左右尖角）
+      const tipSize = 5 * s;
+      ctx.save();
+      ctx.fillStyle = '#5a3a6e';
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.beginPath();
+      // 左上圆角开始
+      ctx.moveTo(tagX + tagR, tagY);
+      // 上边缘到左尖角前
+      ctx.lineTo(tagX - tipSize, tagY);
+      // 左尖角
+      ctx.lineTo(tagX, tagY + tagH / 2);
+      // 左下
+      ctx.lineTo(tagX - tipSize, tagY + tagH);
+      // 下边缘
+      ctx.lineTo(tagX + tagR, tagY + tagH);
+      ctx.quadraticCurveTo(tagX, tagY + tagH, tagX, tagY + tagH - tagR);
+      ctx.lineTo(tagX, tagY + tagR);
+      ctx.quadraticCurveTo(tagX, tagY, tagX + tagR, tagY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // 右侧主体圆角 + 右尖角
+      ctx.save();
+      ctx.fillStyle = '#5a3a6e';
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.beginPath();
+      // 右上圆角
+      ctx.moveTo(tagX + tagW - tagR, tagY);
+      ctx.lineTo(tagX + tagW + tipSize, tagY);
+      // 右尖角
+      ctx.lineTo(tagX + tagW, tagY + tagH / 2);
+      // 右下
+      ctx.lineTo(tagX + tagW + tipSize, tagY + tagH);
+      // 下边缘到左下圆角
+      ctx.lineTo(tagX + tagW - tagR, tagY + tagH);
+      ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW, tagY + tagH - tagR);
+      ctx.lineTo(tagX + tagW, tagY + tagR);
+      ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW - tagR, tagY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      // 中间矩形主体
+      ctx.save();
+      ctx.fillStyle = '#5a3a6e';
+      ctx.fillRect(tagX, tagY, tagW, tagH);
+      ctx.restore();
 
       // 标签文字（白色）
       ctx.save();
