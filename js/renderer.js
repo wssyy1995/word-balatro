@@ -1452,10 +1452,11 @@ class Renderer {
       const col1W = barW * 0.32 + 10 * s;
       const line1Offset = 20 * s;  // 第一根分割线额外右移
       const colOtherW = (barW - col1W - line1Offset) / 3;
+      const colShift = 15 * s;
       const linePositions = [
-        barX + col1W + line1Offset,
-        barX + col1W + line1Offset + colOtherW,
-        barX + col1W + line1Offset + colOtherW * 2,
+        barX + col1W + line1Offset - colShift,
+        barX + col1W + line1Offset + colOtherW - colShift,
+        barX + col1W + line1Offset + colOtherW * 2 - colShift,
       ];
 
       // 绘制三条分隔线
@@ -1474,7 +1475,6 @@ class Renderer {
       });
 
       // 列中心（各自在分割线之间居中，后三列整体左移15px）
-      const colShift = 15 * s;
       const c1 = barX + (col1W + line1Offset) * 0.5;
       const c2 = barX + col1W + line1Offset + colOtherW * 0.5 - colShift;
       const c3 = barX + col1W + line1Offset + colOtherW * 1.5 - colShift;
