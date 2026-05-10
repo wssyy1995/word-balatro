@@ -1447,9 +1447,9 @@ class Renderer {
     ctx.lineWidth = 0.8 * s;
 
     if (witchSkill) {
-      // === 四列布局（女巫技能 32% + 回合/目标分/当前 各 22.67%）===
-      const col1W = barW * 0.32;
-      const colOtherW = barW * 0.68 / 3;
+      // === 四列布局（女巫技能 32%+10px + 后三列等分剩余）===
+      const col1W = barW * 0.32 + 10 * s;
+      const colOtherW = (barW - col1W) / 3;
       const linePositions = [
         barX + col1W,
         barX + col1W + colOtherW,
@@ -1471,11 +1471,11 @@ class Renderer {
         ctx.restore();
       });
 
-      // 列中心
+      // 列中心（回合右移、当前左移，都往目标分靠近）
       const c1 = barX + col1W * 0.5;
-      const c2 = barX + col1W + colOtherW * 0.5;
+      const c2 = barX + col1W + colOtherW * 0.65;
       const c3 = barX + col1W + colOtherW * 1.5;
-      const c4 = barX + col1W + colOtherW * 2.5;
+      const c4 = barX + col1W + colOtherW * 2.35;
 
       // === 列1：女巫技能 ===
       const avatarSize = 32 * s;
