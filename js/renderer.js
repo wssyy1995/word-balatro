@@ -1473,11 +1473,12 @@ class Renderer {
         ctx.restore();
       });
 
-      // 列中心（各自在分割线之间居中）
+      // 列中心（各自在分割线之间居中，后三列整体左移15px）
+      const colShift = 15 * s;
       const c1 = barX + (col1W + line1Offset) * 0.5;
-      const c2 = barX + col1W + line1Offset + colOtherW * 0.5;
-      const c3 = barX + col1W + line1Offset + colOtherW * 1.5;
-      const c4 = barX + col1W + line1Offset + colOtherW * 2.5;
+      const c2 = barX + col1W + line1Offset + colOtherW * 0.5 - colShift;
+      const c3 = barX + col1W + line1Offset + colOtherW * 1.5 - colShift;
+      const c4 = barX + col1W + line1Offset + colOtherW * 2.5 - colShift;
 
       // === 列1：女巫头像（大图直接显示，不裁剪 + 呼吸摇摆） ===
       const avatarH = barH + 5*s;
