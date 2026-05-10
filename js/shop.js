@@ -1037,11 +1037,11 @@ class ShopRenderer {
       skillY += 16 * s;
 
       ctx.save();
-      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = '#9b59b6';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY, textMaxW, 13 * s);
+      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 2 * s, textMaxW, 15 * s);
       ctx.restore();
       skillY += descH + 4 * s;
 
