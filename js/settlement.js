@@ -203,8 +203,8 @@ class WitchRewardRenderer {
 
       // 文字两侧装饰线参数
       const lineY = titleY;
-      const solidSize = 2.5 * s;
-      const hollowSize = 3 * s;
+      const solidSize = 1.5 * s;
+      const hollowSize = 2 * s;
       const gap = 8 * s;             // 文字到实心菱形
       const solidToHollow = 8 * s;   // 实心菱形到空心菱形
       const lineOffset = 3 * s;      // 线与空心菱形之间的间距
