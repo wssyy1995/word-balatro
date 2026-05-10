@@ -1479,24 +1479,34 @@ class Renderer {
       const c3 = barX + col1W + line1Offset + colOtherW * 1.5;
       const c4 = barX + col1W + line1Offset + colOtherW * 2.5;
 
-      // === 列1：女巫头像（大图直接显示，不裁剪） ===
-      const avatarH = barH - 10 * s;
-      const avatarW = Math.min(avatarH, col1W - 10 * s);
-      const avatarX = barX + 5 * s;
-      const avatarY = barY + (barH - avatarH) / 2;
+      // === 列1：女巫头像（大图直接显示，不裁剪 + 呼吸摇摆） ===
+      const avatarH = barH + 5*s;
+      const avatarW = Math.min(avatarH, col1W);
+      const baseX = barX + 25* s;
+      const baseY = barY + (barH - avatarH) / 2-5*s;
       const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
+      // 女巫呼吸 + 轻微摇摆动画
+      const now = Date.now();
+      const breath = Math.sin(now / 1500) * 0.03;
+      const sway = Math.sin(now / 2000) * 1.5 * s;
+      const scale = 1 + breath;
+      const drawW = avatarW * scale;
+      const drawH = avatarH * scale;
+      const drawX = baseX + sway + (avatarW - drawW) / 2;
+      const drawY = baseY + (avatarH - drawH) / 2;
+
       if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
-        ctx.drawImage(witchAvatar.img, avatarX, avatarY, avatarW, avatarH);
+        ctx.drawImage(witchAvatar.img, drawX, drawY, drawW, drawH);
       } else {
         ctx.save();
         ctx.fillStyle = '#9b59b6';
-        ctx.fillRect(avatarX, avatarY, avatarW, avatarH);
+        ctx.fillRect(drawX, drawY, drawW, drawH);
         ctx.restore();
       }
 
-      // 保存头像点击区域
-      this.hudWitchAvatarRect = { x: avatarX, y: avatarY, w: avatarW, h: avatarH };
+      // 保存头像点击区域（用基础位置，不随动画变）
+      this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
 
       // === 列2：回合 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
