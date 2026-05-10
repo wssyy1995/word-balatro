@@ -1449,7 +1449,7 @@ class Renderer {
     if (witchSkill) {
       // === 四列布局（女巫技能 32%+10px + 后三列等分剩余）===
       const col1W = barW * 0.32 + 10 * s;
-      const line1Offset = 15 * s;  // 第一根分割线额外右移
+      const line1Offset = 20 * s;  // 第一根分割线额外右移
       const colOtherW = (barW - col1W - line1Offset) / 3;
       const linePositions = [
         barX + col1W + line1Offset,
