@@ -1513,6 +1513,29 @@ class Renderer {
       // 保存头像点击区域（用基础位置，不随动画变）
       this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
 
+      // === 女巫技能描述标签（头像右侧，标题下方）===
+      const tagH = 22 * s;
+      const tagPaddingX = 10 * s;
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      const tagText = witchSkill.desc;
+      const textMetrics = ctx.measureText(tagText);
+      const tagW = textMetrics.width + tagPaddingX * 2;
+      const tagX = baseX + avatarW + 6 * s;
+      const tagY = barY - 18 * s;
+      const tagR = 6 * s;
+
+      // 标签背景（深紫色圆角）
+      this.roundRect(tagX, tagY, tagW, tagH, tagR, '#5a3a6e');
+
+      // 标签文字（白色）
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2);
+      ctx.restore();
+
       // === 列2：回合 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
