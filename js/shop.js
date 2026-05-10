@@ -1028,13 +1028,13 @@ class ShopRenderer {
 
       let skillY = dividerY + 18 * s;
       ctx.save();
-      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b7d5a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText('女巫技能', textX, skillY);
       ctx.restore();
-      skillY += 16 * s;
+      skillY += 14 * s;
 
       ctx.save();
       ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
