@@ -202,75 +202,79 @@ class WitchRewardRenderer {
       const textWidth = textMetrics.width;
 
       // 文字两侧装饰线参数
-      const lineLength = 55 * s;
-      const lineGap = 14 * s;
       const lineY = titleY;
-      const leftInnerX = W / 2 - textWidth / 2 - lineGap;
-      const leftOuterX = leftInnerX - lineLength;
-      const rightInnerX = W / 2 + textWidth / 2 + lineGap;
-      const rightOuterX = rightInnerX + lineLength;
+      const solidSize = 2.5 * s;
+      const hollowSize = 4 * s;
+      const gap = 8 * s;             // 文字到实心菱形
+      const solidToHollow = 8 * s;   // 实心菱形到空心菱形
+      const lineLength = 45 * s;     // 空心菱形到线末端
+
+      const leftSolidX = W / 2 - textWidth / 2 - gap;
+      const leftHollowX = leftSolidX - solidToHollow;
+      const leftLineEndX = leftHollowX - lineLength;
+      const rightSolidX = W / 2 + textWidth / 2 + gap;
+      const rightHollowX = rightSolidX + solidToHollow;
+      const rightLineEndX = rightHollowX + lineLength;
 
       ctx.save();
 
-      // --- 左侧：空心菱形 + 渐变线 + 实心小菱形 ---
-      // 空心菱形（稍大，靠近文字）
-      const hollowSize = 4.5 * s;
+      // --- 左侧（从右到左：实心小菱形 → 空心菱形 → 渐变线）---
+      // 1. 实心小菱形（最靠近文字）
       ctx.save();
-      ctx.translate(leftInnerX, lineY);
+      ctx.translate(leftSolidX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      // 2. 空心菱形
+      ctx.save();
+      ctx.translate(leftHollowX, lineY);
       ctx.rotate(Math.PI / 4);
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 1.2 * s;
       ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
       ctx.restore();
 
-      // 渐变线（从空心菱形向外变淡）
-      const leftGrad = ctx.createLinearGradient(leftInnerX, lineY, leftOuterX, lineY);
+      // 3. 渐变线（从空心菱形向外变淡）
+      const leftGrad = ctx.createLinearGradient(leftHollowX, lineY, leftLineEndX, lineY);
       leftGrad.addColorStop(0, '#c4a35a');
       leftGrad.addColorStop(1, 'rgba(196,163,90,0)');
       ctx.strokeStyle = leftGrad;
       ctx.lineWidth = 1 * s;
       ctx.beginPath();
-      ctx.moveTo(leftInnerX, lineY);
-      ctx.lineTo(leftOuterX, lineY);
+      ctx.moveTo(leftHollowX, lineY);
+      ctx.lineTo(leftLineEndX, lineY);
       ctx.stroke();
 
-      // 实心小菱形（线末端）
-      const solidSize = 2.5 * s;
+      // --- 右侧（从左到右：实心小菱形 → 空心菱形 → 渐变线）---
+      // 1. 实心小菱形（最靠近文字）
       ctx.save();
-      ctx.translate(leftOuterX, lineY);
+      ctx.translate(rightSolidX, lineY);
       ctx.rotate(Math.PI / 4);
       ctx.fillStyle = '#c4a35a';
       ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
       ctx.restore();
 
-      // --- 右侧：空心菱形 + 渐变线 + 实心小菱形 ---
-      // 空心菱形（稍大，靠近文字）
+      // 2. 空心菱形
       ctx.save();
-      ctx.translate(rightInnerX, lineY);
+      ctx.translate(rightHollowX, lineY);
       ctx.rotate(Math.PI / 4);
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 1.2 * s;
       ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
       ctx.restore();
 
-      // 渐变线（从空心菱形向外变淡）
-      const rightGrad = ctx.createLinearGradient(rightInnerX, lineY, rightOuterX, lineY);
+      // 3. 渐变线（从空心菱形向外变淡）
+      const rightGrad = ctx.createLinearGradient(rightHollowX, lineY, rightLineEndX, lineY);
       rightGrad.addColorStop(0, '#c4a35a');
       rightGrad.addColorStop(1, 'rgba(196,163,90,0)');
       ctx.strokeStyle = rightGrad;
       ctx.lineWidth = 1 * s;
       ctx.beginPath();
-      ctx.moveTo(rightInnerX, lineY);
-      ctx.lineTo(rightOuterX, lineY);
+      ctx.moveTo(rightHollowX, lineY);
+      ctx.lineTo(rightLineEndX, lineY);
       ctx.stroke();
-
-      // 实心小菱形（线末端）
-      ctx.save();
-      ctx.translate(rightOuterX, lineY);
-      ctx.rotate(Math.PI / 4);
-      ctx.fillStyle = '#c4a35a';
-      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
-      ctx.restore();
 
       ctx.restore();
 
