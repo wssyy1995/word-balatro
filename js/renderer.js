@@ -1422,7 +1422,7 @@ class Renderer {
 
     // === 目标分 / 当前 卡片式 top bar ===
     const barW = W - 20 * s;
-    const barH = 56 * s + 7;
+    const barH = h;
     const barX = 10 * s;
     const barY = top + 9;
     const r = 10 * s;
@@ -1569,7 +1569,8 @@ class Renderer {
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
     const top = (this.safeTop || 0) + 20;
-    const hudBottom = top + 66 * s;
+    const h = 66 * s;  // 与 drawHUD 中的 h 保持一致
+    const hudBottom = top + 9 + h;
     const maxRows = 3;
     const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
     const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
