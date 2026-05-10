@@ -1032,7 +1032,7 @@ class ShopRenderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫技能', textX, skillY);
+      ctx.fillText('女巫技能', textX, skillY + 1 * s);
       ctx.restore();
       skillY += 16 * s;
 
@@ -1041,7 +1041,7 @@ class ShopRenderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY, textMaxW, 13 * s);
+      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 3 * s, textMaxW, 13 * s);
       ctx.restore();
       skillY += descH + 4 * s;
 
