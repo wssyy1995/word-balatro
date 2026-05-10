@@ -1407,7 +1407,7 @@ class Renderer {
     const W = this.W;
     const s = this.scale;
     const top = (this.safeTop || 0) + 20;
-    const h = 58 * s;
+    const h = 60 * s;
 
     this.drawTopHeader();
 
@@ -1569,11 +1569,11 @@ class Renderer {
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
     const top = (this.safeTop || 0) + 20;
-    const hudBottom = top + 58 * s;
+    const hudBottom = top + 60 * s;
     const maxRows = 3;
     const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
     const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
-    const propBarH = 86 * s;
+    const propBarH = 84 * s;
 
     const btnTop = H - 90 * s;
     const cardGap = 50 * s;                                    // 卡牌底部到按钮间距（约原来的一半）
@@ -1591,10 +1591,10 @@ class Renderer {
     const padX = 10 * s;
     const dividerW = 1.5 * s;
     const gap = 6 * s;
-    const slotTopPad = 7 * s;
+    const slotTopPad = 6 * s;
 
     const slotW = (propW - padX * 2 - 5 * gap - dividerW) / 6;
-    const slotH = propBarH - slotTopPad - 7 * s;
+    const slotH = propBarH - slotTopPad - 6 * s;
 
     const slotY = propY + slotTopPad;
     const leftStartX = propX + padX;
