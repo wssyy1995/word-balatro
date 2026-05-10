@@ -1032,7 +1032,7 @@ class ShopRenderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫技能', textX, skillY + 1 * s);
+      ctx.fillText('女巫约束', textX, skillY + 1 * s);
       ctx.restore();
       skillY += 16 * s;
 

@@ -163,21 +163,12 @@ class Renderer {
     } catch (e) {
       this.witchHatIconLoaded = false;
     }
-    // 加载女巫头像（动态按 WITCH_SKILLS 中的 level，结构与 shopCardImages 一致）
+    // 女巫头像占位（由 CloudStorageManager 从云端注入，此处只初始化占位）
     this.witchAvatars = {};
     const witchLevels = [...new Set(WITCH_SKILLS.map(s => s.level))];
     witchLevels.forEach(level => {
       const name = `witch_${level}`;
-      try {
-        const img = wx.createImage();
-        img.src = `images/witch/${name}.png`;
-        const data = { img, loaded: false, width: 0, height: 0 };
-        img.onload = () => { data.loaded = true; data.width = img.width || 0; data.height = img.height || 0; };
-        img.onerror = () => { data.loaded = false; };
-        this.witchAvatars[name] = data;
-      } catch (e) {
-        this.witchAvatars[name] = { img: null, loaded: false, width: 0, height: 0 };
-      }
+      this.witchAvatars[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
     
     // 加载金币图标
@@ -698,145 +689,6 @@ class Renderer {
     ctx.fill();
   }
 
-  // ===== HUD 女巫技能详情弹窗 =====
-  _drawHudWitchPopup(game) {
-    const ctx = this.ctx;
-    const W = this.W;
-    const s = this.scale;
-    const popup = game._hudWitchPopup;
-    if (!popup) return;
-
-    const witchSkill = getSkillForLevel(game.round);
-    if (!witchSkill) return;
-
-    const rect = this.hudWitchAvatarRect;
-    if (!rect) return;
-
-    const { x: avatarX, y: avatarY, w: avatarW, h: avatarH } = rect;
-
-    const pad = 10 * s;
-    const lineH = 16 * s;
-
-    // 计算弹窗宽度
-    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-    const descW = ctx.measureText(witchSkill.desc).width;
-    const rewardW = ctx.measureText(witchSkill.reward_desc).width;
-    const minPopupW = avatarW + 20 * s;
-    const popupW = Math.max(minPopupW, Math.max(descW, rewardW) + pad * 2 + 20 * s);
-    let popupX = avatarX + (avatarW - popupW) / 2;
-
-    // 左边缘防溢出
-    const edgePad = 5 * s;
-    popupX = Math.max(edgePad, Math.min(popupX, W - popupW - edgePad));
-
-    // 计算内容高度
-    const popupH = pad * 2 + lineH * 4 + 8 * s;
-    const popupY = avatarY + avatarH + 6 * s + 2;
-
-    // 出现动画（easeOutBack：从头像下方弹出）
-    let appearScale = 1;
-    let appearOffsetY = 0;
-    if (popup.animStartTime) {
-      const ae = Date.now() - popup.animStartTime;
-      const ap = Math.min(ae / 200, 1);
-      const ease = Easing.easeOutBack(ap);
-      appearScale = 0.5 + 0.5 * ease;
-      appearOffsetY = (1 - ease) * 12 * s;
-    }
-
-    ctx.save();
-    ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
-    ctx.scale(appearScale, appearScale);
-    ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
-    ctx.translate(0, appearOffsetY);
-
-    // 小三角
-    const triW = 8 * s;
-    const triH = 6 * s;
-    const triX = avatarX + avatarW / 2;
-    ctx.beginPath();
-    ctx.moveTo(triX - triW, popupY);
-    ctx.lineTo(triX, popupY - triH);
-    ctx.lineTo(triX + triW, popupY);
-    ctx.closePath();
-    ctx.fillStyle = '#9b59b6';
-    ctx.fill();
-
-    // 弹窗面板
-    const r = 8 * s;
-    this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
-
-    let cy = popupY + pad + lineH / 2;
-    const cx = popupX + popupW / 2;
-
-    // 名称（带星星装饰）
-    ctx.save();
-    ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#1a2f4a';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(`✦ ${witchSkill.name} ✦`, cx, cy);
-    ctx.restore();
-
-    cy += lineH + 4 * s;
-
-    // 效果标签
-    ctx.save();
-    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-    ctx.fillStyle = '#888';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('效果', popupX + pad, cy);
-    ctx.restore();
-
-    cy += lineH;
-
-    // 效果描述
-    ctx.save();
-    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#333';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(witchSkill.desc, popupX + pad, cy);
-    ctx.restore();
-
-    cy += lineH + 4 * s;
-
-    // 奖励标签
-    ctx.save();
-    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-    ctx.fillStyle = '#888';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('奖励', popupX + pad, cy);
-    ctx.restore();
-
-    cy += lineH;
-
-    // 奖励描述
-    ctx.save();
-    ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-    ctx.fillStyle = '#c4a35a';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(witchSkill.reward_desc, popupX + pad, cy);
-    ctx.restore();
-
-    // 底部装饰线
-    const decoY = popupY + popupH - 10 * s;
-    ctx.save();
-    ctx.strokeStyle = 'rgba(155,89,182,0.3)';
-    ctx.lineWidth = 1 * s;
-    const decoW = popupW * 0.5;
-    const decoX = popupX + (popupW - decoW) / 2;
-    ctx.beginPath();
-    ctx.moveTo(decoX, decoY);
-    ctx.lineTo(decoX + decoW, decoY);
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.restore();
-  }
 
   // 绘制虚线空位
   _drawEmptySlot(ctx, x, y, w, h, s, type = null) {
@@ -1294,14 +1146,33 @@ class Renderer {
       if (game._letterGodAnim) {
         this._drawLetterGodAnim(game);
       }
-      // HUD 女巫技能详情弹窗
-      if (game._hudWitchPopup) {
-        this._drawHudWitchPopup(game);
-      }
       // 字母置换弹窗（覆盖在游戏页面上方）
       if (game._changeLetterPopup) {
         this.drawChangeLetterPopup(game);
       }
+      // 自动触发 HUD 女巫头像星星动画（约束失败时）
+      if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {
+        game._witchStarBurstAuto = false;
+        const rect = this.hudWitchAvatarRect;
+        game._witchStarBurst = {
+          cx: rect.x + rect.w / 2,
+          cy: rect.y + rect.h / 2,
+          startTime: Date.now(),
+        };
+      }
+
+      // HUD 女巫头像温柔旋转星星
+      if (game._witchStarBurst) {
+        const elapsed = Date.now() - game._witchStarBurst.startTime;
+        const duration = 2500;
+        if (elapsed < duration) {
+          const fade = elapsed > 2000 ? 1 - (elapsed - 2000) / 500 : 1;
+          this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 90 * s, s, fade);
+        } else {
+          game._witchStarBurst = null;
+        }
+      }
+
       // hintToast 提示
       this._drawHintToast(game);
     } else if (game.state === 'settlement') {
@@ -1487,10 +1358,9 @@ class Renderer {
       const baseY = barY + (barH - avatarH) / 2-5*s;
       const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
-      // 女巫呼吸 + 不倒翁式旋转摇摆
+      // 女巫呼吸缩放
       const now = Date.now();
       const breath = Math.sin(now / 1500) * 0.03;
-      const tilt = Math.sin(now / 1200) * 0.06;  // 倾斜角度 ±0.06 rad（约 ±3.4°）
       const scale = 1 + breath;
       const drawW = avatarW * scale;
       const drawH = avatarH * scale;
@@ -1498,8 +1368,6 @@ class Renderer {
       ctx.save();
       // 移动到旋转中心（头像底部中心）
       ctx.translate(baseX + avatarW / 2, baseY + avatarH);
-      // 不倒翁式左右摇摆
-      ctx.rotate(tilt);
       // 绘制头像（以底部中心为原点）
       if (witchAvatar && witchAvatar.loaded && witchAvatar.img) {
         ctx.drawImage(witchAvatar.img, -drawW / 2, -drawH, drawW, drawH);
@@ -1518,31 +1386,63 @@ class Renderer {
       const tagH = 22 * s;
       const tagPaddingX = 10 * s;
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      const tagText = witchSkill.desc;
+      let tagText = witchSkill.desc;
+      if (game._witchAngryTip) {
+        if (Date.now() < game._witchAngryTip.expireAt) {
+          tagText = game._witchAngryTip.text;
+        } else {
+          game._witchAngryTip = null;
+        }
+      }
       const textMetrics = ctx.measureText(tagText);
       const tagW = textMetrics.width + tagPaddingX * 2;
-      const tagX = baseX + avatarW + 6 * s;
-      const tagY = barY - 18 * s;
+      const tagX = baseX + avatarW ;
+      const tagY = barY - 9 * s+1;
       const tagR = 6 * s;
 
-      // 标签背景（深紫色圆角 + 金色边框 + 左右尖角）
-      const tipSize = 5 * s;
+      // 标签整体呼吸缩放（以中心为原点）
+      const tagBreath = 1 + Math.sin(Date.now() / 1000) * 0.03;
+      const tagCX = tagX + tagW / 2;
+      const tagCY = tagY + tagH / 2;
+      ctx.save();
+      ctx.translate(tagCX, tagCY);
+      ctx.scale(tagBreath, tagBreath);
+      ctx.translate(-tagCX, -tagCY);
+
+      // 标签背景（深紫色圆角 + 金色边框 + 底部小三角）
+      const tagTipW = 7 * s;
+      const tagTipH = 5 * s;
+      const tagTipX = tagX + 18 * s;
+      // 金色呼吸灯
+      const breathe = (Math.sin(Date.now() / 900) + 1) / 2;
       ctx.save();
       ctx.fillStyle = '#5a3a6e';
-      ctx.strokeStyle = '#c4a35a';
-      ctx.lineWidth = 1.2 * s;
+      const glowAlpha = 0.15 + breathe * 0.28;
+      ctx.shadowBlur = (3 + breathe * 6) * s;
+      ctx.shadowColor = `rgba(196, 163, 90, ${glowAlpha})`;
+      const sr = 190 + breathe * 35;
+      const sg = 155 + breathe * 28;
+      const sb = 85 + breathe * 18;
+      ctx.strokeStyle = `rgb(${Math.floor(sr)},${Math.floor(sg)},${Math.floor(sb)})`;
+      ctx.lineWidth = 1.2 * s + 1;
       ctx.beginPath();
-      // 左上圆角开始
+      // 左上圆角
       ctx.moveTo(tagX + tagR, tagY);
-      // 上边缘到左尖角前
-      ctx.lineTo(tagX - tipSize, tagY);
-      // 左尖角
-      ctx.lineTo(tagX, tagY + tagH / 2);
-      // 左下
-      ctx.lineTo(tagX - tipSize, tagY + tagH);
-      // 下边缘
+      ctx.lineTo(tagX + tagW - tagR, tagY);
+      ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW, tagY + tagR);
+      // 右边缘
+      ctx.lineTo(tagX + tagW, tagY + tagH - tagR);
+      ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW - tagR, tagY + tagH);
+      // 下边缘到三角右侧
+      ctx.lineTo(tagTipX + tagTipW, tagY + tagH);
+      // 三角右斜边
+      ctx.lineTo(tagTipX, tagY + tagH + tagTipH);
+      // 三角左斜边
+      ctx.lineTo(tagTipX - tagTipW, tagY + tagH);
+      // 下边缘到左下圆角
       ctx.lineTo(tagX + tagR, tagY + tagH);
       ctx.quadraticCurveTo(tagX, tagY + tagH, tagX, tagY + tagH - tagR);
+      // 左边缘
       ctx.lineTo(tagX, tagY + tagR);
       ctx.quadraticCurveTo(tagX, tagY, tagX + tagR, tagY);
       ctx.closePath();
@@ -1550,33 +1450,25 @@ class Renderer {
       ctx.stroke();
       ctx.restore();
 
-      // 右侧主体圆角 + 右尖角
+      // 再画一层无阴影的细边框，避免呼吸灯影响文字清晰度
       ctx.save();
-      ctx.fillStyle = '#5a3a6e';
       ctx.strokeStyle = '#c4a35a';
-      ctx.lineWidth = 1.2 * s;
+      ctx.lineWidth = 0.6 * s;
       ctx.beginPath();
-      // 右上圆角
-      ctx.moveTo(tagX + tagW - tagR, tagY);
-      ctx.lineTo(tagX + tagW + tipSize, tagY);
-      // 右尖角
-      ctx.lineTo(tagX + tagW, tagY + tagH / 2);
-      // 右下
-      ctx.lineTo(tagX + tagW + tipSize, tagY + tagH);
-      // 下边缘到左下圆角
-      ctx.lineTo(tagX + tagW - tagR, tagY + tagH);
-      ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW, tagY + tagH - tagR);
-      ctx.lineTo(tagX + tagW, tagY + tagR);
-      ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW - tagR, tagY);
+      ctx.moveTo(tagX + tagR, tagY);
+      ctx.lineTo(tagX + tagW - tagR, tagY);
+      ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW, tagY + tagR);
+      ctx.lineTo(tagX + tagW, tagY + tagH - tagR);
+      ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW - tagR, tagY + tagH);
+      ctx.lineTo(tagTipX + tagTipW, tagY + tagH);
+      ctx.lineTo(tagTipX, tagY + tagH + tagTipH);
+      ctx.lineTo(tagTipX - tagTipW, tagY + tagH);
+      ctx.lineTo(tagX + tagR, tagY + tagH);
+      ctx.quadraticCurveTo(tagX, tagY + tagH, tagX, tagY + tagH - tagR);
+      ctx.lineTo(tagX, tagY + tagR);
+      ctx.quadraticCurveTo(tagX, tagY, tagX + tagR, tagY);
       ctx.closePath();
-      ctx.fill();
       ctx.stroke();
-      ctx.restore();
-
-      // 中间矩形主体
-      ctx.save();
-      ctx.fillStyle = '#5a3a6e';
-      ctx.fillRect(tagX, tagY, tagW, tagH);
       ctx.restore();
 
       // 标签文字（白色）
@@ -1588,30 +1480,32 @@ class Renderer {
       ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2);
       ctx.restore();
 
+      ctx.restore();
+
       // === 列2：回合 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('回合', c2, barY + barH * 0.32);
+      ctx.fillText('回合', c2, barY + barH * 0.32 + 4);
 
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
-      ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s);
+      ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s + 4);
 
       // === 列3：目标分 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
-      ctx.fillText('目标分', c3, barY + barH * 0.32);
+      ctx.fillText('目标分', c3, barY + barH * 0.32 + 4);
 
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
-      ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s);
+      ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s + 4);
 
       // === 列4：当前 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
-      ctx.fillText('当前', c4, barY + barH * 0.32);
+      ctx.fillText('当前', c4, barY + barH * 0.32 + 4);
 
       // 当前分数（带变化动画）
       if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
@@ -1622,7 +1516,7 @@ class Renderer {
       let scoreScale = scorePulse.scale;
       if (scorePulse.progress >= 1) this.scoreAnim = null;
       ctx.save();
-      ctx.translate(c4, barY + barH * 0.68 - 2 * s);
+      ctx.translate(c4, barY + barH * 0.68 - 2 * s + 4);
       ctx.scale(scoreScale, scoreScale);
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
@@ -2509,7 +2403,7 @@ class Renderer {
     const playText = `出牌 (${game.handsLeft})`;
     const playTx = playX + btnW / 2;
     const selectedCount = game.getSelectedCards ? game.getSelectedCards().length : 0;
-    const isInvalid = game.pendingCheck && game.pendingCheck.state === 'invalid';
+    const isInvalid = game.pendingCheck && (game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed');
     if (isInvalid || selectedCount < 2) {
       // 非法状态或牌数不足：深灰色文字
       ctx.fillStyle = '#666';
@@ -3434,8 +3328,9 @@ class Renderer {
   }
 
   // ===== 烟花粒子系统 =====
-  _spawnSparkles(cx, cy, count = 20) {
+  _spawnSparkles(cx, cy, count = 20, colors = null) {
     const s = this.scale;
+    const palette = colors || ['#ffd700', '#ffffff'];
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = 1 + Math.random() * 2.5;
@@ -3447,7 +3342,30 @@ class Renderer {
         life: 1,
         decay: 0.015 + Math.random() * 0.02,
         size: (1.5 + Math.random() * 2.5) * s,
-        color: Math.random() > 0.4 ? '#ffd700' : '#ffffff',
+        color: palette[Math.floor(Math.random() * palette.length)],
+      });
+    }
+  }
+
+  // 星星爆发（星形、速度较慢、范围较大）
+  _spawnStarBurst(cx, cy, count = 16, colors = null) {
+    const s = this.scale;
+    const palette = colors || ['#ffd700', '#ffffff'];
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.6 + Math.random() * 1.0;
+      this.sparkles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed * s,
+        vy: Math.sin(angle) * speed * s - 0.6 * s,
+        life: 1,
+        decay: 0.010 + Math.random() * 0.012,
+        size: (1.2 + Math.random() * 1.8) * s,
+        color: palette[Math.floor(Math.random() * palette.length)],
+        shape: 'star',
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.12,
       });
     }
   }
@@ -3460,16 +3378,73 @@ class Renderer {
       p.y += p.vy;
       p.vy += 0.08 * s; // 重力
       p.life -= p.decay;
+      p.rotation += p.rotSpeed || 0;
       if (p.life > 0) {
         ctx.globalAlpha = Math.max(0, p.life);
         ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
+        if (p.shape === 'star') {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          ctx.beginPath();
+          for (let k = 0; k < 4; k++) {
+            const a = (Math.PI / 2) * k;
+            const r = k % 2 === 0 ? p.size : p.size * 0.35;
+            ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
         return true;
       }
       return false;
     });
+    ctx.restore();
+  }
+
+  // ===== 温柔旋转星星（复用礼盒 starburst，紫色系）=====
+  _drawGentleStars(cx, cy, size, s, globalAlpha = 1) {
+    const ctx = this.ctx;
+    const now = Date.now();
+    const breath = 0.5 + 0.5 * Math.sin(now / 800);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.globalAlpha = globalAlpha;
+
+    // === 淡紫色径向光晕 ===
+    const glowR = size * 0.6;
+    const glowAlpha = 0.18 * breath;
+    const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
+    glowGrad.addColorStop(0, `rgba(180,140,220,${glowAlpha})`);
+    glowGrad.addColorStop(0.4, `rgba(155,89,182,${glowAlpha * 0.6})`);
+    glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
+
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === 散落小星星（绕中心缓慢旋转+闪烁）===
+    const starCount = 14;
+    for (let i = 0; i < starCount; i++) {
+      const seed = i * 137.5;
+      const dist = size * (0.3 + 0.45 * Math.abs(Math.sin(seed)));
+      const angle = seed + now / 1500;
+      const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
+      const starSize = (1.6 + 1.0 * Math.sin(i * 3)) * s;
+
+      ctx.fillStyle = `rgba(220,190,255,${0.9 * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, starSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.restore();
   }
 

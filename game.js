@@ -294,17 +294,17 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测 HUD 女巫头像点击（显示/关闭技能详情弹窗）
+    // 检测 HUD 女巫头像点击（温柔旋转星星）
     if (renderer.hudWitchAvatarRect) {
       const avatarHit = renderer.hitTest(x, y, [renderer.hudWitchAvatarRect]);
       if (avatarHit) {
         vibrate();
-        game._witchDetailPopup = null; // 关闭女巫牌详情弹窗
-        if (game._hudWitchPopup) {
-          game._hudWitchPopup = null;
-        } else {
-          game._hudWitchPopup = { animStartTime: Date.now() };
-        }
+        const rect = renderer.hudWitchAvatarRect;
+        game._witchStarBurst = {
+          cx: rect.x + rect.w / 2,
+          cy: rect.y + rect.h / 2,
+          startTime: Date.now(),
+        };
         return;
       }
     }
@@ -314,7 +314,6 @@ function handleInput(x, y) {
       const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
       if (witchHit) {
         vibrate();
-        game._hudWitchPopup = null; // 关闭 HUD 女巫弹窗
         if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
           game._witchDetailPopup = null;
         } else {
@@ -327,10 +326,6 @@ function handleInput(x, y) {
     // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗
     if (game._witchDetailPopup) {
       game._witchDetailPopup = null;
-      return;
-    }
-    if (game._hudWitchPopup) {
-      game._hudWitchPopup = null;
       return;
     }
 
