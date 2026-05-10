@@ -163,19 +163,20 @@ class Renderer {
     } catch (e) {
       this.witchHatIconLoaded = false;
     }
-    // 加载女巫头像（动态按 WITCH_SKILLS 中的 level）
+    // 加载女巫头像（动态按 WITCH_SKILLS 中的 level，结构与 shopCardImages 一致）
     this.witchAvatars = {};
     const witchLevels = [...new Set(WITCH_SKILLS.map(s => s.level))];
     witchLevels.forEach(level => {
+      const name = `witch_${level}`;
       try {
         const img = wx.createImage();
-        img.src = `images/witch/witch_${level}.png`;
-        const data = { img, loaded: false };
-        img.onload = () => { data.loaded = true; };
+        img.src = `images/witch/${name}.png`;
+        const data = { img, loaded: false, width: 0, height: 0 };
+        img.onload = () => { data.loaded = true; data.width = img.width || 0; data.height = img.height || 0; };
         img.onerror = () => { data.loaded = false; };
-        this.witchAvatars[level] = data;
+        this.witchAvatars[name] = data;
       } catch (e) {
-        this.witchAvatars[level] = { img: null, loaded: false };
+        this.witchAvatars[name] = { img: null, loaded: false, width: 0, height: 0 };
       }
     });
     
@@ -1482,7 +1483,7 @@ class Renderer {
       const avatarSize = 32 * s;
       const avatarX = barX + 4 * s;
       const avatarY = barY + (barH - avatarSize) / 2;
-      const witchAvatar = this.witchAvatars[witchSkill.level];
+      const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
       // 圆形裁剪绘制头像
       ctx.save();

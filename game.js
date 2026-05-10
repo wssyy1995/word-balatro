@@ -54,10 +54,14 @@ function triggerCloudPreload() {
     return;
   }
 
-  console.log('[Game] 第一回合已显示，开始后台预加载 shop_card 云图片');
-  cloudStorage.preloadShopCardImages().then(() => {
+  console.log('[Game] 第一回合已显示，开始后台预加载云图片');
+  Promise.all([
+    cloudStorage.preloadShopCardImages(),
+    cloudStorage.preloadWitchImages(),
+  ]).then(() => {
     cloudStorage.injectToRenderer(renderer);
-    console.log('[Game] shop_card 云图片已注入 renderer');
+    cloudStorage.injectWitchToRenderer(renderer);
+    console.log('[Game] 云图片已注入 renderer');
   }).catch(err => {
     console.error('[Game] 云图片预加载失败:', err);
   });
@@ -127,6 +131,18 @@ function handleInput(x, y) {
         }).catch(err => {
           game.hintToast = { text: '上传失败', expireAt: Date.now() + 2000 };
           console.error('上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_upload_witch') {
+        cloudStorage.uploadWitchImages().then(res => {
+          game.hintToast = { text: `witch 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadWitchImages();
+        }).then(() => {
+          cloudStorage.injectWitchToRenderer(renderer);
+          game.hintToast = { text: 'witch 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'witch 上传失败', expireAt: Date.now() + 2000 };
+          console.error('witch 上传失败:', err);
         });
       }
       if (debugHit.action === 'debug_endGame') {
