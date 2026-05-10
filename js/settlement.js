@@ -674,8 +674,8 @@ class WitchRewardRenderer {
     ctx.translate(cx, cy);
 
     // === 金色径向光晕（礼盒背后，呼吸脉动）===
-    const glowR = size * 0.9;
-    const glowAlpha = 0.3 * breath;
+    const glowR = size * 0.6;
+    const glowAlpha = 0.15 * breath;
     const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
     glowGrad.addColorStop(0, `rgba(255,215,100,${glowAlpha})`);
     glowGrad.addColorStop(0.4, `rgba(196,163,90,${glowAlpha * 0.6})`);
