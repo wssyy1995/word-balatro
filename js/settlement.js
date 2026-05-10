@@ -193,17 +193,8 @@ class WitchRewardRenderer {
 
       // === 标题：女巫奖励（Canvas 绘制）===
       const titleText = '女巫奖励';
-      const titleFontSize = 20 * s;
-      const titleY = giftY - 30 * s;
-      const titleBarW = 240 * s;
-      const titleBarH = 40 * s;
-      const titleBarX = (W - titleBarW) / 2;
-      const titleBarY = titleY - titleBarH / 2;
-
-      // 深色圆角矩形背景
-      ctx.save();
-      this.parent.roundRect(titleBarX, titleBarY, titleBarW, titleBarH, 8 * s, '#2a2520');
-      ctx.restore();
+      const titleFontSize = 24 * s;
+      const titleY = giftY - 40 * s;
 
       // 先设置字体以测量文字宽度
       ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
@@ -211,43 +202,76 @@ class WitchRewardRenderer {
       const textWidth = textMetrics.width;
 
       // 文字两侧装饰线参数
-      const lineLength = 50 * s;
-      const lineGap = 10 * s;
+      const lineLength = 55 * s;
+      const lineGap = 14 * s;
       const lineY = titleY;
-      const leftLineStartX = W / 2 - textWidth / 2 - lineGap - lineLength;
-      const leftLineEndX = W / 2 - textWidth / 2 - lineGap;
-      const rightLineStartX = W / 2 + textWidth / 2 + lineGap;
-      const rightLineEndX = W / 2 + textWidth / 2 + lineGap + lineLength;
+      const leftInnerX = W / 2 - textWidth / 2 - lineGap;
+      const leftOuterX = leftInnerX - lineLength;
+      const rightInnerX = W / 2 + textWidth / 2 + lineGap;
+      const rightOuterX = rightInnerX + lineLength;
 
-      // 绘制细线
       ctx.save();
+
+      // --- 左侧：空心菱形 + 渐变线 + 实心小菱形 ---
+      // 空心菱形（稍大，靠近文字）
+      const hollowSize = 4.5 * s;
+      ctx.save();
+      ctx.translate(leftInnerX, lineY);
+      ctx.rotate(Math.PI / 4);
       ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      // 渐变线（从空心菱形向外变淡）
+      const leftGrad = ctx.createLinearGradient(leftInnerX, lineY, leftOuterX, lineY);
+      leftGrad.addColorStop(0, '#c4a35a');
+      leftGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = leftGrad;
       ctx.lineWidth = 1 * s;
       ctx.beginPath();
-      ctx.moveTo(leftLineStartX, lineY);
-      ctx.lineTo(leftLineEndX, lineY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(rightLineStartX, lineY);
-      ctx.lineTo(rightLineEndX, lineY);
+      ctx.moveTo(leftInnerX, lineY);
+      ctx.lineTo(leftOuterX, lineY);
       ctx.stroke();
 
-      // 绘制菱形（线的末端和文字侧）
+      // 实心小菱形（线末端）
+      const solidSize = 2.5 * s;
+      ctx.save();
+      ctx.translate(leftOuterX, lineY);
+      ctx.rotate(Math.PI / 4);
       ctx.fillStyle = '#c4a35a';
-      const diamondSize = 3 * s;
-      // 左侧：线起点菱形 + 线终点（靠近文字）菱形
-      [
-        { x: leftLineStartX, y: lineY },
-        { x: leftLineEndX + lineGap * 0.3, y: lineY },
-        { x: rightLineStartX - lineGap * 0.3, y: lineY },
-        { x: rightLineEndX, y: lineY },
-      ].forEach(p => {
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(Math.PI / 4);
-        ctx.fillRect(-diamondSize, -diamondSize, diamondSize * 2, diamondSize * 2);
-        ctx.restore();
-      });
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      // --- 右侧：空心菱形 + 渐变线 + 实心小菱形 ---
+      // 空心菱形（稍大，靠近文字）
+      ctx.save();
+      ctx.translate(rightInnerX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      // 渐变线（从空心菱形向外变淡）
+      const rightGrad = ctx.createLinearGradient(rightInnerX, lineY, rightOuterX, lineY);
+      rightGrad.addColorStop(0, '#c4a35a');
+      rightGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = rightGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(rightInnerX, lineY);
+      ctx.lineTo(rightOuterX, lineY);
+      ctx.stroke();
+
+      // 实心小菱形（线末端）
+      ctx.save();
+      ctx.translate(rightOuterX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
       ctx.restore();
 
       // 金色渐变文字
