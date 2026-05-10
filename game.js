@@ -372,11 +372,13 @@ function handleInput(x, y) {
     if (!data) return;
 
     if (data.phase === 'gift') {
-      // 点击礼物盒开始打开动画
-      if (wr.skipRect && !data._opening) {
-        const hit = renderer.hitTest(x, y, [wr.skipRect]);
+      // 点击3个礼盒之一
+      if (wr.giftRects && !data._opening && data._selectedGiftIndex === undefined) {
+        const hit = renderer.hitTest(x, y, wr.giftRects);
         if (hit) {
           vibrate();
+          game.witchRewardData._selectedGiftIndex = hit.index;
+          game.witchRewardData._disappearStartTime = Date.now();
           game.witchRewardData._opening = true;
           game.witchRewardData._openingStartTime = Date.now();
           return;

@@ -150,6 +150,8 @@ class WitchRewardRenderer {
     this.stashBtnPressed = false;
     this.useBtnPressed = false;
     this.coinFlipStartTime = null;
+    this.giftRects = [];
+    this._lastPhase = null;
   }
 
   draw(ctx, game, W, H, s) {
@@ -182,55 +184,115 @@ class WitchRewardRenderer {
     const py = (H - ph) / 2 + panelOffsetY;
 
     if (data.phase === 'gift') {
-      // 礼物盒绘制（默认呼吸，点击后闪烁）— 直接居中浮在遮罩上
-      let pulse = 1;
-      let alpha = 1;
-      if (data._opening) {
-        const openElapsed = Date.now() - data._openingStartTime;
-        if (openElapsed < 800) {
-          pulse = Math.sin(openElapsed / 80) * 0.2 + 1.1;
-          alpha = 0.6 + Math.sin(openElapsed / 60) * 0.4;
-        } else if (!data._resolved) {
-          data._resolved = true;
-          game.resolveWitchReward();
+      // === 3个礼盒横排 ===
+      const giftSize = 80 * s;
+      const giftGap = 30 * s;
+      const totalWidth = giftSize * 3 + giftGap * 2;
+      const startX = (W - totalWidth) / 2;
+      const giftY = H / 2 + panelOffsetY - giftSize / 2;
+
+      this.giftRects = [];
+
+      // 八角星芒光芒（被选中的礼盒背后）
+      if (data._selectedGiftIndex !== undefined) {
+        const selectedCx = startX + data._selectedGiftIndex * (giftSize + giftGap) + giftSize / 2;
+        const selectedCy = giftY + giftSize / 2;
+        this._drawStarburst(ctx, selectedCx, selectedCy, giftSize, s);
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const gx = startX + i * (giftSize + giftGap);
+        const gy = giftY;
+        const cx = gx + giftSize / 2;
+        const cy = gy + giftSize / 2;
+
+        if (data._selectedGiftIndex !== undefined) {
+          if (i === data._selectedGiftIndex) {
+            // 被选中的礼盒：闪烁（原有逻辑）
+            let pulse = 1;
+            let alpha = 1;
+            if (data._opening) {
+              const openElapsed = Date.now() - data._openingStartTime;
+              if (openElapsed < 800) {
+                pulse = Math.sin(openElapsed / 80) * 0.2 + 1.1;
+                alpha = 0.6 + Math.sin(openElapsed / 60) * 0.4;
+              } else if (!data._resolved) {
+                data._resolved = true;
+                game.resolveWitchReward();
+              }
+            }
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
+            ctx.translate(cx, cy);
+            ctx.scale(pulse, pulse);
+            if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+              ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+            } else {
+              this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+            }
+            ctx.restore();
+          } else {
+            // 未选中的礼盒：淡出+缩小消失
+            const disappearElapsed = Date.now() - (data._disappearStartTime || Date.now());
+            const disappearDuration = 200;
+            const disappearProgress = Math.min(disappearElapsed / disappearDuration, 1);
+            const scale = 1 - Easing.easeOutCubic(disappearProgress);
+            const fadeAlpha = 1 - disappearProgress;
+
+            if (fadeAlpha > 0) {
+              ctx.save();
+              ctx.globalAlpha = fadeAlpha;
+              ctx.translate(cx, cy);
+              ctx.scale(scale, scale);
+              if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+                ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+              } else {
+                this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+              }
+              ctx.restore();
+            }
+          }
+        } else {
+          // 未选择任何礼盒：呼吸动画（略微错开相位）
+          const breath = Math.sin(Date.now() / 800 + i * 0.5) * 0.05;
+          const pulse = 1 + breath;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(pulse, pulse);
+          if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+            ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+          } else {
+            this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+          }
+          ctx.restore();
+
+          // 保存点击区域
+          this.giftRects.push({ x: gx, y: gy, w: giftSize, h: giftSize, index: i });
         }
-      } else {
-        // 缓慢呼吸（周期约 5s，幅度 ±5%）
-        const breath = Math.sin(Date.now() / 800) * 0.05;
-        pulse = 1 + breath;
       }
 
-      const giftSize = 100 * s;
-      const giftX = W / 2;
-      const giftY = H / 2 + panelOffsetY;
-
-      // 八角星芒光芒（礼盒背后，金色射线呼吸）
-      this._drawStarburst(ctx, giftX, giftY, giftSize, s);
-
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
-      ctx.translate(giftX, giftY);
-      ctx.scale(pulse, pulse);
-      if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
-        ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
-      } else {
-        this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+      // 提示文字
+      if (data._selectedGiftIndex === undefined) {
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('选择一个礼盒', W / 2, giftY + giftSize + 25 * s);
       }
-      ctx.restore();
 
-      // 点击揭晓提示
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = '#c4a35a';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('点击揭晓', W / 2, giftY + giftSize / 2 + 25 * s);
-
-      // 整屏可点击跳过
-      this.skipRect = { x: 0, y: 0, w: W, h: H };
+      this.skipRect = null;
       this.stashBtnRect = null;
       this.useBtnRect = null;
       this.okBtnRect = null;
     } else if (data.phase === 'result') {
+      // 首次进入 result 阶段时重置金币翻转时间基准
+      if (this._lastPhase !== 'result') {
+        this.coinFlipStartTime = null;
+      }
+      this._lastPhase = data.phase;
+
       // result 阶段使用 _drawModalPanel（自带遮罩+面板+关闭动画）
       ctx.restore();
 
@@ -481,8 +543,96 @@ class WitchRewardRenderer {
           this.okBtnRect = null;
           this.skipRect = null;
         }
+      } else if (data.consolationGold) {
+        // === 鼓励奖：获得奖励 ===
+        ctx.save();
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('获得奖励', W / 2, py + 38 * s);
+        ctx.restore();
+
+        // === 标题下装饰线 ===
+        ctx.save();
+        ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+        ctx.lineWidth = 1 * s;
+        const decoLineY = py + 56 * s;
+        const decoLineW = pw * 0.5;
+        const decoLineX = px + (pw - decoLineW) / 2;
+        ctx.beginPath();
+        ctx.moveTo(decoLineX, decoLineY);
+        ctx.lineTo(decoLineX + decoLineW, decoLineY);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(W / 2, decoLineY);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = gold;
+        ctx.fillRect(-3 * s, -3 * s, 6 * s, 6 * s);
+        ctx.restore();
+        ctx.restore();
+
+        // === 金币翻面动画（复用 double_coin 样式）===
+        const iconCY = py + 135 * s;
+        if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();
+        const flipElapsed = Date.now() - this.coinFlipStartTime;
+        const flipDuration = 2500;
+        const flipProgress = Math.min(flipElapsed / flipDuration, 1);
+        const rotations = 2;
+        const angle = rotations * Math.PI * 2 * Easing.easeOutCubic(flipProgress);
+        const scaleX = Math.cos(angle);
+        const coinSize = 80 * s;
+
+        ctx.save();
+        ctx.translate(W / 2, iconCY);
+        ctx.scale(scaleX, 1);
+        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+          ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5c542';
+          ctx.fill();
+          ctx.strokeStyle = '#c4a35a';
+          ctx.lineWidth = 3 * s;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 闪光效果（翻转结束时）
+        if (flipProgress < 1) {
+          const shineAlpha = (1 - flipProgress) * 0.4;
+          ctx.save();
+          ctx.globalAlpha = shineAlpha;
+          ctx.beginPath();
+          ctx.arc(W / 2, iconCY, coinSize * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // === 金币数文字 ===
+        const descY = iconCY + 65 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`+${data.consolationGold} 金币`, W / 2, descY);
+        ctx.restore();
+
+        // 底部单个按钮"领取"
+        const btnW = 130 * s;
+        const btnH = 44 * s;
+        const btnX = (W - btnW) / 2;
+        const btnY = py + ph - btnH - 28 * s;
+        this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
+        this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+        this.stashBtnRect = null;
+        this.useBtnRect = null;
+        this.skipRect = null;
       } else {
-        // 没中
+        // 没中（rate=1 时不会进入这里）
         ctx.save();
         ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
         ctx.fillStyle = '#888';

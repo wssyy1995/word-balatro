@@ -911,10 +911,16 @@ class Game {
   resolveWitchReward() {
     if (!this.witchRewardData || this.witchRewardData.phase !== 'gift') return;
     const skill = this.witchRewardData.skill;
-    const hit = Math.random() < (skill.rate || 1);
+    const rate = skill.rate || 1;
+    const hit = Math.random() < rate;
     this.witchRewardData.result = hit;
     if (hit) {
       this.witchRewardData.rewardItem = createRewardItem(skill.reward);
+    } else if (rate < 1) {
+      // 鼓励奖：随机 1~3 金币
+      const bonusGold = Math.floor(Math.random() * 3) + 1;
+      this.witchRewardData.consolationGold = bonusGold;
+      this.gold += bonusGold;
     }
     this.witchRewardData.phase = 'result';
   }
