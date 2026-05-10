@@ -151,6 +151,19 @@ class Renderer {
       this.witchGiftIconLoaded = false;
     }
 
+    // 加载女巫奖励标题图片
+    this.witchRewardTitleIcon = null;
+    this.witchRewardTitleIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/witch_reward_title.png';
+      img.onload = () => { this.witchRewardTitleIconLoaded = true; };
+      img.onerror = () => { this.witchRewardTitleIconLoaded = false; };
+      this.witchRewardTitleIcon = img;
+    } catch (e) {
+      this.witchRewardTitleIconLoaded = false;
+    }
+
     // 加载女巫帽子图标（用于女巫约束提示）
     this.witchHatIcon = null;
     this.witchHatIconLoaded = false;

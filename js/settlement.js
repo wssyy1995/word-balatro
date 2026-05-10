@@ -191,15 +191,23 @@ class WitchRewardRenderer {
       const startX = (W - totalWidth) / 2;
       const giftY = H / 2 + panelOffsetY - giftSize / 2;
 
-      // === 标题：女巫奖励 ===
-      const titleY = giftY - 35 * s;
-      ctx.save();
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#c4a35a';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('女巫奖励', W / 2, titleY);
-      ctx.restore();
+      // === 标题：女巫奖励（图片）===
+      const titleW = 260 * s;
+      const titleH = titleW * (298 / 1352);
+      const titleX = (W - titleW) / 2;
+      const titleY = giftY - titleH - 12 * s;
+      if (this.parent.witchRewardTitleIcon && this.parent.witchRewardTitleIconLoaded) {
+        ctx.drawImage(this.parent.witchRewardTitleIcon, titleX, titleY, titleW, titleH);
+      } else {
+        // 降级：文字
+        ctx.save();
+        ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('女巫奖励', W / 2, titleY + titleH / 2);
+        ctx.restore();
+      }
 
       this.giftRects = [];
 
