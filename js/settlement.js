@@ -303,7 +303,10 @@ class WitchRewardRenderer {
         const cy = gy + giftSize / 2;
 
         // 每个礼盒背后都有淡淡的金色光晕+旋转小星星
-        this._drawStarburst(ctx, cx, cy, giftSize, s);
+        // 已选中时，只给被选中的礼盒画光晕；未选中时三个都画
+        if (data._selectedGiftIndex === undefined || i === data._selectedGiftIndex) {
+          this._drawStarburst(ctx, cx, cy, giftSize, s);
+        }
 
         if (data._selectedGiftIndex !== undefined) {
           if (i === data._selectedGiftIndex) {
