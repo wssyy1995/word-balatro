@@ -1046,24 +1046,25 @@ class ShopRenderer {
       ctx.restore();
       skillY += descH + 4 * s;
 
-      if (witchSkill.reward_desc) {
-        ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#5a4a2a';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('奖励', textX, skillY);
-        ctx.restore();
-        skillY += 16 * s;
-
-        ctx.save();
-        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-        ctx.fillStyle = '#8b7d5a';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        drawWrappedText(ctx, witchSkill.reward_desc, textX, skillY, textMaxW, 13 * s);
-        ctx.restore();
-      }
+      // 隐藏奖励内容（女巫礼盒改为3选1交互后不再提前展示）
+      // if (witchSkill.reward_desc) {
+      //   ctx.save();
+      //   ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      //   ctx.fillStyle = '#5a4a2a';
+      //   ctx.textAlign = 'left';
+      //   ctx.textBaseline = 'middle';
+      //   ctx.fillText('奖励', textX, skillY);
+      //   ctx.restore();
+      //   skillY += 16 * s;
+      //
+      //   ctx.save();
+      //   ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      //   ctx.fillStyle = '#8b7d5a';
+      //   ctx.textAlign = 'left';
+      //   ctx.textBaseline = 'middle';
+      //   drawWrappedText(ctx, witchSkill.reward_desc, textX, skillY, textMaxW, 13 * s);
+      //   ctx.restore();
+      // }
 
       challengeBtnY = moduleY + (moduleH - challengeBtnH) / 2 + 15 * s;
     } else {
