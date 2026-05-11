@@ -1999,11 +1999,17 @@ class Renderer {
                 return !joker || joker._wwJumpDone;
               });
               if (allDone && elapsedSincePhase2 >= baseMultDelay + 200) {
-                // letter_a_mult_half 惩罚动画
+                // letter_a_mult_half 惩罚动画（延迟0.5s + 动画1.5s = 共2.0s）
                 if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
+                  const MULT_HALF_DELAY = 500;
+                  const MULT_HALF_DURATION = 1500;
                   if (!pc._multHalfAnimStart) {
                     pc._multHalfAnimStart = Date.now();
-                    // 触发女巫星星动画
+                  }
+                  const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
+                  // 延迟后触发女巫星星动画
+                  if (multHalfElapsed >= MULT_HALF_DELAY && !pc._multHalfStarTriggered) {
+                    pc._multHalfStarTriggered = true;
                     if (this.hudWitchAvatarRect) {
                       game._witchStarBurst = {
                         startTime: Date.now(),
@@ -2012,8 +2018,7 @@ class Renderer {
                       };
                     }
                   }
-                  const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
-                  if (multHalfElapsed >= 1500) {
+                  if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {
                     pc._multHalfAnimDone = true;
                     pc.animPhase = 3;
                   }
@@ -2261,6 +2266,23 @@ class Renderer {
     ctx.fillText('×', centerX, boxY + boxSize / 2);
     ctx.restore();
 
+    // letter_a_mult_half 惩罚动画：紫色光晕（在背景图背后）
+    if (valid && showSecondBox && pc.multHalfResult?.triggered && pc._multHalfAnimStart) {
+      const elapsed = Date.now() - pc._multHalfAnimStart;
+      const MULT_HALF_DELAY = 500;
+      const MULT_HALF_DURATION = 1500;
+      if (elapsed >= MULT_HALF_DELAY && elapsed < MULT_HALF_DELAY + MULT_HALF_DURATION) {
+        const progress = (elapsed - MULT_HALF_DELAY) / MULT_HALF_DURATION;
+        const glowAlpha = 0.2 + 0.3 * Math.sin(progress * Math.PI);
+        ctx.save();
+        ctx.shadowColor = '#9b59b6';
+        ctx.shadowBlur = 25 * s;
+        const pad = 6 * s;
+        this.roundRect(rightBoxX - pad, boxY - pad, boxSize + pad * 2, boxSize + pad * 2, 6 * s, `rgba(155,89,182,${glowAlpha})`);
+        ctx.restore();
+      }
+    }
+
     // 右：长度倍率（背景图）
     const lengthImg = this.scoreBoxImages['length'];
     if (lengthImg && lengthImg.loaded && lengthImg.img) {
@@ -2284,7 +2306,10 @@ class Renderer {
       const baseMultDelay = 500;
       const stepDuration = 700;
 
-      if (phase2Elapsed >= baseMultDelay) {
+      // 如果惩罚动画已完成，直接显示减半后的倍率
+      if (pc._multHalfAnimDone && pc.multHalfResult?.triggered) {
+        displayValue = pc.multHalfResult.halvedMult;
+      } else if (phase2Elapsed >= baseMultDelay) {
         const afterBase = phase2Elapsed - baseMultDelay;
         // displayStep = 0: 基础倍率弹出
         // displayStep = 1: 第一张 whole_word 触发
@@ -2314,10 +2339,12 @@ class Renderer {
         }
       }
 
-      // letter_a_mult_half 惩罚动画：紫色光晕 + 数字减半
+      // letter_a_mult_half 惩罚动画：数字减半
       if (pc.multHalfResult?.triggered && pc._multHalfAnimStart) {
         const elapsed = Date.now() - pc._multHalfAnimStart;
-        if (elapsed < 1500) {
+        const MULT_HALF_DELAY = 500;
+        const MULT_HALF_DURATION = 1500;
+        if (elapsed >= MULT_HALF_DELAY) {
           displayValue = pc.multHalfResult.halvedMult;
           // 触发脉冲（只在开始时触发一次）
           if (!pc._multHalfPulseTriggered) {
@@ -2325,15 +2352,6 @@ class Renderer {
             this.multAnim = { startTime: Date.now(), duration: 600 };
             this.lastMultValue = displayValue;
           }
-          // 绘制紫色光晕（在倍率方块背后）
-          const progress = elapsed / 1500;
-          const glowAlpha = 0.2 + 0.3 * Math.sin(progress * Math.PI);
-          ctx.save();
-          ctx.shadowColor = '#9b59b6';
-          ctx.shadowBlur = 25 * s;
-          const pad = 6 * s;
-          this.roundRect(rightBoxX - pad, boxY - pad, boxSize + pad * 2, boxSize + pad * 2, 6 * s, `rgba(155,89,182,${glowAlpha})`);
-          ctx.restore();
         }
       }
 
