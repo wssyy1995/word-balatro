@@ -111,6 +111,19 @@ function handleInput(x, y) {
         game.gold += 10;
         if (game.storageManager) game.storageManager.saveProgress(game);
       }
+      if (debugHit.action === 'debug_jumpToRound') {
+        wx.showModal({
+          title: '跳转回合',
+          editable: true,
+          placeholderText: '输入目标回合数',
+          success: (res) => {
+            const round = parseInt(res.content, 10);
+            if (round && round > 0) {
+              game.jumpToRound(round);
+            }
+          }
+        });
+      }
       if (debugHit.action === 'debug_winRound') game.winRound();
       if (debugHit.action === 'debug_refreshShop') {
         if (!game.shopItems) {

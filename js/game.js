@@ -1166,6 +1166,17 @@ class Game {
     this.resetRound();
   }
 
+  jumpToRound(targetRound) {
+    if (targetRound < 1) targetRound = 1;
+    this.roundScores.push({ round: this.round, score: this.score });
+    this.round = targetRound;
+    this.score = 0;
+    this.shopItems = null;
+    this.resetRound();
+    this.state = 'playing';
+    if (this.storageManager) this.storageManager.saveProgress(this);
+  }
+
   getSelectedCards() {
     return this.selected.map(id => this.hand.find(c => c && c.id === id)).filter(Boolean);
   }
