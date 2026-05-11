@@ -951,7 +951,7 @@ class Game {
   _showSettlement() {
     const baseGold = 3 + Math.round(this.round / 3);
     const extraHands = this.handsLeft * 1;
-    const extraDiscards = this.discardsLeft + 1;
+    const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
 
     // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放）
