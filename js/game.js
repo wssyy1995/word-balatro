@@ -326,6 +326,28 @@ function extractPosFromMeaning(meaning) {
   return m ? m[1] : '';
 }
 
+// 通用：letter_X_mult_half 惩罚检测（支持 letter_a_mult_half / letter_e_mult_half 等）
+function applyLetterMultHalf(witchSkill, playedInOrder, result) {
+  if (!witchSkill) return null;
+  const match = witchSkill.skill.match(/letter_([a-z])_mult_half/);
+  if (!match) return null;
+  const letter = match[1];
+  const hasLetter = playedInOrder.some(c => c.letter.toLowerCase() === letter);
+  if (!hasLetter) return null;
+  const originalScore = result.score;
+  const originalMult = result.mult;
+  const halvedMult = Math.max(1, Math.ceil(originalMult / 2));
+  const halvedScore = Math.ceil(result.base * halvedMult);
+  return {
+    triggered: true,
+    originalScore,
+    originalMult,
+    halvedMult,
+    halvedScore,
+    angryTip: witchSkill.angry_tip
+  };
+}
+
 function isValidWord(word) {
   word = word.toLowerCase();
   if (WORD_DATA.has(word)) {
@@ -731,27 +753,9 @@ class Game {
 
     const result = calcWordScore(played, this.jokers);
 
-    // === letter_a_mult_half 惩罚检测 ===
-    let multHalfResult = null;
+    // === letter_X_mult_half 惩罚检测（通用） ===
     const currentWitchSkill = getSkillForLevel(this.round);
-    if (currentWitchSkill && currentWitchSkill.skill === 'letter_a_mult_half') {
-      const hasLetterA = playedInOrder.some(c => c.letter.toLowerCase() === 'a');
-      if (hasLetterA) {
-        const originalScore = result.score;
-        const originalMult = result.mult;
-        const halvedMult = Math.max(1, Math.ceil(originalMult / 2));
-        const halvedScore = Math.ceil(result.base * halvedMult);
-        multHalfResult = {
-          triggered: true,
-          originalScore,
-          originalMult,
-          halvedMult,
-          halvedScore,
-          angryTip: currentWitchSkill.angry_tip
-        };
-      }
-    }
-    this.pendingCheck.multHalfResult = multHalfResult;
+    this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
 
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
     this.pendingCheck.letterGodIndex = letterGodTriggered ? this.jokers.indexOf(letterGod) : -1;
