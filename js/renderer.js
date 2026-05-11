@@ -2365,10 +2365,7 @@ class Renderer {
         ctx.translate(rightBoxX + boxSize / 2, boxY + boxSize / 2);
         ctx.scale(pulseScale, pulseScale);
         ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-        // 惩罚动画期间数字变深紫色
-        const isMultHalfActive = pc.multHalfResult?.triggered && pc._multHalfAnimStart &&
-          (Date.now() - pc._multHalfAnimStart) >= 500;
-        ctx.fillStyle = isMultHalfActive ? '#9b59b6' : '#f5f0e8';
+        ctx.fillStyle = '#f5f0e8';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(String(Math.round(displayValue)), 0, 0);
