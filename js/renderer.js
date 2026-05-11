@@ -2281,7 +2281,7 @@ class Renderer {
         ctx.save();
         ctx.shadowColor = '#9b59b6';
         ctx.shadowBlur = 25 * s;
-        const pad = 6 * s;
+        const pad = 5 * s;
         this.roundRect(rightBoxX - pad, boxY - pad, boxSize + pad * 2, boxSize + pad * 2, 6 * s, `rgba(155,89,182,${glowAlpha})`);
         ctx.restore();
       }
