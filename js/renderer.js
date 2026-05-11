@@ -2007,7 +2007,7 @@ class Renderer {
                     pc._multHalfAnimStart = Date.now();
                   }
                   const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
-                  // 延迟后触发女巫星星动画
+                  // 延迟后触发女巫星星动画 + angry_tip
                   if (multHalfElapsed >= MULT_HALF_DELAY && !pc._multHalfStarTriggered) {
                     pc._multHalfStarTriggered = true;
                     if (this.hudWitchAvatarRect) {
@@ -2016,6 +2016,10 @@ class Renderer {
                         cx: this.hudWitchAvatarRect.x + this.hudWitchAvatarRect.w / 2,
                         cy: this.hudWitchAvatarRect.y + this.hudWitchAvatarRect.h / 2,
                       };
+                    }
+                    // 女巫标签变为 angry_tip，保持3秒
+                    if (witchSkill && witchSkill.angry_tip) {
+                      game._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 3000 };
                     }
                   }
                   if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {
