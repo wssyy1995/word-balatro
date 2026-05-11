@@ -1,7 +1,7 @@
 // ===== 游戏核心逻辑 =====
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
-  WORD_DATA, SEED_WORDS,
+  WORD_DATA, EXPAND_WORD_DATA,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords
 } = require('./data');
@@ -63,8 +63,13 @@ function draw(deck, count) {
 }
 
 function getSeedWord(minLen = 3, maxLen = 6) {
-  // 从保底词池（500个高频常用词）中按长度过滤后随机选取
-  const candidates = SEED_WORDS.filter(w => w.length >= minLen && w.length <= maxLen);
+  // 从本地词库中按长度过滤后随机选取保底词
+  const candidates = [];
+  for (const word of WORD_DATA.keys()) {
+    if (word.length >= minLen && word.length <= maxLen) {
+      candidates.push(word);
+    }
+  }
   if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
   return 'cat';
 }
@@ -158,6 +163,10 @@ function hasValidWordInHand(hand) {
     if (word.length < 2) continue;
     if (canFormWord(word, letterCounts)) return true;
   }
+  for (const word of EXPAND_WORD_DATA.keys()) {
+    if (word.length < 2) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
   for (const word of onlineWordCache) {
     if (word.length < 2) continue;
     if (canFormWord(word, letterCounts)) return true;
@@ -220,6 +229,7 @@ function findAllValidWordsInHand(hand) {
   }
 
   for (const word of WORD_DATA.keys()) tryWord(word);
+  for (const word of EXPAND_WORD_DATA.keys()) tryWord(word);
   for (const word of onlineWordCache) tryWord(word);
 
   results.sort((a, b) => b.cards.length - a.cards.length || b.score - a.score);
@@ -308,9 +318,30 @@ function calcWordScore(cards, jokers) {
   return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace };
 }
 
+// 从释义字符串开头提取词性标记，如 n./v./adj./n&v./adj&adv.
+function extractPosFromMeaning(meaning) {
+  if (!meaning) return '';
+  // 匹配单个词性（如 n. adj.）或 & 连接的多个词性（如 n&v. adj&adv.）
+  const m = meaning.match(/^([a-z]+(?:&[a-z]+)*\.)/);
+  return m ? m[1] : '';
+}
+
 function isValidWord(word) {
   word = word.toLowerCase();
-  return WORD_DATA.has(word) || onlineWordCache.has(word);
+  if (WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L1(WORD_DATA) hit`);
+    return true;
+  }
+  if (EXPAND_WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2(EXPAND_WORD_DATA) hit`);
+    return true;
+  }
+  if (onlineWordCache.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2.5(onlineCache) hit`);
+    return true;
+  }
+  console.log(`[WordCheck] word="${word}" layer=L1+L2 miss`);
+  return false;
 }
 
 // 后台调用 MyMemory 把英文定义译成中文
@@ -334,11 +365,33 @@ async function fetchChineseTranslation(word, enDef, pos) {
 
 async function isValidWordOnline(word) {
   word = word.toLowerCase();
-  if (WORD_DATA.has(word)) return true;
-  if (onlineWordCache.has(word)) return true;
-  if (checkingWords.has(word)) return false; // 已在检测中，避免重复请求
+  // 防御性检查（该函数也可能被单独调用）
+  if (WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L1(WORD_DATA) hit`);
+    return true;
+  }
+  if (EXPAND_WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2(EXPAND_WORD_DATA) hit`);
+    if (!wordMeaningCache.has(word)) {
+      const meaning = EXPAND_WORD_DATA.get(word);
+      const pos = extractPosFromMeaning(meaning);
+      wordMeaningCache.set(word, { entries: [{ pos, def: meaning }], pos, meaning });
+    }
+    onlineWordCache.add(word);
+    wordCheckState.set(word, 'valid');
+    return true;
+  }
+  if (onlineWordCache.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2.5(onlineCache) hit`);
+    return true;
+  }
+  if (checkingWords.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L3 checking in progress, skip`);
+    return false;
+  }
 
   checkingWords.add(word);
+  console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) requesting...`);
 
   try {
     const resp = await requestPromise({
@@ -348,6 +401,7 @@ async function isValidWordOnline(word) {
     });
 
     if (resp.statusCode === 200) {
+      console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) VALID`);
       onlineWordCache.add(word);
       wordCheckState.set(word, 'valid');
 
@@ -369,8 +423,9 @@ async function isValidWordOnline(word) {
       return true;
     }
     // 404 或其他状态码：单词不存在或接口异常
+    console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (status=${resp.statusCode})`);
   } catch (e) {
-    // 网络请求失败（断网、DNS 错误等）
+    console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) ERROR:`, e.message || e);
   }
 
   wordCheckState.set(word, 'invalid');
@@ -388,10 +443,19 @@ function getWordMeaning(word) {
     if (cached.meaning) return { entries: [{ pos: cached.pos || '', def: cached.meaning }], pos: cached.pos || '', meaning: cached.meaning };
   }
 
-  // 2. 离线词库
+  // 2. 核心离线词库
   if (WORD_DATA.has(word)) {
     const info = WORD_DATA.get(word);
     const result = { entries: [{ pos: info.pos || '', def: info.meaning }], pos: info.pos || '', meaning: info.meaning };
+    wordMeaningCache.set(word, result);
+    return result;
+  }
+
+  // 3. 扩展离线词库
+  if (EXPAND_WORD_DATA.has(word)) {
+    const meaning = EXPAND_WORD_DATA.get(word);
+    const pos = extractPosFromMeaning(meaning);
+    const result = { entries: [{ pos, def: meaning }], pos, meaning };
     wordMeaningCache.set(word, result);
     return result;
   }
