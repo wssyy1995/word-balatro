@@ -1943,7 +1943,7 @@ class Renderer {
 
           if (phase >= 2) {
             const wjList = pc.wholeWordJokers || [];
-            const STEP_DURATION = 500; // 每一步固定 500ms
+            const STEP_DURATION = 350; // 每一步固定 350ms
 
             // 阶段2时间基准
             if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
@@ -1958,7 +1958,7 @@ class Renderer {
               currentStep = Math.floor(afterBase / STEP_DURATION);
             }
 
-            // 固定 500ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
+            // 固定 350ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
             wjList.forEach(({ idx }, i) => {
               const joker = game.jokers?.[idx];
               if (!joker) return;
@@ -1990,16 +1990,16 @@ class Renderer {
 
             // 检测阶段2完成 → 进入阶段3（或 letter_a_mult_half 惩罚动画）
             if (phase < 3) {
-              // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 500ms)
+              // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 350ms)
               const totalSteps = 1 + wjList.length;
-              const postWait = 500; // 全部完成后强制等待 500ms
+              const postWait = 350; // 全部完成后强制等待 350ms
               const readyTime = totalSteps * STEP_DURATION + postWait;
 
               if (afterBase >= readyTime) {
                 if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
                   const penaltyElapsed = afterBase - readyTime;
                   const PENALTY_DURATION = 500; // 惩罚动画 500ms
-                  const POST_PENALTY_WAIT = 500; // 惩罚后等待 500ms
+                  const POST_PENALTY_WAIT = 350; // 惩罚后等待 350ms
 
                   // 惩罚动画：紫色光晕 + 女巫星星 + angry_tip（在 500ms 内触发一次）
                   if (penaltyElapsed >= 0 && penaltyElapsed < PENALTY_DURATION) {
@@ -2278,9 +2278,9 @@ class Renderer {
       const phase2Start = 1000 + _cards.length * 350 + waveDuration;
       const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
       const baseMultDelay = 500;
-      const STEP_DURATION = 500;
+      const STEP_DURATION = 350;
       const totalSteps = 1 + (pc.wholeWordJokers || []).length;
-      const postWait = 500;
+      const postWait = 350;
       const readyTime = totalSteps * STEP_DURATION + postWait;
       const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
       const penaltyElapsed = afterBase - readyTime;
@@ -2317,7 +2317,7 @@ class Renderer {
       const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
 
       const baseMultDelay = 500;
-      const STEP_DURATION = 500;
+      const STEP_DURATION = 350;
 
       // 计算当前步
       let currentStep = -1;
@@ -2352,7 +2352,7 @@ class Renderer {
       // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半
       if (pc.multHalfResult?.triggered) {
         const totalSteps = 1 + wjList.length;
-        const postWait = 500;
+        const postWait = 350;
         const readyTime = totalSteps * STEP_DURATION + postWait;
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const penaltyElapsed = afterBase - readyTime;
