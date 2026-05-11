@@ -1992,14 +1992,34 @@ class Renderer {
               }
             });
 
-            // 检测阶段2完成 → 进入阶段3
+            // 检测阶段2完成 → 进入阶段3（或 letter_a_mult_half 惩罚动画）
             if (phase < 3) {
               const allDone = wjList.every(({ idx }) => {
                 const joker = game.jokers?.[idx];
                 return !joker || joker._wwJumpDone;
               });
               if (allDone && elapsedSincePhase2 >= baseMultDelay + 200) {
-                pc.animPhase = 3;
+                // letter_a_mult_half 惩罚动画
+                if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
+                  if (!pc._multHalfAnimStart) {
+                    pc._multHalfAnimStart = Date.now();
+                    // 触发女巫星星动画
+                    if (this.hudWitchAvatarRect) {
+                      game._witchStarBurst = {
+                        startTime: Date.now(),
+                        cx: this.hudWitchAvatarRect.x + this.hudWitchAvatarRect.w / 2,
+                        cy: this.hudWitchAvatarRect.y + this.hudWitchAvatarRect.h / 2,
+                      };
+                    }
+                  }
+                  const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
+                  if (multHalfElapsed >= 1500) {
+                    pc._multHalfAnimDone = true;
+                    pc.animPhase = 3;
+                  }
+                } else {
+                  pc.animPhase = 3;
+                }
               }
             }
           }
@@ -2007,7 +2027,7 @@ class Renderer {
           // === 阶段3: 总分飞行 ===
           if (phase >= 3 && !pc._flyingScoreStarted) {
             pc._flyingScoreStarted = true;
-            const totalScore = pc.result.score;
+            const totalScore = pc.multHalfResult?.halvedScore ?? pc.result.score;
             this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY);
           }
 
@@ -2291,6 +2311,29 @@ class Renderer {
         if (this.lastMultValue !== displayValue) {
           this.lastMultValue = displayValue;
           this.multAnim = { startTime: Date.now(), duration: 400 };
+        }
+      }
+
+      // letter_a_mult_half 惩罚动画：紫色光晕 + 数字减半
+      if (pc.multHalfResult?.triggered && pc._multHalfAnimStart) {
+        const elapsed = Date.now() - pc._multHalfAnimStart;
+        if (elapsed < 1500) {
+          displayValue = pc.multHalfResult.halvedMult;
+          // 触发脉冲（只在开始时触发一次）
+          if (!pc._multHalfPulseTriggered) {
+            pc._multHalfPulseTriggered = true;
+            this.multAnim = { startTime: Date.now(), duration: 600 };
+            this.lastMultValue = displayValue;
+          }
+          // 绘制紫色光晕（在倍率方块背后）
+          const progress = elapsed / 1500;
+          const glowAlpha = 0.2 + 0.3 * Math.sin(progress * Math.PI);
+          ctx.save();
+          ctx.shadowColor = '#9b59b6';
+          ctx.shadowBlur = 25 * s;
+          const pad = 6 * s;
+          this.roundRect(rightBoxX - pad, boxY - pad, boxSize + pad * 2, boxSize + pad * 2, 6 * s, `rgba(155,89,182,${glowAlpha})`);
+          ctx.restore();
         }
       }
 

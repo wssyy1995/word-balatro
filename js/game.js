@@ -730,6 +730,28 @@ class Game {
     }
 
     const result = calcWordScore(played, this.jokers);
+
+    // === letter_a_mult_half 惩罚检测 ===
+    let multHalfResult = null;
+    const currentWitchSkill = getSkillForLevel(this.round);
+    if (currentWitchSkill && currentWitchSkill.skill === 'letter_a_mult_half') {
+      const hasLetterA = playedInOrder.some(c => c.letter.toLowerCase() === 'a');
+      if (hasLetterA) {
+        const originalScore = result.score;
+        const originalMult = result.mult;
+        const halvedMult = Math.max(1, Math.ceil(originalMult / 2));
+        const halvedScore = Math.ceil(result.base * halvedMult);
+        multHalfResult = {
+          triggered: true,
+          originalScore,
+          originalMult,
+          halvedMult,
+          halvedScore
+        };
+      }
+    }
+    this.pendingCheck.multHalfResult = multHalfResult;
+
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
     this.pendingCheck.letterGodIndex = letterGodTriggered ? this.jokers.indexOf(letterGod) : -1;
     this.pendingCheck.state = 'valid';
@@ -812,8 +834,9 @@ class Game {
   }
 
   _applyScore(result) {
-    this.score += result.score;
-    this.totalScore += result.score;
+    const score = this.pendingCheck?.multHalfResult?.halvedScore ?? result.score;
+    this.score += score;
+    this.totalScore += score;
     if (this.audioManager) {
       setTimeout(() => this.audioManager.play('score'), 200);
     }
