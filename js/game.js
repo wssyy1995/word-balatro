@@ -374,8 +374,7 @@ async function isValidWordOnline(word) {
     console.log(`[WordCheck] word="${word}" layer=L2(EXPAND_WORD_DATA) hit`);
     if (!wordMeaningCache.has(word)) {
       const meaning = EXPAND_WORD_DATA.get(word);
-      const pos = extractPosFromMeaning(meaning);
-      wordMeaningCache.set(word, { entries: [{ pos, def: meaning }], pos, meaning });
+      wordMeaningCache.set(word, { meaning });
     }
     onlineWordCache.add(word);
     wordCheckState.set(word, 'valid');
@@ -454,8 +453,7 @@ function getWordMeaning(word) {
   // 3. 扩展离线词库
   if (EXPAND_WORD_DATA.has(word)) {
     const meaning = EXPAND_WORD_DATA.get(word);
-    const pos = extractPosFromMeaning(meaning);
-    const result = { entries: [{ pos, def: meaning }], pos, meaning };
+    const result = { meaning };
     wordMeaningCache.set(word, result);
     return result;
   }
