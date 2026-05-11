@@ -1943,37 +1943,33 @@ class Renderer {
 
           if (phase >= 2) {
             const wjList = pc.wholeWordJokers || [];
+            const STEP_DURATION = 500; // 每一步固定 500ms
 
-            // 基础倍率显示等待期
+            // 阶段2时间基准
             if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
             const elapsedSincePhase2 = Date.now() - pc._phase2StartTime;
             const baseMultDelay = 500;
 
-            // 依次触发 whole_word 女巫牌（事件驱动：前一个完成后触发下一个）
+            // 计算当前步（事件驱动）
+            let afterBase = 0;
+            let currentStep = -1;
             if (elapsedSincePhase2 >= baseMultDelay) {
-              for (let i = 0; i < wjList.length; i++) {
-                const { idx } = wjList[i];
-                const joker = game.jokers?.[idx];
-                if (!joker) continue;
-
-                if (!joker._wwJumpDone) {
-                  if (!joker._wwJumpStart) {
-                    // 检查前面的是否都完成了
-                    const prevAllDone = wjList.slice(0, i).every(({ idx: pIdx }) => {
-                      const prevJoker = game.jokers?.[pIdx];
-                      return !prevJoker || prevJoker._wwJumpDone;
-                    });
-                    if (prevAllDone) {
-                      joker._wwJumpStart = Date.now();
-                      joker._triggered = true;
-                    }
-                  }
-                  break; // 一次只处理一个
-                }
-              }
+              afterBase = elapsedSincePhase2 - baseMultDelay;
+              currentStep = Math.floor(afterBase / STEP_DURATION);
             }
 
-            // 处理跳跃动画
+            // 固定 500ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
+            wjList.forEach(({ idx }, i) => {
+              const joker = game.jokers?.[idx];
+              if (!joker) return;
+              // currentStep = 0: 基础倍率弹出；currentStep = 1~N: whole_word 依次触发
+              if (currentStep === i + 1 && !joker._wwJumpStart && !joker._wwJumpDone) {
+                joker._wwJumpStart = Date.now();
+                joker._triggered = true;
+              }
+            });
+
+            // 处理跳跃动画（保持原 400ms 时长，在 500ms 步内完成）
             wjList.forEach(({ idx }) => {
               const joker = game.jokers?.[idx];
               if (!joker) return;
@@ -1994,35 +1990,40 @@ class Renderer {
 
             // 检测阶段2完成 → 进入阶段3（或 letter_a_mult_half 惩罚动画）
             if (phase < 3) {
-              const allDone = wjList.every(({ idx }) => {
-                const joker = game.jokers?.[idx];
-                return !joker || joker._wwJumpDone;
-              });
-              if (allDone && elapsedSincePhase2 >= baseMultDelay + 200) {
-                // letter_a_mult_half 惩罚动画（延迟0.5s + 动画1.5s = 共2.0s）
+              // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 500ms)
+              const totalSteps = 1 + wjList.length;
+              const postWait = 500; // 全部完成后强制等待 500ms
+              const readyTime = totalSteps * STEP_DURATION + postWait;
+
+              if (afterBase >= readyTime) {
                 if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
-                  const MULT_HALF_DELAY = 500;
-                  const MULT_HALF_DURATION = 1500;
-                  if (!pc._multHalfAnimStart) {
-                    pc._multHalfAnimStart = Date.now();
-                  }
-                  const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
-                  // 延迟后触发女巫星星动画 + angry_tip
-                  if (multHalfElapsed >= MULT_HALF_DELAY && !pc._multHalfStarTriggered) {
-                    pc._multHalfStarTriggered = true;
-                    if (this.hudWitchAvatarRect) {
-                      game._witchStarBurst = {
-                        startTime: Date.now(),
-                        cx: this.hudWitchAvatarRect.x + this.hudWitchAvatarRect.w / 2,
-                        cy: this.hudWitchAvatarRect.y + this.hudWitchAvatarRect.h / 2,
-                      };
+                  const penaltyElapsed = afterBase - readyTime;
+                  const PENALTY_DURATION = 500; // 惩罚动画 500ms
+                  const POST_PENALTY_WAIT = 500; // 惩罚后等待 500ms
+
+                  // 惩罚动画：紫色光晕 + 女巫星星 + angry_tip（在 500ms 内触发一次）
+                  if (penaltyElapsed >= 0 && penaltyElapsed < PENALTY_DURATION) {
+                    if (!pc._multHalfPulseTriggered) {
+                      pc._multHalfPulseTriggered = true;
+                      this.multAnim = { startTime: Date.now(), duration: 600 };
+                      this.lastMultValue = pc.multHalfResult.halvedMult;
                     }
-                    // 女巫标签变为 angry_tip，保持3秒
-                    if (pc.multHalfResult?.angryTip) {
-                      game._witchAngryTip = { text: pc.multHalfResult.angryTip, expireAt: Date.now() + 3000 };
+                    if (!pc._multHalfStarTriggered) {
+                      pc._multHalfStarTriggered = true;
+                      if (this.hudWitchAvatarRect) {
+                        game._witchStarBurst = {
+                          startTime: Date.now(),
+                          cx: this.hudWitchAvatarRect.x + this.hudWitchAvatarRect.w / 2,
+                          cy: this.hudWitchAvatarRect.y + this.hudWitchAvatarRect.h / 2,
+                        };
+                      }
+                      if (pc.multHalfResult?.angryTip) {
+                        game._witchAngryTip = { text: pc.multHalfResult.angryTip, expireAt: Date.now() + 3000 };
+                      }
                     }
                   }
-                  if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {
+
+                  if (penaltyElapsed >= PENALTY_DURATION + POST_PENALTY_WAIT) {
                     pc._multHalfAnimDone = true;
                     pc.animPhase = 3;
                   }
@@ -2271,12 +2272,21 @@ class Renderer {
     ctx.restore();
 
     // letter_a_mult_half 惩罚动画：紫色光晕（在背景图背后）
-    if (valid && showSecondBox && pc.multHalfResult?.triggered && pc._multHalfAnimStart) {
-      const elapsed = Date.now() - pc._multHalfAnimStart;
-      const MULT_HALF_DELAY = 500;
-      const MULT_HALF_DURATION = 1500;
-      if (elapsed >= MULT_HALF_DELAY && elapsed < MULT_HALF_DELAY + MULT_HALF_DURATION) {
-        const progress = (elapsed - MULT_HALF_DELAY) / MULT_HALF_DURATION;
+    if (valid && showSecondBox && pc.multHalfResult?.triggered) {
+      const _cards = pc.cardsInOrder || [];
+      const waveDuration = 200 + _cards.length * 100;
+      const phase2Start = 1000 + _cards.length * 350 + waveDuration;
+      const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
+      const baseMultDelay = 500;
+      const STEP_DURATION = 500;
+      const totalSteps = 1 + (pc.wholeWordJokers || []).length;
+      const postWait = 500;
+      const readyTime = totalSteps * STEP_DURATION + postWait;
+      const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
+      const penaltyElapsed = afterBase - readyTime;
+
+      if (penaltyElapsed >= 0 && penaltyElapsed < 500) {
+        const progress = penaltyElapsed / 500;
         const glowAlpha = 0.2 + 0.3 * Math.sin(progress * Math.PI);
         ctx.save();
         ctx.shadowColor = '#9b59b6';
@@ -2295,7 +2305,7 @@ class Renderer {
       this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
     }
     if (valid && showSecondBox) {
-      // 基础倍率 + whole_word 依次触发（变大缩小脉冲动效）
+      // 基础倍率 + whole_word 依次触发（固定 500ms 一步，跳跃+标签+倍率同时发生）
       let displayValue = null;
       let labelText = null;
       const wjList = pc.wholeWordJokers || [];
@@ -2306,56 +2316,48 @@ class Renderer {
       const phase2Start = 1000 + _cards.length * 350 + waveDuration;
       const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
 
-      // 500ms 延迟后才开始显示
       const baseMultDelay = 500;
-      const stepDuration = 700;
+      const STEP_DURATION = 500;
 
-      // 如果惩罚动画已完成，直接显示减半后的倍率
-      if (pc._multHalfAnimDone && pc.multHalfResult?.triggered) {
-        displayValue = pc.multHalfResult.halvedMult;
-      } else if (phase2Elapsed >= baseMultDelay) {
+      // 计算当前步
+      let currentStep = -1;
+      if (phase2Elapsed >= baseMultDelay) {
         const afterBase = phase2Elapsed - baseMultDelay;
-        // displayStep = 0: 基础倍率弹出
-        // displayStep = 1: 第一张 whole_word 触发
-        // displayStep = 2: 第二张 whole_word 触发
-        const displayStep = Math.floor(afterBase / stepDuration);
+        currentStep = Math.floor(afterBase / STEP_DURATION);
+      }
 
-        // 计算当前倍率
-        let curMult = pendingLength;
-        for (let i = 0; i < Math.min(displayStep, wjList.length); i++) {
-          curMult = Math.ceil(curMult * wjList[i].joker.value);
-        }
-        displayValue = curMult;
+      // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
+      let curMult = pendingLength;
+      for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
+        curMult = Math.ceil(curMult * wjList[i].joker.value);
+      }
+      displayValue = curMult;
 
-        // 标签：displayStep = 1 时显示第1张的 xValue
-        const labelIdx = displayStep - 1;
-        if (labelIdx >= 0 && labelIdx < wjList.length) {
-          const stepProgress = (afterBase % stepDuration) / stepDuration;
-          if (stepProgress < 0.75) {
-            labelText = `x${wjList[labelIdx].joker.value}`;
-          }
-        }
-
-        // 数字变化时触发一次脉冲（类似金币动画）
-        if (this.lastMultValue !== displayValue) {
-          this.lastMultValue = displayValue;
-          this.multAnim = { startTime: Date.now(), duration: 400 };
+      // 标签：currentStep = 1 时显示第1张的 xValue
+      const labelIdx = currentStep - 1;
+      if (labelIdx >= 0 && labelIdx < wjList.length) {
+        const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
+        const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
+        if (stepProgress < 0.8) {
+          labelText = `x${wjList[labelIdx].joker.value}`;
         }
       }
 
-      // letter_a_mult_half 惩罚动画：数字减半
-      if (pc.multHalfResult?.triggered && pc._multHalfAnimStart) {
-        const elapsed = Date.now() - pc._multHalfAnimStart;
-        const MULT_HALF_DELAY = 500;
-        const MULT_HALF_DURATION = 1500;
-        if (elapsed >= MULT_HALF_DELAY) {
+      // 数字变化时触发一次脉冲（类似金币动画）
+      if (this.lastMultValue !== displayValue) {
+        this.lastMultValue = displayValue;
+        this.multAnim = { startTime: Date.now(), duration: 400 };
+      }
+
+      // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半
+      if (pc.multHalfResult?.triggered) {
+        const totalSteps = 1 + wjList.length;
+        const postWait = 500;
+        const readyTime = totalSteps * STEP_DURATION + postWait;
+        const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
+        const penaltyElapsed = afterBase - readyTime;
+        if (penaltyElapsed >= 0) {
           displayValue = pc.multHalfResult.halvedMult;
-          // 触发脉冲（只在开始时触发一次）
-          if (!pc._multHalfPulseTriggered) {
-            pc._multHalfPulseTriggered = true;
-            this.multAnim = { startTime: Date.now(), duration: 600 };
-            this.lastMultValue = displayValue;
-          }
         }
       }
 
