@@ -2018,8 +2018,8 @@ class Renderer {
                       };
                     }
                     // 女巫标签变为 angry_tip，保持3秒
-                    if (witchSkill && witchSkill.angry_tip) {
-                      game._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 3000 };
+                    if (pc.multHalfResult?.angryTip) {
+                      game._witchAngryTip = { text: pc.multHalfResult.angryTip, expireAt: Date.now() + 3000 };
                     }
                   }
                   if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {

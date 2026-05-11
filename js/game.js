@@ -746,7 +746,8 @@ class Game {
           originalScore,
           originalMult,
           halvedMult,
-          halvedScore
+          halvedScore,
+          angryTip: currentWitchSkill.angry_tip
         };
       }
     }
