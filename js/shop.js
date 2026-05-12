@@ -758,7 +758,7 @@ class ShopRenderer {
         // 价格按钮（暖米色，金币图标+价格）
         const btnH = 22 * s;
         const btnY = unitY + unitH - btnH - 10 * s + 2 * s; // 整体下移 2px
-        const coinSize = 14 * s;
+        const coinSize = 16 * s;
         const canAfford = game.gold >= item.cost;
 
         // 检查槽位上限
@@ -784,7 +784,7 @@ class ShopRenderer {
 
         // 先计算按钮宽度
         ctx.save();
-        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         const priceTextW = ctx.measureText(btnText).width;
         ctx.restore();
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
