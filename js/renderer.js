@@ -1687,18 +1687,30 @@ class Renderer {
       const sx = leftStartX + i * (slotW + gap);
       const joker = jokers[i];
       if (joker) {
+        // 生命延续触发：跳跃2次（每次500ms）
+        if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
+          const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
+          const totalDuration = 1000; // 2次 × 500ms
+          if (elapsed < totalDuration) {
+            const cycle = 500;
+            const cycleProgress = (elapsed % cycle) / cycle;
+            joker._jumpOffsetY = Easing.jump(cycleProgress, 12 * s);
+          } else {
+            joker._jumpOffsetY = 0;
+          }
+        }
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
-        // 生命延续触发闪烁光晕（3次/1s）
+        // 生命延续触发：边框光晕+呼吸灯
         if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
           const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
           if (elapsed < 1000) {
-            const cycle = 1000 / 3;
-            const cycleProgress = (elapsed % cycle) / cycle;
-            const glowAlpha = 0.3 + 0.5 * Math.sin(cycleProgress * Math.PI);
+            const breath = 0.5 + 0.5 * Math.sin(Date.now() / 250);
             ctx.save();
             ctx.shadowColor = '#e74c3c';
-            ctx.shadowBlur = 20 * s;
-            this.roundRect(sx - 3 * s, slotY - 3 * s, slotW + 6 * s, slotH + 6 * s, 10 * s, `rgba(231,76,60,${glowAlpha})`);
+            ctx.shadowBlur = (8 + 8 * breath) * s;
+            const lineW = (2 + 2 * breath) * s;
+            const strokeAlpha = 0.4 + 0.4 * breath;
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, `rgba(231,76,60,${strokeAlpha})`, lineW);
             ctx.restore();
           }
         }
