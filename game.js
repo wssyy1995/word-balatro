@@ -749,6 +749,17 @@ function handleInput(x, y) {
           const extraHands = game.handsLeft * 1;
           const extraDiscards = game.discardsLeft * 1;
           game.gold += baseGold + extraHands + extraDiscards;
+          // 目标分滚动动画（从旧值滚动到新值）
+          const baseTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
+          const bonus = game._lifeExtensionBonus || 0;
+          if (bonus > 0) {
+            game._targetRollAnim = {
+              from: baseTarget,
+              to: baseTarget + bonus,
+              startTime: Date.now(),
+              duration: 800,
+            };
+          }
           game.state = 'shop';
           if (!game.shopItems) game.shopItems = generateShopItems(game);
           if (game.storageManager) game.storageManager.saveProgress(game);
