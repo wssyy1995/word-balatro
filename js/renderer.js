@@ -354,11 +354,24 @@ class Renderer {
     const pad = 10 * s;
     const lineH = 16 * s;
 
+    // 先计算可作用字母宽度（如果有），用于动态调整弹窗宽度
+    const letters = this._getWitchLetters(joker.trigger);
+    const hasLetters = letters && letters.length > 0;
+    let lettersTotalW = 0;
+    if (hasLetters) {
+      const circleR = 12 * s;
+      const circleGap = 8 * s;
+      lettersTotalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
+    }
+
     // 根据效果描述文字长度动态计算弹窗宽度
     ctx.font = `${Math.floor(12 * s)}px sans-serif`;
     const descW = ctx.measureText(joker.desc).width;
     const minPopupW = cardW + 20 * s;
-    const popupW = Math.max(minPopupW, descW + pad * 2 + 20 * s);
+    let popupW = Math.max(minPopupW, descW + pad * 2 + 20 * s);
+    if (hasLetters) {
+      popupW = Math.max(popupW, lettersTotalW + pad * 2 + 20 * s);
+    }
     let popupX = cardX + (cardW - popupW) / 2;
     // 确保弹窗不超出屏幕边缘
     const edgePad = 5 * s;
@@ -368,8 +381,6 @@ class Renderer {
     const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
     if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
-    const letters = this._getWitchLetters(joker.trigger);
-    const hasLetters = letters && letters.length > 0;
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
     const popupY = cardY + cardH + 6 * s + 2;
