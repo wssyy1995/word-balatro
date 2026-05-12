@@ -435,6 +435,10 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
 - [ ] 内容淡入使用了 `Easing.fadeIn`
 - [ ] 按钮按压使用了 `_drawScaledBtn`
 - [ ] 动画状态命名符合规范（`_closingXxx` / `_closeXxxStartTime`）
+- [ ] **串行动画基于统一时间轴，没有引入独立计时器（如 `_xxxAnimStart = Date.now()`）**
+- [ ] **Renderer 子方法没有访问父方法局部变量**
+- [ ] **保命/惩罚/拦截机制覆盖了所有触发路径**
+- [ ] **新增动画已查第十章决策流程，有注释说明未命中原因**
 - [ ] 通过 `node --check` 语法检查
 - [ ] 在微信开发者工具中实际运行验证
 
@@ -557,6 +561,148 @@ if (phase >= 3 && pc._flyingScoreStarted && !this.flyingScore && !game._playHand
 | 总分飞行结束后没重置预览区、没飞牌 | `completePlayHand()` 未清 `pendingCheck`；`_executePlayHand` 依赖 `selected` 状态，动画期间用户点击会清除 `selected` | `completePlayHand()` 末尾加 `this.pendingCheck = null`；`_executePlayHand` 改用传入的 `playedCards` 参数；动画期间禁用卡牌点击 |
 | 总分飞行比倍率还早 | `game.js` 中 `letter_god` 触发时 setTimeout 仍在执行，提前把 `animPhase` 推到 3 | 移除所有 setTimeout，完全由 renderer 事件驱动 |
 
+### Bug 5：串行动画时间基准不统一（`letter_a_mult_half` 惩罚动画案）⭐⭐⭐
+
+**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2→3过渡
+
+#### 问题描述
+
+`letter_a_mult_half`（字母A倍率减半）惩罚动画需要插入到计分动画的阶段2（倍率弹出）和阶段3（总分飞行）之间。原始实现使用了独立的 `_multHalfAnimStart = Date.now()` 作为时间基准，与阶段2的 `phase2Elapsed` 各自为政。
+
+后果：
+- `whole_word` 女巫牌跳跃还没完成，惩罚动画就开始执行
+- 倍率更新与惩罚光晕不同步
+- 总分飞行时机混乱，有时提前有时延后
+
+#### 错误代码（反模式）
+
+```javascript
+// ❌ 错误：引入独立时间基准
+if (!pc._multHalfAnimStart) {
+  pc._multHalfAnimStart = Date.now();
+}
+const multHalfElapsed = Date.now() - pc._multHalfAnimStart;
+
+// ❌ 错误：与 afterBase 各自计算，两套时间线
+if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {
+  pc.animPhase = 3;
+}
+```
+
+#### 修复：统一基于 `afterBase` 的时间轴
+
+```javascript
+// ✅ 正确：所有时间计算统一基于 afterBase = phase2Elapsed - baseMultDelay
+const totalSteps = 1 + wjList.length;      // 基础倍率 + whole_word
+const postWait = 350;                       // 强制等待
+const readyTime = totalSteps * STEP_DURATION + postWait;
+
+if (afterBase >= readyTime) {
+  // 惩罚动画基于 afterBase 计算，不再引入新的 Date.now()
+  const penaltyElapsed = afterBase - readyTime;
+  const PENALTY_DURATION = 500;
+  const POST_PENALTY_WAIT = 350;
+
+  if (penaltyElapsed >= 0 && penaltyElapsed < PENALTY_DURATION) {
+    // 执行惩罚动画...
+  }
+  if (penaltyElapsed >= PENALTY_DURATION + POST_PENALTY_WAIT) {
+    pc.animPhase = 3;
+  }
+}
+```
+
+#### 踩过的坑
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| whole_word 跳跃和惩罚动画同时执行 | `_multHalfAnimStart` 与 `_phase2StartTime` 不同步，两个计时器各自推进 | 移除 `_multHalfAnimStart`，统一用 `afterBase` |
+| 倍率更新后惩罚光晕还没出现 | `displayStep` 按 700ms 计算，`multHalfElapsed` 按 1500ms 计算，两套步长 | 统一 `STEP_DURATION = 400ms` |
+| 总分飞行提前触发 | `allDone && elapsedSincePhase2 >= baseMultDelay + 200` 与惩罚延迟条件竞态 | 用 `afterBase >= readyTime + PENALTY_DURATION + POST_PENALTY_WAIT` 统一判断 |
+
+### Bug 6：Renderer 子方法访问父方法局部变量（`witchSkill is not defined`）
+
+**影响范围**：`js/renderer.js` `drawPlaying()`
+
+#### 问题描述
+
+`drawPlaying()` 是 `render()` 调用的子方法。开发者在 `drawPlaying()` 中直接使用了 `render()` 方法体内的局部变量 `witchSkill`，导致运行时 `ReferenceError`。
+
+```javascript
+// ❌ 错误：drawPlaying 内访问了 render() 的局部变量
+if (witchSkill && witchSkill.skill === 'letter_a_mult_half') {
+  // ReferenceError: witchSkill is not defined
+}
+```
+
+#### 修复
+
+```javascript
+// ✅ 正确：数据通过 game 对象或 pendingCheck 传递
+const currentWitchSkill = getSkillForLevel(game.round);
+const multHalfResult = pc.multHalfResult;  // 由 game.js 计算后挂载到 pendingCheck
+```
+
+### Bug 7：数字更新动画未复用通用方案（`_targetRollAnim` 案）
+
+**影响范围**：`js/shop.js` `ShopRenderer.drawBottomModule()`、`game.js` `handleInput()`
+
+#### 问题描述
+
+生命延续触发后，商店底部目标分需要更新动画。最初独立实现了一套 `_targetRollAnim` 滚动动画（`easeOutCubic` 渐变），与项目内已有的「目标减免」脉冲动画（`_calcPulseScale`）效果不一致。
+
+后果：
+- 同一页面内两种数字更新动画风格冲突
+- 多维护一套动画逻辑和状态清理代码
+
+#### 错误代码（反模式）
+
+```javascript
+// ❌ 错误：独立实现滚动动画
+game._targetRollAnim = {
+  from: baseTarget,
+  to: baseTarget + bonus,
+  startTime: Date.now(),
+  duration: 800,
+};
+// shop.js 内单独计算 easeOutCubic + 滚动值
+```
+
+#### 修复：复用 `_calcPulseScale`
+
+```javascript
+// ✅ 正确：复用已有的脉冲动画机制
+game._lifeExtensionTargetAnim = { startTime: Date.now(), duration: 600 };
+
+// shop.js 内
+const pulse = this.parent._calcPulseScale(game._lifeExtensionTargetAnim, 0.2);
+targetScale = pulse.scale;
+displayTarget = pulse.progress >= 0.5 ? (baseTarget + bonus) : baseTarget;
+```
+
+### Bug 8：保命机制只覆盖了一条 gameover 路径
+
+**影响范围**：`js/game.js` `playHand()`、`completePlayHand()`
+
+#### 问题描述
+
+生命延续女巫牌的检查只加在了 `completePlayHand()` 中（正常计分路径）。但「非法单词」和「女巫约束失败」时直接在 `playHand()` 里就进了 gameover，根本没走到 `completePlayHand()`。
+
+后果：装备了生命延续，打出非法单词扣完最后 1 次出牌次数后，仍然弹出游戏结束。
+
+#### 修复：提取通用方法，3 个触发点统一调用
+
+```javascript
+// ✅ 正确：提取 _checkLifeExtension()，在所有 handsLeft <= 0 的地方调用
+_checkLifeExtension() { /* ... */ return triggered; }
+
+// 触发点 1：completePlayHand 中 score < target
+// 触发点 2：playHand 中非法单词
+// 触发点 3：playHand 中女巫约束失败
+```
+
+---
+
 #### 铁律（以后加新动画必须遵守）
 
 1. **串行动画 = 必须重置时间基准**
@@ -579,6 +725,27 @@ if (phase >= 3 && pc._flyingScoreStarted && !this.flyingScore && !game._playHand
 5. **后端逻辑不要依赖前端 UI 状态**
    - `_executePlayHand` 之前通过 `this.hand` 遍历找 `selected` 牌，这非常脆弱
    - 后端方法应该接收明确的参数（如 `playedCards` 数组），不依赖 `selected` / `cardRects` 等 UI 状态
+
+6. **串行动画必须基于统一的时间轴，禁止引入独立计时器**
+   - 新动画插入现有动画链时，必须与已有动画共用同一个 `elapsed` / `afterBase` 基准
+   - 禁止为新动画单独创建 `Date.now()` 基准（如 `_multHalfAnimStart`），所有阶段过渡基于统一变量计算
+   - 需要延迟时，用「统一基准 + 偏移量」而非「新的 `setTimeout` / `Date.now()`」
+
+7. **Renderer 子方法禁止访问父方法的局部变量**
+   - `drawPlaying()`、`drawHUD()` 等子方法只能访问 `this`（Renderer 实例）和传入的参数（如 `game`）
+   - 任何数据必须通过 `game` 对象或 `pendingCheck` 传递，禁止直接引用 `render()` 体内的局部变量（如 `witchSkill`）
+
+8. **数字变化动画必须复用 `_calcPulseScale`，禁止独立实现**
+   - 新增数字更新动画时，先查第十章决策流程，确认是否命中 `_calcPulseScale`、`_reduceTargetAnim` 等现有方案
+   - 禁止手写 `easeOutCubic` 滚动或自定义脉冲逻辑，避免同一页面内动画风格冲突
+
+9. **保命/惩罚/拦截类机制必须覆盖所有触发路径**
+   - 修改 gameover、结算、拦截逻辑时，必须梳理所有可能的触发路径（如 `playHand` 非法单词、女巫约束失败、`completePlayHand` 正常结算）
+   - 提取通用方法（如 `_checkLifeExtension()`），在所有路径统一调用，禁止只改一处
+
+10. **新增动画必须先走决策流程，禁止直接手写**
+    - 开发新动画前，必须先查第十章「新增动画的决策流程」
+    - 未命中任何通用方案才允许手写，且必须注释说明「未命中现有通用方案，原因：XXX」
 
 ---
 
