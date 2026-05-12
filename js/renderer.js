@@ -3202,14 +3202,20 @@ class Renderer {
       highlightIdx = Math.floor(normalized / anglePerSector) % 26;
     }
 
-    // paused 阶段：扇形闪烁2次（浅金色 ↔ 金色，周期1000ms）
+    // paused 阶段：扇形闪烁约1.5次（浅金色 ↔ 金色，周期750ms）
     let pausedPulse = 1;
     let currentHighlightColor = '#ffe8a0';
     if (isPaused && popup.pauseStartTime && !game._potionUpgrading) {
       const pauseElapsed = Date.now() - popup.pauseStartTime;
       pausedPulse = 1 + 0.08 * Math.sin(Date.now() / 200);
-      const flash = Math.sin(pauseElapsed / 400 * Math.PI); // 周期800ms，2秒内闪烁2.5次
-      currentHighlightColor = flash > 0 ? '#f5c542' : '#ffe8a0';
+      const cycle = 750; // 单个周期 750ms
+      const maxFlashTime = cycle * 1.5; // 只闪 1.5 个周期
+      if (pauseElapsed < maxFlashTime) {
+        const flash = Math.sin(pauseElapsed / (cycle / 2) * Math.PI);
+        currentHighlightColor = flash > 0 ? '#f5c542' : '#ffe8a0';
+      } else {
+        currentHighlightColor = '#f5c542'; // 之后固定金色
+      }
     }
 
     // 绘制转盘外圈圆环
