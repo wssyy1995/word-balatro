@@ -32,7 +32,8 @@ const SHOP_POOL = {
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×3'},
     {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
-    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'}
+    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
+    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:3, cost:10, desc:'当出牌次数用完且未达标时，延续生命进入商店，下一关目标分+(差值×2)（限3次）'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -970,6 +971,10 @@ class ShopRenderer {
       } else {
         displayTarget = baseTarget;
       }
+    }
+    // 生命延续加成
+    if (game._lifeExtensionBonus) {
+      displayTarget += game._lifeExtensionBonus;
     }
 
     ctx.save();

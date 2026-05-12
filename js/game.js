@@ -535,6 +535,8 @@ class Game {
     this.pendingCheck = null;
     this.settlementData = null;
     this.witchRewardData = null;
+    this._lifeExtensionBonus = 0;
+    this._lifeExtensionAnim = null;
     this.audioManager = new AudioManager();
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
@@ -559,6 +561,10 @@ class Game {
 
     this.deck = createDeck();
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
+    if (this._lifeExtensionBonus) {
+      this.target += this._lifeExtensionBonus;
+      this._lifeExtensionBonus = 0;
+    }
     this._reduceTargetAnim = null;
     applyCrystalEffects(this);
     const handSize = this.baseHandSize + (this.extraLetters || 0);
@@ -835,6 +841,30 @@ class Game {
     if (this.score >= this.target) {
       this._showSettlement();
     } else if (this.handsLeft <= 0) {
+      // 检查是否有"生命延续"女巫牌
+      const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+      if (lifeExtIdx >= 0) {
+        const joker = this.jokers[lifeExtIdx];
+        if (joker.usesLeft === undefined || joker.usesLeft > 0) {
+          const diff = this.target - this.score;
+          this._lifeExtensionBonus = diff * 2;
+          if (joker.usesLeft !== undefined) joker.usesLeft--;
+          if (joker.usesLeft !== undefined && joker.usesLeft <= 0) {
+            joker._destroying = true;
+            joker._destroyStart = Date.now();
+            setTimeout(() => {
+              const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+              if (idx >= 0) this.jokers.splice(idx, 1);
+              if (this.storageManager) this.storageManager.saveProgress(this);
+            }, 900);
+          }
+          this._lifeExtensionAnim = { startTime: Date.now(), jokerIndex: lifeExtIdx, diff };
+          this.state = 'life_extended';
+          if (this.storageManager) this.storageManager.saveProgress(this);
+          this._playHandCompleting = false;
+          return;
+        }
+      }
       this.state = 'gameover';
       this.gameOverReason = 'out_of_hands';
       if (this.storageManager) {

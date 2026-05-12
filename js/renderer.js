@@ -305,6 +305,7 @@ class Renderer {
     this.shopRenderer = new ShopRenderer(this);
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
     this.gameOverRenderer = new GameOverRenderer(this);
+    this.lifeExtensionBtnRect = null;
   }
 
   // 绘制道具图标（商店/已购买卡牌左侧）
@@ -1207,6 +1208,12 @@ class Renderer {
       }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
+    } else if (game.state === 'life_extended') {
+      // 生命延续：先绘制游戏背景，再叠加闪烁/弹窗
+      this.drawHUD(game);
+      this.drawCoinCapsule(game);
+      this.drawPlaying(game);
+      this._drawLifeExtensionPopup(game);
     } else if (game.state === 'gameover') {
       // 结束报告弹窗（保留游戏页面背景）
       this.drawHUD(game);
@@ -1670,6 +1677,20 @@ class Renderer {
       const joker = jokers[i];
       if (joker) {
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
+        // 生命延续触发闪烁光晕（3次/1s）
+        if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
+          const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
+          if (elapsed < 1000) {
+            const cycle = 1000 / 3;
+            const cycleProgress = (elapsed % cycle) / cycle;
+            const glowAlpha = 0.3 + 0.5 * Math.sin(cycleProgress * Math.PI);
+            ctx.save();
+            ctx.shadowColor = '#e74c3c';
+            ctx.shadowBlur = 20 * s;
+            this.roundRect(sx - 3 * s, slotY - 3 * s, slotW + 6 * s, slotH + 6 * s, 10 * s, `rgba(231,76,60,${glowAlpha})`);
+            ctx.restore();
+          }
+        }
         // 自毁动画期间不响应点击
         if (!joker._destroying) {
           this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
@@ -3839,6 +3860,83 @@ class Renderer {
       ctx.fillText(item.label, ix + itemW / 2, iy + (itemH - 4 * s) / 2);
       this.debugMenuRects.push({ x: ix, y: iy, w: itemW, h: itemH - 4 * s, action: item.action });
     });
+  }
+
+  // 生命延续弹窗绘制
+  _drawLifeExtensionPopup(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+    const anim = game._lifeExtensionAnim;
+    if (!anim) return;
+
+    const elapsed = Date.now() - anim.startTime;
+    // 前1秒只显示闪烁动画（由 drawHUD 绘制），不显示弹窗
+    if (elapsed < 1000) return;
+
+    const panel = this._drawModalPanel(ctx, W, H, s, {
+      isClosing: false,
+      width: 300, height: 260, enterOffset: 25, closeOffset: 40,
+      elapsed: elapsed - 1000,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+
+    // 标题
+    const titleAnim = Easing.fadeIn(elapsed - 1000, 80, 250, 8 * s);
+    ctx.save();
+    ctx.globalAlpha = titleAnim.alpha;
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('游戏顺延', W / 2, py + 40 * s + titleAnim.yShift);
+    ctx.restore();
+
+    // 分隔线
+    const line1Anim = Easing.fadeIn(elapsed - 1000, 140, 250, 6 * s);
+    ctx.save();
+    ctx.globalAlpha = line1Anim.alpha;
+    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    const line1Y = py + 62 * s + line1Anim.yShift;
+    ctx.moveTo(px + 30 * s, line1Y);
+    ctx.lineTo(px + pw - 30 * s, line1Y);
+    ctx.stroke();
+    ctx.restore();
+
+    // 提示文案
+    const hintAnim = Easing.fadeIn(elapsed - 1000, 200, 250, 8 * s);
+    const hintY = py + 100 * s + hintAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = hintAnim.alpha;
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#c4a35a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('女巫续命', W / 2, hintY);
+    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+    ctx.fillStyle = '#555';
+    ctx.fillText(`下一关目标分 + ${anim.diff} × 2`, W / 2, hintY + 28 * s);
+    ctx.restore();
+
+    // 确定按钮
+    const btnAnim = Easing.fadeIn(elapsed - 1000, 350, 250, 10 * s);
+    const btnW = 160 * s;
+    const btnH = 46 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = btnAnim.alpha;
+    this._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, game._lifeExtensionBtnPressed, { color: '#c4a35a', radius: 8 });
+    ctx.restore();
+
+    // 存储点击区域
+    const finalBtnY = py + ph - btnH - 28 * s;
+    this.lifeExtensionBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
   }
 
   // 检测点击位置

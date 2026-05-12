@@ -734,6 +734,30 @@ function handleInput(x, y) {
     }
   }
 
+  if (game.state === 'life_extended') {
+    if (game._lifeExtensionBtnPressed) return;
+    if (renderer.lifeExtensionBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.lifeExtensionBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game._lifeExtensionBtnPressed = true;
+        setTimeout(() => {
+          game._lifeExtensionBtnPressed = false;
+          game._lifeExtensionAnim = null;
+          // 发放结算金币（与 _showSettlement 逻辑一致）
+          const baseGold = 3 + Math.round(game.round / 3);
+          const extraHands = game.handsLeft * 1;
+          const extraDiscards = game.discardsLeft * 1;
+          game.gold += baseGold + extraHands + extraDiscards;
+          game.state = 'shop';
+          if (!game.shopItems) game.shopItems = generateShopItems(game);
+          if (game.storageManager) game.storageManager.saveProgress(game);
+        }, 150);
+        return;
+      }
+    }
+  }
+
   if (game.state === 'gameover') {
     if (game._closingGameOver) return;
     if (game._restartBtnPressed) return;
@@ -771,6 +795,8 @@ function restartGame() {
   game._closeChangeLetterStartTime = null;
   game._changeLetterHint = null;
   game.witchRewardData = null;
+  game._lifeExtensionAnim = null;
+  game._lifeExtensionBtnPressed = false;
   lastPlayResult = null;
 }
 
