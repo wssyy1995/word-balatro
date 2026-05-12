@@ -3030,7 +3030,9 @@ class Renderer {
       const scoreTipY = gridBottomY + 18 * s;
       const baseScore = LETTER_SCORE[selectedLetter];
       const upgrade = letterUpgrades.get(selectedLetter);
-      const currentScore = upgrade ? Math.floor(baseScore * upgrade.mult) : baseScore;
+      const currentScore = upgrade
+        ? Math.floor(baseScore * (upgrade.mult || 1)) + (upgrade.add || 0)
+        : baseScore;
       ctx.save();
       ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
       ctx.fillStyle = '#c4a35a';

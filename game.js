@@ -675,22 +675,36 @@ function handleInput(x, y) {
         vibrate();
         // 先计算升级后的分数
         const potion = game.potionMode;
-        const mult = potion.value || 2;
-        const existing = letterUpgrades.get(game._potionSelectedLetter);
-        const totalMult = existing ? existing.mult * mult : mult;
-        const newScore = Math.floor(LETTER_SCORE[game._potionSelectedLetter] * totalMult);
-        const oldScore = existing ? Math.floor(LETTER_SCORE[game._potionSelectedLetter] * existing.mult) : LETTER_SCORE[game._potionSelectedLetter];
+        const letter = game._potionSelectedLetter;
+        const baseScore = LETTER_SCORE[letter];
+        const existing = letterUpgrades.get(letter) || {};
+        const oldScore = Math.floor(baseScore * (existing.mult || 1)) + (existing.add || 0);
+        let newScore, totalMult, totalAdd;
+        if (potion.effect === 'upgrade_letter') {
+          // 字母强化：加法叠加
+          const add = potion.value || 10;
+          totalMult = existing.mult || 1;
+          totalAdd = (existing.add || 0) + add;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        } else {
+          // 其他（如随机强化/王牌强化）：乘法叠加
+          const mult = potion.value || 2;
+          totalMult = (existing.mult || 1) * mult;
+          totalAdd = existing.add || 0;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        }
         // 执行升级（保留 potionMode 让字母选择页面继续显示）
         const savedPotionMode = game.potionMode;
-        upgradeLetter(game, game._potionSelectedLetter);
+        upgradeLetter(game, letter);
         game.potionMode = savedPotionMode;
         // 启动弹出动画
         game._potionUpgrading = {
           startTime: Date.now(),
-          letter: game._potionSelectedLetter,
+          letter: letter,
           oldScore: oldScore,
           newScore: newScore,
-          upgradeMult: totalMult
+          upgradeMult: totalMult,
+          upgradeAdd: totalAdd
         };
         game._potionSelectedLetter = null;
         return;

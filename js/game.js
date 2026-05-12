@@ -40,17 +40,20 @@ function createDeck() {
       let score = baseScore;
       let upgraded = false;
       let upgradeMult = 1;
+      let upgradeAdd = 0;
       if (upgrade) {
-        score = Math.floor(baseScore * upgrade.mult);
+        if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+        if (upgrade.add) score += upgrade.add;
         upgraded = true;
-        upgradeMult = upgrade.mult;
+        upgradeMult = upgrade.mult || 1;
+        upgradeAdd = upgrade.add || 0;
       }
       cards.push({
         letter, baseScore, score,
         isFace: FACE_CARDS.has(letter),
         id: Math.random().toString(36).substr(2, 9),
         selected: false,
-        upgraded, upgradeMult
+        upgraded, upgradeMult, upgradeAdd
       });
     }
   }
@@ -84,13 +87,16 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
     let score = baseScore;
     let upgraded = false;
     let upgradeMult = 1;
+    let upgradeAdd = 0;
     if (upgrade) {
-      score = Math.floor(baseScore * upgrade.mult);
+      if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+      if (upgrade.add) score += upgrade.add;
       upgraded = true;
-      upgradeMult = upgrade.mult;
+      upgradeMult = upgrade.mult || 1;
+      upgradeAdd = upgrade.add || 0;
     }
     return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
-      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult };
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd };
   });
 
   for (const letter of seedLetters) {
@@ -122,13 +128,16 @@ function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHa
     let score = baseScore;
     let upgraded = false;
     let upgradeMult = 1;
+    let upgradeAdd = 0;
     if (upgrade) {
-      score = Math.floor(baseScore * upgrade.mult);
+      if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+      if (upgrade.add) score += upgrade.add;
       upgraded = true;
-      upgradeMult = upgrade.mult;
+      upgradeMult = upgrade.mult || 1;
+      upgradeAdd = upgrade.add || 0;
     }
     return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
-      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult };
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd };
   });
 
   // 用 seedCards 替换 hand 中的 null 占位符
@@ -1229,10 +1238,12 @@ class Game {
           const letter = popup.targetLetter;
           const potion = this.potionMode;
           const mult = potion ? (potion.value || 4) : 4;
-          const existing = letterUpgrades.get(letter);
-          const totalMult = existing ? existing.mult * mult : mult;
-          const newScore = Math.floor(LETTER_SCORE[letter] * totalMult);
-          const oldScore = existing ? Math.floor(LETTER_SCORE[letter] * existing.mult) : LETTER_SCORE[letter];
+          const existing = letterUpgrades.get(letter) || {};
+          const totalMult = (existing.mult || 1) * mult;
+          const totalAdd = existing.add || 0;
+          const baseScore = LETTER_SCORE[letter];
+          const newScore = Math.floor(baseScore * totalMult) + totalAdd;
+          const oldScore = Math.floor(baseScore * (existing.mult || 1)) + totalAdd;
 
           const savedPotionMode = this.potionMode;
           upgradeLetter(this, letter);
@@ -1243,7 +1254,8 @@ class Game {
             letter,
             oldScore,
             newScore,
-            upgradeMult: totalMult
+            upgradeMult: totalMult,
+            upgradeAdd: totalAdd
           };
           popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
         }

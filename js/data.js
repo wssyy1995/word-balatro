@@ -36,14 +36,16 @@ const wordMeaningCache = new Map();
 // 字母升级记录（跨回合保留）
 const letterUpgrades = new Map();
 
-// 获取升级后的字母分数
+// 获取升级后的字母分数（支持乘法 + 加法叠加）
 function getLetterScore(letter) {
   const base = LETTER_SCORE[letter];
   const upgrade = letterUpgrades.get(letter);
-  if (upgrade && upgrade.mult) {
-    return Math.floor(base * upgrade.mult);
+  let score = base;
+  if (upgrade) {
+    if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+    if (upgrade.add) score += upgrade.add;
   }
-  return base;
+  return score;
 }
 
 module.exports = {

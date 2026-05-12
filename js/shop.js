@@ -27,7 +27,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
-    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:3, cost:7, desc:'单词字母>=5时，倍率×2'},
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:4, cost:8, desc:'单词字母>=6时，倍率×3'},
     {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
@@ -44,7 +44,7 @@ const SHOP_POOL = {
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:4, cost:5, desc:'随机强化1个字母，分数×4'},
-    {name:'字母升级', type:'potion', effect:'upgrade_letter', value:2, cost:4, desc:'选择一张字母牌，分数x2'},
+    {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
 };
@@ -141,22 +141,32 @@ function upgradeLetter(game, letter) {
   if (!game.potionMode) return false;
 
   const potion = game.potionMode;
-  const mult = potion.value || 2;
+  const value = potion.value || (potion.effect === 'upgrade_letter' ? 10 : 2);
 
-  // 更新字母升级乘数（乘法叠加）
-  const existing = letterUpgrades.get(letter);
-  const totalMult = existing ? existing.mult * mult : mult;
-  letterUpgrades.set(letter, { mult: totalMult });
+  const existing = letterUpgrades.get(letter) || {};
+  let totalMult = existing.mult || 1;
+  let totalAdd = existing.add || 0;
+
+  if (potion.effect === 'upgrade_letter') {
+    // 字母强化：加法叠加（分数 + value）
+    totalAdd += value;
+  } else {
+    // 随机强化：乘法叠加（分数 × value）
+    totalMult *= value;
+  }
+
+  letterUpgrades.set(letter, { mult: totalMult, add: totalAdd });
 
   // 同步更新当前手牌中该字母的所有卡牌分数
   const baseScore = LETTER_SCORE[letter];
-  const newScore = Math.floor(baseScore * totalMult);
+  const newScore = Math.floor(baseScore * totalMult) + totalAdd;
   game.hand.forEach(card => {
     if (card && card.letter === letter) {
       card.baseScore = baseScore;
       card.score = newScore;
       card.upgraded = true;
       card.upgradeMult = totalMult;
+      card.upgradeAdd = totalAdd;
     }
   });
 
