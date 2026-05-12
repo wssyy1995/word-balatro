@@ -1700,7 +1700,7 @@ class Renderer {
           }
         }
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
-        // 生命延续触发：边框光晕+呼吸灯
+        // 生命延续触发：红色呼吸光晕（无描边）
         if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
           const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
           if (elapsed < 1000) {
@@ -1708,9 +1708,8 @@ class Renderer {
             ctx.save();
             ctx.shadowColor = '#e74c3c';
             ctx.shadowBlur = (8 + 8 * breath) * s;
-            const lineW = (2 + 2 * breath) * s;
-            const strokeAlpha = 0.4 + 0.4 * breath;
-            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, `rgba(231,76,60,${strokeAlpha})`, lineW);
+            // 极淡填充承载 shadow，不画红色描边
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, `rgba(231,76,60,${0.05 + 0.05 * breath})`);
             ctx.restore();
           }
         }
