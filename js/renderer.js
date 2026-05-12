@@ -1211,7 +1211,7 @@ class Renderer {
       ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
       ctx.restore();
 
-      this.drawCoinCapsule(game, 2 * s);
+      this.drawCoinCapsule(game, 4 * s);
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
