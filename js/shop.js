@@ -959,35 +959,33 @@ class ShopRenderer {
     const baseTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
     const targetTextX = moduleX + moduleW - 18 * s;
 
-    // 目标分显示（支持滚动动画 + 目标减免 + 生命延续加成）
+    // 目标分显示（支持目标减免 / 生命延续 脉冲动画）
     let displayTarget = baseTarget;
     let targetScale = 1;
 
-    // 目标分滚动动画（生命延续触发）
-    if (game._targetRollAnim) {
-      const elapsed = Date.now() - game._targetRollAnim.startTime;
-      const progress = Math.min(elapsed / game._targetRollAnim.duration, 1);
-      const ease = Easing.easeOutCubic(progress);
-      displayTarget = Math.round(game._targetRollAnim.from + (game._targetRollAnim.to - game._targetRollAnim.from) * ease);
-      if (progress >= 1) {
-        game._targetRollAnim = null;
+    // 生命延续：放大缩小脉冲，中点切换数字（复用目标减免效果）
+    if (game._lifeExtensionTargetAnim) {
+      const pulse = this.parent._calcPulseScale(game._lifeExtensionTargetAnim, 0.2);
+      targetScale = pulse.scale;
+      const bonus = game._lifeExtensionBonus || 0;
+      displayTarget = pulse.progress >= 0.5 ? (baseTarget + bonus) : baseTarget;
+      if (pulse.progress >= 1) {
+        game._lifeExtensionTargetAnim = null;
       }
-    } else {
+    } else if (game._reduceTargetAnim) {
       // 目标减免：放大缩小过程中数字从旧值变为新值
-      if (game._reduceTargetAnim) {
-        const reducedTarget = Math.floor(baseTarget * game._reduceTargetAnim.value);
-        if (game._reduceTargetAnim.startTime) {
-          const pulse = this.parent._calcPulseScale(game._reduceTargetAnim, 0.2);
-          targetScale = pulse.scale;
-          displayTarget = pulse.progress >= 0.5 ? reducedTarget : baseTarget;
-        } else {
-          displayTarget = baseTarget;
-        }
+      const reducedTarget = Math.floor(baseTarget * game._reduceTargetAnim.value);
+      if (game._reduceTargetAnim.startTime) {
+        const pulse = this.parent._calcPulseScale(game._reduceTargetAnim, 0.2);
+        targetScale = pulse.scale;
+        displayTarget = pulse.progress >= 0.5 ? reducedTarget : baseTarget;
+      } else {
+        displayTarget = baseTarget;
       }
-      // 生命延续加成
-      if (game._lifeExtensionBonus) {
-        displayTarget += game._lifeExtensionBonus;
-      }
+    }
+    // 生命延续加成（无动画时直接显示）
+    if (game._lifeExtensionBonus && !game._lifeExtensionTargetAnim) {
+      displayTarget += game._lifeExtensionBonus;
     }
 
     ctx.save();
