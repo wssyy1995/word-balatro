@@ -738,7 +738,7 @@ class ShopRenderer {
         // 名称（左对齐）
         const nameY = unitY + 18 * s;
         ctx.save();
-        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = nameColor;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
@@ -757,8 +757,8 @@ class ShopRenderer {
 
         // 价格按钮（暖米色，金币图标+价格）
         const btnH = 22 * s;
-        const btnY = unitY + unitH - btnH - 10 * s + 2 * s; // 整体下移 2px
-        const coinSize = 16 * s;
+        const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
+        const coinSize = 15 * s;
         const canAfford = game.gold >= item.cost;
 
         // 检查槽位上限
@@ -790,7 +790,7 @@ class ShopRenderer {
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
         const btnExtraW = isActive ? 23 : 13; // 灰色状态左右各-5px
         // 金币数字状态：统一固定宽度；其他状态保持动态宽度
-        const ACTIVE_BTN_W = 76 * s;
+        const ACTIVE_BTN_W = 70 * s;
         const btnW = isActive ? ACTIVE_BTN_W : contentW + 16 * s + btnExtraW;
         const btnX = textX + 2;
 
