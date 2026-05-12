@@ -1211,7 +1211,7 @@ class Renderer {
       ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
       ctx.restore();
 
-      this.drawCoinCapsule(game);
+      this.drawCoinCapsule(game, 2 * s);
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
@@ -2596,7 +2596,7 @@ class Renderer {
     this._drawWitchDetailPopup(ctx, game, s);
   }
 
-  drawCoinCapsule(game) {
+  drawCoinCapsule(game, offsetY = 0) {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
@@ -2608,7 +2608,7 @@ class Renderer {
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
     const coinCapsuleX = W - coinCapsuleW - 16 * s;
-    const coinCapsuleY = 15 * s;
+    const coinCapsuleY = 15 * s + offsetY;
     // 半透明白色胶囊背景
     this.roundRect(coinCapsuleX, coinCapsuleY, coinCapsuleW + 6 * s, coinCapsuleH, coinCapsuleH / 2, 'rgba(255,255,255,0.35)');
     // coin.png 图标
