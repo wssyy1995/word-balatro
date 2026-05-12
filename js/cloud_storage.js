@@ -14,6 +14,7 @@ class CloudStorageManager {
 
     // 默认云文件映射（已上传的 shop_card 图片，fileID 固定）
     this.defaultFileMap = {
+      'life_extension': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/life_extension.png',
       'bonus_gold': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/bonus_gold.png',
       'change_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/change_letter.png',
       'extra_discard': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_discard.png',
@@ -37,9 +38,6 @@ class CloudStorageManager {
 
     // 默认 witch 图片云文件映射
     this.defaultWitchFileMap = {
-      'Image 519_副本': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本.png',
-      'Image 519_副本2': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本2.png',
-      'Image 519_副本3': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/Image 519_副本3.png',
       'witch_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_11.png',
       'witch_2': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_2.png',
       'witch_2_upper': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_2_upper.png',

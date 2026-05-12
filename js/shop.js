@@ -789,9 +789,10 @@ class ShopRenderer {
         ctx.restore();
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
         const btnExtraW = isActive ? 23 : 13; // 灰色状态左右各-5px
-        // 金币数字状态：统一固定宽度；其他状态保持动态宽度
-        const ACTIVE_BTN_W = 70 * s;
-        const btnW = isActive ? ACTIVE_BTN_W : contentW + 16 * s + btnExtraW;
+        // 可购买 / 余额不足：统一固定宽度（82*s 可容纳金币图标+"余额不足"）；已达上限保持动态宽度
+        const ACTIVE_BTN_W = 82 * s;
+        const useFixedWidth = isActive || !canAfford;
+        const btnW = useFixedWidth ? ACTIVE_BTN_W : contentW + 16 * s + btnExtraW;
         const btnX = textX + 2;
 
         let pressOffset = 0;
@@ -1354,17 +1355,19 @@ class ConfirmBuyRenderer {
 
     // === 卡牌描述 ===
     const descY = nameY + 24 * s;
+    const descMaxW = pw - 40 * s; // 留出左右边距
     ctx.save();
     if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.font = `${Math.floor(12 * s)}px sans-serif`;
     ctx.fillStyle = '#555';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(item.desc, W / 2, descY);
+    const descLineHeight = 15 * s;
+    const descH = drawWrappedText(ctx, item.desc, W / 2, descY, descMaxW, descLineHeight);
     ctx.restore();
 
     // === 底部分隔线 ===
-    const bottomLineY = descY + 28 * s;
+    const bottomLineY = descY + descH + 10 * s;
     ctx.save();
     if (!isClosing) ctx.globalAlpha = contentAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
