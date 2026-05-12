@@ -1943,7 +1943,7 @@ class Renderer {
 
           if (phase >= 2) {
             const wjList = pc.wholeWordJokers || [];
-            const STEP_DURATION = 350; // 每一步固定 350ms
+            const STEP_DURATION = 400; // 每一步固定 400ms
 
             // 阶段2时间基准
             if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
@@ -1958,7 +1958,7 @@ class Renderer {
               currentStep = Math.floor(afterBase / STEP_DURATION);
             }
 
-            // 固定 350ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
+            // 固定 400ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
             wjList.forEach(({ idx }, i) => {
               const joker = game.jokers?.[idx];
               if (!joker) return;
@@ -2278,7 +2278,7 @@ class Renderer {
       const phase2Start = 1000 + _cards.length * 350 + waveDuration;
       const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
       const baseMultDelay = 500;
-      const STEP_DURATION = 350;
+      const STEP_DURATION = 400;
       const totalSteps = 1 + (pc.wholeWordJokers || []).length;
       const postWait = 350;
       const readyTime = totalSteps * STEP_DURATION + postWait;
@@ -2305,7 +2305,7 @@ class Renderer {
       this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
     }
     if (valid && showSecondBox) {
-      // 基础倍率 + whole_word 依次触发（固定 500ms 一步，跳跃+标签+倍率同时发生）
+      // 基础倍率 + whole_word 依次触发（固定 400ms 一步，跳跃+标签+倍率同时发生）
       let displayValue = null;
       let labelText = null;
       const wjList = pc.wholeWordJokers || [];
@@ -2317,7 +2317,7 @@ class Renderer {
       const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
 
       const baseMultDelay = 500;
-      const STEP_DURATION = 350;
+      const STEP_DURATION = 400;
 
       // 计算当前步
       let currentStep = -1;
