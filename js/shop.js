@@ -33,7 +33,7 @@ const SHOP_POOL = {
     // {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
-    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:3, cost:10, desc:'当出牌次数用完且未达标时，延续生命进入商店，下一关目标分+(差值×2)（限3次）'}
+    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:2, cost:12, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限2次）'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -757,7 +757,7 @@ class ShopRenderer {
 
         // 价格按钮（暖米色，金币图标+价格）
         const btnH = 22 * s;
-        const btnY = unitY + unitH - btnH - 10 * s;
+        const btnY = unitY + unitH - btnH - 10 * s + 2 * s; // 整体下移 2px
         const coinSize = 14 * s;
         const canAfford = game.gold >= item.cost;
 
@@ -789,7 +789,9 @@ class ShopRenderer {
         ctx.restore();
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
         const btnExtraW = isActive ? 23 : 13; // 灰色状态左右各-5px
-        const btnW = contentW + 16 * s + btnExtraW;
+        // 金币数字状态：统一固定宽度；其他状态保持动态宽度
+        const ACTIVE_BTN_W = 76 * s;
+        const btnW = isActive ? ACTIVE_BTN_W : contentW + 16 * s + btnExtraW;
         const btnX = textX + 2;
 
         let pressOffset = 0;
