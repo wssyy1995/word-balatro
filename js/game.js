@@ -697,16 +697,19 @@ class Game {
         this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
-        // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
-        setTimeout(() => {
-          this.state = 'gameover';
-          this.gameOverReason = 'out_of_hands';
-          if (this.storageManager) {
-            this.storageManager.setHighScore(this.totalScore);
-            this.storageManager.updateStats(this);
-            this.storageManager.clearProgress();
-          }
-        }, 1500);
+        const triggered = this._checkLifeExtension();
+        if (!triggered) {
+          // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
+          setTimeout(() => {
+            this.state = 'gameover';
+            this.gameOverReason = 'out_of_hands';
+            if (this.storageManager) {
+              this.storageManager.setHighScore(this.totalScore);
+              this.storageManager.updateStats(this);
+              this.storageManager.clearProgress();
+            }
+          }, 1500);
+        }
       }
       if (this.storageManager) this.storageManager.saveProgress(this);
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
@@ -727,15 +730,18 @@ class Game {
       if (this.audioManager) this.audioManager.play('invalid');
       this.handsLeft--;
       if (this.handsLeft <= 0) {
-        setTimeout(() => {
-          this.state = 'gameover';
-          this.gameOverReason = 'out_of_hands';
-          if (this.storageManager) {
-            this.storageManager.setHighScore(this.totalScore);
-            this.storageManager.updateStats(this);
-            this.storageManager.clearProgress();
-          }
-        }, 1500);
+        const triggered = this._checkLifeExtension();
+        if (!triggered) {
+          setTimeout(() => {
+            this.state = 'gameover';
+            this.gameOverReason = 'out_of_hands';
+            if (this.storageManager) {
+              this.storageManager.setHighScore(this.totalScore);
+              this.storageManager.updateStats(this);
+              this.storageManager.clearProgress();
+            }
+          }, 1500);
+        }
       }
       if (this.storageManager) this.storageManager.saveProgress(this);
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
@@ -823,6 +829,30 @@ class Game {
     return result;
   }
 
+  _checkLifeExtension() {
+    const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+    if (lifeExtIdx < 0) return false;
+    const joker = this.jokers[lifeExtIdx];
+    if (joker.usesLeft !== undefined && joker.usesLeft <= 0) return false;
+
+    const diff = this.target - this.score;
+    this._lifeExtensionBonus = diff * 2;
+    if (joker.usesLeft !== undefined) joker.usesLeft--;
+    if (joker.usesLeft !== undefined && joker.usesLeft <= 0) {
+      joker._destroying = true;
+      joker._destroyStart = Date.now();
+      setTimeout(() => {
+        const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+        if (idx >= 0) this.jokers.splice(idx, 1);
+        if (this.storageManager) this.storageManager.saveProgress(this);
+      }, 900);
+    }
+    this._lifeExtensionAnim = { startTime: Date.now(), jokerIndex: lifeExtIdx, diff };
+    this.state = 'life_extended';
+    if (this.storageManager) this.storageManager.saveProgress(this);
+    return true;
+  }
+
   completePlayHand() {
     if (this._playHandCompleting) return;
     if (!this.pendingCheck || this.pendingCheck.state !== 'valid') return;
@@ -841,36 +871,15 @@ class Game {
     if (this.score >= this.target) {
       this._showSettlement();
     } else if (this.handsLeft <= 0) {
-      // 检查是否有"生命延续"女巫牌
-      const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
-      if (lifeExtIdx >= 0) {
-        const joker = this.jokers[lifeExtIdx];
-        if (joker.usesLeft === undefined || joker.usesLeft > 0) {
-          const diff = this.target - this.score;
-          this._lifeExtensionBonus = diff * 2;
-          if (joker.usesLeft !== undefined) joker.usesLeft--;
-          if (joker.usesLeft !== undefined && joker.usesLeft <= 0) {
-            joker._destroying = true;
-            joker._destroyStart = Date.now();
-            setTimeout(() => {
-              const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
-              if (idx >= 0) this.jokers.splice(idx, 1);
-              if (this.storageManager) this.storageManager.saveProgress(this);
-            }, 900);
-          }
-          this._lifeExtensionAnim = { startTime: Date.now(), jokerIndex: lifeExtIdx, diff };
-          this.state = 'life_extended';
-          if (this.storageManager) this.storageManager.saveProgress(this);
-          this._playHandCompleting = false;
-          return;
+      const triggered = this._checkLifeExtension();
+      if (!triggered) {
+        this.state = 'gameover';
+        this.gameOverReason = 'out_of_hands';
+        if (this.storageManager) {
+          this.storageManager.setHighScore(this.totalScore);
+          this.storageManager.updateStats(this);
+          this.storageManager.clearProgress();
         }
-      }
-      this.state = 'gameover';
-      this.gameOverReason = 'out_of_hands';
-      if (this.storageManager) {
-        this.storageManager.setHighScore(this.totalScore);
-        this.storageManager.updateStats(this);
-        this.storageManager.clearProgress();
       }
     }
 
