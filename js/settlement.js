@@ -72,7 +72,7 @@ class SettlementRenderer {
     const lineH = 36 * s;
     const items = [
       { label: '基础金币', value: `+${settlement.baseGold}` },
-      { label: '剩余出牌次数 ×1', value: `+${settlement.extraHands}` },
+      { label: '剩余出牌次数 ×2', value: `+${settlement.extraHands}` },
       { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}` },
     ];
 

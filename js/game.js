@@ -1039,7 +1039,7 @@ class Game {
 
   _showSettlement() {
     const baseGold = 3 + Math.round(this.round / 3);
-    const extraHands = this.handsLeft * 1;
+    const extraHands = this.handsLeft * 2;
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
 

@@ -25,7 +25,8 @@ word-balatro/
 ├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标等）
 └── js/
     ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
-    ├── words.js         # 本地词库（高频词含中文释义）
+    ├── words.js         # 本地核心词库（高频词含中文释义）
+    ├── expand_words.js  # 扩展离线词库（补充高频词）
     ├── game.js          # Game 核心类 + 工具函数（计分、校验、保底、发牌）
     ├── renderer.js      # Canvas 主渲染器：所有 UI、动画、粒子、HUD
     ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
@@ -90,6 +91,9 @@ word-balatro/
 | `extraHands` | number | 水晶球额外出牌次数（跨回合清零） |
 | `extraSafety` | number | 水晶球延长保底回合数 |
 | `extraLetters` | number | 水晶球额外手牌数量（跨回合清零） |
+| `_lifeExtensionBonus` | number | 生命延续加成的目标分数（跨回合生效后清零） |
+| `_shuffledSkills` | Array | 游戏开始时打乱后的 SKILL_POOL，用于动态分配女巫约束 |
+| `witchSkillPassed` | boolean | 本回合是否通过女巫技能约束 |
 | `baseHandSize` | number | 基础手牌数量（默认 9，可被女巫奖励永久增加） |
 | `_maxHandSize` | number | 本回合实际手牌上限 |
 | `safetyRounds` | number | 保底相关配置（默认 3，实际所有回合均保底） |
@@ -137,6 +141,10 @@ word-balatro/
 - 补牌后确保手牌仍有合法单词
 - `discardsLeft--`
 
+**`completePlayHand()` — 完成出牌（由渲染器动画完成后调用）**
+- 执行计分、旧牌飞出、新牌飞入
+- 判断 score≥target 进入 settlement，或 handsLeft≤0 触发 life_extension / gameover
+
 **`claimSettlement()` — 领取结算**
 - 将结算金币加入 `gold`
 - 200ms 关闭动画后进入 `witch_reward`（如有女巫技能且通过）或 `shop` 状态
@@ -145,6 +153,14 @@ word-balatro/
 - 保存本回合得分到 `roundScores`
 - `round++`，清空 `shopItems`
 - 调用 `resetRound()`
+
+**`_checkLifeExtension()` — 检查生命延续**
+- 出牌耗尽时检查是否拥有「生命延续」女巫牌且次数未耗尽
+- 若触发：计算 `target - score` 的差值×2 加到下一回合目标分，进入 `life_extended` 状态
+
+**`showHint()` — 提示功能**
+- 调用 `findAllValidWordsInHand()` 查找当前手牌所有可组成的合法单词
+- 显示前 10 个高分单词及其分数预览
 
 **`resetRound()` — 回合重置**
 ```
@@ -166,32 +182,31 @@ word-balatro/
 mult = 单词长度（即卡牌数量）
 
 for each whole_word 女巫牌:
-  若 trigger 满足 → mult = ceil(mult × 女巫牌 value)
+  若 trigger 满足 → mult = ceil(mult × 女巫牌 value) 或 mult += value（illegal_boost）
 
 for each flat_bonus 女巫牌:
   基础分 += 女巫牌 value
 
-// letter_god（字母之神）：已在 playHand() 中预处理，所有出牌字母分数改为最高分
+// letter_god（字母之神）：在 playHand() 中预处理，所有出牌字母分数改为最高分
 // 因此 calcWordScore 内部只需读取当前 card.score
 
 总分 = ceil(基础分 × mult)
 ```
 
-**女巫牌触发条件（per_card / whole_word）**
+**女巫牌触发条件（per_card / whole_word / limit）**
 
-| Trigger | 条件 | 效果类型 |
-|---------|------|---------|
-| `letter_a` | 卡牌为 A | per_card：该卡 score ×2 |
-| `letter_e` | 卡牌为 E | per_card：该卡 score ×2 |
-| `has_vowel` | 卡牌为元音 | per_card：该卡 score ×3 |
-| `high_letter` | 卡牌为 J/Q/X/Z | per_card：该卡 score ×倍率 |
-| `has_face` | 整词含 X/Y/Z | whole_word：mult ×3 |
-| `length_3` | 单词 ≥3 字母 | whole_word：mult ×1.2 |
-| `length_4` | 单词 ≥4 字母 | whole_word：mult ×1.5 |
-| `length_5` | 单词 ≥5 字母 | whole_word：mult ×2 |
-| `length_6` | 单词 ≥6 字母 | whole_word：mult ×3 |
-| `letter_god` | 每次计分（限3次） | limit：本单词所有字母按最高分字母算分 |
-| `shield_illegal` | — | 打出非法单词不扣除出牌次数 |
+| 名称 | Trigger | Scope | 条件 | 效果 |
+|------|---------|-------|------|------|
+| 元音强化 | `has_vowel` | per_card | 卡牌为元音 | 该卡 score ×3 |
+| 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult ×2 |
+| 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult ×3 |
+| 容错咒文 | `shield_illegal` | — | 打出非法单词 | 不扣除出牌次数 |
+| 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
+| 生命延续 | `life_extension` | limit | 出牌耗尽时（限2次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
+| 错误即经验 | `illegal_boost` | whole_word | 打出非法单词后 | 倍率 +0.5（若同时触发容错咒文则 -0.1） |
+
+> 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
+> `illegal_boost` 的 value 会随非法单词打出次数动态变化。
 
 **目标分数公式**
 ```
@@ -215,12 +230,13 @@ target = 150 + 50 × round × (round - 1)
 
 #### 3.2.5 单词检测系统
 
-**三层检测**
+**四层检测**
 
 | 层级 | 来源 | 速度 |
 |------|------|------|
-| L1 | `WORD_DATA` / `onlineWordCache` | 毫秒级 |
-| L2 | `dictionaryapi.dev` API | 1-3 秒 |
+| L1 | `WORD_DATA`（核心离线词库） | 毫秒级 |
+| L1.5 | `EXPAND_WORD_DATA`（扩展离线词库） | 毫秒级 |
+| L2 | `onlineWordCache` / `dictionaryapi.dev` API | 1-3 秒 |
 | L3 | `MyMemory` 翻译（后台） | 异步 |
 
 **校验状态机（`pendingCheck`）**
@@ -239,10 +255,18 @@ target = 150 + 50 × round × (round - 1)
 | 第 5 关 | `need_letter_4` | 每次出牌必须不少于 4 个字母 | 额外出牌（100%） |
 | 第 8 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 金币翻倍（50%） |
 | 第 11 关 | `force_letter_4` | 每次出牌只能出 4 张字母牌 | 额外字母（100%） |
+| 第 14 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 金币翻倍（50%） |
+| 第 16 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 字母强化药水（30%） |
+| 第 18 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 随机强化药水（30%） |
+
+> *动态分配：第 16、18 关及以后的约束从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，可能包含：
+> - `letter_a_mult_half`：出牌含字母 A，则单词倍率减半
+> - `letter_e_mult_half`：出牌含字母 E，则单词倍率减半
+> - `no_letter_a`：本回合牌堆中不会出现字母 A
 
 过关且满足约束后，进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，根据技能 `rate` 概率获得奖励。奖励类型包括：
 - **buff 类**：额外出牌、额外字母、金币翻倍（直接生效）
-- **药水类**：字母强化、字母置换（可暂存或立即使用）
+- **药水类**：字母强化、字母置换、随机强化（可暂存或立即使用）
 
 ---
 
@@ -367,21 +391,21 @@ gap = 8 * scale
 │  第 N 关结算      │
 │  ─────────────   │
 │  基础金币    +x   │
-│  剩余出牌×1  +x   │
-│  剩余弃牌+1  +x   │
+│  剩余出牌×2  +x   │
+│  剩余弃牌×1  +x   │
 │  ─────────────   │
 │  总计       +xx  │
 │     [领取]       │
 └──────────────────┘
 ```
 
-> 注：`extraDiscards = this.discardsLeft + 1`，即剩余弃牌次数额外加 1。
+> 注：`extraDiscards = this.discardsLeft`，即剩余弃牌次数直接折算为金币。
 
 #### 3.3.9 药水升级页面（potion 状态）
 
 进入后显示 A-Z 字母矩阵，选中字母后点击升级：
-- **字母升级**：指定字母分数 ×2（全局，跨回合保留）
-- **随机强化**：随机强化手牌中 1 个字母，分数 ×4（老虎机抽奖形式）
+- **字母升级**：指定字母分数 +10（加法叠加，全局，跨回合保留）
+- **随机强化**：随机强化手牌中 1 个字母，分数 ×4（乘法叠加，老虎机抽奖形式）
 - **字母置换**：将手牌中选中的一张牌替换为指定字母（游戏中直接使用）
 
 升级后启动弹出动画（oldScore → newScore），播放升级音效。
@@ -429,6 +453,7 @@ gap = 8 * scale
 | `upgrade` | audio/upgrade.mp3 | 药水升级 |
 | `buy` | audio/buy.mp3 | 商店购买 |
 | `levelup` | audio/levelup.mp3 | 进入下一关 |
+| `surrender` | audio/surrender.mp3 | 投降 |
 | `button` | audio/button.mp3 | 按钮点击 |
 
 BGM 支持循环播放，音量 0.3。
@@ -463,19 +488,21 @@ BGM 支持循环播放，音量 0.3。
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 6 种 | 4-10 金币 | 装备栏 4 格 | 紫色 |
-| **水晶球**（crystal） | 3~4 种 | 3-5 金币 | 购买即生效 | 蓝色 |
+| **女巫牌**（witch） | 7 种 | 4-12 金币 | 装备栏 4 格 | 紫色 |
+| **水晶球**（crystal） | 4 种 | 3-5 金币 | 购买即生效 | 蓝色 |
 | **魔法药水**（potion） | 3 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复。
+
+**女巫牌列表**：元音强化、五字母连击、六字母连击、容错咒文、字母之神、生命延续、错误即经验。
 
 ### 4.2 药水种类
 
 | 名称 | 效果 | value |
 |------|------|-------|
-| 字母升级 | 指定字母分数 ×2 | 2 |
+| 字母升级 | 指定字母分数 +10（加法叠加，全局跨回合保留） | 10 |
 | 字母置换 | 将手牌中一张替换为指定字母 | - |
-| 随机强化 | 随机强化 1 个字母，分数 ×4 | 4 |
+| 随机强化 | 随机强化 1 个字母，分数 ×4（乘法叠加） | 4 |
 
 > 药水购买后需在成功弹窗选择"暂存"（放入道具栏）或"立即使用"。字母置换药水仅在道具栏点击后游戏中直接使用。
 
@@ -520,6 +547,8 @@ BGM 支持循环播放，音量 0.3。
     │←──upgradeCard()── [potion] ←── buy/use potion ──────────────┘
     │       (暂存/升级后返回)
     │
+    └── out_of_hands ──→ [life_extended] ──领取──→ [shop]  （如有生命延续女巫牌）
+    │
     └── out_of_hands / surrender ──→ [gameover] ──restart()──→ [playing]
 ```
 
@@ -539,6 +568,7 @@ BGM 支持循环播放，音量 0.3。
   selected: false,       // 是否被选中
   upgraded: false,       // 是否被药水升级过
   upgradeMult: 1,        // 升级倍率（累乘）
+  upgradeAdd: 0,         // 升级加法值（加法叠加）
   newCard: false,        // 是否是刚抽到的新牌
   animOffset: null,      // 动画偏移 {x, y, rotation, opacity, scale}
   selectOffset: 0,       // 选中上移偏移
@@ -552,9 +582,9 @@ BGM 支持循环播放，音量 0.3。
 ### 6.2 商店商品对象（ShopItem）
 
 ```js
-// 女巫牌
-{ name: "A之强化", type: "witch", scope: "per_card", trigger: "letter_a",
-  value: 2, cost: 5, desc: "字母A分数×2" }
+// 女巫牌（无 scope 的仅触发特殊效果，不参与常规倍率计算）
+{ name: "容错咒文", type: "witch", trigger: "shield_illegal",
+  cost: 8, desc: "打出非法单词，不扣除出牌次数" }
 
 // 水晶球
 { name: "额外弃牌", type: "crystal", effect: "extra_discard",
@@ -562,7 +592,7 @@ BGM 支持循环播放，音量 0.3。
 
 // 魔法药水
 { name: "字母升级", type: "potion", effect: "upgrade_letter",
-  value: 2, cost: 4, desc: "选择一张字母牌，分数翻倍" }
+  value: 10, cost: 4, desc: "指定一张字母牌，分数 +10" }
 ```
 
 ### 6.3 字母升级记录（LetterUpgrade）
@@ -638,6 +668,7 @@ letterUpgrades = Map {
 - 重置出牌次数
 - 增加 100 分
 - 增加 10 金币
+- 跳转回合（输入目标回合数）
 - 直接通关（进入 settlement）
 - 刷新商店（重新生成 6 款商品）
 - 上传 shop_card 图片到云存储
@@ -678,7 +709,8 @@ letterUpgrades = Map {
 | v1.2.0 | 2026-05-01 | 新增动画系统、音效系统、本地存储、女巫技能、售出/刷新、药水升级、调试菜单 |
 | v1.3.0 | 2026-05-06 | 新增女巫奖励阶段、云存储系统、字母置换、目标减免、额外手牌、字母之神、容错咒文等 |
 | v1.3.1 | 2026-05-11 | 更新文档，修正 README 与代码不一致处；补充随机强化、女巫奖励、保底机制等说明 |
+| v1.3.2 | 2026-05-13 | 补充生命延续、动态女巫技能分配、扩展词库、提示功能等；修正女巫牌/药水/水晶球描述；更新状态机与调试菜单 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-05-11*
+*文档基于实际代码整理，最后更新：2026-05-13*

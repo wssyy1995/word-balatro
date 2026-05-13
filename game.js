@@ -746,7 +746,7 @@ function handleInput(x, y) {
           game._lifeExtensionAnim = null;
           // 发放结算金币（与 _showSettlement 逻辑一致）
           const baseGold = 3 + Math.round(game.round / 3);
-          const extraHands = game.handsLeft * 1;
+          const extraHands = game.handsLeft * 2;
           const extraDiscards = game.discardsLeft * 1;
           game.gold += baseGold + extraHands + extraDiscards;
           // 目标分脉冲动画（放大缩小，参考目标减免/金币胶囊）
