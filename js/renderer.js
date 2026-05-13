@@ -1713,16 +1713,17 @@ class Renderer {
           }
         }
         this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
-        // 生命延续触发：红色呼吸光晕（无描边）
+        // 生命延续触发：紫色边框光晕闪烁
         if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
           const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
           if (elapsed < 1000) {
             const breath = 0.5 + 0.5 * Math.sin(Date.now() / 250);
             ctx.save();
-            ctx.shadowColor = '#e74c3c';
-            ctx.shadowBlur = (8 + 8 * breath) * s;
-            // 极淡填充承载 shadow，不画红色描边
-            this.roundRect(sx, slotY, slotW, slotH, 4 * s, `rgba(231,76,60,${0.05 + 0.05 * breath})`);
+            ctx.shadowColor = `rgba(155,89,182,${0.3 + 0.4 * breath})`;
+            ctx.shadowBlur = (6 + 10 * breath) * s;
+            const lineW = (2 + 2 * breath) * s;
+            const strokeColor = `rgba(155,89,182,${0.6 + 0.4 * breath})`;
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
             ctx.restore();
           }
         }
