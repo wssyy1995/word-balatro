@@ -304,9 +304,17 @@ function calcWordScore(cards, jokers) {
           if (_matchCardTrigger(c, j.trigger)) cardMults[i] *= j.value;
         });
         break;
-      case 'whole_word':
-        if (_matchWordTrigger(cards, j.trigger)) mult = Math.ceil(mult * j.value);
+      case 'whole_word': {
+        const wwMatched = j.trigger === 'illegal_boost' ? j.value > 0 : _matchWordTrigger(cards, j.trigger);
+        if (wwMatched) {
+          if (j.trigger === 'illegal_boost') {
+            mult += j.value;
+          } else {
+            mult = Math.ceil(mult * j.value);
+          }
+        }
         break;
+      }
       // flat_bonus 在 baseScore 累加后单独处理
     }
   }
@@ -670,6 +678,14 @@ class Game {
       this.pendingCheck.resolveTime = Date.now();
       if (this.audioManager) this.audioManager.play('invalid');
 
+      // 错误即经验：每次非法单词累加 +0.5；若同时触发容错咒文，倍率 -0.1
+      const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
+      (this.jokers || []).forEach(j => {
+        if (j.trigger === 'illegal_boost') {
+          j.value = (j.value || 0) + (hasShield ? -0.1 : 0.5);
+        }
+      });
+
       // 检查是否有"出现非法单词，游戏结束"的女巫技能
       const witchSkill = getSkillForLevel(this.round);
       if (witchSkill && witchSkill.skill === 'forbid_illegal_words') {
@@ -815,8 +831,13 @@ class Game {
     // 预处理 whole_word 女巫牌（用于 phase 1.5 波浪动画 + phase 2 倍率弹出）
     const wholeWordJokers = [];
     jokers.forEach((joker, idx) => {
-      if (joker.type === 'witch' && joker.scope === 'whole_word' && _matchWordTrigger(playedInOrder, joker.trigger)) {
-        wholeWordJokers.push({ idx, joker });
+      if (joker.type === 'witch' && joker.scope === 'whole_word') {
+        const matched = joker.trigger === 'illegal_boost'
+          ? joker.value > 0
+          : _matchWordTrigger(playedInOrder, joker.trigger);
+        if (matched) {
+          wholeWordJokers.push({ idx, joker });
+        }
       }
     });
     this.pendingCheck.wholeWordJokers = wholeWordJokers;

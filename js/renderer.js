@@ -379,7 +379,9 @@ class Renderer {
 
     // 计算内容高度
     const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
+    const hasIllegalBoost = joker.trigger === 'illegal_boost';
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+    if (hasIllegalBoost) contentH += lineH + 2 * s; // 倍率增值
     if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
@@ -451,6 +453,18 @@ class Renderer {
     ctx.textBaseline = 'middle';
     ctx.fillText(joker.desc, popupX + pad, cy);
     ctx.restore();
+
+    // 倍率增值（错误即经验：显示当前累加值）
+    if (joker.trigger === 'illegal_boost') {
+      cy += lineH + 2 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#9b59b6';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`倍率增值：+${joker.value}`, popupX + pad, cy);
+      ctx.restore();
+    }
 
     // 剩余次数（limit 型女巫牌）
     if (joker.limit !== undefined && joker.usesLeft !== undefined) {
@@ -1149,7 +1163,6 @@ class Renderer {
       ctx.fillStyle = '#0a1628';
       ctx.fillRect(0, 0, W, H);
     }
-
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
       this.drawHUD(game);
@@ -2372,17 +2385,27 @@ class Renderer {
       // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
       let curMult = pendingLength;
       for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
-        curMult = Math.ceil(curMult * wjList[i].joker.value);
+        const joker = wjList[i].joker;
+        if (joker.trigger === 'illegal_boost') {
+          curMult += joker.value;
+        } else {
+          curMult = Math.ceil(curMult * joker.value);
+        }
       }
       displayValue = curMult;
 
-      // 标签：currentStep = 1 时显示第1张的 xValue
+      // 标签：currentStep = 1 时显示第1张的 xValue / +Value
       const labelIdx = currentStep - 1;
       if (labelIdx >= 0 && labelIdx < wjList.length) {
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
         if (stepProgress < 0.8) {
-          labelText = `x${wjList[labelIdx].joker.value}`;
+          const joker = wjList[labelIdx].joker;
+          if (joker.trigger === 'illegal_boost') {
+            labelText = `+${joker.value}`;
+          } else {
+            labelText = `x${joker.value}`;
+          }
         }
       }
 
@@ -2417,7 +2440,9 @@ class Renderer {
         ctx.fillStyle = '#f5f0e8';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(String(Math.round(displayValue)), 0, 0);
+        // 有小数时保留1位，整数时正常显示（总分飞行仍用四舍五入的整数）
+        const displayText = Number.isInteger(displayValue) ? String(Math.round(displayValue)) : displayValue.toFixed(1);
+        ctx.fillText(displayText, 0, 0);
         ctx.restore();
       }
 
