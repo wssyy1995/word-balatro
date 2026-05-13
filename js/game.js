@@ -9,7 +9,7 @@ const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -552,6 +552,8 @@ class Game {
     this.witchRewardData = null;
     this._lifeExtensionBonus = 0;
     this._lifeExtensionAnim = null;
+    this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
+    console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
     this.audioManager = new AudioManager();
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
@@ -562,7 +564,7 @@ class Game {
     wordCheckState.clear();
 
     // 根据女巫技能设置保底词长度
-    const witchSkill = getSkillForLevel(this.round);
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (witchSkill && witchSkill.skill === 'force_letter_3') {
       this._seedMinLen = 3;
       this._seedMaxLen = 3;
@@ -699,7 +701,7 @@ class Game {
       });
 
       // 检查是否有"出现非法单词，游戏结束"的女巫技能
-      const witchSkill = getSkillForLevel(this.round);
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       if (witchSkill && witchSkill.skill === 'forbid_illegal_words') {
         this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
         setTimeout(() => {
@@ -744,7 +746,7 @@ class Game {
     }
 
     // === 女巫技能约束检查 ===
-    const witchSkill = getSkillForLevel(this.round);
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (witchSkill && !checkSkill(witchSkill.skill, this, playedInOrder)) {
       this.witchSkillPassed = false;
       this.pendingCheck.state = 'witch_failed';
@@ -803,7 +805,7 @@ class Game {
     const result = calcWordScore(played, this.jokers);
 
     // === letter_X_mult_half 惩罚检测（通用） ===
-    const currentWitchSkill = getSkillForLevel(this.round);
+    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
 
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
@@ -1025,7 +1027,7 @@ class Game {
       });
 
       this.hand = this.hand.filter(c => c !== null);
-      const witchSkill = getSkillForLevel(this.round);
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
       ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
@@ -1042,7 +1044,7 @@ class Game {
     const totalGold = baseGold + extraHands + extraDiscards;
 
     // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放）
-    const witchSkill = getSkillForLevel(this.round);
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     const hasWitchReward = witchSkill && this.witchSkillPassed;
 
     this.settlementData = {
@@ -1213,7 +1215,7 @@ class Game {
       // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
 
-      const witchSkill = getSkillForLevel(this.round);
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
       ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });

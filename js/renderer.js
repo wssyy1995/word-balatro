@@ -1332,7 +1332,7 @@ class Renderer {
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
 
-    const witchSkill = getSkillForLevel(game.round);
+    const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
     const bg = '#f0e0c8';
     const outerStroke = '#c5a059';
 
@@ -2569,7 +2569,7 @@ class Renderer {
     ctx.shadowOffsetY = 3 * s;
     this.drawBtnImage('throw_card', discardX, discardY, btnW, btnH);
     ctx.restore();
-    // 弃牌文字 + 剩余次数（金色渐变字）
+    // 弃牌文字 + 剩余次数
     ctx.save();
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.textAlign = 'center';
@@ -2577,17 +2577,23 @@ class Renderer {
     const discardTextY = discardY + btnH / 2 - 1 * s;
     const discardText = `弃牌 (${game.discardsLeft})`;
     const discardTx = discardX + btnW / 2;
-    // 深色外描边
-    ctx.lineWidth = 2 * s;
-    ctx.strokeStyle = '#2a1f0d';
-    ctx.strokeText(discardText, discardTx, discardTextY);
-    // 金色渐变填充（上亮下暗，自然光照）
-    const dgrad = ctx.createLinearGradient(discardTx, discardTextY - 7 * s, discardTx, discardTextY + 7 * s);
-    dgrad.addColorStop(0, '#dfc06e');
-    dgrad.addColorStop(0.5, '#c9a84c');
-    dgrad.addColorStop(1, '#b5973e');
-    ctx.fillStyle = dgrad;
-    ctx.fillText(discardText, discardTx, discardTextY);
+    if (game.discardsLeft <= 0) {
+      // 次数用完：深灰色文字（disable 状态）
+      ctx.fillStyle = '#666';
+      ctx.fillText(discardText, discardTx, discardTextY);
+    } else {
+      // 深色外描边
+      ctx.lineWidth = 2 * s;
+      ctx.strokeStyle = '#2a1f0d';
+      ctx.strokeText(discardText, discardTx, discardTextY);
+      // 金色渐变填充（上亮下暗，自然光照）
+      const dgrad = ctx.createLinearGradient(discardTx, discardTextY - 7 * s, discardTx, discardTextY + 7 * s);
+      dgrad.addColorStop(0, '#dfc06e');
+      dgrad.addColorStop(0.5, '#c9a84c');
+      dgrad.addColorStop(1, '#b5973e');
+      ctx.fillStyle = dgrad;
+      ctx.fillText(discardText, discardTx, discardTextY);
+    }
     ctx.restore();
     this.discardBtnRect = { x: discardX, y: btnY, w: btnW, h: btnH, action: 'discard' };
 

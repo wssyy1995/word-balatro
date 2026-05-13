@@ -1,19 +1,47 @@
 // ===== 女巫技能配置 =====
 
 const WITCH_SKILLS = [
-  { level: 2, name: '女巫 Lv.2', skill: 'force_letter_3', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换', desc: '每次出牌,只能出3张字母牌',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 5, name: '女巫 Lv.5', skill: 'need_letter_4', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1', desc: '每次出牌,不能少于4个字母',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 8, name: '女巫 Lv.8', skill: 'forbid_illegal_words', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍', desc: '出现非法单词，游戏结束',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 11, name: '女巫 Lv.11', skill: 'force_letter_4', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1', desc: '每次出牌,只能出4张字母牌',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 14, name: '女巫 Lv.14', skill: 'letter_a_mult_half', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍', desc: '出牌如果包含字母 \'A\', 单词倍率减半',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 16, name: '女巫 Lv.16', skill: 'no_letter_a', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级', desc: '本回合不会出现字母牌\'A\'',angry_tip:'A去哪儿了' },
-  { level: 18, name: '女巫 Lv.18', skill: 'letter_e_mult_half', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化', desc: '出牌如果包含字母 \'E\', 单词倍率减半',angry_tip:'要遵守规矩哦，我生气的后果很严重。' }
+  { level: 2, name: '女巫 Lv.2', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
+  { level: 5, name: '女巫 Lv.5', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1' },
+  { level: 8, name: '女巫 Lv.8', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
+  { level: 11, name: '女巫 Lv.11', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
+  { level: 14, name: '女巫 Lv.14', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
+  { level: 16, name: '女巫 Lv.16', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' }
 
 ];
 
+// 技能池（skill + desc + angry_tip 绑定，游戏开始时打乱顺序分配）
+const SKILL_POOL = [
+  { skill: 'force_letter_3', desc: '每次出牌,只能出3张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'forbid_illegal_words', desc: '出现非法单词，游戏结束', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'force_letter_4', desc: '每次出牌,只能出4张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'no_letter_a', desc: '本回合不会出现字母牌\'A\'', angry_tip: 'A去哪儿了' },
+  { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
+];
+
+// 打乱数组（Fisher-Yates）
+function shuffleSkills(arr) {
+  const result = [...arr];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 // 获取指定回合的女巫技能
-function getSkillForLevel(level) {
-  return WITCH_SKILLS.find(s => s.level === level);
+// shuffledSkills：打乱后的 SKILL_POOL 数组，若传入则按索引动态分配 skill + desc + angry_tip
+function getSkillForLevel(level, shuffledSkills = null) {
+  const config = WITCH_SKILLS.find(s => s.level === level);
+  if (!config) return null;
+  if (!shuffledSkills) return { ...config, skill: null };
+  const idx = WITCH_SKILLS.indexOf(config);
+  const skillDef = idx >= 0 && idx < shuffledSkills.length ? shuffledSkills[idx] : null;
+  if (!skillDef) return { ...config, skill: null };
+  return { ...config, skill: skillDef.skill, desc: skillDef.desc, angry_tip: skillDef.angry_tip };
 }
 
 // 检查技能是否满足
@@ -143,10 +171,12 @@ function giveReward(rewardType, game) {
 
 module.exports = {
   WITCH_SKILLS,
+  SKILL_POOL,
   getSkillForLevel,
   checkSkill,
   getSkillFailText,
   getRewardName,
   createRewardItem,
-  giveReward
+  giveReward,
+  shuffleSkills
 };

@@ -884,7 +884,7 @@ class ShopRenderer {
 
     // === 下一回合女巫技能模块 ===
     const nextRound = game.round + 1;
-    const witchSkill = getSkillForLevel(nextRound);
+    const witchSkill = getSkillForLevel(nextRound, game._shuffledSkills);
 
     // === 下一回合模块（始终显示）===
     const moduleH = witchSkill ? 120 * s : 100 * s;
