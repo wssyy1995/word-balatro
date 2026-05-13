@@ -65,21 +65,28 @@ function draw(deck, count) {
   return drawn;
 }
 
-function getSeedWord(minLen = 3, maxLen = 6) {
+function getSeedWord(minLen = 3, maxLen = 6, excludeLetters = []) {
   // 从本地词库中按长度过滤后随机选取保底词
   const candidates = [];
   for (const word of WORD_DATA.keys()) {
+    const upper = word.toUpperCase();
     if (word.length >= minLen && word.length <= maxLen) {
-      candidates.push(word);
+      const hasExcluded = excludeLetters.some(l => upper.includes(l));
+      if (!hasExcluded) {
+        candidates.push(word);
+      }
     }
   }
   if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
-  return 'cat';
+  // 兜底：返回不含排除字母的词
+  const fallbacks = ['the', 'it', 'on', 'up', 'do', 'go', 'me', 'we', 'to', 'so'];
+  const validFallbacks = fallbacks.filter(w => !excludeLetters.some(l => w.toUpperCase().includes(l)));
+  return validFallbacks.length > 0 ? validFallbacks[0] : 'the';
 }
 
-function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6) {
-  const seedWord = getSeedWord(seedMinLen, seedMaxLen);
-  const seedLetters = seedWord.toUpperCase().split('');
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = []) {
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
+  const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
 
   const seedCards = seedLetters.map(letter => {
     const baseScore = LETTER_SCORE[letter];
@@ -111,11 +118,11 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   return hand;
 }
 
-function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHandSize = 9) {
+function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHandSize = 9, excludeLetters = []) {
   if (hasValidWordInHand(hand)) return;
 
-  const seedWord = getSeedWord(seedMinLen, seedMaxLen);
-  const seedLetters = seedWord.toUpperCase().split('');
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
+  const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
 
   for (const letter of seedLetters) {
     const idx = deck.findIndex(c => c.letter === letter);
@@ -568,6 +575,11 @@ class Game {
     }
 
     this.deck = createDeck();
+    // no_letter_a：牌堆中排除指定字母
+    const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+    if (excludeLetters.length > 0) {
+      this.deck = this.deck.filter(c => !excludeLetters.includes(c.letter));
+    }
     this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
     if (this._lifeExtensionBonus) {
       this.target += this._lifeExtensionBonus;
@@ -577,7 +589,7 @@ class Game {
     applyCrystalEffects(this);
     const handSize = this.baseHandSize + (this.extraLetters || 0);
     this._maxHandSize = handSize;
-    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen);
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters);
     this.selected = [];
     this.score = 0;
     this.handsLeft = 4 + this.extraHands;
@@ -1013,11 +1025,13 @@ class Game {
       });
 
       this.hand = this.hand.filter(c => c !== null);
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize);
+      const witchSkill = getSkillForLevel(this.round);
+      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
-    this.handsLeft--;
+    this.handsLeft--
     if (this.storageManager) this.storageManager.saveProgress(this);
   }
 
@@ -1199,11 +1213,13 @@ class Game {
       // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
 
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize);
+      const witchSkill = getSkillForLevel(this.round);
+      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
-    this.discardsLeft--;
+    this.discardsLeft--
     if (this.storageManager) this.storageManager.saveProgress(this);
     return true;
   }

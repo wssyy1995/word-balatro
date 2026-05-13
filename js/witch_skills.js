@@ -6,7 +6,8 @@ const WITCH_SKILLS = [
   { level: 8, name: '女巫 Lv.8', skill: 'forbid_illegal_words', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍', desc: '出现非法单词，游戏结束',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
   { level: 11, name: '女巫 Lv.11', skill: 'force_letter_4', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1', desc: '每次出牌,只能出4张字母牌',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
   { level: 14, name: '女巫 Lv.14', skill: 'letter_a_mult_half', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍', desc: '出牌如果包含字母 \'A\', 单词倍率减半',angry_tip:'要遵守规矩哦，我生气的后果很严重。' },
-  { level: 16, name: '女巫 Lv.16', skill: 'letter_e_mult_half', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化', desc: '出牌如果包含字母 \'E\', 单词倍率减半',angry_tip:'要遵守规矩哦，我生气的后果很严重。' }
+  { level: 16, name: '女巫 Lv.16', skill: 'no_letter_a', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级', desc: '本回合不会出现字母牌\'A\'',angry_tip:'A去哪儿了' },
+  { level: 18, name: '女巫 Lv.18', skill: 'letter_e_mult_half', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化', desc: '出牌如果包含字母 \'E\', 单词倍率减半',angry_tip:'要遵守规矩哦，我生气的后果很严重。' }
 
 ];
 
