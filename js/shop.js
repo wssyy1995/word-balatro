@@ -34,7 +34,7 @@ const SHOP_POOL = {
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:2, cost:12, desc:'挽救游戏结束，将目标分差值×2,加到下一回合目标分（限2次）'},
-    {name:'错误即经验', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+0.5；若同时触发\'容错咒文\'，倍率-0.1'}
+    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，倍率-0.1'}
     
   ],
   crystal: [
