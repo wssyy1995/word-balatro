@@ -1197,16 +1197,7 @@ class Renderer {
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
       this.drawHUD(game);
-      this.drawPlaying(game);
-      // 字母之神专属星星飞行动画（在其他女巫牌动画之前）
-      if (game._letterGodAnim) {
-        this._drawLetterGodAnim(game);
-      }
-      // 字母置换弹窗（覆盖在游戏页面上方）
-      if (game._changeLetterPopup) {
-        this.drawChangeLetterPopup(game);
-      }
-      // 自动触发 HUD 女巫头像星星动画（约束失败时）
+      // 自动触发 HUD 女巫头像星星动画（约束失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
       if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {
         game._witchStarBurstAuto = false;
         const rect = this.hudWitchAvatarRect;
@@ -1216,19 +1207,15 @@ class Renderer {
           startTime: Date.now(),
         };
       }
-
-      // HUD 女巫头像温柔旋转星星
-      if (game._witchStarBurst) {
-        const elapsed = Date.now() - game._witchStarBurst.startTime;
-        const duration = 4500;
-        if (elapsed < duration) {
-          const fade = elapsed > 3500 ? 1 - (elapsed - 3500) / 1000 : 1;
-          this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 55 * s, s, fade);
-        } else {
-          game._witchStarBurst = null;
-        }
+      this.drawPlaying(game);
+      // 字母之神专属星星飞行动画（在其他女巫牌动画之前）
+      if (game._letterGodAnim) {
+        this._drawLetterGodAnim(game);
       }
-
+      // 字母置换弹窗（覆盖在游戏页面上方）
+      if (game._changeLetterPopup) {
+        this.drawChangeLetterPopup(game);
+      }
       // hintToast 提示
       this._drawHintToast(game);
     } else if (game.state === 'settlement') {
@@ -1418,6 +1405,21 @@ class Renderer {
       const avatarW = Math.min(avatarH, col1W);
       const baseX = barX + 25* s;
       const baseY = barY + (barH - avatarH) / 2-5*s;
+      // 保存头像点击区域（提前设置，供星星动画使用）
+      this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
+
+      // === 女巫头像背后的温柔旋转星星（在头像下层）===
+      if (game._witchStarBurst) {
+        const elapsed = Date.now() - game._witchStarBurst.startTime;
+        const duration = 4500;
+        if (elapsed < duration) {
+          const fade = elapsed > 3500 ? 1 - (elapsed - 3500) / 1000 : 1;
+          this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 55 * s, s, fade);
+        } else {
+          game._witchStarBurst = null;
+        }
+      }
+
       const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
 
       // 女巫呼吸缩放
@@ -1440,9 +1442,6 @@ class Renderer {
         ctx.restore();
       }
       ctx.restore();
-
-      // 保存头像点击区域（用基础位置，不随动画变）
-      this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
 
       // === 女巫技能描述标签（头像右侧，标题下方）===
       const tagH = 22 * s;
