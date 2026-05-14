@@ -525,7 +525,7 @@ if (phase === 0 && !game._letterGodAnim) {
 // 阶段1 完成后主动推进到阶段2
 if (isAllJumped && phase < 2) {
   const totalJumpTime = cardsInOrder.length * letterInterval;
-  const waveDuration = 200 + cardsInOrder.length * 100;
+  const waveDuration = 180 + cardsInOrder.length * 90;
   const waveElapsed = jumpElapsed - totalJumpTime;
   if (waveElapsed >= waveDuration + 100) {
     pc.animPhase = 2;
@@ -594,7 +594,7 @@ if (multHalfElapsed >= MULT_HALF_DELAY + MULT_HALF_DURATION) {
 ```javascript
 // ✅ 正确：所有时间计算统一基于 afterBase = phase2Elapsed - baseMultDelay
 const totalSteps = 1 + wjList.length;      // 基础倍率 + whole_word
-const postWait = 350;                       // 强制等待
+const postWait = 300;                       // 强制等待
 const readyTime = totalSteps * STEP_DURATION + postWait;
 
 if (afterBase >= readyTime) {
@@ -700,6 +700,87 @@ _checkLifeExtension() { /* ... */ return triggered; }
 // 触发点 2：playHand 中非法单词
 // 触发点 3：playHand 中女巫约束失败
 ```
+
+### Bug 9：第二个方块数字更新与女巫跳跃时间基准不同步
+
+**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2 逻辑推进区 + 数字渲染区
+
+#### 问题描述
+
+Phase 2（倍率弹出阶段）的时间基准在「逻辑推进区」和「数字渲染区」中使用了两个不同的计算方式：
+
+- **逻辑推进区**：使用 `pc._phase2StartTime`（`animPhase` 真正变为 2 的时刻）
+- **数字渲染区**：使用 `resolveTime + phase2Start`（理论值，因 `phase2Start` 未包含波浪结束后多等的 100ms，导致比真实时间早约 100ms）
+
+后果：
+- 第二个方块的倍率数字**提前约 100ms** 更新
+- 对应的女巫牌**还没开始跳跃**，数字已经变了
+- 如果有后续 whole_word 步骤，数字可能在女巫跳跃尚未结束时再次提前变化
+
+#### 错误代码（反模式）
+
+```javascript
+// ❌ 错误：渲染区使用 resolveTime + phase2Start，与逻辑区基准不一致
+const waveDuration = 180 + cardsInOrder.length * 90;
+const phase2Start = 1000 + cards.length * 350 + waveDuration;
+const phase2Elapsed = (Date.now() - pc.resolveTime) - phase2Start;
+
+// 逻辑区使用 _phase2StartTime
+const elapsedSincePhase2 = Date.now() - pc._phase2StartTime;
+// 同一物理时刻，phase2Elapsed ≈ elapsedSincePhase2 + 100
+```
+
+#### 修复：统一使用 `_phase2StartTime`
+
+```javascript
+// ✅ 正确：渲染区与逻辑区共用同一个时间基准
+const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
+```
+
+#### 踩过的坑
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| 数字已变，女巫牌还没跳 | `phase2Elapsed` 比 `elapsedSincePhase2` 大 100ms，渲染提前进入下一步 | 渲染区统一使用 `_phase2StartTime` |
+| 步进结束后女巫仍在跳 | `waveDuration + 100` 的 100ms 静默未纳入 `phase2Start` | 不再依赖 `phase2Start`，直接用真实触发时间 `_phase2StartTime` |
+
+---
+
+### Bug 10：whole_word 标签显示时长与女巫跳跃动画不一致
+
+**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2 标签绘制
+
+#### 问题描述
+
+`whole_word` 女巫牌触发时，第二个方块上方会显示标签（如 `x2`、`+1`）。原始实现中标签只在每步的前 80% 时间显示：
+
+```javascript
+// 错误：标签只显示 320ms（400ms × 0.8）
+if (stepProgress < 0.8) {
+  labelText = joker.trigger === 'illegal_boost' ? `+${joker.value}` : `x${joker.value}`;
+}
+```
+
+而女巫跳跃动画持续 **400ms**，数字脉冲也持续 **400ms**。后果：
+- 标签提前 80ms 消失
+- 女巫牌还在跳跃，但上方标签已经没了
+- 视觉反馈不完整
+
+#### 修复：标签持续整步
+
+```javascript
+// ✅ 正确：标签与跳跃、数字脉冲同步，持续整步 400ms
+if (stepProgress < 1.0) {
+  labelText = joker.trigger === 'illegal_boost' ? `+${joker.value}` : `x${joker.value}`;
+}
+```
+
+#### 踩过的坑
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| 标签提前消失 | `stepProgress < 0.8` 只覆盖 320ms | 改为 `stepProgress < 1.0`，覆盖整步 400ms |
+| 多步连续触发时标签闪烁 | 下一步开始时旧标签瞬间消失，新标签延迟出现 | 整步显示后，下一步 currentStep 增加自然切换 labelIdx |
 
 ---
 

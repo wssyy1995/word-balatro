@@ -27,13 +27,13 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
-    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×2'},
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×3'},
     // {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
-    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:2, cost:12, desc:'挽救游戏结束，将目标分差值×2,加到下一回合目标分（限2次）'},
+    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，倍率-0.1'}
     
   ],

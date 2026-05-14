@@ -562,6 +562,7 @@ class Game {
 
   resetRound() {
     wordCheckState.clear();
+    this.pendingCheck = null;
 
     // 根据女巫技能设置保底词长度
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);

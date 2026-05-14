@@ -1221,7 +1221,7 @@ class Renderer {
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+      ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
       ctx.restore();
 
       this.drawCoinCapsule(game);
@@ -1320,7 +1320,7 @@ class Renderer {
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Words Witch Game', W / 2, top - 12 * s);
+    ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
     ctx.restore();
 
     // === 目标分 / 当前 卡片式 top bar ===
@@ -1930,13 +1930,13 @@ class Renderer {
 
             // 波浪跳跃
             const totalJumpTime = cardsInOrder.length * letterInterval;
-            const waveStartDelay = 100;
-            const waveInterval2 = 80;
+            const waveStartDelay = 90;
+            const waveInterval2 = 70;
             if (jumpElapsed >= totalJumpTime) {
               const waveElapsed = jumpElapsed - totalJumpTime;
               if (!pc._waveOffsetYs) pc._waveOffsetYs = [];
               cardsInOrder.forEach((_, i) => {
-                const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 200;
+                const waveProgress = (waveElapsed - waveStartDelay - i * waveInterval2) / 180;
                 if (waveProgress >= 0 && waveProgress <= 1) {
                   const waveH = 5 * s * Math.sin(waveProgress * Math.PI);
                   pc._waveOffsetYs[i] = -waveH;
@@ -1987,7 +1987,7 @@ class Renderer {
             // 检测阶段1完成 → 进入阶段2
             if (isAllJumped && phase < 2) {
               const totalJumpTime = cardsInOrder.length * letterInterval;
-              const waveDuration = 200 + cardsInOrder.length * 100;
+              const waveDuration = 180 + cardsInOrder.length * 90;
               const waveElapsed = jumpElapsed - totalJumpTime;
               if (waveElapsed >= waveDuration + 100) {
                 pc.animPhase = 2;
@@ -2047,9 +2047,9 @@ class Renderer {
 
             // 检测阶段2完成 → 进入阶段3（或 letter_a_mult_half 惩罚动画）
             if (phase < 3) {
-              // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 350ms)
+              // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 300ms)
               const totalSteps = 1 + wjList.length;
-              const postWait = 350; // 全部完成后强制等待 350ms
+              const postWait = 300; // 全部完成后强制等待 300ms
               const readyTime = totalSteps * STEP_DURATION + postWait;
 
               if (afterBase >= readyTime) {
@@ -2330,14 +2330,11 @@ class Renderer {
 
     // letter_a_mult_half 惩罚动画：紫色光晕（在背景图背后）
     if (valid && showSecondBox && pc.multHalfResult?.triggered) {
-      const _cards = pc.cardsInOrder || [];
-      const waveDuration = 200 + _cards.length * 100;
-      const phase2Start = 1000 + _cards.length * 350 + waveDuration;
-      const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
+      const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
       const baseMultDelay = 500;
       const STEP_DURATION = 400;
       const totalSteps = 1 + (pc.wholeWordJokers || []).length;
-      const postWait = 350;
+      const postWait = 300;
       const readyTime = totalSteps * STEP_DURATION + postWait;
       const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
       const penaltyElapsed = afterBase - readyTime;
@@ -2368,10 +2365,7 @@ class Renderer {
       const wjList = pc.wholeWordJokers || [];
 
       // 计算 phase 2 已进行的时间
-      const _cards = pc.cardsInOrder || [];
-      const waveDuration = 200 + _cards.length * 100;
-      const phase2Start = 1000 + _cards.length * 350 + waveDuration;
-      const phase2Elapsed = (Date.now() - (pc.resolveTime || 0)) - phase2Start;
+      const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
 
       const baseMultDelay = 500;
       const STEP_DURATION = 400;
@@ -2400,7 +2394,7 @@ class Renderer {
       if (labelIdx >= 0 && labelIdx < wjList.length) {
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
-        if (stepProgress < 0.8) {
+        if (stepProgress < 1.0) {
           const joker = wjList[labelIdx].joker;
           if (joker.trigger === 'illegal_boost') {
             labelText = `+${joker.value}`;
@@ -2419,7 +2413,7 @@ class Renderer {
       // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半
       if (pc.multHalfResult?.triggered) {
         const totalSteps = 1 + wjList.length;
-        const postWait = 350;
+        const postWait = 300;
         const readyTime = totalSteps * STEP_DURATION + postWait;
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const penaltyElapsed = afterBase - readyTime;
