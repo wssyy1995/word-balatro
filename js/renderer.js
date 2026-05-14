@@ -989,16 +989,16 @@ class Renderer {
           const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(130,60,240,.4)' : 'rgba(60,10,210,.85)';
+        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(140,70,255,.55)' : 'rgba(60,10,210,.85)';
         ctx.shadowColor = '#a020f0';
-        ctx.shadowBlur = (2 + layer * 2) * s;
+        ctx.shadowBlur = layer === 1 ? 7 * s : (2 + layer * 2) * s;
         ctx.stroke();
       }
     }
 
     // 28 个十字星
     for (let i = 0; i < 28; i++) {
-      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.08) % 1, 13 * s);
+      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.08) % 1, 2.5 * s);
       const pulse = 0.5 + 0.5 * Math.sin(elapsed * 4.5 + i * 1.7);
       ctx.save();
       ctx.translate(p.x, p.y);
