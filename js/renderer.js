@@ -961,21 +961,20 @@ class Renderer {
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
     this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(235, 198, 255, ${0.9 * alpha})`;
+    ctx.strokeStyle = `rgba(160, 80, 255, ${0.7 * alpha})`;
     ctx.lineWidth = 0.25 * s;
-    ctx.shadowColor = 'rgba(192, 80, 255, .9)';
-    ctx.shadowBlur = 2 * s;
+    ctx.shadowColor = 'rgba(140, 60, 240, .9)';
+    ctx.shadowBlur = 3 * s;
     ctx.stroke();
-    ctx.shadowBlur = 4 * s;
-    ctx.strokeStyle = `rgba(138, 43, 226, ${0.38 * alpha})`;
+    ctx.shadowBlur = 6 * s;
+    ctx.strokeStyle = `rgba(100, 30, 220, ${0.5 * alpha})`;
     ctx.lineWidth = 0.8 * s;
     ctx.stroke();
     ctx.restore();
 
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
 
-    // 3 层 × 4 边
+    // 3 层 × 4 边（深紫色调，source-over 避免白色背景冲白发白）
     for (let layer = 0; layer < 3; layer++) {
       ctx.lineWidth = (0.08 + layer * 0.06) * s;
       ctx.lineCap = 'round';
@@ -990,9 +989,9 @@ class Renderer {
           const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.strokeStyle = layer === 0 ? 'rgba(210,150,255,.35)' : layer === 1 ? 'rgba(180,80,255,.45)' : 'rgba(80,15,230,.9)';
-        ctx.shadowColor = '#c85cff';
-        ctx.shadowBlur = (0.8 + layer * 1) * s;
+        ctx.strokeStyle = layer === 0 ? 'rgba(140,60,255,.35)' : layer === 1 ? 'rgba(110,40,240,.5)' : 'rgba(70,10,220,.95)';
+        ctx.shadowColor = '#a020f0';
+        ctx.shadowBlur = (2 + layer * 2) * s;
         ctx.stroke();
       }
     }
@@ -1004,10 +1003,10 @@ class Renderer {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(elapsed + i);
-      ctx.strokeStyle = `rgba(220,180,255,${0.2 + pulse * 0.6})`;
+      ctx.strokeStyle = `rgba(180,120,255,${0.25 + pulse * 0.55})`;
       ctx.lineWidth = 0.2 * s;
-      ctx.shadowBlur = 1.5 * s;
-      ctx.shadowColor = '#d946ef';
+      ctx.shadowBlur = 2 * s;
+      ctx.shadowColor = '#a855f7';
       ctx.beginPath();
       ctx.moveTo(-1.2 * s, 0); ctx.lineTo(1.2 * s, 0); ctx.moveTo(0, -1.2 * s); ctx.lineTo(0, 1.2 * s);
       ctx.stroke();
