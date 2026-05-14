@@ -927,95 +927,6 @@ class Renderer {
     }
   }
 
-  // ===== 咒罚冥焰（预览区边框）=====
-  _roundedRectPath(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-  }
-
-  _pointOnRect(x, y, w, h, t, offset = 0) {
-    const p = t % 1;
-    const per = 2 * (w + h);
-    let d = p * per;
-    if (d < w) return { x: x + d, y: y - offset, nx: 0, ny: -1 };
-    d -= w;
-    if (d < h) return { x: x + w + offset, y: y + d, nx: 1, ny: 0 };
-    d -= h;
-    if (d < w) return { x: x + w - d, y: y + h + offset, nx: 0, ny: 1 };
-    d -= w;
-    return { x: x - offset, y: y + h - d, nx: -1, ny: 0 };
-  }
-
-  _drawCurseFlame(ctx, x, y, w, h, r, s, elapsed) {
-    const alpha = 0.75;
-
-    // base glow
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(160, 80, 255, ${0.7 * alpha})`;
-    ctx.lineWidth = 0.25 * s;
-    ctx.shadowColor = 'rgba(140, 60, 240, .9)';
-    ctx.shadowBlur = 3 * s;
-    ctx.stroke();
-    ctx.shadowBlur = 6 * s;
-    ctx.strokeStyle = `rgba(100, 30, 220, ${0.5 * alpha})`;
-    ctx.lineWidth = 0.8 * s;
-    ctx.stroke();
-    ctx.restore();
-
-    ctx.save();
-
-    // 3 层 × 4 边（深紫色调，source-over 避免白色背景冲白发白）
-    for (let layer = 0; layer < 3; layer++) {
-      ctx.lineWidth = (0.08 + layer * 0.06) * s;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      for (let k = 0; k < 4; k++) {
-        ctx.beginPath();
-        for (let i = 0; i <= 35; i++) {
-          const t = (i / 35 + elapsed * (0.025 + layer * 0.012) + k * 0.25) % 1;
-          const p = this._pointOnRect(x, y, w, h, t, (1 + layer * 1) * s);
-          const wave = Math.sin(i * 0.25 + elapsed * 3 + layer * 2) * (0.8 + layer * 0.5) * s;
-          const px = p.x + p.nx * wave + p.ny * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
-          const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
-          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
-        }
-        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(180,130,255,.45)' : 'rgba(60,10,210,.85)';
-        ctx.shadowColor = '#a020f0';
-        ctx.shadowBlur = layer === 1 ? 7 * s : (2 + layer * 2) * s;
-        ctx.stroke();
-      }
-    }
-
-    // 28 个十字星
-    for (let i = 0; i < 28; i++) {
-      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.04) % 1, 2.5 * s);
-      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 4.5 + i * 1.7);
-      ctx.save();
-      ctx.translate(p.x, p.y);
-      ctx.rotate(elapsed + i);
-      ctx.strokeStyle = `rgba(180,120,255,${0.35 + pulse * 0.55})`;
-      ctx.lineWidth = 0.8 * s;
-      ctx.shadowBlur = 5 * s;
-      ctx.shadowColor = '#a855f7';
-      ctx.beginPath();
-      ctx.moveTo(-3.5 * s, 0); ctx.lineTo(3.5 * s, 0); ctx.moveTo(0, -3.5 * s); ctx.lineTo(0, 3.5 * s);
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    ctx.restore();
-  }
-
   // ===== 星辰燔边粒子系统 =====
   _createSparkParticles(x, y, w, h, s, count) {
     const particles = [];
@@ -2262,13 +2173,6 @@ class Renderer {
         // 女巫约束失败：橙色单词 + 紫色提示
         invalid = true;
 
-        // === 咒罚冥焰（预览区边框）===
-        if (!pc._curseStartTime) pc._curseStartTime = Date.now();
-        const curseElapsed = Date.now() - pc._curseStartTime;
-        if (curseElapsed < 2000) {
-          this._drawCurseFlame(ctx, maskX, maskY, maskW, maskH, 10 * s, s, curseElapsed / 1000);
-        }
-
         ctx.save();
         ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#f1c40f';
@@ -2335,14 +2239,6 @@ class Renderer {
       ctx.textBaseline = 'middle';
       ctx.fillText('选择字母牌组成单词', W / 2, wordAreaY);
       ctx.restore();
-    }
-
-    // 残留咒罚冥焰（女巫约束失败结束后）
-    if (pc && pc._curseStartTime) {
-      const curseElapsed = Date.now() - pc._curseStartTime;
-      if (curseElapsed < 2000) {
-        this._drawCurseFlame(ctx, maskX, maskY, maskW, maskH, 10 * s, s, curseElapsed / 1000);
-      }
     }
 
     // 分数预览（两个方块）—— 始终显示背景图
