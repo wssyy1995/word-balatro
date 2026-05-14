@@ -927,88 +927,94 @@ class Renderer {
     }
   }
 
-  // ===== 幽光流焰粒子系统 =====
-  _createWispParticles(x, y, w, h, s, count) {
-    const particles = [];
-    const spacing = 10 * s; // 每 10px(缩放后) 一个发射点，保证边缘分布到位
-    const perSideH = Math.max(4, Math.ceil(w / spacing));
-    const perSideV = Math.max(4, Math.ceil(h / spacing));
-
-    const emit = (sx, sy, ex, ey, dx, dy, n) => {
-      const lenX = ex - sx;
-      const lenY = ey - sy;
-      for (let i = 0; i < n; i++) {
-        const t = (i + 0.5) / n;
-        const px = sx + lenX * t;
-        const py = sy + lenY * t;
-        const spd = (0.08 + Math.random() * 0.2) * s;
-        const life = 18 + Math.floor(Math.random() * 20);
-        const size = (0.5 + Math.random() * 0.6) * s;
-        particles.push({
-          x: px, y: py,
-          vx: dx * spd + (Math.random() - 0.5) * 0.08 * s,
-          vy: dy * spd + (Math.random() - 0.5) * 0.05 * s,
-          life, maxLife: life,
-          size,
-          wobble: Math.random() * Math.PI * 2,
-          wobbleSpd: 0.02 + Math.random() * 0.04,
-          wobbleAmp: (0.08 + Math.random() * 0.2) * s,
-        });
-      }
-    };
-
-    emit(x, y, x + w, y, 0, -1, perSideH);           // 上
-    emit(x, y + h, x + w, y + h, 0, 1, perSideH);    // 下
-    emit(x, y, x, y + h, -1, 0, perSideV);           // 左
-    emit(x + w, y, x + w, y + h, 1, 0, perSideV);    // 右
-
-    return particles;
+  // ===== 咒罚冥焰（预览区边框）=====
+  _roundedRectPath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
-  _updateAndDrawWispParticles(ctx, particles, s) {
-    const sineOffset = Date.now() / 1000 * 10;
-    const alive = [];
+  _pointOnRect(x, y, w, h, t, offset = 0) {
+    const p = t % 1;
+    const per = 2 * (w + h);
+    let d = p * per;
+    if (d < w) return { x: x + d, y: y - offset, nx: 0, ny: -1 };
+    d -= w;
+    if (d < h) return { x: x + w + offset, y: y + d, nx: 1, ny: 0 };
+    d -= h;
+    if (d < w) return { x: x + w - d, y: y + h + offset, nx: 0, ny: 1 };
+    d -= w;
+    return { x: x - offset, y: y + h - d, nx: -1, ny: 0 };
+  }
+
+  _drawCurseFlame(ctx, x, y, w, h, r, s, elapsed) {
+    const alpha = 0.75;
+
+    // base glow
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(235, 198, 255, ${0.9 * alpha})`;
+    ctx.lineWidth = 1.2 * s;
+    ctx.shadowColor = 'rgba(192, 80, 255, .9)';
+    ctx.shadowBlur = 16 * s;
+    ctx.stroke();
+    ctx.shadowBlur = 34 * s;
+    ctx.strokeStyle = `rgba(138, 43, 226, ${0.38 * alpha})`;
+    ctx.lineWidth = 6 * s;
+    ctx.stroke();
+    ctx.restore();
 
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
 
-    for (let i = 0; i < particles.length; i++) {
-      const p = particles[i];
-      if (p.life <= 0) continue;
-      alive.push(p);
-
-      p.x += p.vx + Math.sin(p.wobble + sineOffset) * p.wobbleAmp;
-      p.y += p.vy;
-      p.wobble += p.wobbleSpd;
-      p.life--;
-
-      const alpha = p.life / p.maxLife;
-      if (alpha <= 0.01) continue;
-
-      let cr, cg, cb, ca;
-      if (alpha > 0.97) {
-        cr = 200; cg = 180; cb = 255; ca = alpha;
-      } else if (alpha > 0.6) {
-        cr = 180; cg = 120; cb = 255; ca = alpha;
-      } else {
-        cr = 90; cg = 40; cb = 220; ca = alpha;
+    // 3 层 × 4 边
+    for (let layer = 0; layer < 3; layer++) {
+      ctx.lineWidth = (2.2 - layer * 0.35) * s;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (let k = 0; k < 4; k++) {
+        ctx.beginPath();
+        for (let i = 0; i <= 140; i++) {
+          const t = (i / 140 + elapsed * (0.045 + layer * 0.018) + k * 0.25) % 1;
+          const p = this._pointOnRect(x, y, w, h, t, (5 + layer * 4) * s);
+          const wave = Math.sin(i * 0.25 + elapsed * 3 + layer * 2) * (3 + layer * 2) * s;
+          const px = p.x + p.nx * wave + p.ny * Math.sin(elapsed * 2 + i * 0.13) * 2 * s;
+          const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 2 * s;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.strokeStyle = layer === 0 ? 'rgba(255,245,255,.54)' : layer === 1 ? 'rgba(202,92,255,.38)' : 'rgba(95,35,180,.25)';
+        ctx.shadowColor = '#c85cff';
+        ctx.shadowBlur = (8 + layer * 8) * s;
+        ctx.stroke();
       }
+    }
 
-      // 外圈柔光
+    // 28 个十字星
+    for (let i = 0; i < 28; i++) {
+      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.08) % 1, 13 * s);
+      const pulse = 0.5 + 0.5 * Math.sin(elapsed * 4.5 + i * 1.7);
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(elapsed + i);
+      ctx.strokeStyle = `rgba(238,208,255,${0.18 + pulse * 0.55})`;
+      ctx.lineWidth = 1 * s;
+      ctx.shadowBlur = 10 * s;
+      ctx.shadowColor = '#d946ef';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca * 0.25})`;
-      ctx.fill();
-
-      // 核心
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca})`;
-      ctx.fill();
+      ctx.moveTo(-3 * s, 0); ctx.lineTo(3 * s, 0); ctx.moveTo(0, -3 * s); ctx.lineTo(0, 3 * s);
+      ctx.stroke();
+      ctx.restore();
     }
 
     ctx.restore();
-    return alive;
   }
 
   // ===== 星辰燔边粒子系统 =====
@@ -2257,14 +2263,11 @@ class Renderer {
         // 女巫约束失败：橙色单词 + 紫色提示
         invalid = true;
 
-        // === 幽光流焰（预览区边框）===
-        if (!pc._wispParticles) pc._wispParticles = [];
-        if (!pc._wispStartTime) pc._wispStartTime = Date.now();
-        const wispElapsed = Date.now() - pc._wispStartTime;
-        if (wispElapsed < 2000 && (!pc._wispLastEmit || Date.now() - pc._wispLastEmit > 60)) {
-          const fresh = this._createWispParticles(maskX, maskY, maskW, maskH, s, 8);
-          pc._wispParticles.push(...fresh);
-          pc._wispLastEmit = Date.now();
+        // === 咒罚冥焰（预览区边框）===
+        if (!pc._curseStartTime) pc._curseStartTime = Date.now();
+        const curseElapsed = Date.now() - pc._curseStartTime;
+        if (curseElapsed < 2000) {
+          this._drawCurseFlame(ctx, maskX, maskY, maskW, maskH, 10 * s, s, curseElapsed / 1000);
         }
 
         ctx.save();
@@ -2335,9 +2338,12 @@ class Renderer {
       ctx.restore();
     }
 
-    // 残留幽光流焰粒子继续消亡（女巫约束失败结束后）
-    if (pc && pc._wispParticles && pc._wispParticles.length > 0) {
-      pc._wispParticles = this._updateAndDrawWispParticles(ctx, pc._wispParticles, s);
+    // 残留咒罚冥焰（女巫约束失败结束后）
+    if (pc && pc._curseStartTime) {
+      const curseElapsed = Date.now() - pc._curseStartTime;
+      if (curseElapsed < 2000) {
+        this._drawCurseFlame(ctx, maskX, maskY, maskW, maskH, 10 * s, s, curseElapsed / 1000);
+      }
     }
 
     // 分数预览（两个方块）—— 始终显示背景图
