@@ -1414,7 +1414,7 @@ class Renderer {
         const duration = 4500;
         if (elapsed < duration) {
           const fade = elapsed > 3500 ? 1 - (elapsed - 3500) / 1000 : 1;
-          this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 55 * s, s, fade);
+          this._drawGentleStars(game._witchStarBurst.cx, game._witchStarBurst.cy, 80 * s, s, fade);
         } else {
           game._witchStarBurst = null;
         }
