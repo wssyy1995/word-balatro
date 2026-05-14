@@ -576,32 +576,7 @@ class Renderer {
     const cardRects = this.cardRects || [];
     const getCardRect = (cardId) => cardRects.find(r => r.cardId === cardId);
 
-    // ===== 烟花等待期：只绘制呼吸光晕 =====
-    if (elapsed < 0) {
-      if (witchRect) {
-        const breath = 0.5 + 0.5 * Math.sin((Date.now() - (anim.startTime - 1000)) / 250);
-        ctx.save();
-        ctx.shadowColor = 'rgba(155,89,182,0.6)';
-        ctx.shadowBlur = (10 + 10 * breath) * s;
-        const strokeColor = `rgba(155,89,182,${0.4 + 0.4 * breath})`;
-        const lineW = (2 + 2 * breath) * s;
-        this.roundRect(witchRect.x, witchRect.y, witchRect.w, witchRect.h, 4 * s, null, strokeColor, lineW);
-        ctx.restore();
-      }
-      return;
-    }
-
-    // ===== 绘制女巫牌呼吸光晕 =====
-    if (witchRect) {
-      const breath = 0.5 + 0.5 * Math.sin(elapsed / 250);
-      ctx.save();
-      ctx.shadowColor = 'rgba(155,89,182,0.6)';
-      ctx.shadowBlur = (10 + 10 * breath) * s;
-      const strokeColor = `rgba(155,89,182,${0.4 + 0.4 * breath})`;
-      const lineW = (2 + 2 * breath) * s;
-      this.roundRect(witchRect.x, witchRect.y, witchRect.w, witchRect.h, 4 * s, null, strokeColor, lineW);
-      ctx.restore();
-    }
+    // 幽光流焰由 _drawPropCard 统一绘制，此处不再重复绘制紫色呼吸光晕
 
     // ===== 计算星星位置 =====
     let starX, starY;
@@ -820,60 +795,19 @@ class Renderer {
       destroyProgress = Math.min(destroyElapsed / destroyDuration, 1);
     }
 
-    // 如果有触发状态，先画紫色光晕 + 边框（在 clip 之外）
-    if (prop._triggered) {
-      ctx.save();
-
-      // 紫色径向光晕（脉动）
-      const glowCX = x + w / 2;
-      const glowCY = finalY + h / 2;
-      const glowR = Math.max(w, h) * 0.9;
-      const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 250);
-      const glowGrad = ctx.createRadialGradient(glowCX, glowCY, glowR * 0.1, glowCX, glowCY, glowR);
-      glowGrad.addColorStop(0, `rgba(155,89,182,${0.3 * pulse})`);
-      glowGrad.addColorStop(0.5, `rgba(155,89,182,${0.15 * pulse})`);
-      glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
-      ctx.fillStyle = glowGrad;
-      ctx.beginPath();
-      ctx.arc(glowCX, glowCY, glowR, 0, Math.PI * 2);
-      ctx.fill();
-
-      // 外层扩散光晕（轮廓向外冒光）
-      ctx.strokeStyle = 'rgba(155,89,182,0.15)';
-      ctx.lineWidth = 6 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.5)';
-      ctx.shadowBlur = 14 * s;
-      ctx.beginPath();
-      ctx.moveTo(x + r, finalY);
-      ctx.lineTo(x + w - r, finalY);
-      ctx.quadraticCurveTo(x + w, finalY, x + w, finalY + r);
-      ctx.lineTo(x + w, finalY + h - r);
-      ctx.quadraticCurveTo(x + w, finalY + h, x + w - r, finalY + h);
-      ctx.lineTo(x + r, finalY + h);
-      ctx.quadraticCurveTo(x, finalY + h, x, finalY + h - r);
-      ctx.lineTo(x, finalY + r);
-      ctx.quadraticCurveTo(x, finalY, x + r, finalY);
-      ctx.closePath();
-      ctx.stroke();
-
-      // 紫色粗边框
-      ctx.strokeStyle = '#9b59b6';
-      ctx.lineWidth = 2.5 * s;
-      ctx.shadowColor = 'rgba(155,89,182,0.6)';
-      ctx.shadowBlur = 8 * s;
-      ctx.beginPath();
-      ctx.moveTo(x + r, finalY);
-      ctx.lineTo(x + w - r, finalY);
-      ctx.quadraticCurveTo(x + w, finalY, x + w, finalY + r);
-      ctx.lineTo(x + w, finalY + h - r);
-      ctx.quadraticCurveTo(x + w, finalY + h, x + w - r, finalY + h);
-      ctx.lineTo(x + r, finalY + h);
-      ctx.quadraticCurveTo(x, finalY + h, x, finalY + h - r);
-      ctx.lineTo(x, finalY + r);
-      ctx.quadraticCurveTo(x, finalY, x + r, finalY);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
+    // === 星辰燔边边框（女巫牌触发时）===
+    if (prop.type === 'witch') {
+      if (prop._triggered) {
+        if (!prop._sparkParticles) prop._sparkParticles = [];
+        if (!prop._sparkLastEmit || Date.now() - prop._sparkLastEmit > 60) {
+          const fresh = this._createSparkParticles(x, finalY, w, h, s, 24);
+          prop._sparkParticles.push(...fresh);
+          prop._sparkLastEmit = Date.now();
+        }
+        prop._sparkParticles = this._updateAndDrawSparkParticles(ctx, prop._sparkParticles, s);
+      } else if (prop._sparkParticles && prop._sparkParticles.length > 0) {
+        prop._sparkParticles = this._updateAndDrawSparkParticles(ctx, prop._sparkParticles, s);
+      }
     }
 
     // 自毁动画变换
@@ -991,6 +925,185 @@ class Renderer {
     if (destroyProgress > 0) {
       ctx.restore();
     }
+  }
+
+  // ===== 幽光流焰粒子系统 =====
+  _createWispParticles(x, y, w, h, s, count) {
+    const particles = [];
+    const perSide = Math.max(4, Math.floor(count / 4));
+
+    const emit = (sx, sy, ex, ey, dx, dy, n) => {
+      const lenX = ex - sx;
+      const lenY = ey - sy;
+      for (let i = 0; i < n; i++) {
+        const t = (i + 0.5) / n;
+        const px = sx + lenX * t;
+        const py = sy + lenY * t;
+        const spd = (0.15 + Math.random() * 0.4) * s;
+        const life = 18 + Math.floor(Math.random() * 20);
+        const size = (0.8 + Math.random() * 1.2) * s;
+        particles.push({
+          x: px, y: py,
+          vx: dx * spd + (Math.random() - 0.5) * 0.15 * s,
+          vy: dy * spd + (Math.random() - 0.5) * 0.1 * s,
+          life, maxLife: life,
+          size,
+          wobble: Math.random() * Math.PI * 2,
+          wobbleSpd: 0.03 + Math.random() * 0.06,
+          wobbleAmp: (0.15 + Math.random() * 0.4) * s,
+        });
+      }
+    };
+
+    emit(x, y, x + w, y, 0, -1, perSide);           // 上
+    emit(x, y + h, x + w, y + h, 0, 1, perSide);    // 下
+    emit(x, y, x, y + h, -1, 0, perSide);           // 左
+    emit(x + w, y, x + w, y + h, 1, 0, perSide);    // 右
+
+    return particles;
+  }
+
+  _updateAndDrawWispParticles(ctx, particles, s) {
+    const sineOffset = Date.now() / 1000 * 10;
+    const alive = [];
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p.life <= 0) continue;
+      alive.push(p);
+
+      p.x += p.vx + Math.sin(p.wobble + sineOffset) * p.wobbleAmp;
+      p.y += p.vy;
+      p.wobble += p.wobbleSpd;
+      p.life--;
+
+      const alpha = p.life / p.maxLife;
+      if (alpha <= 0.01) continue;
+
+      let cr, cg, cb, ca;
+      if (alpha > 0.9) {
+        cr = 255; cg = 255; cb = 255; ca = alpha;
+      } else if (alpha > 0.5) {
+        cr = 180; cg = 120; cb = 255; ca = alpha;
+      } else {
+        cr = 90; cg = 40; cb = 220; ca = alpha;
+      }
+
+      // 外圈柔光
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca * 0.25})`;
+      ctx.fill();
+
+      // 核心
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca})`;
+      ctx.fill();
+    }
+
+    ctx.restore();
+    return alive;
+  }
+
+  // ===== 星辰燔边粒子系统 =====
+  _createSparkParticles(x, y, w, h, s, count) {
+    const particles = [];
+    const perSide = Math.max(6, Math.floor(count / 4));
+
+    const emit = (sx, sy, ex, ey, dx, dy, n) => {
+      const lenX = ex - sx;
+      const lenY = ey - sy;
+      for (let i = 0; i < n; i++) {
+        const t = Math.random();
+        const px = sx + lenX * t;
+        const py = sy + lenY * t;
+        const isGold = Math.random() < 0.15;
+        const spd = (0.15 + Math.random() * 0.5) * s;
+        const life = 8 + Math.floor(Math.random() * 22);
+        const size = (0.5 + Math.random() * 2.0) * s;
+
+        let cr, cg, cb;
+        if (isGold) {
+          cr = 251; cg = 191; cb = 36;
+        } else if (Math.random() < 0.55) {
+          cr = 233; cg = 213; cb = 255;
+        } else {
+          cr = 139; cg = 92; cb = 246;
+        }
+
+        particles.push({
+          x: px, y: py,
+          vx: dx * spd + (Math.random() - 0.5) * 0.15 * s,
+          vy: dy * spd + (Math.random() - 0.5) * 0.1 * s,
+          life, maxLife: life,
+          size,
+          cr, cg, cb,
+          twinkle: Math.random() * Math.PI * 2,
+          twinkleSpd: 0.1 + Math.random() * 0.3,
+        });
+      }
+    };
+
+    emit(x, y, x + w, y, 0, -1, perSide);
+    emit(x, y + h, x + w, y + h, 0, 1, perSide);
+    emit(x, y, x, y + h, -1, 0, perSide);
+    emit(x + w, y, x + w, y + h, 1, 0, perSide);
+
+    return particles;
+  }
+
+  _updateAndDrawSparkParticles(ctx, particles, s) {
+    const alive = [];
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      if (p.life <= 0) continue;
+      alive.push(p);
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      p.twinkle += p.twinkleSpd;
+
+      const alpha = p.life / p.maxLife;
+      if (alpha <= 0.01) continue;
+
+      const flicker = 0.6 + 0.4 * Math.sin(p.twinkle);
+      const ca = alpha * flicker;
+      const sz = p.size;
+
+      // 十字光芒
+      ctx.strokeStyle = `rgba(${p.cr},${p.cg},${p.cb},${ca * 0.5})`;
+      ctx.lineWidth = sz * 0.25;
+      ctx.beginPath();
+      ctx.moveTo(p.x - sz, p.y);
+      ctx.lineTo(p.x + sz, p.y);
+      ctx.moveTo(p.x, p.y - sz);
+      ctx.lineTo(p.x, p.y + sz);
+      ctx.stroke();
+
+      // 核心
+      ctx.fillStyle = `rgba(${p.cr},${p.cg},${p.cb},${ca})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, sz * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 外圈微光
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, sz * 1.2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(${p.cr},${p.cg},${p.cb},${ca * 0.12})`;
+      ctx.fill();
+    }
+
+    ctx.restore();
+    return alive;
   }
 
   // 绘制圆角矩形
@@ -2141,6 +2254,17 @@ class Renderer {
       } else if (pc.state === 'witch_failed') {
         // 女巫约束失败：橙色单词 + 紫色提示
         invalid = true;
+
+        // === 幽光流焰（预览区边框）===
+        if (!pc._wispParticles) pc._wispParticles = [];
+        if (!pc._wispStartTime) pc._wispStartTime = Date.now();
+        const wispElapsed = Date.now() - pc._wispStartTime;
+        if (wispElapsed < 2000 && (!pc._wispLastEmit || Date.now() - pc._wispLastEmit > 60)) {
+          const fresh = this._createWispParticles(maskX, maskY, maskW, maskH, s, 12);
+          pc._wispParticles.push(...fresh);
+          pc._wispLastEmit = Date.now();
+        }
+
         ctx.save();
         ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#f1c40f';
@@ -2207,6 +2331,11 @@ class Renderer {
       ctx.textBaseline = 'middle';
       ctx.fillText('选择字母牌组成单词', W / 2, wordAreaY);
       ctx.restore();
+    }
+
+    // 残留幽光流焰粒子继续消亡（女巫约束失败结束后）
+    if (pc && pc._wispParticles && pc._wispParticles.length > 0) {
+      pc._wispParticles = this._updateAndDrawWispParticles(ctx, pc._wispParticles, s);
     }
 
     // 分数预览（两个方块）—— 始终显示背景图

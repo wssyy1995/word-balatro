@@ -46,7 +46,7 @@ const SHOP_POOL = {
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
   ],
   potion: [
-    {name:'随机强化', type:'potion', effect:'random_upgrade', value:4, cost:5, desc:'随机强化1个字母，分数×4'},
+    {name:'随机强化', type:'potion', effect:'random_upgrade', value:3, cost:5, desc:'随机强化1个字母，分数×3'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
@@ -368,7 +368,7 @@ class ShopRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const coinSize = 10 * s * appearScale;
-        const sellText = String(joker.cost);
+        const sellText = String(Math.round(joker.cost / 2));
         const textW = ctx.measureText(sellText).width;
         const contentW = coinSize + 2 * s + textW;
         const startX = finalX + (finalW - contentW) / 2;
@@ -470,7 +470,7 @@ class ShopRenderer {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const coinSize = 10 * s * appearScale;
-        const sellText = String(potion.cost);
+        const sellText = String(Math.round(potion.cost / 2));
         const textW = ctx.measureText(sellText).width;
         const contentW = coinSize + 2 * s + textW;
         const startX = finalX + (finalW - contentW) / 2;

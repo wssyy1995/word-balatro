@@ -547,7 +547,7 @@ function handleInput(x, y) {
         const arr = game[sellHit.array];
         if (arr && arr[sellHit.index]) {
           const item = arr[sellHit.index];
-          game.gold += item.cost;
+          game.gold += Math.round(item.cost / 2);
           // 启动售出消失动画（400ms 后实际移除）
           game._sellingProp = {
             type: sellHit.array,
