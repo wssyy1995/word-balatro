@@ -939,18 +939,18 @@ class Renderer {
         const t = (i + 0.5) / n;
         const px = sx + lenX * t;
         const py = sy + lenY * t;
-        const spd = (0.15 + Math.random() * 0.4) * s;
+        const spd = (0.08 + Math.random() * 0.2) * s;
         const life = 18 + Math.floor(Math.random() * 20);
-        const size = (0.8 + Math.random() * 1.2) * s;
+        const size = (0.5 + Math.random() * 0.6) * s;
         particles.push({
           x: px, y: py,
-          vx: dx * spd + (Math.random() - 0.5) * 0.15 * s,
-          vy: dy * spd + (Math.random() - 0.5) * 0.1 * s,
+          vx: dx * spd + (Math.random() - 0.5) * 0.08 * s,
+          vy: dy * spd + (Math.random() - 0.5) * 0.05 * s,
           life, maxLife: life,
           size,
           wobble: Math.random() * Math.PI * 2,
-          wobbleSpd: 0.03 + Math.random() * 0.06,
-          wobbleAmp: (0.15 + Math.random() * 0.4) * s,
+          wobbleSpd: 0.02 + Math.random() * 0.04,
+          wobbleAmp: (0.08 + Math.random() * 0.2) * s,
         });
       }
     };
@@ -984,9 +984,9 @@ class Renderer {
       if (alpha <= 0.01) continue;
 
       let cr, cg, cb, ca;
-      if (alpha > 0.9) {
-        cr = 255; cg = 255; cb = 255; ca = alpha;
-      } else if (alpha > 0.5) {
+      if (alpha > 0.97) {
+        cr = 200; cg = 180; cb = 255; ca = alpha;
+      } else if (alpha > 0.6) {
         cr = 180; cg = 120; cb = 255; ca = alpha;
       } else {
         cr = 90; cg = 40; cb = 220; ca = alpha;
@@ -994,13 +994,13 @@ class Renderer {
 
       // 外圈柔光
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size * 1.8, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca * 0.25})`;
       ctx.fill();
 
       // 核心
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size * 0.7, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size * 0.6, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${cr},${cg},${cb},${ca})`;
       ctx.fill();
     }
@@ -2260,7 +2260,7 @@ class Renderer {
         if (!pc._wispStartTime) pc._wispStartTime = Date.now();
         const wispElapsed = Date.now() - pc._wispStartTime;
         if (wispElapsed < 2000 && (!pc._wispLastEmit || Date.now() - pc._wispLastEmit > 60)) {
-          const fresh = this._createWispParticles(maskX, maskY, maskW, maskH, s, 12);
+          const fresh = this._createWispParticles(maskX, maskY, maskW, maskH, s, 8);
           pc._wispParticles.push(...fresh);
           pc._wispLastEmit = Date.now();
         }
