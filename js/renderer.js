@@ -930,7 +930,9 @@ class Renderer {
   // ===== 幽光流焰粒子系统 =====
   _createWispParticles(x, y, w, h, s, count) {
     const particles = [];
-    const perSide = Math.max(4, Math.floor(count / 4));
+    const spacing = 10 * s; // 每 10px(缩放后) 一个发射点，保证边缘分布到位
+    const perSideH = Math.max(4, Math.ceil(w / spacing));
+    const perSideV = Math.max(4, Math.ceil(h / spacing));
 
     const emit = (sx, sy, ex, ey, dx, dy, n) => {
       const lenX = ex - sx;
@@ -955,10 +957,10 @@ class Renderer {
       }
     };
 
-    emit(x, y, x + w, y, 0, -1, perSide);           // 上
-    emit(x, y + h, x + w, y + h, 0, 1, perSide);    // 下
-    emit(x, y, x, y + h, -1, 0, perSide);           // 左
-    emit(x + w, y, x + w, y + h, 1, 0, perSide);    // 右
+    emit(x, y, x + w, y, 0, -1, perSideH);           // 上
+    emit(x, y + h, x + w, y + h, 0, 1, perSideH);    // 下
+    emit(x, y, x, y + h, -1, 0, perSideV);           // 左
+    emit(x + w, y, x + w, y + h, 1, 0, perSideV);    // 右
 
     return particles;
   }
