@@ -977,7 +977,7 @@ class Renderer {
 
     // 3 层 × 4 边
     for (let layer = 0; layer < 3; layer++) {
-      ctx.lineWidth = (0.2 - layer * 0.04) * s;
+      ctx.lineWidth = (0.08 + layer * 0.06) * s;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       for (let k = 0; k < 4; k++) {
@@ -990,9 +990,9 @@ class Renderer {
           const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.strokeStyle = layer === 0 ? 'rgba(220,180,255,.55)' : layer === 1 ? 'rgba(190,100,255,.45)' : 'rgba(70,20,170,.48)';
+        ctx.strokeStyle = layer === 0 ? 'rgba(210,150,255,.35)' : layer === 1 ? 'rgba(180,80,255,.45)' : 'rgba(80,15,230,.9)';
         ctx.shadowColor = '#c85cff';
-        ctx.shadowBlur = (1 + layer * 1.5) * s;
+        ctx.shadowBlur = (0.8 + layer * 1) * s;
         ctx.stroke();
       }
     }
