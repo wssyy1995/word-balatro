@@ -1038,47 +1038,46 @@ class Renderer {
     ctx.closePath();
   }
 
-  // 紫鞭束缚边框（letter_a_mult_half 惩罚动画）
+  // 紫鞭束缚边框（letter_a_mult_half 惩罚动画）—— 紧凑版适配小方块
   _drawLashBorder(ctx, x, y, w, h, r, s, elapsedSec) {
     const v = 0.5 + 0.5 * Math.sin(elapsedSec * 1.82 * Math.PI + 0.5);
     const breath = v * v * (3 - 2 * v);
 
     ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
 
-    // 1. 基础描边
+    // 1. 基础描边（紧贴边框）
     this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(210,150,255,${0.17 + 0.24 * breath})`;
-    ctx.lineWidth = 1.4 * s;
+    ctx.strokeStyle = `rgba(180,120,255,${0.25 + 0.35 * breath})`;
+    ctx.lineWidth = 0.8 * s;
     ctx.stroke();
 
-    // 2. 三层虚线流动
-    for (let k = 0; k < 3; k++) {
-      ctx.setLineDash([24 * s, 18 * s]);
-      ctx.lineDashOffset = -(elapsedSec * 50 * s + k * 22 * s);
+    // 2. 两层虚线流动（更密更细）
+    for (let k = 0; k < 2; k++) {
+      ctx.setLineDash([6 * s, 4 * s]);
+      ctx.lineDashOffset = -(elapsedSec * 30 * s + k * 10 * s);
       this._roundedRectPath(ctx, x, y, w, h, r);
-      ctx.strokeStyle = `rgba(${k === 1 ? '214,176,118' : '178,86,255'},${0.17 + 0.25 * breath})`;
-      ctx.lineWidth = 1.1 * s;
+      ctx.strokeStyle = `rgba(${k === 0 ? '160,90,240' : '200,150,255'},${0.2 + 0.3 * breath})`;
+      ctx.lineWidth = 0.5 * s;
       ctx.stroke();
     }
     ctx.setLineDash([]);
 
-    // 3. 12 个发光点
+    // 3. 6 个小发光点（紧贴边框，范围小）
     const per = 2 * (w + h);
-    for (let i = 0; i < 12; i++) {
-      const t = (i / 12 + elapsedSec * 0.055) % 1;
+    for (let i = 0; i < 6; i++) {
+      const t = (i / 6 + elapsedSec * 0.08) % 1;
       let d = t * per;
       let px, py;
-      const offset = 9 * s;
+      const offset = 1 * s;
       if (d < w) { px = x + d; py = y - offset; }
       else if (d < w + h) { px = x + w + offset; py = y + (d - w); }
       else if (d < w * 2 + h) { px = x + w - (d - w - h); py = y + h + offset; }
       else { d -= w * 2 + h; px = x - offset; py = y + h - d; }
 
-      const alpha = 0.11 + 0.10 * breath;
-      const glowR = 18 * s;
+      const alpha = 0.15 + 0.25 * breath;
+      const glowR = 4 * s;
       const grad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-      const col = i % 3 ? '178,86,255' : '214,176,118';
+      const col = i % 2 ? '160,90,240' : '220,180,255';
       grad.addColorStop(0, `rgba(${col},${alpha})`);
       grad.addColorStop(1, `rgba(${col},0)`);
       ctx.fillStyle = grad;
