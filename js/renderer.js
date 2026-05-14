@@ -1003,12 +1003,12 @@ class Renderer {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(elapsed + i);
-      ctx.strokeStyle = `rgba(180,120,255,${0.3 + pulse * 0.6})`;
-      ctx.lineWidth = 0.5 * s;
-      ctx.shadowBlur = 3 * s;
+      ctx.strokeStyle = `rgba(180,120,255,${0.35 + pulse * 0.55})`;
+      ctx.lineWidth = 0.8 * s;
+      ctx.shadowBlur = 5 * s;
       ctx.shadowColor = '#a855f7';
       ctx.beginPath();
-      ctx.moveTo(-2.5 * s, 0); ctx.lineTo(2.5 * s, 0); ctx.moveTo(0, -2.5 * s); ctx.lineTo(0, 2.5 * s);
+      ctx.moveTo(-3.5 * s, 0); ctx.lineTo(3.5 * s, 0); ctx.moveTo(0, -3.5 * s); ctx.lineTo(0, 3.5 * s);
       ctx.stroke();
       ctx.restore();
     }
