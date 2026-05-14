@@ -1024,6 +1024,72 @@ class Renderer {
     return alive;
   }
 
+  _roundedRectPath(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
+  // 紫鞭束缚边框（letter_a_mult_half 惩罚动画）
+  _drawLashBorder(ctx, x, y, w, h, r, s, elapsedSec) {
+    const v = 0.5 + 0.5 * Math.sin(elapsedSec * 1.82 * Math.PI + 0.5);
+    const breath = v * v * (3 - 2 * v);
+
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+
+    // 1. 基础描边
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(210,150,255,${0.17 + 0.24 * breath})`;
+    ctx.lineWidth = 1.4 * s;
+    ctx.stroke();
+
+    // 2. 三层虚线流动
+    for (let k = 0; k < 3; k++) {
+      ctx.setLineDash([24 * s, 18 * s]);
+      ctx.lineDashOffset = -(elapsedSec * 50 * s + k * 22 * s);
+      this._roundedRectPath(ctx, x, y, w, h, r);
+      ctx.strokeStyle = `rgba(${k === 1 ? '214,176,118' : '178,86,255'},${0.17 + 0.25 * breath})`;
+      ctx.lineWidth = 1.1 * s;
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+
+    // 3. 12 个发光点
+    const per = 2 * (w + h);
+    for (let i = 0; i < 12; i++) {
+      const t = (i / 12 + elapsedSec * 0.055) % 1;
+      let d = t * per;
+      let px, py;
+      const offset = 9 * s;
+      if (d < w) { px = x + d; py = y - offset; }
+      else if (d < w + h) { px = x + w + offset; py = y + (d - w); }
+      else if (d < w * 2 + h) { px = x + w - (d - w - h); py = y + h + offset; }
+      else { d -= w * 2 + h; px = x - offset; py = y + h - d; }
+
+      const alpha = 0.11 + 0.10 * breath;
+      const glowR = 18 * s;
+      const grad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+      const col = i % 3 ? '178,86,255' : '214,176,118';
+      grad.addColorStop(0, `rgba(${col},${alpha})`);
+      grad.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(px, py, glowR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
   // 绘制圆角矩形
   roundRect(x, y, w, h, r, fill, stroke, lineWidth = 2) {
     const ctx = this.ctx;
@@ -2359,7 +2425,7 @@ class Renderer {
     ctx.fillText('×', centerX, boxY + boxSize / 2);
     ctx.restore();
 
-    // letter_a_mult_half 惩罚动画：紫色光晕（在背景图背后）
+    // letter_a_mult_half 惩罚动画：紫鞭束缚边框
     if (valid && showSecondBox && pc.multHalfResult?.triggered) {
       const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
       const baseMultDelay = 500;
@@ -2371,14 +2437,7 @@ class Renderer {
       const penaltyElapsed = afterBase - readyTime;
 
       if (penaltyElapsed >= 0 && penaltyElapsed < 500) {
-        const progress = penaltyElapsed / 500;
-        const glowAlpha = 0.2 + 0.3 * Math.sin(progress * Math.PI);
-        ctx.save();
-        ctx.shadowColor = '#9b59b6';
-        ctx.shadowBlur = 25 * s;
-        const pad = 4 * s;
-        this.roundRect(rightBoxX - pad, boxY - pad, boxSize + pad * 2, boxSize + pad * 2, 6 * s, `rgba(155,89,182,${glowAlpha})`);
-        ctx.restore();
+        this._drawLashBorder(ctx, rightBoxX, boxY, boxSize, boxSize, 4 * s, s, penaltyElapsed / 1000);
       }
     }
 

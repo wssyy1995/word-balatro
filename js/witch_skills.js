@@ -22,7 +22,7 @@ const WITCH_SKILLS = [
 //   { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
 // ];
 const SKILL_POOL = [
-  { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
+  { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
 ];
 // 打乱数组（Fisher-Yates）
 function shuffleSkills(arr) {
