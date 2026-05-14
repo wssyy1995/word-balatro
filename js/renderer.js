@@ -982,14 +982,14 @@ class Renderer {
       for (let k = 0; k < 4; k++) {
         ctx.beginPath();
         for (let i = 0; i <= 35; i++) {
-          const t = (i / 35 + elapsed * (0.045 + layer * 0.018) + k * 0.25) % 1;
+          const t = (i / 35 + elapsed * (0.025 + layer * 0.012) + k * 0.25) % 1;
           const p = this._pointOnRect(x, y, w, h, t, (1 + layer * 1) * s);
           const wave = Math.sin(i * 0.25 + elapsed * 3 + layer * 2) * (0.8 + layer * 0.5) * s;
           const px = p.x + p.nx * wave + p.ny * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(140,70,255,.55)' : 'rgba(60,10,210,.85)';
+        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(180,130,255,.45)' : 'rgba(60,10,210,.85)';
         ctx.shadowColor = '#a020f0';
         ctx.shadowBlur = layer === 1 ? 7 * s : (2 + layer * 2) * s;
         ctx.stroke();
@@ -998,17 +998,17 @@ class Renderer {
 
     // 28 个十字星
     for (let i = 0; i < 28; i++) {
-      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.08) % 1, 2.5 * s);
+      const p = this._pointOnRect(x, y, w, h, (i / 28 + elapsed * 0.04) % 1, 2.5 * s);
       const pulse = 0.5 + 0.5 * Math.sin(elapsed * 4.5 + i * 1.7);
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(elapsed + i);
-      ctx.strokeStyle = `rgba(180,120,255,${0.25 + pulse * 0.55})`;
-      ctx.lineWidth = 0.2 * s;
-      ctx.shadowBlur = 2 * s;
+      ctx.strokeStyle = `rgba(180,120,255,${0.3 + pulse * 0.6})`;
+      ctx.lineWidth = 0.5 * s;
+      ctx.shadowBlur = 3 * s;
       ctx.shadowColor = '#a855f7';
       ctx.beginPath();
-      ctx.moveTo(-1.2 * s, 0); ctx.lineTo(1.2 * s, 0); ctx.moveTo(0, -1.2 * s); ctx.lineTo(0, 1.2 * s);
+      ctx.moveTo(-2.5 * s, 0); ctx.lineTo(2.5 * s, 0); ctx.moveTo(0, -2.5 * s); ctx.lineTo(0, 2.5 * s);
       ctx.stroke();
       ctx.restore();
     }
