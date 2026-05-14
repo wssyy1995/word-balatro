@@ -962,13 +962,13 @@ class Renderer {
     ctx.globalCompositeOperation = 'lighter';
     this._roundedRectPath(ctx, x, y, w, h, r);
     ctx.strokeStyle = `rgba(235, 198, 255, ${0.9 * alpha})`;
-    ctx.lineWidth = 1.2 * s;
+    ctx.lineWidth = 0.6 * s;
     ctx.shadowColor = 'rgba(192, 80, 255, .9)';
-    ctx.shadowBlur = 16 * s;
+    ctx.shadowBlur = 6 * s;
     ctx.stroke();
-    ctx.shadowBlur = 34 * s;
+    ctx.shadowBlur = 12 * s;
     ctx.strokeStyle = `rgba(138, 43, 226, ${0.38 * alpha})`;
-    ctx.lineWidth = 6 * s;
+    ctx.lineWidth = 2.5 * s;
     ctx.stroke();
     ctx.restore();
 
@@ -977,22 +977,22 @@ class Renderer {
 
     // 3 层 × 4 边
     for (let layer = 0; layer < 3; layer++) {
-      ctx.lineWidth = (2.2 - layer * 0.35) * s;
+      ctx.lineWidth = (1.0 - layer * 0.2) * s;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       for (let k = 0; k < 4; k++) {
         ctx.beginPath();
         for (let i = 0; i <= 140; i++) {
           const t = (i / 140 + elapsed * (0.045 + layer * 0.018) + k * 0.25) % 1;
-          const p = this._pointOnRect(x, y, w, h, t, (5 + layer * 4) * s);
-          const wave = Math.sin(i * 0.25 + elapsed * 3 + layer * 2) * (3 + layer * 2) * s;
-          const px = p.x + p.nx * wave + p.ny * Math.sin(elapsed * 2 + i * 0.13) * 2 * s;
-          const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 2 * s;
+          const p = this._pointOnRect(x, y, w, h, t, (2 + layer * 2) * s);
+          const wave = Math.sin(i * 0.25 + elapsed * 3 + layer * 2) * (1.5 + layer * 1) * s;
+          const px = p.x + p.nx * wave + p.ny * Math.sin(elapsed * 2 + i * 0.13) * 1 * s;
+          const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 1 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
         ctx.strokeStyle = layer === 0 ? 'rgba(255,245,255,.54)' : layer === 1 ? 'rgba(202,92,255,.38)' : 'rgba(95,35,180,.25)';
         ctx.shadowColor = '#c85cff';
-        ctx.shadowBlur = (8 + layer * 8) * s;
+        ctx.shadowBlur = (3 + layer * 3) * s;
         ctx.stroke();
       }
     }
@@ -1005,11 +1005,11 @@ class Renderer {
       ctx.translate(p.x, p.y);
       ctx.rotate(elapsed + i);
       ctx.strokeStyle = `rgba(238,208,255,${0.18 + pulse * 0.55})`;
-      ctx.lineWidth = 1 * s;
-      ctx.shadowBlur = 10 * s;
+      ctx.lineWidth = 0.6 * s;
+      ctx.shadowBlur = 3 * s;
       ctx.shadowColor = '#d946ef';
       ctx.beginPath();
-      ctx.moveTo(-3 * s, 0); ctx.lineTo(3 * s, 0); ctx.moveTo(0, -3 * s); ctx.lineTo(0, 3 * s);
+      ctx.moveTo(-2 * s, 0); ctx.lineTo(2 * s, 0); ctx.moveTo(0, -2 * s); ctx.lineTo(0, 2 * s);
       ctx.stroke();
       ctx.restore();
     }
