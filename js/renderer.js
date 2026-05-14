@@ -989,7 +989,7 @@ class Renderer {
           const py = p.y + p.ny * wave - p.nx * Math.sin(elapsed * 2 + i * 0.13) * 0.5 * s;
           if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
-        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.45)' : layer === 1 ? 'rgba(130,60,240,.6)' : 'rgba(60,10,210,.95)';
+        ctx.strokeStyle = layer === 0 ? 'rgba(200,160,255,.3)' : layer === 1 ? 'rgba(130,60,240,.4)' : 'rgba(60,10,210,.85)';
         ctx.shadowColor = '#a020f0';
         ctx.shadowBlur = (2 + layer * 2) * s;
         ctx.stroke();
