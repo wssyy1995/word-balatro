@@ -306,6 +306,10 @@ class Renderer {
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
     this.gameOverRenderer = new GameOverRenderer(this);
     this.lifeExtensionBtnRect = null;
+
+    // 女巫牌标签弹出动画状态
+    this.lastLabelText = null;
+    this.labelTagAnim = null;
   }
 
   // 绘制道具图标（商店/已购买卡牌左侧）
@@ -1163,6 +1167,127 @@ class Renderer {
     return pts;
   }
 
+  // 绘制华丽倍率标签（方案B · 粒子环流风格）
+  // cx,cy: 中心点; s: 缩放; text: 文字如 "x2"; scale: 弹出缩放; elapsed: 动画已进行毫秒
+  _drawFancyLabel(ctx, cx, cy, s, text, scale, elapsed) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+
+    const fontSize = Math.floor(28 * s);
+    const t = elapsed * 0.001;
+
+    // ============ 方案B · 光晕呼吸 ============
+
+    // 0. 白色蒙层（最底层，衬托光晕）
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 15 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 1. 底层大光晕（呼吸）
+    const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
+    for (let i = 3; i >= 1; i--) {
+      const r = (17 + i * 7 + breathe * 4) * s;
+      const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
+      g.addColorStop(0, `rgba(255,200,40,${0.22 - i * 0.04})`);
+      g.addColorStop(0.5, `rgba(255,235,120,${0.1 - i * 0.02})`);
+      g.addColorStop(1, 'rgba(220,200,250,0)');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    // 2. 紫影扩散脉冲
+    for (let i = 2; i >= 0; i--) {
+      const phase = (t * 0.6 + i * 2.1) % (Math.PI * 2);
+      const r = (14 + phase * 18) * s;
+      if (r > 40 * s) continue;
+      const alpha = Math.max(0, 0.35 - r / (200 * s));
+      const g = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r);
+      g.addColorStop(0, 'rgba(255,200,40,0)');
+      g.addColorStop(0.6, `rgba(255,220,100,${alpha})`);
+      g.addColorStop(1, 'rgba(240,210,130,0)');
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    // 3. 金色粒子（12个）
+    for (let i = 0; i < 12; i++) {
+      const a = (Math.PI * 2 / 12) * i + t * 0.35;
+      const dist = (24 + Math.sin(t * 2 + i) * 7) * s;
+      const px = Math.cos(a) * dist;
+      const py = Math.sin(a) * dist;
+      const alpha = 0.25 + Math.sin(t * 3 + i) * 0.15;
+      ctx.beginPath();
+      ctx.arc(px, py, 1.5 * s, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,220,100,${alpha})`;
+      ctx.fill();
+    }
+
+    // 4. 文字（深紫描边 + 紫色主体 + 金色外发光，x/+ 前缀小一点）
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
+    const numStr = prefix ? text.slice(1) : text;
+    const pSize = prefix ? Math.floor(fontSize * 0.78) : fontSize;
+    const pYOff = prefix ? (fontSize - pSize) / 2 - 1 * s : 0;
+
+    ctx.font = `900 ${pSize}px sans-serif`;
+    const pW = prefix ? ctx.measureText(prefix).width : 0;
+    ctx.font = `900 ${fontSize}px sans-serif`;
+    const nW = ctx.measureText(numStr).width;
+    const gap = 1 * s;
+    const startX = -(pW + gap + nW) / 2;
+    const pX = startX + pW / 2;
+    const nX = startX + pW + gap + nW / 2;
+
+    const drawLayer = (styleFn, drawFn) => {
+      styleFn();
+      if (prefix) {
+        ctx.font = `900 ${pSize}px sans-serif`; drawFn(prefix, pX, pYOff);
+        ctx.font = `900 ${fontSize}px sans-serif`; drawFn(numStr, nX, 0);
+      } else {
+        ctx.font = `900 ${fontSize}px sans-serif`; drawFn(text, 0, 0);
+      }
+    };
+
+    // 深紫描边
+    drawLayer(
+      () => { ctx.lineWidth = 1.5 * s; ctx.strokeStyle = '#2a0850'; },
+      (t, x, y) => ctx.strokeText(t, x, y)
+    );
+
+    // 紫色主体 + 金色外发光
+    drawLayer(
+      () => {
+        ctx.shadowColor = 'rgba(230,180,60,0.8)';
+        ctx.shadowBlur = 6 * s;
+        ctx.shadowOffsetY = 1 * s;
+        ctx.fillStyle = '#3a0870';
+      },
+      (t, x, y) => ctx.fillText(t, x, y)
+    );
+
+    // 白色高光（向上偏移）
+    drawLayer(
+      () => {
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = 'transparent';
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      },
+      (t, x, y) => ctx.fillText(t, x, y - fontSize * 0.025)
+    );
+
+    ctx.restore();
+    ctx.restore();
+  }
+
   // 绘制圆角矩形
   roundRect(x, y, w, h, r, fill, stroke, lineWidth = 2) {
     const ctx = this.ctx;
@@ -1966,9 +2091,12 @@ class Renderer {
 
     // 方块区域变量（提前定义，pendingCheck 动画需要）
     const centerX = W / 2;
-    const boxY = scoreAreaY;
+    const boxY = scoreAreaY + 3 * s;
     const leftBoxX = centerX - boxSize - 10 * s - 5;
     const rightBoxX = centerX + 10 * s + 5;
+
+    // 存储第一个方块点击区域（调试用）
+    this.firstBoxRect = { x: leftBoxX, y: boxY, w: boxSize, h: boxSize };
 
     // === pendingCheck 状态优先 ===
     let pc = null;
@@ -2461,28 +2589,23 @@ class Renderer {
       } else {
         this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
       }
-      // per_card 倍率提示（左方块上方紫色大字 + 白色底色）
+      // 左方块标签（方案B光晕呼吸风格）
       if (pc._perCardMultText) {
-        ctx.save();
-        const multFontSize = Math.floor(22 * s);
-        ctx.font = `900 ${multFontSize}px sans-serif`;
-        const textW = ctx.measureText(pc._perCardMultText).width;
-        const padX = 6 * s;
-        const padY = 3 * s;
-        const bgW = textW + padX * 2;
-        const bgH = multFontSize + padY * 2;
-        const bgX = leftBoxX + boxSize / 2 - bgW / 2;
-        const bgY = boxY - bgH - 2 * s;
+        if (this.lastLeftLabelText !== pc._perCardMultText) {
+          this.lastLeftLabelText = pc._perCardMultText;
+          this.leftLabelTagAnim = { startTime: Date.now(), duration: 350 };
+        }
+        const tagPulse = this._calcPulseScale(this.leftLabelTagAnim, 0.25);
+        const tagScale = tagPulse.scale;
+        if (tagPulse.progress >= 1) this.leftLabelTagAnim = null;
 
-        // 白色圆角底色（更淡、更大圆角）
-        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.72)');
+        const tagCX = leftBoxX + boxSize / 2;
+        const tagCY = boxY - 14 * s;
+        const elapsed = Date.now() - (this.leftLabelTagAnim ? this.leftLabelTagAnim.startTime : Date.now() - 350);
 
-        // 紫色大字（居中）
-        ctx.fillStyle = '#9b59b6';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(pc._perCardMultText, leftBoxX + boxSize / 2, bgY + bgH / 2);
-        ctx.restore();
+        this._drawFancyLabel(ctx, tagCX, tagCY, s, pc._perCardMultText, tagScale, elapsed);
+      } else {
+        this.lastLeftLabelText = null;
       }
     } else if (!game.pendingCheck) {
       // 没有 pendingCheck 时重置
@@ -2607,28 +2730,25 @@ class Renderer {
         ctx.restore();
       }
 
-      // 绘制 "xN" 标签（右方块上方，样式与 per_card 一致：白底紫字）
+      // 绘制 "xN" 标签（右方块上方，方案B粒子环流风格）
       if (labelText) {
-        ctx.save();
-        const multFontSize = Math.floor(22 * s);
-        ctx.font = `900 ${multFontSize}px sans-serif`;
-        const textW = ctx.measureText(labelText).width;
-        const padX = 6 * s;
-        const padY = 3 * s;
-        const bgW = textW + padX * 2;
-        const bgH = multFontSize + padY * 2;
-        const bgX = rightBoxX + boxSize / 2 - bgW / 2;
-        const bgY = boxY - bgH - 2 * s;
+        // 标签首次出现时触发弹出动画（350ms）
+        if (this.lastLabelText !== labelText) {
+          this.lastLabelText = labelText;
+          this.labelTagAnim = { startTime: Date.now(), duration: 350 };
+        }
 
-        // 白色圆角底色
-        this.roundRect(bgX, bgY, bgW, bgH, 8 * s, 'rgba(255,255,255,0.72)');
+        const tagPulse = this._calcPulseScale(this.labelTagAnim, 0.25);
+        const tagScale = tagPulse.scale;
+        if (tagPulse.progress >= 1) this.labelTagAnim = null;
 
-        // 紫色大字
-        ctx.fillStyle = '#9b59b6';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(labelText, rightBoxX + boxSize / 2, bgY + bgH / 2);
-        ctx.restore();
+        const tagCX = rightBoxX + boxSize / 2;
+        const tagCY = boxY - 14 * s;
+        const elapsed = Date.now() - (this.labelTagAnim ? this.labelTagAnim.startTime : Date.now() - 350);
+
+        this._drawFancyLabel(ctx, tagCX, tagCY, s, labelText, tagScale, elapsed);
+      } else {
+        this.lastLabelText = null;
       }
     }
 
@@ -2781,6 +2901,20 @@ class Renderer {
     ctx.fillText(resetText, resetTx, resetTextY);
     ctx.restore();
     this.resetBtnRect = { x: resetX, y: btnY, w: btnW, h: btnH, action: 'reset' };
+
+    // 调试：点击第一个方块显示华丽 x2 标签（保持 1.5s）
+    if (game._debugLabelShow) {
+      const elapsed = Date.now() - game._debugLabelShow.startTime;
+      if (elapsed < 1500) {
+        const progress = Math.min(elapsed / 350, 1);
+        const tagScale = 1 + 0.25 * Math.sin(progress * Math.PI);
+        const tagCX = leftBoxX + boxSize / 2;
+        const tagCY = boxY - 14 * s;
+        this._drawFancyLabel(ctx, tagCX, tagCY, s, game._debugLabelShow.text, tagScale, elapsed);
+      } else {
+        game._debugLabelShow = null;
+      }
+    }
 
     this.drawCoinCapsule(game);
 

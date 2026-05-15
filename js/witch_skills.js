@@ -2,12 +2,12 @@
 
 const WITCH_SKILLS = [
   { level: 2, name: '女巫 Lv.2', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
-  { level: 5, name: '女巫 Lv.5', reward: 'global_hand_1',rate:1,reward_desc: '本赛局出牌次数+1' },
-  { level: 8, name: '女巫 Lv.8', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
-  { level: 11, name: '女巫 Lv.11', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
-  { level: 14, name: '女巫 Lv.14', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
-  { level: 16, name: '女巫 Lv.16', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
-  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' }
+  { level: 5, name: '女巫 Lv.5', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
+  { level: 8, name: '女巫 Lv.8', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
+  { level: 11, name: '女巫 Lv.11', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 14, name: '女巫 Lv.14', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' },
+  { level: 16, name: '女巫 Lv.16', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
+  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化' }
 
 ];
 
