@@ -3649,6 +3649,7 @@ class Renderer {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.globalAlpha = globalAlpha;
+    ctx.shadowBlur = 0;
 
     // === 淡紫色径向光晕 ===
     const glowR = size * 0.6;
@@ -3699,6 +3700,7 @@ class Renderer {
       ctx.restore();
 
       // 中心高光点
+      ctx.shadowBlur = 0;
       ctx.fillStyle = `rgba(255,255,255,${0.6 * twinkle})`;
       ctx.beginPath();
       ctx.arc(px, py, 1.2 * s, 0, Math.PI * 2);

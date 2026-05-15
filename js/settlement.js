@@ -768,6 +768,7 @@ class WitchRewardRenderer {
 
     ctx.save();
     ctx.translate(cx, cy);
+    ctx.shadowBlur = 0;
 
     // === 金色径向光晕（礼盒背后，呼吸脉动）===
     const glowR = size * 0.6;
