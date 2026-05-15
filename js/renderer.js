@@ -1038,55 +1038,129 @@ class Renderer {
     ctx.closePath();
   }
 
-  // 紫鞭束缚边框（letter_a_mult_half 惩罚动画）—— 紧凑版适配小方块
+  // 贰 · 妖雾弥散边框（letter_a_mult_half 惩罚动画）—— 替代紫鞭
+  // 方块实际尺寸约 56*s px，所有参数按 ~0.3 比例缩小自 200px 参考卡片
   _drawLashBorder(ctx, x, y, w, h, r, s, elapsedSec) {
-    const v = 0.5 + 0.5 * Math.sin(elapsedSec * 1.82 * Math.PI + 0.5);
-    const breath = v * v * (3 - 2 * v);
+    const cycle = Math.min(elapsedSec / 0.7, 1);
+    const breathe = 0.5 + 0.5 * Math.sin(cycle * Math.PI);
 
     ctx.save();
 
-    // 1. 基础描边（紧贴边框）
+    // 1. 外层光晕描边（缩到 0.3 比例）
     this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(180,120,255,${0.25 + 0.35 * breath})`;
-    ctx.lineWidth = 0.8 * s;
+    ctx.strokeStyle = `rgba(180,100,255,${0.25 + breathe * 0.6})`;
+    ctx.lineWidth = (4 + breathe * 3) * s;
+    ctx.shadowColor = `rgba(160,75,240,${0.35 + breathe * 0.5})`;
+    ctx.shadowBlur = (7 + breathe * 5) * s;
     ctx.stroke();
+    ctx.shadowBlur = 0;
 
-    // 2. 两层虚线流动（更密更细）
-    for (let k = 0; k < 2; k++) {
-      ctx.setLineDash([6 * s, 4 * s]);
-      ctx.lineDashOffset = -(elapsedSec * 30 * s + k * 10 * s);
-      this._roundedRectPath(ctx, x, y, w, h, r);
-      ctx.strokeStyle = `rgba(${k === 0 ? '160,90,240' : '200,150,255'},${0.2 + 0.3 * breath})`;
-      ctx.lineWidth = 0.5 * s;
-      ctx.stroke();
+    // 2. 内层细描边
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(230,200,255,${0.25 + breathe * 0.35})`;
+    ctx.lineWidth = 0.8 * s;
+    ctx.shadowColor = `rgba(200,150,255,${0.3 + breathe * 0.4})`;
+    ctx.shadowBlur = (4 + breathe * 3) * s;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 3. 雾层（缩到 0.3 比例）
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(140,60,230,${0.15 + breathe * 0.2})`;
+    ctx.lineWidth = (6 + breathe * 4) * s;
+    ctx.shadowColor = `rgba(120,40,210,${0.1 + breathe * 0.18})`;
+    ctx.shadowBlur = 8 * s;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 4. 妖雾粒子（状态驱动，每帧持续渗出，cycle 0.1~0.4）
+    if (!this._lashParticles) this._lashParticles = [];
+
+    // 新动画周期开始时清空旧粒子
+    if (cycle < 0.05) {
+      this._lashParticles = [];
     }
-    ctx.setLineDash([]);
 
-    // 3. 6 个小发光点（紧贴边框，范围小）
-    const per = 2 * (w + h);
-    for (let i = 0; i < 6; i++) {
-      const t = (i / 6 + elapsedSec * 0.08) % 1;
-      let d = t * per;
-      let px, py;
-      const offset = 1 * s;
-      if (d < w) { px = x + d; py = y - offset; }
-      else if (d < w + h) { px = x + w + offset; py = y + (d - w); }
-      else if (d < w * 2 + h) { px = x + w - (d - w - h); py = y + h + offset; }
-      else { d -= w * 2 + h; px = x - offset; py = y + h - d; }
+    // 在 cycle 0.1~0.4 期间，每帧概率生成新粒子（8 个起源点，适配小方块）
+    if (cycle > 0.1 && cycle < 0.4) {
+      const origins = this._borderPoints(x, y, w, h, 8);
+      origins.forEach((o) => {
+        if (Math.random() < 0.32) {
+          for (let i = 0; i < 3; i++) {
+            const angle = Math.atan2(o.ny, o.nx) + (Math.random() * 1.2 - 0.6);
+            const spd = 1.3 * (0.5 + Math.random() * 0.7) * s;
+            this._lashParticles.push({
+              x: o.x,
+              y: o.y,
+              vx: Math.cos(angle) * spd,
+              vy: Math.sin(angle) * spd,
+              life: Math.floor(35 * (0.3 + Math.random() * 0.7)),
+              maxLife: 35,
+              size: (0.5 + Math.random() * 1.5) * s,
+              color: { r: 180, g: 110, b: 255 }
+            });
+          }
+        }
+      });
+    }
 
-      const alpha = 0.15 + 0.25 * breath;
-      const glowR = 4 * s;
-      const grad = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-      const col = i % 2 ? '160,90,240' : '220,180,255';
-      grad.addColorStop(0, `rgba(${col},${alpha})`);
-      grad.addColorStop(1, `rgba(${col},0)`);
-      ctx.fillStyle = grad;
+    // 更新并绘制粒子（像 HTML 原版一样：位置更新 + 阻力衰减）
+    const alive = [];
+    for (const p of this._lashParticles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life--;
+      p.vx *= 0.965;
+      p.vy *= 0.965;
+      if (p.life > 0) alive.push(p);
+    }
+    this._lashParticles = alive;
+
+    for (const p of this._lashParticles) {
+      const a = (p.life / p.maxLife) * 0.85;
+      if (a < 0.02) continue;
+      ctx.fillStyle = `rgba(${p.color.r},${p.color.g},${p.color.b},${a})`;
+      ctx.shadowColor = `rgba(140,70,230,${a * 0.5})`;
+      ctx.shadowBlur = p.size * 1.5;
       ctx.beginPath();
-      ctx.arc(px, py, glowR, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 雾团光晕（存活期>40%）
+      if (p.life / p.maxLife > 0.4) {
+        const glowAlpha = (p.life / p.maxLife) * 0.15;
+        ctx.fillStyle = `rgba(160,90,240,${glowAlpha})`;
+        ctx.shadowColor = 'rgba(140,70,230,0.3)';
+        ctx.shadowBlur = 3 * s;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    // 动画快结束时清空粒子，防止残留到下一轮
+    if (cycle >= 0.95) {
+      this._lashParticles = [];
     }
 
     ctx.restore();
+  }
+
+  _borderPoints(x, y, w, h, n) {
+    const perim = w * 2 + h * 2;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      let d = (i / n) * perim;
+      let px, py, nx, ny;
+      if (d <= w) { px = x + d; py = y; nx = 0; ny = -1; }
+      else { d -= w; if (d <= h) { px = x + w; py = y + d; nx = 1; ny = 0; }
+      else { d -= h; if (d <= w) { px = x + w - d; py = y + h; nx = 0; ny = 1; }
+      else { d -= w; px = x; py = y + h - d; nx = -1; ny = 0; }}}
+      pts.push({ x: px, y: py, nx, ny });
+    }
+    return pts;
   }
 
   // 绘制圆角矩形
@@ -2147,13 +2221,16 @@ class Renderer {
               const postWait = 300; // 全部完成后强制等待 300ms
               const readyTime = totalSteps * STEP_DURATION + postWait;
 
-              if (afterBase >= readyTime) {
-                if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
-                  const penaltyElapsed = afterBase - readyTime;
-                  const PENALTY_DURATION = 500; // 惩罚动画 500ms
-                  const POST_PENALTY_WAIT = 350; // 惩罚后等待 350ms
+              // letter_a_mult_half 惩罚动画：提前 100ms 开始，总时长 700ms，结束延迟 100ms
+              const PENALTY_START_OFFSET = -100; // 提前 100ms
+              const PENALTY_DURATION = 700;      // 动画总时长 700ms
+              const POST_PENALTY_WAIT = 350;     // 惩罚后等待 350ms（不变）
 
-                  // 惩罚动画：紫色光晕 + 女巫星星 + angry_tip（在 500ms 内触发一次）
+              if (afterBase >= readyTime + PENALTY_START_OFFSET) {
+                if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
+                  const penaltyElapsed = afterBase - (readyTime + PENALTY_START_OFFSET);
+
+                  // 惩罚动画：紫色光晕 + 女巫星星 + angry_tip（在 PENALTY_DURATION 内触发一次）
                   if (penaltyElapsed >= 0 && penaltyElapsed < PENALTY_DURATION) {
                     if (!pc._multHalfPulseTriggered) {
                       pc._multHalfPulseTriggered = true;
@@ -2424,7 +2501,7 @@ class Renderer {
     ctx.fillText('×', centerX, boxY + boxSize / 2);
     ctx.restore();
 
-    // letter_a_mult_half 惩罚动画：紫鞭束缚边框
+    // letter_a_mult_half 惩罚动画：妖雾弥散边框（提前 100ms 开始，总时长 700ms）
     if (valid && showSecondBox && pc.multHalfResult?.triggered) {
       const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
       const baseMultDelay = 500;
@@ -2433,9 +2510,9 @@ class Renderer {
       const postWait = 300;
       const readyTime = totalSteps * STEP_DURATION + postWait;
       const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
-      const penaltyElapsed = afterBase - readyTime;
+      const penaltyElapsed = afterBase - (readyTime - 100); // 提前 100ms
 
-      if (penaltyElapsed >= 0 && penaltyElapsed < 500) {
+      if (penaltyElapsed >= 0 && penaltyElapsed < 700) {
         this._drawLashBorder(ctx, rightBoxX, boxY, boxSize, boxSize, 4 * s, s, penaltyElapsed / 1000);
       }
     }
@@ -2499,13 +2576,13 @@ class Renderer {
         this.multAnim = { startTime: Date.now(), duration: 400 };
       }
 
-      // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半
+      // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半（提前 100ms）
       if (pc.multHalfResult?.triggered) {
         const totalSteps = 1 + wjList.length;
         const postWait = 300;
         const readyTime = totalSteps * STEP_DURATION + postWait;
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
-        const penaltyElapsed = afterBase - readyTime;
+        const penaltyElapsed = afterBase - (readyTime - 100); // 提前 100ms
         if (penaltyElapsed >= 0) {
           displayValue = pc.multHalfResult.halvedMult;
         }
