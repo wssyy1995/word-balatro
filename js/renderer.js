@@ -1179,36 +1179,14 @@ class Renderer {
 
     // ============ 方案B · 光晕呼吸 ============
 
-    // 0. 白色蒙层（最底层，衬托光晕）
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.beginPath();
-    ctx.arc(0, 0, 15 * s, 0, Math.PI * 2);
-    ctx.fill();
-
     // 1. 底层大光晕（呼吸）
     const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
     for (let i = 3; i >= 1; i--) {
-      const r = (17 + i * 7 + breathe * 4) * s;
+      const r = (8 + i * 4 + breathe * 2) * s;
       const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
-      g.addColorStop(0, `rgba(255,200,40,${0.22 - i * 0.04})`);
-      g.addColorStop(0.5, `rgba(255,235,120,${0.1 - i * 0.02})`);
-      g.addColorStop(1, 'rgba(220,200,250,0)');
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fillStyle = g;
-      ctx.fill();
-    }
-
-    // 2. 紫影扩散脉冲
-    for (let i = 2; i >= 0; i--) {
-      const phase = (t * 0.6 + i * 2.1) % (Math.PI * 2);
-      const r = (14 + phase * 18) * s;
-      if (r > 40 * s) continue;
-      const alpha = Math.max(0, 0.35 - r / (200 * s));
-      const g = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r);
-      g.addColorStop(0, 'rgba(255,200,40,0)');
-      g.addColorStop(0.6, `rgba(255,220,100,${alpha})`);
-      g.addColorStop(1, 'rgba(240,210,130,0)');
+      g.addColorStop(0, `rgba(255,255,255,${0.88 - i * 0.04})`);
+      g.addColorStop(0.5, `rgba(255,255,255,${0.72 - i * 0.02})`);
+      g.addColorStop(1, `rgba(255,255,255,${0.50 - i * 0.02})`);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = g;
@@ -1221,7 +1199,7 @@ class Renderer {
       const dist = (24 + Math.sin(t * 2 + i) * 7) * s;
       const px = Math.cos(a) * dist;
       const py = Math.sin(a) * dist;
-      const alpha = 0.25 + Math.sin(t * 3 + i) * 0.15;
+      const alpha = 0.40 + Math.sin(t * 3 + i) * 0.20;
       ctx.beginPath();
       ctx.arc(px, py, 1.5 * s, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255,220,100,${alpha})`;
@@ -1269,7 +1247,7 @@ class Renderer {
         ctx.shadowColor = 'rgba(230,180,60,0.8)';
         ctx.shadowBlur = 6 * s;
         ctx.shadowOffsetY = 1 * s;
-        ctx.fillStyle = '#3a0870';
+        ctx.fillStyle = '#64009e';
       },
       (t, x, y) => ctx.fillText(t, x, y)
     );
