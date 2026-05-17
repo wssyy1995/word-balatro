@@ -183,6 +183,19 @@ class Renderer {
     } catch (e) {
       this.coinIconLoaded = false;
     }
+
+    // 加载刷新图标
+    this.refreshIcon = null;
+    this.refreshIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/shop_refresh.png';
+      img.onload = () => { this.refreshIconLoaded = true; };
+      img.onerror = () => { this.refreshIconLoaded = false; };
+      this.refreshIcon = img;
+    } catch (e) {
+      this.refreshIconLoaded = false;
+    }
     
     // 加载卡牌背景图
     this.cardTemplate = null;
@@ -372,9 +385,9 @@ class Renderer {
     ctx.font = `${Math.floor(12 * s)}px sans-serif`;
     const descW = ctx.measureText(joker.desc).width;
     const minPopupW = cardW + 20 * s;
-    let popupW = Math.max(minPopupW, descW + pad * 2 + 20 * s);
+    let popupW = Math.max(minPopupW, descW + pad * 2);
     if (hasLetters) {
-      popupW = Math.max(popupW, lettersTotalW + pad * 2 + 20 * s);
+      popupW = Math.max(popupW, lettersTotalW + pad * 2);
     }
     let popupX = cardX + (cardW - popupW) / 2;
     // 确保弹窗不超出屏幕边缘
@@ -1184,9 +1197,9 @@ class Renderer {
     for (let i = 3; i >= 1; i--) {
       const r = (8 + i * 4 + breathe * 2) * s;
       const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
-      g.addColorStop(0, `rgba(255,255,255,${0.88 - i * 0.04})`);
-      g.addColorStop(0.5, `rgba(255,255,255,${0.72 - i * 0.02})`);
-      g.addColorStop(1, `rgba(255,255,255,${0.50 - i * 0.02})`);
+      g.addColorStop(0, `rgba(255,255,255,${0.98 - i * 0.04})`);
+      g.addColorStop(0.5, `rgba(255,255,255,${0.96 - i * 0.02})`);
+      g.addColorStop(1, `rgba(255,255,255,${0.92 - i * 0.02})`);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = g;
@@ -2573,7 +2586,7 @@ class Renderer {
           this.lastLeftLabelText = pc._perCardMultText;
           this.leftLabelTagAnim = { startTime: Date.now(), duration: 350 };
         }
-        const tagPulse = this._calcPulseScale(this.leftLabelTagAnim, 0.25);
+        const tagPulse = this._calcPulseScale(this.leftLabelTagAnim, 0.03);
         const tagScale = tagPulse.scale;
         if (tagPulse.progress >= 1) this.leftLabelTagAnim = null;
 
@@ -2716,7 +2729,7 @@ class Renderer {
           this.labelTagAnim = { startTime: Date.now(), duration: 350 };
         }
 
-        const tagPulse = this._calcPulseScale(this.labelTagAnim, 0.25);
+        const tagPulse = this._calcPulseScale(this.labelTagAnim, 0.03);
         const tagScale = tagPulse.scale;
         if (tagPulse.progress >= 1) this.labelTagAnim = null;
 

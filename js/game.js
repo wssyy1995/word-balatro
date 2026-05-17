@@ -360,7 +360,7 @@ function applyLetterMultHalf(witchSkill, playedInOrder, result) {
   if (!hasLetter) return null;
   const originalScore = result.score;
   const originalMult = result.mult;
-  const halvedMult = Math.max(1, Math.ceil(originalMult / 2));
+  const halvedMult = Math.max(1, Number((originalMult / 2).toFixed(1)));
   const halvedScore = Math.ceil(result.base * halvedMult);
   return {
     triggered: true,

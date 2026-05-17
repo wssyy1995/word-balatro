@@ -208,6 +208,7 @@ class ShopRenderer {
     this.shopRefreshRects = [];
     this.shopPriceBtnRects = [];
     this.priceBtnPressed = null; // { index, pressTime }
+    this.refreshBtnPressed = null; // { modIdx, pressTime }
     this.challengeBtnPressed = false;
     this.challengeBtnPressTime = 0;
   }
@@ -837,7 +838,7 @@ class ShopRenderer {
         this.shopPriceBtnRects.push({ x: btnX, y: btnY, w: btnW, h: btnH, index: itemIdx });
       }
 
-      // 两张卡牌都售罄时，显示刷新按钮（金币 5 + 刷新）
+      // 两张卡牌都售罄时，显示刷新按钮
       const itemIdx0 = modIdx * 2;
       const itemIdx1 = modIdx * 2 + 1;
       const allSold = !game.shopItems[itemIdx0] && !game.shopItems[itemIdx1];
@@ -845,38 +846,70 @@ class ShopRenderer {
         const refreshBtnH = 26 * s;
         const refreshBtnY = rowY + (rowH - refreshBtnH) / 2;
 
-        const refreshText = '刷新';
+        const canAfford = game.gold >= 5;
+        const isActive = canAfford;
+
+        // 确定文案和是否显示金币图标
+        let btnText, showCoin;
+        if (!canAfford) {
+          btnText = '余额不足';
+          showCoin = true;
+        } else {
+          btnText = '刷新';
+          showCoin = true;
+        }
+
         const costText = '5';
         ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        const refreshTextW = ctx.measureText(refreshText).width;
-        const costTextW = ctx.measureText(costText).width;
+        const btnTextW = ctx.measureText(btnText).width;
+        const costTextW = canAfford ? ctx.measureText(costText).width : 0;
         const coinSize = 14 * s;
-        const contentW = coinSize + 4 * s + costTextW + 8 * s + refreshTextW;
+        const contentW = showCoin ? coinSize + 4 * s + costTextW + 8 * s + btnTextW : btnTextW;
         const refreshBtnW = contentW + 16 * s;
-
         const refreshBtnX = modX + (modW - refreshBtnW) / 2;
 
-        this.parent.roundRect(refreshBtnX, refreshBtnY, refreshBtnW, refreshBtnH, 6 * s, '#e8dcc8');
+        // 按下动效
+        let pressOffset = 0;
+        const isPressed = this.refreshBtnPressed && this.refreshBtnPressed.modIdx === modIdx;
+        if (isPressed) {
+          const pe = Date.now() - this.refreshBtnPressed.pressTime;
+          if (pe < 150) pressOffset = 2 * s;
+        }
 
+        // 按钮投影 + 背景
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.parent.roundRect(refreshBtnX, refreshBtnY + pressOffset, refreshBtnW, refreshBtnH, 7 * s, isActive ? '#FFF1D4' : '#e0e0e0');
+        ctx.restore();
+
+        // 顶部高光条
         ctx.save();
         ctx.strokeStyle = 'rgba(255,255,255,0.45)';
         ctx.lineWidth = 1.2 * s;
         ctx.beginPath();
-        ctx.moveTo(refreshBtnX + 5 * s, refreshBtnY + 2 * s);
-        ctx.lineTo(refreshBtnX + refreshBtnW - 5 * s, refreshBtnY + 2 * s);
+        ctx.moveTo(refreshBtnX + 4 * s, refreshBtnY + 2 * s + pressOffset);
+        ctx.lineTo(refreshBtnX + refreshBtnW - 4 * s, refreshBtnY + 2 * s + pressOffset);
         ctx.stroke();
         ctx.restore();
 
-        const contentStartX = refreshBtnX + 8 * s;
-        const midY = refreshBtnY + refreshBtnH / 2;
-        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-          ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
+        // 金币图标 + 文案（整体居中）
+        const contentStartX = refreshBtnX + (refreshBtnW - contentW) / 2;
+        const midY = refreshBtnY + refreshBtnH / 2 + pressOffset;
+        if (showCoin && this.parent.refreshIcon && this.parent.refreshIconLoaded) {
+          ctx.drawImage(this.parent.refreshIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
         }
-        ctx.fillStyle = '#8b6914';
+        ctx.fillStyle = isActive ? '#8b6914' : '#999';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(costText, contentStartX + coinSize + 4 * s, midY);
-        ctx.fillText(refreshText, contentStartX + coinSize + 4 * s + costTextW + 8 * s, midY);
+        const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
+        if (canAfford) {
+          ctx.fillText(costText, btnTextX, midY);
+          ctx.fillText(btnText, btnTextX + costTextW + 8 * s, midY);
+        } else {
+          ctx.fillText(btnText, btnTextX, midY);
+        }
 
         this.shopRefreshRects.push({ x: refreshBtnX, y: refreshBtnY, w: refreshBtnW, h: refreshBtnH, modIdx });
       }

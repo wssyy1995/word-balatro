@@ -581,9 +581,10 @@ function handleInput(x, y) {
     if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
       const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
       if (refreshHit) {
+        vibrate();
+        renderer.shopRenderer.refreshBtnPressed = { modIdx: refreshHit.modIdx, pressTime: Date.now() };
         if (game.gold >= 5) {
           game.gold -= 5;
-          vibrate();
           refreshModule(game, refreshHit.modIdx);
         }
         return;
