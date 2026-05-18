@@ -8,11 +8,11 @@ const WITCH_SKILLS = [
   { level: 14, name: '女巫 Lv.14', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' },
   { level: 16, name: '女巫 Lv.16', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
   { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化' },
-  { level: 20, name: '女巫 Lv.20', reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位' }
+  { level: 21, name: '女巫 Lv.21', reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位' }
 
 ];
 
-// 技能池（skill + desc + angry_tip 绑定，游戏开始时打乱顺序分配）
+//技能池（skill + desc + angry_tip 绑定，游戏开始时打乱顺序分配）
 const SKILL_POOL = [
   { skill: 'force_letter_3', desc: '每次出牌,只能出3张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
@@ -20,10 +20,13 @@ const SKILL_POOL = [
   { skill: 'force_letter_4', desc: '每次出牌,只能出4张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'no_letter_a', desc: '本回合不会出现字母牌\'A\'', angry_tip: 'A去哪儿了' },
-  { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
+  { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
 ];
 // const SKILL_POOL = [
-//   { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
+//   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
 // ];
 // 打乱数组（Fisher-Yates）
 function shuffleSkills(arr) {

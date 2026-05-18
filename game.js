@@ -134,6 +134,10 @@ function handleInput(x, y) {
           refreshModule(game, 2);
         }
       }
+      if (debugHit.action === 'debug_addWitchSlot') {
+        game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
+        if (game.storageManager) game.storageManager.saveProgress(game);
+      }
       if (debugHit.action === 'debug_upload_shop_card') {
         cloudStorage.uploadShopCards().then(res => {
           game.hintToast = { text: `上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
@@ -336,6 +340,8 @@ function handleInput(x, y) {
     if (renderer.witchPropRects) {
       const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
       if (witchHit) {
+        const joker = game.jokers[witchHit.jokerIndex];
+        if (joker && joker._disabled) return;
         vibrate();
         if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
           game._witchDetailPopup = null;
@@ -600,7 +606,7 @@ function handleInput(x, y) {
         if (!item) return;
         // 金币不足或已达上限，直接忽略
         if (game.gold < item.cost) return;
-        if (item.type === 'witch' && (game.jokers || []).length >= 4) return;
+        if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return;
         if (item.type === 'potion' && (game.potions || []).length >= 2) return;
 
         // 按下动效

@@ -283,6 +283,8 @@ function _matchWordTrigger(cards, trigger) {
 function calcWordScore(cards, jokers) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
+  const activeJokers = (jokers || []).filter(j => j && !j._disabled);
+
   let mult = cards.length; // 基础倍率 = 单词长度
   let hasFace = false;
   for (const c of cards) {
@@ -292,7 +294,7 @@ function calcWordScore(cards, jokers) {
   const word = cards.map(c => c.letter.toLowerCase()).join('');
 
   // === 先处理 limit 型女巫牌（字母之神）：所有字母基础分变为最高分 ===
-  const letterGod = (jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
+  const letterGod = activeJokers.find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
   let maxBaseScore = 0;
   if (letterGod) {
     maxBaseScore = Math.max(...cards.map(c => c.score));
@@ -301,7 +303,7 @@ function calcWordScore(cards, jokers) {
   // 计算每个字母的倍率（女巫牌对单个字母的加成）
   const cardMults = cards.map(() => 1);
 
-  for (const j of jokers) {
+  for (const j of activeJokers) {
     if (j.type !== 'witch') continue;
     // limit 型女巫牌不参与常规倍率计算
     if (j.scope === 'limit') continue;
@@ -332,7 +334,7 @@ function calcWordScore(cards, jokers) {
     baseScore += cardScore * cardMults[i];
   }
 
-  for (const j of jokers) {
+  for (const j of activeJokers) {
     if (j.type === 'witch' && j.scope === 'flat_bonus') {
       baseScore += j.value;
     }
@@ -618,6 +620,22 @@ class Game {
         j._wwJumpDone = false;
       }
     });
+
+    // disable_one_witch_card：回合开始时随机禁用1张女巫牌（延迟1秒播放边框动画）
+    const disableSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (disableSkill && disableSkill.skill === 'disable_one_witch_card' && this.jokers && this.jokers.length > 0) {
+      const validJokers = this.jokers.filter(j => j);
+      if (validJokers.length > 0) {
+        this.jokers.forEach(j => { if (j) j._disabled = false; });
+        const target = validJokers[Math.floor(Math.random() * validJokers.length)];
+        target._disabled = true;
+        this._disableWitchAnim = { startTime: Date.now() + 1000, jokerIndex: this.jokers.indexOf(target) };
+      }
+    } else {
+      (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+      this._disableWitchAnim = null;
+    }
+
     this.state = 'playing';
   }
 
@@ -780,7 +798,7 @@ class Game {
     }
 
     // === 字母之神触发（limit 型女巫牌，优先处理）===
-    const letterGod = (this.jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
+    const letterGod = (this.jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god' && !j._disabled);
     let letterGodTriggered = false;
     if (letterGod && (letterGod.usesLeft === undefined || letterGod.usesLeft > 0)) {
       letterGodTriggered = true;
@@ -827,6 +845,7 @@ class Game {
       const triggered = [];
       for (let j = 0; j < jokers.length; j++) {
         const joker = jokers[j];
+        if (!joker || joker._disabled) continue;
         if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
         if (_matchCardTrigger(card, joker.trigger)) triggered.push(j);
       }
@@ -836,6 +855,7 @@ class Game {
     const globalTriggered = [];
     for (let j = 0; j < jokers.length; j++) {
       const joker = jokers[j];
+      if (!joker || joker._disabled) continue;
       if (joker.type !== 'witch') continue;
       if (joker.scope === 'flat_bonus') {
         globalTriggered.push(j);
@@ -847,6 +867,7 @@ class Game {
     // 预处理 whole_word 女巫牌（用于 phase 1.5 波浪动画 + phase 2 倍率弹出）
     const wholeWordJokers = [];
     jokers.forEach((joker, idx) => {
+      if (!joker || joker._disabled) return;
       if (joker.type === 'witch' && joker.scope === 'whole_word') {
         const matched = joker.trigger === 'illegal_boost'
           ? joker.value > 0

@@ -197,6 +197,19 @@ class Renderer {
       this.refreshIconLoaded = false;
     }
     
+    // 加载禁用锁图标
+    this.cardDisableIcon = null;
+    this.cardDisableIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_disable.png';
+      img.onload = () => { this.cardDisableIconLoaded = true; };
+      img.onerror = () => { this.cardDisableIconLoaded = false; };
+      this.cardDisableIcon = img;
+    } catch (e) {
+      this.cardDisableIconLoaded = false;
+    }
+
     // 加载卡牌背景图
     this.cardTemplate = null;
     this.cardTemplateLoaded = false;
@@ -775,7 +788,7 @@ class Renderer {
   }
 
   // 绘制已购买道具卡牌（cover模式裁剪到空位大小+底部蒙层+名字）
-  _drawPropCard(ctx, prop, x, y, w, h, s) {
+  _drawPropCard(ctx, prop, x, y, w, h, s, showDisabled = true) {
     const iconName = prop.trigger || prop.effect;
     const iconData = this.shopCardImages[iconName];
     let offsetY = prop._jumpOffsetY || 0;
@@ -942,6 +955,28 @@ class Renderer {
     if (destroyProgress > 0) {
       ctx.restore();
     }
+
+    // 禁用状态：灰色半透明蒙层 + 锁图标（由调用方控制是否显示，支持动画过渡）
+    if (showDisabled && prop._disabled) {
+      ctx.save();
+      this.roundRect(x, finalY, w, h, r, 'rgba(60, 60, 60, 0.5)');
+
+      const iconSize = 20 * s;
+      const iconX = x + (w - iconSize) / 2;
+      const iconY = finalY + (h - iconSize) / 2;
+
+      if (this.cardDisableIconLoaded && this.cardDisableIcon) {
+        ctx.drawImage(this.cardDisableIcon, iconX, iconY, iconSize, iconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(iconSize)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🔒', x + w / 2, finalY + h / 2);
+      }
+
+      ctx.restore();
+    }
   }
 
   // ===== 星辰燔边粒子系统 =====
@@ -1057,8 +1092,8 @@ class Renderer {
 
   // 贰 · 妖雾弥散边框（letter_a_mult_half 惩罚动画）—— 替代紫鞭
   // 方块实际尺寸约 56*s px，所有参数按 ~0.3 比例缩小自 200px 参考卡片
-  _drawLashBorder(ctx, x, y, w, h, r, s, elapsedSec) {
-    const cycle = Math.min(elapsedSec / 0.7, 1);
+  _drawLashBorder(ctx, x, y, w, h, r, s, elapsedSec, duration = 0.7) {
+    const cycle = Math.min(elapsedSec / duration, 1);
     const breathe = 0.5 + 0.5 * Math.sin(cycle * Math.PI);
 
     ctx.save();
@@ -1192,14 +1227,14 @@ class Renderer {
 
     // ============ 方案B · 光晕呼吸 ============
 
-    // 1. 底层大光晕（呼吸）
+    // 1. 底层大光晕（呼吸）—— 透明度适度、半径缩小
     const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
     for (let i = 3; i >= 1; i--) {
-      const r = (8 + i * 4 + breathe * 2) * s;
+      const r = (6 + i * 3 + breathe * 2) * s;
       const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
-      g.addColorStop(0, `rgba(255,255,255,${0.98 - i * 0.04})`);
-      g.addColorStop(0.5, `rgba(255,255,255,${0.96 - i * 0.02})`);
-      g.addColorStop(1, `rgba(255,255,255,${0.92 - i * 0.02})`);
+      g.addColorStop(0, `rgba(255,255,255,${0.35 - i * 0.06})`);
+      g.addColorStop(0.5, `rgba(255,255,255,${0.30 - i * 0.035})`);
+      g.addColorStop(1, `rgba(255,255,255,${0.25 - i * 0.02})`);
       ctx.beginPath();
       ctx.arc(0, 0, r, 0, Math.PI * 2);
       ctx.fillStyle = g;
@@ -1942,29 +1977,39 @@ class Renderer {
     this.cardRects = []; // 存储卡牌点击区域
 
     // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
-    const propW = W - 20 * s;
-    const propX = 10 * s;
+    const propW = actualWitchSlots >= 5 ? W - 8 * s : W - 20 * s;
+    const propX = actualWitchSlots >= 5 ? 4 * s : 10 * s;
     const padX = 10 * s;
     const dividerW = 1.5 * s;
     const BASE_GAP = 6 * s;
     const slotTopPad = 6 * s;
 
-    // 基准单卡宽度（按 4 女巫 + 2 药水 = 6 格计算）
-    const baseSlotW = (propW - padX * 2 - 5 * BASE_GAP - dividerW) / 6;
-    const slotH = propBarH - slotTopPad - 6 * s;
+    // 基准单卡宽度（固定按 4 张时的 propW 计算，避免宽度变化被卡牌尺寸吸收）
+    const rawSlotW = (W - 20 * s - padX * 2 - 5 * BASE_GAP - dividerW) / 6;
 
     // 实际女巫槽位
     const actualWitchSlots = game.maxJokerSlots || 4;
     const actualTotalSlots = actualWitchSlots + 2;
 
     // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
-    const actualGap = (propW - padX * 2 - dividerW - actualTotalSlots * baseSlotW) / (actualTotalSlots - 1);
+    const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
+    const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
+    const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const slotH = actualWitchSlots >= 5
+      ? (propBarH - slotTopPad - 6 * s) * (slotW / rawSlotW)
+      : propBarH - slotTopPad - 6 * s;
 
     const slotY = propY + slotTopPad;
-    const leftStartX = propX + padX;
-    const witchRightEdge = leftStartX + actualWitchSlots * baseSlotW + (actualWitchSlots - 1) * actualGap;
+    const baseLeftStartX = propX + padX - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const witchRightEdge = baseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
     const dividerX = witchRightEdge + actualGap / 2 + dividerW / 2;
-    const rightStartX = dividerX + dividerW / 2 + actualGap / 2;
+    const baseRightStartX = dividerX + dividerW / 2 + actualGap / 2;
+
+    // 女巫牌左移、药水牌右移，分割线保持不动（4张时各1px，5张时更多）
+    const witchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
+    const potionShift = actualWitchSlots >= 5 ? 3.5 * s : 1 * s;
+    const leftStartX = baseLeftStartX - witchShift;
+    const rightStartX = baseRightStartX + potionShift;
 
     // 背景
     this.roundRect(propX, propY, propW, propBarH, 10 * s, '#f0e0c8', '#c4a35a');
@@ -1991,7 +2036,7 @@ class Renderer {
 
     // 左区女巫牌
     for (let i = 0; i < actualWitchSlots; i++) {
-      const sx = leftStartX + i * (baseSlotW + actualGap);
+      const sx = leftStartX + i * (slotW + actualGap);
       const joker = jokers[i];
       if (joker) {
         // 生命延续触发：跳跃2次（每次500ms）
@@ -2006,7 +2051,45 @@ class Renderer {
             joker._jumpOffsetY = 0;
           }
         }
-        this._drawPropCard(ctx, joker, sx, slotY, baseSlotW, slotH, s);
+        this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s, false);
+
+        // disable_one_witch_card 禁用动画：1000ms 边框光晕 + 锁图标 easeOutBack 弹出
+        if (joker._disabled) {
+          const elapsed = game._disableWitchAnim ? Date.now() - game._disableWitchAnim.startTime : Infinity;
+          const isAnimating = game._disableWitchAnim && game._disableWitchAnim.jokerIndex === i && elapsed >= 0 && elapsed < 1000;
+          if (isAnimating) {
+            this._drawLashBorder(ctx, sx, slotY, slotW, slotH, 4 * s, s, elapsed / 1000, 1.0);
+          }
+          if (!isAnimating) {
+            ctx.save();
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, 'rgba(60, 60, 60, 0.5)');
+
+            // 锁图标 easeOutBack 弹出动画（边框结束后开始，持续400ms）
+            const iconElapsed = game._disableWitchAnim && game._disableWitchAnim.jokerIndex === i
+              ? Math.max(0, elapsed - 1000)
+              : Infinity;
+            const iconDuration = 400;
+            const iconProgress = iconElapsed < iconDuration
+              ? Easing.easeOutBack(Math.min(iconElapsed / iconDuration, 1))
+              : 1;
+            const iconSize = 20 * s * iconProgress;
+            const iconX = sx + (slotW - iconSize) / 2;
+            const iconY = slotY + (slotH - iconSize) / 2;
+
+            if (this.cardDisableIconLoaded && this.cardDisableIcon) {
+              ctx.drawImage(this.cardDisableIcon, iconX, iconY, iconSize, iconSize);
+            } else {
+              ctx.font = `bold ${Math.floor(iconSize)}px sans-serif`;
+              ctx.fillStyle = '#fff';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('🔒', sx + slotW / 2, slotY + slotH / 2);
+            }
+
+            ctx.restore();
+          }
+        }
+
         // 生命延续触发：紫色边框光晕闪烁
         if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
           const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
@@ -2017,35 +2100,35 @@ class Renderer {
             ctx.shadowBlur = (6 + 10 * breath) * s;
             const lineW = (2 + 2 * breath) * s;
             const strokeColor = `rgba(155,89,182,${0.6 + 0.4 * breath})`;
-            this.roundRect(sx, slotY, baseSlotW, slotH, 4 * s, null, strokeColor, lineW);
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
             ctx.restore();
           }
         }
         // 自毁动画期间不响应点击
         if (!joker._destroying) {
-          this.witchPropRects.push({ x: sx, y: slotY, w: baseSlotW, h: slotH, jokerIndex: i });
+          this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
         }
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, baseSlotW, slotH, s, 'witch');
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
       }
     }
 
     // 右区2格：药水牌
     this.changeLetterHintRect = null;
     for (let i = 0; i < 2; i++) {
-      const sx = rightStartX + i * (baseSlotW + actualGap);
+      const sx = rightStartX + i * (slotW + actualGap);
       const potion = potions[i];
       if (potion) {
-        this._drawPropCard(ctx, potion, sx, slotY, baseSlotW, slotH, s);
-        this.potionPropRects.push({ x: sx, y: slotY, w: baseSlotW, h: slotH, potionIndex: i });
+        this._drawPropCard(ctx, potion, sx, slotY, slotW, slotH, s);
+        this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, baseSlotW, slotH, s, 'potion');
+        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');
       }
 
       // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）
       if (game._changeLetterHint && game._changeLetterHint.potionIndex === i && potion && potion.effect === 'change_letter') {
         const hintBtnH = 16 * s;
-        const hintBtnW = baseSlotW + 5;
+        const hintBtnW = slotW + 5;
         const hintBtnY = slotY + slotH + 2 * s;
         const hintElapsed = Date.now() - game._changeLetterHint.startTime;
         const hintProgress = Math.min(hintElapsed / 200, 1);
@@ -2055,7 +2138,7 @@ class Renderer {
 
         const finalW = hintBtnW * hintScale;
         const finalH = hintBtnH * hintScale;
-        const finalX = sx + (baseSlotW - finalW) / 2;
+        const finalX = sx + (slotW - finalW) / 2;
         const finalY = hintBtnY + hintOffsetY + (hintBtnH - finalH) / 2;
 
         ctx.save();
@@ -2064,7 +2147,7 @@ class Renderer {
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('选择一张字母牌', sx + baseSlotW / 2, finalY + finalH / 2);
+        ctx.fillText('选择一张字母牌', sx + slotW / 2, finalY + finalH / 2);
         ctx.restore();
 
         this.changeLetterHintRect = { x: sx, y: hintBtnY, w: hintBtnW, h: hintBtnH, potionIndex: i };
@@ -4176,6 +4259,7 @@ class Renderer {
       { label: '跳转至X回合', action: 'debug_jumpToRound' },
       { label: '直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
+      { label: '5张女巫牌', action: 'debug_addWitchSlot' },
       { label: '上传shop_card', action: 'debug_upload_shop_card' },
       { label: '上传witch', action: 'debug_upload_witch' },
       { label: '结束游戏', action: 'debug_endGame' },

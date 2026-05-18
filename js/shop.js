@@ -243,8 +243,8 @@ class ShopRenderer {
     // === 已购买道具卡牌栏（6格：左4女巫 + 右2药水，样式复用游戏页）===
     const ownedY = top + 16 * s;
     const ownedH = 92 * s;
-    const ownedW = W - 30 * s;
-    const ownedX = 15 * s;
+    const ownedW = actualWitchSlots >= 5 ? W - 18 * s : W - 30 * s;
+    const ownedX = actualWitchSlots >= 5 ? 9 * s : 15 * s;
 
     this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#f0e0c8', '#c4a35a');
 
@@ -254,22 +254,32 @@ class ShopRenderer {
     const BASE_GAP = 6 * s;
     const oSlotTop = 10 * s;
 
-    // 基准单卡宽度（按 4 女巫 + 2 药水 = 6 格计算）
-    const baseSlotW = (ownedW - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
-    const oSlotH = ownedH - oSlotTop - 10 * s;
+    // 基准单卡宽度（固定按 4 张时的 ownedW 计算，避免宽度变化被卡牌尺寸吸收）
+    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
 
     // 实际女巫槽位
     const actualWitchSlots = game.maxJokerSlots || 4;
     const actualTotalSlots = actualWitchSlots + 2;
 
     // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
-    const actualGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * baseSlotW) / (actualTotalSlots - 1);
+    const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
+    const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
+    const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const oSlotH = actualWitchSlots >= 5
+      ? (ownedH - oSlotTop - 10 * s) * (slotW / rawSlotW)
+      : ownedH - oSlotTop - 10 * s;
 
     const oSlotY = ownedY + oSlotTop;
-    const oLeftStartX = ownedX + oPadX;
-    const witchRightEdge = oLeftStartX + actualWitchSlots * baseSlotW + (actualWitchSlots - 1) * actualGap;
+    const oBaseLeftStartX = ownedX + oPadX - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const witchRightEdge = oBaseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
     const oDividerX = witchRightEdge + actualGap / 2 + oDividerW / 2;
-    const oRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
+    const oBaseRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
+
+    // 女巫牌左移、药水牌右移，分割线保持不动（4张时各1px，5张时更多）
+    const oWitchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
+    const oPotionShift = actualWitchSlots >= 5 ? 3.5 * s : 1 * s;
+    const oLeftStartX = oBaseLeftStartX - oWitchShift;
+    const oRightStartX = oBaseRightStartX + oPotionShift;
 
     // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
     ctx.beginPath();
@@ -298,7 +308,7 @@ class ShopRenderer {
       game._sellingProp = null;
     }
     for (let i = 0; i < actualWitchSlots; i++) {
-      const sx = oLeftStartX + i * (baseSlotW + actualGap);
+      const sx = oLeftStartX + i * (slotW + actualGap);
       const joker = oJokers[i];
 
       // 售出消失动画
@@ -314,7 +324,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          slideOffsetX = -(baseSlotW + actualGap) * Easing.easeOutBack(t);
+          slideOffsetX = -(slotW + actualGap) * Easing.easeOutBack(t);
         }
       }
 
@@ -337,17 +347,17 @@ class ShopRenderer {
         const flyX = -eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = -eased * 20;
-        ctx.translate(sx + baseSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.translate(sx + slotW / 2, oSlotY + oSlotH / 2);
         ctx.rotate(rotation * Math.PI / 180);
-        ctx.translate(-(sx + baseSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(-(sx + slotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, joker, sx, oSlotY, baseSlotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, joker, sx, oSlotY, slotW, oSlotH, s);
         ctx.restore();
       } else if (joker) {
-        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: baseSlotW, h: oSlotH, index: i, array: 'jokers' });
+        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s, 'witch');
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'witch');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -366,9 +376,9 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const finalW = baseSlotW * appearScale;
+        const finalW = slotW * appearScale;
         const finalH = sellBtnH * appearScale;
-        const finalX = sx + (baseSlotW - finalW) / 2;
+        const finalX = sx + (slotW - finalW) / 2;
         const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
 
         ctx.save();
@@ -389,7 +399,7 @@ class ShopRenderer {
         ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
         ctx.restore();
 
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: baseSlotW, h: sellBtnH, index: i, array: 'jokers' };
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'jokers' };
       }
     }
 
@@ -400,7 +410,7 @@ class ShopRenderer {
       game._sellingProp = null;
     }
     for (let i = 0; i < 2; i++) {
-      const sx = oRightStartX + i * (baseSlotW + actualGap);
+      const sx = oRightStartX + i * (slotW + actualGap);
       const potion = oPotions[i];
 
       // 售出消失动画
@@ -416,7 +426,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          slideOffsetX = -(baseSlotW + actualGap) * Easing.easeOutBack(t);
+          slideOffsetX = -(slotW + actualGap) * Easing.easeOutBack(t);
         }
       }
 
@@ -439,17 +449,17 @@ class ShopRenderer {
         const flyX = eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = eased * 20;
-        ctx.translate(sx + baseSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.translate(sx + slotW / 2, oSlotY + oSlotH / 2);
         ctx.rotate(rotation * Math.PI / 180);
-        ctx.translate(-(sx + baseSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(-(sx + slotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, potion, sx, oSlotY, baseSlotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, potion, sx, oSlotY, slotW, oSlotH, s);
         ctx.restore();
       } else if (potion) {
-        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: baseSlotW, h: oSlotH, index: i, array: 'potions' });
+        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s, 'potion');
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'potion');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -468,9 +478,9 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const finalW = baseSlotW * appearScale;
+        const finalW = slotW * appearScale;
         const finalH = sellBtnH * appearScale;
-        const finalX = sx + (baseSlotW - finalW) / 2;
+        const finalX = sx + (slotW - finalW) / 2;
         const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
 
         ctx.save();
@@ -491,7 +501,7 @@ class ShopRenderer {
         ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
         ctx.restore();
 
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: baseSlotW, h: sellBtnH, index: i, array: 'potions' };
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'potions' };
       }
     }
 

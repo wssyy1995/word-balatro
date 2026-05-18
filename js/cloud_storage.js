@@ -39,7 +39,8 @@ class CloudStorageManager {
 
     // 默认 witch 图片云文件映射
     this.defaultWitchFileMap = {
-      'witch_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_16.png',
+      'witch_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_21.png',
+      'witch_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_18.png',
       'witch_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_16.png',
       'witch_14': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_14.png',
       'witch_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_11.png',
