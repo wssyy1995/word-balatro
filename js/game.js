@@ -523,6 +523,7 @@ class Game {
     this.round = 1;
     this.gold = 4;
     this.jokers = [];
+    this.maxJokerSlots = 4;
     this.crystalEffects = [];
     this.potions = [];
     this.potionMode = null;

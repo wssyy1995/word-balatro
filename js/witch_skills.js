@@ -7,7 +7,8 @@ const WITCH_SKILLS = [
   { level: 11, name: '女巫 Lv.11', reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
   { level: 14, name: '女巫 Lv.14', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' },
   { level: 16, name: '女巫 Lv.16', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
-  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化' }
+  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化' },
+  { level: 20, name: '女巫 Lv.20', reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位' }
 
 ];
 
@@ -82,6 +83,7 @@ function getRewardName(rewardType) {
     'card_change_letter': '字母置换药水',
     'global_hand_1': '额外出牌',
     'global_letter_1': '额外字母',
+    'global_witch_card_1': '女巫槽位+1',
     'double_coin': '金币翻倍',
   };
   return map[rewardType] || rewardType;
@@ -142,6 +144,14 @@ function createRewardItem(rewardType) {
         value: 2,
         desc: '已拥有金币翻倍'
       };
+    case 'global_witch_card_1':
+      return {
+        name: '女巫槽位+1',
+        type: 'buff',
+        effect: 'extra_witch_slot',
+        value: 1,
+        desc: '本赛局女巫牌槽位+1'
+      };
     default:
       return null;
   }
@@ -164,6 +174,10 @@ function giveReward(rewardType, game) {
     }
     case 'global_letter_1': {
       game._globalExtraLetters = (game._globalExtraLetters || 0) + 1;
+      return true;
+    }
+    case 'global_witch_card_1': {
+      game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
       return true;
     }
     default:

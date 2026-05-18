@@ -1941,21 +1941,30 @@ class Renderer {
 
     this.cardRects = []; // 存储卡牌点击区域
 
-    // ===== 道具卡牌栏（6格：左4女巫 + 右2药水，竖分割线）=====
+    // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
     const propW = W - 20 * s;
     const propX = 10 * s;
     const padX = 10 * s;
     const dividerW = 1.5 * s;
-    const gap = 6 * s;
+    const BASE_GAP = 6 * s;
     const slotTopPad = 6 * s;
 
-    const slotW = (propW - padX * 2 - 5 * gap - dividerW) / 6;
+    // 基准单卡宽度（按 4 女巫 + 2 药水 = 6 格计算）
+    const baseSlotW = (propW - padX * 2 - 5 * BASE_GAP - dividerW) / 6;
     const slotH = propBarH - slotTopPad - 6 * s;
+
+    // 实际女巫槽位
+    const actualWitchSlots = game.maxJokerSlots || 4;
+    const actualTotalSlots = actualWitchSlots + 2;
+
+    // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
+    const actualGap = (propW - padX * 2 - dividerW - actualTotalSlots * baseSlotW) / (actualTotalSlots - 1);
 
     const slotY = propY + slotTopPad;
     const leftStartX = propX + padX;
-    const dividerX = leftStartX + 4 * slotW + 3.5 * gap + dividerW / 2;
-    const rightStartX = dividerX + dividerW / 2 + gap / 2;
+    const witchRightEdge = leftStartX + actualWitchSlots * baseSlotW + (actualWitchSlots - 1) * actualGap;
+    const dividerX = witchRightEdge + actualGap / 2 + dividerW / 2;
+    const rightStartX = dividerX + dividerW / 2 + actualGap / 2;
 
     // 背景
     this.roundRect(propX, propY, propW, propBarH, 10 * s, '#f0e0c8', '#c4a35a');
@@ -1980,9 +1989,9 @@ class Renderer {
     this.potionPropRects = [];
     this.witchPropRects = [];
 
-    // 左区4格：女巫牌
-    for (let i = 0; i < 4; i++) {
-      const sx = leftStartX + i * (slotW + gap);
+    // 左区女巫牌
+    for (let i = 0; i < actualWitchSlots; i++) {
+      const sx = leftStartX + i * (baseSlotW + actualGap);
       const joker = jokers[i];
       if (joker) {
         // 生命延续触发：跳跃2次（每次500ms）
@@ -1997,7 +2006,7 @@ class Renderer {
             joker._jumpOffsetY = 0;
           }
         }
-        this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s);
+        this._drawPropCard(ctx, joker, sx, slotY, baseSlotW, slotH, s);
         // 生命延续触发：紫色边框光晕闪烁
         if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
           const elapsed = Date.now() - game._lifeExtensionAnim.startTime;
@@ -2008,35 +2017,35 @@ class Renderer {
             ctx.shadowBlur = (6 + 10 * breath) * s;
             const lineW = (2 + 2 * breath) * s;
             const strokeColor = `rgba(155,89,182,${0.6 + 0.4 * breath})`;
-            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
+            this.roundRect(sx, slotY, baseSlotW, slotH, 4 * s, null, strokeColor, lineW);
             ctx.restore();
           }
         }
         // 自毁动画期间不响应点击
         if (!joker._destroying) {
-          this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });
+          this.witchPropRects.push({ x: sx, y: slotY, w: baseSlotW, h: slotH, jokerIndex: i });
         }
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
+        this._drawEmptySlot(ctx, sx, slotY, baseSlotW, slotH, s, 'witch');
       }
     }
 
     // 右区2格：药水牌
     this.changeLetterHintRect = null;
     for (let i = 0; i < 2; i++) {
-      const sx = rightStartX + i * (slotW + gap);
+      const sx = rightStartX + i * (baseSlotW + actualGap);
       const potion = potions[i];
       if (potion) {
-        this._drawPropCard(ctx, potion, sx, slotY, slotW, slotH, s);
-        this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
+        this._drawPropCard(ctx, potion, sx, slotY, baseSlotW, slotH, s);
+        this.potionPropRects.push({ x: sx, y: slotY, w: baseSlotW, h: slotH, potionIndex: i });
       } else {
-        this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');
+        this._drawEmptySlot(ctx, sx, slotY, baseSlotW, slotH, s, 'potion');
       }
 
       // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）
       if (game._changeLetterHint && game._changeLetterHint.potionIndex === i && potion && potion.effect === 'change_letter') {
         const hintBtnH = 16 * s;
-        const hintBtnW = slotW + 5;
+        const hintBtnW = baseSlotW + 5;
         const hintBtnY = slotY + slotH + 2 * s;
         const hintElapsed = Date.now() - game._changeLetterHint.startTime;
         const hintProgress = Math.min(hintElapsed / 200, 1);
@@ -2046,7 +2055,7 @@ class Renderer {
 
         const finalW = hintBtnW * hintScale;
         const finalH = hintBtnH * hintScale;
-        const finalX = sx + (slotW - finalW) / 2;
+        const finalX = sx + (baseSlotW - finalW) / 2;
         const finalY = hintBtnY + hintOffsetY + (hintBtnH - finalH) / 2;
 
         ctx.save();
@@ -2055,7 +2064,7 @@ class Renderer {
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('选择一张字母牌', sx + slotW / 2, finalY + finalH / 2);
+        ctx.fillText('选择一张字母牌', sx + baseSlotW / 2, finalY + finalH / 2);
         ctx.restore();
 
         this.changeLetterHintRect = { x: sx, y: hintBtnY, w: hintBtnW, h: hintBtnH, potionIndex: i };

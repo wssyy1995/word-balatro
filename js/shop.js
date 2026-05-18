@@ -111,7 +111,7 @@ function buyItem(game, idx) {
   if (!item || game.gold < item.cost) return false;
 
   // 上限检查
-  if (item.type === 'witch' && (game.jokers || []).length >= 4) return false;
+  if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return false;
   if (item.type === 'potion' && (game.potions || []).length >= 2) return false;
 
   game.gold -= item.cost;
@@ -248,19 +248,28 @@ class ShopRenderer {
 
     this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#f0e0c8', '#c4a35a');
 
-    // 6格布局（参数与游戏页 drawPlaying 完全一致）
+    // 道具栏布局（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）
     const oPadX = 10 * s;
     const oDividerW = 1.5 * s;
-    const oGap = 6 * s;
+    const BASE_GAP = 6 * s;
     const oSlotTop = 10 * s;
 
-    const oSlotW = (ownedW - oPadX * 2 - 5 * oGap - oDividerW) / 6;
+    // 基准单卡宽度（按 4 女巫 + 2 药水 = 6 格计算）
+    const baseSlotW = (ownedW - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
     const oSlotH = ownedH - oSlotTop - 10 * s;
+
+    // 实际女巫槽位
+    const actualWitchSlots = game.maxJokerSlots || 4;
+    const actualTotalSlots = actualWitchSlots + 2;
+
+    // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
+    const actualGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * baseSlotW) / (actualTotalSlots - 1);
 
     const oSlotY = ownedY + oSlotTop;
     const oLeftStartX = ownedX + oPadX;
-    const oDividerX = oLeftStartX + 4 * oSlotW + 3.5 * oGap + oDividerW / 2;
-    const oRightStartX = oDividerX + oDividerW / 2 + oGap / 2;
+    const witchRightEdge = oLeftStartX + actualWitchSlots * baseSlotW + (actualWitchSlots - 1) * actualGap;
+    const oDividerX = witchRightEdge + actualGap / 2 + oDividerW / 2;
+    const oRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
 
     // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
     ctx.beginPath();
@@ -288,8 +297,8 @@ class ShopRenderer {
       game.jokers.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
-    for (let i = 0; i < 4; i++) {
-      const sx = oLeftStartX + i * (oSlotW + oGap);
+    for (let i = 0; i < actualWitchSlots; i++) {
+      const sx = oLeftStartX + i * (baseSlotW + actualGap);
       const joker = oJokers[i];
 
       // 售出消失动画
@@ -305,7 +314,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          slideOffsetX = -(oSlotW + oGap) * Easing.easeOutBack(t);
+          slideOffsetX = -(baseSlotW + actualGap) * Easing.easeOutBack(t);
         }
       }
 
@@ -328,17 +337,17 @@ class ShopRenderer {
         const flyX = -eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = -eased * 20;
-        ctx.translate(sx + oSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.translate(sx + baseSlotW / 2, oSlotY + oSlotH / 2);
         ctx.rotate(rotation * Math.PI / 180);
-        ctx.translate(-(sx + oSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(-(sx + baseSlotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, joker, sx, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, joker, sx, oSlotY, baseSlotW, oSlotH, s);
         ctx.restore();
       } else if (joker) {
-        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'jokers' });
+        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: baseSlotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s, 'witch');
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s, 'witch');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -357,9 +366,9 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const finalW = oSlotW * appearScale;
+        const finalW = baseSlotW * appearScale;
         const finalH = sellBtnH * appearScale;
-        const finalX = sx + (oSlotW - finalW) / 2;
+        const finalX = sx + (baseSlotW - finalW) / 2;
         const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
 
         ctx.save();
@@ -380,7 +389,7 @@ class ShopRenderer {
         ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
         ctx.restore();
 
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: oSlotW, h: sellBtnH, index: i, array: 'jokers' };
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: baseSlotW, h: sellBtnH, index: i, array: 'jokers' };
       }
     }
 
@@ -391,7 +400,7 @@ class ShopRenderer {
       game._sellingProp = null;
     }
     for (let i = 0; i < 2; i++) {
-      const sx = oRightStartX + i * (oSlotW + oGap);
+      const sx = oRightStartX + i * (baseSlotW + actualGap);
       const potion = oPotions[i];
 
       // 售出消失动画
@@ -407,7 +416,7 @@ class ShopRenderer {
         const tRaw = (sellElapsed - shiftStart - stagger) / shiftDuration;
         if (tRaw > 0) {
           const t = Math.min(tRaw, 1);
-          slideOffsetX = -(oSlotW + oGap) * Easing.easeOutBack(t);
+          slideOffsetX = -(baseSlotW + actualGap) * Easing.easeOutBack(t);
         }
       }
 
@@ -430,17 +439,17 @@ class ShopRenderer {
         const flyX = eased * 400 * s;
         const flyY = eased * 30 * s;
         const rotation = eased * 20;
-        ctx.translate(sx + oSlotW / 2, oSlotY + oSlotH / 2);
+        ctx.translate(sx + baseSlotW / 2, oSlotY + oSlotH / 2);
         ctx.rotate(rotation * Math.PI / 180);
-        ctx.translate(-(sx + oSlotW / 2), -(oSlotY + oSlotH / 2));
+        ctx.translate(-(sx + baseSlotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, potion, sx, oSlotY, oSlotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, potion, sx, oSlotY, baseSlotW, oSlotH, s);
         ctx.restore();
       } else if (potion) {
-        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: oSlotW, h: oSlotH, index: i, array: 'potions' });
+        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: baseSlotW, h: oSlotH, index: i, array: 'potions' });
       } else {
-        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, oSlotW, oSlotH, s, 'potion');
+        this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, baseSlotW, oSlotH, s, 'potion');
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -459,9 +468,9 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const finalW = oSlotW * appearScale;
+        const finalW = baseSlotW * appearScale;
         const finalH = sellBtnH * appearScale;
-        const finalX = sx + (oSlotW - finalW) / 2;
+        const finalX = sx + (baseSlotW - finalW) / 2;
         const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
 
         ctx.save();
@@ -482,7 +491,7 @@ class ShopRenderer {
         ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
         ctx.restore();
 
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: oSlotW, h: sellBtnH, index: i, array: 'potions' };
+        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: baseSlotW, h: sellBtnH, index: i, array: 'potions' };
       }
     }
 
@@ -767,7 +776,7 @@ class ShopRenderer {
         // 检查槽位上限
         const isWitch = item.type === 'witch';
         const isPotion = item.type === 'potion';
-        const witchFull = (game.jokers || []).length >= 4;
+        const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
         const potionFull = (game.potions || []).length >= 2;
         const atLimit = (isWitch && witchFull) || (isPotion && potionFull);
 
@@ -1594,7 +1603,7 @@ class ConfirmBuyRenderer {
     // 检查是否达到上限
     const isWitch = item.type === 'witch';
     const isPotion = item.type === 'potion';
-    const witchFull = (game.jokers || []).length >= 4;
+    const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
     const potionFull = (game.potions || []).length >= 2;
     const atLimit = (isWitch && witchFull) || (isPotion && potionFull);
 
