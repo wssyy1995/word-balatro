@@ -824,12 +824,29 @@ class Game {
 
     const result = calcWordScore(played, this.jokers);
 
+    // === 临死祈祷（最后一次出牌且不满4字母，50%概率倍率+4） ===
+    const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
+    let lastPrayerResult = null;
+    if (lastPrayer && this.handsLeft === 1 && playedInOrder.length < 4) {
+      const success = Math.random() < 0.5;
+      if (success) {
+        result.mult += lastPrayer.value;
+        result.score = Math.ceil(result.base * result.mult);
+      }
+      lastPrayerResult = {
+        success,
+        jokerIndex: this.jokers.indexOf(lastPrayer),
+        value: lastPrayer.value,
+      };
+    }
+
     // === letter_X_mult_half 惩罚检测（通用） ===
     const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
 
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
     this.pendingCheck.letterGodIndex = letterGodTriggered ? this.jokers.indexOf(letterGod) : -1;
+    this.pendingCheck.lastPrayerResult = lastPrayerResult;
     this.pendingCheck.state = 'valid';
     this.pendingCheck.result = result;
     this.pendingCheck.meaning = getWordMeaning(word);
@@ -877,6 +894,13 @@ class Game {
         }
       }
     });
+    // 临死祈祷成功时，追加到 whole_word 列表（动画复用）
+    if (lastPrayerResult && lastPrayerResult.success) {
+      wholeWordJokers.push({
+        idx: lastPrayerResult.jokerIndex,
+        joker: { trigger: 'last_chance', value: lastPrayerResult.value }
+      });
+    }
     this.pendingCheck.wholeWordJokers = wholeWordJokers;
 
     if (this.audioManager) {

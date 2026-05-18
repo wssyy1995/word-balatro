@@ -524,11 +524,43 @@ function handleInput(x, y) {
             }
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
-              game.potionMode = {...game._confirmBuyItemData};
-              game._prePotionState = 'shop';
-              game.state = 'potion';
+              const item = game._confirmBuyItemData;
+              if (item.effect === 'destroy_witch') {
+                // 推倒重铸：随机销毁一张女巫牌，获得金币
+                const jokers = game.jokers || [];
+                if (jokers.length > 0) {
+                  const idx = Math.floor(Math.random() * jokers.length);
+                  const target = jokers[idx];
+                  game._destroyWitchPotion = {
+                    startTime: Date.now(),
+                    jokerIndex: idx,
+                    goldReward: (target.cost || 0) + 2,
+                  };
+                }
+              } else {
+                game.potionMode = {...item};
+                game._prePotionState = 'shop';
+                game.state = 'potion';
+              }
             }
-            // 水晶球点击"生效"（购买时已生效，无需额外处理）
+            // 水晶球点击"生效"
+            if (btnHit.action === 'applyCrystal' && game._confirmBuyItemData) {
+              const item = game._confirmBuyItemData;
+              if (item.effect === 'reroll_skill') {
+                // 技能重掷：从 SKILL_POOL 随机选一个新技能替换下一回合的
+                const { SKILL_POOL, shuffleSkills } = require('./js/witch_skills');
+                const { WITCH_SKILLS } = require('./js/witch_skills');
+                const nextRound = game.round + 1;
+                const targetConfig = WITCH_SKILLS.find(s => s.level === nextRound);
+                if (targetConfig && game._shuffledSkills) {
+                  const idx = WITCH_SKILLS.indexOf(targetConfig);
+                  if (idx >= 0 && idx < game._shuffledSkills.length) {
+                    const newSkill = SKILL_POOL[Math.floor(Math.random() * SKILL_POOL.length)];
+                    game._shuffledSkills[idx] = {...newSkill};
+                  }
+                }
+              }
+            }
             game._closingConfirmBuy = true;
             game._closeConfirmBuyStartTime = Date.now();
           }, 300);

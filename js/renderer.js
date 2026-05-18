@@ -1200,6 +1200,32 @@ class Renderer {
     ctx.restore();
   }
 
+  // 金色闪烁边框（推倒重铸药水：选中女巫牌销毁前的闪烁提示）
+  _drawGoldFlashBorder(ctx, x, y, w, h, r, s, elapsedMs, duration = 1000) {
+    const cycle = Math.min(elapsedMs / duration, 1);
+    const breathe = 0.5 + 0.5 * Math.sin(cycle * Math.PI * 3); // 闪烁3次
+    const alpha = 1 - cycle; // 逐渐淡出
+
+    ctx.save();
+
+    // 外层金色光晕
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(255,200,60,${(0.4 + breathe * 0.5) * alpha})`;
+    ctx.lineWidth = (3 + breathe * 2) * s;
+    ctx.shadowColor = `rgba(255,180,30,${(0.5 + breathe * 0.4) * alpha})`;
+    ctx.shadowBlur = (8 + breathe * 6) * s;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // 内层亮金细描边
+    this._roundedRectPath(ctx, x, y, w, h, r);
+    ctx.strokeStyle = `rgba(255,230,150,${(0.5 + breathe * 0.4) * alpha})`;
+    ctx.lineWidth = (1 + breathe) * s;
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
   _borderPoints(x, y, w, h, n) {
     const perim = w * 2 + h * 2;
     const pts = [];
@@ -2753,7 +2779,7 @@ class Renderer {
       let curMult = pendingLength;
       for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
         const joker = wjList[i].joker;
-        if (joker.trigger === 'illegal_boost') {
+        if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
           curMult += joker.value;
         } else {
           curMult = Math.ceil(curMult * joker.value);
@@ -2768,7 +2794,7 @@ class Renderer {
         const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
         if (stepProgress < 1.0) {
           const joker = wjList[labelIdx].joker;
-          if (joker.trigger === 'illegal_boost') {
+          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
             labelText = `+${joker.value}`;
           } else {
             labelText = `x${joker.value}`;

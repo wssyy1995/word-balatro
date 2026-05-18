@@ -34,8 +34,8 @@ const SHOP_POOL = {
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
-    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，倍率-0.1'}
-    
+    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，倍率-0.1'},
+    {name:'临死祈祷', type:'witch', scope:'whole_word', trigger:'last_chance', value:4, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+4'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -43,12 +43,14 @@ const SHOP_POOL = {
     {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:5, desc:'下一回合,增加一张字母手牌'}
     // {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
-    {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'}
+    {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'},
+    {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:6, desc:'重掷下一回合的女巫技能'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:3, cost:5, desc:'随机强化1个字母，分数×3'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
-    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
+    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
+    {name:'推倒重铸', type:'potion', effect:'destroy_witch', cost:4, desc:'随机销毁一张已装备的女巫牌，获得其价格+2的金币'}
   ]
 };
 
@@ -124,9 +126,11 @@ function buyItem(game, idx) {
     if (game.storageManager) game.storageManager.saveProgress(game);
     return true;
   } else if (item.type === 'crystal') {
-    game.crystalEffects.push({...item});
-    if (item.effect === 'reduce_target') {
-      game._reduceTargetAnim = { value: item.value, duration: 400 };
+    if (item.effect !== 'reroll_skill') {
+      game.crystalEffects.push({...item});
+      if (item.effect === 'reduce_target') {
+        game._reduceTargetAnim = { value: item.value, duration: 400 };
+      }
     }
     game.shopItems[idx] = null;
     if (game.storageManager) game.storageManager.saveProgress(game);
@@ -306,10 +310,33 @@ class ShopRenderer {
     if (game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp._shouldRemove) {
       game.jokers.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
+      // 推倒重铸：销毁完成后获得金币
+      if (game._destroyWitchPotion) {
+        game.gold += game._destroyWitchPotion.goldReward;
+        game._destroyWitchPotion = null;
+        if (game.storageManager) game.storageManager.saveProgress(game);
+      }
     }
     for (let i = 0; i < actualWitchSlots; i++) {
       const sx = oLeftStartX + i * (slotW + actualGap);
       const joker = oJokers[i];
+
+      // 推倒重铸：金色闪烁 → 启动售出飞走
+      let isDestroyFlash = false;
+      if (game._destroyWitchPotion && game._destroyWitchPotion.jokerIndex === i) {
+        const dElapsed = Date.now() - game._destroyWitchPotion.startTime;
+        if (dElapsed < 1000) {
+          isDestroyFlash = true;
+          this.parent._drawGoldFlashBorder(ctx, sx, oSlotY, slotW, oSlotH, 4 * s, s, dElapsed);
+        } else if (!game._destroyWitchPotion._flying) {
+          game._destroyWitchPotion._flying = true;
+          game._sellingProp = {
+            type: 'jokers',
+            index: i,
+            startTime: Date.now(),
+          };
+        }
+      }
 
       // 售出消失动画
       const isSelling = game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp.index === i;
@@ -1451,6 +1478,11 @@ class ConfirmBuyRenderer {
     if (!isClosing) ctx.globalAlpha = contentAlpha;
 
     if (isPotion && !isChangeLetter) {
+      // 推倒重铸：没有女巫牌时，立即使用按钮置灰
+      const isDestroyWitch = item.effect === 'destroy_witch';
+      const hasWitchCards = (game.jokers || []).length > 0;
+      const canUseNow = !isDestroyWitch || hasWitchCards;
+
       // 普通药水牌：两个按钮（立即使用 + 暂存）
       const btnW = 120 * s;
       const btnGap = 12 * s;
@@ -1461,15 +1493,15 @@ class ConfirmBuyRenderer {
       const btn1Scale = (game._successPressedBtn === 'usePotionNow' && cpe > 0 && cpe < 150) ? 0.95 : 1;
       const btn2Scale = (game._successPressedBtn === 'stashPotion' && cpe > 0 && cpe < 150) ? 0.95 : 1;
 
-      // 按钮1：立即使用（金色背景）
+      // 按钮1：立即使用（金色背景 / 灰色禁用）
       const b1x = startX;
       const b1w = btnW * btn1Scale;
       const b1h = collectBtnH * btn1Scale;
       const b1X = b1x + (btnW - b1w) / 2;
       const b1Y = collectBtnY + (collectBtnH - b1h) / 2 + contentYShift;
-      this.parent.roundRect(b1X, b1Y, b1w, b1h, 8 * s, '#c4a35a');
+      this.parent.roundRect(b1X, b1Y, b1w, b1h, 8 * s, canUseNow ? '#c4a35a' : '#b0a898');
       ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = canUseNow ? '#fff' : 'rgba(255,255,255,0.6)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('立即使用', b1x + btnW / 2, b1Y + b1h / 2);
@@ -1486,9 +1518,9 @@ class ConfirmBuyRenderer {
 
       ctx.restore();
 
-      // 存储两个按钮点击区域
+      // 存储两个按钮点击区域（立即使用无女巫牌时不存储）
       const finalY = collectBtnY;
-      this.successBtnRect = { x: b1x, y: finalY, w: btnW, h: collectBtnH, action: 'usePotionNow' };
+      this.successBtnRect = canUseNow ? { x: b1x, y: finalY, w: btnW, h: collectBtnH, action: 'usePotionNow' } : null;
       this.successBtn2Rect = { x: b2x, y: finalY, w: btnW, h: collectBtnH, action: 'stashPotion' };
     } else if (isChangeLetter) {
       // 字母置换药水：只有暂存按钮（游戏中使用）
