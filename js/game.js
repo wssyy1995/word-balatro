@@ -1122,6 +1122,8 @@ class Game {
               this.extraHands += 1;
             } else if (data.rewardItem.effect === 'extra_letter') {
               this.baseHandSize += 1;
+            } else if (data.rewardItem.effect === 'extra_witch_slot') {
+              this.maxJokerSlots = (this.maxJokerSlots || 4) + 1;
             } else if (data.rewardItem.effect === 'double_coin') {
               this.gold *= 2;
             }
