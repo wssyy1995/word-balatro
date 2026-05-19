@@ -34,7 +34,7 @@ const SHOP_POOL = {
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
-    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，倍率-0.1'},
+    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
     {name:'临死祈祷', type:'witch', scope:'whole_word', trigger:'last_chance', value:4, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+4'},
     {name:'争分夺秒', type:'witch', scope:'limit', trigger:'haste_play', limit:5, cost:8, desc:'生效5回合，每回合前10秒出牌不消耗次数'},
     {name:'规则破坏', type:'witch', scope:'limit', trigger:'rule_breaker', limit:5, cost:8, desc:'生效5回合，每回合首次出牌无视女巫约束'}
