@@ -764,7 +764,7 @@ class Game {
         // 触发容错咒文动画：跳跃 + 紫色光晕
         shieldJoker._triggered = true;
         shieldJoker._shieldAnimStart = Date.now();
-      } else if (!this._isHastePlayActive()) {
+      } else if (!this._hastePlayActive) {
         this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
@@ -811,7 +811,7 @@ class Game {
         this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
       }
       if (this.audioManager) this.audioManager.play('invalid');
-      if (!this._isHastePlayActive()) {
+      if (!this._hastePlayActive) {
         this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
@@ -1145,7 +1145,7 @@ class Game {
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
-    if (!this._isHastePlayActive()) {
+    if (!this._hastePlayActive) {
       this.handsLeft--
     }
     if (this.storageManager) this.storageManager.saveProgress(this);

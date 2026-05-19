@@ -419,7 +419,7 @@ class Renderer {
     if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
-    const popupY = cardY + cardH + 6 * s + 2;
+    const popupY = cardY + cardH + 6 * s + 2 * s;
 
     // 出现动画（easeOutBack：从卡牌底部向下弹出）
     let appearScale = 1;
@@ -1551,7 +1551,7 @@ class Renderer {
       this.drawTopHeader(game);
 
       // 游戏标题
-      const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       ctx.save();
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -1625,26 +1625,25 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    // top_icon 与金币胶囊统一从页面顶部向下倒推 5px
+    // top_icon 与金币胶囊统一从页面顶部向下倒推 15px（10+5）
     const iconSize = 38 * s;
-    const iconX = 15 * s;
-    const iconY = 10 * s;
+    const iconX = 15 * s + 5 * s;
+    const iconY = 10 * s + 5 * s;
     if (this.topIcon && this.topIconLoaded) {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
     // 记录点击区域
     this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
 
-    // 金币胶囊：宽屏 iOS 刘海/灵动岛机型放到右上角，其余在 icon 右侧
+    // 金币胶囊：放在 top_icon 右侧，间距 10px
     const coinIconSize = 22 * s;
     ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
     const coinCapsuleH = 34 * s;
-    const isWideIOS = this.platform === 'ios' && W >= 390 && this.safeTop > 20;
-    const coinX = isWideIOS ? W - coinCapsuleW - 15 * s : iconX + iconSize + 10 * s;
-    const coinY = isWideIOS ? iconY : iconY + (iconSize - coinCapsuleH) / 2;
+    const coinX = iconX + iconSize + 10 * s;
+    const coinY = iconY + (iconSize - coinCapsuleH) / 2;
     this._drawCoinCapsuleAt(coinX, coinY, game);
   }
 
@@ -1652,7 +1651,7 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
+    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0);
     const h = 72 * s;
 
     this.drawTopHeader(game);
@@ -1696,7 +1695,7 @@ class Renderer {
     const barW = W - 20 * s;
     const barH = h;
     const barX = 10 * s;
-    const barY = top + 9;
+    const barY = top + 9 * s;
     const r = 10 * s;
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
@@ -1809,7 +1808,7 @@ class Renderer {
       const textMetrics = ctx.measureText(tagText);
       const tagW = textMetrics.width + tagPaddingX * 2;
       const tagX = baseX + avatarW ;
-      const tagY = barY - 9 * s+1;
+      const tagY = barY - 9 * s + 1 * s;
       const tagR = 6 * s;
 
       // 标签整体呼吸缩放（以中心为原点）
@@ -1899,25 +1898,25 @@ class Renderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('回合', c2, barY + barH * 0.32 + 4);
+      ctx.fillText('回合', c2, barY + barH * 0.32 + 4 * s);
 
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
-      ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s + 4);
+      ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s + 4 * s);
 
       // === 列3：目标分 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
-      ctx.fillText('目标分', c3, barY + barH * 0.32 + 4);
+      ctx.fillText('目标分', c3, barY + barH * 0.32 + 4 * s);
 
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
-      ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s + 4);
+      ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s + 4 * s);
 
       // === 列4：当前 ===
       ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
       ctx.fillStyle = '#5a4a2a';
-      ctx.fillText('当前', c4, barY + barH * 0.32 + 4);
+      ctx.fillText('当前', c4, barY + barH * 0.32 + 4 * s);
 
       // 当前分数（带变化动画）
       if (!this._scoreUpdateLocked && this.lastScore !== game.score) {
@@ -2019,9 +2018,9 @@ class Renderer {
     // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
-    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
+    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0);
     const h = 70 * s;  // 与 drawHUD 中的 h 保持一致
-    const hudBottom = top + 9 + h;
+    const hudBottom = top + 9 * s + h;
     const maxRows = 3;
     const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
     const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
@@ -2030,11 +2029,11 @@ class Renderer {
     const btnTop = H - 90 * s;
     // tall/narrow 且元素被缩小的屏幕（s<1）自适应：把多余高度分配给底部间距和道具栏下移
     const extraHeight = s < 1.0 ? Math.max(0, H - Math.floor(740 * s)) : 0;
-    const cardGap = 50 * s + extraHeight * 0.3;                // 卡牌底部到按钮间距
-    const cardBottom = btnTop - cardGap + 3;                  // 卡牌底部
+    const cardGap = 50 * s + extraHeight * 0.3 - 10;           // 卡牌底部到按钮间距（整体下移10px）
+    const cardBottom = btnTop - cardGap + 3 * s;              // 卡牌底部
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
-    const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2;         // 预览区中心（卡牌上方 20px）
-    const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
+    const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心（卡牌上方 15px，间距压缩5px）
+    const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部（预览上方 20px，额外再下移2px）
     const propY = hudBottom + 6 * s + extraHeight * 0.15;    // 道具栏顶部（随高度自适应下移）
 
     this.cardRects = []; // 存储卡牌点击区域
@@ -2208,7 +2207,7 @@ class Renderer {
       // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）
       if (game._changeLetterHint && game._changeLetterHint.potionIndex === i && potion && potion.effect === 'change_letter') {
         const hintBtnH = 16 * s;
-        const hintBtnW = slotW + 5;
+        const hintBtnW = slotW + 5 * s;
         const hintBtnY = slotY + slotH + 2 * s;
         const hintElapsed = Date.now() - game._changeLetterHint.startTime;
         const hintProgress = Math.min(hintElapsed / 200, 1);
@@ -2255,8 +2254,8 @@ class Renderer {
     // 方块区域变量（提前定义，pendingCheck 动画需要）
     const centerX = W / 2;
     const boxY = scoreAreaY + 3 * s;
-    const leftBoxX = centerX - boxSize - 10 * s - 5;
-    const rightBoxX = centerX + 10 * s + 5;
+    const leftBoxX = centerX - boxSize - 10 * s - 5 * s;
+    const rightBoxX = centerX + 10 * s + 5 * s;
 
     // 存储第一个方块点击区域（调试用）
     this.firstBoxRect = { x: leftBoxX, y: boxY, w: boxSize, h: boxSize };
@@ -3095,9 +3094,9 @@ class Renderer {
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
-    const capsuleW = coinCapsuleW + 6 * s - 7;
-    const capsuleH = coinCapsuleH - 3;
-    const borderW = Math.max(1, Math.floor(1 * s)) + 1;
+    const capsuleW = coinCapsuleW + 6 * s - 7 * s;
+    const capsuleH = coinCapsuleH - 3 * s;
+    const borderW = Math.max(1, Math.floor(1 * s)) + 1 * s;
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
 
     // 内部隐隐立体感：顶部微弱高光 + 底部微弱阴影
@@ -3144,7 +3143,7 @@ class Renderer {
 
     // 金币数量（带动画缩放）
     ctx.save();
-    const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s - 1;
+    const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s - 1 * s;
     const goldTextY = coinCapsuleY + capsuleH / 2;
     ctx.translate(goldTextX + goldTextW / 2, goldTextY);
     ctx.scale(goldScale, goldScale);
@@ -3431,7 +3430,7 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
+    const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
     // LETTER_SCORE 和 letterUpgrades 已在顶部导入
 
     // 背景由 render() 统一绘制 bgImage，不覆盖
@@ -3454,9 +3453,9 @@ class Renderer {
     ctx.restore();
 
     // 左右装饰图标
-    const decoIconW = 20 * s + 2;
+    const decoIconW = 20 * s + 2 * s;
     const decoIconH = 20 * s;
-    const decoGap = 10 * s - 2;
+    const decoGap = 10 * s - 2 * s;
     const decoIconY = titleY - decoIconH / 2;
     if (this.shopIcon && this.shopIconLoaded) {
       const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
@@ -3653,7 +3652,7 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
+    const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
     const popup = game._randomUpgradePopup;
 
     // 顶部栏
@@ -3673,9 +3672,9 @@ class Renderer {
     ctx.restore();
 
     // 左右装饰图标
-    const decoIconW = 20 * s + 2;
+    const decoIconW = 20 * s + 2 * s;
     const decoIconH = 20 * s;
-    const decoGap = 10 * s - 2;
+    const decoGap = 10 * s - 2 * s;
     const decoIconY = titleY - decoIconH / 2;
     if (this.shopIcon && this.shopIconLoaded) {
       const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
@@ -3734,7 +3733,7 @@ class Renderer {
     const targetLetter = popup ? popup.targetLetter : null;
 
     const wheelRadius = 160 * s;
-    const wheelCenterY = dividerY + 30 * s + wheelRadius + 50;
+    const wheelCenterY = dividerY + 30 * s + wheelRadius + 50 * s;
     const anglePerSector = 360 / 26;
 
     // 计算当前旋转角度和高亮字母
