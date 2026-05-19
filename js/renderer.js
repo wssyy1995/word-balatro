@@ -1539,16 +1539,14 @@ class Renderer {
     } else if (game.state === 'settlement') {
       // 金币结算弹窗（保留 HUD 背景）
       this.drawHUD(game);
-      this.drawCoinCapsule(game);
       this.settlementRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'witch_reward') {
       // 女巫奖励弹窗
       this.drawHUD(game);
-      this.drawCoinCapsule(game);
       this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
       // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
-      this.drawTopHeader();
+      this.drawTopHeader(game);
 
       // 游戏标题
       const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
@@ -1560,7 +1558,6 @@ class Renderer {
       ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
       ctx.restore();
 
-      this.drawCoinCapsule(game);
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
@@ -1571,13 +1568,11 @@ class Renderer {
     } else if (game.state === 'life_extended') {
       // 生命延续：先绘制游戏背景，再叠加闪烁/弹窗
       this.drawHUD(game);
-      this.drawCoinCapsule(game);
       this.drawPlaying(game);
       this._drawLifeExtensionPopup(game);
     } else if (game.state === 'gameover') {
       // 结束报告弹窗（保留游戏页面背景）
       this.drawHUD(game);
-      this.drawCoinCapsule(game);
       this.drawPlaying(game);
       this.gameOverRenderer.draw(ctx, game, W, H, s);
     }
@@ -1623,14 +1618,14 @@ class Renderer {
     }
   }
 
-  // 绘制顶部图标 + 标题（商店/游戏共用）
-  drawTopHeader() {
+  // 绘制顶部图标 + 金币胶囊（两者并排水平居中）
+  drawTopHeader(game) {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
     const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
 
-    // 左上角图标（压在 topbar 上方）
+    // top_icon（保持原位置）
     const iconSize = 38 * s;
     const iconX = 15 * s;
     const iconY = top - iconSize - 5 - 2;
@@ -1639,6 +1634,17 @@ class Renderer {
     }
     // 记录点击区域
     this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
+
+    // 金币胶囊在 icon 右侧，间距 10px，垂直居中对齐
+    const coinIconSize = 22 * s;
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    const goldText = String(game.gold);
+    const goldTextW = ctx.measureText(goldText).width;
+    const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
+    const coinCapsuleH = 34 * s;
+    const coinX = iconX + iconSize + 10 * s;
+    const coinY = iconY + (iconSize - coinCapsuleH) / 2;
+    this._drawCoinCapsuleAt(coinX, coinY, game);
   }
 
   drawHUD(game) {
@@ -1648,7 +1654,7 @@ class Renderer {
     const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
     const h = 72 * s;
 
-    this.drawTopHeader();
+    this.drawTopHeader(game);
 
     // 游戏标题
     ctx.save();
@@ -3070,15 +3076,12 @@ class Renderer {
       }
     }
 
-    this.drawCoinCapsule(game);
-
     // 女巫牌详情弹窗
     this._drawWitchDetailPopup(ctx, game, s);
   }
 
-  drawCoinCapsule(game, offsetY = 0) {
+  _drawCoinCapsuleAt(coinCapsuleX, coinCapsuleY, game) {
     const ctx = this.ctx;
-    const W = this.W;
     const s = this.scale;
 
     const coinCapsuleH = 34 * s;
@@ -3087,8 +3090,7 @@ class Renderer {
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
-    const coinCapsuleX = W - coinCapsuleW - 16 * s - 2;
-    const coinCapsuleY = 15 * s + offsetY - 2;
+
     // 半透明白色胶囊背景
     this.roundRect(coinCapsuleX, coinCapsuleY, coinCapsuleW + 6 * s, coinCapsuleH, coinCapsuleH / 2, 'rgba(255,255,255,0.35)');
     // coin.png 图标
@@ -3400,8 +3402,7 @@ class Renderer {
     // 背景由 render() 统一绘制 bgImage，不覆盖
 
     // === 顶部栏（参考商店页样式）===
-    this.drawTopHeader();
-    this.drawCoinCapsule(game);
+    this.drawTopHeader(game);
 
     // 标题区域 Y 坐标（与商店页"商店"标题位置一致）
     const titleY = top - 10 * s;
@@ -3621,8 +3622,7 @@ class Renderer {
     const popup = game._randomUpgradePopup;
 
     // 顶部栏
-    this.drawTopHeader();
-    this.drawCoinCapsule(game);
+    this.drawTopHeader(game);
 
     const titleY = top - 10 * s;
 
