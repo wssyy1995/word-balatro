@@ -1629,9 +1629,9 @@ class Renderer {
     const top = (this.safeTop || 0) + 20;
 
     // 左上角图标（压在 topbar 上方）
-    const iconSize = 40 * s;
+    const iconSize = 38 * s;
     const iconX = 15 * s;
-    const iconY = top - iconSize - 5;
+    const iconY = top - iconSize - 5 - 2;
     if (this.topIcon && this.topIconLoaded) {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
@@ -3085,8 +3085,8 @@ class Renderer {
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
-    const coinCapsuleX = W - coinCapsuleW - 16 * s;
-    const coinCapsuleY = 15 * s + offsetY;
+    const coinCapsuleX = W - coinCapsuleW - 16 * s - 2;
+    const coinCapsuleY = 15 * s + offsetY - 2;
     // 半透明白色胶囊背景
     this.roundRect(coinCapsuleX, coinCapsuleY, coinCapsuleW + 6 * s, coinCapsuleH, coinCapsuleH / 2, 'rgba(255,255,255,0.35)');
     // coin.png 图标
