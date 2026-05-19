@@ -3092,8 +3092,8 @@ class Renderer {
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
-    const capsuleW = coinCapsuleW + 6 * s - 4;
-    const capsuleH = coinCapsuleH - 1;
+    const capsuleW = coinCapsuleW + 6 * s - 6;
+    const capsuleH = coinCapsuleH - 2;
     const borderW = Math.max(1, Math.floor(1 * s)) + 1;
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
 
