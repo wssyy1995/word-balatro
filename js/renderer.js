@@ -27,16 +27,18 @@ class Renderer {
     this.cardH = Math.min(Math.floor(88 * this.scale), maxCardH);
     this.gap = Math.floor(8 * this.scale);
     
-    // 安全区域（刘海屏适配）
+    // 安全区域（刘海屏/灵动岛适配）
     this.safeTop = 0;
     this.safeBottom = 0;
+    this.hasDynamicIsland = false;
     try {
-      const safeArea = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null;
-      if (safeArea) {
-        this.safeTop = safeArea.top || 0;
-      }
+      const sysInfo = wx.getSystemInfoSync();
+      this.safeTop = sysInfo.safeArea?.top || sysInfo.statusBarHeight || 0;
+      this.safeBottom = (sysInfo.screenHeight - (sysInfo.safeArea?.bottom || sysInfo.screenHeight));
+      this.hasDynamicIsland = sysInfo.platform === 'ios' && this.safeTop >= 59;
     } catch (e) {
-      // 非刘海屏
+      this.safeTop = 0;
+      this.hasDynamicIsland = false;
     }
     
     this.animations = [];
@@ -1549,7 +1551,7 @@ class Renderer {
       this.drawTopHeader();
 
       // 游戏标题
-      const top = (this.safeTop || 0) + 20;
+      const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
       ctx.save();
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -1626,7 +1628,7 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20;
+    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
 
     // 左上角图标（压在 topbar 上方）
     const iconSize = 38 * s;
@@ -1643,7 +1645,7 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20;
+    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
     const h = 72 * s;
 
     this.drawTopHeader();
@@ -2010,7 +2012,7 @@ class Renderer {
     // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
-    const top = (this.safeTop || 0) + 20;
+    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
     const h = 70 * s;  // 与 drawHUD 中的 h 保持一致
     const hudBottom = top + 9 + h;
     const maxRows = 3;
@@ -3392,7 +3394,7 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20;
+    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
     // LETTER_SCORE 和 letterUpgrades 已在顶部导入
 
     // 背景由 render() 统一绘制 bgImage，不覆盖
@@ -3615,7 +3617,7 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20;
+    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
     const popup = game._randomUpgradePopup;
 
     // 顶部栏
