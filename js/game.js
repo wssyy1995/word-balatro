@@ -618,6 +618,7 @@ class Game {
         j._destroyStart = null;
         j._wwJumpStart = null;
         j._wwJumpDone = false;
+        j._ruleBreakerFlash = false;
       }
     });
 
@@ -634,6 +635,26 @@ class Game {
     } else {
       (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
       this._disableWitchAnim = null;
+    }
+
+    // === 争分夺秒：回合开始时递减剩余回合数，激活10秒倒计时 ===
+    const hastePlay = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
+    if (hastePlay && hastePlay.usesLeft > 0) {
+      hastePlay.usesLeft--;
+      this._hastePlayActive = true;
+      this._hastePlayStartTime = Date.now();
+    } else {
+      this._hastePlayActive = false;
+      this._hastePlayStartTime = null;
+    }
+
+    // === 规则破坏：回合开始时递减剩余回合数，标记本回合可用 ===
+    const ruleBreaker = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
+    if (ruleBreaker && ruleBreaker.usesLeft > 0) {
+      ruleBreaker.usesLeft--;
+      this._ruleBreakerAvailable = true;
+    } else {
+      this._ruleBreakerAvailable = false;
     }
 
     this.state = 'playing';
@@ -722,7 +743,7 @@ class Game {
 
       // 检查是否有"出现非法单词，游戏结束"的女巫技能
       const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-      if (witchSkill && witchSkill.skill === 'forbid_illegal_words') {
+      if (witchSkill && witchSkill.skill === 'forbid_illegal_words' && !this._ruleBreakerAvailable) {
         this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
         setTimeout(() => {
           this.state = 'gameover';
@@ -743,7 +764,7 @@ class Game {
         // 触发容错咒文动画：跳跃 + 紫色光晕
         shieldJoker._triggered = true;
         shieldJoker._shieldAnimStart = Date.now();
-      } else {
+      } else if (!this._isHastePlayActive()) {
         this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
@@ -765,9 +786,21 @@ class Game {
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
+    // === 规则破坏：本回合首次出牌豁免女巫约束 ===
+    let ruleBreakerTriggered = false;
+    if (this._ruleBreakerAvailable) {
+      this._ruleBreakerAvailable = false;
+      ruleBreakerTriggered = true;
+      const ruleBreakerJoker = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
+      if (ruleBreakerJoker) {
+        ruleBreakerJoker._ruleBreakerFlash = true;
+        ruleBreakerJoker._ruleBreakerFlashStart = Date.now();
+      }
+    }
+
     // === 女巫技能约束检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    if (witchSkill && !checkSkill(witchSkill.skill, this, playedInOrder)) {
+    if (witchSkill && !ruleBreakerTriggered && !checkSkill(witchSkill.skill, this, playedInOrder)) {
       this.witchSkillPassed = false;
       this.pendingCheck.state = 'witch_failed';
       this.pendingCheck.resolveTime = Date.now();
@@ -778,7 +811,9 @@ class Game {
         this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
       }
       if (this.audioManager) this.audioManager.play('invalid');
-      this.handsLeft--;
+      if (!this._isHastePlayActive()) {
+        this.handsLeft--;
+      }
       if (this.handsLeft <= 0) {
         const triggered = this._checkLifeExtension();
         if (!triggered) {
@@ -1016,6 +1051,36 @@ class Game {
       }
     }
 
+    // 检查争分夺秒是否次数耗尽，触发撕裂自毁动画
+    const hastePlayIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
+    if (hastePlayIdx >= 0) {
+      const hastePlay = this.jokers[hastePlayIdx];
+      if (hastePlay.usesLeft !== undefined && hastePlay.usesLeft <= 0) {
+        hastePlay._destroying = true;
+        hastePlay._destroyStart = Date.now();
+        setTimeout(() => {
+          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
+          if (idx >= 0) this.jokers.splice(idx, 1);
+          if (this.storageManager) this.storageManager.saveProgress(this);
+        }, 900);
+      }
+    }
+
+    // 检查规则破坏是否次数耗尽，触发撕裂自毁动画
+    const ruleBreakerIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
+    if (ruleBreakerIdx >= 0) {
+      const ruleBreaker = this.jokers[ruleBreakerIdx];
+      if (ruleBreaker.usesLeft !== undefined && ruleBreaker.usesLeft <= 0) {
+        ruleBreaker._destroying = true;
+        ruleBreaker._destroyStart = Date.now();
+        setTimeout(() => {
+          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
+          if (idx >= 0) this.jokers.splice(idx, 1);
+          if (this.storageManager) this.storageManager.saveProgress(this);
+        }, 900);
+      }
+    }
+
     // 使用传入的 playedCards 而不是依赖 this.hand 的 selected 状态
     //（防止动画期间 selected 被意外清除导致 finalPlayedCards 为空）
     const finalPlayedCards = playedCards.filter(c => c);
@@ -1080,7 +1145,9 @@ class Game {
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
-    this.handsLeft--
+    if (!this._isHastePlayActive()) {
+      this.handsLeft--
+    }
     if (this.storageManager) this.storageManager.saveProgress(this);
   }
 
