@@ -3091,11 +3091,13 @@ class Renderer {
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
-    // 半透明白色胶囊背景
-    this.roundRect(coinCapsuleX, coinCapsuleY, coinCapsuleW + 6 * s, coinCapsuleH, coinCapsuleH / 2, 'rgba(255,255,255,0.35)');
+    // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
+    const capsuleW = coinCapsuleW + 6 * s - 2;
+    const capsuleH = coinCapsuleH - 1;
+    this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', Math.max(1, 1 * s));
     // coin.png 图标
     if (this.coinIcon && this.coinIconLoaded) {
-      ctx.drawImage(this.coinIcon, coinCapsuleX + 8 * s, coinCapsuleY + (coinCapsuleH - coinIconSize) / 2, coinIconSize, coinIconSize);
+      ctx.drawImage(this.coinIcon, coinCapsuleX + 8 * s, coinCapsuleY + (capsuleH - coinIconSize) / 2, coinIconSize, coinIconSize);
     }
 
     // 金币变化动画
@@ -3110,7 +3112,7 @@ class Renderer {
     // 金币数量（带动画缩放）
     ctx.save();
     const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s;
-    const goldTextY = coinCapsuleY + coinCapsuleH / 2;
+    const goldTextY = coinCapsuleY + capsuleH / 2;
     ctx.translate(goldTextX + goldTextW / 2, goldTextY);
     ctx.scale(goldScale, goldScale);
     ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
