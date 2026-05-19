@@ -27,9 +27,15 @@ function vibrate() {
 const WIDTH = info.windowWidth;
 const HEIGHT = info.windowHeight;
 const dpr = info.pixelRatio || 1;
-canvas.width = WIDTH * dpr;
-canvas.height = HEIGHT * dpr;
-ctx.scale(dpr, dpr);
+
+// 限制 Canvas 物理像素上限，防止高分屏内存爆炸
+const MAX_CANVAS_WIDTH = 1280;
+const MAX_CANVAS_HEIGHT = 2560;
+const scaleDpr = Math.min(dpr, MAX_CANVAS_WIDTH / WIDTH, MAX_CANVAS_HEIGHT / HEIGHT);
+
+canvas.width = Math.floor(WIDTH * scaleDpr);
+canvas.height = Math.floor(HEIGHT * scaleDpr);
+ctx.scale(scaleDpr, scaleDpr);
 
 // 游戏全局状态
 let game = new Game();

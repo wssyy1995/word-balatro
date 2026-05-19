@@ -21,8 +21,40 @@ const FACE_CARDS = new Set(['X', 'Y', 'Z']);
 const { WORD_DATA } = require('./words');
 const { EXPAND_WORD_DATA } = require('./expand_words');
 
-// 在线校验缓存
-const onlineWordCache = new Set();
+// 带容量上限的 Set（LRU 淘汰）
+class LimitedSet extends Set {
+  constructor(maxSize) {
+    super();
+    this.maxSize = maxSize;
+  }
+  add(value) {
+    if (this.size >= this.maxSize && !this.has(value)) {
+      const first = this.values().next().value;
+      this.delete(first);
+    }
+    super.add(value);
+    return this;
+  }
+}
+
+// 带容量上限的 Map（LRU 淘汰）
+class LimitedMap extends Map {
+  constructor(maxSize) {
+    super();
+    this.maxSize = maxSize;
+  }
+  set(key, value) {
+    if (this.size >= this.maxSize && !this.has(key)) {
+      const first = this.keys().next().value;
+      this.delete(first);
+    }
+    super.set(key, value);
+    return this;
+  }
+}
+
+// 在线校验缓存（上限 500 条）
+const onlineWordCache = new LimitedSet(500);
 
 // 在线检测状态缓存（当前回合内有效）
 const wordCheckState = new Map();
@@ -30,8 +62,8 @@ const wordCheckState = new Map();
 // 正在检测中的单词（防并发重复请求）
 const checkingWords = new Set();
 
-// 单词释义缓存
-const wordMeaningCache = new Map();
+// 单词释义缓存（上限 500 条）
+const wordMeaningCache = new LimitedMap(500);
 
 // 字母升级记录（跨回合保留）
 const letterUpgrades = new Map();

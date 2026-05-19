@@ -195,12 +195,15 @@ class AnimationManager {
       duration: 800,
       easing: Easing.easeOutCubic,
       onUpdate: (curr) => {
-        // 分数弹出动画数据存储在全局，renderer 中读取
-        this.floatingTexts = this.floatingTexts || [];
-        this.floatingTexts.push({
-          text, x: curr.x, y: curr.y, opacity: curr.opacity, 
-          scale: curr.scale, color, id: this.nextId++
-        });
+        // 修复：原逻辑每帧 push 到 floatingTexts 导致内存只增不减
+        // 改为仅保留当前帧状态，供后续 renderer 读取时不会累积
+        this._lastFloatingText = {
+          text, x: curr.x, y: curr.y, opacity: curr.opacity,
+          scale: curr.scale, color, id: this.nextId
+        };
+      },
+      onComplete: () => {
+        this._lastFloatingText = null;
       }
     });
   }
