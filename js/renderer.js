@@ -31,11 +31,13 @@ class Renderer {
     this.safeTop = 0;
     this.safeBottom = 0;
     this.hasDynamicIsland = false;
+    this.platform = '';
     try {
       const sysInfo = wx.getSystemInfoSync();
       this.safeTop = sysInfo.safeArea?.top || sysInfo.statusBarHeight || 0;
       this.safeBottom = (sysInfo.screenHeight - (sysInfo.safeArea?.bottom || sysInfo.screenHeight));
-      this.hasDynamicIsland = sysInfo.platform === 'ios' && this.safeTop >= 59;
+      this.platform = sysInfo.platform || '';
+      this.hasDynamicIsland = this.platform === 'ios' && this.safeTop >= 59;
     } catch (e) {
       this.safeTop = 0;
       this.hasDynamicIsland = false;
@@ -1623,27 +1625,26 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 20 + (this.hasDynamicIsland ? 10 * s : 0);
-
-    // top_icon（保持原位置）
+    // top_icon 与金币胶囊统一从页面顶部向下倒推 5px
     const iconSize = 38 * s;
     const iconX = 15 * s;
-    const iconY = top - iconSize - 5 - 2;
+    const iconY = 10 * s;
     if (this.topIcon && this.topIconLoaded) {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
     // 记录点击区域
     this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
 
-    // 金币胶囊在 icon 右侧，间距 10px，垂直居中对齐
+    // 金币胶囊：宽屏 iOS 刘海/灵动岛机型放到右上角，其余在 icon 右侧
     const coinIconSize = 22 * s;
     ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
     const coinCapsuleH = 34 * s;
-    const coinX = iconX + iconSize + 10 * s;
-    const coinY = iconY + (iconSize - coinCapsuleH) / 2;
+    const isWideIOS = this.platform === 'ios' && W >= 390 && this.safeTop > 20;
+    const coinX = isWideIOS ? W - coinCapsuleW - 15 * s : iconX + iconSize + 10 * s;
+    const coinY = isWideIOS ? iconY : iconY + (iconSize - coinCapsuleH) / 2;
     this._drawCoinCapsuleAt(coinX, coinY, game);
   }
 
@@ -2027,12 +2028,14 @@ class Renderer {
     const propBarH = 84 * s;
 
     const btnTop = H - 90 * s;
-    const cardGap = 50 * s;                                    // 卡牌底部到按钮间距（约原来的一半）
+    // tall/narrow 且元素被缩小的屏幕（s<1）自适应：把多余高度分配给底部间距和道具栏下移
+    const extraHeight = s < 1.0 ? Math.max(0, H - Math.floor(740 * s)) : 0;
+    const cardGap = 50 * s + extraHeight * 0.3;                // 卡牌底部到按钮间距
     const cardBottom = btnTop - cardGap + 3;                  // 卡牌底部
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
     const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2;         // 预览区中心（卡牌上方 20px）
     const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize; // 分数方块顶部（预览上方 20px）
-    const propY = hudBottom + 6 * s;                         // 道具栏顶部（固定距 HUD 15px）
+    const propY = hudBottom + 6 * s + extraHeight * 0.15;    // 道具栏顶部（随高度自适应下移）
 
     this.cardRects = []; // 存储卡牌点击区域
 
@@ -3092,8 +3095,8 @@ class Renderer {
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
-    const capsuleW = coinCapsuleW + 6 * s - 6;
-    const capsuleH = coinCapsuleH - 2;
+    const capsuleW = coinCapsuleW + 6 * s - 7;
+    const capsuleH = coinCapsuleH - 3;
     const borderW = Math.max(1, Math.floor(1 * s)) + 1;
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
 

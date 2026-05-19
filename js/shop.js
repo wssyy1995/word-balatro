@@ -35,7 +35,7 @@ const SHOP_POOL = {
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
-    {name:'临死祈祷', type:'witch', scope:'whole_word', trigger:'last_chance', value:4, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+4'},
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
     {name:'争分夺秒', type:'witch', scope:'limit', trigger:'haste_play', limit:5, cost:8, desc:'生效5回合，每回合前10秒出牌不消耗次数'},
     {name:'规则破坏', type:'witch', scope:'limit', trigger:'rule_breaker', limit:5, cost:8, desc:'生效5回合，每回合首次出牌无视女巫约束'}
   ],
@@ -49,7 +49,7 @@ const SHOP_POOL = {
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:6, desc:'重掷下一回合的女巫技能'}
   ],
   potion: [
-    {name:'随机强化', type:'potion', effect:'random_upgrade', value:3, cost:5, desc:'随机强化1个字母，分数×3'},
+    {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数×2'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
     {name:'推倒重铸', type:'potion', effect:'destroy_witch', cost:4, desc:'随机销毁一张已装备的女巫牌，获得其价格+2的金币'}
