@@ -31,7 +31,7 @@ class InputHandler {
         const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
         if (btnHit) {
           const selected = game.getSelectedCards();
-          if (selected.length >= 3) {
+          if (selected.length >= 2) {
             game.playHand().then(result => {
               if (result.valid) {
                 // 出牌成功
@@ -92,6 +92,36 @@ class InputHandler {
     }
 
     if (game.state === 'potion') {
+      // 随机强化转盘弹窗
+      if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+        // 检测关闭按钮
+        if (renderer.randomUpgradeCloseRect) {
+          const closeHit = renderer.hitTest(x, y, [renderer.randomUpgradeCloseRect]);
+          if (closeHit) {
+            if (game.potionMode) {
+              game.gold += game.potionMode.cost;
+              game.potionMode = null;
+            }
+            game._randomUpgradePopup = null;
+            game.state = 'shop';
+            return;
+          }
+        }
+
+        // 检测中心抽选按钮（圆形区域）
+        if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
+          const btn = renderer.randomSpinBtnRect;
+          const dx = x - btn.cx;
+          const dy = y - btn.cy;
+          if (dx * dx + dy * dy <= btn.r * btn.r) {
+            game.startRandomSpin();
+            return;
+          }
+        }
+
+        return; // 转盘弹窗内其他区域不响应
+      }
+
       // 检测药水选牌
       if (renderer.potionCardRects) {
         const cardHit = renderer.hitTest(x, y, renderer.potionCardRects);

@@ -61,6 +61,7 @@ class StorageManager {
       totalScore: game.totalScore,
       roundScores: game.roundScores,
       jokers: game.jokers,
+      maxJokerSlots: game.maxJokerSlots,
       letterUpgrades: [...letterUpgrades.entries()],
       timestamp: Date.now()
     };
@@ -68,7 +69,11 @@ class StorageManager {
   }
 
   loadProgress() {
-    return this.get('progress', null);
+    const progress = this.get('progress', null);
+    if (progress && progress.maxJokerSlots === undefined) {
+      progress.maxJokerSlots = 4;
+    }
+    return progress;
   }
 
   hasProgress() {

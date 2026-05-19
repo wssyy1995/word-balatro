@@ -2,8 +2,9 @@
 const { Game } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeLetter, refreshModule } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { CloudStorageManager } = require('./js/cloud_storage');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -35,16 +36,67 @@ let game = new Game();
 let lastPlayResult = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
+// 云存储管理器
+const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
+game.cloudStorage = cloudStorage;
+
+// 云存储初始化 + shop_card 预加载，延迟到第一回合页面渲染完成后
+let cloudPreloadTriggered = false;
+function triggerCloudPreload() {
+  if (cloudPreloadTriggered) return;
+  cloudPreloadTriggered = true;
+
+  // 延迟初始化云环境，避免阻塞游戏启动
+  cloudStorage.init();
+
+  if (!cloudStorage.hasUploaded()) {
+    console.log('[Game] 没有云存储映射，跳过 shop_card 云加载');
+    return;
+  }
+
+  console.log('[Game] 第一回合已显示，开始后台预加载云图片');
+  Promise.all([
+    cloudStorage.preloadShopCardImages(),
+    cloudStorage.preloadWitchImages(),
+  ]).then(() => {
+    cloudStorage.injectToRenderer(renderer);
+    cloudStorage.injectWitchToRenderer(renderer);
+    console.log('[Game] 云图片已注入 renderer');
+  }).catch(err => {
+    console.error('[Game] 云图片预加载失败:', err);
+  });
+}
+
 // 触摸事件处理
 wx.onTouchStart((e) => {
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
 
+  // 日志区域触摸（优先处理滚动）
+  if (renderer.cloudLogRect) {
+    const r = renderer.cloudLogRect;
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+      renderer.cloudLogDragging = true;
+      renderer.cloudLogDragStartY = y;
+      renderer.cloudLogDragStartScrollY = renderer.cloudLogScrollY;
+      return;
+    }
+  }
+
   handleInput(x, y);
 });
 
+wx.onTouchMove((e) => {
+  if (!renderer.cloudLogDragging) return;
+  const touch = e.touches[0];
+  const y = touch.clientY;
+  const deltaY = renderer.cloudLogDragStartY - y;
+  renderer.cloudLogScrollY = renderer.cloudLogDragStartScrollY + deltaY;
+});
+
 wx.onTouchEnd(() => {
+  renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
 });
 
@@ -55,7 +107,61 @@ function handleInput(x, y) {
     if (debugHit) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(100);
+      if (debugHit.action === 'debug_addGold') {
+        game.gold += 10;
+        if (game.storageManager) game.storageManager.saveProgress(game);
+      }
+      if (debugHit.action === 'debug_jumpToRound') {
+        wx.showModal({
+          title: '跳转回合',
+          editable: true,
+          placeholderText: '输入目标回合数',
+          success: (res) => {
+            const round = parseInt(res.content, 10);
+            if (round && round > 0) {
+              game.jumpToRound(round);
+            }
+          }
+        });
+      }
       if (debugHit.action === 'debug_winRound') game.winRound();
+      if (debugHit.action === 'debug_refreshShop') {
+        if (!game.shopItems) {
+          game.shopItems = generateShopItems(game);
+        } else {
+          refreshModule(game, 0);
+          refreshModule(game, 1);
+          refreshModule(game, 2);
+        }
+      }
+      if (debugHit.action === 'debug_addWitchSlot') {
+        game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
+        if (game.storageManager) game.storageManager.saveProgress(game);
+      }
+      if (debugHit.action === 'debug_upload_shop_card') {
+        cloudStorage.uploadShopCards().then(res => {
+          game.hintToast = { text: `上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadShopCardImages();
+        }).then(() => {
+          cloudStorage.injectToRenderer(renderer);
+          game.hintToast = { text: '云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: '上传失败', expireAt: Date.now() + 2000 };
+          console.error('上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_upload_witch') {
+        cloudStorage.uploadWitchImages().then(res => {
+          game.hintToast = { text: `witch 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadWitchImages();
+        }).then(() => {
+          cloudStorage.injectWitchToRenderer(renderer);
+          game.hintToast = { text: 'witch 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'witch 上传失败', expireAt: Date.now() + 2000 };
+          console.error('witch 上传失败:', err);
+        });
+      }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';
         game.gameOverReason = 'debug';
@@ -79,12 +185,87 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'playing') {
-    // 检测卡牌点击
-    const cardHit = renderer.hitTest(x, y, renderer.cardRects);
-    if (cardHit) {
-      vibrate();
-      game.toggleSelect(cardHit.cardId);
+    // 字母置换弹窗打开时，优先处理弹窗点击
+    if (game._changeLetterPopup) {
+      // 检测关闭按钮
+      if (renderer.changeLetterCloseRect) {
+        const closeHit = renderer.hitTest(x, y, [renderer.changeLetterCloseRect]);
+        if (closeHit) {
+          vibrate();
+          game._changeLetterPopup = null;
+          return;
+        }
+      }
+      // 检测字母块点击
+      if (renderer.changeLetterRects) {
+        const letterHit = renderer.hitTest(x, y, renderer.changeLetterRects);
+        if (letterHit) {
+          vibrate();
+          game._changeLetterPopup.targetLetter = letterHit.letter;
+          return;
+        }
+      }
+      // 检测置换按钮
+      if (renderer.changeLetterSwapBtnRect && renderer.changeLetterSwapBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game._closingChangeLetter) return;
+          const popup = game._changeLetterPopup;
+          const card = game.hand.find(c => c && c.id === popup.cardId);
+          if (card && popup.targetLetter) {
+            // 启动关闭动画，动画结束后执行置换
+            game._closingChangeLetter = true;
+            game._closeChangeLetterStartTime = Date.now();
+            setTimeout(() => {
+              // 执行字母置换
+              const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./js/data');
+              card.letter = popup.targetLetter;
+              card.baseScore = LETTER_SCORE[popup.targetLetter];
+              const upgrade = letterUpgrades.get(popup.targetLetter);
+              card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
+              card.upgraded = !!upgrade;
+              card.upgradeMult = upgrade ? upgrade.mult : 1;
+              card.isFace = FACE_CARDS.has(popup.targetLetter);
+              // 保持卡牌选中状态，不移除 game.selected
+              // 消耗药水
+              if (game.potions && game.potions[popup.potionIndex]) {
+                game.potions.splice(popup.potionIndex, 1);
+              }
+              if (game.audioManager) game.audioManager.play('upgrade');
+              if (game.storageManager) game.storageManager.saveProgress(game);
+              game._changeLetterPopup = null;
+              game._closingChangeLetter = false;
+            }, 200);
+          } else {
+            // 条件不满足，直接关闭（无动画）
+            game._changeLetterPopup = null;
+          }
+          return;
+        }
+      }
+      // 弹窗空白区域点击不关闭，仅允许点击右上角 X
       return;
+    }
+
+    // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
+    if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
+      const cardHit = renderer.hitTest(x, y, renderer.cardRects);
+      if (cardHit) {
+        vibrate();
+        game.toggleSelect(cardHit.cardId);
+        return;
+      }
+    }
+
+    // 调试：点击第一个分数方块显示华丽 x2 标签
+    if (renderer.firstBoxRect) {
+      const boxHit = renderer.hitTest(x, y, [renderer.firstBoxRect]);
+      if (boxHit) {
+        vibrate();
+        game._debugLabelShow = { startTime: Date.now(), text: 'x2' };
+        return;
+      }
     }
 
     // 检测出牌按钮
@@ -95,7 +276,7 @@ function handleInput(x, y) {
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
-        if (selected.length >= 3 && !game.pendingCheck) {
+        if (selected.length >= 2 && !game.pendingCheck) {
           game.playHand().then(result => {
             lastPlayResult = result;
           }).catch(err => {
@@ -130,17 +311,80 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测字母置换提示按钮点击
+    if (renderer.changeLetterHintRect) {
+      const hintHit = renderer.hitTest(x, y, [renderer.changeLetterHintRect]);
+      if (hintHit) {
+        vibrate();
+        game._changeLetterHint = null;
+        return;
+      }
+    }
+
+    // 检测 HUD 女巫头像点击（温柔旋转星星）
+    if (renderer.hudWitchAvatarRect) {
+      const avatarHit = renderer.hitTest(x, y, [renderer.hudWitchAvatarRect]);
+      if (avatarHit) {
+        vibrate();
+        const rect = renderer.hudWitchAvatarRect;
+        game._witchStarBurst = {
+          cx: rect.x + rect.w / 2,
+          cy: rect.y + rect.h / 2,
+          startTime: Date.now(),
+        };
+        return;
+      }
+    }
+
+    // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
+    if (renderer.witchPropRects) {
+      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
+      if (witchHit) {
+        const joker = game.jokers[witchHit.jokerIndex];
+        if (joker && joker._disabled) return;
+        vibrate();
+        if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
+          game._witchDetailPopup = null;
+        } else {
+          game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex, animStartTime: Date.now() };
+        }
+        return;
+      }
+    }
+
+    // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗
+    if (game._witchDetailPopup) {
+      game._witchDetailPopup = null;
+      return;
+    }
+
     // 检测已购买道具栏中的药水牌点击
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
       if (potionHit) {
         vibrate();
         const potion = game.potions[potionHit.potionIndex];
-        if (potion) {
-          game.potionMode = {...potion};
-          game._prePotionState = 'playing';
-          game.state = 'potion';
+        if (!potion) return;
+        // 字母置换药水：游戏中直接使用，弹出选择弹窗
+        if (potion.effect === 'change_letter') {
+          const selectedCards = game.getSelectedCards();
+          if (selectedCards.length !== 1) {
+            game._changeLetterHint = { potionIndex: potionHit.potionIndex, startTime: Date.now() };
+            return;
+          }
+          game._changeLetterPopup = {
+            potionIndex: potionHit.potionIndex,
+            cardId: selectedCards[0].id,
+            originalLetter: selectedCards[0].letter,
+            targetLetter: null,
+            startTime: Date.now(),
+          };
+          return;
         }
+        // 其他药水：进入 potion 状态
+        game.potionMode = {...potion};
+        game._prePotionState = 'playing';
+        game.state = 'potion';
         return;
       }
     }
@@ -151,8 +395,92 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
       if (btnHit) {
         vibrate();
-        game.claimSettlement();
+        renderer.settlementRenderer.claimBtnPressed = true;
+        setTimeout(() => {
+          renderer.settlementRenderer.claimBtnPressed = false;
+          game.claimSettlement();
+        }, 150);
         return;
+      }
+    }
+  }
+
+  if (game.state === 'witch_reward') {
+    const wr = renderer.witchRewardRenderer;
+    if (!wr) return;
+    const data = game.witchRewardData;
+    if (!data) return;
+
+    if (data.phase === 'gift') {
+      // 点击3个礼盒之一
+      if (wr.giftRects && !data._opening && data._selectedGiftIndex === undefined) {
+        const hit = renderer.hitTest(x, y, wr.giftRects);
+        if (hit) {
+          vibrate();
+          game.witchRewardData._selectedGiftIndex = hit.index;
+          game.witchRewardData._disappearStartTime = Date.now();
+          game.witchRewardData._opening = true;
+          game.witchRewardData._openingStartTime = Date.now();
+          return;
+        }
+      }
+    } else if (data.phase === 'result') {
+      // 防止重复触发
+      if (wr.okBtnPressed || wr.stashBtnPressed || wr.useBtnPressed) return;
+
+      if (data.result) {
+        if (data.rewardItem && data.rewardItem.type === 'buff') {
+          // buff 类奖励：领取按钮
+          if (wr.okBtnRect) {
+            const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+            if (hit) {
+              vibrate();
+              wr.okBtnPressed = true;
+              setTimeout(() => {
+                wr.okBtnPressed = false;
+                game.closeWitchReward('ok');
+              }, 150);
+              return;
+            }
+          }
+        } else {
+          // 药水类奖励：暂存 / 立即使用
+          const rects = [];
+          if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
+          if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
+          const btnHit = renderer.hitTest(x, y, rects);
+          if (btnHit) {
+            vibrate();
+            if (btnHit.action === 'stash') {
+              wr.stashBtnPressed = true;
+              setTimeout(() => {
+                wr.stashBtnPressed = false;
+                game.closeWitchReward('stash');
+              }, 150);
+            } else if (btnHit.action === 'use') {
+              wr.useBtnPressed = true;
+              setTimeout(() => {
+                wr.useBtnPressed = false;
+                game.closeWitchReward('use');
+              }, 150);
+            }
+            return;
+          }
+        }
+      } else {
+        // 没中：确定按钮
+        if (wr.okBtnRect) {
+          const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+          if (hit) {
+            vibrate();
+            wr.okBtnPressed = true;
+            setTimeout(() => {
+              wr.okBtnPressed = false;
+              game.closeWitchReward('ok');
+            }, 150);
+            return;
+          }
+        }
       }
     }
   }
@@ -182,7 +510,11 @@ function handleInput(x, y) {
             game._successPressedBtn = null;
             // 女巫牌且点击"装备"
             if (btnHit.action === 'equipWitch' && game._confirmBuyItemData) {
-              game.jokers.push({...game._confirmBuyItemData});
+              const item = {...game._confirmBuyItemData};
+              if (item.limit !== undefined && item.usesLeft === undefined) {
+                item.usesLeft = item.limit;
+              }
+              game.jokers.push(item);
               if (game.storageManager) game.storageManager.saveProgress(game);
             }
             // 药水牌且点击"暂存"
@@ -192,11 +524,43 @@ function handleInput(x, y) {
             }
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
-              game.potionMode = {...game._confirmBuyItemData};
-              game._prePotionState = 'shop';
-              game.state = 'potion';
+              const item = game._confirmBuyItemData;
+              if (item.effect === 'destroy_witch') {
+                // 推倒重铸：随机销毁一张女巫牌，获得金币
+                const jokers = game.jokers || [];
+                if (jokers.length > 0) {
+                  const idx = Math.floor(Math.random() * jokers.length);
+                  const target = jokers[idx];
+                  game._destroyWitchPotion = {
+                    startTime: Date.now(),
+                    jokerIndex: idx,
+                    goldReward: (target.cost || 0) + 2,
+                  };
+                }
+              } else {
+                game.potionMode = {...item};
+                game._prePotionState = 'shop';
+                game.state = 'potion';
+              }
             }
-            // 水晶球点击"生效"（购买时已生效，无需额外处理）
+            // 水晶球点击"生效"
+            if (btnHit.action === 'applyCrystal' && game._confirmBuyItemData) {
+              const item = game._confirmBuyItemData;
+              if (item.effect === 'reroll_skill') {
+                // 技能重掷：从 SKILL_POOL 随机选一个新技能替换下一回合的
+                const { SKILL_POOL, shuffleSkills } = require('./js/witch_skills');
+                const { WITCH_SKILLS } = require('./js/witch_skills');
+                const nextRound = game.round + 1;
+                const targetConfig = WITCH_SKILLS.find(s => s.level === nextRound);
+                if (targetConfig && game._shuffledSkills) {
+                  const idx = WITCH_SKILLS.indexOf(targetConfig);
+                  if (idx >= 0 && idx < game._shuffledSkills.length) {
+                    const newSkill = SKILL_POOL[Math.floor(Math.random() * SKILL_POOL.length)];
+                    game._shuffledSkills[idx] = {...newSkill};
+                  }
+                }
+              }
+            }
             game._closingConfirmBuy = true;
             game._closeConfirmBuyStartTime = Date.now();
           }, 300);
@@ -231,7 +595,7 @@ function handleInput(x, y) {
         const arr = game[sellHit.array];
         if (arr && arr[sellHit.index]) {
           const item = arr[sellHit.index];
-          game.gold += item.cost;
+          game.gold += Math.round(item.cost / 2);
           // 启动售出消失动画（400ms 后实际移除）
           game._sellingProp = {
             type: sellHit.array,
@@ -245,12 +609,22 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测刷新按钮点击
+    // 点击商店页面其他地方，关闭售出按钮
+    if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
+      renderer.shopRenderer.shopSelectedOwned = null;
+      return;
+    }
+
+    // 检测刷新按钮点击（扣除 5 金币）
     if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
       const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
       if (refreshHit) {
         vibrate();
-        refreshModule(game, refreshHit.modIdx);
+        renderer.shopRenderer.refreshBtnPressed = { modIdx: refreshHit.modIdx, pressTime: Date.now() };
+        if (game.gold >= 5) {
+          game.gold -= 5;
+          refreshModule(game, refreshHit.modIdx);
+        }
         return;
       }
     }
@@ -264,7 +638,7 @@ function handleInput(x, y) {
         if (!item) return;
         // 金币不足或已达上限，直接忽略
         if (game.gold < item.cost) return;
-        if (item.type === 'witch' && (game.jokers || []).length >= 4) return;
+        if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return;
         if (item.type === 'potion' && (game.potions || []).length >= 2) return;
 
         // 按下动效
@@ -287,9 +661,16 @@ function handleInput(x, y) {
 
     if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
-      if (btnHit) {
+      if (btnHit && !game._challengeBtnPressed) {
         vibrate();
-        game.nextRound();
+        game._challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressTime = Date.now();
+        // 启动页面过渡动画
+        game._shopToGameTransition = { startTime: Date.now() };
+        setTimeout(() => {
+          game.nextRound();
+        }, 400);
         return;
       }
     }
@@ -298,6 +679,33 @@ function handleInput(x, y) {
   if (game.state === 'potion') {
     // 动画进行中，忽略所有点击
     if (game._potionUpgrading) return;
+
+    // === 随机强化药水（老虎机）===
+    if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+      // 检测关闭按钮
+      if (renderer.randomUpgradeCloseRect) {
+        const closeHit = renderer.hitTest(x, y, [renderer.randomUpgradeCloseRect]);
+        if (closeHit) {
+          vibrate();
+          game.potionMode = null;
+          game._randomUpgradePopup = null;
+          game.state = game._prePotionState || 'shop';
+          game._prePotionState = null;
+          if (game.storageManager) game.storageManager.saveProgress(game);
+          return;
+        }
+      }
+      // 检测抽选按钮（只在 idle 阶段可点）
+      if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
+        const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
+        if (spinHit) {
+          vibrate();
+          game.startRandomSpin();
+          return;
+        }
+      }
+      return;
+    }
 
     // 检测字母点击
     if (renderer.potionLetterRects) {
@@ -316,18 +724,36 @@ function handleInput(x, y) {
         vibrate();
         // 先计算升级后的分数
         const potion = game.potionMode;
-        const mult = potion.value || 2;
-        const existing = letterUpgrades.get(game._potionSelectedLetter);
-        const totalMult = existing ? existing.mult * mult : mult;
-        const newScore = Math.floor(LETTER_SCORE[game._potionSelectedLetter] * totalMult);
-        // 执行升级
-        upgradeLetter(game, game._potionSelectedLetter);
+        const letter = game._potionSelectedLetter;
+        const baseScore = LETTER_SCORE[letter];
+        const existing = letterUpgrades.get(letter) || {};
+        const oldScore = Math.floor(baseScore * (existing.mult || 1)) + (existing.add || 0);
+        let newScore, totalMult, totalAdd;
+        if (potion.effect === 'upgrade_letter') {
+          // 字母强化：加法叠加
+          const add = potion.value || 10;
+          totalMult = existing.mult || 1;
+          totalAdd = (existing.add || 0) + add;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        } else {
+          // 其他（如随机强化/王牌强化）：乘法叠加
+          const mult = potion.value || 2;
+          totalMult = (existing.mult || 1) * mult;
+          totalAdd = existing.add || 0;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        }
+        // 执行升级（保留 potionMode 让字母选择页面继续显示）
+        const savedPotionMode = game.potionMode;
+        upgradeLetter(game, letter);
+        game.potionMode = savedPotionMode;
         // 启动弹出动画
         game._potionUpgrading = {
           startTime: Date.now(),
-          letter: game._potionSelectedLetter,
+          letter: letter,
+          oldScore: oldScore,
           newScore: newScore,
-          upgradeMult: totalMult
+          upgradeMult: totalMult,
+          upgradeAdd: totalAdd
         };
         game._potionSelectedLetter = null;
         return;
@@ -352,6 +778,35 @@ function handleInput(x, y) {
         game._prePotionState = null;
         game._potionSelectedLetter = null;
         if (game.storageManager) game.storageManager.saveProgress(game);
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'life_extended') {
+    if (game._lifeExtensionBtnPressed) return;
+    if (renderer.lifeExtensionBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.lifeExtensionBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game._lifeExtensionBtnPressed = true;
+        setTimeout(() => {
+          game._lifeExtensionBtnPressed = false;
+          game._lifeExtensionAnim = null;
+          // 发放结算金币（与 _showSettlement 逻辑一致）
+          const baseGold = 3 + Math.round(game.round / 3);
+          const extraHands = game.handsLeft * 2;
+          const extraDiscards = game.discardsLeft * 1;
+          game.gold += baseGold + extraHands + extraDiscards;
+          // 目标分脉冲动画（放大缩小，参考目标减免/金币胶囊）
+          const bonus = game._lifeExtensionBonus || 0;
+          if (bonus > 0) {
+            game._lifeExtensionTargetAnim = { startTime: Date.now(), duration: 600 };
+          }
+          game.state = 'shop';
+          if (!game.shopItems) game.shopItems = generateShopItems(game);
+          if (game.storageManager) game.storageManager.saveProgress(game);
+        }, 150);
         return;
       }
     }
@@ -388,6 +843,14 @@ function restartGame() {
   game = new Game();
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
+  game._randomUpgradePopup = null;
+  game._changeLetterPopup = null;
+  game._closingChangeLetter = false;
+  game._closeChangeLetterStartTime = null;
+  game._changeLetterHint = null;
+  game.witchRewardData = null;
+  game._lifeExtensionAnim = null;
+  game._lifeExtensionBtnPressed = false;
   lastPlayResult = null;
 }
 
@@ -400,11 +863,25 @@ function gameLoop(timestamp) {
   game.update(deltaTime);
   renderer.render(game);
 
+  // 第一回合页面渲染后，触发云存储图片后台预加载
+  // 用 setTimeout 把云初始化从 RAF 回调中脱出来，避免 Failed to fetch
+  if (game.state === 'playing' && !cloudPreloadTriggered) {
+    setTimeout(triggerCloudPreload, 0);
+  }
+
   requestAnimationFrame(gameLoop);
 }
 
-// 启动游戏循环
-requestAnimationFrame(gameLoop);
+// 等待 bg.png 加载完成后再启动游戏循环，避免蓝色 fallback 背景一闪而过
+function waitForBgAndStart() {
+  if (renderer.bgLoaded || !renderer.bgImage) {
+    // bg.png 已加载，或加载失败，都可以开始渲染
+    requestAnimationFrame(gameLoop);
+  } else {
+    requestAnimationFrame(waitForBgAndStart);
+  }
+}
+requestAnimationFrame(waitForBgAndStart);
 
 // 暴露到全局（调试用）
 wx.game = game;
