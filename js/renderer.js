@@ -1342,19 +1342,19 @@ class Renderer {
     ctx.restore();
   }
 
-  // 绘制圆角矩形
+  // 绘制圆角矩形（使用 arcTo 画真正的圆弧，圆角更圆润）
   roundRect(x, y, w, h, r, fill, stroke, lineWidth = 2) {
     const ctx = this.ctx;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
     ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.arcTo(x, y + h, x, y, r);
     ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
     if (fill) { ctx.fillStyle = fill; ctx.fill(); }
     if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth; ctx.stroke(); }
@@ -3094,7 +3094,37 @@ class Renderer {
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
     const capsuleW = coinCapsuleW + 6 * s - 2;
     const capsuleH = coinCapsuleH - 1;
-    this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', Math.max(1, 1 * s));
+    const borderW = Math.max(1, Math.floor(1 * s)) + 2; // 边框粗细 +1px
+    this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
+
+    // 内部隐隐立体感：顶部微弱高光 + 底部微弱阴影
+    ctx.save();
+    const ix = coinCapsuleX + borderW;
+    const iy = coinCapsuleY + borderW;
+    const iw = capsuleW - borderW * 2;
+    const ih = capsuleH - borderW * 2;
+    const ir = ih / 2;
+    ctx.beginPath();
+    ctx.moveTo(ix + ir, iy);
+    ctx.lineTo(ix + iw - ir, iy);
+    ctx.arcTo(ix + iw, iy, ix + iw, iy + ih, ir);
+    ctx.lineTo(ix + iw, iy + ih - ir);
+    ctx.arcTo(ix + iw, iy + ih, ix, iy + ih, ir);
+    ctx.lineTo(ix + ir, iy + ih);
+    ctx.arcTo(ix, iy + ih, ix, iy, ir);
+    ctx.lineTo(ix, iy + ir);
+    ctx.arcTo(ix, iy, ix + iw, iy, ir);
+    ctx.closePath();
+    ctx.clip();
+    const innerGrad = ctx.createLinearGradient(0, iy, 0, iy + ih);
+    innerGrad.addColorStop(0, 'rgba(255,255,255,0.15)');
+    innerGrad.addColorStop(0.35, 'rgba(255,255,255,0)');
+    innerGrad.addColorStop(0.65, 'rgba(255,255,255,0)');
+    innerGrad.addColorStop(1, 'rgba(0,0,0,0.06)');
+    ctx.fillStyle = innerGrad;
+    ctx.fillRect(ix, iy, iw, ih);
+    ctx.restore();
+
     // coin.png 图标
     if (this.coinIcon && this.coinIconLoaded) {
       ctx.drawImage(this.coinIcon, coinCapsuleX + 8 * s, coinCapsuleY + (capsuleH - coinIconSize) / 2, coinIconSize, coinIconSize);
