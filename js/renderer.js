@@ -3085,8 +3085,8 @@ class Renderer {
     const s = this.scale;
 
     const coinCapsuleH = 34 * s;
-    const coinIconSize = 22 * s;
-    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    const coinIconSize = 20 * s;
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
@@ -3145,7 +3145,7 @@ class Renderer {
     const goldTextY = coinCapsuleY + capsuleH / 2;
     ctx.translate(goldTextX + goldTextW / 2, goldTextY);
     ctx.scale(goldScale, goldScale);
-    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
