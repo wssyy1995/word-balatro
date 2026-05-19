@@ -733,11 +733,11 @@ class Game {
       this.pendingCheck.resolveTime = Date.now();
       if (this.audioManager) this.audioManager.play('invalid');
 
-      // 勇敢试错：每次非法单词倍率 +1；若同时触发容错咒文，倍率 -0.1
+      // 勇敢试错：每次非法单词倍率 +1；若同时触发容错咒文，不生效
       const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
       (this.jokers || []).forEach(j => {
-        if (j.trigger === 'illegal_boost') {
-          j.value = (j.value || 0) + (hasShield ? -0.1 : 1);
+        if (j.trigger === 'illegal_boost' && !hasShield) {
+          j.value = (j.value || 0) + 1;
         }
       });
 
