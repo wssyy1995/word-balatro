@@ -3092,7 +3092,7 @@ class Renderer {
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
-    const capsuleW = coinCapsuleW + 6 * s - 2;
+    const capsuleW = coinCapsuleW + 6 * s - 4;
     const capsuleH = coinCapsuleH - 1;
     const borderW = Math.max(1, Math.floor(1 * s)) + 1.5;
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
@@ -3141,7 +3141,7 @@ class Renderer {
 
     // 金币数量（带动画缩放）
     ctx.save();
-    const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s;
+    const goldTextX = coinCapsuleX + 8 * s + coinIconSize + 6 * s - 1;
     const goldTextY = coinCapsuleY + capsuleH / 2;
     ctx.translate(goldTextX + goldTextW / 2, goldTextY);
     ctx.scale(goldScale, goldScale);
