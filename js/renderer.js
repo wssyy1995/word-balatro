@@ -3094,7 +3094,7 @@ class Renderer {
     // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
     const capsuleW = coinCapsuleW + 6 * s - 2;
     const capsuleH = coinCapsuleH - 1;
-    const borderW = Math.max(1, Math.floor(1 * s)) + 2; // 边框粗细 +1px
+    const borderW = Math.max(1, Math.floor(1 * s)) + 1.5;
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
 
     // 内部隐隐立体感：顶部微弱高光 + 底部微弱阴影
