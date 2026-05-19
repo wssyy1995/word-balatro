@@ -1657,7 +1657,33 @@ class Renderer {
     ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
     ctx.restore();
 
-    // === 目标分 / 当前 卡片式 top bar ===
+    // === 争分夺秒倒计时条（在顶部bar上方）===
+    if (game._hastePlayActive && game._hastePlayStartTime) {
+      const elapsed = Date.now() - game._hastePlayStartTime;
+      const total = 10000;
+      const remaining = Math.max(0, total - elapsed);
+      const progress = remaining / total;
+      if (progress > 0) {
+        const timerH = 6 * s;
+        const timerY = barY - timerH - 3 * s;
+        const timerW = barW * 0.4;
+        const timerX = W / 2 - timerW / 2;
+        // 背景
+        this.roundRect(timerX, timerY, timerW, timerH, timerH / 2, 'rgba(0,0,0,0.3)');
+        // 进度
+        const barColor = progress > 0.5 ? '#2ecc71' : progress > 0.2 ? '#f39c12' : '#e74c3c';
+        this.roundRect(timerX, timerY, timerW * progress, timerH, timerH / 2, barColor);
+        // 文字
+        ctx.save();
+        const sec = (remaining / 1000).toFixed(1);
+        ctx.font = `bold ${Math.max(7, Math.floor(9 * s))}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${sec}s`, timerX + timerW / 2, timerY + timerH / 2 + 0.5 * s);
+        ctx.restore();
+      }
+    }
     const barW = W - 20 * s;
     const barH = h;
     const barX = 10 * s;
@@ -2128,6 +2154,23 @@ class Renderer {
             const strokeColor = `rgba(155,89,182,${0.6 + 0.4 * breath})`;
             this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
             ctx.restore();
+          }
+        }
+
+        // 规则破坏触发：金色边框闪烁（持续800ms）
+        if (joker._ruleBreakerFlash && joker._ruleBreakerFlashStart) {
+          const elapsed = Date.now() - joker._ruleBreakerFlashStart;
+          if (elapsed < 800) {
+            const breath = 0.5 + 0.5 * Math.sin(Date.now() / 150);
+            ctx.save();
+            ctx.shadowColor = `rgba(255,215,0,${0.4 + 0.4 * breath})`;
+            ctx.shadowBlur = (8 + 12 * breath) * s;
+            const lineW = (2 + 3 * breath) * s;
+            const strokeColor = `rgba(255,215,0,${0.7 + 0.3 * breath})`;
+            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
+            ctx.restore();
+          } else {
+            joker._ruleBreakerFlash = false;
           }
         }
         // 自毁动画期间不响应点击
