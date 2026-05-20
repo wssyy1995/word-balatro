@@ -561,6 +561,38 @@ class Game {
     this.storageManager = new StorageManager();
     this.audioManager.preloadAll();
     this.resetRound();
+    // 追踪本实例的所有 setTimeout，restart 时统一清除防止闭包泄漏
+    this._timeoutIds = [];
+    this._destroyed = false;
+  }
+
+  // 封装 setTimeout，自动追踪 ID，destroy 时统一清除
+  _delay(callback, ms) {
+    if (this._destroyed) return null;
+    const id = setTimeout(() => {
+      const idx = this._timeoutIds.indexOf(id);
+      if (idx >= 0) this._timeoutIds.splice(idx, 1);
+      if (!this._destroyed) callback();
+    }, ms);
+    this._timeoutIds.push(id);
+    return id;
+  }
+
+  _clearAllTimeouts() {
+    this._timeoutIds.forEach(id => clearTimeout(id));
+    this._timeoutIds = [];
+  }
+
+  destroy() {
+    this._destroyed = true;
+    this._clearAllTimeouts();
+    if (this.audioManager) {
+      this.audioManager.destroy();
+      this.audioManager = null;
+    }
+    if (this.animManager) {
+      this.animManager.clear();
+    }
   }
 
   resetRound() {
@@ -648,15 +680,6 @@ class Game {
       this._hastePlayStartTime = null;
     }
 
-    // === 规则破坏：回合开始时递减剩余回合数，标记本回合可用 ===
-    const ruleBreaker = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
-    if (ruleBreaker && ruleBreaker.usesLeft > 0) {
-      ruleBreaker.usesLeft--;
-      this._ruleBreakerAvailable = true;
-    } else {
-      this._ruleBreakerAvailable = false;
-    }
-
     this.state = 'playing';
   }
 
@@ -728,6 +751,9 @@ class Game {
     let valid = isValidWord(word);
     if (!valid) valid = await isValidWordOnline(word);
 
+    // 实例已销毁（如 restart），立即停止后续逻辑
+    if (this._destroyed) return { valid: false };
+
     if (!valid) {
       this.pendingCheck.state = 'invalid';
       this.pendingCheck.resolveTime = Date.now();
@@ -745,7 +771,7 @@ class Game {
       const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       if (witchSkill && witchSkill.skill === 'forbid_illegal_words' && !this._ruleBreakerAvailable) {
         this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
-        setTimeout(() => {
+        this._delay(() => {
           this.state = 'gameover';
           this.gameOverReason = 'forbidden_word';
           if (this.storageManager) {
@@ -771,7 +797,7 @@ class Game {
         const triggered = this._checkLifeExtension();
         if (!triggered) {
           // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
-          setTimeout(() => {
+          this._delay(() => {
             this.state = 'gameover';
             this.gameOverReason = 'out_of_hands';
             if (this.storageManager) {
@@ -786,21 +812,9 @@ class Game {
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
-    // === 规则破坏：本回合首次出牌豁免女巫约束 ===
-    let ruleBreakerTriggered = false;
-    if (this._ruleBreakerAvailable) {
-      this._ruleBreakerAvailable = false;
-      ruleBreakerTriggered = true;
-      const ruleBreakerJoker = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
-      if (ruleBreakerJoker) {
-        ruleBreakerJoker._ruleBreakerFlash = true;
-        ruleBreakerJoker._ruleBreakerFlashStart = Date.now();
-      }
-    }
-
     // === 女巫技能约束检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    if (witchSkill && !ruleBreakerTriggered && !checkSkill(witchSkill.skill, this, playedInOrder)) {
+    if (witchSkill && !checkSkill(witchSkill.skill, this, playedInOrder)) {
       this.witchSkillPassed = false;
       this.pendingCheck.state = 'witch_failed';
       this.pendingCheck.resolveTime = Date.now();
@@ -817,7 +831,7 @@ class Game {
       if (this.handsLeft <= 0) {
         const triggered = this._checkLifeExtension();
         if (!triggered) {
-          setTimeout(() => {
+          this._delay(() => {
             this.state = 'gameover';
             this.gameOverReason = 'out_of_hands';
             if (this.storageManager) {
@@ -958,7 +972,7 @@ class Game {
     if (joker.usesLeft !== undefined && joker.usesLeft <= 0) {
       joker._destroying = true;
       joker._destroyStart = Date.now();
-      setTimeout(() => {
+      this._delay(() => {
         const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
         if (idx >= 0) this.jokers.splice(idx, 1);
         if (this.storageManager) this.storageManager.saveProgress(this);
@@ -1008,7 +1022,7 @@ class Game {
     this.score += score;
     this.totalScore += score;
     if (this.audioManager) {
-      setTimeout(() => this.audioManager.play('score'), 200);
+      this._delay(() => this.audioManager.play('score'), 200);
     }
   }
 
@@ -1043,7 +1057,7 @@ class Game {
         letterGod._destroying = true;
         letterGod._destroyStart = Date.now();
         // 延迟从数组中移除（给动画留出 900ms）
-        setTimeout(() => {
+        this._delay(() => {
           const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
           if (idx >= 0) this.jokers.splice(idx, 1);
           if (this.storageManager) this.storageManager.saveProgress(this);
@@ -1058,23 +1072,8 @@ class Game {
       if (hastePlay.usesLeft !== undefined && hastePlay.usesLeft <= 0) {
         hastePlay._destroying = true;
         hastePlay._destroyStart = Date.now();
-        setTimeout(() => {
+        this._delay(() => {
           const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
-          if (idx >= 0) this.jokers.splice(idx, 1);
-          if (this.storageManager) this.storageManager.saveProgress(this);
-        }, 900);
-      }
-    }
-
-    // 检查规则破坏是否次数耗尽，触发撕裂自毁动画
-    const ruleBreakerIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
-    if (ruleBreakerIdx >= 0) {
-      const ruleBreaker = this.jokers[ruleBreakerIdx];
-      if (ruleBreaker.usesLeft !== undefined && ruleBreaker.usesLeft <= 0) {
-        ruleBreaker._destroying = true;
-        ruleBreaker._destroyStart = Date.now();
-        setTimeout(() => {
-          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'rule_breaker');
           if (idx >= 0) this.jokers.splice(idx, 1);
           if (this.storageManager) this.storageManager.saveProgress(this);
         }, 900);
@@ -1108,7 +1107,7 @@ class Game {
     this.hand = this.hand.map(c => finalPlayedCards.includes(c) ? null : c);
 
     // 0.6秒后：把打出的牌放回牌堆底部，然后重新洗牌，再补牌
-    setTimeout(() => {
+    this._delay(() => {
       // 1. 打出的牌回到牌堆底部
       for (const card of finalPlayedCards) {
         if (card) this.deck.push(card);
@@ -1178,7 +1177,7 @@ class Game {
     // settlementData 暂时保留用于 closing 动画，200ms 后再处理
     this._closingSettlement = true;
     this._closeStartTime = Date.now();
-    setTimeout(() => {
+    this._delay(() => {
       const witchSkill = this.settlementData ? this.settlementData.witchSkill : null;
       this.settlementData = null;
       this._closingSettlement = false;
@@ -1222,7 +1221,7 @@ class Game {
   closeWitchReward(action) {
     this._closingWitchReward = true;
     this._closeWitchRewardStartTime = Date.now();
-    setTimeout(() => {
+    this._delay(() => {
       const data = this.witchRewardData;
       this.witchRewardData = null;
       this._closingWitchReward = false;
@@ -1298,7 +1297,7 @@ class Game {
     this.hand = this.hand.map(c => discardedCards.includes(c) ? null : c);
 
     // 1秒后：把弃掉的牌放回牌堆底部，然后重新洗牌，再补牌
-    setTimeout(() => {
+    this._delay(() => {
       // 1. 弃掉的牌回到牌堆底部
       for (const card of discardedCards) {
         if (card) this.deck.push(card);

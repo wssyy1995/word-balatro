@@ -59,6 +59,24 @@ class AudioManager {
     }
   }
 
+  // 销毁所有音频资源，防止 restart 时泄漏
+  destroy() {
+    Object.values(this.sounds).forEach(audio => {
+      try {
+        audio.stop();
+        audio.destroy();
+      } catch (e) {}
+    });
+    this.sounds = {};
+    if (this.bgm) {
+      try {
+        this.bgm.stop();
+        this.bgm.destroy();
+      } catch (e) {}
+      this.bgm = null;
+    }
+  }
+
   // 预加载所有音效（需要在游戏启动时调用）
   preloadAll() {
     // 注意：实际项目中需要将这些音效文件放入项目目录

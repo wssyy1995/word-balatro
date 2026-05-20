@@ -22,7 +22,7 @@ word-balatro/
 ├── game.json            # 小游戏配置（竖屏、无状态栏）
 ├── project.config.json  # 微信项目配置（需替换 appid）
 ├── README.md            # 本文档
-├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标等）
+├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
 └── js/
     ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
     ├── words.js         # 本地核心词库（高频词含中文释义）
@@ -77,14 +77,15 @@ word-balatro/
 | `totalScore` | number | 历史总分（跨回合累加） |
 | `target` | number | 当前回合目标分数 |
 | `deck` | Array | 牌堆（剩余未发牌） |
-| `hand` | Array | 手牌（默认 9 张，3×3 网格，可被水晶球扩充） |
+| `hand` | Array | 手牌（默认 9 张，3×3 网格，可被水晶球/奖励扩充） |
 | `selected` | Array | 已选卡牌 ID 列表 |
-| `jokers` | Array | 女巫牌栏（最多 4 张） |
+| `jokers` | Array | 女巫牌栏（默认最多 4 张，可扩展） |
+| `maxJokerSlots` | number | 女巫牌栏上限（默认 4，可被奖励永久增加） |
 | `potions` | Array | 魔法药水栏（最多 2 张） |
 | `crystalEffects` | Array | 已购买的水晶球效果（下一回合结算） |
 | `potionMode` | Object | 当前药水使用状态 |
 | `shopItems` | Array | 当前回合 6 款商品（`null` 表示已购买） |
-| `state` | string | `playing` / `settlement` / `witch_reward` / `shop` / `potion` / `gameover` |
+| `state` | string | `playing` / `settlement` / `witch_reward` / `shop` / `potion` / `life_extended` / `gameover` |
 | `handsLeft` | number | 剩余出牌次数（初始 4 + 水晶球加成） |
 | `discardsLeft` | number | 剩余弃牌次数（初始 3 + 水晶球加成） |
 | `extraDiscards` | number | 水晶球额外弃牌次数（跨回合清零） |
@@ -102,6 +103,8 @@ word-balatro/
 | `pendingCheck` | Object | 单词校验状态机（checking / valid / invalid / witch_failed） |
 | `_reduceTargetAnim` | Object | 目标分数减免动画状态 |
 | `_changeLetterPopup` | Object | 字母置换弹窗状态 |
+| `_hastePlayActive` | boolean | 争分夺秒生效中（前 10 秒出牌不耗次数） |
+| `_disableWitchAnim` | Object | 禁用女巫牌动画状态 |
 | `animManager` | AnimationManager | 动画管理器实例 |
 | `audioManager` | AudioManager | 音效管理器实例 |
 | `storageManager` | StorageManager | 本地存储管理器实例 |
@@ -119,20 +122,23 @@ word-balatro/
 流程：
 1. 检查选中卡牌 ≥2 张，且不在 pendingCheck 中
 2. 拼接字母成单词
-3. 本地校验（WORD_DATA / onlineWordCache）
+3. 本地校验（WORD_DATA / EXPAND_WORD_DATA / onlineWordCache）
 4. 本地不存在 → 在线 API 校验（dictionaryapi.dev）
-5. 非法 → pendingCheck.state = 'invalid'，handsLeft--（或被 shield_illegal 抵消），可能触发 gameover
-6. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
-7. 字母之神（letter_god）预处理：若触发，先将所有出牌字母分数改为最高分
-8. 合法 → calcWordScore() 计算分数
-9. 启动完整动画时间线（事件驱动，renderer 推进）：
-   - 阶段0：烟花 + 字母之神飞星动画（如有）
-   - 阶段1：字母依次跳跃 + per_card 女巫牌触发
-   - 阶段1.5：波浪动画 + whole_word 女巫牌依次触发
-   - 阶段2：基础倍率弹出
-   - 阶段3：总分飞行
-   - 阶段4：执行计分、旧牌飞出、新牌飞入
-   - 阶段5：score≥target 进入 settlement，或 handsLeft≤0 进入 gameover
+5. 非法 → pendingCheck.state = 'invalid'，handsLeft--（或被 shield_illegal / haste_play 抵消），可能触发 gameover
+6. 勇敢试错：非法单词且未触发容错咒文时，illegal_boost 倍率 +1
+7. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
+9. 字母之神（letter_god）预处理：若触发，先将所有出牌字母分数改为最高分
+10. 以小博大（last_chance）：若最后一次出牌且 <4 字母，50% 概率 mult +10
+11. letter_X_mult_half 惩罚检测（含 A/E/S/I）→ 满足条件则倍率减半
+12. 合法 → calcWordScore() 计算分数
+13. 启动完整动画时间线（事件驱动，renderer 推进）：
+    - 阶段0：烟花 + 字母之神飞星动画（如有）
+    - 阶段1：字母依次跳跃 + per_card 女巫牌触发
+    - 阶段1.5：波浪动画 + whole_word 女巫牌依次触发
+    - 阶段2：基础倍率弹出
+    - 阶段3：总分飞行
+    - 阶段4：执行计分、旧牌飞出、新牌飞入
+    - 阶段5：score≥target 进入 settlement，或 handsLeft≤0 进入 life_extension / gameover
 ```
 
 **`discard()` — 弃牌**
@@ -164,14 +170,17 @@ word-balatro/
 
 **`resetRound()` — 回合重置**
 ```
-保留字段：round, gold, jokers, potions, totalScore, roundScores, letterUpgrades, baseHandSize
+保留字段：round, gold, jokers, potions, totalScore, roundScores, letterUpgrades, baseHandSize, maxJokerSlots
 重置字段：
 - score=0, handsLeft=4+extraHands, discardsLeft=3+extraDiscards
 - target = 150 + 50 × round × (round - 1)
 - deck=createDeck(), hand=drawWithSafety()（保底词长度受女巫技能影响）
+- 排除字母：若女巫技能为 no_letter_a，牌堆中移除所有 A
 - selected=[], crystalEffects 生效后清空
 - extraDiscards=0, extraSafety=0, extraHands=0, extraLetters=0
 - _reduceTargetAnim=null, witchSkillPassed=true
+- disable_one_witch_card：回合开始时随机禁用 1 张女巫牌（延迟 1 秒播放边框动画）
+- haste_play：若生效，递减剩余回合数，激活 10 秒倒计时
 ```
 
 #### 3.2.3 计分系统（calcWordScore）
@@ -182,7 +191,7 @@ word-balatro/
 mult = 单词长度（即卡牌数量）
 
 for each whole_word 女巫牌:
-  若 trigger 满足 → mult = ceil(mult × 女巫牌 value) 或 mult += value（illegal_boost）
+  若 trigger 满足 → mult = ceil(mult × 女巫牌 value) 或 mult += value（illegal_boost / last_chance）
 
 for each flat_bonus 女巫牌:
   基础分 += 女巫牌 value
@@ -191,9 +200,11 @@ for each flat_bonus 女巫牌:
 // 因此 calcWordScore 内部只需读取当前 card.score
 
 总分 = ceil(基础分 × mult)
+
+// letter_X_mult_half 惩罚：若触发，mult 减半（取 max(1, mult/2)），总分重算
 ```
 
-**女巫牌触发条件（per_card / whole_word / limit）**
+**女巫牌触发条件（per_card / whole_word / limit / flat_bonus）**
 
 | 名称 | Trigger | Scope | 条件 | 效果 |
 |------|---------|-------|------|------|
@@ -203,8 +214,10 @@ for each flat_bonus 女巫牌:
 | 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult ×3 |
 | 容错咒文 | `shield_illegal` | — | 打出非法单词 | 不扣除出牌次数 |
 | 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
-| 生命延续 | `life_extension` | limit | 出牌耗尽时（限2次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
-| 勇敢试错 | `illegal_boost` | whole_word | 打出非法单词后 | 倍率 +1（若同时触发容错咒文则 -0.1） |
+| 生命延续 | `life_extension` | limit | 出牌耗尽时（限1次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
+| 勇敢试错 | `illegal_boost` | whole_word | 打出非法单词后 | 倍率 +1（若同时触发容错咒文则不生效） |
+| 以小博大 | `last_chance` | whole_word | 最后一次出牌且 <4 字母 | 50% 概率 mult +10 |
+| 争分夺秒 | `haste_play` | limit | 生效 5 回合 | 每回合前 10 秒出牌不消耗次数 |
 
 > 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
@@ -224,10 +237,11 @@ target = 150 + 50 × round × (round - 1)
 
 #### 3.2.4 保底机制（Safety）
 
-- **发牌时**：从本地词库 `WORD_DATA` 中按长度（3~6 字母）过滤后随机选一个，将其所需字母从牌堆中抽出并插入随机位置
+- **发牌时**：从本地词库 `WORD_DATA` 中按长度（3~6 字母，受女巫技能强制限制）过滤后随机选一个，将其所需字母从牌堆中抽出并插入随机位置
 - **弃牌/出牌后补牌**：若补牌后手牌无合法单词，再次从本地词库中按长度过滤后选保底词替换空位
 - **生效范围**：所有回合均保底（`drawWithSafety` 始终执行）
 - **手牌上限**：始终不超过 `_maxHandSize`（默认 9 + 额外手牌）
+- **排除字母**：若女巫技能为 `no_letter_a`，保底词也不会包含字母 A
 
 #### 3.2.5 单词检测系统
 
@@ -259,14 +273,18 @@ target = 150 + 50 × round × (round - 1)
 | 第 14 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 随机强化药水（30%） |
 | 第 16 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 额外出牌（100%） |
 | 第 18 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 随机强化药水（50%） |
+| 第 21 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 女巫槽位+1（100%） |
 
-> *动态分配：第 16、18 关及以后的约束从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，可能包含：
+> *动态分配：第 16、18、21 关及以后的约束从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，可能包含：
 > - `letter_a_mult_half`：出牌含字母 A，则单词倍率减半
 > - `letter_e_mult_half`：出牌含字母 E，则单词倍率减半
+> - `letter_s_mult_half`：出牌含字母 S，则单词倍率减半
+> - `letter_i_mult_half`：出牌含字母 I，则单词倍率减半
 > - `no_letter_a`：本回合牌堆中不会出现字母 A
+> - `disable_one_witch_card`：回合开始时随机禁用 1 张女巫牌
 
 过关且满足约束后，进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，根据技能 `rate` 概率获得奖励。奖励类型包括：
-- **buff 类**：额外出牌、额外字母、金币翻倍（直接生效）
+- **buff 类**：额外出牌、额外字母、金币翻倍、女巫槽位+1（直接生效）
 - **药水类**：字母强化、字母置换、随机强化（可暂存或立即使用）
 
 ---
@@ -287,6 +305,7 @@ render(game)
 │   ├── shop     → drawTopHeader() + drawCoinCapsule() + shopRenderer.draw()
 │   │              └── confirmBuyRenderer.draw()（如有购买弹窗）
 │   ├── potion   → drawPotion()
+│   ├── life_extended → drawLifeExtension()
 │   └── gameover → drawHUD() + drawPlaying() + gameOverRenderer.draw()
 ├── updateAnimations()
 ├── _updateAndDrawSparkles()    # 烟花粒子
@@ -308,6 +327,7 @@ gap = 8 * scale
 ```
 
 > 注：当手牌数 > 9（额外手牌效果）时，布局自动切换为 4 列自适应 + 最后一行居中。
+> 针对灵动岛机型（iOS safeTop ≥ 59）增加顶部安全区域 padding。
 
 #### 3.3.3 卡牌渲染
 
@@ -316,6 +336,7 @@ gap = 8 * scale
 - 当前分数（11px，底部）
 - Face 牌标记 `★`（右下角，金色）
 - 新牌标记 `NEW`（绿色，首次渲染）
+- 禁用标记（红色边框 + 抖动，disable_one_witch_card 触发）
 
 卡牌支持动画偏移：`animOffset`（飞入/飞出）、`selectOffset`（选中上移）、`jumpOffsetY`（字母跳跃）。
 
@@ -325,14 +346,14 @@ gap = 8 * scale
 ┌─────────────────────────────┐
 │  [HUD: 回合 | 目标分 | 当前]  │  ← 顶部状态栏
 ├─────────────────────────────┤
-│  [女巫牌×4] |[药水瓶×2]      │  ← 道具栏（6格，金色竖线分隔）
+│  [女巫牌×N] |[药水瓶×2]      │  ← 道具栏（N+2 格，金色竖线分隔，N 默认 4 可扩展）
 ├─────────────────────────────┤
 │                              │
 │      预 览 区 域              │  ← 单词预览 + 分数方块
 │                              │
 ├─────────────────────────────┤
 │  ┌──┐ ┌──┐ ┌──┐             │
-│  │A │ │B │ │C │  ... 3×3    │  ← 手牌网格（默认9张）
+│  │A │ │B │ │C │  ... 3×3    │  ← 手牌网格（默认9张，>9时4列）
 │  └──┘ └──┘ └──┘             │
 ├─────────────────────────────┤
 │  [出牌] [弃牌] [清空]        │  ← 底部操作按钮（图片按钮）
@@ -354,7 +375,7 @@ gap = 8 * scale
         💰 金币胶囊
 
 ┌─────────────────────────────┐
-│ [女巫×4] |[药水×2]  已装备栏  │
+│ [女巫×N] |[药水×2]  已装备栏  │  ← N 随 maxJokerSlots 动态变化
 ├─────────────────────────────┤
 │      ⚜️ 卡牌商店 ⚜️          │
 ├─────────────────────────────┤
@@ -374,6 +395,7 @@ gap = 8 * scale
 - 价格按钮：暖米色，带金币图标
 - 商品售完后显示"刷新"按钮（5 金币刷新该行）
 - 已装备栏支持点击选中 + 售出（红色按钮，easeOutBack 弹出动画）
+- 女巫牌槽位 >4 时，卡牌自动重叠排列以适应屏幕
 
 #### 3.3.7 购买成功弹窗
 
@@ -381,6 +403,7 @@ gap = 8 * scale
 - **女巫牌**：展示"装备"按钮 → 加入 `jokers[]`
 - **药水牌**：展示"暂存"（加入 `potions[]`）和"立即使用"（进入 `potion` 状态）
 - **水晶球**：展示"生效"（立即加入 `crystalEffects[]`）
+- **技能重掷水晶球**：展示"生效" → 替换下一回合女巫技能
 
 弹窗动画：easeOutBack 入场 + 内容渐入 + 关闭时上滑淡出。
 
@@ -406,7 +429,7 @@ gap = 8 * scale
 
 进入后显示 A-Z 字母矩阵，选中字母后点击升级：
 - **字母升级**：指定字母分数 +10（加法叠加，全局，跨回合保留）
-- **随机强化**：随机强化手牌中 1 个字母，分数 ×4（乘法叠加，老虎机抽奖形式）
+- **随机强化**：随机强化手牌中 1 个字母，分数 ×2（商店购买）或 ×4（女巫奖励），老虎机抽奖形式
 - **字母置换**：将手牌中选中的一张牌替换为指定字母（游戏中直接使用）
 
 升级后启动弹出动画（oldScore → newScore），播放升级音效。
@@ -465,7 +488,7 @@ BGM 支持循环播放，音量 0.3。
 
 | 键 | 内容 |
 |----|------|
-| `word_balatro_progress` | 游戏进度（回合、金币、女巫牌、药水、字母升级） |
+| `word_balatro_progress` | 游戏进度（回合、金币、女巫牌、药水、字母升级、maxJokerSlots） |
 | `word_balatro_high_score` | 历史最高分 |
 | `word_balatro_stats` | 统计（总局数、总分、最高关卡） |
 | `word_balatro_settings` | 设置（音效、音乐、震动开关） |
@@ -489,13 +512,13 @@ BGM 支持循环播放，音量 0.3。
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 8 种 | 4-10 金币 | 装备栏 4 格 | 紫色 |
-| **水晶球**（crystal） | 4 种 | 3-5 金币 | 购买即生效 | 蓝色 |
-| **魔法药水**（potion） | 3 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
+| **女巫牌**（witch） | 11 种 | 4-10 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
+| **水晶球**（crystal） | 5 种 | 3-6 金币 | 购买即生效 | 蓝色 |
+| **魔法药水**（potion） | 4 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复。
 
-**女巫牌列表**：元音强化、四字母连击、五字母连击、六字母连击、容错咒文、字母之神、生命延续、勇敢试错。
+**女巫牌列表**：元音强化、四字母连击、五字母连击、六字母连击、容错咒文、字母之神、生命延续、勇敢试错、以小博大、争分夺秒。
 
 ### 4.2 药水种类
 
@@ -503,7 +526,7 @@ BGM 支持循环播放，音量 0.3。
 |------|------|-------|
 | 字母升级 | 指定字母分数 +10（加法叠加，全局跨回合保留） | 10 |
 | 字母置换 | 将手牌中一张替换为指定字母 | - |
-| 随机强化 | 随机强化 1 个字母，分数 ×4（乘法叠加） | 4 |
+| 随机强化 | 随机强化 1 个字母，分数 ×2（商店）/ ×4（女巫奖励） | 2/4 |
 
 > 药水购买后需在成功弹窗选择"暂存"（放入道具栏）或"立即使用"。字母置换药水仅在道具栏点击后游戏中直接使用。
 
@@ -515,6 +538,7 @@ BGM 支持循环播放，音量 0.3。
 | 额外出牌 | 下一回合出牌次数 +1 |
 | 额外手牌 | 下一回合增加一张字母手牌 |
 | 目标减免 | 下一回合目标分数 ×0.8 |
+| 技能重掷 | 重掷下一回合的女巫技能 |
 
 ### 4.4 购买与售出流程
 
@@ -528,8 +552,8 @@ BGM 支持循环播放，音量 0.3。
                 → 点击"立即使用" → 进入 potion 状态
 
 点击已装备道具 → 选中（紫色边框）
-  → 显示"售出"按钮（easeOutBack 弹出）
-  → 点击售出 → 卡牌飞出动画 → 获得金币 → 补位滑动
+  → 显示"售出"按钮（easeOutBack 弹出，3 秒后自动消失）
+  → 点击售出 → 卡牌飞出动画 → 获得金币（售价的一半） → 补位滑动
 ```
 
 ### 4.5 刷新
@@ -563,7 +587,7 @@ BGM 支持循环播放，音量 0.3。
 {
   letter: "S",           // 字母（大写）
   baseScore: 19,         // 原始字母分数
-  score: 19,             // 当前有效分数（升级后 = baseScore × upgradeMult）
+  score: 19,             // 当前有效分数（升级后 = baseScore × upgradeMult + upgradeAdd）
   isFace: false,         // 是否人头牌（X/Y/Z）
   id: "faxdakqgq",       // 唯一标识
   selected: false,       // 是否被选中
@@ -601,7 +625,7 @@ BGM 支持循环播放，音量 0.3。
 ```js
 letterUpgrades = Map {
   "T" => { mult: 2 },   // T 牌所有实例分数 ×2
-  "S" => { mult: 6 },   // S 牌先×2再×3 = ×6（累乘）
+  "S" => { mult: 6, add: 10 },   // S 牌先×2再×3 = ×6，再加 10
 }
 ```
 
@@ -628,7 +652,7 @@ letterUpgrades = Map {
 | API | 用途 |
 |-----|------|
 | `wx.createCanvas()` | 创建 Canvas |
-| `wx.getSystemInfoSync()` | 获取屏幕尺寸、DPR |
+| `wx.getSystemInfoSync()` | 获取屏幕尺寸、DPR、安全区域 |
 | `wx.onTouchStart()` | 触摸事件 |
 | `wx.createImage()` | 加载图片资源 |
 | `wx.createInnerAudioContext()` | 音效/BGM |
@@ -669,6 +693,7 @@ letterUpgrades = Map {
 - 重置出牌次数
 - 增加 100 分
 - 增加 10 金币
+- 增加女巫槽位
 - 跳转回合（输入目标回合数）
 - 直接通关（进入 settlement）
 - 刷新商店（重新生成 6 款商品）
@@ -712,7 +737,8 @@ letterUpgrades = Map {
 | v1.3.1 | 2026-05-11 | 更新文档，修正 README 与代码不一致处；补充随机强化、女巫奖励、保底机制等说明 |
 | v1.3.2 | 2026-05-13 | 补充生命延续、动态女巫技能分配、扩展词库、提示功能等；修正女巫牌/药水/水晶球描述；更新状态机与调试菜单 |
 | v1.3.3 | 2026-05-17 | 修正女巫技能奖励表格与代码实际一致；补充四字母连击女巫牌；修正商店随机强化药水倍率说明 |
+| v1.4.0 | 2026-05-18 | 新增女巫牌：以小博大、争分夺秒；新增水晶球：技能重掷；新增女巫技能池：letter_s_mult_half、letter_i_mult_half、disable_one_witch_card；新增 Lv.21 女巫奖励（女巫槽位+1）；新增生命延续状态机；优化灵动岛适配、金币胶囊样式、商店售出补位动画 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-05-17*
+*文档基于实际代码整理，最后更新：2026-05-20*

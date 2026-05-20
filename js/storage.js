@@ -54,6 +54,16 @@ class StorageManager {
   // ===== 游戏进度存档 =====
   
   saveProgress(game) {
+    // 防抖：500ms 内多次调用只保存最后一次
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._saveTimer = setTimeout(() => {
+      this._doSaveProgress(game);
+    }, 500);
+  }
+
+  _doSaveProgress(game) {
+    // 实例已销毁则跳过保存
+    if (game._destroyed) return;
     const progress = {
       round: game.round,
       gold: game.gold,

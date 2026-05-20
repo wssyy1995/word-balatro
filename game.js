@@ -39,7 +39,6 @@ ctx.scale(scaleDpr, scaleDpr);
 
 // 游戏全局状态
 let game = new Game();
-let lastPlayResult = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
 // 云存储管理器
@@ -283,8 +282,8 @@ function handleInput(x, y) {
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
         if (selected.length >= 2 && !game.pendingCheck) {
-          game.playHand().then(result => {
-            lastPlayResult = result;
+          game.playHand().then(() => {
+            // result 消费完毕，不保存到全局变量
           }).catch(err => {
             console.error('playHand error:', err);
           });
@@ -531,23 +530,9 @@ function handleInput(x, y) {
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
               const item = game._confirmBuyItemData;
-              if (item.effect === 'destroy_witch') {
-                // 推倒重铸：随机销毁一张女巫牌，获得金币
-                const jokers = game.jokers || [];
-                if (jokers.length > 0) {
-                  const idx = Math.floor(Math.random() * jokers.length);
-                  const target = jokers[idx];
-                  game._destroyWitchPotion = {
-                    startTime: Date.now(),
-                    jokerIndex: idx,
-                    goldReward: (target.cost || 0) + 2,
-                  };
-                }
-              } else {
-                game.potionMode = {...item};
-                game._prePotionState = 'shop';
-                game.state = 'potion';
-              }
+              game.potionMode = {...item};
+              game._prePotionState = 'shop';
+              game.state = 'potion';
             }
             // 水晶球点击"生效"
             if (btnHit.action === 'applyCrystal' && game._confirmBuyItemData) {
@@ -842,6 +827,17 @@ function handleInput(x, y) {
 }
 
 function restartGame() {
+  // 先销毁旧实例，释放音频、清除 timeout 闭包，防止内存泄漏
+  if (game) {
+    game.destroy();
+  }
+  if (renderer) {
+    renderer.resetState();
+  }
+  // 清理可能残留的网络请求标记
+  const { checkingWords } = require('./js/data');
+  checkingWords.clear();
+
   if (renderer && renderer.gameOverRenderer) {
     renderer.gameOverRenderer.lastGameOverReason = null;
     renderer.gameOverRenderer.animStartTime = null;
@@ -857,7 +853,6 @@ function restartGame() {
   game.witchRewardData = null;
   game._lifeExtensionAnim = null;
   game._lifeExtensionBtnPressed = false;
-  lastPlayResult = null;
 }
 
 // 游戏主循环

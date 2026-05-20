@@ -342,6 +342,28 @@ class Renderer {
     this.labelTagAnim = null;
   }
 
+  // 清理累积的动画/粒子状态，防止 restart 后旧状态残留
+  resetState() {
+    this.sparkles = [];
+    this.flyingScore = null;
+    this.scoreRoll = null;
+    this.scoreAnim = null;
+    this.goldAnim = null;
+    this._lashParticles = [];
+    this._lastFloatingText = null;
+    this.debugMenuOpen = false;
+    this.pressedBtn = null;
+    this.settlementRenderer.claimBtnPressed = false;
+    this.witchRewardRenderer.okBtnPressed = false;
+    this.witchRewardRenderer.stashBtnPressed = false;
+    this.witchRewardRenderer.useBtnPressed = false;
+    // 清理结算渲染器残留数据，防止旧 Game 对象被闭包引用
+    if (this.settlementRenderer) {
+      this.settlementRenderer.lastSettlementData = null;
+      this.settlementRenderer.animStartTime = null;
+    }
+  }
+
   // 绘制道具图标（商店/已购买卡牌左侧）
   drawShopCardIcon(x, y, size, name) {
     const ctx = this.ctx;
@@ -1200,32 +1222,6 @@ class Renderer {
     if (cycle >= 0.95) {
       this._lashParticles = [];
     }
-
-    ctx.restore();
-  }
-
-  // 金色闪烁边框（推倒重铸药水：选中女巫牌销毁前的闪烁提示）
-  _drawGoldFlashBorder(ctx, x, y, w, h, r, s, elapsedMs, duration = 1000) {
-    const cycle = Math.min(elapsedMs / duration, 1);
-    const breathe = 0.5 + 0.5 * Math.sin(cycle * Math.PI * 3); // 闪烁3次
-    const alpha = 1 - cycle; // 逐渐淡出
-
-    ctx.save();
-
-    // 外层金色光晕
-    this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(255,200,60,${(0.4 + breathe * 0.5) * alpha})`;
-    ctx.lineWidth = (3 + breathe * 2) * s;
-    ctx.shadowColor = `rgba(255,180,30,${(0.5 + breathe * 0.4) * alpha})`;
-    ctx.shadowBlur = (8 + breathe * 6) * s;
-    ctx.stroke();
-    ctx.shadowBlur = 0;
-
-    // 内层亮金细描边
-    this._roundedRectPath(ctx, x, y, w, h, r);
-    ctx.strokeStyle = `rgba(255,230,150,${(0.5 + breathe * 0.4) * alpha})`;
-    ctx.lineWidth = (1 + breathe) * s;
-    ctx.stroke();
 
     ctx.restore();
   }
@@ -2167,22 +2163,6 @@ class Renderer {
           }
         }
 
-        // 规则破坏触发：金色边框闪烁（持续800ms）
-        if (joker._ruleBreakerFlash && joker._ruleBreakerFlashStart) {
-          const elapsed = Date.now() - joker._ruleBreakerFlashStart;
-          if (elapsed < 800) {
-            const breath = 0.5 + 0.5 * Math.sin(Date.now() / 150);
-            ctx.save();
-            ctx.shadowColor = `rgba(255,215,0,${0.4 + 0.4 * breath})`;
-            ctx.shadowBlur = (8 + 12 * breath) * s;
-            const lineW = (2 + 3 * breath) * s;
-            const strokeColor = `rgba(255,215,0,${0.7 + 0.3 * breath})`;
-            this.roundRect(sx, slotY, slotW, slotH, 4 * s, null, strokeColor, lineW);
-            ctx.restore();
-          } else {
-            joker._ruleBreakerFlash = false;
-          }
-        }
         // 自毁动画期间不响应点击
         if (!joker._destroying) {
           this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, jokerIndex: i });

@@ -35,8 +35,8 @@ class CloudStorageManager {
       'illegal_boost':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/illegal_boost.png',
       'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png',
       'letter_god':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_god.png',
-      'rule_breaker':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/rule_breaker.png',
       'last_chance':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/last_chance.png',
+      'reroll_skill':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/reroll_skill.png',
       'haste_play':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/haste_play.png'
     };
 
@@ -187,8 +187,12 @@ class CloudStorageManager {
     }
 
     this.log('开始下载 shop_card 图片，共' + names.length + '张');
-    const promises = names.map(name => this._loadCloudImage(name));
-    await Promise.all(promises);
+    // 分批加载，每批 5 张，避免并行过多导致内存峰值过高
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(name => this._loadCloudImage(name)));
+    }
     const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
     const failed = names.filter(n => !this.shopCardImages[n] || !this.shopCardImages[n].loaded);
     this.log('下载完成：' + loaded.length + '/' + names.length + '张成功');
@@ -272,8 +276,12 @@ class CloudStorageManager {
     }
 
     this.log('开始下载 witch 图片，共' + names.length + '张');
-    const promises = names.map(name => this._loadWitchImage(name));
-    await Promise.all(promises);
+    // 分批加载，每批 5 张，避免并行过多导致内存峰值过高
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(name => this._loadWitchImage(name)));
+    }
     const loaded = Object.keys(this.witchImages).filter(n => this.witchImages[n].loaded);
     const failed = names.filter(n => !this.witchImages[n] || !this.witchImages[n].loaded);
     this.log('witch 下载完成：' + loaded.length + '/' + names.length + '张成功');
@@ -283,6 +291,12 @@ class CloudStorageManager {
   }
 
   async _loadCloudImage(name) {
+    // 重复加载防护：已加载成功则直接跳过
+    const existing = this.shopCardImages[name];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
     const fileID = this.cloudFileMap[name];
     if (!fileID) return;
 
@@ -320,6 +334,11 @@ class CloudStorageManager {
       return;
     }
 
+    // 释放旧 Image 像素数据，防止 Native 层 ArrayBuffer 堆积
+    if (existing && existing.img) {
+      existing.img.src = '';
+    }
+
     // wx.createImage 加载图片
     const img = wx.createImage();
     img.src = urlData.tempFileURL;
@@ -343,6 +362,12 @@ class CloudStorageManager {
   }
 
   async _loadWitchImage(name) {
+    // 重复加载防护：已加载成功则直接跳过
+    const existing = this.witchImages[name];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
     const fileID = this.witchFileMap[name];
     if (!fileID) return;
 
@@ -378,6 +403,11 @@ class CloudStorageManager {
       this.log('获取临时URL失败: ' + name + ' detail=' + detail);
       this.witchImages[name] = { img: null, loaded: false, width: 0, height: 0 };
       return;
+    }
+
+    // 释放旧 Image 像素数据，防止 Native 层 ArrayBuffer 堆积
+    if (existing && existing.img) {
+      existing.img.src = '';
     }
 
     // wx.createImage 加载图片
