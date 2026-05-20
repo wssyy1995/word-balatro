@@ -895,7 +895,7 @@ function gameLoop(timestamp) {
 
     // 上层：游戏页面从 50% → 100% 淡入
     ctx.save();
-    ctx.globalAlpha = 0.75 + transitionAlpha * 0.25;
+    ctx.globalAlpha = 0.85 + transitionAlpha * 0.15;
     renderer.render(game);
     ctx.restore();
 
