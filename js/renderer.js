@@ -1622,7 +1622,7 @@ class Renderer {
     const W = this.W;
     const s = this.scale;
     // top_icon 与金币胶囊统一从页面顶部向下倒推 15px（10+5）
-    const iconSize = 38 * s;
+    const iconSize = 36 * s;
     const iconX = 15 * s + 5 * s;
     const iconY = 10 * s + 5 * s;
     if (this.topIcon && this.topIconLoaded) {
@@ -1637,7 +1637,7 @@ class Renderer {
     const goldText = String(game.gold);
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
-    const coinCapsuleH = 34 * s;
+    const coinCapsuleH = 32 * s;
     const coinX = iconX + iconSize + 10 * s;
     const coinY = iconY + (iconSize - coinCapsuleH) / 2;
     this._drawCoinCapsuleAt(coinX, coinY, game);
@@ -3066,7 +3066,7 @@ class Renderer {
     const ctx = this.ctx;
     const s = this.scale;
 
-    const coinCapsuleH = 34 * s;
+    const coinCapsuleH = 32 * s;
     const coinIconSize = 20 * s;
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     const goldText = String(game.gold);
