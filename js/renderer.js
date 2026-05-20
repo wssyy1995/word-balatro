@@ -429,14 +429,16 @@ class Renderer {
       }
     }
 
-    // 走路小女巫（精灵图，位置随进度条同步）
-    const witchW = 48 * s;
-    const witchH = 48 * s;
-    const witchX = barX + (barW * (progress / 100)) - witchW / 2;
-    const witchY = barY - witchH - 6 * s;
+    // 走路小女巫（精灵图，位置随进度条同步，保持原始像素比例）
     const frameIdx = Math.floor(Date.now() / 150) % 3;
     const witchImg = this.witchWalkFrames[frameIdx];
     if (witchImg && this.witchWalkFramesLoaded[frameIdx]) {
+      const witchBaseW = witchImg.width || 48;
+      const witchBaseH = witchImg.height || 48;
+      const witchW = witchBaseW * s;
+      const witchH = witchBaseH * s;
+      const witchX = barX + (barW * (progress / 100)) - witchW / 2;
+      const witchY = H * 0.66;
       ctx.drawImage(witchImg, witchX, witchY, witchW, witchH);
     }
 
