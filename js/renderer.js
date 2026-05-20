@@ -3855,7 +3855,6 @@ class Renderer {
     // === 中心圆形（抽选按钮 / 倍数显示）===
     const btnRadius = 36 * s;
     const isIdle = !popup || popup.phase === 'idle';
-    const isSpinning = popup && popup.phase === 'spinning';
     const isPausedOrDone = popup && (popup.phase === 'paused' || popup.phase === 'done');
     const spinEnabled = isIdle;
 
