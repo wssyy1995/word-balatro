@@ -3076,7 +3076,7 @@ class Renderer {
     // 双层圆角边框胶囊：外层粗金边 + 内层细浅金边，浅米色背景
     const capsuleW = coinCapsuleW + 6 * s - 7 * s;
     const capsuleH = coinCapsuleH - 3 * s;
-    const outerBorderW = 2.5 * s;
+    const outerBorderW = 1.5 * s;
     const innerBorderW = 1 * s;
     // 外层：浅米色填充 + 粗深金色边框
     this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, '#faf6ee', '#b8934a', outerBorderW);
