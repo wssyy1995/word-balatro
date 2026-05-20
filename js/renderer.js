@@ -3852,18 +3852,25 @@ class Renderer {
 
     ctx.restore(); // 结束转盘旋转
 
-    // === 中心"抽选"按钮（不旋转）===
+    // === 中心圆形（抽选按钮 / 倍数显示）===
     const btnRadius = 36 * s;
     const isIdle = !popup || popup.phase === 'idle';
+    const isSpinning = popup && popup.phase === 'spinning';
+    const isPausedOrDone = popup && (popup.phase === 'paused' || popup.phase === 'done');
     const spinEnabled = isIdle;
 
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, wheelCenterY, btnRadius, 0, Math.PI * 2);
-    ctx.fillStyle = spinEnabled ? '#c0392b' : '#d4c9a8';
-    ctx.fill();
-    ctx.strokeStyle = spinEnabled ? '#a93226' : '#bbb';
+    if (isIdle) {
+      ctx.fillStyle = '#c0392b';
+      ctx.strokeStyle = '#a93226';
+    } else {
+      ctx.fillStyle = '#d4c9a8';
+      ctx.strokeStyle = '#bbb';
+    }
     ctx.lineWidth = 2 * s;
+    ctx.fill();
     ctx.stroke();
 
     // 按钮内阴影
@@ -3873,11 +3880,23 @@ class Renderer {
     ctx.lineWidth = 1 * s;
     ctx.stroke();
 
+    // 文字：idle 显示"抽选"，spinning 快速切换倍数，paused/done 定格最终倍数
     ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('抽选', centerX, wheelCenterY);
+    if (isIdle) {
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillText('抽选', centerX, wheelCenterY);
+    } else if (isSpinning && popup.multSequence) {
+      const elapsed = Date.now() - popup.spinStartTime;
+      const idx = Math.min(Math.floor(elapsed / 300), popup.multSequence.length - 1);
+      const displayMult = popup.multSequence[idx];
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillText('×' + displayMult, centerX, wheelCenterY);
+    } else if (isPausedOrDone) {
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillText('×' + popup.randomMult, centerX, wheelCenterY);
+    }
     ctx.restore();
 
     // 中心按钮点击区域（圆形）

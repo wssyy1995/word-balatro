@@ -111,7 +111,7 @@ function createRewardItem(rewardType) {
         effect: 'random_upgrade',
         value: 4,
         cost: 5,
-        desc: '随机强化1个字母，分数×4'
+        desc: '随机强化1个字母，分数×1.5~4.0'
       };
     case 'card_change_letter':
       return {

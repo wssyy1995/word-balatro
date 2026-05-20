@@ -1429,8 +1429,7 @@ class Game {
         const pauseElapsed = Date.now() - popup.pauseStartTime;
         if (pauseElapsed >= 2000) {
           const letter = popup.targetLetter;
-          const potion = this.potionMode;
-          const mult = potion ? (potion.value || 4) : 4;
+          const mult = popup.randomMult || 2;
           const existing = letterUpgrades.get(letter) || {};
           const totalMult = (existing.mult || 1) * mult;
           const totalAdd = existing.add || 0;
@@ -1464,9 +1463,20 @@ class Game {
       ? handLetters[Math.floor(Math.random() * handLetters.length)]
       : 'A';
 
+    // 最终随机倍数 1.5~4.0，保留1位小数
+    const randomMult = Math.round((Math.random() * 2.5 + 1.5) * 10) / 10;
+    // 生成10个展示用的随机倍数序列（最后一个是最终倍数）
+    const multSequence = [];
+    for (let i = 0; i < 9; i++) {
+      multSequence.push(Math.round((Math.random() * 2.5 + 1.5) * 10) / 10);
+    }
+    multSequence.push(randomMult);
+
     this._randomUpgradePopup = {
       phase: 'spinning',
       targetLetter,
+      randomMult,
+      multSequence,
       spinStartTime: Date.now(),
     };
   }
