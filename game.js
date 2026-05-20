@@ -886,17 +886,14 @@ function gameLoop(timestamp) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
   } else if (transitionStartTime !== null) {
-    // 过渡阶段：preview_load 淡出 + 游戏页面淡入
+    // 过渡阶段：preview_load 保持 100% 作为底层，游戏页面从 0→100% 淡入叠加
     const elapsed = Date.now() - transitionStartTime;
     transitionAlpha = Math.min(elapsed / TRANSITION_DURATION, 1);
 
-    // preview_load 淡出
-    ctx.save();
-    ctx.globalAlpha = 1 - transitionAlpha;
+    // 底层：preview_load 完全不透明
     renderer.drawPreviewLoad(100);
-    ctx.restore();
 
-    // 游戏页面淡入
+    // 上层：游戏页面淡入
     ctx.save();
     ctx.globalAlpha = transitionAlpha;
     renderer.render(game);
