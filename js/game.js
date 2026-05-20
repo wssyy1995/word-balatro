@@ -1474,9 +1474,9 @@ class Game {
       return Math.round((Math.random() * (max - min) + min) * 10) / 10;
     }
     const randomMult = genMult();
-    // 生成10个展示用的随机倍数序列（最后一个是最终倍数）
+    // 生成30个展示用的随机倍数序列（最后一个是最终倍数）
     const multSequence = [];
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 29; i++) {
       multSequence.push(genMult());
     }
     multSequence.push(randomMult);
