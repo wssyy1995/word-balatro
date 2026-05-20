@@ -370,25 +370,71 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
     }
 
-    // 进度条
-    const barW = 240 * s;
-    const barH = 10 * s;
+    // 进度条区域参数
+    const barW = 260 * s;
+    const barH = 18 * s;
     const barX = (W - barW) / 2;
-    const barY = H * 0.72;
+    const barY = H * 0.68;
     const barR = barH / 2;
 
-    // 进度条背景
-    this.roundRect(barX, barY, barW, barH, barR, 'rgba(255,255,255,0.15)');
-    // 进度条填充
-    const fillW = Math.max(barW * (progress / 100), barH);
-    this.roundRect(barX, barY, fillW, barH, barR, '#c4a35a');
+    // 标题文字
+    ctx.fillStyle = '#5a4a2a';
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('资源加载中...', W / 2, barY - 24 * s);
+
+    // 外框：浅米色填充 + 粗深金色边框
+    this.roundRect(barX, barY, barW, barH, barR, '#faf6ee', '#b8934a', 2 * s);
+    // 内框：细浅金色边框
+    const innerGap = 3 * s;
+    this.roundRect(barX + innerGap, barY + innerGap, barW - innerGap * 2, barH - innerGap * 2, (barH - innerGap * 2) / 2, null, '#d4c9a8', 1 * s);
+
+    // 深蓝色填充
+    const fillPadding = 4 * s;
+    const fillMaxW = barW - fillPadding * 2;
+    const fillW = Math.max(fillMaxW * (progress / 100), 0);
+    const fillX = barX + fillPadding;
+    const fillY = barY + fillPadding;
+    const fillH = barH - fillPadding * 2;
+    const fillR = fillH / 2;
+
+    if (fillW > 0) {
+      this.roundRect(fillX, fillY, fillW, fillH, fillR, '#1a2a5e');
+
+      // 填充左端小星星
+      if (fillW > 8 * s) {
+        this._drawTinyStar(ctx, fillX + 4 * s, fillY + fillH / 2, 2.5 * s, '#ffd700');
+      }
+      // 填充右端小星星
+      if (fillW > 16 * s) {
+        this._drawTinyStar(ctx, fillX + fillW - 4 * s, fillY + fillH / 2, 2.5 * s, '#ffd700');
+      }
+    }
 
     // 百分比文字
-    ctx.fillStyle = '#fff';
+    ctx.fillStyle = '#5a4a2a';
     ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(progress + '%', W / 2, barY + barH + 18 * s);
+    ctx.fillText(progress + '%', W / 2, barY + barH + 22 * s);
+  }
+
+  // 小四角星（用于进度条装饰）
+  _drawTinyStar(ctx, cx, cy, r, color) {
+    ctx.save();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (let i = 0; i < 4; i++) {
+      const angle = (i * Math.PI / 2) - Math.PI / 4;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
   }
 
   // 清理累积的动画/粒子状态，防止 restart 后旧状态残留
