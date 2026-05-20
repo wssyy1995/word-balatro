@@ -3336,11 +3336,11 @@ class Renderer {
     const now = Date.now();
     const elapsed = now - anim.startTime;
 
-    if (elapsed < 1600) {
+    if (elapsed < 1800) {
       const popDuration = 300;
       const holdOldDuration = 300;
-      const scoreChangeDuration = 300;
-      const holdNewDuration = 600;
+      const scoreChangeDuration = 400;
+      const holdNewDuration = 700;
       const fadeOutDuration = 100;
 
       let cardScale = 1;
