@@ -1686,7 +1686,7 @@ class Renderer {
       // 游戏标题
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       ctx.save();
-      ctx.font = `bold ${Math.floor(22 * s)}px ${this.titleFontFamily}`;
+      ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1791,7 +1791,7 @@ class Renderer {
 
     // 游戏标题
     ctx.save();
-    ctx.font = `bold ${Math.floor(22 * s)}px ${this.titleFontFamily}`;
+    ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
