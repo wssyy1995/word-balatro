@@ -398,6 +398,15 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
     }
 
+    // 游戏标题（预加载页也显示）
+    ctx.save();
+    ctx.font = `${Math.floor(28 * s)}px ${this.titleFontFamily}`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('女巫的词牌', W / 2, H * 0.30);
+    ctx.restore();
+
     // 进度条区域参数
     const barW = 260 * s;
     const barH = 18 * s;
@@ -405,7 +414,7 @@ class Renderer {
     const barY = H * 0.80;
     const barR = barH / 2;
 
-    // 标题文字
+    // 副标题文字
     ctx.fillStyle = '#5a4a2a';
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.textAlign = 'center';
