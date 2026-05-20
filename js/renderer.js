@@ -3073,18 +3073,32 @@ class Renderer {
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
 
-    // 半透明白色胶囊背景（宽度-2px，高度-1px），暖金色边框
+    // 双层圆角边框胶囊：外层粗金边 + 内层细浅金边，浅米色背景
     const capsuleW = coinCapsuleW + 6 * s - 7 * s;
     const capsuleH = coinCapsuleH - 3 * s;
-    const borderW = Math.max(1, Math.floor(1 * s)) + 1 * s;
-    this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, 'rgba(255,255,255,0.35)', '#c4a35a', borderW);
+    const outerBorderW = 2.5 * s;
+    const innerBorderW = 1 * s;
+    // 外层：浅米色填充 + 粗深金色边框
+    this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, '#faf6ee', '#b8934a', outerBorderW);
+    // 内层：只画细浅金色边框
+    const innerGap = outerBorderW + 1 * s;
+    this.roundRect(
+      coinCapsuleX + innerGap,
+      coinCapsuleY + innerGap,
+      capsuleW - innerGap * 2,
+      capsuleH - innerGap * 2,
+      (capsuleH - innerGap * 2) / 2,
+      null,
+      '#d4c9a8',
+      innerBorderW
+    );
 
     // 内部隐隐立体感：顶部微弱高光 + 底部微弱阴影
     ctx.save();
-    const ix = coinCapsuleX + borderW;
-    const iy = coinCapsuleY + borderW;
-    const iw = capsuleW - borderW * 2;
-    const ih = capsuleH - borderW * 2;
+    const ix = coinCapsuleX + outerBorderW;
+    const iy = coinCapsuleY + outerBorderW;
+    const iw = capsuleW - outerBorderW * 2;
+    const ih = capsuleH - outerBorderW * 2;
     const ir = ih / 2;
     ctx.beginPath();
     ctx.moveTo(ix + ir, iy);
