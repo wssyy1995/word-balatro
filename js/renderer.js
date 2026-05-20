@@ -3689,7 +3689,7 @@ class Renderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击抽选，随机强化1个字母', W / 2, subTitleY);
+    ctx.fillText('点击抽选字母，分数乘以1.5~4倍', W / 2, subTitleY);
     ctx.restore();
 
     // 分隔线

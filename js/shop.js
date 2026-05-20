@@ -48,7 +48,7 @@ const SHOP_POOL = {
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:6, desc:'重掷下一回合的女巫技能'}
   ],
   potion: [
-    {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数×1.5~4.0'},
+    {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
