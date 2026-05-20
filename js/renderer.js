@@ -374,7 +374,7 @@ class Renderer {
     const barW = 260 * s;
     const barH = 18 * s;
     const barX = (W - barW) / 2;
-    const barY = H * 0.68;
+    const barY = H * 0.70;
     const barR = barH / 2;
 
     // 标题文字
