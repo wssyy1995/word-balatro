@@ -374,18 +374,12 @@ class Renderer {
     // 加载自定义标题字体（香萃灯粗宋 — 子集化后仅 4.4KB）
     this.titleFontFamily = '"PingFang SC", "Noto Sans SC", sans-serif';
     try {
-      wx.loadFont({
-        family: 'XiangcuiDengcusong',
-        source: 'url(images/fonts/XiangcuiDengcusong_subset.ttf)',
-        success: () => {
-          this.titleFontFamily = 'XiangcuiDengcusong, sans-serif';
-        },
-        fail: (err) => {
-          console.warn('标题字体加载失败，使用系统字体:', err);
-        }
-      });
+      const fontFamily = wx.loadFont('images/fonts/XiangcuiDengcusong_subset.ttf');
+      if (fontFamily) {
+        this.titleFontFamily = fontFamily + ', sans-serif';
+      }
     } catch (e) {
-      console.warn('loadFont 不支持，使用系统字体');
+      console.warn('loadFont 失败，使用系统字体:', e);
     }
   }
 
