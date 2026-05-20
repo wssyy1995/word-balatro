@@ -1447,7 +1447,8 @@ class Game {
             oldScore,
             newScore,
             upgradeMult: totalMult,
-            upgradeAdd: totalAdd
+            upgradeAdd: totalAdd,
+            randomMult: popup.randomMult
           };
           popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
         }

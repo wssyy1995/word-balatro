@@ -3914,6 +3914,14 @@ class Renderer {
     }
     ctx.restore();
 
+    // done 阶段且倍率 > 3：中心圆内部放烟花（复用单词验证合法烟花）
+    if (popup && popup.phase === 'done' && game._potionUpgrading && game._potionUpgrading.randomMult > 3) {
+      if (!game._potionUpgrading._fireworkSpawned) {
+        game._potionUpgrading._fireworkSpawned = true;
+        this._spawnSparkles(centerX, wheelCenterY, 20);
+      }
+    }
+
     // 中心按钮点击区域（圆形）
     this.randomSpinBtnRect = {
       x: centerX - btnRadius,
