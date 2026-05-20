@@ -353,6 +353,23 @@ class Renderer {
     } catch (e) {
       this.previewLoadBgLoaded = false;
     }
+
+    // 加载预加载页走路小女巫精灵图
+    this.witchWalkFrames = [];
+    this.witchWalkFramesLoaded = [false, false, false];
+    for (let i = 1; i <= 3; i++) {
+      try {
+        const img = wx.createImage();
+        img.src = `images/small_witch_${i}.png`;
+        const idx = i - 1;
+        img.onload = () => { this.witchWalkFramesLoaded[idx] = true; };
+        img.onerror = () => { this.witchWalkFramesLoaded[idx] = false; };
+        this.witchWalkFrames.push(img);
+      } catch (e) {
+        this.witchWalkFramesLoaded[i - 1] = false;
+        this.witchWalkFrames.push(null);
+      }
+    }
   }
 
   // ===== 预加载页绘制 =====
@@ -410,6 +427,17 @@ class Renderer {
       if (fillW > 16 * s) {
         this._drawTinyStar(ctx, fillX + fillW - 4 * s, fillY + fillH / 2, 2.5 * s, '#ffd700');
       }
+    }
+
+    // 走路小女巫（精灵图，位置随进度条同步）
+    const witchW = 48 * s;
+    const witchH = 48 * s;
+    const witchX = barX + (barW * (progress / 100)) - witchW / 2;
+    const witchY = barY - witchH - 6 * s;
+    const frameIdx = Math.floor(Date.now() / 150) % 3;
+    const witchImg = this.witchWalkFrames[frameIdx];
+    if (witchImg && this.witchWalkFramesLoaded[frameIdx]) {
+      ctx.drawImage(witchImg, witchX, witchY, witchW, witchH);
     }
 
     // 百分比文字
