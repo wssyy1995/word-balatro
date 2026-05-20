@@ -404,7 +404,7 @@ class Renderer {
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('女巫的词牌', W / 2, H * 0.25);
+    ctx.fillText('女巫的词牌', W / 2, H * 0.23);
     ctx.restore();
 
     // 进度条区域参数
