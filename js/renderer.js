@@ -3868,8 +3868,9 @@ class Renderer {
       ctx.fillStyle = '#fdf5e0';
       ctx.strokeStyle = '#c4a35a';
     } else {
-      ctx.fillStyle = '#d4c9a8';
-      ctx.strokeStyle = '#bbb';
+      // paused / done：金色背景，与扇形高亮颜色一致
+      ctx.fillStyle = '#f5c542';
+      ctx.strokeStyle = '#c4a35a';
     }
     ctx.lineWidth = 2 * s;
     ctx.fill();
