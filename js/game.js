@@ -1463,12 +1463,21 @@ class Game {
       ? handLetters[Math.floor(Math.random() * handLetters.length)]
       : 'A';
 
-    // 最终随机倍数 1.5~4.0，保留1位小数
-    const randomMult = Math.round((Math.random() * 2.5 + 1.5) * 10) / 10;
+    // 带权重生成随机倍数 1.5~4.0（保留1位小数）
+    // 10% 概率 3.0~4.0，50% 概率 1.5~2.0，40% 概率 2.0~3.0
+    function genMult() {
+      const r = Math.random();
+      let min, max;
+      if (r < 0.10) { min = 3.0; max = 4.0; }
+      else if (r < 0.60) { min = 1.5; max = 2.0; }
+      else { min = 2.0; max = 3.0; }
+      return Math.round((Math.random() * (max - min) + min) * 10) / 10;
+    }
+    const randomMult = genMult();
     // 生成10个展示用的随机倍数序列（最后一个是最终倍数）
     const multSequence = [];
     for (let i = 0; i < 9; i++) {
-      multSequence.push(Math.round((Math.random() * 2.5 + 1.5) * 10) / 10);
+      multSequence.push(genMult());
     }
     multSequence.push(randomMult);
 
