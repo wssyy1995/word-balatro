@@ -3895,12 +3895,22 @@ class Renderer {
       const idx = Math.min(Math.floor(elapsed / 100), popup.multSequence.length - 1);
       const displayMult = popup.multSequence[idx];
       ctx.fillStyle = '#5a4a2a';
-      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+      ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
       ctx.fillText('×' + displayMult, centerX, wheelCenterY);
     } else if (isPausedOrDone) {
+      // done 阶段触发一次放大缩小脉冲
+      let scale = 1;
+      if (popup.phase === 'done' && game._potionUpgrading) {
+        const pulseState = { startTime: game._potionUpgrading.startTime, duration: 400 };
+        scale = this._calcPulseScale(pulseState, 0.25).scale;
+      }
       ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
-      ctx.fillText('×' + popup.randomMult, centerX, wheelCenterY);
+      ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+      ctx.save();
+      ctx.translate(centerX, wheelCenterY);
+      ctx.scale(scale, scale);
+      ctx.fillText('×' + popup.randomMult, 0, 0);
+      ctx.restore();
     }
     ctx.restore();
 
