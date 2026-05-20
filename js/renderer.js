@@ -370,6 +370,23 @@ class Renderer {
         this.witchWalkFrames.push(null);
       }
     }
+
+    // 加载自定义标题字体（香萃灯粗宋 — 子集化后仅 4.4KB）
+    this.titleFontFamily = '"PingFang SC", "Noto Sans SC", sans-serif';
+    try {
+      wx.loadFont({
+        family: 'XiangcuiDengcusong',
+        source: 'url(images/fonts/XiangcuiDengcusong_subset.ttf)',
+        success: () => {
+          this.titleFontFamily = 'XiangcuiDengcusong, sans-serif';
+        },
+        fail: (err) => {
+          console.warn('标题字体加载失败，使用系统字体:', err);
+        }
+      });
+    } catch (e) {
+      console.warn('loadFont 不支持，使用系统字体');
+    }
   }
 
   // ===== 预加载页绘制 =====
@@ -1675,7 +1692,7 @@ class Renderer {
       // 游戏标题
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       ctx.save();
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.font = `bold ${Math.floor(22 * s)}px ${this.titleFontFamily}`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1780,7 +1797,7 @@ class Renderer {
 
     // 游戏标题
     ctx.save();
-    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    ctx.font = `bold ${Math.floor(22 * s)}px ${this.titleFontFamily}`;
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
