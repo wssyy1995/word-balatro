@@ -1638,8 +1638,8 @@ class Renderer {
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
     const coinCapsuleH = 32 * s;
-    const coinX = iconX + iconSize + 10 * s;
-    const coinY = iconY + (iconSize - coinCapsuleH) / 2;
+    const coinX = iconX + iconSize + 10 * s - 1 * s;
+    const coinY = iconY + (iconSize - coinCapsuleH) / 2 + 1 * s;
     this._drawCoinCapsuleAt(coinX, coinY, game);
   }
 
