@@ -49,6 +49,11 @@ cloudStorage.init();
 let preloadProgress = 0;
 let preloadComplete = false;
 
+// 过渡状态（预加载页 → 游戏页）
+let transitionAlpha = 0;
+let transitionStartTime = null;
+const TRANSITION_DURATION = 600;
+
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
@@ -82,6 +87,7 @@ function startGame() {
   game = new Game();
   game.cloudStorage = cloudStorage;
   wx.game = game;
+  transitionStartTime = Date.now();
 }
 
 // 触摸事件处理
@@ -879,6 +885,26 @@ function gameLoop(timestamp) {
   if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
+  } else if (transitionStartTime !== null) {
+    // 过渡阶段：preview_load 淡出 + 游戏页面淡入
+    const elapsed = Date.now() - transitionStartTime;
+    transitionAlpha = Math.min(elapsed / TRANSITION_DURATION, 1);
+
+    // preview_load 淡出
+    ctx.save();
+    ctx.globalAlpha = 1 - transitionAlpha;
+    renderer.drawPreviewLoad(100);
+    ctx.restore();
+
+    // 游戏页面淡入
+    ctx.save();
+    ctx.globalAlpha = transitionAlpha;
+    renderer.render(game);
+    ctx.restore();
+
+    if (transitionAlpha >= 1) {
+      transitionStartTime = null;
+    }
   } else {
     game.update(deltaTime);
     renderer.render(game);
