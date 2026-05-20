@@ -1427,7 +1427,7 @@ class Game {
         }
       } else if (popup.phase === 'paused') {
         const pauseElapsed = Date.now() - popup.pauseStartTime;
-        if (pauseElapsed >= 2000) {
+        if (pauseElapsed >= 1300) {
           const letter = popup.targetLetter;
           const mult = popup.randomMult || 2;
           const existing = letterUpgrades.get(letter) || {};
