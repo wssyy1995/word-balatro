@@ -3891,7 +3891,7 @@ class Renderer {
       ctx.fillText('抽选', centerX, wheelCenterY);
     } else if (isSpinning && popup.multSequence) {
       const elapsed = Date.now() - popup.spinStartTime;
-      const idx = Math.min(Math.floor(elapsed / 150), popup.multSequence.length - 1);
+      const idx = Math.min(Math.floor(elapsed / 100), popup.multSequence.length - 1);
       const displayMult = popup.multSequence[idx];
       ctx.fillStyle = '#5a4a2a';
       ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
