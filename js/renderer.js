@@ -3904,7 +3904,7 @@ class Renderer {
         const pulseState = { startTime: game._potionUpgrading.startTime, duration: 400 };
         scale = this._calcPulseScale(pulseState, 0.25).scale;
       }
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = '#5a4a2a';
       ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
       ctx.save();
       ctx.translate(centerX, wheelCenterY);
