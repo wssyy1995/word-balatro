@@ -38,42 +38,57 @@ canvas.height = Math.floor(HEIGHT * scaleDpr);
 ctx.scale(scaleDpr, scaleDpr);
 
 // 游戏全局状态
-let game = new Game();
+let game = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
 
 // 云存储管理器
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
-game.cloudStorage = cloudStorage;
+cloudStorage.init();
 
-// 云存储初始化 + shop_card 预加载，延迟到第一回合页面渲染完成后
-let cloudPreloadTriggered = false;
-function triggerCloudPreload() {
-  if (cloudPreloadTriggered) return;
-  cloudPreloadTriggered = true;
+// 预加载状态
+let preloadProgress = 0;
+let preloadComplete = false;
 
-  // 延迟初始化云环境，避免阻塞游戏启动
-  cloudStorage.init();
+// 启动预加载：下载云图片并显示进度条
+async function startPreload() {
+  const shopNames = Object.keys(cloudStorage.cloudFileMap);
+  const witchNames = Object.keys(cloudStorage.witchFileMap);
+  const total = shopNames.length + witchNames.length;
 
-  if (!cloudStorage.hasUploaded()) {
-    console.log('[Game] 没有云存储映射，跳过 shop_card 云加载');
+  if (total === 0) {
+    console.log('[Game] 没有云存储映射，跳过预加载');
+    preloadComplete = true;
+    startGame();
     return;
   }
 
-  console.log('[Game] 第一回合已显示，开始后台预加载云图片');
-  Promise.all([
-    cloudStorage.preloadShopCardImages(),
-    cloudStorage.preloadWitchImages(),
-  ]).then(() => {
-    cloudStorage.injectToRenderer(renderer);
-    cloudStorage.injectWitchToRenderer(renderer);
-    console.log('[Game] 云图片已注入 renderer');
-  }).catch(err => {
-    console.error('[Game] 云图片预加载失败:', err);
-  });
+  let loaded = 0;
+  function onProgress() {
+    loaded++;
+    preloadProgress = Math.floor((loaded / total) * 100);
+  }
+
+  await cloudStorage.preloadShopCardImages(onProgress);
+  await cloudStorage.preloadWitchImages(onProgress);
+
+  cloudStorage.injectToRenderer(renderer);
+  cloudStorage.injectWitchToRenderer(renderer);
+  preloadComplete = true;
+  startGame();
+  console.log('[Game] 云图片预加载完成，进入游戏');
+}
+
+function startGame() {
+  game = new Game();
+  game.cloudStorage = cloudStorage;
+  wx.game = game;
 }
 
 // 触摸事件处理
 wx.onTouchStart((e) => {
+  // 预加载阶段不响应触摸
+  if (!preloadComplete) return;
+
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
@@ -861,29 +876,20 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
-  game.update(deltaTime);
-  renderer.render(game);
-
-  // 第一回合页面渲染后，触发云存储图片后台预加载
-  // 用 setTimeout 把云初始化从 RAF 回调中脱出来，避免 Failed to fetch
-  if (game.state === 'playing' && !cloudPreloadTriggered) {
-    setTimeout(triggerCloudPreload, 0);
+  if (!preloadComplete) {
+    // 预加载阶段：绘制预加载页
+    renderer.drawPreviewLoad(preloadProgress);
+  } else {
+    game.update(deltaTime);
+    renderer.render(game);
   }
 
   requestAnimationFrame(gameLoop);
 }
 
-// 等待 bg.png 加载完成后再启动游戏循环，避免蓝色 fallback 背景一闪而过
-function waitForBgAndStart() {
-  if (renderer.bgLoaded || !renderer.bgImage) {
-    // bg.png 已加载，或加载失败，都可以开始渲染
-    requestAnimationFrame(gameLoop);
-  } else {
-    requestAnimationFrame(waitForBgAndStart);
-  }
-}
-requestAnimationFrame(waitForBgAndStart);
+// 启动预加载并开始渲染循环
+startPreload();
+requestAnimationFrame(gameLoop);
 
 // 暴露到全局（调试用）
-wx.game = game;
 wx.renderer = renderer;

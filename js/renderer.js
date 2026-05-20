@@ -340,6 +340,55 @@ class Renderer {
     // 女巫牌标签弹出动画状态
     this.lastLabelText = null;
     this.labelTagAnim = null;
+
+    // 加载预加载页背景图
+    this.previewLoadBg = null;
+    this.previewLoadBgLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/preview_load.png';
+      img.onload = () => { this.previewLoadBgLoaded = true; };
+      img.onerror = () => { this.previewLoadBgLoaded = false; };
+      this.previewLoadBg = img;
+    } catch (e) {
+      this.previewLoadBgLoaded = false;
+    }
+  }
+
+  // ===== 预加载页绘制 =====
+  drawPreviewLoad(progress) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    // 背景图
+    if (this.previewLoadBg && this.previewLoadBgLoaded) {
+      ctx.drawImage(this.previewLoadBg, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#2d2d3a';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 进度条
+    const barW = 240 * s;
+    const barH = 10 * s;
+    const barX = (W - barW) / 2;
+    const barY = H * 0.72;
+    const barR = barH / 2;
+
+    // 进度条背景
+    this.roundRect(barX, barY, barW, barH, barR, 'rgba(255,255,255,0.15)');
+    // 进度条填充
+    const fillW = Math.max(barW * (progress / 100), barH);
+    this.roundRect(barX, barY, fillW, barH, barR, '#c4a35a');
+
+    // 百分比文字
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(progress + '%', W / 2, barY + barH + 18 * s);
   }
 
   // 清理累积的动画/粒子状态，防止 restart 后旧状态残留

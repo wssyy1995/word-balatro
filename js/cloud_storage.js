@@ -179,7 +179,7 @@ class CloudStorageManager {
   }
 
   // 从云存储下载并缓存所有 shop_card 图片（后台静默加载）
-  async preloadShopCardImages() {
+  async preloadShopCardImages(onProgress = null) {
     const names = Object.keys(this.cloudFileMap);
     if (names.length === 0) {
       this.log('没有云存储图片映射，跳过预加载');
@@ -191,7 +191,10 @@ class CloudStorageManager {
     const batchSize = 5;
     for (let i = 0; i < names.length; i += batchSize) {
       const batch = names.slice(i, i + batchSize);
-      await Promise.all(batch.map(name => this._loadCloudImage(name)));
+      await Promise.all(batch.map(async name => {
+        await this._loadCloudImage(name);
+        if (onProgress) onProgress();
+      }));
     }
     const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
     const failed = names.filter(n => !this.shopCardImages[n] || !this.shopCardImages[n].loaded);
@@ -268,7 +271,7 @@ class CloudStorageManager {
   }
 
   // 从云存储下载并缓存所有 witch 图片（后台静默加载）
-  async preloadWitchImages() {
+  async preloadWitchImages(onProgress = null) {
     const names = Object.keys(this.witchFileMap);
     if (names.length === 0) {
       this.log('没有 witch 云存储映射，跳过预加载');
@@ -280,7 +283,10 @@ class CloudStorageManager {
     const batchSize = 5;
     for (let i = 0; i < names.length; i += batchSize) {
       const batch = names.slice(i, i + batchSize);
-      await Promise.all(batch.map(name => this._loadWitchImage(name)));
+      await Promise.all(batch.map(async name => {
+        await this._loadWitchImage(name);
+        if (onProgress) onProgress();
+      }));
     }
     const loaded = Object.keys(this.witchImages).filter(n => this.witchImages[n].loaded);
     const failed = names.filter(n => !this.witchImages[n] || !this.witchImages[n].loaded);
