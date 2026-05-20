@@ -435,10 +435,11 @@ class Renderer {
     if (witchImg && this.witchWalkFramesLoaded[frameIdx]) {
       const witchBaseW = witchImg.width || 48;
       const witchBaseH = witchImg.height || 48;
-      const witchW = witchBaseW * s;
-      const witchH = witchBaseH * s;
+      const witchScale = 0.85; // 等比例缩小一点点
+      const witchW = witchBaseW * s * witchScale;
+      const witchH = witchBaseH * s * witchScale;
       const witchX = barX + (barW * (progress / 100)) - witchW / 2;
-      const witchY = H * 0.50;
+      const witchY = H * 0.55;
       ctx.drawImage(witchImg, witchX, witchY, witchW, witchH);
     }
 
