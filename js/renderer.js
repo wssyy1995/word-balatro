@@ -3864,6 +3864,9 @@ class Renderer {
     if (isIdle) {
       ctx.fillStyle = '#c0392b';
       ctx.strokeStyle = '#a93226';
+    } else if (isSpinning) {
+      ctx.fillStyle = '#fdf5e0';
+      ctx.strokeStyle = '#c4a35a';
     } else {
       ctx.fillStyle = '#d4c9a8';
       ctx.strokeStyle = '#bbb';
@@ -3880,20 +3883,22 @@ class Renderer {
     ctx.stroke();
 
     // 文字：idle 显示"抽选"，spinning 快速切换倍数，paused/done 定格最终倍数
-    ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     if (isIdle) {
+      ctx.fillStyle = '#fff';
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
       ctx.fillText('抽选', centerX, wheelCenterY);
     } else if (isSpinning && popup.multSequence) {
       const elapsed = Date.now() - popup.spinStartTime;
-      const idx = Math.min(Math.floor(elapsed / 300), popup.multSequence.length - 1);
+      const idx = Math.min(Math.floor(elapsed / 150), popup.multSequence.length - 1);
       const displayMult = popup.multSequence[idx];
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
       ctx.fillText('×' + displayMult, centerX, wheelCenterY);
     } else if (isPausedOrDone) {
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
       ctx.fillText('×' + popup.randomMult, centerX, wheelCenterY);
     }
     ctx.restore();
