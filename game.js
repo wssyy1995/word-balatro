@@ -4,11 +4,19 @@ const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
-  console.log('游戏启动');
+  console.log('[Game] 切回前台');
+});
+
+wx.onHide(() => {
+  console.log('[Game] 切后台，立即存档');
+  if (game && game.storageManager && game.state !== 'gameover') {
+    game.storageManager.saveProgress(game);
+  }
 });
 
 const info = wx.getSystemInfoSync();
@@ -58,7 +66,8 @@ const TRANSITION_DURATION = 600;
 async function startPreload() {
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
   const witchNames = Object.keys(cloudStorage.witchFileMap);
-  const total = shopNames.length + witchNames.length;
+  const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
+  const total = shopNames.length + witchNames.length + bgIconNames.length;
 
   if (total === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -75,16 +84,45 @@ async function startPreload() {
 
   await cloudStorage.preloadShopCardImages(onProgress);
   await cloudStorage.preloadWitchImages(onProgress);
+  await cloudStorage.preloadBgIconImages(onProgress);
 
   cloudStorage.injectToRenderer(renderer);
   cloudStorage.injectWitchToRenderer(renderer);
+  cloudStorage.injectBgIconToRenderer(renderer);
   preloadComplete = true;
   startGame();
   console.log('[Game] 云图片预加载完成，进入游戏');
 }
 
 function startGame() {
-  game = new Game();
+  const storage = new StorageManager();
+  const saved = storage.loadProgress();
+
+  // 存档超过 7 天视为过期
+  const isExpired = saved && saved.timestamp && (Date.now() - saved.timestamp > 7 * 24 * 60 * 60 * 1000);
+
+  // 检查存档字段完整性（旧版本存档缺少 hand/deck/target 等字段，不能恢复）
+  const hasRequiredFields = saved &&
+    Array.isArray(saved.hand) &&
+    Array.isArray(saved.deck) &&
+    typeof saved.target === 'number' &&
+    typeof saved.state === 'string' &&
+    Array.isArray(saved._shuffledSkills);
+
+  if (saved && !isExpired && saved.state !== 'gameover' && hasRequiredFields) {
+    game = new Game(saved);
+    console.log('[Game] 从存档恢复，回合:', saved.round);
+  } else {
+    game = new Game();
+    // 无效或过期存档统一清理，避免反复加载旧存档导致异常
+    if (saved && (!hasRequiredFields || isExpired)) {
+      storage.clearProgress();
+      console.log('[Game] 旧存档字段不完整/已过期，已清理，开始新游戏');
+    } else {
+      console.log('[Game] 新游戏');
+    }
+  }
+
   game.cloudStorage = cloudStorage;
   wx.game = game;
   transitionStartTime = Date.now();
@@ -127,6 +165,20 @@ wx.onTouchEnd(() => {
 });
 
 function handleInput(x, y) {
+  // 新手引导阶段：优先处理引导点击，禁用其他交互
+  if (game.guidePhase >= 1 && game.guidePhase <= 4) {
+    if (renderer.guideNextBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.guideNextBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game.advanceGuide();
+        return;
+      }
+    }
+    // 引导阶段点击其他区域不响应
+    return;
+  }
+
   // 检测调试菜单按钮（优先）
   if (renderer.debugMenuOpen && renderer.debugMenuRects) {
     const debugHit = renderer.hitTest(x, y, renderer.debugMenuRects);
@@ -187,6 +239,27 @@ function handleInput(x, y) {
           game.hintToast = { text: 'witch 上传失败', expireAt: Date.now() + 2000 };
           console.error('witch 上传失败:', err);
         });
+      }
+      if (debugHit.action === 'debug_upload_bg_icon') {
+        cloudStorage.uploadBgIconImages().then(res => {
+          game.hintToast = { text: `bg_icon 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadBgIconImages();
+        }).then(() => {
+          cloudStorage.injectBgIconToRenderer(renderer);
+          game.hintToast = { text: 'bg_icon 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'bg_icon 上传失败', expireAt: Date.now() + 2000 };
+          console.error('bg_icon 上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_triggerGuide') {
+        game.guidePhase = 1;
+        game._guideTextStartTime = Date.now();
+        game._guideCardGiftStartTime = null;
+        // 如果已有 has_vowel 女巫牌，先移除以避免重复
+        const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
+        if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
+        if (game.storageManager) game.storageManager.saveProgress(game);
       }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';

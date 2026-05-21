@@ -6,8 +6,10 @@ class CloudStorageManager {
     this.env = env;
     this.shopCardImages = {}; // { name: { img, loaded, width, height } }
     this.witchImages = {};    // { name: { img, loaded, width, height } }
+    this.bgIconImages = {};   // { name: { img, loaded, width, height } }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
+    this.bgIconFileMap = {};  // { name: fileID }
     this.initialized = false;
     this.uploading = false;
     this.debugLogs = [];
@@ -52,6 +54,11 @@ class CloudStorageManager {
       'witch_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_5.png',
       'witch_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_8.png',
     };
+
+    // 默认 bg_icon 图片云文件映射
+    this.defaultBgIconFileMap = {
+      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
+    };
   }
 
   init() {
@@ -95,6 +102,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('witch 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 bg_icon 映射兜底
+    this.bgIconFileMap = { ...this.defaultBgIconFileMap };
+
+    // 加载 bg_icon 图片的本地缓存映射
+    try {
+      const bgIconStored = wx.getStorageSync('cloud_bg_icon_map');
+      if (bgIconStored) {
+        const bgIconLocalMap = JSON.parse(bgIconStored);
+        this.bgIconFileMap = { ...this.bgIconFileMap, ...bgIconLocalMap };
+        this.log('bg_icon 本地缓存映射已加载，共' + Object.keys(bgIconLocalMap).length + '张');
+      } else {
+        this.log('无 bg_icon 本地缓存');
+      }
+    } catch (e) {
+      this.log('bg_icon 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
   }
 
@@ -471,6 +495,178 @@ class CloudStorageManager {
       }
     });
     this.log('已注入 witch renderer: ' + count + '张');
+  }
+
+  // 上传 images/bg_icon 目录下所有 .png 到云存储
+  async uploadBgIconImages() {
+    if (this.uploading) return { success: false, message: '正在上传中...' };
+    this.uploading = true;
+
+    const results = { success: [], failed: [] };
+    const fs = wx.getFileSystemManager();
+
+    let files = [];
+    try {
+      files = fs.readdirSync('images/bg_icon/');
+    } catch (e) {
+      this.log('读取 bg_icon 目录失败: ' + (e && e.message ? e.message : String(e)));
+      this.uploading = false;
+      return { success: false, message: '读取目录失败', error: e };
+    }
+
+    const pngFiles = files.filter(f => f.endsWith('.png'));
+    this.log('扫描 images/bg_icon/ 目录下');
+    this.log('扫描到 ' + pngFiles.length + ' 张本地 bg_icon 图片');
+
+    for (const fileName of pngFiles) {
+      const name = fileName.replace(/\.png$/i, '');
+      const localPath = `images/bg_icon/${fileName}`;
+      const cloudPath = `bg_icon/${fileName}`;
+
+      this.log('开始上传 bg_icon/' + name);
+
+      let uploadRes = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: localPath,
+          });
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            this.log('上传失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (uploadRes) {
+        this.bgIconFileMap[name] = uploadRes.fileID;
+        results.success.push({ name, fileID: uploadRes.fileID });
+        this.log('上传成功 bg_icon/' + name);
+      } else {
+        console.error('上传失败:', name, lastError);
+        this.log('上传失败 bg_icon/' + name + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        results.failed.push({ name, error: lastError });
+      }
+    }
+
+    // 保存映射到本地缓存
+    try {
+      wx.setStorageSync('cloud_bg_icon_map', JSON.stringify(this.bgIconFileMap));
+    } catch (e) {}
+
+    this.uploading = false;
+    return results;
+  }
+
+  // 从云存储下载并缓存所有 bg_icon 图片（后台静默加载）
+  async preloadBgIconImages(onProgress = null) {
+    const names = Object.keys(this.bgIconFileMap);
+    if (names.length === 0) {
+      this.log('没有 bg_icon 云存储映射，跳过预加载');
+      return;
+    }
+
+    this.log('开始下载 bg_icon 图片，共' + names.length + '张');
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadBgIconImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const loaded = Object.keys(this.bgIconImages).filter(n => this.bgIconImages[n].loaded);
+    const failed = names.filter(n => !this.bgIconImages[n] || !this.bgIconImages[n].loaded);
+    this.log('bg_icon 下载完成：' + loaded.length + '/' + names.length + '张成功');
+    if (failed.length > 0) {
+      this.log('bg_icon 失败：' + failed.join(', '));
+    }
+  }
+
+  async _loadBgIconImage(name) {
+    const existing = this.bgIconImages[name];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
+    const fileID = this.bgIconFileMap[name];
+    if (!fileID) return;
+
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if (!urlData) {
+      const detail = lastError ? lastError.message : 'unknown';
+      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
+      this.bgIconImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+      return;
+    }
+
+    if (existing && existing.img) {
+      existing.img.src = '';
+    }
+
+    const img = wx.createImage();
+    img.src = urlData.tempFileURL;
+    await new Promise((resolve) => {
+      img.onload = () => {
+        this.log('bg_icon 下载完成: ' + name);
+        this.bgIconImages[name] = {
+          img,
+          loaded: true,
+          width: img.width || 0,
+          height: img.height || 0,
+        };
+        resolve();
+      };
+      img.onerror = (e) => {
+        this.log('bg_icon 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+        this.bgIconImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+        resolve();
+      };
+    });
+  }
+
+  // 将云缓存 bg_icon 图片注入到 renderer 的 bgImage
+  injectBgIconToRenderer(renderer) {
+    let count = 0;
+    Object.keys(this.bgIconImages).forEach(name => {
+      const data = this.bgIconImages[name];
+      if (data && data.loaded && data.img) {
+        renderer.bgImage = data.img;
+        renderer.bgLoaded = true;
+        count++;
+      }
+    });
+    this.log('已注入 bg_icon renderer: ' + count + '张');
   }
 }
 

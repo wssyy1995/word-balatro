@@ -72,17 +72,52 @@ class StorageManager {
       roundScores: game.roundScores,
       jokers: game.jokers,
       maxJokerSlots: game.maxJokerSlots,
+      potions: game.potions || [],
+      crystalEffects: game.crystalEffects || [],
+      shopItems: game.shopItems,
+      state: game.state,
+      _shuffledSkills: game._shuffledSkills,
+      discardsLeft: game.discardsLeft,
+      handsLeft: game.handsLeft,
+      hand: game.hand,
+      deck: game.deck,
+      selected: game.selected,
+      baseHandSize: game.baseHandSize,
+      extraHands: game.extraHands || 0,
+      extraDiscards: game.extraDiscards || 0,
+      extraSafety: game.extraSafety || 0,
+      extraLetters: game.extraLetters || 0,
+      witchSkillPassed: game.witchSkillPassed,
+      _lifeExtensionBonus: game._lifeExtensionBonus || 0,
+      target: game.target,
+      _maxHandSize: game._maxHandSize,
+      _seedMinLen: game._seedMinLen,
+      _seedMaxLen: game._seedMaxLen,
+      guidePhase: game.guidePhase,
       letterUpgrades: [...letterUpgrades.entries()],
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      version: 1
     };
     return this.set('progress', progress);
   }
 
   loadProgress() {
     const progress = this.get('progress', null);
-    if (progress && progress.maxJokerSlots === undefined) {
+    if (!progress) return null;
+
+    // 兼容旧存档
+    if (progress.maxJokerSlots === undefined) {
       progress.maxJokerSlots = 4;
     }
+
+    // 恢复模块级的 letterUpgrades
+    letterUpgrades.clear();
+    if (progress.letterUpgrades) {
+      for (const [k, v] of progress.letterUpgrades) {
+        letterUpgrades.set(k, v);
+      }
+    }
+
     return progress;
   }
 

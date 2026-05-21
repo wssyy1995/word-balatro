@@ -8,7 +8,7 @@ const {
 const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
-const { generateShopItems, applyCrystalEffects, upgradeLetter } = require('./shop');
+const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
@@ -519,29 +519,42 @@ function formatMeaning(meaningObj) {
 
 // ===== 游戏主类 =====
 class Game {
-  constructor() {
-    // 新游戏时清除字母升级记录
-    letterUpgrades.clear();
-    this.round = 1;
-    this.gold = 4;
-    this.jokers = [];
-    this.maxJokerSlots = 4;
-    this.crystalEffects = [];
-    this.potions = [];
-    this.potionMode = null;
-    this._potionSelectedLetter = null;
-    this._potionUpgrading = null;
-    this._randomUpgradePopup = null;
-    this.state = 'playing';
-    this.shopItems = null;
-    this.safetyRounds = 3;
-    this.extraDiscards = 0;
-    this.extraSafety = 0;
-    this.extraHands = 0;
-    this.baseHandSize = 9;
-    this.totalScore = 0;
-    this.gameOverReason = null;
-    this.roundScores = [];
+  constructor(savedProgress = null) {
+    this.storageManager = new StorageManager();
+    this.audioManager = new AudioManager();
+    this.audioManager.preloadAll();
+
+    if (savedProgress) {
+      this._restoreFromProgress(savedProgress);
+    } else {
+      // ===== 全新游戏 =====
+      letterUpgrades.clear();
+      this.round = 1;
+      this.gold = 4;
+      this.jokers = [];
+      this.maxJokerSlots = 4;
+      this.crystalEffects = [];
+      this.potions = [];
+      this.potionMode = null;
+      this._potionSelectedLetter = null;
+      this._potionUpgrading = null;
+      this._randomUpgradePopup = null;
+      this.state = 'playing';
+      this.shopItems = null;
+      this.safetyRounds = 3;
+      this.extraDiscards = 0;
+      this.extraSafety = 0;
+      this.extraHands = 0;
+      this.baseHandSize = 9;
+      this.totalScore = 0;
+      this.gameOverReason = null;
+      this.roundScores = [];
+      this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
+      console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
+      this.resetRound();
+    }
+
+    // 公共初始化（新游戏和恢复都需要）
     this.animManager = new AnimationManager();
     this.flyingCards = [];
     this.hintToast = null;
@@ -553,17 +566,179 @@ class Game {
     this.pendingCheck = null;
     this.settlementData = null;
     this.witchRewardData = null;
-    this._lifeExtensionBonus = 0;
     this._lifeExtensionAnim = null;
-    this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
-    console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
-    this.audioManager = new AudioManager();
-    this.storageManager = new StorageManager();
-    this.audioManager.preloadAll();
-    this.resetRound();
+    this._playHandAnimCompleted = false;
+    this._playHandCompleting = false;
+    this._closingSettlement = false;
+    this._closeStartTime = null;
+    this._closingWitchReward = false;
+    this._closeWitchRewardStartTime = null;
+    this._shopToGameTransition = null;
+    this._challengeBtnPressed = false;
+    this._sellingProp = null;
+    this._successBtnPressed = false;
+    this._successPressedBtn = null;
+    this._successBtnPressTime = null;
+    this._closingConfirmBuy = false;
+    this._closeConfirmBuyStartTime = null;
+    this._confirmBuyItemData = null;
+    this._confirmBuySuccess = false;
+    this._confirmBuySuccessTime = null;
+    this._lifeExtensionBtnPressed = false;
+    this._restartBtnPressed = false;
+    this._restartBtnPressTime = null;
+    this._closingGameOver = false;
+    this._closeStartTime = null;
+    this._witchStarBurst = null;
+    this._witchStarBurstAuto = false;
+    this._disableWitchAnim = null;
+    this._hastePlayActive = false;
+    this._hastePlayStartTime = null;
+    this._letterGodAnim = null;
+    this._debugLabelShow = null;
+
+    // 新手引导（全新游戏时 resetRound 可能已经设置了 guidePhase，不要覆盖）
+    if (savedProgress && savedProgress.guidePhase !== undefined) {
+      this.guidePhase = savedProgress.guidePhase;
+    } else if (this.guidePhase === undefined) {
+      this.guidePhase = 0;
+    }
+    // _guideTextStartTime 在 resetRound 中已设置，不要覆盖；恢复时若正在引导则重新开始文字动画
+    if (this._guideTextStartTime === undefined && this.guidePhase >= 1 && this.guidePhase <= 4) {
+      this._guideTextStartTime = Date.now();
+    }
+    this._guideCardGiftStartTime = null;
+
     // 追踪本实例的所有 setTimeout，restart 时统一清除防止闭包泄漏
     this._timeoutIds = [];
     this._destroyed = false;
+  }
+
+  _restoreFromProgress(p) {
+    this.round = p.round;
+    this.gold = p.gold;
+    this.score = p.score;
+    this.totalScore = p.totalScore;
+    this.roundScores = p.roundScores || [];
+    this.jokers = p.jokers || [];
+    this.maxJokerSlots = p.maxJokerSlots || 4;
+    this.potions = p.potions || [];
+    this.crystalEffects = p.crystalEffects || [];
+    this.shopItems = p.shopItems || null;
+    this.state = p.state || 'playing';
+    this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
+    this.discardsLeft = p.discardsLeft;
+    this.handsLeft = p.handsLeft;
+    this.hand = p.hand || [];
+    this.deck = p.deck || [];
+    this.selected = p.selected || [];
+    this.baseHandSize = p.baseHandSize || 9;
+    this.extraHands = p.extraHands || 0;
+    this.extraDiscards = p.extraDiscards || 0;
+    this.extraSafety = p.extraSafety || 0;
+    this.extraLetters = p.extraLetters || 0;
+    this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
+    this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
+    this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
+    this.gameOverReason = p.gameOverReason || null;
+    this.target = p.target;
+    this._maxHandSize = p._maxHandSize;
+    this._seedMinLen = p._seedMinLen;
+    this._seedMaxLen = p._seedMaxLen;
+
+    // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
+    const sanitizeCard = (card) => {
+      if (!card) return;
+      delete card.animOffset;
+      delete card.selectOffset;
+      delete card.jumpOffsetY;
+      delete card.newCard;
+      delete card._flyIndex;
+      delete card._originalScore;
+      delete card._scorePulseAnim;
+      delete card._scoreScale;
+    };
+    this.hand.forEach(sanitizeCard);
+    this.deck.forEach(sanitizeCard);
+
+    // 清理女巫牌上的动画残留状态
+    (this.jokers || []).forEach(j => {
+      if (!j) return;
+      delete j._triggered;
+      delete j._jumpOffsetY;
+      delete j._shieldAnimStart;
+      delete j._letterGodAnimStart;
+      delete j._destroying;
+      delete j._destroyStart;
+      delete j._wwJumpStart;
+      delete j._wwJumpDone;
+      delete j._ruleBreakerFlash;
+      // 恢复禁用状态由 resetRound 逻辑处理，但恢复时也统一清理
+      if (j._disabled === undefined) j._disabled = false;
+    });
+
+    // 同步 selected 数组：移除 hand 中不存在的 id，同步卡牌的 selected 字段
+    const handIds = new Set(this.hand.filter(Boolean).map(c => c.id));
+    this.selected = this.selected.filter(id => handIds.has(id));
+    this.hand.forEach(card => {
+      if (!card) return;
+      card.selected = this.selected.includes(card.id);
+    });
+
+    // 同步手牌中卡牌的升级分数（letterUpgrades 已由 storage.loadProgress 恢复）
+    this._syncHandCardScores();
+
+    // 恢复引导状态
+    this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
+
+    console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
+  }
+
+  _syncHandCardScores() {
+    this.hand.forEach(card => {
+      if (!card) return;
+      const baseScore = LETTER_SCORE[card.letter];
+      const upgrade = letterUpgrades.get(card.letter);
+      if (upgrade) {
+        let newScore = baseScore;
+        if (upgrade.mult) newScore = Math.floor(newScore * upgrade.mult);
+        if (upgrade.add) newScore += upgrade.add;
+        card.baseScore = baseScore;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = upgrade.mult || 1;
+        card.upgradeAdd = upgrade.add || 0;
+      } else {
+        card.baseScore = baseScore;
+        card.score = baseScore;
+        card.upgraded = false;
+        card.upgradeMult = 1;
+        card.upgradeAdd = 0;
+      }
+    });
+
+    // 同步牌堆中卡牌的升级分数
+    this.deck.forEach(card => {
+      if (!card) return;
+      const baseScore = LETTER_SCORE[card.letter];
+      const upgrade = letterUpgrades.get(card.letter);
+      if (upgrade) {
+        let newScore = baseScore;
+        if (upgrade.mult) newScore = Math.floor(newScore * upgrade.mult);
+        if (upgrade.add) newScore += upgrade.add;
+        card.baseScore = baseScore;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = upgrade.mult || 1;
+        card.upgradeAdd = upgrade.add || 0;
+      } else {
+        card.baseScore = baseScore;
+        card.score = baseScore;
+        card.upgraded = false;
+        card.upgradeMult = 1;
+        card.upgradeAdd = 0;
+      }
+    });
   }
 
   // 封装 setTimeout，自动追踪 ID，destroy 时统一清除
@@ -680,7 +855,50 @@ class Game {
       this._hastePlayStartTime = null;
     }
 
+    // 第一回合触发新手引导
+    if (this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
+      this.guidePhase = 1;
+      this._guideTextStartTime = Date.now();
+    }
+
     this.state = 'playing';
+  }
+
+  advanceGuide() {
+    const PHASE_TEXTS = [
+      '', // 0: 未开始
+      '终于等到你了，灵词师！二十六个女巫将词牌夺走后，所有的词语都失去了能量，而你体内的字母之力，是唯一能与女巫对抗的力量。',
+      '方法很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越强，能量越高！找到女巫，挑战她们，夺回26张词牌！',
+      '对了，这个送你——我珍藏很久的女巫卡牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店也有更多卡牌可以买到哦）',
+      '好了，快出发寻找女巫吧！',
+    ];
+
+    if (this.guidePhase < 1 || this.guidePhase > 4) return;
+
+    // 阶段3特殊处理：给 has_vowel 卡牌
+    if (this.guidePhase === 3) {
+      // 如果还没给过，插入 has_vowel 女巫牌
+      const hasVowel = this.jokers.find(j => j && j.trigger === 'has_vowel');
+      if (!hasVowel) {
+        const gift = SHOP_POOL.witch.find(w => w.trigger === 'has_vowel');
+        if (gift) {
+          this.jokers.push({ ...gift, _guideGift: true });
+          if (this.storageManager) this.storageManager.saveProgress(this);
+        }
+      }
+    }
+
+    this.guidePhase++;
+    this._guideTextStartTime = Date.now();
+
+    // 阶段5（完成）：清理引导状态
+    if (this.guidePhase >= 5) {
+      this.guidePhase = 5;
+      this._guideTextStartTime = null;
+      this._guideCardGiftStartTime = null;
+    }
+
+    if (this.storageManager) this.storageManager.saveProgress(this);
   }
 
   toggleSelect(cardId) {
