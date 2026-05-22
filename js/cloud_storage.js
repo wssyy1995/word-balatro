@@ -62,13 +62,16 @@ class CloudStorageManager {
       'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
 
-    // 默认 guide 帧序列云文件映射（witch_guide_1/1.png ~ witch_guide_2/11.png）
+    // 默认 guide 帧序列云文件映射（witch_guide_1 和 witch_guide_2 分开配置，帧数可独立调整）
     this.defaultGuideFileMap = {};
     const guideBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/guide';
-    for (let g = 1; g <= 2; g++) {
-      for (let f = 1; f <= 13; f++) {
-        this.defaultGuideFileMap[`witch_guide_${g}_${f}`] = `${guideBase}/witch_guide_${g}/${f}.png`;
-      }
+    // witch_guide_1
+    for (let f = 1; f <= 18; f++) {
+      this.defaultGuideFileMap[`witch_guide_1_${f}`] = `${guideBase}/witch_guide_1/${f}.png`;
+    }
+    // witch_guide_2
+    for (let f = 1; f <= 13; f++) {
+      this.defaultGuideFileMap[`witch_guide_2_${f}`] = `${guideBase}/witch_guide_2/${f}.png`;
     }
   }
 
