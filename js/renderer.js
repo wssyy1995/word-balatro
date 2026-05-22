@@ -3803,7 +3803,8 @@ class Renderer {
     // 背景由 render() 统一绘制 bgImage，不覆盖
 
     // === 顶部栏（参考商店页样式）===
-    this.drawTopHeader(game);
+    // 字母升级页面不显示设置和金币胶囊
+    // this.drawTopHeader(game);
 
     // 标题区域 Y 坐标（与商店页"商店"标题位置一致）
     const titleY = top - 10 * s;
@@ -3843,7 +3844,7 @@ class Renderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('选择一张字母牌升级，本赛局内有效', W / 2, subTitleY);
+    ctx.fillText('选择一张字母牌，分数+10，本赛局内有效', W / 2, subTitleY);
     ctx.restore();
 
     // === 分隔线（两条线 + 中间菱形）===
@@ -4023,7 +4024,8 @@ class Renderer {
     const popup = game._randomUpgradePopup;
 
     // 顶部栏
-    this.drawTopHeader(game);
+    // 随机强化页面不显示设置和金币胶囊
+    // this.drawTopHeader(game);
 
     const titleY = top - 10 * s;
 
@@ -4062,7 +4064,7 @@ class Renderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('点击抽选字母，分数乘以1.5~4倍', W / 2, subTitleY);
+    ctx.fillText('点击抽选字母，分数乘以1.5~4倍，本赛局有效', W / 2, subTitleY);
     ctx.restore();
 
     // 分隔线
@@ -4344,22 +4346,8 @@ class Renderer {
       ctx.restore();
     }
 
-    // 关闭按钮（右上角 X）
-    const closeSize = 28 * s;
-    const closeX = W - closeSize - 16 * s;
-    const closeY = titleY - closeSize / 2;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fill();
-    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-    ctx.fillStyle = '#888';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s);
-    ctx.restore();
-    this.randomUpgradeCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
+    // 关闭按钮已移除（随机强化页面无需手动关闭）
+    this.randomUpgradeCloseRect = null;
   }
 
 

@@ -144,6 +144,12 @@ function startGame() {
   game._preloadWitchAvatars();
 }
 
+// 长按检测状态
+let longPressTimer = null;
+let touchStartPos = null;
+const LONG_PRESS_DURATION = 600; // 600ms 长按
+const LONG_PRESS_MOVE_THRESHOLD = 10; // 移动超过 10px 取消长按
+
 // 触摸事件处理
 wx.onTouchStart((e) => {
   // 预加载阶段不响应触摸
@@ -152,6 +158,7 @@ wx.onTouchStart((e) => {
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
+  touchStartPos = { x, y };
 
   // 日志区域触摸（优先处理滚动）
   if (renderer.cloudLogRect) {
@@ -164,10 +171,33 @@ wx.onTouchStart((e) => {
     }
   }
 
+  // 检测 top_icon 长按（打开/关闭调试菜单）
+  if (renderer.topIconRect) {
+    const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
+    if (iconHit) {
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        renderer.debugMenuOpen = !renderer.debugMenuOpen;
+      }, LONG_PRESS_DURATION);
+      return; // 长按期间不触发其他交互
+    }
+  }
+
   handleInput(x, y);
 });
 
 wx.onTouchMove((e) => {
+  // 移动超过阈值时取消长按
+  if (longPressTimer && touchStartPos) {
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.x;
+    const dy = touch.clientY - touchStartPos.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
   if (!renderer.cloudLogDragging) return;
   const touch = e.touches[0];
   const y = touch.clientY;
@@ -178,6 +208,13 @@ wx.onTouchMove((e) => {
 wx.onTouchEnd(() => {
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
+
+  // 取消未触发的长按定时器
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+  touchStartPos = null;
 });
 
 function handleInput(x, y) {
@@ -298,15 +335,6 @@ function handleInput(x, y) {
     }
   }
   
-  // 检测 top_icon 点击（切换调试菜单）
-  if (renderer.topIconRect) {
-    const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
-    if (iconHit) {
-      renderer.debugMenuOpen = !renderer.debugMenuOpen;
-      return;
-    }
-  }
-
   if (game.state === 'playing') {
     // 字母置换弹窗打开时，优先处理弹窗点击
     if (game._changeLetterPopup) {
@@ -791,19 +819,6 @@ function handleInput(x, y) {
 
     // === 随机强化药水（老虎机）===
     if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
-      // 检测关闭按钮
-      if (renderer.randomUpgradeCloseRect) {
-        const closeHit = renderer.hitTest(x, y, [renderer.randomUpgradeCloseRect]);
-        if (closeHit) {
-          vibrate();
-          game.potionMode = null;
-          game._randomUpgradePopup = null;
-          game.state = game._prePotionState || 'shop';
-          game._prePotionState = null;
-          if (game.storageManager) game.storageManager.saveProgress(game);
-          return;
-        }
-      }
       // 检测抽选按钮（只在 idle 阶段可点）
       if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
         const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
