@@ -67,7 +67,15 @@ async function startPreload() {
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
   const witchNames = Object.keys(cloudStorage.witchFileMap);
   const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
-  const total = shopNames.length + witchNames.length + bgIconNames.length;
+
+  // 只有新用户或引导未完成的用户才需要下载 guide 帧序列
+  const savedProgress = wx.getStorageSync('word_balatro_progress');
+  const needGuide = !savedProgress || (
+    savedProgress.guidePhase !== undefined && savedProgress.guidePhase < 5
+  );
+  const guideNames = needGuide ? Object.keys(cloudStorage.guideFileMap) : [];
+
+  const total = shopNames.length + witchNames.length + bgIconNames.length + guideNames.length;
 
   if (total === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -85,10 +93,16 @@ async function startPreload() {
   await cloudStorage.preloadShopCardImages(onProgress);
   await cloudStorage.preloadWitchImages(onProgress);
   await cloudStorage.preloadBgIconImages(onProgress);
+  if (needGuide) {
+    await cloudStorage.preloadGuideImages(onProgress);
+  }
 
   cloudStorage.injectToRenderer(renderer);
   cloudStorage.injectWitchToRenderer(renderer);
   cloudStorage.injectBgIconToRenderer(renderer);
+  if (needGuide) {
+    cloudStorage.injectGuideToRenderer(renderer);
+  }
   preloadComplete = true;
   startGame();
   console.log('[Game] 云图片预加载完成，进入游戏');
@@ -231,9 +245,13 @@ function handleInput(x, y) {
       if (debugHit.action === 'debug_upload_witch') {
         cloudStorage.uploadWitchImages().then(res => {
           game.hintToast = { text: `witch 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
-          return cloudStorage.preloadWitchImages();
+          return Promise.all([
+            cloudStorage.preloadWitchImages(),
+            cloudStorage.preloadGuideImages(),
+          ]);
         }).then(() => {
           cloudStorage.injectWitchToRenderer(renderer);
+          cloudStorage.injectGuideToRenderer(renderer);
           game.hintToast = { text: 'witch 云图片已加载到游戏', expireAt: Date.now() + 2000 };
         }).catch(err => {
           game.hintToast = { text: 'witch 上传失败', expireAt: Date.now() + 2000 };
@@ -260,6 +278,10 @@ function handleInput(x, y) {
         const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
         if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
         if (game.storageManager) game.storageManager.saveProgress(game);
+        // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入
+        cloudStorage.preloadGuideImages().then(() => {
+          cloudStorage.injectGuideToRenderer(renderer);
+        });
       }
       if (debugHit.action === 'debug_endGame') {
         game.state = 'gameover';
@@ -959,22 +981,9 @@ function gameLoop(timestamp) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
   } else if (transitionStartTime !== null) {
-    // 过渡阶段：preview_load 保持 100% 作为底层，游戏页面从 0→100% 淡入叠加
-    const elapsed = Date.now() - transitionStartTime;
-    transitionAlpha = Math.min(elapsed / TRANSITION_DURATION, 1);
-
-    // 底层：preview_load 完全不透明
-    renderer.drawPreviewLoad(100);
-
-    // 上层：游戏页面从 50% → 100% 淡入
-    ctx.save();
-    ctx.globalAlpha = 0.85 + transitionAlpha * 0.15;
+    // 过渡阶段：直接渲染游戏页面（去掉淡入淡出）
     renderer.render(game);
-    ctx.restore();
-
-    if (transitionAlpha >= 1) {
-      transitionStartTime = null;
-    }
+    transitionStartTime = null;
   } else {
     game.update(deltaTime);
     renderer.render(game);

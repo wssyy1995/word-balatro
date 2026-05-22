@@ -49,22 +49,14 @@ class Renderer {
     this.bgImage = null;
     this.bgLoaded = false;
     
-    // 加载新手引导图片
+    // 新手引导帧序列（由 cloudStorage 在预加载时注入，不再使用本地图片）
     this.guideImages = {
-      witch_1: { img: null, loaded: false },
-      witch_2: { img: null, loaded: false },
+      witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 200 },
+      witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
     };
-    ['witch_1', 'witch_2'].forEach(name => {
-      try {
-        const img = wx.createImage();
-        img.src = `images/witch/witch_guide_${name === 'witch_1' ? '1' : '2'}.png`;
-        img.onload = () => { this.guideImages[name].loaded = true; };
-        img.onerror = () => { this.guideImages[name].loaded = false; };
-        this.guideImages[name].img = img;
-      } catch (e) {
-        this.guideImages[name].loaded = false;
-      }
-    });
+    // 预分配帧槽位，等待云存储注入
+    for (let i = 0; i < 9; i++) this.guideImages.witch_1.frames[i] = { img: null, loaded: false };
+    for (let i = 0; i < 11; i++) this.guideImages.witch_2.frames[i] = { img: null, loaded: false };
 
     // 加载 top bar 图标
     this.topIcon = null;
@@ -364,8 +356,8 @@ class Renderer {
 
     // 加载预加载页走路小女巫精灵图
     this.witchWalkFrames = [];
-    this.witchWalkFramesLoaded = [false, false, false];
-    for (let i = 1; i <= 3; i++) {
+    this.witchWalkFramesLoaded = [false, false, false, false];
+    for (let i = 1; i <= 4; i++) {
       try {
         const img = wx.createImage();
         img.src = `images/small_witch_${i}.png`;
@@ -458,7 +450,7 @@ class Renderer {
     }
 
     // 走路小女巫（精灵图，位置随进度条同步，保持原始像素比例）
-    const frameIdx = Math.floor(Date.now() / 150) % 3;
+    const frameIdx = Math.floor(Date.now() / 150) % 4;
     const witchImg = this.witchWalkFrames[frameIdx];
     if (witchImg && this.witchWalkFramesLoaded[frameIdx]) {
       const witchBaseW = witchImg.width || 48;
@@ -467,7 +459,7 @@ class Renderer {
       const witchW = witchBaseW * s * witchScale;
       const witchH = witchBaseH * s * witchScale;
       const witchX = barX + (barW * (progress / 100)) - witchW / 2;
-      const witchY = H * 0.55;
+      const witchY = H * 0.56;
       ctx.drawImage(witchImg, witchX, witchY, witchW, witchH);
     }
 
@@ -1767,6 +1759,21 @@ class Renderer {
     // 新手引导（覆盖在最上层）
     if (game.guidePhase >= 1 && game.guidePhase <= 4) {
       this._drawGuideOverlay(game);
+    } else if (game.guidePhase === 5 && game._guideExitStartTime) {
+      // Phase 5 退场动画：女巫和对话框弹出去 → 蒙层淡出
+      const exitElapsed = Date.now() - game._guideExitStartTime;
+      if (exitElapsed < 600) {
+        // 0~600ms：女巫+对话框弹出去，蒙层保持
+        this._drawGuideOverlay(game);
+      } else if (exitElapsed < 1100) {
+        // 600~1100ms：蒙层从 0.75 渐变到透明（500ms 变亮）
+        const fadeProgress = (exitElapsed - 600) / 500;
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+      // 1100ms 后彻底结束，不再绘制引导层
     }
 
     // 调试菜单（最后绘制，确保在最上层）
@@ -1785,62 +1792,127 @@ class Renderer {
 
     const PHASE_TEXTS = [
       '',
-      '终于等到你了，灵词师！二十六个女巫将词牌夺走后，所有的词语都失去了能量，而你体内的字母之力，是唯一能与女巫对抗的力量。',
-      '方法很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越强，能量越高！找到女巫，挑战她们，夺回26张词牌！',
-      '对了，这个送你——我珍藏很久的女巫卡牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店也有更多卡牌可以买到哦）',
+      '传说中具有强大能量的26张词牌，由26位女巫保管着，她们都设下了独一无二的试炼。唯有通过考验之人，才能唤醒词牌的真正力量。',
+      '怎么通过考验？很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越长，能量越高。',
+      '对了，这个送你——我珍藏很久的女巫牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店有更多强大的卡牌可以买到哦）',
       '好了，快出发寻找女巫吧！',
     ];
 
+    // Phase 1 入场时序：0~1000ms 全亮无UI → 1000~1500ms 渐变变暗 → 1500ms+ 显示完整UI
+    const overlayStartTime = game._guideOverlayStartTime || Date.now();
+    const overlayElapsed = Date.now() - overlayStartTime;
+    const FADE_START = 1000;
+    const FADE_DURATION = 500;
+    const UI_SHOW_DELAY = FADE_START + FADE_DURATION; // 1500ms
+
+    if (phase === 1 && overlayElapsed < UI_SHOW_DELAY) {
+      this.guideNextBtnRect = null; // 渐变阶段禁止点击
+      if (overlayElapsed >= FADE_START) {
+        // 渐变变暗阶段：只画遮罩
+        const fadeProgress = Math.min((overlayElapsed - FADE_START) / FADE_DURATION, 1);
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.75})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+      return; // 不画女巫、对话框等
+    }
+
     const fullText = PHASE_TEXTS[phase] || '';
-    const textStartTime = game._guideTextStartTime || Date.now();
+
+    // Phase 1 弹出动画参数
+    const POPUP_DURATION = 600;
+    const POST_POPUP_DELAY = 500;
+
+    // 计算文字开始时间：Phase 1 在女巫+对话框弹出并贴合后延迟 500ms 才开始；Phase 2~4 保持原有逻辑
+    const textStartTime = (phase === 1)
+      ? (overlayStartTime + UI_SHOW_DELAY + POPUP_DURATION + POST_POPUP_DELAY)
+      : (game._guideTextStartTime || Date.now());
     const charInterval = 55; // 每 55ms 显示一个字
     const elapsed = Date.now() - textStartTime;
-    const visibleChars = Math.min(fullText.length, Math.floor(elapsed / charInterval));
+    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(elapsed / charInterval)));
     const displayText = fullText.slice(0, visibleChars);
     const isTextComplete = visibleChars >= fullText.length;
 
     // === 1. 黑色半透明蒙层 ===
     ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
 
-    // === 2. 对话框（宽版，底部居中） ===
+    // === 2. 女巫引导图片 + 对话框（Phase 1 果冻感弹出，Phase 2~4 直接显示） ===
     const dialogPadX = 20 * s;
-    const dialogX = dialogPadX;
-    const dialogW = W - dialogPadX * 2;
-    const dialogH = 130 * s;
-    const dialogR = 12 * s;
-    const dialogY = H - dialogH - 30 * s;
-
-    ctx.save();
-    // 对话框背景（奶油色）
-    this.roundRect(dialogX, dialogY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
-    ctx.restore();
-
-    // === 3. 女巫引导图片（左边缘与对话框对齐，底部贴合对话框上边缘） ===
+    const dialogTargetX = dialogPadX;
     const imgName = phase === 1 ? 'witch_1' : 'witch_2';
     const imgData = this.guideImages[imgName];
     const imgW = 180 * s;
     const imgH = 220 * s;
-    const imgX = dialogX; // 左边缘对齐
-    const imgY = dialogY - imgH; // 底部完全贴合对话框上边缘
-    if (imgData && imgData.loaded && imgData.img) {
-      ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
+    const imgTargetX = dialogTargetX;
+    const imgTargetY = H * 0.6 - imgH;
+
+    const dialogW = W - dialogPadX * 2;
+    const dialogH = 130 * s;
+    const dialogR = 12 * s;
+    const dialogTargetY = H * 0.6;
+
+    let imgX, imgY, dialogDrawX, dialogDrawY;
+    if (phase === 1) {
+      const popupElapsed = overlayElapsed - UI_SHOW_DELAY;
+      if (popupElapsed > 0) {
+        const popupProgress = Math.min(popupElapsed / POPUP_DURATION, 1);
+        const eased = Easing.easeOutBackStrong(popupProgress);
+        // 女巫从左侧弹出：起始在屏幕外左侧，目标位置对齐
+        imgX = -imgW + (imgTargetX + imgW) * eased;
+        // 对话框从右侧弹出：起始在屏幕外右侧，目标位置对齐
+        dialogDrawX = W + (dialogTargetX - W) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else {
+        imgX = -imgW;
+        dialogDrawX = W;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+    } else if (phase === 5) {
+      // Phase 5 退场动画：女巫向左、对话框向右弹出去
+      const exitElapsed = Date.now() - (game._guideExitStartTime || Date.now());
+      const exitProgress = Math.min(exitElapsed / 600, 1);
+      const eased = Easing.easeOutBackStrong(exitProgress);
+      imgX = imgTargetX - (imgTargetX + imgW) * eased;
+      dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
+    } else {
+      imgX = imgTargetX;
+      dialogDrawX = dialogTargetX;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
     }
 
-    // === 4. 逐字显示的文字 ===
+    // 女巫引导图片（均为帧序列动画）
+    if (imgData && imgData.loaded) {
+      const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+      const frame = imgData.frames[frameIdx];
+      if (frame && frame.loaded && frame.img) {
+        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      }
+    }
+
+    // 对话框背景（奶油色）
+    this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+    // === 3. 逐字显示的文字 ===
     ctx.save();
-    ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+    ctx.font = `${Math.floor(17 * s)}px sans-serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
 
     const textPad = 18 * s;
-    const textX = dialogX + textPad;
-    const textY = dialogY + textPad + 10 * s; // 稍微下移，给上方图片留空间
+    const textX = dialogDrawX + textPad;
+    const textY = dialogDrawY + textPad;
     const textMaxW = dialogW - textPad * 2;
-    const lineHeight = 22 * s;
+    const lineHeight = 24 * s;
 
     // 自动换行绘制
     let line = '';
@@ -1860,12 +1932,12 @@ class Renderer {
     if (line) ctx.fillText(line, textX, currentY);
     ctx.restore();
 
-    // === 5. 倒三角按钮（文字显示完全后才显示）===
+    // === 4. 倒三角按钮（文字显示完全后才显示，Phase 5 退场时不显示）===
     this.guideNextBtnRect = null;
-    if (isTextComplete) {
+    if (isTextComplete && phase !== 5) {
       const btnSize = 16 * s;
-      const btnX = dialogX + dialogW - btnSize - 16 * s;
-      const btnY = dialogY + dialogH - btnSize - 12 * s;
+      const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+      const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
 
       ctx.save();
       ctx.beginPath();
@@ -1882,36 +1954,37 @@ class Renderer {
       ctx.fill();
       ctx.restore();
 
-      this.guideNextBtnRect = { x: btnX - 4 * s, y: btnY - 4 * s, w: btnSize + 8 * s, h: btnSize + 8 * s };
+      // 点击区域扩大为整个对话框
+      this.guideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     }
 
     // === 6. 阶段3：has_vowel 卡牌弹入动画（果冻感缩放） ===
+    // 弹入完成后持续显示在女巫旁边，点击下一步进入 Phase 4 时自然消失
     if (phase === 3 && isTextComplete) {
       const giftStart = game._guideCardGiftStartTime || (game._guideCardGiftStartTime = Date.now());
       const giftElapsed = Date.now() - giftStart;
-      const giftDuration = 2000;
 
-      if (giftElapsed < giftDuration) {
-        const cardW = 70 * s;
-        const cardH = 90 * s;
-        // 卡牌目标位置：witch 图片右侧，与 witch 图片中心垂直对齐
-        const targetX = imgX + imgW + 10 * s;
-        const targetY = imgY + imgH / 2;
-        // 弹入动画：600ms 从小变大，easeOutBackStrong 强力果冻回弹
-        const progress = Math.min(giftElapsed / 600, 1);
-        const scale = progress === 0 ? 0 : Easing.easeOutBackStrong(progress);
-        const curW = cardW * scale;
-        const curH = cardH * scale;
-        const cardX = targetX;
-        const cardY = targetY - curH / 2; // 中心对齐
+      const cardW = 70 * s;
+      const cardH = 90 * s;
+      // 卡牌目标位置：witch 图片右侧，与 witch 图片中心垂直对齐
+      const targetX = imgX + imgW + 10 * s;
+      const targetY = imgY + imgH / 2;
+      // 弹入动画：600ms 从小变大，easeOutBackStrong 强力果冻回弹；之后保持
+      const progress = Math.min(giftElapsed / 600, 1);
+      const scale = progress === 0 ? 0 : Easing.easeOutBackStrong(progress);
+      const curW = cardW * scale;
+      const curH = cardH * scale;
+      const cardX = targetX;
+      const cardY = targetY - curH / 2; // 中心对齐
 
-        const hasVowelData = this.shopCardImages['has_vowel'];
-        if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {
-          ctx.save();
-          ctx.globalAlpha = progress === 0 ? 0 : Math.min(scale, 1);
-          ctx.drawImage(hasVowelData.img, cardX, cardY, curW, curH);
-          ctx.restore();
-        }
+      const hasVowelData = this.shopCardImages['has_vowel'];
+      if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {
+        ctx.save();
+        ctx.globalAlpha = progress === 0 ? 0 : Math.min(scale, 1);
+        // 卡牌背后金色星星+光晕（复用购买成功弹窗效果）
+        this._drawCardGlow(ctx, cardX, cardY, curW, curH, s);
+        ctx.drawImage(hasVowelData.img, cardX, cardY, curW, curH);
+        ctx.restore();
       }
     }
   }

@@ -603,8 +603,16 @@ class Game {
     } else if (this.guidePhase === undefined) {
       this.guidePhase = 0;
     }
-    // _guideTextStartTime 在 resetRound 中已设置，不要覆盖；恢复时若正在引导则重新开始文字动画
-    if (this._guideTextStartTime === undefined && this.guidePhase >= 1 && this.guidePhase <= 4) {
+    // 恢复引导时间戳
+    if (savedProgress && savedProgress._guideOverlayStartTime !== undefined) {
+      this._guideOverlayStartTime = savedProgress._guideOverlayStartTime;
+    }
+    // Phase 1 恢复时若缺少 overlay 时间，设为过去值让延迟立即结束（避免恢复后卡住）
+    if (this.guidePhase === 1 && !this._guideOverlayStartTime) {
+      this._guideOverlayStartTime = Date.now() - 2000;
+    }
+    // Phase 2~4 恢复时若正在引导则重新开始文字动画
+    if (this._guideTextStartTime === undefined && this.guidePhase >= 2 && this.guidePhase <= 4) {
       this._guideTextStartTime = Date.now();
     }
     this._guideCardGiftStartTime = null;
@@ -855,24 +863,16 @@ class Game {
       this._hastePlayStartTime = null;
     }
 
-    // 第一回合触发新手引导
+    // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
     if (this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
       this.guidePhase = 1;
-      this._guideTextStartTime = Date.now();
+      this._guideOverlayStartTime = Date.now();
     }
 
     this.state = 'playing';
   }
 
   advanceGuide() {
-    const PHASE_TEXTS = [
-      '', // 0: 未开始
-      '终于等到你了，灵词师！二十六个女巫将词牌夺走后，所有的词语都失去了能量，而你体内的字母之力，是唯一能与女巫对抗的力量。',
-      '方法很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越强，能量越高！找到女巫，挑战她们，夺回26张词牌！',
-      '对了，这个送你——我珍藏很久的女巫卡牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店也有更多卡牌可以买到哦）',
-      '好了，快出发寻找女巫吧！',
-    ];
-
     if (this.guidePhase < 1 || this.guidePhase > 4) return;
 
     // 阶段3特殊处理：给 has_vowel 卡牌
@@ -891,9 +891,10 @@ class Game {
     this.guidePhase++;
     this._guideTextStartTime = Date.now();
 
-    // 阶段5（完成）：清理引导状态
+    // 阶段5（完成）：先触发退场动画，再清理引导状态
     if (this.guidePhase >= 5) {
       this.guidePhase = 5;
+      this._guideExitStartTime = Date.now();
       this._guideTextStartTime = null;
       this._guideCardGiftStartTime = null;
     }

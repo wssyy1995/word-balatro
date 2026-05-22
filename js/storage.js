@@ -94,6 +94,7 @@ class StorageManager {
       _seedMinLen: game._seedMinLen,
       _seedMaxLen: game._seedMaxLen,
       guidePhase: game.guidePhase,
+      _guideOverlayStartTime: game._guideOverlayStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
       timestamp: Date.now(),
       version: 1

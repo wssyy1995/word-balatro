@@ -7,9 +7,11 @@ class CloudStorageManager {
     this.shopCardImages = {}; // { name: { img, loaded, width, height } }
     this.witchImages = {};    // { name: { img, loaded, width, height } }
     this.bgIconImages = {};   // { name: { img, loaded, width, height } }
+    this.guideImages = {};    // { witch_1: { frames: [...], loaded: false }, witch_2: ... }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
+    this.guideFileMap = {};   // { 'witch_guide_1_1': fileID, ... }
     this.initialized = false;
     this.uploading = false;
     this.debugLogs = [];
@@ -59,6 +61,15 @@ class CloudStorageManager {
     this.defaultBgIconFileMap = {
       'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
+
+    // 默认 guide 帧序列云文件映射（witch_guide_1/1.png ~ witch_guide_2/11.png）
+    this.defaultGuideFileMap = {};
+    const guideBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/guide';
+    for (let g = 1; g <= 2; g++) {
+      for (let f = 1; f <= 11; f++) {
+        this.defaultGuideFileMap[`witch_guide_${g}_${f}`] = `${guideBase}/witch_guide_${g}/${f}.png`;
+      }
+    }
   }
 
   init() {
@@ -119,6 +130,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('bg_icon 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 guide 映射兜底
+    this.guideFileMap = { ...this.defaultGuideFileMap };
+
+    // 加载 guide 图片的本地缓存映射
+    try {
+      const guideStored = wx.getStorageSync('cloud_guide_map');
+      if (guideStored) {
+        const guideLocalMap = JSON.parse(guideStored);
+        this.guideFileMap = { ...this.guideFileMap, ...guideLocalMap };
+        this.log('guide 本地缓存映射已加载，共' + Object.keys(guideLocalMap).length + '张');
+      } else {
+        this.log('无 guide 本地缓存，使用默认云映射，共' + Object.keys(this.defaultGuideFileMap).length + '张');
+      }
+    } catch (e) {
+      this.log('guide 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
   }
 
@@ -228,7 +256,28 @@ class CloudStorageManager {
     }
   }
 
-  // 上传 images/witch 目录下所有 .png 到云存储
+  // 递归扫描 images/witch/ 及其子目录下的所有 .png
+  _scanWitchDir(fs, dirPath) {
+    const results = [];
+    try {
+      const entries = fs.readdirSync(dirPath);
+      for (const entry of entries) {
+        const fullPath = `${dirPath}/${entry}`;
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          results.push(...this._scanWitchDir(fs, fullPath));
+        } else if (entry.endsWith('.png')) {
+          const relPath = fullPath.replace(/^images\/witch\//, '');
+          results.push({ localPath: fullPath, fileName: entry, relPath });
+        }
+      }
+    } catch (e) {
+      console.error('扫描目录失败:', dirPath, e);
+    }
+    return results;
+  }
+
+  // 上传 images/witch 目录下所有 .png（含子目录 witch_guide_1 / witch_guide_2）到云存储
   async uploadWitchImages() {
     if (this.uploading) return { success: false, message: '正在上传中...' };
     this.uploading = true;
@@ -236,25 +285,26 @@ class CloudStorageManager {
     const results = { success: [], failed: [] };
     const fs = wx.getFileSystemManager();
 
-    let files = [];
-    try {
-      files = fs.readdirSync('images/witch/');
-    } catch (e) {
-      this.log('读取 witch 目录失败: ' + (e && e.message ? e.message : String(e)));
-      this.uploading = false;
-      return { success: false, message: '读取目录失败', error: e };
-    }
+    const allFiles = this._scanWitchDir(fs, 'images/witch');
+    this.log('扫描 images/witch/ 目录（含子目录）');
+    this.log('扫描到 ' + allFiles.length + ' 张本地 witch 图片');
 
-    const pngFiles = files.filter(f => f.endsWith('.png'));
-    this.log('扫描 images/witch/ 目录下');
-    this.log('扫描到 ' + pngFiles.length + ' 张本地 witch 图片');
+    for (const file of allFiles) {
+      const { localPath, fileName, relPath } = file;
+      const isSubDir = relPath.includes('/');
 
-    for (const fileName of pngFiles) {
-      const name = fileName.replace(/\.png$/i, '');
-      const localPath = `images/witch/${fileName}`;
-      const cloudPath = `witch/${fileName}`;
+      let name, cloudPath;
+      if (isSubDir) {
+        // 子目录文件：witch_guide_1/1.png → cloud: witch/guide/witch_guide_1/1.png
+        name = relPath.replace(/\.png$/i, '').replace(/\//g, '_'); // witch_guide_1_1
+        cloudPath = `witch/guide/${relPath}`;
+      } else {
+        // 一级目录文件：witch_21.png → cloud: witch/witch_21.png
+        name = fileName.replace(/\.png$/i, '');
+        cloudPath = `witch/${fileName}`;
+      }
 
-      this.log('开始上传 witch/' + name);
+      this.log('开始上传 ' + cloudPath);
 
       let uploadRes = null;
       let lastError = null;
@@ -275,12 +325,16 @@ class CloudStorageManager {
       }
 
       if (uploadRes) {
-        this.witchFileMap[name] = uploadRes.fileID;
-        results.success.push({ name, fileID: uploadRes.fileID });
-        this.log('上传成功 witch/' + name);
+        if (isSubDir) {
+          this.guideFileMap[name] = uploadRes.fileID;
+        } else {
+          this.witchFileMap[name] = uploadRes.fileID;
+        }
+        results.success.push({ name, fileID: uploadRes.fileID, type: isSubDir ? 'guide' : 'witch' });
+        this.log('上传成功 ' + cloudPath);
       } else {
         console.error('上传失败:', name, lastError);
-        this.log('上传失败 witch/' + name + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        this.log('上传失败 ' + cloudPath + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
         results.failed.push({ name, error: lastError });
       }
     }
@@ -288,6 +342,7 @@ class CloudStorageManager {
     // 保存映射到本地缓存
     try {
       wx.setStorageSync('cloud_witch_map', JSON.stringify(this.witchFileMap));
+      wx.setStorageSync('cloud_guide_map', JSON.stringify(this.guideFileMap));
     } catch (e) {}
 
     this.uploading = false;
@@ -495,6 +550,133 @@ class CloudStorageManager {
       }
     });
     this.log('已注入 witch renderer: ' + count + '张');
+  }
+
+  // 从云存储下载并缓存所有 guide 帧序列图片
+  async preloadGuideImages(onProgress = null) {
+    const names = Object.keys(this.guideFileMap);
+    if (names.length === 0) {
+      this.log('没有 guide 云存储映射，跳过预加载');
+      return;
+    }
+
+    this.log('开始下载 guide 图片，共' + names.length + '张');
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadGuideImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const groups = Object.keys(this.guideImages);
+    let loadedCount = 0;
+    let totalFrames = 0;
+    groups.forEach(gk => {
+      const frames = this.guideImages[gk].frames;
+      totalFrames += frames.length;
+      loadedCount += frames.filter(f => f && f.loaded).length;
+    });
+    this.log('guide 下载完成：' + loadedCount + '/' + totalFrames + '帧成功');
+  }
+
+  async _loadGuideImage(name) {
+    const fileID = this.guideFileMap[name];
+    if (!fileID) return;
+
+    // 解析 name: witch_guide_1_1 → groupKey='witch_1', frameIdx=0
+    const match = name.match(/^witch_guide_(\d+)_(\d+)$/);
+    if (!match) return;
+    const guideNum = match[1];
+    const frameNum = parseInt(match[2], 10);
+    const groupKey = `witch_${guideNum}`;
+    const frameIdx = frameNum - 1;
+
+    if (!this.guideImages[groupKey]) {
+      this.guideImages[groupKey] = { frames: [], loaded: false };
+    }
+
+    // 重复加载防护
+    const existing = this.guideImages[groupKey].frames[frameIdx];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
+    // getTempFileURL 重试3次
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if (!urlData) {
+      const detail = lastError ? lastError.message : 'unknown';
+      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
+      this.guideImages[groupKey].frames[frameIdx] = { img: null, loaded: false };
+      return;
+    }
+
+    if (existing && existing.img) {
+      existing.img.src = '';
+    }
+
+    const img = wx.createImage();
+    img.src = urlData.tempFileURL;
+    await new Promise((resolve) => {
+      img.onload = () => {
+        this.log('guide 下载完成: ' + name);
+        this.guideImages[groupKey].frames[frameIdx] = { img, loaded: true };
+        resolve();
+      };
+      img.onerror = (e) => {
+        this.log('guide 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+        this.guideImages[groupKey].frames[frameIdx] = { img: null, loaded: false };
+        resolve();
+      };
+    });
+  }
+
+  // 将云缓存 guide 帧序列注入到 renderer 的 guideImages
+  injectGuideToRenderer(renderer) {
+    let count = 0;
+    Object.keys(this.guideImages).forEach(groupKey => {
+      const group = this.guideImages[groupKey];
+      if (!group || !group.frames) return;
+      const rendererGroup = renderer.guideImages[groupKey];
+      if (!rendererGroup || !rendererGroup.frames) return;
+
+      group.frames.forEach((frame, idx) => {
+        if (frame && frame.loaded && frame.img && rendererGroup.frames[idx]) {
+          rendererGroup.frames[idx] = { img: frame.img, loaded: true };
+          count++;
+        }
+      });
+
+      if (rendererGroup.frames.every(f => f && f.loaded)) {
+        rendererGroup.loaded = true;
+      }
+    });
+    this.log('已注入 guide renderer: ' + count + '张');
   }
 
   // 上传 images/bg_icon 目录下所有 .png 到云存储
