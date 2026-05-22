@@ -91,14 +91,12 @@ async function startPreload() {
   }
 
   await cloudStorage.preloadShopCardImages(onProgress);
-  await cloudStorage.preloadWitchImages(onProgress);
   await cloudStorage.preloadBgIconImages(onProgress);
   if (needGuide) {
     await cloudStorage.preloadGuideImages(onProgress);
   }
 
   cloudStorage.injectToRenderer(renderer);
-  cloudStorage.injectWitchToRenderer(renderer);
   cloudStorage.injectBgIconToRenderer(renderer);
   if (needGuide) {
     cloudStorage.injectGuideToRenderer(renderer);
@@ -138,8 +136,12 @@ function startGame() {
   }
 
   game.cloudStorage = cloudStorage;
+  game.renderer = renderer;
   wx.game = game;
   transitionStartTime = Date.now();
+
+  // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）
+  game._preloadWitchAvatars();
 }
 
 // 触摸事件处理

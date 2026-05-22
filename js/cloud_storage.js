@@ -66,7 +66,7 @@ class CloudStorageManager {
     this.defaultGuideFileMap = {};
     const guideBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/guide';
     for (let g = 1; g <= 2; g++) {
-      for (let f = 1; f <= 11; f++) {
+      for (let f = 1; f <= 13; f++) {
         this.defaultGuideFileMap[`witch_guide_${g}_${f}`] = `${guideBase}/witch_guide_${g}/${f}.png`;
       }
     }
@@ -550,6 +550,39 @@ class CloudStorageManager {
       }
     });
     this.log('已注入 witch renderer: ' + count + '张');
+  }
+
+  // 按需下载并注入指定 level 的女巫头像（当前回合进行时，后台预加载下一回合头像）
+  async preloadWitchAvatarForLevel(level, renderer) {
+    const name = `witch_${level}`;
+
+    // 1. renderer 已缓存则跳过
+    const avatar = renderer.witchAvatars[name];
+    if (avatar && avatar.loaded && avatar.img) {
+      return;
+    }
+
+    // 2. cloudStorage 已缓存则直接注入
+    const cached = this.witchImages[name];
+    if (cached && cached.loaded && cached.img) {
+      renderer.witchAvatars[name] = cached;
+      return;
+    }
+
+    // 3. 无云映射则跳过
+    const fileID = this.witchFileMap[name];
+    if (!fileID) {
+      this.log('无云映射，跳过下载女巫头像: ' + name);
+      return;
+    }
+
+    // 4. 下载并注入
+    await this._loadWitchImage(name);
+    const data = this.witchImages[name];
+    if (data && data.loaded && renderer.witchAvatars[name]) {
+      renderer.witchAvatars[name] = data;
+      this.log('已按需注入女巫头像: ' + name);
+    }
   }
 
   // 从云存储下载并缓存所有 guide 帧序列图片

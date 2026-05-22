@@ -872,6 +872,23 @@ class Game {
     this.state = 'playing';
   }
 
+  // 按需预加载当前回合和下一回合的女巫头像
+  _preloadWitchAvatars() {
+    if (!this.cloudStorage || !this.renderer) return;
+
+    // 当前回合（存档恢复时可能需要兜底下载）
+    const currentSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (currentSkill && currentSkill.skill) {
+      this.cloudStorage.preloadWitchAvatarForLevel(currentSkill.level, this.renderer);
+    }
+
+    // 下一回合（后台提前下载）
+    const nextSkill = getSkillForLevel(this.round + 1, this._shuffledSkills);
+    if (nextSkill && nextSkill.skill) {
+      this.cloudStorage.preloadWitchAvatarForLevel(nextSkill.level, this.renderer);
+    }
+  }
+
   advanceGuide() {
     if (this.guidePhase < 1 || this.guidePhase > 4) return;
 
@@ -1585,6 +1602,7 @@ class Game {
     this.round++;
     this.shopItems = null;
     this.resetRound();
+    this._preloadWitchAvatars();
   }
 
   jumpToRound(targetRound) {
