@@ -130,6 +130,15 @@ class StorageManager {
     return this.remove('progress');
   }
 
+  // ===== 新手引导状态（独立于游戏进度，永久保留）=====
+  saveGuidePhase(phase) {
+    return this.set('guide_phase', phase);
+  }
+
+  loadGuidePhase() {
+    return this.get('guide_phase', null);
+  }
+
   // ===== 最高分 =====
   
   getHighScore() {

@@ -597,8 +597,11 @@ class Game {
     this._letterGodAnim = null;
     this._debugLabelShow = null;
 
-    // 新手引导（全新游戏时 resetRound 可能已经设置了 guidePhase，不要覆盖）
-    if (savedProgress && savedProgress.guidePhase !== undefined) {
+    // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
+    const savedGuidePhase = this.storageManager.loadGuidePhase();
+    if (savedGuidePhase !== null) {
+      this.guidePhase = savedGuidePhase;
+    } else if (savedProgress && savedProgress.guidePhase !== undefined) {
       this.guidePhase = savedProgress.guidePhase;
     } else if (this.guidePhase === undefined) {
       this.guidePhase = 0;
@@ -916,7 +919,13 @@ class Game {
       this._guideCardGiftStartTime = null;
     }
 
-    if (this.storageManager) this.storageManager.saveProgress(this);
+    if (this.storageManager) {
+      this.storageManager.saveProgress(this);
+      // 引导完成时单独持久化，防止游戏结束后 clearProgress 丢失
+      if (this.guidePhase >= 5) {
+        this.storageManager.saveGuidePhase(this.guidePhase);
+      }
+    }
   }
 
   toggleSelect(cardId) {

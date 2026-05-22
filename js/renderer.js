@@ -51,7 +51,7 @@ class Renderer {
     
     // 新手引导帧序列（由 cloudStorage 在预加载时注入，不再使用本地图片）
     this.guideImages = {
-      witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 200 },
+      witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 180 },
       witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
     };
     // 预分配帧槽位，等待云存储注入
@@ -1828,7 +1828,7 @@ class Renderer {
     const textStartTime = (phase === 1)
       ? (overlayStartTime + UI_SHOW_DELAY + POPUP_DURATION + POST_POPUP_DELAY)
       : (game._guideTextStartTime || Date.now());
-    const charInterval = 55; // 每 55ms 显示一个字
+    const charInterval = 65; // 每 65ms 显示一个字
     const elapsed = Date.now() - textStartTime;
     const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(elapsed / charInterval)));
     const displayText = fullText.slice(0, visibleChars);
