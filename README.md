@@ -266,14 +266,14 @@ target = 150 + 50 × round × (round - 1)
 
 | 回合 | 约束 | 说明 | 奖励 |
 |------|------|------|------|
-| 第 2 关 | `force_letter_3` | 每次出牌只能出 3 张字母牌 | 字母置换药水（50%） |
+| 第 3 关 | `force_letter_3` | 每次出牌只能出 3 张字母牌 | 字母置换药水（50%） |
 | 第 5 关 | `need_letter_4` | 每次出牌必须不少于 4 个字母 | 金币翻倍（50%） |
 | 第 8 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 额外字母（100%） |
-| 第 11 关 | `force_letter_4` | 每次出牌只能出 4 张字母牌 | 字母强化药水（30%） |
+| 第 11 关 | `global_witch_card_1` | 依 `SKILL_POOL` 分配 | 女巫槽位+1（100%） |
 | 第 14 关 | `forbid_illegal_words` | 出现非法单词即游戏结束 | 随机强化药水（30%） |
 | 第 16 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 额外出牌（100%） |
 | 第 18 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 随机强化药水（50%） |
-| 第 21 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 女巫槽位+1（100%） |
+| 第 21 关 | 动态分配* | 依 `SKILL_POOL` 分配 | 字母升级（30%） |
 
 > *动态分配：第 16、18、21 关及以后的约束从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，可能包含：
 > - `letter_a_mult_half`：出牌含字母 A，则单词倍率减半
@@ -297,21 +297,23 @@ target = 150 + 50 × round × (round - 1)
 
 ```
 render(game)
-├── 清空画布 → 绘制背景图（bg.png）或纯色 #0a1628
+├── 清空画布 → 绘制背景图（云存储注入 bg_icon/bg.png，回退纯色 #0a1628）
 ├── 状态分流
 │   ├── playing  → drawHUD() + drawPlaying()
 │   ├── settlement → drawHUD() + drawCoinCapsule() + settlementRenderer.draw()
 │   ├── witch_reward → witchRewardRenderer.draw()
 │   ├── shop     → drawTopHeader() + drawCoinCapsule() + shopRenderer.draw()
 │   │              └── confirmBuyRenderer.draw()（如有购买弹窗）
-│   ├── potion   → drawPotion()
+│   ├── potion   → drawPotion()（字母升级/随机强化不显示顶部栏）
 │   ├── life_extended → drawLifeExtension()
 │   └── gameover → drawHUD() + drawPlaying() + gameOverRenderer.draw()
 ├── updateAnimations()
 ├── _updateAndDrawSparkles()    # 烟花粒子
 ├── _updateAndDrawFlyingScore() # 飞行总分
 ├── _shopToGameTransition()     # 页面过渡遮罩
-└── _drawDebugMenu()            # 调试菜单（如需）
+├── _drawGuideOverlay()         # 新手引导覆盖层（Phase 1~5）
+├── _drawCloudDebugLogs()       # 云存储调试日志
+└── _drawDebugMenu()            # 调试菜单（长按 top_icon 触发）
 ```
 
 #### 3.3.2 坐标系与适配
@@ -495,14 +497,19 @@ BGM 支持循环播放，音量 0.3。
 
 ### 3.7 cloud_storage.js — 微信云存储
 
-用于管理 `shop_card` 和 `witch` 系列图片的上传、下载与运行时注入：
+用于管理 `shop_card`、`witch`、`bg_icon`、`guide` 系列图片的上传、下载与运行时注入：
 
-- **上传**：`uploadShopCards()` / `uploadWitchImages()` 将本地图片批量上传到微信云存储
-- **下载**：`preloadShopCardImages()` / `preloadWitchImages()` 获取临时 URL 并缓存为 `Image` 对象
-- **注入**：`injectToRenderer(renderer)` / `injectWitchToRenderer(renderer)` 将云缓存图片覆盖到渲染器，实现无版本更新替换图标
+- **上传**：
+  - `uploadShopCards()`：批量上传 `images/shop_card/` 到云存储
+  - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`、`witch_guide_2`），witch 头像上传至 `witch/`，guide 帧序列上传至 `witch/guide/`
+  - `uploadBgIconImages()`：上传背景图到 `bg_icon/`
+- **下载**：
+  - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
+  - `preloadBgIconImages()`：预加载页下载背景图
+  - `preloadGuideImages()`：按需下载（仅新用户/引导未完成时）
+  - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
+- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` 将云缓存图片覆盖到渲染器
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
-
-> 云存储初始化延迟到第一回合渲染完成后执行，避免阻塞游戏启动。
 
 ---
 
@@ -576,6 +583,33 @@ BGM 支持循环播放，音量 0.3。
     │
     └── out_of_hands / surrender ──→ [gameover] ──restart()──→ [playing]
 ```
+
+---
+
+## 5.1 新手引导（witch_guide）
+
+首次进入游戏的玩家会在第 1 回合触发新手引导，共 **5 个 Phase**：
+
+| Phase | 内容 | 动画 |
+|-------|------|------|
+| 1 | 开场白：女巫介绍世界观 | witch_1 帧动画（左→右果冻弹出）+ 对话框（右→左弹出）+ 逐字显示 |
+| 2 | 玩法说明：如何拼单词得分 | witch_2 帧动画 |
+| 3 | 赠送卡牌：插入 `has_vowel` 女巫牌 | witch_2 帧动画 + 卡牌果冻弹入（带金色星星光晕） |
+| 4 | 结束语：鼓励出发挑战 | witch_2 帧动画 |
+| 5 | 退场动画：女巫+对话框弹出屏幕 | 退场后引导层消失，恢复正常游戏 |
+
+**入场时序（Phase 1）**：
+```
+0~1000ms    → 全亮无 UI（只显示游戏画面）
+1000~1500ms → 渐变变暗（黑色蒙层 alpha 0→0.75）
+1500ms      → 女巫+对话框果冻感弹出（600ms easeOutBackStrong）
+2000ms      → 弹出完成，延迟 500ms
+2500ms      → 文字开始逐字显示（每 65ms 一个字）
+```
+
+**持久化**：引导完成状态（`guidePhase ≥ 5`）通过 `storage.saveGuidePhase()` **独立存储**，即使游戏结束 `clearProgress()` 也不会清除。同一位玩家终身只显示一次引导。
+
+**预加载**：guide 帧序列仅在预加载页**按需下载**（判断 `savedProgress.guidePhase < 5` 或存档不存在），已完成引导的用户不下载，节省流量。
 
 ---
 
@@ -689,7 +723,7 @@ letterUpgrades = Map {
 
 ## 9. 调试功能
 
-点击游戏左上角图标（`top_icon.png`）可打开调试菜单：
+**长按**游戏左上角图标（`top_icon.png`）**600ms** 可打开/关闭调试菜单：
 - 重置出牌次数
 - 增加 100 分
 - 增加 10 金币
@@ -698,7 +732,9 @@ letterUpgrades = Map {
 - 直接通关（进入 settlement）
 - 刷新商店（重新生成 6 款商品）
 - 上传 shop_card 图片到云存储
-- 上传 witch 图片到云存储
+- 上传 witch 图片到云存储（含 guide 帧序列）
+- 上传 bg_icon 图片到云存储
+- **触发新人引导**（强制回到 Phase 1）
 - 结束游戏（进入 gameover）
 
 > 调试功能仅在开发阶段使用，上线前应移除或隐藏入口。
@@ -721,7 +757,7 @@ letterUpgrades = Map {
 | P1 | 动画系统持续完善（更多粒子效果、过渡动画） |
 | P1 | 音效资源补充与 BGM |
 | P2 | 分享功能（`wx.shareAppMessage`） |
-| P2 | 新手引导 |
+| ~~P2~~ | ~~新手引导~~ ✅ 已完成 |
 | P3 | 皮肤系统 / 多种卡牌主题 |
 
 ---
@@ -738,7 +774,8 @@ letterUpgrades = Map {
 | v1.3.2 | 2026-05-13 | 补充生命延续、动态女巫技能分配、扩展词库、提示功能等；修正女巫牌/药水/水晶球描述；更新状态机与调试菜单 |
 | v1.3.3 | 2026-05-17 | 修正女巫技能奖励表格与代码实际一致；补充四字母连击女巫牌；修正商店随机强化药水倍率说明 |
 | v1.4.0 | 2026-05-18 | 新增女巫牌：以小博大、争分夺秒；新增水晶球：技能重掷；新增女巫技能池：letter_s_mult_half、letter_i_mult_half、disable_one_witch_card；新增 Lv.21 女巫奖励（女巫槽位+1）；新增生命延续状态机；优化灵动岛适配、金币胶囊样式、商店售出补位动画 |
+| v1.5.0 | 2026-05-21 | 新增新手引导（5 Phase 帧动画 + 卡牌赠送）；背景图强制云存储；witch/guide 帧序列云存储管理；女巫头像改为回合级按需下载；调试菜单改为长按触发；字母升级/随机强化页面去顶部栏；修复游戏结束后重复触发引导的 bug |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-05-20*
+*文档基于实际代码整理，最后更新：2026-05-21*
