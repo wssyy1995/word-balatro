@@ -65,7 +65,6 @@ const TRANSITION_DURATION = 600;
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
-  const witchNames = Object.keys(cloudStorage.witchFileMap);
   const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
 
   // 只有新用户或引导未完成的用户才需要下载 guide 帧序列
@@ -75,7 +74,8 @@ async function startPreload() {
   );
   const guideNames = needGuide ? Object.keys(cloudStorage.guideFileMap) : [];
 
-  const total = shopNames.length + witchNames.length + bgIconNames.length + guideNames.length;
+  // 注：witch 头像和 witch_card 已改为回合级按需下载，不在预加载页下载
+  const total = shopNames.length + bgIconNames.length + guideNames.length;
 
   if (total === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -183,6 +183,14 @@ wx.onTouchStart((e) => {
     }
   }
 
+  // 检测卡牌图鉴图标按下
+  if (renderer.cardBookIconRect && game.cardBookUnlocked && !game.cardBookOpen) {
+    const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+    if (cbHit) {
+      game._cardBookIconPressed = true;
+    }
+  }
+
   handleInput(x, y);
 });
 
@@ -198,6 +206,15 @@ wx.onTouchMove((e) => {
     }
   }
 
+  // 移出卡牌图鉴图标区域时取消按下状态
+  if (game._cardBookIconPressed && renderer.cardBookIconRect) {
+    const touch = e.touches[0];
+    const iconHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookIconRect]);
+    if (!iconHit) {
+      game._cardBookIconPressed = false;
+    }
+  }
+
   if (!renderer.cloudLogDragging) return;
   const touch = e.touches[0];
   const y = touch.clientY;
@@ -208,6 +225,7 @@ wx.onTouchMove((e) => {
 wx.onTouchEnd(() => {
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
+  game._cardBookIconPressed = false;
 
   // 取消未触发的长按定时器
   if (longPressTimer) {
@@ -335,6 +353,38 @@ function handleInput(x, y) {
     }
   }
   
+  // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
+  if (game.cardBookOpen && !game._closingCardBook) {
+    const insidePanel = renderer.cardBookPanelRect &&
+      x >= renderer.cardBookPanelRect.x && x <= renderer.cardBookPanelRect.x + renderer.cardBookPanelRect.w &&
+      y >= renderer.cardBookPanelRect.y && y <= renderer.cardBookPanelRect.y + renderer.cardBookPanelRect.h;
+    if (insidePanel) {
+      // 面板内部：只响应翻页按钮，不关闭
+      if (renderer.cardBookPrevBtnRect) {
+        const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+        if (prevHit && game.cardBookPage > 0) {
+          vibrate();
+          game.cardBookPage--;
+          return;
+        }
+      }
+      if (renderer.cardBookNextBtnRect) {
+        const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+        if (nextHit) {
+          vibrate();
+          game.cardBookPage++;
+          return;
+        }
+      }
+      // 点击面板内部非按钮区域 → 不关闭
+      return;
+    }
+    // 面板外部 → 关闭弹窗
+    game._closingCardBook = true;
+    game._closeCardBookStartTime = Date.now();
+    return;
+  }
+
   if (game.state === 'playing') {
     // 字母置换弹窗打开时，优先处理弹窗点击
     if (game._changeLetterPopup) {
@@ -509,6 +559,19 @@ function handleInput(x, y) {
       return;
     }
 
+    // 检测卡牌图鉴图标点击
+    if (renderer.cardBookIconRect && game.cardBookUnlocked) {
+      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      if (cbHit) {
+        vibrate();
+        game.cardBookOpen = true;
+        game.cardBookPage = 0;
+        game._cardBookAnimStartTime = Date.now();
+        game._closingCardBook = false;
+        return;
+      }
+    }
+
     // 检测已购买道具栏中的药水牌点击
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
@@ -637,6 +700,19 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'shop') {
+    // 检测卡牌图鉴图标点击
+    if (renderer.cardBookIconRect && game.cardBookUnlocked) {
+      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      if (cbHit) {
+        vibrate();
+        game.cardBookOpen = true;
+        game.cardBookPage = 0;
+        game._cardBookAnimStartTime = Date.now();
+        game._closingCardBook = false;
+        return;
+      }
+    }
+
     // 确认购买弹窗打开时
     if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
       // 购买成功弹窗

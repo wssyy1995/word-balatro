@@ -26,30 +26,30 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
-    {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
-    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×2'},
-    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×3'},
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:5, desc:'元音字母分×3'},
+    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
+    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×1.5'},
+    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×2'},
     // {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
-    {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
-    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
-    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
+    {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:7, desc:'打出非法单词，不扣除出牌次数'},
+    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
+    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
     {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
     {name:'争分夺秒', type:'witch', scope:'limit', trigger:'haste_play', limit:5, cost:8, desc:'生效5回合，每回合前10秒出牌不消耗次数'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
-    {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:5, desc:'下一回合出牌次数+1'},
-    {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:5, desc:'下一回合,增加一张字母手牌'}
+    {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:4, desc:'下一回合出牌次数+1'},
+    {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:4, desc:'下一回合,增加一张字母手牌'}
     // {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'},
-    {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:6, desc:'重掷下一回合的女巫技能'}
+    {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:5, desc:'重掷下一回合的女巫技能'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
-    {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:4, desc:'指定一张字母牌，分数 +10'},
+    {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:5, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
   ]
 };
@@ -565,9 +565,9 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const decoLineW = 100 * s;
-    const lineY = titleMidY - 1 * s;
-    ctx.lineWidth = 0.8 * s;
+    const decoLineW = 80 * s;
+    const lineY = titleMidY - 0.7*s;
+    ctx.lineWidth = 0.9 * s;
 
     // 左侧横线：外端淡 → 内端浓
     const leftGrad = ctx.createLinearGradient(titleStartX - decoLineW, lineY, titleStartX + titleIconSize * 0.6, lineY);
@@ -976,9 +976,9 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const nrDecoLineW = 80 * s;
-    const nrLineY = nrTitleY - 1 * s;
-    ctx.lineWidth = 0.8 * s;
+    const nrDecoLineW = 60 * s;
+    const nrLineY = nrTitleY - 0.7*s;
+    ctx.lineWidth = 0.9 * s;
 
     // 左侧横线：外端淡 → 内端浓
     const nrLeftGrad = ctx.createLinearGradient(nrTitleStartX - nrDecoLineW, nrLineY, nrTitleStartX + nrTitleIconSize * 0.6, nrLineY);

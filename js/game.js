@@ -543,6 +543,15 @@ class Game {
       this.shopItems = null;
       this.safetyRounds = 3;
       this.extraDiscards = 0;
+      this.cardBookUnlocked = this.storageManager.loadCardBookUnlocked() || false;
+      this.cardBookOpen = false;
+      this.cardBookPage = 0;
+      this._cardBookAnimStartTime = null;
+      this._closingCardBook = false;
+      this._closeCardBookStartTime = null;
+      this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
+      this._newWitchCardThisShop = null;
+      this._cardBookIconFlashStart = null;
       this.extraSafety = 0;
       this.extraHands = 0;
       this.baseHandSize = 9;
@@ -651,6 +660,15 @@ class Game {
     this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
     this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
     this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
+    this.cardBookUnlocked = this.storageManager ? this.storageManager.loadCardBookUnlocked() : false;
+    this.cardBookOpen = false;
+    this.cardBookPage = 0;
+    this._cardBookAnimStartTime = null;
+    this._closingCardBook = false;
+    this._closeCardBookStartTime = null;
+    this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
+    this._newWitchCardThisShop = null;
+    this._cardBookIconFlashStart = null;
     this.gameOverReason = p.gameOverReason || null;
     this.target = p.target;
     this._maxHandSize = p._maxHandSize;
@@ -875,7 +893,7 @@ class Game {
     this.state = 'playing';
   }
 
-  // 按需预加载当前回合和下一回合的女巫头像
+  // 按需预加载当前回合和下一回合的女巫头像与卡牌
   _preloadWitchAvatars() {
     if (!this.cloudStorage || !this.renderer) return;
 
@@ -883,12 +901,14 @@ class Game {
     const currentSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (currentSkill && currentSkill.skill) {
       this.cloudStorage.preloadWitchAvatarForLevel(currentSkill.level, this.renderer);
+      this.cloudStorage.preloadWitchCardForLevel(currentSkill.level, this.renderer);
     }
 
     // 下一回合（后台提前下载）
     const nextSkill = getSkillForLevel(this.round + 1, this._shuffledSkills);
     if (nextSkill && nextSkill.skill) {
       this.cloudStorage.preloadWitchAvatarForLevel(nextSkill.level, this.renderer);
+      this.cloudStorage.preloadWitchCardForLevel(nextSkill.level, this.renderer);
     }
   }
 
@@ -1416,6 +1436,27 @@ class Game {
     this.state = 'settlement';
   }
 
+  _checkCardBookUnlock() {
+    if (this.round >= 3 && !this.cardBookUnlocked) {
+      this.cardBookUnlocked = true;
+      if (this.storageManager) this.storageManager.saveCardBookUnlocked(true);
+    }
+
+    // 收集本回合的女巫卡牌
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (witchSkill && witchSkill.level) {
+      const level = witchSkill.level;
+      if (!this.collectedWitchCards.includes(level)) {
+        this.collectedWitchCards.push(level);
+        this._newWitchCardThisShop = level;
+        this._cardBookIconFlashStart = Date.now();
+        if (this.storageManager) {
+          this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+        }
+      }
+    }
+  }
+
   claimSettlement() {
     if (!this.settlementData) return;
     this.gold += this.settlementData.totalGold;
@@ -1439,6 +1480,7 @@ class Game {
         this.state = 'witch_reward';
       } else {
         this.state = 'shop';
+        this._checkCardBookUnlock();
         if (!this.shopItems) {
           this.shopItems = generateShopItems(this);
         }
@@ -1485,6 +1527,7 @@ class Game {
             }
           }
           this.state = 'shop';
+          this._checkCardBookUnlock();
           if (!this.shopItems) this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;
@@ -1496,6 +1539,7 @@ class Game {
             }
           }
           this.state = 'shop';
+          this._checkCardBookUnlock();
           if (!this.shopItems) this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;

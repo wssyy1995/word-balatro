@@ -141,6 +141,54 @@ class Renderer {
     } catch (e) {
       this.shopIconLoaded = false;
     }
+
+    // 加载卡牌图鉴图标与弹窗大图
+    this.cardBookIcon = null;
+    this.cardBookIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_book_icon.png';
+      img.onload = () => { this.cardBookIconLoaded = true; };
+      img.onerror = () => { this.cardBookIconLoaded = false; };
+      this.cardBookIcon = img;
+    } catch (e) {
+      this.cardBookIconLoaded = false;
+    }
+    this.cardBookImage = null;
+    this.cardBookImageLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_book.png';
+      img.onload = () => { this.cardBookImageLoaded = true; };
+      img.onerror = () => { this.cardBookImageLoaded = false; };
+      this.cardBookImage = img;
+    } catch (e) {
+      this.cardBookImageLoaded = false;
+    }
+
+    // 加载卡牌图鉴翻页按钮
+    this.cardBookLeftBtn = null;
+    this.cardBookLeftBtnLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_book_left.png';
+      img.onload = () => { this.cardBookLeftBtnLoaded = true; };
+      img.onerror = () => { this.cardBookLeftBtnLoaded = false; };
+      this.cardBookLeftBtn = img;
+    } catch (e) {
+      this.cardBookLeftBtnLoaded = false;
+    }
+    this.cardBookRightBtn = null;
+    this.cardBookRightBtnLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_book_right.png';
+      img.onload = () => { this.cardBookRightBtnLoaded = true; };
+      img.onerror = () => { this.cardBookRightBtnLoaded = false; };
+      this.cardBookRightBtn = img;
+    } catch (e) {
+      this.cardBookRightBtnLoaded = false;
+    }
     
     // 加载女巫礼物图标
     this.witchGiftIcon = null;
@@ -174,7 +222,14 @@ class Renderer {
       const name = `witch_${level}`;
       this.witchAvatars[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
-    
+
+    // 女巫卡牌占位（由 CloudStorageManager 从云端注入）
+    this.witchCardImages = {};
+    witchLevels.forEach(level => {
+      const name = `witch_card_${level}`;
+      this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+    });
+
     // 加载金币图标
     this.coinIcon = null;
     this.coinIconLoaded = false;
@@ -1699,8 +1754,12 @@ class Renderer {
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
+      const shopTitleText = '女巫的词牌';
+      ctx.fillText(shopTitleText, W / 2, top - 12 * s);
+      const shopTitleW = ctx.measureText(shopTitleText).width;
       ctx.restore();
+
+      this._drawCardBookIcon(game, W / 2, top - 12 * s, shopTitleW);
 
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
@@ -1774,6 +1833,227 @@ class Renderer {
         ctx.restore();
       }
       // 1100ms 后彻底结束，不再绘制引导层
+    }
+
+    // 卡牌图鉴弹窗（使用 _drawModalPanel 标准弹窗框架）
+    if (game.cardBookOpen) {
+      const elapsed = game._closingCardBook ? 99999 : Date.now() - (game._cardBookAnimStartTime || Date.now());
+
+      // 根据图片比例计算面板尺寸
+      let panelW = 320;
+      let panelH = 440;
+      if (this.cardBookImage && this.cardBookImageLoaded) {
+        const maxBookW = W * 0.88;
+        const maxBookH = H * 0.75;
+        const imgAspect = this.cardBookImage.width / this.cardBookImage.height;
+        let bookW = maxBookW;
+        let bookH = bookW / imgAspect;
+        if (bookH > maxBookH) {
+          bookH = maxBookH;
+          bookW = bookH * imgAspect;
+        }
+        panelW = Math.round(bookW / s);
+        panelH = Math.round(bookH / s);
+      }
+
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: game._closingCardBook,
+        closeStartTime: game._closeCardBookStartTime,
+        width: panelW,
+        height: panelH,
+        bgColor: null,
+        borderColor: null,
+        overlayAlpha: 0.78,
+        closeDuration: 300,
+        elapsed,
+        onCloseComplete: () => {
+          game.cardBookOpen = false;
+          game._closingCardBook = false;
+          game._cardBookAnimStartTime = null;
+        }
+      });
+
+      if (!panel) return;
+      const { px, py, pw, ph } = panel;
+      this.cardBookPanelRect = { x: px, y: py, w: pw, h: ph };
+
+      // 内容快速消失（100ms），独立于蒙层的 300ms
+      const contentCloseElapsed = game._closingCardBook ? Date.now() - (game._closeCardBookStartTime || Date.now()) : 0;
+      const contentCloseProgress = Math.min(contentCloseElapsed / 100, 1);
+      const contentAlpha = 1 - contentCloseProgress;
+
+      if (contentAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+
+      // 绘制 card_book.png 背景
+      if (this.cardBookImage && this.cardBookImageLoaded) {
+        const imgAspect = this.cardBookImage.width / this.cardBookImage.height;
+        const panelAspect = pw / ph;
+        let drawW, drawH, drawX, drawY;
+        if (imgAspect > panelAspect) {
+          drawW = pw;
+          drawH = drawW / imgAspect;
+          drawX = px;
+          drawY = py + (ph - drawH) / 2;
+        } else {
+          drawH = ph;
+          drawW = drawH * imgAspect;
+          drawX = px + (pw - drawW) / 2;
+          drawY = py;
+        }
+        ctx.drawImage(this.cardBookImage, drawX, drawY, drawW, drawH);
+      }
+
+      // === 图鉴内容：4 格布局 + 翻页 ===
+      const allLevels = WITCH_SKILLS.map(s => s.level);
+      const itemsPerPage = 4;
+      const totalPages = Math.ceil(allLevels.length / itemsPerPage);
+      const page = Math.min(game.cardBookPage || 0, totalPages - 1);
+      const pageLevels = allLevels.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
+
+      // 内容区域（在面板内部，留出边距给背景图边框）
+      const contentPad = 36 * s;
+      const contentX = px + contentPad;
+      const contentY = py + contentPad;
+      const contentW = pw - contentPad * 2;
+      const contentH = ph - contentPad * 2;
+      const cellGap = 12 * s;
+
+      // 固定格子宽高比为 3:4（竖向），优先以宽度计算
+      let cellW = (contentW - cellGap) / 2;
+      let cellH = cellW * 4 / 3;
+      // 若高度溢出，则以高度为基准回退
+      const maxCellH = (contentH - cellGap) / 2;
+      if (cellH > maxCellH) {
+        cellH = maxCellH;
+        cellW = cellH * 3 / 4;
+      }
+
+      // 等比例扩大约 14.6%（原 11.3% + 3%）
+      cellW *= 1.146;
+      cellH *= 1.146;
+
+      // 左右列向外撑开一点
+      const spreadOffset = 20 * s;
+
+      // 内容居中
+      const gridW = cellW * 2 + cellGap + spreadOffset * 2;
+      const gridH = cellH * 2 + cellGap;
+      const offsetX = (contentW - gridW) / 2;
+      const offsetY = (contentH - gridH) / 2 + 3;
+
+      const cellPositions = [
+        { x: contentX + offsetX, y: contentY + offsetY },                                    // 左上
+        { x: contentX + offsetX, y: contentY + offsetY + cellH + cellGap - 4 },              // 左下（再向上 2px）
+        { x: contentX + offsetX + cellW + cellGap + spreadOffset * 2, y: contentY + offsetY },           // 右上
+        { x: contentX + offsetX + cellW + cellGap + spreadOffset * 2, y: contentY + offsetY + cellH + cellGap - 4 }, // 右下（再向上 2px）
+      ];
+
+      // 四边 padding（像素值，不乘 s，保持视觉一致）
+      const cardPadding = 3;
+
+      pageLevels.forEach((level, i) => {
+        const pos = cellPositions[i];
+        const isUnlocked = game.collectedWitchCards.includes(level);
+        const cardName = `witch_card_${level}`;
+        const cardData = this.witchCardImages[cardName];
+
+        ctx.save();
+        // 圆角裁剪
+        const r = 6 * s;
+        ctx.beginPath();
+        ctx.moveTo(pos.x + r, pos.y);
+        ctx.lineTo(pos.x + cellW - r, pos.y);
+        ctx.quadraticCurveTo(pos.x + cellW, pos.y, pos.x + cellW, pos.y + r);
+        ctx.lineTo(pos.x + cellW, pos.y + cellH - r);
+        ctx.quadraticCurveTo(pos.x + cellW, pos.y + cellH, pos.x + cellW - r, pos.y + cellH);
+        ctx.lineTo(pos.x + r, pos.y + cellH);
+        ctx.quadraticCurveTo(pos.x, pos.y + cellH, pos.x, pos.y + cellH - r);
+        ctx.lineTo(pos.x, pos.y + r);
+        ctx.quadraticCurveTo(pos.x, pos.y, pos.x + r, pos.y);
+        ctx.closePath();
+        ctx.clip();
+
+        if (isUnlocked && cardData && cardData.loaded && cardData.img) {
+          // 已解锁：绘制 witch_card 图片（contain 模式，完整显示 + 3px 四边 padding）
+          const imgAspect = cardData.width / cardData.height;
+          const drawAreaW = cellW - cardPadding * 2;
+          const drawAreaH = cellH - cardPadding * 2;
+          const areaAspect = drawAreaW / drawAreaH;
+          let dw, dh, dx, dy;
+          if (imgAspect > areaAspect) {
+            // 图片更宽，以宽度为基准
+            dw = drawAreaW;
+            dh = dw / imgAspect;
+            dx = pos.x + cardPadding;
+            dy = pos.y + cardPadding + (drawAreaH - dh) / 2;
+          } else {
+            // 图片更高，以高度为基准
+            dh = drawAreaH;
+            dw = dh * imgAspect;
+            dx = pos.x + cardPadding + (drawAreaW - dw) / 2;
+            dy = pos.y + cardPadding;
+          }
+          ctx.drawImage(cardData.img, dx, dy, dw, dh);
+        } else {
+          // 未解锁：灰色占位 + 锁图标
+          ctx.fillStyle = 'rgba(180, 170, 150, 0.25)';
+          ctx.fillRect(pos.x, pos.y, cellW, cellH);
+          ctx.fillStyle = 'rgba(140, 130, 110, 0.4)';
+          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', pos.x + cellW / 2, pos.y + cellH / 2);
+        }
+        ctx.restore();
+
+        // 格子细边框
+        ctx.save();
+        ctx.strokeStyle = isUnlocked ? 'rgba(196,163,90,0.35)' : 'rgba(140,130,110,0.2)';
+        ctx.lineWidth = 1 * s;
+        ctx.beginPath();
+        ctx.moveTo(pos.x + r, pos.y);
+        ctx.lineTo(pos.x + cellW - r, pos.y);
+        ctx.quadraticCurveTo(pos.x + cellW, pos.y, pos.x + cellW, pos.y + r);
+        ctx.lineTo(pos.x + cellW, pos.y + cellH - r);
+        ctx.quadraticCurveTo(pos.x + cellW, pos.y + cellH, pos.x + cellW - r, pos.y + cellH);
+        ctx.lineTo(pos.x + r, pos.y + cellH);
+        ctx.quadraticCurveTo(pos.x, pos.y + cellH, pos.x, pos.y + cellH - r);
+        ctx.lineTo(pos.x, pos.y + r);
+        ctx.quadraticCurveTo(pos.x, pos.y, pos.x + r, pos.y);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      // 翻页按钮（面板左右两侧）
+      const btnSize = 28 * s;
+      const btnY = py + ph / 2 - btnSize / 2;
+      this.cardBookPrevBtnRect = null;
+      this.cardBookNextBtnRect = null;
+      const hitPadding = 6 * s;
+
+      // 左按钮（嵌入面板左边缘内侧 10*s）
+      if (page > 0) {
+        const btnX = px - btnSize + 10 * s;
+        if (this.cardBookLeftBtn && this.cardBookLeftBtnLoaded) {
+          ctx.drawImage(this.cardBookLeftBtn, btnX, btnY, btnSize, btnSize);
+        }
+        this.cardBookPrevBtnRect = { x: btnX - hitPadding, y: btnY - hitPadding, w: btnSize + hitPadding * 2, h: btnSize + hitPadding * 2 };
+      }
+
+      // 右按钮（嵌入面板右边缘内侧 10*s）
+      if (page < totalPages - 1) {
+        const btnX = px + pw - 10 * s;
+        if (this.cardBookRightBtn && this.cardBookRightBtnLoaded) {
+          ctx.drawImage(this.cardBookRightBtn, btnX, btnY, btnSize, btnSize);
+        }
+        this.cardBookNextBtnRect = { x: btnX - hitPadding, y: btnY - hitPadding, w: btnSize + hitPadding * 2, h: btnSize + hitPadding * 2 };
+      }
+
+        ctx.restore();
+      }
     }
 
     // 调试菜单（最后绘制，确保在最上层）
@@ -1989,6 +2269,46 @@ class Renderer {
     }
   }
 
+  // 绘制卡牌图鉴图标（标题右侧）
+  _drawCardBookIcon(game, titleX, titleY, titleW) {
+    if (!game.cardBookUnlocked) return;
+    const ctx = this.ctx;
+    const s = this.scale;
+    const baseH = 24 * s + 2;
+    let iconW = baseH;
+    // 保持原始宽高比（card_book_icon.png 为 150x198）
+    if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
+      iconW = baseH * (this.cardBookIcon.width / this.cardBookIcon.height);
+    }
+    // 宽度再 +1px*s，高度等比例缩放
+    iconW += 1 * s;
+    let iconH = baseH;
+    if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
+      iconH = iconW * (this.cardBookIcon.height / this.cardBookIcon.width);
+    }
+    const iconX = titleX + titleW / 2 + 7 * s;
+    const pressOffset = game._cardBookIconPressed ? 1 : 0;
+    const iconY = titleY - iconH / 2 + pressOffset;
+    ctx.save();
+
+    // 新收集闪烁动画：持续约 2.5 秒，透明度正弦波动 2 下
+    if (game._newWitchCardThisShop && game._cardBookIconFlashStart) {
+      const flashElapsed = Date.now() - game._cardBookIconFlashStart;
+      if (flashElapsed < 2500) {
+        const flashAlpha = 0.6 + 0.4 * Math.sin(flashElapsed / 200);
+        ctx.globalAlpha = flashAlpha;
+      } else {
+        game._newWitchCardThisShop = null;
+      }
+    }
+
+    if (this.cardBookIcon && this.cardBookIconLoaded) {
+      ctx.drawImage(this.cardBookIcon, iconX, iconY, iconW, iconH);
+    }
+    ctx.restore();
+    this.cardBookIconRect = { x: iconX, y: iconY, w: iconW, h: iconH };
+  }
+
   // 绘制顶部图标 + 金币胶囊（两者并排水平居中）
   drawTopHeader(game) {
     const ctx = this.ctx;
@@ -2031,8 +2351,12 @@ class Renderer {
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('女巫的词牌', W / 2, top - 12 * s);
+    const hudTitleText = '女巫的词牌';
+    ctx.fillText(hudTitleText, W / 2, top - 12 * s);
+    const hudTitleW = ctx.measureText(hudTitleText).width;
     ctx.restore();
+
+    this._drawCardBookIcon(game, W / 2, top - 12 * s, hudTitleW);
 
     // === 争分夺秒倒计时条（在顶部bar上方）===
     if (game._hastePlayActive && game._hastePlayStartTime) {

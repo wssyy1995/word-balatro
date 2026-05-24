@@ -6,10 +6,12 @@ class CloudStorageManager {
     this.env = env;
     this.shopCardImages = {}; // { name: { img, loaded, width, height } }
     this.witchImages = {};    // { name: { img, loaded, width, height } }
+    this.witchCardImages = {}; // { name: { img, loaded, width, height } }
     this.bgIconImages = {};   // { name: { img, loaded, width, height } }
     this.guideImages = {};    // { witch_1: { frames: [...], loaded: false }, witch_2: ... }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
+    this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
     this.guideFileMap = {};   // { 'witch_guide_1_1': fileID, ... }
     this.initialized = false;
@@ -55,6 +57,18 @@ class CloudStorageManager {
       'witch_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_4.png',
       'witch_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_5.png',
       'witch_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_8.png',
+    };
+
+    // 默认 witch_card 图片云文件映射
+    this.defaultWitchCardFileMap = {
+      'witch_card_3': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_3.png',
+      'witch_card_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_5.png',
+      'witch_card_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_8.png',
+      'witch_card_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_11.png',
+      'witch_card_14': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_14.png',
+      'witch_card_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_16.png',
+      'witch_card_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_18.png',
+      'witch_card_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_21.png',
     };
 
     // 默认 bg_icon 图片云文件映射
@@ -116,6 +130,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('witch 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 witch_card 映射兜底
+    this.witchCardFileMap = { ...this.defaultWitchCardFileMap };
+
+    // 加载 witch_card 图片的本地缓存映射
+    try {
+      const witchCardStored = wx.getStorageSync('cloud_witch_card_map');
+      if (witchCardStored) {
+        const witchCardLocalMap = JSON.parse(witchCardStored);
+        this.witchCardFileMap = { ...this.witchCardFileMap, ...witchCardLocalMap };
+        this.log('witch_card 本地缓存映射已加载，共' + Object.keys(witchCardLocalMap).length + '张');
+      } else {
+        this.log('无 witch_card 本地缓存，使用默认云映射，共' + Object.keys(this.defaultWitchCardFileMap).length + '张');
+      }
+    } catch (e) {
+      this.log('witch_card 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
 
     // 先用默认 bg_icon 映射兜底
@@ -294,17 +325,23 @@ class CloudStorageManager {
 
     for (const file of allFiles) {
       const { localPath, fileName, relPath } = file;
-      const isSubDir = relPath.includes('/');
 
-      let name, cloudPath;
-      if (isSubDir) {
-        // 子目录文件：witch_guide_1/1.png → cloud: witch/guide/witch_guide_1/1.png
+      let name, cloudPath, fileType;
+      if (relPath.startsWith('witch_card/')) {
+        // witch_card 子目录：witch_card/witch_card_3.png → cloud: witch/witch_card/witch_card_3.png
+        name = fileName.replace(/\.png$/i, ''); // witch_card_3
+        cloudPath = `witch/${relPath}`;
+        fileType = 'witch_card';
+      } else if (relPath.includes('/')) {
+        // 其他子目录（witch_guide）：witch_guide_1/1.png → cloud: witch/guide/witch_guide_1/1.png
         name = relPath.replace(/\.png$/i, '').replace(/\//g, '_'); // witch_guide_1_1
         cloudPath = `witch/guide/${relPath}`;
+        fileType = 'guide';
       } else {
         // 一级目录文件：witch_21.png → cloud: witch/witch_21.png
         name = fileName.replace(/\.png$/i, '');
         cloudPath = `witch/${fileName}`;
+        fileType = 'witch';
       }
 
       this.log('开始上传 ' + cloudPath);
@@ -328,12 +365,14 @@ class CloudStorageManager {
       }
 
       if (uploadRes) {
-        if (isSubDir) {
+        if (fileType === 'witch_card') {
+          this.witchCardFileMap[name] = uploadRes.fileID;
+        } else if (fileType === 'guide') {
           this.guideFileMap[name] = uploadRes.fileID;
         } else {
           this.witchFileMap[name] = uploadRes.fileID;
         }
-        results.success.push({ name, fileID: uploadRes.fileID, type: isSubDir ? 'guide' : 'witch' });
+        results.success.push({ name, fileID: uploadRes.fileID, type: fileType });
         this.log('上传成功 ' + cloudPath);
       } else {
         console.error('上传失败:', name, lastError);
@@ -345,6 +384,7 @@ class CloudStorageManager {
     // 保存映射到本地缓存
     try {
       wx.setStorageSync('cloud_witch_map', JSON.stringify(this.witchFileMap));
+      wx.setStorageSync('cloud_witch_card_map', JSON.stringify(this.witchCardFileMap));
       wx.setStorageSync('cloud_guide_map', JSON.stringify(this.guideFileMap));
     } catch (e) {}
 
@@ -586,6 +626,110 @@ class CloudStorageManager {
       renderer.witchAvatars[name] = data;
       this.log('已按需注入女巫头像: ' + name);
     }
+  }
+
+  // 按需下载并注入指定 level 的女巫卡牌（witch_card）
+  async preloadWitchCardForLevel(level, renderer) {
+    const name = `witch_card_${level}`;
+
+    // 1. renderer 已缓存则跳过
+    const card = renderer.witchCardImages[name];
+    if (card && card.loaded && card.img) {
+      return;
+    }
+
+    // 2. cloudStorage 已缓存则直接注入
+    const cached = this.witchCardImages[name];
+    if (cached && cached.loaded && cached.img) {
+      renderer.witchCardImages[name] = cached;
+      return;
+    }
+
+    // 3. 无云映射则跳过
+    const fileID = this.witchCardFileMap[name];
+    if (!fileID) {
+      this.log('无云映射，跳过下载女巫卡牌: ' + name);
+      return;
+    }
+
+    // 4. 下载并注入
+    await this._loadWitchCardImage(name);
+    const data = this.witchCardImages[name];
+    if (data && data.loaded && renderer.witchCardImages[name]) {
+      renderer.witchCardImages[name] = data;
+      this.log('已按需注入女巫卡牌: ' + name);
+    }
+  }
+
+  async _loadWitchCardImage(name) {
+    const existing = this.witchCardImages[name];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
+    const fileID = this.witchCardFileMap[name];
+    if (!fileID) return;
+
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if (!urlData) {
+      this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+      return;
+    }
+
+    if (existing && existing.img) {
+      existing.img.src = '';
+    }
+
+    const img = wx.createImage();
+    img.src = urlData.tempFileURL;
+    await new Promise((resolve) => {
+      img.onload = () => {
+        this.witchCardImages[name] = { img, loaded: true, width: img.width || 0, height: img.height || 0 };
+        resolve();
+      };
+      img.onerror = () => {
+        this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+        resolve();
+      };
+    });
+  }
+
+  // 将云缓存 witch_card 图片注入到 renderer
+  injectWitchCardToRenderer(renderer) {
+    let count = 0;
+    Object.keys(this.witchCardImages).forEach(name => {
+      const data = this.witchCardImages[name];
+      if (data && data.loaded && renderer.witchCardImages[name]) {
+        renderer.witchCardImages[name] = data;
+        count++;
+      }
+    });
+    this.log('已注入 witch_card renderer: ' + count + '张');
   }
 
   // 从云存储下载并缓存所有 guide 帧序列图片

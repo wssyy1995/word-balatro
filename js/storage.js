@@ -176,8 +176,28 @@ class StorageManager {
     return this.set('stats', stats);
   }
 
+  // ===== 卡牌图鉴解锁状态（跨局永久保留）=====
+
+  saveCardBookUnlocked(unlocked) {
+    return this.set('card_book_unlocked', unlocked);
+  }
+
+  loadCardBookUnlocked() {
+    return this.get('card_book_unlocked', false);
+  }
+
+  // ===== 已收集女巫卡牌（跨局永久保留）=====
+
+  saveCollectedWitchCards(cards) {
+    return this.set('collected_witch_cards', cards);
+  }
+
+  loadCollectedWitchCards() {
+    return this.get('collected_witch_cards', []);
+  }
+
   // ===== 设置 =====
-  
+
   getSettings() {
     return this.get('settings', {
       soundEnabled: true,
