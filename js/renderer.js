@@ -2032,7 +2032,7 @@ class Renderer {
       const btnY = py + ph / 2 - btnSize / 2;
       this.cardBookPrevBtnRect = null;
       this.cardBookNextBtnRect = null;
-      const hitPadding = 6 * s;
+      const hitPadding = 16 * s;
 
       // 左按钮（嵌入面板左边缘内侧 10*s）
       if (page > 0) {

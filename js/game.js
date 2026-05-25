@@ -550,6 +550,7 @@ class Game {
       this._closingCardBook = false;
       this._closeCardBookStartTime = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
+      console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
       this.extraSafety = 0;
@@ -667,6 +668,7 @@ class Game {
     this._closingCardBook = false;
     this._closeCardBookStartTime = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
+    console.log('[CardBook] 存档恢复加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
     this._newWitchCardThisShop = null;
     this._cardBookIconFlashStart = null;
     this.gameOverReason = p.gameOverReason || null;
@@ -1448,11 +1450,18 @@ class Game {
       const level = witchSkill.level;
       if (!this.collectedWitchCards.includes(level)) {
         this.collectedWitchCards.push(level);
+        console.log('[CardBook] 收集新卡 level=' + level + ', 当前:', JSON.stringify(this.collectedWitchCards));
         this._newWitchCardThisShop = level;
         this._cardBookIconFlashStart = Date.now();
         if (this.storageManager) {
-          this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+          const ok = this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+          if (!ok) {
+            console.error('[CardBook] 保存验证失败，尝试重试');
+            this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+          }
         }
+      } else {
+        console.log('[CardBook] 重复收集检查 level=' + level + ', 当前已有:', JSON.stringify(this.collectedWitchCards));
       }
     }
   }

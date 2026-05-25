@@ -341,11 +341,15 @@ function handleInput(x, y) {
         });
       }
       if (debugHit.action === 'debug_endGame') {
+        console.log('[CardBook] debug_endGame 前 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
         game.state = 'gameover';
         game.gameOverReason = 'debug';
         if (game.storageManager) {
           game.storageManager.setHighScore(game.totalScore);
           game.storageManager.updateStats(game);
+          // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
+          game.storageManager.saveProgress(game);
+          game.storageManager.clearProgress();
         }
       }
       renderer.debugMenuOpen = false;
@@ -355,27 +359,28 @@ function handleInput(x, y) {
   
   // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
   if (game.cardBookOpen && !game._closingCardBook) {
+    // 先检测翻页按钮（点击区域可能超出面板，优先处理）
+    if (renderer.cardBookPrevBtnRect) {
+      const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+      if (prevHit && game.cardBookPage > 0) {
+        vibrate();
+        game.cardBookPage--;
+        return;
+      }
+    }
+    if (renderer.cardBookNextBtnRect) {
+      const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+      if (nextHit) {
+        vibrate();
+        game.cardBookPage++;
+        return;
+      }
+    }
+
     const insidePanel = renderer.cardBookPanelRect &&
       x >= renderer.cardBookPanelRect.x && x <= renderer.cardBookPanelRect.x + renderer.cardBookPanelRect.w &&
       y >= renderer.cardBookPanelRect.y && y <= renderer.cardBookPanelRect.y + renderer.cardBookPanelRect.h;
     if (insidePanel) {
-      // 面板内部：只响应翻页按钮，不关闭
-      if (renderer.cardBookPrevBtnRect) {
-        const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
-        if (prevHit && game.cardBookPage > 0) {
-          vibrate();
-          game.cardBookPage--;
-          return;
-        }
-      }
-      if (renderer.cardBookNextBtnRect) {
-        const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
-        if (nextHit) {
-          vibrate();
-          game.cardBookPage++;
-          return;
-        }
-      }
       // 点击面板内部非按钮区域 → 不关闭
       return;
     }
@@ -1036,6 +1041,7 @@ function handleInput(x, y) {
 }
 
 function restartGame() {
+  console.log('[CardBook] restartGame 前, 旧实例 collectedWitchCards:', game ? JSON.stringify(game.collectedWitchCards) : 'null');
   // 先销毁旧实例，释放音频、清除 timeout 闭包，防止内存泄漏
   if (game) {
     game.destroy();
@@ -1052,6 +1058,7 @@ function restartGame() {
     renderer.gameOverRenderer.animStartTime = null;
   }
   game = new Game();
+  console.log('[CardBook] restartGame 后, 新实例 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
   game._randomUpgradePopup = null;

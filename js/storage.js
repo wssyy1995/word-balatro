@@ -36,15 +36,10 @@ class StorageManager {
     }
   }
 
-  // 清空所有游戏数据
+  // 清空所有游戏数据（只清除 progress，不碰 card_book 等跨局持久化数据）
   clear() {
     try {
-      const keys = wx.getStorageInfoSync().keys;
-      keys.forEach(key => {
-        if (key.startsWith(this.prefix)) {
-          wx.removeStorageSync(key);
-        }
-      });
+      wx.removeStorageSync(this.prefix + 'progress');
       return true;
     } catch (e) {
       return false;
@@ -189,11 +184,22 @@ class StorageManager {
   // ===== 已收集女巫卡牌（跨局永久保留）=====
 
   saveCollectedWitchCards(cards) {
-    return this.set('collected_witch_cards', cards);
+    // 深拷贝后存储，避免引用问题
+    const toSave = Array.isArray(cards) ? [...cards] : [];
+    console.log('[CardBook] saveCollectedWitchCards:', JSON.stringify(toSave));
+    this.set('collected_witch_cards', toSave);
+    // 写入后立即验证
+    const verify = this.get('collected_witch_cards', []);
+    console.log('[CardBook] saveCollectedWitchCards 验证:', JSON.stringify(verify));
+    return JSON.stringify(toSave) === JSON.stringify(verify);
   }
 
   loadCollectedWitchCards() {
-    return this.get('collected_witch_cards', []);
+    const result = this.get('collected_witch_cards', []);
+    // 防御性检查：确保返回的是数组
+    const safe = Array.isArray(result) ? result : [];
+    console.log('[CardBook] loadCollectedWitchCards:', JSON.stringify(safe));
+    return safe;
   }
 
   // ===== 设置 =====
