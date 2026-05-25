@@ -3,7 +3,7 @@ const { formatMeaning, isValidWordOnline } = require('./game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('./data');
 const { SettlementRenderer, WitchRewardRenderer } = require('./settlement');
 const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, WITCH_SKILLS } = require('./witch_skills');
+const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('./witch_skills');
 const { Easing } = require('./animation');
 
 class Renderer {
@@ -558,6 +558,10 @@ class Renderer {
     this.witchRewardRenderer.okBtnPressed = false;
     this.witchRewardRenderer.stashBtnPressed = false;
     this.witchRewardRenderer.useBtnPressed = false;
+    // 清理图鉴相关点击区域，防止 restart 后残留
+    this.cardBookCellRects = [];
+    this.cardBookDetailPanelRect = null;
+    this.cardBookEquipBtnRect = null;
     // 清理结算渲染器残留数据，防止旧 Game 对象被闭包引用
     if (this.settlementRenderer) {
       this.settlementRenderer.lastSettlementData = null;
@@ -1953,13 +1957,46 @@ class Renderer {
       // 四边 padding（像素值，不乘 s，保持视觉一致）
       const cardPadding = 3;
 
+      // 记录已解锁卡牌的点击区域（用于详情弹窗）
+      this.cardBookCellRects = [];
+
       pageLevels.forEach((level, i) => {
-        const pos = cellPositions[i];
+        const pos = { ...cellPositions[i] };
+        if (game._cardBookCellPressed === level) pos.y -= 3 * s;
         const isUnlocked = game.collectedWitchCards.includes(level);
+        const isPressed = game._cardBookCellPressed === level;
         const cardName = `witch_card_${level}`;
         const cardData = this.witchCardImages[cardName];
 
         ctx.save();
+        // 选中态金色光晕（绘制在卡牌后方）
+        if (isPressed) {
+          ctx.save();
+          ctx.shadowColor = 'rgba(255, 220, 120, 0.35)';
+          ctx.shadowBlur = 14 * s;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.fillStyle = 'rgba(255, 220, 120, 0.10)';
+          const glowPad = 2 * s;
+          const glowR = 8 * s;
+          const gx = pos.x - glowPad;
+          const gy = pos.y - glowPad;
+          const gw = cellW + glowPad * 2;
+          const gh = cellH + glowPad * 2;
+          ctx.beginPath();
+          ctx.moveTo(gx + glowR, gy);
+          ctx.lineTo(gx + gw - glowR, gy);
+          ctx.quadraticCurveTo(gx + gw, gy, gx + gw, gy + glowR);
+          ctx.lineTo(gx + gw, gy + gh - glowR);
+          ctx.quadraticCurveTo(gx + gw, gy + gh, gx + gw - glowR, gy + gh);
+          ctx.lineTo(gx + glowR, gy + gh);
+          ctx.quadraticCurveTo(gx, gy + gh, gx, gy + gh - glowR);
+          ctx.lineTo(gx, gy + glowR);
+          ctx.quadraticCurveTo(gx, gy, gx + glowR, gy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
         // 圆角裁剪
         const r = 6 * s;
         ctx.beginPath();
@@ -2008,6 +2045,11 @@ class Renderer {
         }
         ctx.restore();
 
+        // 记录已解锁卡牌点击区域（使用原始位置，不受按下偏移影响）
+        if (isUnlocked) {
+          this.cardBookCellRects.push({ x: cellPositions[i].x, y: cellPositions[i].y, w: cellW, h: cellH, level, isUnlocked: true });
+        }
+
         // 格子细边框
         ctx.save();
         ctx.strokeStyle = isUnlocked ? 'rgba(196,163,90,0.35)' : 'rgba(140,130,110,0.2)';
@@ -2025,6 +2067,93 @@ class Renderer {
         ctx.closePath();
         ctx.stroke();
         ctx.restore();
+
+        // 选中态闪烁小星星（随机分布在卡牌上）
+        if (isPressed) {
+          const time = Date.now();
+          const pr = (seed) => {
+            const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
+            return x - Math.floor(x);
+          };
+          const starCount = 6;
+          const edgeThick = 12 * s;
+          const margin = 4 * s;
+          for (let i = 0; i < starCount; i++) {
+            const isHorizontalEdge = pr(level * 10 + i + 200) < 0.5;
+            let sx, sy;
+            if (isHorizontalEdge) {
+              const isTop = pr(level * 10 + i + 250) < 0.5;
+              sx = pos.x + pr(level * 10 + i + 300) * cellW;
+              sy = isTop
+                ? pos.y + margin + pr(level * 10 + i + 350) * edgeThick
+                : pos.y + cellH - margin - pr(level * 10 + i + 350) * edgeThick;
+            } else {
+              const isLeft = pr(level * 10 + i + 250) < 0.5;
+              sx = isLeft
+                ? pos.x + margin + pr(level * 10 + i + 350) * edgeThick
+                : pos.x + cellW - margin - pr(level * 10 + i + 350) * edgeThick;
+              sy = pos.y + pr(level * 10 + i + 300) * cellH;
+            }
+            const offset = i * 80;
+            const size = 2.8 * s;
+            const alpha = 0.25 + 0.75 * Math.abs(Math.sin((time + offset) / 400));
+            ctx.save();
+            // 菱形星心
+            ctx.fillStyle = `rgba(255, 240, 180, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(sx, sy - size);
+            ctx.lineTo(sx + size * 0.5, sy);
+            ctx.lineTo(sx, sy + size);
+            ctx.lineTo(sx - size * 0.5, sy);
+            ctx.closePath();
+            ctx.fill();
+            // 十字光芒
+            ctx.strokeStyle = `rgba(255, 240, 180, ${alpha * 0.6})`;
+            ctx.lineWidth = 0.8 * s;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(sx - size * 1.6, sy);
+            ctx.lineTo(sx + size * 1.6, sy);
+            ctx.moveTo(sx, sy - size * 1.6);
+            ctx.lineTo(sx, sy + size * 1.6);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // 已装备标识（右上角小标签）
+        if (isUnlocked && game.equippedWitchCard === level) {
+          ctx.save();
+          const tagH = 16 * s;
+          const tagPad = 4 * s;
+          ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+          const tagText = '已装备';
+          const tagTextW = ctx.measureText(tagText).width;
+          const tagW = tagTextW + tagPad * 2;
+          const tagX = pos.x + cellW - tagW - 3 * s;
+          const tagY = pos.y + 3 * s;
+
+          ctx.fillStyle = 'rgba(107,76,138,0.9)';
+          ctx.beginPath();
+          const tr = 3 * s;
+          ctx.moveTo(tagX + tr, tagY);
+          ctx.lineTo(tagX + tagW - tr, tagY);
+          ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW, tagY + tr);
+          ctx.lineTo(tagX + tagW, tagY + tagH - tr);
+          ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW - tr, tagY + tagH);
+          ctx.lineTo(tagX + tr, tagY + tagH);
+          ctx.quadraticCurveTo(tagX, tagY + tagH, tagX, tagY + tagH - tr);
+          ctx.lineTo(tagX, tagY + tr);
+          ctx.quadraticCurveTo(tagX, tagY, tagX + tr, tagY);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2);
+          ctx.restore();
+        }
       });
 
       // 翻页按钮（面板左右两侧）
@@ -2050,6 +2179,38 @@ class Renderer {
           ctx.drawImage(this.cardBookRightBtn, btnX, btnY, btnSize, btnSize);
         }
         this.cardBookNextBtnRect = { x: btnX - hitPadding, y: btnY - hitPadding, w: btnSize + hitPadding * 2, h: btnSize + hitPadding * 2 };
+      }
+
+      // 右上角关闭按钮（X）
+      const closeBtnSize = 24 * s;
+      const closeBtnX = px + pw - closeBtnSize - 10 * s + 5;
+      const closeBtnY = py + 10 * s - 5;
+      ctx.save();
+      // 绘制圆形背景
+      ctx.beginPath();
+      ctx.arc(closeBtnX + closeBtnSize / 2, closeBtnY + closeBtnSize / 2, closeBtnSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(120,100,80,0.15)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(120,100,80,0.35)';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+      // 绘制 X
+      const xPad = 6 * s;
+      ctx.strokeStyle = 'rgba(80,70,60,0.6)';
+      ctx.lineWidth = 1.5 * s;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(closeBtnX + xPad, closeBtnY + xPad);
+      ctx.lineTo(closeBtnX + closeBtnSize - xPad, closeBtnY + closeBtnSize - xPad);
+      ctx.moveTo(closeBtnX + closeBtnSize - xPad, closeBtnY + xPad);
+      ctx.lineTo(closeBtnX + xPad, closeBtnY + closeBtnSize - xPad);
+      ctx.stroke();
+      ctx.restore();
+      this.cardBookCloseBtnRect = { x: closeBtnX, y: closeBtnY, w: closeBtnSize, h: closeBtnSize };
+
+      // 卡牌详情弹窗（覆盖在图鉴内容之上）
+      if (game._cardBookDetailLevel && !game._closingCardBook) {
+        this._drawCardBookDetail(ctx, game, W, H, s);
       }
 
         ctx.restore();
@@ -2274,7 +2435,7 @@ class Renderer {
     if (!game.cardBookUnlocked) return;
     const ctx = this.ctx;
     const s = this.scale;
-    const baseH = 24 * s + 2;
+    const baseH = 28 * s + 2;
     let iconW = baseH;
     // 保持原始宽高比（card_book_icon.png 为 150x198）
     if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
@@ -2307,6 +2468,242 @@ class Renderer {
     }
     ctx.restore();
     this.cardBookIconRect = { x: iconX, y: iconY, w: iconW, h: iconH };
+  }
+
+  // 绘制卡牌详情区域（在 card_book 面板下方延伸）
+  _drawCardBookDetail(ctx, game, W, H, s) {
+    const level = game._cardBookDetailLevel;
+    if (!level) return;
+
+    const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+    if (!cardConfig) return;
+
+    const panelRect = this.cardBookPanelRect;
+    if (!panelRect) return;
+
+    const elapsed = game._closingCardBookDetail ? 99999 : Date.now() - (game._cardBookDetailStartTime || Date.now());
+    const closeElapsed = game._closingCardBookDetail ? Date.now() - (game._closeCardBookDetailStartTime || Date.now()) : 0;
+    const closeProgress = game._closingCardBookDetail ? Math.min(closeElapsed / 100, 1) : 0;
+
+    // 关闭完成后清理状态
+    if (game._closingCardBookDetail && closeProgress >= 1) {
+      game._cardBookDetailLevel = null;
+      game._closingCardBookDetail = false;
+      game._cardBookDetailStartTime = null;
+      return;
+    }
+
+    const enterProgress = Math.min(elapsed / 200, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+    const alpha = game._closingCardBookDetail ? (1 - closeProgress) : enterEase;
+    if (alpha <= 0) return;
+
+    const detailW = panelRect.w;
+    const detailH = 132 * s;
+    const detailX = panelRect.x;
+    const detailY = panelRect.y + panelRect.h + 6 * s + (1 - enterEase) * 15 * s;
+
+    this.cardBookDetailPanelRect = { x: detailX, y: detailY, w: detailW, h: detailH };
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // 绘制详情条背景
+    this.roundRect(detailX, detailY, detailW, detailH, 12 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+
+    const pad = 14 * s;
+    const innerX = detailX + pad;
+    const innerY = detailY + pad;
+    const innerW = detailW - pad * 2;
+    const innerH = detailH - pad * 2;
+
+    // 左侧图片区域
+    const imgMaxH = innerH;
+    const cardName = `witch_card_${level}`;
+    const cardData = this.witchCardImages[cardName];
+    let imgDrawW = 0;
+    let imgDrawH = 0;
+    let imgDrawX = innerX;
+    let imgDrawY = innerY;
+    if (cardData && cardData.loaded && cardData.img) {
+      const imgAspect = cardData.width / cardData.height;
+      imgDrawH = imgMaxH;
+      imgDrawW = imgDrawH * imgAspect;
+      if (imgDrawW > innerW * 0.32) {
+        imgDrawW = innerW * 0.32;
+        imgDrawH = imgDrawW / imgAspect;
+      }
+      imgDrawY = innerY + (innerH - imgDrawH) / 2;
+      const imgR = 5 * s;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(imgDrawX + imgR, imgDrawY);
+      ctx.lineTo(imgDrawX + imgDrawW - imgR, imgDrawY);
+      ctx.quadraticCurveTo(imgDrawX + imgDrawW, imgDrawY, imgDrawX + imgDrawW, imgDrawY + imgR);
+      ctx.lineTo(imgDrawX + imgDrawW, imgDrawY + imgDrawH - imgR);
+      ctx.quadraticCurveTo(imgDrawX + imgDrawW, imgDrawY + imgDrawH, imgDrawX + imgDrawW - imgR, imgDrawY + imgDrawH);
+      ctx.lineTo(imgDrawX + imgR, imgDrawY + imgDrawH);
+      ctx.quadraticCurveTo(imgDrawX, imgDrawY + imgDrawH, imgDrawX, imgDrawY + imgDrawH - imgR);
+      ctx.lineTo(imgDrawX, imgDrawY + imgR);
+      ctx.quadraticCurveTo(imgDrawX, imgDrawY, imgDrawX + imgR, imgDrawY);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(cardData.img, imgDrawX, imgDrawY, imgDrawW, imgDrawH);
+      ctx.restore();
+    }
+
+    // 文字区域布局：名称和按钮在上方同一行，下方是横线+描述+技能
+    const textX = imgDrawX + imgDrawW + 10 * s;
+    const btnW = 60 * s;
+    const btnH = 22 * s;
+    const btnX = detailX + detailW - pad - btnW;
+    const btnY = innerY - 3 * s;
+    const textW = btnX - textX - 8 * s; // 文字宽度到按钮左侧
+    let textY = innerY + 2 * s;
+
+    // 女巫名称
+    ctx.font = `bold ${Math.floor(19 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(cardConfig.witch_name, textX, textY);
+
+    // 名称下方的横线
+    const lineY = textY + 24 * s;
+    ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+    ctx.lineWidth = 1 * s;
+    ctx.beginPath();
+    ctx.moveTo(textX, lineY);
+    ctx.lineTo(btnX + btnW, lineY);
+    ctx.stroke();
+
+    textY = lineY + 8 * s;
+
+    // 女巫描述
+    ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+    ctx.fillStyle = '#4a4a4a';
+    const descLines = this._wrapText(ctx, cardConfig.witch_desc, textW + btnW + 8 * s, 14 * s);
+    descLines.slice(0, 2).forEach((line, i) => {
+      ctx.fillText(line, textX, textY + i * 18 * s);
+    });
+    textY += Math.min(descLines.length, 2) * 18 * s + 10 * s;
+
+    // 技能描述
+    if (cardConfig.card_skill_desc) {
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b6fae';
+      ctx.fillText('卡牌技能', textX, textY);
+      textY += 18 * s;
+
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#4a4a4a';
+      const skillLines = this._wrapText(ctx, cardConfig.card_skill_desc, textW + btnW + 8 * s, 14 * s);
+      skillLines.slice(0, 2).forEach((line, i) => {
+        ctx.fillText(line, textX, textY + i * 18 * s);
+      });
+    }
+
+    // 右上角装备按钮
+    const isEquipped = game.equippedWitchCard === level;
+    const btnPressOffset = game._cardBookEquipBtnPressed ? 1 * s : 0;
+    const drawBtnY = btnY + btnPressOffset;
+
+    // 按钮背景
+    ctx.save();
+    ctx.beginPath();
+    const br = 5 * s;
+    ctx.moveTo(btnX + br, drawBtnY);
+    ctx.lineTo(btnX + btnW - br, drawBtnY);
+    ctx.quadraticCurveTo(btnX + btnW, drawBtnY, btnX + btnW, drawBtnY + br);
+    ctx.lineTo(btnX + btnW, drawBtnY + btnH - br);
+    ctx.quadraticCurveTo(btnX + btnW, drawBtnY + btnH, btnX + btnW - br, drawBtnY + btnH);
+    ctx.lineTo(btnX + br, drawBtnY + btnH);
+    ctx.quadraticCurveTo(btnX, drawBtnY + btnH, btnX, drawBtnY + btnH - br);
+    ctx.lineTo(btnX, drawBtnY + br);
+    ctx.quadraticCurveTo(btnX, drawBtnY, btnX + br, drawBtnY);
+    ctx.closePath();
+    if (isEquipped) {
+      ctx.fillStyle = '#5a3d7a';
+    } else {
+      ctx.fillStyle = '#6b4c8a';
+    }
+    ctx.fill();
+    ctx.restore();
+
+    // 按钮文字
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(isEquipped ? '已装备' : '装备', btnX + btnW / 2, drawBtnY + btnH / 2);
+
+    // 回合中禁止切换提示
+    if (game._equipBlockToast) {
+      const toastElapsed = Date.now() - game._equipBlockToast.startTime;
+      if (toastElapsed > 3000) {
+        game._equipBlockToast = null;
+      } else {
+        const toastText = game._equipBlockToast.text;
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        const toastTextW = ctx.measureText(toastText).width;
+        const toastPadX = 8 * s;
+        const toastPadY = 4 * s;
+        const toastW = toastTextW + toastPadX * 2;
+        const toastH = 20 * s;
+        const toastX = btnX + btnW / 2 - toastW / 2;
+        const toastY = btnY - toastH - 6 * s;
+        const toastFadeIn = Math.min(1, toastElapsed / 150);
+        const toastFadeOut = toastElapsed > 2500 ? (3000 - toastElapsed) / 500 : 1;
+        const toastAlpha = toastFadeIn * toastFadeOut;
+
+        ctx.save();
+        ctx.globalAlpha = toastAlpha * alpha;
+        ctx.fillStyle = 'rgba(200, 60, 60, 0.92)';
+        const tr = 4 * s;
+        ctx.beginPath();
+        ctx.moveTo(toastX + tr, toastY);
+        ctx.lineTo(toastX + toastW - tr, toastY);
+        ctx.quadraticCurveTo(toastX + toastW, toastY, toastX + toastW, toastY + tr);
+        ctx.lineTo(toastX + toastW, toastY + toastH - tr);
+        ctx.quadraticCurveTo(toastX + toastW, toastY + toastH, toastX + toastW - tr, toastY + toastH);
+        ctx.lineTo(toastX + tr, toastY + toastH);
+        ctx.quadraticCurveTo(toastX, toastY + toastH, toastX, toastY + toastH - tr);
+        ctx.lineTo(toastX, toastY + tr);
+        ctx.quadraticCurveTo(toastX, toastY, toastX + tr, toastY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(toastText, toastX + toastW / 2, toastY + toastH / 2);
+        ctx.restore();
+      }
+    }
+
+    // 记录按钮点击区域
+    this.cardBookEquipBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+    ctx.restore();
+  }
+
+  // 辅助：文本自动换行，返回行数组
+  _wrapText(ctx, text, maxWidth, fontSize) {
+    const chars = text.split('');
+    const lines = [];
+    let line = '';
+    for (let i = 0; i < chars.length; i++) {
+      const testLine = line + chars[i];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth && line !== '') {
+        lines.push(line);
+        line = chars[i];
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+    return lines;
   }
 
   // 绘制顶部图标 + 金币胶囊（两者并排水平居中）

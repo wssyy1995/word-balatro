@@ -1,5 +1,4 @@
 // ===== 女巫技能配置 =====
-
 const WITCH_SKILLS = [
   { level: 3, name: '女巫 Lv.3', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
   { level: 5, name: '女巫 Lv.5', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
@@ -28,6 +27,15 @@ const SKILL_POOL = [
 // const SKILL_POOL = [
 //   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
 // ];
+// ===== 女巫卡牌配置 =====
+const WITCH_CARDS = [
+  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'金之女巫，黄金时代的最后守望者',card_skill_name: 'initail_coin_10',card_skill_desc:'每赛局开始，获得初始金币10'},
+  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'each_round_hand_plus1',card_skill_desc:'每回合出牌次数+1'},
+  { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'illegal_words_one',card_skill_desc:'每回合首次非法单词不扣除出牌次数'}
+
+];
+
+
 // 打乱数组（Fisher-Yates）
 function shuffleSkills(arr) {
   const result = [...arr];
@@ -190,6 +198,7 @@ function giveReward(rewardType, game) {
 
 module.exports = {
   WITCH_SKILLS,
+  WITCH_CARDS,
   SKILL_POOL,
   getSkillForLevel,
   checkSkill,

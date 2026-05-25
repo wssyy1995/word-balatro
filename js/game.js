@@ -9,7 +9,7 @@ const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -531,6 +531,8 @@ class Game {
       letterUpgrades.clear();
       this.round = 1;
       this.gold = 4;
+      // 应用装备的女巫卡牌初始技能
+      this._applyEquippedCardBonus('init');
       this.jokers = [];
       this.maxJokerSlots = 4;
       this.crystalEffects = [];
@@ -549,7 +551,14 @@ class Game {
       this._cardBookAnimStartTime = null;
       this._closingCardBook = false;
       this._closeCardBookStartTime = null;
+      this._cardBookDetailLevel = null;
+      this._closingCardBookDetail = false;
+      this._cardBookDetailStartTime = null;
+      this._closeCardBookDetailStartTime = null;
+      this._cardBookEquipBtnPressed = false;
+      this._cardBookCellPressed = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
+      this.equippedWitchCard = this.storageManager.loadEquippedWitchCard();
       console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
@@ -667,7 +676,14 @@ class Game {
     this._cardBookAnimStartTime = null;
     this._closingCardBook = false;
     this._closeCardBookStartTime = null;
+    this._cardBookDetailLevel = null;
+    this._closingCardBookDetail = false;
+    this._cardBookDetailStartTime = null;
+    this._closeCardBookDetailStartTime = null;
+    this._cardBookEquipBtnPressed = false;
+    this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
+    this.equippedWitchCard = this.storageManager ? this.storageManager.loadEquippedWitchCard() : null;
     console.log('[CardBook] 存档恢复加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
     this._newWitchCardThisShop = null;
     this._cardBookIconFlashStart = null;
@@ -837,12 +853,15 @@ class Game {
     this.selected = [];
     this.score = 0;
     this.handsLeft = 4 + this.extraHands;
+    // 应用装备的女巫卡牌回合技能
+    this._applyEquippedCardBonus('round');
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraHands = 0;
     this.extraDiscards = 0;
     this.extraSafety = 0;
     this.extraLetters = 0;
     this.witchSkillPassed = true;
+    this._illegalWordShieldUsed = false;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     // 清除所有女巫牌的动画状态，防止上一回合的动画残留
@@ -1057,6 +1076,15 @@ class Game {
         // 触发容错咒文动画：跳跃 + 紫色光晕
         shieldJoker._triggered = true;
         shieldJoker._shieldAnimStart = Date.now();
+      } else if (this.equippedWitchCard && !this._illegalWordShieldUsed) {
+        // 检查是否装备了 illegal_words_one 技能的女巫卡牌
+        const eqCard = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
+        if (eqCard && eqCard.card_skill_name === 'illegal_words_one') {
+          this._illegalWordShieldUsed = true;
+          console.log('[EquippedSkill] illegal_words_one shielded illegal word');
+        } else if (!this._hastePlayActive) {
+          this.handsLeft--;
+        }
       } else if (!this._hastePlayActive) {
         this.handsLeft--;
       }
@@ -1649,6 +1677,30 @@ class Game {
   addScore(delta) {
     this.score += delta;
     this.totalScore += delta;
+  }
+
+  // 应用装备的女巫卡牌技能 bonus
+  _applyEquippedCardBonus(timing) {
+    if (!this.equippedWitchCard) return;
+    const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
+    if (!cardConfig) return;
+    switch (cardConfig.card_skill_name) {
+      case 'initail_coin_10':
+        if (timing === 'init') {
+          this.gold += 10;
+          console.log('[EquippedSkill] initail_coin_10 applied, gold:', this.gold);
+        }
+        break;
+      case 'each_round_hand_plus1':
+        if (timing === 'round') {
+          this.handsLeft += 1;
+          console.log('[EquippedSkill] each_round_hand_plus1 applied, handsLeft:', this.handsLeft);
+        }
+        break;
+      case 'illegal_words_one':
+        // 回合级标记在 resetRound 中重置，实际生效在 playHand 非法单词逻辑中
+        break;
+    }
   }
 
   winRound() {

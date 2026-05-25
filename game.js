@@ -74,10 +74,33 @@ async function startPreload() {
   );
   const guideNames = needGuide ? Object.keys(cloudStorage.guideFileMap) : [];
 
-  // 注：witch 头像和 witch_card 已改为回合级按需下载，不在预加载页下载
+  // 判断是否有存档恢复（同 startGame 中的逻辑）
+  const isExpired = savedProgress && savedProgress.timestamp &&
+    (Date.now() - savedProgress.timestamp > 7 * 24 * 60 * 60 * 1000);
+  const hasRequiredFields = savedProgress &&
+    Array.isArray(savedProgress.hand) &&
+    Array.isArray(savedProgress.deck) &&
+    typeof savedProgress.target === 'number' &&
+    typeof savedProgress.state === 'string' &&
+    Array.isArray(savedProgress._shuffledSkills);
+  const isResuming = savedProgress && !isExpired && savedProgress.state !== 'gameover' && hasRequiredFields;
+
+  // 读取已解锁的 witch_card
+  let collectedWitchCards = [];
+  if (isResuming) {
+    const raw = wx.getStorageSync('word_balatro_collected_witch_cards');
+    if (raw) {
+      try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        if (Array.isArray(parsed)) collectedWitchCards = parsed;
+      } catch (e) {}
+    }
+  }
+
+  // 注：witch 头像仍改为回合级按需下载，但 witch_card 在存档恢复时预加载
   const total = shopNames.length + bgIconNames.length + guideNames.length;
 
-  if (total === 0) {
+  if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
     preloadComplete = true;
     startGame();
@@ -94,6 +117,15 @@ async function startPreload() {
   await cloudStorage.preloadBgIconImages(onProgress);
   if (needGuide) {
     await cloudStorage.preloadGuideImages(onProgress);
+  }
+
+  // 存档恢复时：并行预加载所有已解锁的 witch_card
+  if (collectedWitchCards.length > 0) {
+    console.log('[Preload] 存档恢复，预加载已解锁 witch_card:', collectedWitchCards);
+    await Promise.all(collectedWitchCards.map(level =>
+      cloudStorage.preloadWitchCardForLevel(level, renderer)
+    ));
+    console.log('[Preload] 已解锁 witch_card 预加载完成');
   }
 
   cloudStorage.injectToRenderer(renderer);
@@ -215,6 +247,17 @@ wx.onTouchMove((e) => {
     }
   }
 
+  // 移出装备按钮区域时取消按下状态
+  if (game._cardBookEquipBtnPressed && renderer.cardBookEquipBtnRect) {
+    const touch = e.touches[0];
+    const btnHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookEquipBtnRect]);
+    if (!btnHit) {
+      game._cardBookEquipBtnPressed = false;
+    }
+  }
+
+
+
   if (!renderer.cloudLogDragging) return;
   const touch = e.touches[0];
   const y = touch.clientY;
@@ -226,6 +269,7 @@ wx.onTouchEnd(() => {
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
   game._cardBookIconPressed = false;
+  game._cardBookEquipBtnPressed = false;
 
   // 取消未触发的长按定时器
   if (longPressTimer) {
@@ -359,12 +403,96 @@ function handleInput(x, y) {
   
   // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
   if (game.cardBookOpen && !game._closingCardBook) {
+    // 1. 先检测是否点击了已解锁卡牌（最高优先级）
+    if (renderer.cardBookCellRects && renderer.cardBookCellRects.length > 0) {
+      const cellHit = renderer.hitTest(x, y, renderer.cardBookCellRects);
+      if (cellHit && cellHit.isUnlocked) {
+        vibrate();
+        if (game._cardBookCellPressed === cellHit.level) {
+          // 再次点击同一张卡：复位 + 关闭详情
+          game._cardBookCellPressed = null;
+          game._cardBookDetailLevel = null;
+          game._closingCardBookDetail = false;
+        } else {
+          // 点击新卡：切换选中 + 打开/切换详情
+          game._cardBookCellPressed = cellHit.level;
+          game._cardBookDetailLevel = cellHit.level;
+          game._cardBookDetailStartTime = Date.now();
+          game._closingCardBookDetail = false;
+        }
+        return;
+      }
+    }
+
+    // 先检测关闭按钮（X）
+    if (renderer.cardBookCloseBtnRect) {
+      const closeHit = renderer.hitTest(x, y, [renderer.cardBookCloseBtnRect]);
+      if (closeHit) {
+        vibrate();
+        game._closingCardBook = true;
+        game._closeCardBookStartTime = Date.now();
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
+        return;
+      }
+    }
+
+    // 2. 如果详情弹窗打开，处理详情弹窗交互
+    if (game._cardBookDetailLevel && !game._closingCardBookDetail) {
+      // 检测装备/卸下按钮
+      if (renderer.cardBookEquipBtnRect) {
+        const equipHit = renderer.hitTest(x, y, [renderer.cardBookEquipBtnRect]);
+        if (equipHit) {
+          if (game.state === 'playing') {
+            vibrate();
+            game._equipBlockToast = {
+              text: '游戏回合中,无法切换',
+              startTime: Date.now(),
+            };
+            return;
+          }
+          game._cardBookEquipBtnPressed = true;
+          vibrate();
+          const level = game._cardBookDetailLevel;
+          if (game.equippedWitchCard === level) {
+            // 卸下
+            game.equippedWitchCard = null;
+            console.log('[Equipped] 卸下 witch_card_' + level);
+          } else {
+            // 装备（单选，自动替换）
+            game.equippedWitchCard = level;
+            console.log('[Equipped] 装备 witch_card_' + level);
+          }
+          if (game.storageManager) {
+            game.storageManager.saveEquippedWitchCard(game.equippedWitchCard);
+          }
+          return;
+        }
+      }
+
+      const insideDetail = renderer.cardBookDetailPanelRect &&
+        x >= renderer.cardBookDetailPanelRect.x && x <= renderer.cardBookDetailPanelRect.x + renderer.cardBookDetailPanelRect.w &&
+        y >= renderer.cardBookDetailPanelRect.y && y <= renderer.cardBookDetailPanelRect.y + renderer.cardBookDetailPanelRect.h;
+      if (insideDetail) {
+        // 点击详情面板内部（非按钮），不关闭
+        return;
+      }
+      // 点击详情面板外部 → 同时关闭图鉴和详情弹窗
+      game._closingCardBook = true;
+      game._closeCardBookStartTime = Date.now();
+      game._cardBookDetailLevel = null;
+      game._closingCardBookDetail = false;
+      return;
+    }
+
     // 先检测翻页按钮（点击区域可能超出面板，优先处理）
     if (renderer.cardBookPrevBtnRect) {
       const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
       if (prevHit && game.cardBookPage > 0) {
         vibrate();
         game.cardBookPage--;
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
         return;
       }
     }
@@ -373,6 +501,8 @@ function handleInput(x, y) {
       if (nextHit) {
         vibrate();
         game.cardBookPage++;
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
         return;
       }
     }
@@ -387,6 +517,8 @@ function handleInput(x, y) {
     // 面板外部 → 关闭弹窗
     game._closingCardBook = true;
     game._closeCardBookStartTime = Date.now();
+    game._cardBookDetailLevel = null;
+    game._closingCardBookDetail = false;
     return;
   }
 
