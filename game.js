@@ -85,16 +85,14 @@ async function startPreload() {
     Array.isArray(savedProgress._shuffledSkills);
   const isResuming = savedProgress && !isExpired && savedProgress.state !== 'gameover' && hasRequiredFields;
 
-  // 读取已解锁的 witch_card
+  // 读取已解锁的 witch_card（独立于存档恢复，新游戏也保留已收集卡牌）
   let collectedWitchCards = [];
-  if (isResuming) {
-    const raw = wx.getStorageSync('word_balatro_collected_witch_cards');
-    if (raw) {
-      try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        if (Array.isArray(parsed)) collectedWitchCards = parsed;
-      } catch (e) {}
-    }
+  const raw = wx.getStorageSync('word_balatro_collected_witch_cards');
+  if (raw) {
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (Array.isArray(parsed)) collectedWitchCards = parsed;
+    } catch (e) {}
   }
 
   // 注：witch 头像仍改为回合级按需下载，但 witch_card 在存档恢复时预加载
@@ -433,6 +431,7 @@ function handleInput(x, y) {
         game._closeCardBookStartTime = Date.now();
         game._cardBookDetailLevel = null;
         game._closingCardBookDetail = false;
+        game._cardBookCellPressed = null;
         return;
       }
     }
@@ -482,6 +481,7 @@ function handleInput(x, y) {
       game._closeCardBookStartTime = Date.now();
       game._cardBookDetailLevel = null;
       game._closingCardBookDetail = false;
+      game._cardBookCellPressed = null;
       return;
     }
 
@@ -519,6 +519,7 @@ function handleInput(x, y) {
     game._closeCardBookStartTime = Date.now();
     game._cardBookDetailLevel = null;
     game._closingCardBookDetail = false;
+    game._cardBookCellPressed = null;
     return;
   }
 

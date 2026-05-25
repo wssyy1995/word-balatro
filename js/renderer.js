@@ -1972,11 +1972,11 @@ class Renderer {
         // 选中态金色光晕（绘制在卡牌后方）
         if (isPressed) {
           ctx.save();
-          ctx.shadowColor = 'rgba(255, 220, 120, 0.35)';
-          ctx.shadowBlur = 14 * s;
+          ctx.shadowColor = 'rgba(255, 220, 120, 0.45)';
+          ctx.shadowBlur = 16 * s;
           ctx.shadowOffsetX = 0;
           ctx.shadowOffsetY = 0;
-          ctx.fillStyle = 'rgba(255, 220, 120, 0.10)';
+          ctx.fillStyle = 'rgba(255, 220, 120, 0.14)';
           const glowPad = 2 * s;
           const glowR = 8 * s;
           const gx = pos.x - glowPad;
@@ -1993,6 +1993,32 @@ class Renderer {
           ctx.quadraticCurveTo(gx, gy + gh, gx, gy + gh - glowR);
           ctx.lineTo(gx, gy + glowR);
           ctx.quadraticCurveTo(gx, gy, gx + glowR, gy);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+          // 叠加一层更小的淡紫色光晕
+          ctx.save();
+          ctx.shadowColor = 'rgba(180, 140, 220, 0.35)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          ctx.fillStyle = 'rgba(180, 140, 220, 0.18)';
+          const purPad = 0;
+          const purR = 8 * s;
+          const px1 = pos.x - purPad;
+          const py1 = pos.y - purPad;
+          const pw1 = cellW + purPad * 2;
+          const ph1 = cellH + purPad * 2;
+          ctx.beginPath();
+          ctx.moveTo(px1 + purR, py1);
+          ctx.lineTo(px1 + pw1 - purR, py1);
+          ctx.quadraticCurveTo(px1 + pw1, py1, px1 + pw1, py1 + purR);
+          ctx.lineTo(px1 + pw1, py1 + ph1 - purR);
+          ctx.quadraticCurveTo(px1 + pw1, py1 + ph1, px1 + pw1 - purR, py1 + ph1);
+          ctx.lineTo(px1 + purR, py1 + ph1);
+          ctx.quadraticCurveTo(px1, py1 + ph1, px1, py1 + ph1 - purR);
+          ctx.lineTo(px1, py1 + purR);
+          ctx.quadraticCurveTo(px1, py1, px1 + purR, py1);
           ctx.closePath();
           ctx.fill();
           ctx.restore();
@@ -2182,21 +2208,21 @@ class Renderer {
       }
 
       // 右上角关闭按钮（X）
-      const closeBtnSize = 24 * s;
-      const closeBtnX = px + pw - closeBtnSize - 10 * s + 5;
-      const closeBtnY = py + 10 * s - 5;
+      const closeBtnSize = 28 * s;
+      const closeBtnX = px + pw - closeBtnSize - 10 * s + 12;
+      const closeBtnY = py + 10 * s - 16;
       ctx.save();
       // 绘制圆形背景
       ctx.beginPath();
       ctx.arc(closeBtnX + closeBtnSize / 2, closeBtnY + closeBtnSize / 2, closeBtnSize / 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(120,100,80,0.15)';
+      ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(120,100,80,0.35)';
+      ctx.strokeStyle = 'rgba(40, 28, 18, 0.85)';
       ctx.lineWidth = 1 * s;
       ctx.stroke();
       // 绘制 X
-      const xPad = 6 * s;
-      ctx.strokeStyle = 'rgba(80,70,60,0.6)';
+      const xPad = 8 * s;
+      ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
       ctx.lineWidth = 1.5 * s;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -2206,7 +2232,7 @@ class Renderer {
       ctx.lineTo(closeBtnX + xPad, closeBtnY + closeBtnSize - xPad);
       ctx.stroke();
       ctx.restore();
-      this.cardBookCloseBtnRect = { x: closeBtnX, y: closeBtnY, w: closeBtnSize, h: closeBtnSize };
+      this.cardBookCloseBtnRect = { x: closeBtnX - 3, y: closeBtnY - 3, w: closeBtnSize + 6, h: closeBtnSize + 6 };
 
       // 卡牌详情弹窗（覆盖在图鉴内容之上）
       if (game._cardBookDetailLevel && !game._closingCardBook) {
