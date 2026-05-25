@@ -966,6 +966,21 @@ function handleInput(x, y) {
       return;
     }
 
+    // 检测全局重掷按钮点击（扣除 3 金币，刷新所有模块）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopGlobalRerollBtnRect) {
+      const rerollHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
+      if (rerollHit) {
+        vibrate();
+        if (game.gold >= 3) {
+          game.gold -= 3;
+          refreshModule(game, 0);
+          refreshModule(game, 1);
+          refreshModule(game, 2);
+        }
+        return;
+      }
+    }
+
     // 检测刷新按钮点击（扣除 5 金币）
     if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
       const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);

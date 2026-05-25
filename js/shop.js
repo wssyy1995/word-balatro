@@ -35,8 +35,7 @@ const SHOP_POOL = {
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
-    {name:'争分夺秒', type:'witch', scope:'limit', trigger:'haste_play', limit:5, cost:8, desc:'生效5回合，每回合前10秒出牌不消耗次数'}
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -45,7 +44,8 @@ const SHOP_POOL = {
     // {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'},
-    {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:5, desc:'重掷下一回合的女巫技能'}
+    {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:5, desc:'重掷下一回合的女巫技能'},
+    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:8, desc:'下回合前30秒出牌不消耗次数'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
@@ -197,6 +197,10 @@ function applyCrystalEffects(game) {
     if (eff.effect === 'extra_letter') game.extraLetters = (game.extraLetters || 0) + eff.value;
     if (eff.effect === 'bonus_gold') game.gold += eff.value;
     if (eff.effect === 'reduce_target') game.target = Math.floor(game.target * eff.value);
+    if (eff.effect === 'haste_play') {
+      game._hastePlayActive = true;
+      game._hastePlayStartTime = Date.now();
+    }
   });
   game.crystalEffects = [];
 }
@@ -565,7 +569,7 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const decoLineW = 80 * s;
+    const decoLineW = 60 * s - 10;
     const lineY = titleMidY - 0.7*s;
     ctx.lineWidth = 0.9 * s;
 
@@ -589,6 +593,57 @@ class ShopRenderer {
     ctx.moveTo(rightIconX + titleIconSize * 0.4, lineY);
     ctx.lineTo(rightIconX + titleIconSize + decoLineW, lineY);
     ctx.stroke();
+
+    // === 全局重掷按钮（卡牌商店标题右侧）===
+    const rerollBtnH = 26 * s;
+    const rerollCoinSize = 14 * s;
+    ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+    const rerollText = '重掷';
+    const rerollTextW = ctx.measureText(rerollText).width;
+    const costText = '3';
+    const costTextW = ctx.measureText(costText).width;
+    const rerollBtnPadX = 6 * s;
+    const textToCoinGap = 4 * s;
+    const coinToNumGap = 4 * s - 1;
+    const contentW = rerollTextW + textToCoinGap + rerollCoinSize + coinToNumGap + costTextW;
+    const rerollBtnW = rerollBtnPadX * 2 + contentW - 1;
+    const rerollBtnX = modX + modW - rerollBtnW - 6 * s + 7;
+    const rerollBtnY = titleMidY - rerollBtnH / 2;
+
+    // 按钮背景（复用金币购买按钮 active 样式）
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur = 4 * s;
+    ctx.shadowOffsetY = 2 * s;
+    this.parent.roundRect(rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH, 7 * s, '#FFF1D4');
+    ctx.restore();
+
+    // 顶部高光条
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 1.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(rerollBtnX + 4 * s, rerollBtnY + 2 * s);
+    ctx.lineTo(rerollBtnX + rerollBtnW - 4 * s, rerollBtnY + 2 * s);
+    ctx.stroke();
+    ctx.restore();
+
+    // 重掷 + 金币图标 + 3（整体居中）
+    const contentStartX = rerollBtnX + (rerollBtnW - contentW) / 2;
+    const midY = rerollBtnY + rerollBtnH / 2;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(rerollText, contentStartX, midY);
+    let curX = contentStartX + rerollTextW + textToCoinGap;
+    if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+      ctx.drawImage(this.parent.coinIcon, curX, midY - rerollCoinSize / 2, rerollCoinSize, rerollCoinSize);
+    }
+    curX += rerollCoinSize + coinToNumGap;
+    ctx.fillText(costText, curX, midY);
+
+    // 记录全局重掷按钮点击区域
+    this.shopGlobalRerollBtnRect = { x: rerollBtnX, y: rerollBtnY, w: rerollBtnW, h: rerollBtnH };
 
     ctx.restore();
 
@@ -864,78 +919,7 @@ class ShopRenderer {
       // 两张卡牌都售罄时，显示刷新按钮
       const itemIdx0 = modIdx * 2;
       const itemIdx1 = modIdx * 2 + 1;
-      const allSold = !game.shopItems[itemIdx0] && !game.shopItems[itemIdx1];
-      if (allSold) {
-        const refreshBtnH = 26 * s;
-        const refreshBtnY = rowY + (rowH - refreshBtnH) / 2;
-
-        const canAfford = game.gold >= 5;
-        const isActive = canAfford;
-
-        // 确定文案和是否显示金币图标
-        let btnText, showCoin;
-        if (!canAfford) {
-          btnText = '余额不足';
-          showCoin = true;
-        } else {
-          btnText = '刷新';
-          showCoin = true;
-        }
-
-        const costText = '5';
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        const btnTextW = ctx.measureText(btnText).width;
-        const costTextW = canAfford ? ctx.measureText(costText).width : 0;
-        const coinSize = 14 * s;
-        const contentW = showCoin ? coinSize + 4 * s + costTextW + 8 * s + btnTextW : btnTextW;
-        const refreshBtnW = contentW + 16 * s;
-        const refreshBtnX = modX + (modW - refreshBtnW) / 2;
-
-        // 按下动效
-        let pressOffset = 0;
-        const isPressed = this.refreshBtnPressed && this.refreshBtnPressed.modIdx === modIdx;
-        if (isPressed) {
-          const pe = Date.now() - this.refreshBtnPressed.pressTime;
-          if (pe < 150) pressOffset = 2 * s;
-        }
-
-        // 按钮投影 + 背景
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(refreshBtnX, refreshBtnY + pressOffset, refreshBtnW, refreshBtnH, 7 * s, isActive ? '#FFF1D4' : '#e0e0e0');
-        ctx.restore();
-
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(refreshBtnX + 4 * s, refreshBtnY + 2 * s + pressOffset);
-        ctx.lineTo(refreshBtnX + refreshBtnW - 4 * s, refreshBtnY + 2 * s + pressOffset);
-        ctx.stroke();
-        ctx.restore();
-
-        // 金币图标 + 文案（整体居中）
-        const contentStartX = refreshBtnX + (refreshBtnW - contentW) / 2;
-        const midY = refreshBtnY + refreshBtnH / 2 + pressOffset;
-        if (showCoin && this.parent.refreshIcon && this.parent.refreshIconLoaded) {
-          ctx.drawImage(this.parent.refreshIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
-        }
-        ctx.fillStyle = isActive ? '#8b6914' : '#999';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
-        if (canAfford) {
-          ctx.fillText(costText, btnTextX, midY);
-          ctx.fillText(btnText, btnTextX + costTextW + 8 * s, midY);
-        } else {
-          ctx.fillText(btnText, btnTextX, midY);
-        }
-
-        this.shopRefreshRects.push({ x: refreshBtnX, y: refreshBtnY, w: refreshBtnW, h: refreshBtnH, modIdx });
-      }
+      // 两张卡牌都售罄时不再显示刷新按钮（已由全局重掷按钮替代）
     });
 
     // === 下一回合女巫技能模块 ===
@@ -976,7 +960,7 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const nrDecoLineW = 60 * s;
+    const nrDecoLineW = 60 * s - 10;
     const nrLineY = nrTitleY - 0.7*s;
     ctx.lineWidth = 0.9 * s;
 

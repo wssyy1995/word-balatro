@@ -894,14 +894,8 @@ class Game {
       this._disableWitchAnim = null;
     }
 
-    // === 争分夺秒：回合开始时递减剩余回合数，激活10秒倒计时 ===
-    const hastePlay = (this.jokers || []).find(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
-    if (hastePlay && hastePlay.usesLeft > 0) {
-      hastePlay.usesLeft--;
-      this._hastePlayActive = true;
-      this._hastePlayStartTime = Date.now();
-    } else {
-      this._hastePlayActive = false;
+    // === 争分夺秒：水晶球效果已在 applyCrystalEffects 中处理 ===
+    if (!this._hastePlayActive) {
       this._hastePlayStartTime = null;
     }
 
@@ -1361,19 +1355,7 @@ class Game {
     }
 
     // 检查争分夺秒是否次数耗尽，触发撕裂自毁动画
-    const hastePlayIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
-    if (hastePlayIdx >= 0) {
-      const hastePlay = this.jokers[hastePlayIdx];
-      if (hastePlay.usesLeft !== undefined && hastePlay.usesLeft <= 0) {
-        hastePlay._destroying = true;
-        hastePlay._destroyStart = Date.now();
-        this._delay(() => {
-          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'haste_play');
-          if (idx >= 0) this.jokers.splice(idx, 1);
-          if (this.storageManager) this.storageManager.saveProgress(this);
-        }, 900);
-      }
-    }
+    // 争分夺秒已改为水晶球牌，无需自毁逻辑
 
     // 使用传入的 playedCards 而不是依赖 this.hand 的 selected 状态
     //（防止动画期间 selected 被意外清除导致 finalPlayedCards 为空）

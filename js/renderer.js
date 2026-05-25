@@ -1969,60 +1969,6 @@ class Renderer {
         const cardData = this.witchCardImages[cardName];
 
         ctx.save();
-        // 选中态金色光晕（绘制在卡牌后方）
-        if (isPressed) {
-          ctx.save();
-          ctx.shadowColor = 'rgba(255, 220, 120, 0.45)';
-          ctx.shadowBlur = 16 * s;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.fillStyle = 'rgba(255, 220, 120, 0.14)';
-          const glowPad = 2 * s;
-          const glowR = 8 * s;
-          const gx = pos.x - glowPad;
-          const gy = pos.y - glowPad;
-          const gw = cellW + glowPad * 2;
-          const gh = cellH + glowPad * 2;
-          ctx.beginPath();
-          ctx.moveTo(gx + glowR, gy);
-          ctx.lineTo(gx + gw - glowR, gy);
-          ctx.quadraticCurveTo(gx + gw, gy, gx + gw, gy + glowR);
-          ctx.lineTo(gx + gw, gy + gh - glowR);
-          ctx.quadraticCurveTo(gx + gw, gy + gh, gx + gw - glowR, gy + gh);
-          ctx.lineTo(gx + glowR, gy + gh);
-          ctx.quadraticCurveTo(gx, gy + gh, gx, gy + gh - glowR);
-          ctx.lineTo(gx, gy + glowR);
-          ctx.quadraticCurveTo(gx, gy, gx + glowR, gy);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-          // 叠加一层更小的淡紫色光晕
-          ctx.save();
-          ctx.shadowColor = 'rgba(180, 140, 220, 0.35)';
-          ctx.shadowBlur = 4 * s;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          ctx.fillStyle = 'rgba(180, 140, 220, 0.18)';
-          const purPad = 0;
-          const purR = 8 * s;
-          const px1 = pos.x - purPad;
-          const py1 = pos.y - purPad;
-          const pw1 = cellW + purPad * 2;
-          const ph1 = cellH + purPad * 2;
-          ctx.beginPath();
-          ctx.moveTo(px1 + purR, py1);
-          ctx.lineTo(px1 + pw1 - purR, py1);
-          ctx.quadraticCurveTo(px1 + pw1, py1, px1 + pw1, py1 + purR);
-          ctx.lineTo(px1 + pw1, py1 + ph1 - purR);
-          ctx.quadraticCurveTo(px1 + pw1, py1 + ph1, px1 + pw1 - purR, py1 + ph1);
-          ctx.lineTo(px1 + purR, py1 + ph1);
-          ctx.quadraticCurveTo(px1, py1 + ph1, px1, py1 + ph1 - purR);
-          ctx.lineTo(px1, py1 + purR);
-          ctx.quadraticCurveTo(px1, py1, px1 + purR, py1);
-          ctx.closePath();
-          ctx.fill();
-          ctx.restore();
-        }
         // 圆角裁剪
         const r = 6 * s;
         ctx.beginPath();
@@ -2784,7 +2730,7 @@ class Renderer {
     // === 争分夺秒倒计时条（在顶部bar上方）===
     if (game._hastePlayActive && game._hastePlayStartTime) {
       const elapsed = Date.now() - game._hastePlayStartTime;
-      const total = 10000;
+      const total = 30000;
       const remaining = Math.max(0, total - elapsed);
       const progress = remaining / total;
       if (progress > 0) {
