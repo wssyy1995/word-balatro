@@ -168,6 +168,12 @@ function startGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+
+  // 从预加载页进入商店页时，强制刷新商店
+  if (game.state === 'shop') {
+    game.shopItems = generateShopItems(game);
+  }
+
   transitionStartTime = Date.now();
 
   // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）

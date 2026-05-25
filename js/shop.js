@@ -228,8 +228,7 @@ class ShopRenderer {
     const cream = '#f5f0e6';
 
     // 背景已由 renderer.js 统一绘制，这里只画商店内容
-    // 每次渲染商店时重新刷新商品（避免存档恢复后出现空位）
-    if (!game.shopItems || game.shopItems.some(item => !item)) {
+    if (!game.shopItems) {
       game.shopItems = generateShopItems(game);
     }
 

@@ -37,7 +37,7 @@ class Renderer {
       this.safeTop = sysInfo.safeArea?.top || sysInfo.statusBarHeight || 0;
       this.safeBottom = (sysInfo.screenHeight - (sysInfo.safeArea?.bottom || sysInfo.screenHeight));
       this.platform = sysInfo.platform || '';
-      this.hasDynamicIsland = this.platform === 'ios' && this.safeTop >= 59;
+      this.hasDynamicIsland = this.safeTop >= 44;
     } catch (e) {
       this.safeTop = 0;
       this.hasDynamicIsland = false;
@@ -1753,17 +1753,18 @@ class Renderer {
 
       // 游戏标题
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
       ctx.save();
       ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const shopTitleText = '女巫的词牌';
-      ctx.fillText(shopTitleText, W / 2, top - 12 * s);
+      ctx.fillText(shopTitleText, W / 2, titleY);
       const shopTitleW = ctx.measureText(shopTitleText).width;
       ctx.restore();
 
-      this._drawCardBookIcon(game, W / 2, top - 12 * s, shopTitleW);
+      this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
 
       this.shopRenderer.draw(ctx, game, W, H, s);
       // 确认购买弹窗（覆盖在商店上方）
@@ -2683,10 +2684,10 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    // top_icon 与金币胶囊统一从页面顶部向下倒推 15px（10+5）
-    const iconSize = 36 * s;
+    const headerOffset = (this.hasDynamicIsland ? 13 * s : 0);
+    const iconSize = 34 * s;
     const iconX = 15 * s + 5 * s;
-    const iconY = 10 * s + 5 * s;
+    const iconY = 10 * s + 5 * s + headerOffset;
     if (this.topIcon && this.topIconLoaded) {
       ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
     }
@@ -2700,7 +2701,7 @@ class Renderer {
     const goldTextW = ctx.measureText(goldText).width;
     const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
     const coinCapsuleH = 32 * s;
-    const coinX = iconX + iconSize + 10 * s - 1 * s;
+    const coinX = iconX + iconSize + 7 * s;
     const coinY = iconY + (iconSize - coinCapsuleH) / 2 + 1 * s;
     this._drawCoinCapsuleAt(coinX, coinY, game);
   }
@@ -2709,7 +2710,9 @@ class Renderer {
     const ctx = this.ctx;
     const W = this.W;
     const s = this.scale;
-    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0);
+    const extraHeight = s < 1.0 ? Math.max(0, this.H - Math.floor(740 * s)) : 0;
+    const topOffset = extraHeight * 0.05;
+    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0) + topOffset;
     const h = 72 * s;
 
     this.drawTopHeader(game);
@@ -2721,11 +2724,12 @@ class Renderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const hudTitleText = '女巫的词牌';
-    ctx.fillText(hudTitleText, W / 2, top - 12 * s);
+    const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
+    ctx.fillText(hudTitleText, W / 2, titleY);
     const hudTitleW = ctx.measureText(hudTitleText).width;
     ctx.restore();
 
-    this._drawCardBookIcon(game, W / 2, top - 12 * s, hudTitleW);
+    this._drawCardBookIcon(game, W / 2, titleY, hudTitleW);
 
     // === 争分夺秒倒计时条（在顶部bar上方）===
     if (game._hastePlayActive && game._hastePlayStartTime) {
@@ -3080,7 +3084,9 @@ class Renderer {
     // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
     // 改卡牌底部和按钮的间距时，上方区域自动跟随
     const boxSize = 56 * s;
-    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0);
+    const extraHeight = s < 1.0 ? Math.max(0, H - Math.floor(740 * s)) : 0;
+    const topOffset = extraHeight * 0.05;
+    const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0) + topOffset;
     const h = 70 * s;  // 与 drawHUD 中的 h 保持一致
     const hudBottom = top + 9 * s + h;
     const maxRows = 3;
@@ -3090,13 +3096,12 @@ class Renderer {
 
     const btnTop = H - 90 * s;
     // tall/narrow 且元素被缩小的屏幕（s<1）自适应：把多余高度分配给底部间距和道具栏下移
-    const extraHeight = s < 1.0 ? Math.max(0, H - Math.floor(740 * s)) : 0;
-    const cardGap = 50 * s + extraHeight * 0.3 - 10;           // 卡牌底部到按钮间距（整体下移10px）
+    const cardGap = 50 * s + extraHeight * 0.25 - 10;         // 卡牌底部到按钮间距
     const cardBottom = btnTop - cardGap + 3 * s;              // 卡牌底部
     const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
-    const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心（卡牌上方 15px，间距压缩5px）
-    const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部（预览上方 20px，额外再下移2px）
-    const propY = hudBottom + 6 * s + extraHeight * 0.15;    // 道具栏顶部（随高度自适应下移）
+    const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心
+    const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部
+    const propY = hudBottom + 6 * s;                         // 道具栏顶部（固定间距，跟随 HUD 整体下移）
 
     this.cardRects = []; // 存储卡牌点击区域
 

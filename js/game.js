@@ -1530,9 +1530,7 @@ class Game {
       } else {
         this.state = 'shop';
         this._checkCardBookUnlock();
-        if (!this.shopItems || this.shopItems.some(item => !item)) {
-          this.shopItems = generateShopItems(this);
-        }
+        this.shopItems = generateShopItems(this);
       }
     }, 200);
   }
@@ -1577,7 +1575,7 @@ class Game {
           }
           this.state = 'shop';
           this._checkCardBookUnlock();
-          if (!this.shopItems || this.shopItems.some(item => !item)) this.shopItems = generateShopItems(this);
+          this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;
         case 'stash':
@@ -1589,7 +1587,7 @@ class Game {
           }
           this.state = 'shop';
           this._checkCardBookUnlock();
-          if (!this.shopItems || this.shopItems.some(item => !item)) this.shopItems = generateShopItems(this);
+          this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;
         case 'use':
