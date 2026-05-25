@@ -2651,7 +2651,7 @@ class Renderer {
     if (isEquipped) {
       ctx.fillStyle = '#5a3d7a';
     } else {
-      ctx.fillStyle = '#6b4c8a';
+      ctx.fillStyle = '#c4a35a';
     }
     ctx.fill();
     ctx.restore();
