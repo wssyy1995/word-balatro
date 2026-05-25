@@ -325,12 +325,12 @@ function calcWordScore(cards, jokers) {
         break;
       case 'whole_word': {
         if (j.trigger === 'double_and_firstend') {
-          if (word.length >= 2 && word[0] === word[word.length - 1]) mult += 8;
+          if (word.length >= 2 && word[0] === word[word.length - 1]) mult += 6;
           let hasDouble = false;
           for (let k = 1; k < word.length; k++) {
             if (word[k] === word[k - 1]) { hasDouble = true; break; }
           }
-          if (hasDouble) mult += 6;
+          if (hasDouble) mult += 5;
         } else {
           const wwMatched = j.trigger === 'illegal_boost' ? j.value > 0 : _matchWordTrigger(cards, j.trigger);
           if (wwMatched) {
@@ -1247,7 +1247,16 @@ class Game {
           ? joker.value > 0
           : _matchWordTrigger(playedInOrder, joker.trigger);
         if (matched) {
-          wholeWordJokers.push({ idx, joker });
+          let addValue = null;
+          if (joker.trigger === 'double_and_firstend') {
+            const w = playedInOrder.map(c => c.letter.toLowerCase()).join('');
+            addValue = 0;
+            if (w.length >= 2 && w[0] === w[w.length - 1]) addValue += 6;
+            for (let k = 1; k < w.length; k++) {
+              if (w[k] === w[k - 1]) { addValue += 5; break; }
+            }
+          }
+          wholeWordJokers.push({ idx, joker, addValue });
         }
       }
     });

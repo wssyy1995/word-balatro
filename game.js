@@ -977,6 +977,7 @@ function handleInput(x, y) {
       const rerollHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
       if (rerollHit) {
         vibrate();
+        renderer.shopRenderer.rerollBtnPressed = { pressTime: Date.now() };
         if (game.gold >= 3) {
           game.gold -= 3;
           refreshModule(game, 0);

@@ -36,8 +36,7 @@ const SHOP_POOL = {
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
     {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
-    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'收尾字母相同，倍率+8;相邻重复字母，倍率+6'},
-    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'收尾字母相同，倍率+8;相邻重复字母，倍率+6'}
+    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'单词首尾字母相同，倍率+6; 相邻重复字母，倍率+5'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -47,7 +46,7 @@ const SHOP_POOL = {
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'},
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:5, desc:'重掷下一回合的女巫技能'},
-    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:8, desc:'下回合前30秒出牌不消耗次数'}
+    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:8, desc:'下回合前20秒出牌不消耗次数'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
@@ -219,6 +218,7 @@ class ShopRenderer {
     this.shopPriceBtnRects = [];
     this.priceBtnPressed = null; // { index, pressTime }
     this.refreshBtnPressed = null; // { modIdx, pressTime }
+    this.rerollBtnPressed = null; // { pressTime }
     this.challengeBtnPressed = false;
     this.challengeBtnPressTime = 0;
   }
@@ -596,7 +596,7 @@ class ShopRenderer {
     ctx.stroke();
 
     // === 全局重掷按钮（卡牌商店标题右侧）===
-    const rerollBtnH = 26 * s;
+    const rerollBtnH = 24 * s;
     const rerollCoinSize = 14 * s;
     ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
     const rerollText = '重掷';
@@ -609,7 +609,15 @@ class ShopRenderer {
     const contentW = rerollTextW + textToCoinGap + rerollCoinSize + coinToNumGap + costTextW;
     const rerollBtnW = rerollBtnPadX * 2 + contentW - 3;
     const rerollBtnX = modX + modW - rerollBtnW - 6 * s + 9;
-    const rerollBtnY = titleMidY - rerollBtnH / 2 - 1;
+
+    // 按下偏移
+    let rerollPressOffset = 0;
+    if (this.rerollBtnPressed) {
+      const pe = Date.now() - this.rerollBtnPressed.pressTime;
+      if (pe < 150) rerollPressOffset = 1 * s;
+    }
+
+    const rerollBtnY = titleMidY - rerollBtnH / 2 - 1 + rerollPressOffset;
 
     // 按钮背景（复用金币购买按钮 active 样式）
     ctx.save();

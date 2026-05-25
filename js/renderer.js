@@ -2731,33 +2731,7 @@ class Renderer {
 
     this._drawCardBookIcon(game, W / 2, titleY, hudTitleW);
 
-    // === 争分夺秒倒计时条（在顶部bar上方）===
-    if (game._hastePlayActive && game._hastePlayStartTime) {
-      const elapsed = Date.now() - game._hastePlayStartTime;
-      const total = 30000;
-      const remaining = Math.max(0, total - elapsed);
-      const progress = remaining / total;
-      if (progress > 0) {
-        const timerH = 6 * s;
-        const timerY = barY - timerH - 3 * s;
-        const timerW = barW * 0.4;
-        const timerX = W / 2 - timerW / 2;
-        // 背景
-        this.roundRect(timerX, timerY, timerW, timerH, timerH / 2, 'rgba(0,0,0,0.3)');
-        // 进度
-        const barColor = progress > 0.5 ? '#2ecc71' : progress > 0.2 ? '#f39c12' : '#e74c3c';
-        this.roundRect(timerX, timerY, timerW * progress, timerH, timerH / 2, barColor);
-        // 文字
-        ctx.save();
-        const sec = (remaining / 1000).toFixed(1);
-        ctx.font = `bold ${Math.max(7, Math.floor(9 * s))}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${sec}s`, timerX + timerW / 2, timerY + timerH / 2 + 0.5 * s);
-        ctx.restore();
-      }
-    }
+    // 争分夺秒倒计时条已移至 drawPlaying 出牌按钮上方
     const barW = W - 20 * s;
     const barH = h;
     const barX = 10 * s;
@@ -3885,6 +3859,8 @@ class Renderer {
         const joker = wjList[i].joker;
         if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
           curMult += joker.value;
+        } else if (joker.trigger === 'double_and_firstend') {
+          curMult += wjList[i].addValue || 0;
         } else {
           curMult = Math.ceil(curMult * joker.value);
         }
@@ -3900,6 +3876,9 @@ class Renderer {
           const joker = wjList[labelIdx].joker;
           if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
             labelText = `+${joker.value}`;
+          } else if (joker.trigger === 'double_and_firstend') {
+            const addValue = wjList[labelIdx].addValue || 0;
+            labelText = addValue > 0 ? `+${addValue}` : '';
           } else {
             labelText = `x${joker.value}`;
           }
@@ -4013,6 +3992,34 @@ class Renderer {
     const btnGap = 20 * s;
     const totalBtnW = btnW * 3 + btnGap * 2;
     const btnStartX = (W - totalBtnW) / 2;
+
+    // === 争分夺秒倒计时条（在出牌按钮上方）===
+    if (game._hastePlayActive && game._hastePlayStartTime) {
+      const elapsed = Date.now() - game._hastePlayStartTime;
+      const total = 20000;
+      const remaining = Math.max(0, total - elapsed);
+      const progress = remaining / total;
+      if (progress > 0) {
+        const timerH = 6 * s;
+        const timerY = btnY - timerH - 8 * s;
+        const timerW = W * 0.5;
+        const timerX = W / 2 - timerW / 2;
+        // 背景
+        this.roundRect(timerX, timerY, timerW, timerH, timerH / 2, 'rgba(0,0,0,0.3)');
+        // 进度
+        const barColor = progress > 0.5 ? '#2ecc71' : progress > 0.2 ? '#f39c12' : '#e74c3c';
+        this.roundRect(timerX, timerY, timerW * progress, timerH, timerH / 2, barColor);
+        // 文字
+        ctx.save();
+        const sec = (remaining / 1000).toFixed(1);
+        ctx.font = `bold ${Math.max(7, Math.floor(9 * s))}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${sec}s`, timerX + timerW / 2, timerY + timerH / 2 + 0.5 * s);
+        ctx.restore();
+      }
+    }
 
     // 出牌按钮（图片 + 阴影 + 按下偏移）
     const playX = btnStartX;
