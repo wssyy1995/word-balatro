@@ -446,7 +446,7 @@ function handleInput(x, y) {
           if (game.state === 'playing') {
             vibrate();
             game._equipBlockToast = {
-              text: '游戏回合中,无法切换',
+              text: '回合进行中,无法切换',
               startTime: Date.now(),
             };
             return;

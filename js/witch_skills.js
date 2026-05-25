@@ -29,8 +29,8 @@ const SKILL_POOL = [
 // ];
 // ===== 女巫卡牌配置 =====
 const WITCH_CARDS = [
-  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'金之女巫，黄金时代的最后守望者',card_skill_name: 'initail_coin_10',card_skill_desc:'每赛局开始，获得初始金币10'},
-  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'each_round_hand_plus1',card_skill_desc:'每回合出牌次数+1'},
+  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'金之女巫，黄金时代的最后守望者',card_skill_name: 'each_round_coin_plus1',card_skill_desc:'每回合结算，基础金币+1'},
+  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'each_round_hand_plus1',card_skill_desc:'每回合出牌次数+1,基础金币-1'},
   { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'illegal_words_one',card_skill_desc:'每回合首次非法单词不扣除出牌次数'}
 
 ];

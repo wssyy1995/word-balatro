@@ -1446,7 +1446,18 @@ class Game {
   }
 
   _showSettlement() {
-    const baseGold = 3 + Math.round(this.round / 3);
+    let baseGold = 4;
+    // 装备卡结算加成
+    if (this.equippedWitchCard) {
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
+      if (cardConfig) {
+        if (cardConfig.card_skill_name === 'each_round_coin_plus1') {
+          baseGold += 1;
+        } else if (cardConfig.card_skill_name === 'each_round_hand_plus1') {
+          baseGold -= 1;
+        }
+      }
+    }
     const extraHands = this.handsLeft * 2;
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
@@ -1685,11 +1696,8 @@ class Game {
     const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
     if (!cardConfig) return;
     switch (cardConfig.card_skill_name) {
-      case 'initail_coin_10':
-        if (timing === 'init') {
-          this.gold += 10;
-          console.log('[EquippedSkill] initail_coin_10 applied, gold:', this.gold);
-        }
+      case 'each_round_coin_plus1':
+        // 结算加成在 _showSettlement 中处理
         break;
       case 'each_round_hand_plus1':
         if (timing === 'round') {
