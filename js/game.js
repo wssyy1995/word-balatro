@@ -276,6 +276,16 @@ function _matchWordTrigger(cards, trigger) {
     case 'length_4': return cards.length >= 4;
     case 'length_5': return cards.length >= 5;
     case 'length_6': return cards.length >= 6;
+    case 'double_and_firstend': {
+      const word = cards.map(c => c.letter.toLowerCase()).join('');
+      if (word.length < 2) return false;
+      const firstLastSame = word[0] === word[word.length - 1];
+      let hasDouble = false;
+      for (let k = 1; k < word.length; k++) {
+        if (word[k] === word[k - 1]) { hasDouble = true; break; }
+      }
+      return firstLastSame || hasDouble;
+    }
     default: return false;
   }
 }
@@ -314,12 +324,21 @@ function calcWordScore(cards, jokers) {
         });
         break;
       case 'whole_word': {
-        const wwMatched = j.trigger === 'illegal_boost' ? j.value > 0 : _matchWordTrigger(cards, j.trigger);
-        if (wwMatched) {
-          if (j.trigger === 'illegal_boost') {
-            mult += j.value;
-          } else {
-            mult = Math.ceil(mult * j.value);
+        if (j.trigger === 'double_and_firstend') {
+          if (word.length >= 2 && word[0] === word[word.length - 1]) mult += 8;
+          let hasDouble = false;
+          for (let k = 1; k < word.length; k++) {
+            if (word[k] === word[k - 1]) { hasDouble = true; break; }
+          }
+          if (hasDouble) mult += 6;
+        } else {
+          const wwMatched = j.trigger === 'illegal_boost' ? j.value > 0 : _matchWordTrigger(cards, j.trigger);
+          if (wwMatched) {
+            if (j.trigger === 'illegal_boost') {
+              mult += j.value;
+            } else {
+              mult = Math.ceil(mult * j.value);
+            }
           }
         }
         break;
@@ -1511,7 +1530,7 @@ class Game {
       } else {
         this.state = 'shop';
         this._checkCardBookUnlock();
-        if (!this.shopItems) {
+        if (!this.shopItems || this.shopItems.some(item => !item)) {
           this.shopItems = generateShopItems(this);
         }
       }
@@ -1558,7 +1577,7 @@ class Game {
           }
           this.state = 'shop';
           this._checkCardBookUnlock();
-          if (!this.shopItems) this.shopItems = generateShopItems(this);
+          if (!this.shopItems || this.shopItems.some(item => !item)) this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;
         case 'stash':
@@ -1570,7 +1589,7 @@ class Game {
           }
           this.state = 'shop';
           this._checkCardBookUnlock();
-          if (!this.shopItems) this.shopItems = generateShopItems(this);
+          if (!this.shopItems || this.shopItems.some(item => !item)) this.shopItems = generateShopItems(this);
           if (this.storageManager) this.storageManager.saveProgress(this);
           break;
         case 'use':

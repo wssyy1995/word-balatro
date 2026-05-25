@@ -35,7 +35,9 @@ const SHOP_POOL = {
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'}
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
+    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'收尾字母相同，倍率+8;相邻重复字母，倍率+6'},
+    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'收尾字母相同，倍率+8;相邻重复字母，倍率+6'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -226,8 +228,8 @@ class ShopRenderer {
     const cream = '#f5f0e6';
 
     // 背景已由 renderer.js 统一绘制，这里只画商店内容
-    // 生成商品
-    if (!game.shopItems) {
+    // 每次渲染商店时重新刷新商品（避免存档恢复后出现空位）
+    if (!game.shopItems || game.shopItems.some(item => !item)) {
       game.shopItems = generateShopItems(game);
     }
 
@@ -606,9 +608,9 @@ class ShopRenderer {
     const textToCoinGap = 4 * s;
     const coinToNumGap = 4 * s - 1;
     const contentW = rerollTextW + textToCoinGap + rerollCoinSize + coinToNumGap + costTextW;
-    const rerollBtnW = rerollBtnPadX * 2 + contentW - 1;
-    const rerollBtnX = modX + modW - rerollBtnW - 6 * s + 7;
-    const rerollBtnY = titleMidY - rerollBtnH / 2;
+    const rerollBtnW = rerollBtnPadX * 2 + contentW - 3;
+    const rerollBtnX = modX + modW - rerollBtnW - 6 * s + 9;
+    const rerollBtnY = titleMidY - rerollBtnH / 2 - 1;
 
     // 按钮背景（复用金币购买按钮 active 样式）
     ctx.save();
