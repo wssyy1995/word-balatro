@@ -610,21 +610,26 @@ class ShopRenderer {
     const rerollBtnW = rerollBtnPadX * 2 + contentW - 3;
     const rerollBtnX = modX + modW - rerollBtnW - 6 * s + 9;
 
-    // 按下偏移
+    // 判断余额是否足够
+    const canAfford = game.gold >= 3;
+
+    // 按下偏移（仅余额充足时生效）
     let rerollPressOffset = 0;
-    if (this.rerollBtnPressed) {
+    if (canAfford && this.rerollBtnPressed) {
       const pe = Date.now() - this.rerollBtnPressed.pressTime;
       if (pe < 150) rerollPressOffset = 1 * s;
     }
 
     const rerollBtnY = titleMidY - rerollBtnH / 2 - 1 + rerollPressOffset;
+    const btnColor = canAfford ? '#FFF1D4' : '#e0e0e0';
+    const textColor = canAfford ? '#8b6914' : '#999';
 
     // 按钮背景（复用金币购买按钮 active 样式）
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.25)';
     ctx.shadowBlur = 4 * s;
     ctx.shadowOffsetY = 2 * s;
-    this.parent.roundRect(rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH, 7 * s, '#FFF1D4');
+    this.parent.roundRect(rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH, 7 * s, btnColor);
     ctx.restore();
 
     // 顶部高光条
@@ -640,7 +645,7 @@ class ShopRenderer {
     // 重掷 + 金币图标 + 3（整体居中）
     const contentStartX = rerollBtnX + (rerollBtnW - contentW) / 2;
     const midY = rerollBtnY + rerollBtnH / 2;
-    ctx.fillStyle = '#8b6914';
+    ctx.fillStyle = textColor;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(rerollText, contentStartX, midY);

@@ -2408,21 +2408,18 @@ class Renderer {
     if (!game.cardBookUnlocked) return;
     const ctx = this.ctx;
     const s = this.scale;
-    const baseH = 28 * s + 2;
+    const baseH = 28 * s + 4;
     let iconW = baseH;
     // 保持原始宽高比（card_book_icon.png 为 150x198）
     if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
       iconW = baseH * (this.cardBookIcon.width / this.cardBookIcon.height);
     }
-    // 宽度再 +1px*s，高度等比例缩放
-    iconW += 1 * s;
-    let iconH = baseH;
-    if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
-      iconH = iconW * (this.cardBookIcon.height / this.cardBookIcon.width);
-    }
+    // 宽度再 +3px*s（比等比例宽 3px），高度保持固定
+    iconW += 3 * s;
+    const iconH = baseH;
     const iconX = titleX + titleW / 2 + 7 * s;
     const pressOffset = game._cardBookIconPressed ? 1 : 0;
-    const iconY = titleY - iconH / 2 + pressOffset;
+    const iconY = titleY - iconH / 2 + pressOffset - 1 * s;
     ctx.save();
 
     // 新收集闪烁动画：持续约 2.5 秒，透明度正弦波动 2 下
