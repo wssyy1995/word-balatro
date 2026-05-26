@@ -968,7 +968,7 @@ class Game {
         const gift = SHOP_POOL.witch.find(w => w.trigger === 'has_vowel');
         if (gift) {
           this.jokers.push({ ...gift, _guideGift: true });
-          if (this.storageManager) this.storageManager.saveProgress(this);
+          if (this.storageManager) this.storageManager.saveProgress();
         }
       }
     }
@@ -985,7 +985,7 @@ class Game {
     }
 
     if (this.storageManager) {
-      this.storageManager.saveProgress(this);
+      this.storageManager.saveProgress();
       // 引导完成时单独持久化，防止游戏结束后 clearProgress 丢失
       if (this.guidePhase >= 5) {
         this.storageManager.saveGuidePhase(this.guidePhase);
@@ -1090,7 +1090,7 @@ class Game {
             this.storageManager.clearProgress();
           }
         }, 1000);
-        if (this.storageManager) this.storageManager.saveProgress(this);
+        if (this.storageManager) this.storageManager.saveProgress();
         return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
       }
 
@@ -1127,7 +1127,7 @@ class Game {
           }, 1500);
         }
       }
-      if (this.storageManager) this.storageManager.saveProgress(this);
+      if (this.storageManager) this.storageManager.saveProgress();
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
@@ -1161,7 +1161,7 @@ class Game {
           }, 1500);
         }
       }
-      if (this.storageManager) this.storageManager.saveProgress(this);
+      if (this.storageManager) this.storageManager.saveProgress();
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
@@ -1187,7 +1187,7 @@ class Game {
         maxCardId: maxCard.id,
         playedCardIds: played.map(c => c.id),
       };
-      if (this.storageManager) this.storageManager.saveProgress(this);
+      if (this.storageManager) this.storageManager.saveProgress();
     }
 
     const result = calcWordScore(played, this.jokers);
@@ -1303,12 +1303,12 @@ class Game {
       this._delay(() => {
         const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
         if (idx >= 0) this.jokers.splice(idx, 1);
-        if (this.storageManager) this.storageManager.saveProgress(this);
+        if (this.storageManager) this.storageManager.saveProgress();
       }, 900);
     }
     this._lifeExtensionAnim = { startTime: Date.now(), jokerIndex: lifeExtIdx, diff };
     this.state = 'life_extended';
-    if (this.storageManager) this.storageManager.saveProgress(this);
+    if (this.storageManager) this.storageManager.saveProgress();
     return true;
   }
 
@@ -1388,7 +1388,7 @@ class Game {
         this._delay(() => {
           const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
           if (idx >= 0) this.jokers.splice(idx, 1);
-          if (this.storageManager) this.storageManager.saveProgress(this);
+          if (this.storageManager) this.storageManager.saveProgress();
         }, 900);
       }
     }
@@ -1463,7 +1463,7 @@ class Game {
     if (!this._hastePlayActive) {
       this.handsLeft--
     }
-    if (this.storageManager) this.storageManager.saveProgress(this);
+    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   _showSettlement() {
@@ -1596,7 +1596,7 @@ class Game {
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);
-          if (this.storageManager) this.storageManager.saveProgress(this);
+          if (this.storageManager) this.storageManager.saveProgress();
           break;
         case 'stash':
           if (data && data.rewardItem) {
@@ -1608,14 +1608,14 @@ class Game {
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);
-          if (this.storageManager) this.storageManager.saveProgress(this);
+          if (this.storageManager) this.storageManager.saveProgress();
           break;
         case 'use':
           if (data && data.rewardItem) {
             this.potionMode = { ...data.rewardItem };
             this._prePotionState = 'shop';
             this.state = 'potion';
-            if (this.storageManager) this.storageManager.saveProgress(this);
+            if (this.storageManager) this.storageManager.saveProgress();
           }
           break;
       }
@@ -1693,7 +1693,7 @@ class Game {
     }, 600);
 
     this.discardsLeft--
-    if (this.storageManager) this.storageManager.saveProgress(this);
+    if (this.storageManager) this.storageManager.saveProgress();
     return true;
   }
 
@@ -1754,7 +1754,7 @@ class Game {
     this.shopItems = null;
     this.resetRound();
     this.state = 'playing';
-    if (this.storageManager) this.storageManager.saveProgress(this);
+    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   getSelectedCards() {

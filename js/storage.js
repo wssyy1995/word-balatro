@@ -48,15 +48,17 @@ class StorageManager {
 
   // ===== 游戏进度存档 =====
   
-  saveProgress(game) {
+  saveProgress() {
     // 防抖：500ms 内多次调用只保存最后一次
     if (this._saveTimer) clearTimeout(this._saveTimer);
     this._saveTimer = setTimeout(() => {
-      this._doSaveProgress(game);
+      this._doSaveProgress();
     }, 500);
   }
 
-  _doSaveProgress(game) {
+  _doSaveProgress() {
+    const game = wx.game;
+    if (!game) return;
     // 实例已销毁则跳过保存
     if (game._destroyed) return;
     console.log('[Save] saving jokers:', JSON.stringify(game.jokers), 'potions:', JSON.stringify(game.potions));
@@ -96,6 +98,10 @@ class StorageManager {
       version: 1
     };
     return this.set('progress', progress);
+  }
+
+  _getGame() {
+    return typeof wx !== 'undefined' ? wx.game : null;
   }
 
   loadProgress() {

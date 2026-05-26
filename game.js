@@ -15,7 +15,7 @@ wx.onShow(() => {
 wx.onHide(() => {
   console.log('[Game] 切后台，立即存档');
   if (game && game.storageManager && game.state !== 'gameover') {
-    game.storageManager.saveProgress(game);
+    game.storageManager.saveProgress();
   }
 });
 
@@ -306,7 +306,7 @@ function handleInput(x, y) {
       if (debugHit.action === 'debug_addScore') game.addScore(100);
       if (debugHit.action === 'debug_addGold') {
         game.gold += 10;
-        if (game.storageManager) game.storageManager.saveProgress(game);
+        if (game.storageManager) game.storageManager.saveProgress();
       }
       if (debugHit.action === 'debug_jumpToRound') {
         wx.showModal({
@@ -333,7 +333,7 @@ function handleInput(x, y) {
       }
       if (debugHit.action === 'debug_addWitchSlot') {
         game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
-        if (game.storageManager) game.storageManager.saveProgress(game);
+        if (game.storageManager) game.storageManager.saveProgress();
       }
       if (debugHit.action === 'debug_upload_shop_card') {
         cloudStorage.uploadShopCards().then(res => {
@@ -382,7 +382,7 @@ function handleInput(x, y) {
         // 如果已有 has_vowel 女巫牌，先移除以避免重复
         const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
         if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
-        if (game.storageManager) game.storageManager.saveProgress(game);
+        if (game.storageManager) game.storageManager.saveProgress();
         // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入
         cloudStorage.preloadGuideImages().then(() => {
           cloudStorage.injectGuideToRenderer(renderer);
@@ -396,7 +396,7 @@ function handleInput(x, y) {
           game.storageManager.setHighScore(game.totalScore);
           game.storageManager.updateStats(game);
           // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
-          game.storageManager.saveProgress(game);
+          game.storageManager.saveProgress();
           game.storageManager.clearProgress();
         }
       }
@@ -578,7 +578,7 @@ function handleInput(x, y) {
                 game.potions.splice(popup.potionIndex, 1);
               }
               if (game.audioManager) game.audioManager.play('upgrade');
-              if (game.storageManager) game.storageManager.saveProgress(game);
+              if (game.storageManager) game.storageManager.saveProgress();
               game._changeLetterPopup = null;
               game._closingChangeLetter = false;
             }, 200);
@@ -744,7 +744,7 @@ function handleInput(x, y) {
         game.potionMode = {...potion};
         game._prePotionState = 'playing';
         game.state = 'potion';
-        if (game.storageManager) game.storageManager.saveProgress(game);
+        if (game.storageManager) game.storageManager.saveProgress();
         return;
       }
     }
@@ -888,12 +888,12 @@ function handleInput(x, y) {
                 item.usesLeft = item.limit;
               }
               game.jokers.push(item);
-              if (game.storageManager) game.storageManager.saveProgress(game);
+              if (game.storageManager) game.storageManager.saveProgress();
             }
             // 药水牌且点击"暂存"
             if (btnHit.action === 'stashPotion' && game._confirmBuyItemData) {
               game.potions.push({...game._confirmBuyItemData});
-              if (game.storageManager) game.storageManager.saveProgress(game);
+              if (game.storageManager) game.storageManager.saveProgress();
             }
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
@@ -962,7 +962,7 @@ function handleInput(x, y) {
             startTime: Date.now(),
           };
           renderer.shopRenderer.shopSelectedOwned = null;
-          if (game.storageManager) game.storageManager.saveProgress(game);
+          if (game.storageManager) game.storageManager.saveProgress();
         }
         return;
       }
@@ -1143,7 +1143,7 @@ function handleInput(x, y) {
         game.state = game._prePotionState || 'shop';
         game._prePotionState = null;
         game._potionSelectedLetter = null;
-        if (game.storageManager) game.storageManager.saveProgress(game);
+        if (game.storageManager) game.storageManager.saveProgress();
         return;
       }
     }
@@ -1171,7 +1171,7 @@ function handleInput(x, y) {
           }
           game.state = 'shop';
           if (!game.shopItems) game.shopItems = generateShopItems(game);
-          if (game.storageManager) game.storageManager.saveProgress(game);
+          if (game.storageManager) game.storageManager.saveProgress();
         }, 150);
         return;
       }

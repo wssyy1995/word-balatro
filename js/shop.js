@@ -106,7 +106,7 @@ function refreshModule(game, modIdx) {
   game.shopItems[startIdx + 1] = shuffled[1];
 
   if (game.audioManager) game.audioManager.play('select');
-  if (game.storageManager) game.storageManager.saveProgress(game);
+  if (game.storageManager) game.storageManager.saveProgress();
 }
 
 function buyItem(game, idx) {
@@ -125,7 +125,7 @@ function buyItem(game, idx) {
   if (item.type === 'witch') {
     // 女巫牌：购买后不在此加入 jokers，成功弹窗点击"装备"后才加入
     game.shopItems[idx] = null;
-    if (game.storageManager) game.storageManager.saveProgress(game);
+    if (game.storageManager) game.storageManager.saveProgress();
     return true;
   } else if (item.type === 'crystal') {
     if (item.effect !== 'reroll_skill') {
@@ -135,12 +135,12 @@ function buyItem(game, idx) {
       }
     }
     game.shopItems[idx] = null;
-    if (game.storageManager) game.storageManager.saveProgress(game);
+    if (game.storageManager) game.storageManager.saveProgress();
     return true;
   } else if (item.type === 'potion') {
     // 药水牌：购买后不在此加入 potions，成功弹窗点击"暂存"后才加入
     game.shopItems[idx] = null;
-    if (game.storageManager) game.storageManager.saveProgress(game);
+    if (game.storageManager) game.storageManager.saveProgress();
     return true;
   }
   return false;
@@ -183,7 +183,7 @@ function upgradeLetter(game, letter) {
 
   // 药水已从道具栏提前移除（道具栏使用时）或不在道具栏中（商店直接使用时）
   game.potionMode = null;
-  if (game.storageManager) game.storageManager.saveProgress(game);
+  if (game.storageManager) game.storageManager.saveProgress();
   return true;
 }
 
