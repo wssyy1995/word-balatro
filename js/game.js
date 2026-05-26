@@ -768,6 +768,7 @@ class Game {
     this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
 
     console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
+    console.log('[Game] 恢复 jokers:', JSON.stringify(this.jokers), 'potions:', JSON.stringify(this.potions));
   }
 
   _syncHandCardScores() {
