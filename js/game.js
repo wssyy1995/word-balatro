@@ -867,6 +867,11 @@ class Game {
   destroy() {
     this._destroyed = true;
     this._clearAllTimeouts();
+    // 清理 storageManager 的防抖定时器，防止实例销毁后仍触发保存
+    if (this.storageManager && this.storageManager._saveTimer) {
+      clearTimeout(this.storageManager._saveTimer);
+      this.storageManager._saveTimer = null;
+    }
     if (this.audioManager) {
       this.audioManager.destroy();
       this.audioManager = null;
@@ -1773,6 +1778,7 @@ class Game {
     this.shopItems = null;
     this.resetRound();
     this._preloadWitchAvatars();
+    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   jumpToRound(targetRound) {

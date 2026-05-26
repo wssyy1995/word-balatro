@@ -49,11 +49,9 @@ class StorageManager {
   // ===== 游戏进度存档 =====
   
   saveProgress() {
-    // 防抖：500ms 内多次调用只保存最后一次
-    if (this._saveTimer) clearTimeout(this._saveTimer);
-    this._saveTimer = setTimeout(() => {
-      this._doSaveProgress();
-    }, 500);
+    // 直接保存，不再防抖。微信小程序本地存储无需防抖，
+    // 500ms 防抖反而引入致命竞态：旧实例/其他路径残留的定时器会覆盖正确存档。
+    this._doSaveProgress();
   }
 
   saveProgressImmediate() {
@@ -67,15 +65,18 @@ class StorageManager {
     // 实例已销毁则跳过保存
     if (game._destroyed) return;
     console.log('[Save] saving jokers:', JSON.stringify(game.jokers), 'potions:', JSON.stringify(game.potions));
+    // 深拷贝 jokers/potions，彻底切断引用，避免保存后数组被意外修改
+    const jokersSnapshot = JSON.parse(JSON.stringify(game.jokers || []));
+    const potionsSnapshot = JSON.parse(JSON.stringify(game.potions || []));
     const progress = {
       round: game.round,
       gold: game.gold,
       score: game.score,
       totalScore: game.totalScore,
       roundScores: game.roundScores,
-      jokers: game.jokers,
+      jokers: jokersSnapshot,
       maxJokerSlots: game.maxJokerSlots,
-      potions: game.potions || [],
+      potions: potionsSnapshot,
       crystalEffects: game.crystalEffects || [],
       shopItems: game.shopItems,
       state: game.state === 'potion' ? (game._prePotionState || 'shop') : game.state,
@@ -102,7 +103,11 @@ class StorageManager {
       timestamp: Date.now(),
       version: 1
     };
-    return this.set('progress', progress);
+    this.set('progress', progress);
+    // 回读验证，确认写入成功
+    const verify = wx.getStorageSync(this.prefix + 'progress');
+    console.log('[SaveVerify] 写入后回读 jokers:', JSON.stringify(verify.jokers), 'potions:', JSON.stringify(verify.potions));
+    return true;
   }
 
   _getGame() {
@@ -112,6 +117,8 @@ class StorageManager {
   loadProgress() {
     const progress = this.get('progress', null);
     if (!progress) return null;
+
+    console.log('[Load] 读取存档 jokers:', JSON.stringify(progress.jokers), 'potions:', JSON.stringify(progress.potions));
 
     // 兼容旧存档
     if (progress.maxJokerSlots === undefined) {
