@@ -27,6 +27,7 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:5, desc:'元音字母分×3'},
+    {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:4, desc:'单词首字母为元音时，该首字母分+60'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×1.5'},
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×2'},

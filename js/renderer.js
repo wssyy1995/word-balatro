@@ -594,6 +594,7 @@ class Renderer {
       case 'letter_e': return ['E'];
       case 'has_vowel': return ['A', 'E', 'I', 'O', 'U'];
       case 'has_face': return ['J', 'Q', 'X', 'Y', 'Z'];
+      case 'initial_vowel': return ['A', 'E', 'I', 'O', 'U'];
       default: return null;
     }
   }
@@ -3382,16 +3383,27 @@ class Renderer {
             if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
             const jokers = game.jokers || [];
 
-            // per_card 倍率提示
+            // per_card 倍率/加分提示
             pc._perCardMultText = null;
             if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
               const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
               if (triggered.length > 0) {
-                const totalMult = triggered.reduce((prod, jIdx) => {
+                let totalMult = 1;
+                let totalAdd = 0;
+                triggered.forEach(jIdx => {
                   const joker = jokers[jIdx];
-                  return joker && joker.value ? prod * joker.value : prod;
-                }, 1);
-                if (totalMult > 1) pc._perCardMultText = `x${totalMult}`;
+                  if (joker && joker.value) {
+                    if (joker.operation === 'add') {
+                      totalAdd += joker.value;
+                    } else {
+                      totalMult *= joker.value;
+                    }
+                  }
+                });
+                const parts = [];
+                if (totalMult > 1) parts.push(`x${totalMult}`);
+                if (totalAdd > 0) parts.push(`+${totalAdd}`);
+                if (parts.length > 0) pc._perCardMultText = parts.join(' ');
               }
             }
 
@@ -3401,7 +3413,13 @@ class Renderer {
               const triggered = pc.jokerTriggers?.[i] || [];
               triggered.forEach(jIdx => {
                 const joker = jokers[jIdx];
-                if (joker && joker.value) score *= joker.value;
+                if (joker && joker.value) {
+                  if (joker.operation === 'add') {
+                    score += joker.value;
+                  } else {
+                    score *= joker.value;
+                  }
+                }
               });
               accumulatedScore += score;
             }

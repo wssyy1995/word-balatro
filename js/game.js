@@ -258,12 +258,14 @@ function findValidWordInHand(hand) {
 }
 
 // 判断单张卡是否匹配女巫牌的 trigger 条件
-function _matchCardTrigger(card, trigger) {
+// index: 卡牌在单词中的位置（从0开始），用于 initial_vowel 等需要位置信息的 trigger
+function _matchCardTrigger(card, trigger, index = -1) {
   switch (trigger) {
     case 'letter_a': return card.letter === 'A';
     case 'letter_e': return card.letter === 'E';
     case 'has_vowel': return 'AEIOU'.includes(card.letter);
     case 'high_letter': return ['J','Q','X','Z'].includes(card.letter);
+    case 'initial_vowel': return index === 0 && 'AEIOU'.includes(card.letter);
     default: return false;
   }
 }
@@ -312,6 +314,7 @@ function calcWordScore(cards, jokers) {
 
   // 计算每个字母的倍率（女巫牌对单个字母的加成）
   const cardMults = cards.map(() => 1);
+  const cardAddScores = cards.map(() => 0);
 
   for (const j of activeJokers) {
     if (j.type !== 'witch') continue;
@@ -320,7 +323,13 @@ function calcWordScore(cards, jokers) {
     switch (j.scope) {
       case 'per_card':
         cards.forEach((c, i) => {
-          if (_matchCardTrigger(c, j.trigger)) cardMults[i] *= j.value;
+          if (_matchCardTrigger(c, j.trigger, i)) {
+            if (j.operation === 'add') {
+              cardAddScores[i] += j.value;
+            } else {
+              cardMults[i] *= j.value;
+            }
+          }
         });
         break;
       case 'whole_word': {
@@ -350,7 +359,7 @@ function calcWordScore(cards, jokers) {
   let baseScore = 0;
   for (let i = 0; i < cards.length; i++) {
     const cardScore = letterGod ? maxBaseScore : cards[i].score;
-    baseScore += cardScore * cardMults[i];
+    baseScore += cardScore * cardMults[i] + cardAddScores[i];
   }
 
   for (const j of activeJokers) {
@@ -1267,7 +1276,7 @@ class Game {
         const joker = jokers[j];
         if (!joker || joker._disabled) continue;
         if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
-        if (_matchCardTrigger(card, joker.trigger)) triggered.push(j);
+        if (_matchCardTrigger(card, joker.trigger, i)) triggered.push(j);
       }
       jokerTriggers.push(triggered);
     }

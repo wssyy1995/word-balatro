@@ -28,6 +28,7 @@ class CloudStorageManager {
       'extra_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_letter.png',
       'has_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_face.png',
       'has_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
+      'initial_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
       'length_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_4.png',
       'length_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_5.png',
       'length_6': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_6.png',
