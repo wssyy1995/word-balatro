@@ -593,7 +593,7 @@ class Renderer {
       case 'letter_a': return ['A'];
       case 'letter_e': return ['E'];
       case 'has_vowel': return ['A', 'E', 'I', 'O', 'U'];
-      case 'has_face': return ['X', 'Y', 'Z'];
+      case 'has_face': return ['J', 'Q', 'X', 'Y', 'Z'];
       default: return null;
     }
   }

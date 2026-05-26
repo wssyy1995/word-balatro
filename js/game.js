@@ -271,7 +271,7 @@ function _matchCardTrigger(card, trigger) {
 // 判断整手牌是否匹配女巫牌的 trigger 条件
 function _matchWordTrigger(cards, trigger) {
   switch (trigger) {
-    case 'has_face': return cards.some(c => c.isFace);
+    case 'has_face': return cards.some(c => ['J','Q','X','Y','Z'].includes(c.letter));
     case 'length_3': return cards.length >= 3;
     case 'length_4': return cards.length >= 4;
     case 'length_5': return cards.length >= 5;
