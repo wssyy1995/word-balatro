@@ -113,9 +113,10 @@ function buyItem(game, idx) {
   const item = game.shopItems[idx];
   if (!item || game.gold < item.cost) return false;
 
-  // 上限检查
+  // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
   if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return false;
-  if (item.type === 'potion' && (game.potions || []).length >= 2) return false;
+  const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+  if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return false;
 
   game.gold -= item.cost;
 
@@ -856,12 +857,13 @@ class ShopRenderer {
         const coinSize = 15 * s;
         const canAfford = game.gold >= item.cost;
 
-        // 检查槽位上限
+        // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
         const isWitch = item.type === 'witch';
         const isPotion = item.type === 'potion';
+        const isAlwaysBuyablePotion = isPotion && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
         const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
         const potionFull = (game.potions || []).length >= 2;
-        const atLimit = (isWitch && witchFull) || (isPotion && potionFull);
+        const atLimit = (isWitch && witchFull) || (isPotion && potionFull && !isAlwaysBuyablePotion);
 
         // 确定按钮文案和是否显示金币图标
         let btnText, showCoin;
@@ -1459,9 +1461,14 @@ class ConfirmBuyRenderer {
       const totalW = btnW * 2 + btnGap;
       const startX = (W - totalW) / 2;
 
+      // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade 且药水槽满）
+      const potionFull = (game.potions || []).length >= 2;
+      const isAlwaysBuyable = item.effect === 'upgrade_letter' || item.effect === 'random_upgrade';
+      const stashDisabled = isAlwaysBuyable && potionFull;
+
       // 独立按下缩放
       const btn1Scale = (game._successPressedBtn === 'usePotionNow' && cpe > 0 && cpe < 150) ? 0.95 : 1;
-      const btn2Scale = (game._successPressedBtn === 'stashPotion' && cpe > 0 && cpe < 150) ? 0.95 : 1;
+      const btn2Scale = (!stashDisabled && game._successPressedBtn === 'stashPotion' && cpe > 0 && cpe < 150) ? 0.95 : 1;
 
       // 按钮1：立即使用（金色背景 / 灰色禁用）
       const b1x = startX;
@@ -1476,22 +1483,30 @@ class ConfirmBuyRenderer {
       ctx.textBaseline = 'middle';
       ctx.fillText('立即使用', b1x + btnW / 2, b1Y + b1h / 2);
 
-      // 按钮2：暂存（米色边框按钮）
+      // 按钮2：暂存（米色边框按钮 / 灰色禁用）
       const b2x = startX + btnW + btnGap;
       const b2w = btnW * btn2Scale;
       const b2h = collectBtnH * btn2Scale;
       const b2X = b2x + (btnW - b2w) / 2;
       const b2Y = collectBtnY + (collectBtnH - b2h) / 2 + contentYShift;
-      this.parent.roundRect(b2X, b2Y, b2w, b2h, 8 * s, '#f5f0e6', '#c4a35a');
-      ctx.fillStyle = '#5a4a2a';
-      ctx.fillText('暂存', b2x + btnW / 2, b2Y + b2h / 2);
+      const stashBtnColor = stashDisabled ? '#e0e0e0' : '#f5f0e6';
+      const stashBorderColor = stashDisabled ? '#999' : '#c4a35a';
+      const stashTextColor = stashDisabled ? '#999' : '#5a4a2a';
+      this.parent.roundRect(b2X, b2Y, b2w, b2h, 8 * s, stashBtnColor, stashBorderColor);
+      ctx.fillStyle = stashTextColor;
+      if (stashDisabled) {
+        ctx.fillText('暂存', b2x + btnW / 2, b2Y + b2h / 2 - 6 * s);
+        ctx.fillText('(已达上限)', b2x + btnW / 2, b2Y + b2h / 2 + 8 * s);
+      } else {
+        ctx.fillText('暂存', b2x + btnW / 2, b2Y + b2h / 2);
+      }
 
       ctx.restore();
 
-      // 存储两个按钮点击区域（立即使用无女巫牌时不存储）
+      // 存储两个按钮点击区域（暂存禁用时不存储）
       const finalY = collectBtnY;
       this.successBtnRect = { x: b1x, y: finalY, w: btnW, h: collectBtnH, action: 'usePotionNow' };
-      this.successBtn2Rect = { x: b2x, y: finalY, w: btnW, h: collectBtnH, action: 'stashPotion' };
+      this.successBtn2Rect = stashDisabled ? null : { x: b2x, y: finalY, w: btnW, h: collectBtnH, action: 'stashPotion' };
     } else if (isChangeLetter) {
       // 字母置换药水：只有暂存按钮（游戏中使用）
       const collectBtnW = 160 * s;

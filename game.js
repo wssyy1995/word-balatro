@@ -1012,7 +1012,8 @@ function handleInput(x, y) {
         // 金币不足或已达上限，直接忽略
         if (game.gold < item.cost) return;
         if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return;
-        if (item.type === 'potion' && (game.potions || []).length >= 2) return;
+        const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+        if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return;
 
         // 按下动效
         renderer.shopRenderer.priceBtnPressed = { index: priceHit.index, pressTime: Date.now() };
