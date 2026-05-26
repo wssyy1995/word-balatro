@@ -4681,7 +4681,7 @@ class Renderer {
     // 升级按钮（需要选中字母）
     const upgradeBtnX = btnStartX;
     const upgradeBtnY = btnAreaY;
-    const upgradeEnabled = !!selectedLetter && !game._potionUpgrading;
+    const upgradeEnabled = !!selectedLetter && !game._potionUpgrading && !!game.potionMode;
     this.roundRect(upgradeBtnX, upgradeBtnY, potionBtnW, potionBtnH, 10 * s,
       upgradeEnabled ? '#c4a35a' : '#d4c9a8',
       upgradeEnabled ? null : '#bbb', upgradeEnabled ? 0 : 1.5 * s);

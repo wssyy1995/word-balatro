@@ -672,9 +672,19 @@ class Game {
     this.jokers = p.jokers || [];
     this.maxJokerSlots = p.maxJokerSlots || 4;
     this.potions = p.potions || [];
+    this.potionMode = p.potionMode || null;
+    this._prePotionState = p._prePotionState || null;
+    this._potionSelectedLetter = p._potionSelectedLetter || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
     this.state = p.state || 'playing';
+
+    // 兼容：旧存档 state 为 potion 但没有 potionMode，重置为 playing
+    if (this.state === 'potion' && !this.potionMode) {
+      this.state = 'playing';
+      this._prePotionState = null;
+      this._potionSelectedLetter = null;
+    }
     this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
     this.discardsLeft = p.discardsLeft;
     this.handsLeft = p.handsLeft;

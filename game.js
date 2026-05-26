@@ -739,10 +739,12 @@ function handleInput(x, y) {
           };
           return;
         }
-        // 其他药水：进入 potion 状态
+        // 其他药水：从道具栏移除后进入 potion 状态
+        game.potions.splice(potionHit.potionIndex, 1);
         game.potionMode = {...potion};
         game._prePotionState = 'playing';
         game.state = 'potion';
+        if (game.storageManager) game.storageManager.saveProgress(game);
         return;
       }
     }
@@ -1053,6 +1055,9 @@ function handleInput(x, y) {
   if (game.state === 'potion') {
     // 动画进行中，忽略所有点击
     if (game._potionUpgrading) return;
+
+    // 防御：potionMode 异常为空时直接忽略
+    if (!game.potionMode) return;
 
     // === 随机强化药水（老虎机）===
     if (game.potionMode && game.potionMode.effect === 'random_upgrade') {

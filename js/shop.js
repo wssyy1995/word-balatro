@@ -181,11 +181,7 @@ function upgradeLetter(game, letter) {
 
   if (game.audioManager) game.audioManager.play('upgrade');
 
-  // 从暂存列表中移除已使用的药水
-  if (game.potions && game.potionMode) {
-    const usedIdx = game.potions.findIndex(p => p.effect === game.potionMode.effect);
-    if (usedIdx >= 0) game.potions.splice(usedIdx, 1);
-  }
+  // 药水已从道具栏提前移除（道具栏使用时）或不在道具栏中（商店直接使用时）
   game.potionMode = null;
   if (game.storageManager) game.storageManager.saveProgress(game);
   return true;
