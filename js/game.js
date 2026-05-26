@@ -341,9 +341,11 @@ function calcWordScore(cards, jokers) {
           }
           if (hasDouble) mult += 5;
         } else {
-          const wwMatched = j.trigger === 'illegal_boost' ? j.value > 0 : _matchWordTrigger(cards, j.trigger);
+          const wwMatched = j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation'
+            ? j.value > 0
+            : _matchWordTrigger(cards, j.trigger);
           if (wwMatched) {
-            if (j.trigger === 'illegal_boost') {
+            if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
               mult += j.value;
             } else {
               mult = Math.ceil(mult * j.value);
@@ -730,6 +732,7 @@ class Game {
     this._maxHandSize = p._maxHandSize;
     this._seedMinLen = p._seedMinLen;
     this._seedMaxLen = p._seedMaxLen;
+    this._lastInitialLetter = p._lastInitialLetter || null;
 
     // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
     const sanitizeCard = (card) => {
@@ -1266,6 +1269,21 @@ class Game {
     this.pendingCheck.resolveTime = Date.now();
     this.pendingCheck.animPhase = 0;
 
+    // === 首领连击：连续打出首字母相同的单词，倍率累加+2；中断后重置 ===
+    const currentInitial = playedInOrder[0]?.letter;
+    if (currentInitial) {
+      (this.jokers || []).forEach(j => {
+        if (j && j.trigger === 'initial_succession') {
+          if (this._lastInitialLetter === currentInitial) {
+            j.value = (j.value || 0) + 2;
+          } else {
+            j.value = 0;
+          }
+        }
+      });
+      this._lastInitialLetter = currentInitial;
+    }
+
     // 计算每个字母跳跃时触发的女巫牌索引（scope === 'per_card'）
     const jokers = this.jokers || [];
     const jokerTriggers = [];
@@ -1298,7 +1316,7 @@ class Game {
     jokers.forEach((joker, idx) => {
       if (!joker || joker._disabled) return;
       if (joker.type === 'witch' && joker.scope === 'whole_word') {
-        const matched = joker.trigger === 'illegal_boost'
+        const matched = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation'
           ? joker.value > 0
           : _matchWordTrigger(playedInOrder, joker.trigger);
         if (matched) {

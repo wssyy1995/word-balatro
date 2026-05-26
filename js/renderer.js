@@ -641,9 +641,9 @@ class Renderer {
 
     // 计算内容高度
     const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
-    const hasIllegalBoost = joker.trigger === 'illegal_boost';
+    const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
-    if (hasIllegalBoost) contentH += lineH + 2 * s; // 倍率增值
+    if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
     if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
@@ -3872,7 +3872,7 @@ class Renderer {
       let curMult = pendingLength;
       for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
         const joker = wjList[i].joker;
-        if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
+        if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
           curMult += joker.value;
         } else if (joker.trigger === 'double_and_firstend') {
           curMult += wjList[i].addValue || 0;
@@ -3889,7 +3889,7 @@ class Renderer {
         const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
         if (stepProgress < 1.0) {
           const joker = wjList[labelIdx].joker;
-          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance') {
+          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
             labelText = `+${joker.value}`;
           } else if (joker.trigger === 'double_and_firstend') {
             const addValue = wjList[labelIdx].addValue || 0;

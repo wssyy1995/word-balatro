@@ -97,6 +97,7 @@ class StorageManager {
       _maxHandSize: game._maxHandSize,
       _seedMinLen: game._seedMinLen,
       _seedMaxLen: game._seedMaxLen,
+      _lastInitialLetter: game._lastInitialLetter || null,
       guidePhase: game.guidePhase,
       _guideOverlayStartTime: game._guideOverlayStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
