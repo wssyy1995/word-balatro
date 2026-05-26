@@ -1226,19 +1226,20 @@ class Game {
 
     const result = calcWordScore(played, this.jokers);
 
-    // === 临死祈祷（最后一次出牌且不满4字母，50%概率倍率+4） ===
+    // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
     if (lastPrayer && this.handsLeft === 1 && playedInOrder.length < 4) {
-      const success = Math.random() < 0.5;
+      const success = Math.random() < 0.2;
+      const boostValue = 8;
       if (success) {
-        result.mult += lastPrayer.value;
+        result.mult += boostValue;
         result.score = Math.ceil(result.base * result.mult);
       }
       lastPrayerResult = {
         success,
         jokerIndex: this.jokers.indexOf(lastPrayer),
-        value: lastPrayer.value,
+        value: boostValue,
       };
     }
 

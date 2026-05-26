@@ -30,12 +30,12 @@ const SHOP_POOL = {
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:2, cost:7, desc:'单词字母>=5时，倍率×1.5'},
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:3, cost:8, desc:'单词字母>=6时，倍率×2'},
-    // {name:'XYZ', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含X/Y/Z时，倍率×3'},
+    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', value:3, cost:6, desc:'单词字母含J/Q/X/Y/Z时，倍率+5'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:7, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,倍率+1；若同时触发\'容错咒文\'，不生效'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'最后一次出牌且不满4字母，50%概率倍率+10'},
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'出牌少于4个字母,20%概率倍率+8'},
     {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'单词首尾字母相同，倍率+6; 相邻重复字母，倍率+5'}
   ],
   crystal: [
@@ -46,7 +46,7 @@ const SHOP_POOL = {
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:5, desc:'下一回合目标分数×0.8'},
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:5, desc:'重掷下一回合的女巫技能'},
-    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:8, desc:'下回合前20秒出牌不消耗次数'}
+    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:5, desc:'下回合前20秒出牌不消耗次数'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
