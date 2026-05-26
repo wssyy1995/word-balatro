@@ -767,6 +767,35 @@ class Game {
     // 恢复引导状态
     this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
 
+    // 修复：恢复后清理手牌中的 null 占位符并重新补牌
+    if (this.state === 'playing') {
+      const validHand = this.hand.filter(Boolean);
+      const need = (this._maxHandSize || this.baseHandSize || 9) - validHand.length;
+      if (need > 0) {
+        // 如果 deck 不够，补充新牌
+        if (!this.deck || this.deck.length < need) {
+          const extraDeck = createDeck();
+          this.deck = this.deck ? [...this.deck, ...extraDeck] : extraDeck;
+        }
+        const newCards = draw(this.deck, need);
+        newCards.forEach(c => {
+          c.selected = false;
+          c.animOffset = null;
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
+          c.newCard = false;
+        });
+        this.hand = [...validHand, ...newCards];
+        this._syncHandCardScores();
+        // 确保手牌中有合法单词
+        const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+        const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+        ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
+      } else {
+        this.hand = validHand;
+      }
+    }
+
     console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
     console.log('[Game] 恢复 jokers:', JSON.stringify(this.jokers), 'potions:', JSON.stringify(this.potions));
   }
