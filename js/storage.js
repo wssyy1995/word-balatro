@@ -59,6 +59,7 @@ class StorageManager {
   _doSaveProgress(game) {
     // 实例已销毁则跳过保存
     if (game._destroyed) return;
+    console.log('[Save] saving jokers:', JSON.stringify(game.jokers), 'potions:', JSON.stringify(game.potions));
     const progress = {
       round: game.round,
       gold: game.gold,
