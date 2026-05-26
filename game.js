@@ -15,7 +15,7 @@ wx.onShow(() => {
 wx.onHide(() => {
   console.log('[Game] 切后台，立即存档');
   if (game && game.storageManager && game.state !== 'gameover') {
-    game.storageManager.saveProgress();
+    game.storageManager.saveProgressImmediate();
   }
 });
 

@@ -56,6 +56,11 @@ class StorageManager {
     }, 500);
   }
 
+  saveProgressImmediate() {
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._doSaveProgress();
+  }
+
   _doSaveProgress() {
     const game = wx.game;
     if (!game) return;

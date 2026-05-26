@@ -1458,6 +1458,7 @@ class Game {
       const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
       ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
+      if (this.storageManager) this.storageManager.saveProgress();
     }, 600);
 
     if (!this._hastePlayActive) {
@@ -1693,7 +1694,6 @@ class Game {
     }, 600);
 
     this.discardsLeft--
-    if (this.storageManager) this.storageManager.saveProgress();
     return true;
   }
 
