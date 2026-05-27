@@ -1308,6 +1308,19 @@ class Game {
         globalTriggered.push(j);
       }
     }
+    // 构建 perCardSteps：每张 per_card 对应一次独立的字母跳跃步骤
+    const perCardSteps = [];
+    for (let i = 0; i < playedInOrder.length; i++) {
+      const triggered = jokerTriggers[i] || [];
+      if (triggered.length === 0) {
+        perCardSteps.push({ cardIdx: i, jokerIdx: null });
+      } else {
+        triggered.forEach(jIdx => {
+          perCardSteps.push({ cardIdx: i, jokerIdx: jIdx });
+        });
+      }
+    }
+    this.pendingCheck.perCardSteps = perCardSteps;
     this.pendingCheck.jokerTriggers = jokerTriggers;
     this.pendingCheck.globalTriggered = globalTriggered;
 

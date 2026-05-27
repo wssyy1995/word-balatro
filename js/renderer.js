@@ -3372,38 +3372,34 @@ class Renderer {
           const letterJumpStart = 1000;
           const cardsInOrder = pc.cardsInOrder || [];
           let accumulatedScore = 0;
-          let currentJumpIdx = -1;
           let isAllJumped = false;
 
           // === 阶段1: 字母跳跃 ===
+          // 每张 per_card 对应一次独立的字母跳跃步骤；无 per_card 的字母基础跳一次
           if (phase >= 1) {
             const jumpElapsed = elapsed - letterJumpStart;
-            currentJumpIdx = Math.floor(jumpElapsed / letterInterval);
-            isAllJumped = currentJumpIdx >= cardsInOrder.length;
-            if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
+            const steps = pc.perCardSteps || [];
+            const stepIdx = Math.floor(jumpElapsed / letterInterval);
+            isAllJumped = stepIdx >= steps.length;
+            const stepInfo = isAllJumped ? null : steps[stepIdx];
+            const cardIdx = stepInfo ? stepInfo.cardIdx : -1;
             const jokers = game.jokers || [];
 
-            // per_card 倍率/加分提示 — 按女巫牌顺序依次触发显示
+            // per_card 倍率/加分提示 — 当前步骤对应的 per_card
             pc._perCardMultText = null;
-            if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
-              const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
-              if (triggered.length > 0) {
-                const stepDuration = letterInterval / triggered.length;
-                const stepIndex = Math.min(Math.floor((jumpElapsed % letterInterval) / stepDuration), triggered.length - 1);
-                const activeJIdx = triggered[stepIndex];
-                const activeJoker = jokers[activeJIdx];
-                if (activeJoker && activeJoker.value) {
-                  if (activeJoker.operation === 'add') {
-                    pc._perCardMultText = `+${activeJoker.value}`;
-                  } else {
-                    pc._perCardMultText = `x${activeJoker.value}`;
-                  }
+            if (!isAllJumped && cardIdx >= 0 && stepInfo && stepInfo.jokerIdx !== null) {
+              const activeJoker = jokers[stepInfo.jokerIdx];
+              if (activeJoker && activeJoker.value) {
+                if (activeJoker.operation === 'add') {
+                  pc._perCardMultText = `+${activeJoker.value}`;
+                } else {
+                  pc._perCardMultText = `x${activeJoker.value}`;
                 }
               }
             }
 
-            // 计算累加分数
-            for (let i = 0; i <= currentJumpIdx && i < cardsInOrder.length; i++) {
+            // 计算累加分数（按字母索引累计，同字母多步骤不重复加分）
+            for (let i = 0; i <= cardIdx && i < cardsInOrder.length; i++) {
               let score = cardsInOrder[i].score;
               const triggered = pc.jokerTriggers?.[i] || [];
               triggered.forEach(jIdx => {
@@ -3423,7 +3419,7 @@ class Renderer {
             jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
 
             // 波浪跳跃
-            const totalJumpTime = cardsInOrder.length * letterInterval;
+            const totalJumpTime = steps.length * letterInterval;
             const waveStartDelay = 90;
             const waveInterval2 = 70;
             if (jumpElapsed >= totalJumpTime) {
@@ -3444,21 +3440,18 @@ class Renderer {
             cardsInOrder.forEach((card, i) => {
               if (isAllJumped) {
                 card.jumpOffsetY = 0;
-              } else if (i === currentJumpIdx && jumpElapsed >= 0) {
+              } else if (i === cardIdx && jumpElapsed >= 0) {
                 const jumpProgress = ((jumpElapsed % letterInterval) / 200);
                 card.jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
-                const triggered = pc.jokerTriggers?.[i] || [];
-                if (triggered.length > 0) {
-                  const stepDuration = letterInterval / triggered.length;
-                  const stepIndex = Math.min(Math.floor((jumpElapsed % letterInterval) / stepDuration), triggered.length - 1);
-                  const activeJIdx = triggered[stepIndex];
-                  const activeJoker = jokers[activeJIdx];
+                // 当前步骤对应的 per_card 女巫牌同步跳跃
+                if (stepInfo && stepInfo.jokerIdx !== null) {
+                  const activeJoker = jokers[stepInfo.jokerIdx];
                   if (activeJoker) {
                     activeJoker._triggered = true;
                     activeJoker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
                   }
                 }
-              } else if (i < currentJumpIdx) {
+              } else if (i < cardIdx) {
                 card.jumpOffsetY = 0;
               }
             });
@@ -3469,7 +3462,7 @@ class Renderer {
               const joker = jokers[jIdx];
               if (joker) {
                 joker._triggered = true;
-                if (!isAllJumped && currentJumpIdx >= 0) {
+                if (!isAllJumped && cardIdx >= 0) {
                   const jumpProgress = ((jumpElapsed % letterInterval) / 200);
                   joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
                 }
@@ -3483,7 +3476,7 @@ class Renderer {
 
             // 检测阶段1完成 → 进入阶段2
             if (isAllJumped && phase < 2) {
-              const totalJumpTime = cardsInOrder.length * letterInterval;
+              const totalJumpTime = steps.length * letterInterval;
               const waveDuration = 180 + cardsInOrder.length * 90;
               const waveElapsed = jumpElapsed - totalJumpTime;
               if (waveElapsed >= waveDuration + 100) {
