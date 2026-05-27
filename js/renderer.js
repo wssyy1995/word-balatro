@@ -716,8 +716,8 @@ class Renderer {
     ctx.fillText(joker.desc, popupX + pad, cy);
     ctx.restore();
 
-    // 倍率增值（错误即经验：显示当前累加值）
-    if (joker.trigger === 'illegal_boost') {
+    // 倍率增值（错误即经验 / 首字连击：显示当前累加值）
+    if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
       cy += lineH + 2 * s;
       ctx.save();
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;

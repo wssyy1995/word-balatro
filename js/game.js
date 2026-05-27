@@ -970,10 +970,9 @@ class Game {
       this._disableWitchAnim = null;
     }
 
-    // === 争分夺秒：水晶球效果已在 applyCrystalEffects 中处理 ===
-    if (!this._hastePlayActive) {
-      this._hastePlayStartTime = null;
-    }
+    // === 争分夺秒：每回合开始时重置，由 applyCrystalEffects 重新激活 ===
+    this._hastePlayActive = false;
+    this._hastePlayStartTime = null;
 
     // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
     if (this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
@@ -1084,6 +1083,12 @@ class Game {
 
   async playHand() {
     if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
+
+    // 争分夺秒 20 秒过期检查
+    if (this._hastePlayActive && this._hastePlayStartTime && Date.now() - this._hastePlayStartTime > 20000) {
+      this._hastePlayActive = false;
+    }
+
     const played = this.hand.filter(c => c && c.selected);
     const playedInOrder = this.getSelectedCards();
     const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
