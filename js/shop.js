@@ -37,7 +37,7 @@ const SHOP_POOL = {
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'阻止游戏结束，将目标分差值×2,加到下一回合目标分（限1次）'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:5, desc:'每次打出非法单词,本牌倍率+1；若同时触发\'容错咒文\'，不生效'},
     {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:10, cost:8, desc:'出牌少于4个字母,20%概率倍率+8'},
-    {name:'对称之美', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'单词首尾字母相同，倍率+6; 相邻重复字母，倍率+5'},
+    {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_and_firstend', value:10, cost:8, desc:'单词首尾字母相同，倍率+6; 相邻重复字母，倍率+5'},
     {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:6, desc:'连续打出首字母相同的单词，本牌倍率+3；中断后重置'}
   ],
   crystal: [
