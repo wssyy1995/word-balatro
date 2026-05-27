@@ -3867,8 +3867,6 @@ class Renderer {
         const joker = wjList[i].joker;
         if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
           curMult += joker.value;
-        } else if (joker.trigger === 'double_and_firstend') {
-          curMult += wjList[i].addValue || 0;
         } else {
           curMult = Math.ceil(curMult * joker.value);
         }
@@ -3884,9 +3882,6 @@ class Renderer {
           const joker = wjList[labelIdx].joker;
           if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
             labelText = `+${joker.value}`;
-          } else if (joker.trigger === 'double_and_firstend') {
-            const addValue = wjList[labelIdx].addValue || 0;
-            labelText = addValue > 0 ? `+${addValue}` : '';
           } else {
             labelText = `x${joker.value}`;
           }

@@ -278,15 +278,16 @@ function _matchWordTrigger(cards, trigger) {
     case 'length_4': return cards.length >= 4;
     case 'length_5': return cards.length >= 5;
     case 'length_6': return cards.length >= 6;
-    case 'double_and_firstend': {
+    case 'double_same': {
       const word = cards.map(c => c.letter.toLowerCase()).join('');
-      if (word.length < 2) return false;
-      const firstLastSame = word[0] === word[word.length - 1];
-      let hasDouble = false;
       for (let k = 1; k < word.length; k++) {
-        if (word[k] === word[k - 1]) { hasDouble = true; break; }
+        if (word[k] === word[k - 1]) return true;
       }
-      return firstLastSame || hasDouble;
+      return false;
+    }
+    case 'firstend_same': {
+      const word = cards.map(c => c.letter.toLowerCase()).join('');
+      return word.length >= 2 && word[0] === word[word.length - 1];
     }
     default: return false;
   }
@@ -333,23 +334,14 @@ function calcWordScore(cards, jokers) {
         });
         break;
       case 'whole_word': {
-        if (j.trigger === 'double_and_firstend') {
-          if (word.length >= 2 && word[0] === word[word.length - 1]) mult += 6;
-          let hasDouble = false;
-          for (let k = 1; k < word.length; k++) {
-            if (word[k] === word[k - 1]) { hasDouble = true; break; }
-          }
-          if (hasDouble) mult += 5;
-        } else {
-          const wwMatched = j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation'
-            ? j.value > 0
-            : _matchWordTrigger(cards, j.trigger);
-          if (wwMatched) {
-            if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
-              mult += j.value;
-            } else {
-              mult = Math.ceil(mult * j.value);
-            }
+        const wwMatched = j.trigger === 'illegal_boost' || j.trigger === 'initial_succession'
+          ? j.value > 0
+          : _matchWordTrigger(cards, j.trigger);
+        if (wwMatched) {
+          if (j.trigger === 'illegal_boost' || j.trigger === 'initial_succession' || j.operation === 'multi_accumulation') {
+            mult += j.value;
+          } else {
+            mult = Math.ceil(mult * j.value);
           }
         }
         break;
@@ -1330,20 +1322,11 @@ class Game {
     jokers.forEach((joker, idx) => {
       if (!joker || joker._disabled) return;
       if (joker.type === 'witch' && joker.scope === 'whole_word') {
-        const matched = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation'
+        const matched = joker.trigger === 'illegal_boost' || joker.trigger === 'initial_succession'
           ? joker.value > 0
           : _matchWordTrigger(playedInOrder, joker.trigger);
         if (matched) {
-          let addValue = null;
-          if (joker.trigger === 'double_and_firstend') {
-            const w = playedInOrder.map(c => c.letter.toLowerCase()).join('');
-            addValue = 0;
-            if (w.length >= 2 && w[0] === w[w.length - 1]) addValue += 6;
-            for (let k = 1; k < w.length; k++) {
-              if (w[k] === w[k - 1]) { addValue += 5; break; }
-            }
-          }
-          wholeWordJokers.push({ idx, joker, addValue });
+          wholeWordJokers.push({ idx, joker });
         }
       }
     });

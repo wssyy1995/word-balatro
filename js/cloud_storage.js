@@ -28,7 +28,7 @@ class CloudStorageManager {
       'extra_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_letter.png',
       'has_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_face.png',
       'has_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
-      'initial_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
+      'initial_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/initial_vowel.png',
       'length_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_4.png',
       'length_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_5.png',
       'length_6': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_6.png',
@@ -45,8 +45,9 @@ class CloudStorageManager {
       'last_chance':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/last_chance.png',
       'reroll_skill':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/reroll_skill.png',
       'haste_play':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/haste_play.png',
-      'double_and_firstend':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_and_firstend.png',
-      'initial_succession':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_and_firstend.png'
+      'firstend_same':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_and_firstend.png',
+      'double_same':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_same.png',
+      'initial_succession':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/initial_succession.png'
     };
 
     // 默认 witch 图片云文件映射
