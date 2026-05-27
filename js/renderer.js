@@ -3383,27 +3383,22 @@ class Renderer {
             if (isAllJumped) currentJumpIdx = cardsInOrder.length - 1;
             const jokers = game.jokers || [];
 
-            // per_card 倍率/加分提示
+            // per_card 倍率/加分提示 — 按女巫牌顺序依次触发显示
             pc._perCardMultText = null;
             if (!isAllJumped && currentJumpIdx >= 0 && currentJumpIdx < cardsInOrder.length) {
               const triggered = pc.jokerTriggers?.[currentJumpIdx] || [];
               if (triggered.length > 0) {
-                let totalMult = 1;
-                let totalAdd = 0;
-                triggered.forEach(jIdx => {
-                  const joker = jokers[jIdx];
-                  if (joker && joker.value) {
-                    if (joker.operation === 'add') {
-                      totalAdd += joker.value;
-                    } else {
-                      totalMult *= joker.value;
-                    }
+                const stepDuration = letterInterval / triggered.length;
+                const stepIndex = Math.min(Math.floor((jumpElapsed % letterInterval) / stepDuration), triggered.length - 1);
+                const activeJIdx = triggered[stepIndex];
+                const activeJoker = jokers[activeJIdx];
+                if (activeJoker && activeJoker.value) {
+                  if (activeJoker.operation === 'add') {
+                    pc._perCardMultText = `+${activeJoker.value}`;
+                  } else {
+                    pc._perCardMultText = `x${activeJoker.value}`;
                   }
-                });
-                const parts = [];
-                if (totalMult > 1) parts.push(`x${totalMult}`);
-                if (totalAdd > 0) parts.push(`+${totalAdd}`);
-                if (parts.length > 0) pc._perCardMultText = parts.join(' ');
+                }
               }
             }
 
@@ -3453,13 +3448,16 @@ class Renderer {
                 const jumpProgress = ((jumpElapsed % letterInterval) / 200);
                 card.jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
                 const triggered = pc.jokerTriggers?.[i] || [];
-                triggered.forEach(jIdx => {
-                  const joker = jokers[jIdx];
-                  if (joker) {
-                    joker._triggered = true;
-                    joker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
+                if (triggered.length > 0) {
+                  const stepDuration = letterInterval / triggered.length;
+                  const stepIndex = Math.min(Math.floor((jumpElapsed % letterInterval) / stepDuration), triggered.length - 1);
+                  const activeJIdx = triggered[stepIndex];
+                  const activeJoker = jokers[activeJIdx];
+                  if (activeJoker) {
+                    activeJoker._triggered = true;
+                    activeJoker._jumpOffsetY = Easing.jump(jumpProgress, 12 * s);
                   }
-                });
+                }
               } else if (i < currentJumpIdx) {
                 card.jumpOffsetY = 0;
               }
