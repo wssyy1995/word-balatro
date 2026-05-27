@@ -1556,6 +1556,7 @@ class Game {
       witchSkill: hasWitchReward ? witchSkill : null,
     };
     this.state = 'settlement';
+    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   _checkCardBookUnlock() {
@@ -1611,6 +1612,7 @@ class Game {
         this.state = 'shop';
         this._checkCardBookUnlock();
         this.shopItems = generateShopItems(this);
+        if (this.storageManager) this.storageManager.saveProgress();
       }
     }, 200);
   }
