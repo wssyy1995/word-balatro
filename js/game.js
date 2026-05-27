@@ -293,7 +293,7 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
-function calcWordScore(cards, jokers) {
+function calcWordScore(cards, jokers, pendingCheck = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
@@ -334,11 +334,18 @@ function calcWordScore(cards, jokers) {
         });
         break;
       case 'whole_word': {
-        const wwMatched = j.trigger === 'illegal_boost' || j.trigger === 'initial_succession'
-          ? j.value > 0
-          : _matchWordTrigger(cards, j.trigger);
+        let wwMatched;
+        if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
+          wwMatched = j.value > 0;
+        } else if (j.trigger === 'end_ed') {
+          wwMatched = pendingCheck?.endEdValid || false;
+        } else if (j.trigger === 'end_s') {
+          wwMatched = pendingCheck?.endSValid || false;
+        } else {
+          wwMatched = _matchWordTrigger(cards, j.trigger);
+        }
         if (wwMatched) {
-          if (j.trigger === 'illegal_boost' || j.trigger === 'initial_succession' || j.operation === 'multi_accumulation') {
+          if (j.trigger === 'illegal_boost' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
             mult += j.value;
           } else {
             mult = Math.ceil(mult * j.value);
@@ -1103,6 +1110,22 @@ class Game {
     // 实例已销毁（如 restart），立即停止后续逻辑
     if (this._destroyed) return { valid: false };
 
+    // === end_ed / end_s 变形单词校验（主单词合法后才校验） ===
+    const endEdJoker = (this.jokers || []).find(j => j && j.trigger === 'end_ed' && !j._disabled);
+    const endSJoker = (this.jokers || []).find(j => j && j.trigger === 'end_s' && !j._disabled);
+    if (endEdJoker || endSJoker) {
+      const lowerWord = word.toLowerCase();
+      const edPromise = endEdJoker
+        ? (isValidWord(lowerWord + 'ed') ? Promise.resolve(true) : isValidWordOnline(lowerWord + 'ed'))
+        : Promise.resolve(false);
+      const sPromise = endSJoker
+        ? (isValidWord(lowerWord + 's') ? Promise.resolve(true) : isValidWordOnline(lowerWord + 's'))
+        : Promise.resolve(false);
+      const [edValid, sValid] = await Promise.all([edPromise, sPromise]);
+      this.pendingCheck.endEdValid = edValid;
+      this.pendingCheck.endSValid = sValid;
+    }
+
     if (!valid) {
       this.pendingCheck.state = 'invalid';
       this.pendingCheck.resolveTime = Date.now();
@@ -1229,7 +1252,7 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(played, this.jokers);
+    const result = calcWordScore(played, this.jokers, this.pendingCheck);
 
     // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
@@ -1322,9 +1345,16 @@ class Game {
     jokers.forEach((joker, idx) => {
       if (!joker || joker._disabled) return;
       if (joker.type === 'witch' && joker.scope === 'whole_word') {
-        const matched = joker.trigger === 'illegal_boost' || joker.trigger === 'initial_succession'
-          ? joker.value > 0
-          : _matchWordTrigger(playedInOrder, joker.trigger);
+        let matched;
+        if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
+          matched = joker.value > 0;
+        } else if (joker.trigger === 'end_ed') {
+          matched = this.pendingCheck.endEdValid || false;
+        } else if (joker.trigger === 'end_s') {
+          matched = this.pendingCheck.endSValid || false;
+        } else {
+          matched = _matchWordTrigger(playedInOrder, joker.trigger);
+        }
         if (matched) {
           wholeWordJokers.push({ idx, joker });
         }

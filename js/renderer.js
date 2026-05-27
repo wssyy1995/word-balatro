@@ -3865,7 +3865,7 @@ class Renderer {
       let curMult = pendingLength;
       for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
         const joker = wjList[i].joker;
-        if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
+        if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
           curMult += joker.value;
         } else {
           curMult = Math.ceil(curMult * joker.value);
@@ -3880,7 +3880,7 @@ class Renderer {
         const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
         if (stepProgress < 1.0) {
           const joker = wjList[labelIdx].joker;
-          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_accumulation') {
+          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
             labelText = `+${joker.value}`;
           } else {
             labelText = `x${joker.value}`;
