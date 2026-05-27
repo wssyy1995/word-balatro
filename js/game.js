@@ -688,6 +688,7 @@ class Game {
     this._potionSelectedLetter = p._potionSelectedLetter || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
+    this.settlementData = p.settlementData || null;
     this.state = p.state || 'playing';
 
     // 兼容：旧存档 state 为 potion 但没有 potionMode，重置为 playing
@@ -1269,13 +1270,13 @@ class Game {
     this.pendingCheck.resolveTime = Date.now();
     this.pendingCheck.animPhase = 0;
 
-    // === 首领连击：连续打出首字母相同的单词，倍率累加+2；中断后重置 ===
+    // === 首领连击：连续打出首字母相同的单词，本牌倍率累加+3；中断后重置 ===
     const currentInitial = playedInOrder[0]?.letter;
     if (currentInitial) {
       (this.jokers || []).forEach(j => {
         if (j && j.trigger === 'initial_succession') {
           if (this._lastInitialLetter === currentInitial) {
-            j.value = (j.value || 0) + 2;
+            j.value = (j.value || 0) + 3;
           } else {
             j.value = 0;
           }

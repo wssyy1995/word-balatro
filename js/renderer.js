@@ -3382,7 +3382,9 @@ class Renderer {
             const stepIdx = Math.floor(jumpElapsed / letterInterval);
             isAllJumped = stepIdx >= steps.length;
             const stepInfo = isAllJumped ? null : steps[stepIdx];
-            const cardIdx = stepInfo ? stepInfo.cardIdx : -1;
+            const cardIdx = isAllJumped
+              ? cardsInOrder.length - 1
+              : (stepInfo ? stepInfo.cardIdx : -1);
             const jokers = game.jokers || [];
 
             // per_card 倍率/加分提示 — 当前步骤对应的 per_card
