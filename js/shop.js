@@ -1,4 +1,4 @@
-const { LETTER_SCORE, letterUpgrades } = require('./data');
+const { LETTER_SCORE, letterUpgrades, calcBaseTarget } = require('./data');
 const { getSkillForLevel, getRewardName } = require('./witch_skills');
 const { Easing } = require('./animation');
 
@@ -1020,7 +1020,7 @@ class ShopRenderer {
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    const baseTarget = Math.floor(150 + 50 * (game.round + 1) * game.round);
+    const baseTarget = calcBaseTarget(game.round + 1);
     const targetTextX = moduleX + moduleW - 18 * s;
 
     // 目标分显示（支持目标减免 / 生命延续 脉冲动画）

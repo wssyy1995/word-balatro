@@ -3,7 +3,8 @@ const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA, EXPAND_WORD_DATA,
   onlineWordCache, wordCheckState,
-  wordMeaningCache, letterUpgrades, checkingWords
+  wordMeaningCache, letterUpgrades, checkingWords,
+  calcBaseTarget
 } = require('./data');
 const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
@@ -978,7 +979,7 @@ class Game {
     if (excludeLetters.length > 0) {
       this.deck = this.deck.filter(c => !excludeLetters.includes(c.letter));
     }
-    this.target = Math.floor(150 + 50 * this.round * (this.round - 1));
+    this.target = calcBaseTarget(this.round);
     if (this._lifeExtensionBonus) {
       this.target += this._lifeExtensionBonus;
       this._lifeExtensionBonus = 0;

@@ -80,10 +80,29 @@ function getLetterScore(letter) {
   return score;
 }
 
+// 计算基础目标分（分段递增系数）
+// 1关=150；2~5关系数100；6~10关系数50；11~20关系数60；21~30关系数70；31~40关系数80；41~50关系数90；51~80关系数100
+function calcBaseTarget(round) {
+  function getCoefficient(r) {
+    if (r <= 5) return 100;
+    if (r <= 10) return 50;
+    if (r <= 20) return 60;
+    if (r <= 30) return 70;
+    if (r <= 40) return 80;
+    if (r <= 50) return 90;
+    return 100;
+  }
+  let target = 150;
+  for (let r = 2; r <= round; r++) {
+    target += getCoefficient(r) * (r - 1);
+  }
+  return target;
+}
+
 module.exports = {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA, EXPAND_WORD_DATA,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords,
-  getLetterScore
+  getLetterScore, calcBaseTarget
 };
