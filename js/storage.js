@@ -64,7 +64,6 @@ class StorageManager {
     if (!game) return;
     // 实例已销毁则跳过保存
     if (game._destroyed) return;
-    console.log('[Save] saving jokers:', JSON.stringify(game.jokers), 'potions:', JSON.stringify(game.potions));
     // 深拷贝 jokers/potions，彻底切断引用，避免保存后数组被意外修改
     const jokersSnapshot = JSON.parse(JSON.stringify(game.jokers || []));
     const potionsSnapshot = JSON.parse(JSON.stringify(game.potions || []));
@@ -116,7 +115,7 @@ class StorageManager {
     this.set('progress', progress);
     // 回读验证，确认写入成功
     const verify = wx.getStorageSync(this.prefix + 'progress');
-    console.log('[SaveVerify] 写入后回读 jokers:', JSON.stringify(verify.jokers), 'potions:', JSON.stringify(verify.potions));
+    // 回读验证成功（静默）
     return true;
   }
 
