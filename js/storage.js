@@ -104,6 +104,11 @@ class StorageManager {
       shopGuidePhase: game.shopGuidePhase,
       _shopGuideStartTime: game._shopGuideStartTime,
       _shopGuideTextStartTime: game._shopGuideTextStartTime,
+      cardBookGuidePhase: game.cardBookGuidePhase,
+      _cardBookGuideStartTime: game._cardBookGuideStartTime,
+      _cardBookGuideTextStartTime: game._cardBookGuideTextStartTime,
+      _cardBookGuideText2StartTime: game._cardBookGuideText2StartTime,
+      _cardBookGuideExitStartTime: game._cardBookGuideExitStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
       timestamp: Date.now(),
       version: 1
@@ -165,6 +170,15 @@ class StorageManager {
 
   loadShopGuidePhase() {
     return this.get('shop_guide_phase', null);
+  }
+
+  // ===== 卡牌图鉴引导（独立于游戏进度，永久保留）=====
+  saveCardBookGuidePhase(phase) {
+    return this.set('cardbook_guide_phase', phase);
+  }
+
+  loadCardBookGuidePhase() {
+    return this.get('cardbook_guide_phase', null);
   }
 
   // ===== 最高分 =====

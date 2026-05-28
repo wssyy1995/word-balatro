@@ -403,6 +403,22 @@ function handleInput(x, y) {
           console.log('[Debug] witch_guide_3 本地缓存已存在，跳过下载');
         }
       }
+      if (debugHit.action === 'debug_triggerCardBookGuide') {
+        game.cardBookGuidePhase = 1;
+        game._cardBookGuideStartTime = Date.now();
+        game._cardBookGuideTextStartTime = Date.now();
+        if (game.storageManager) game.storageManager.saveProgress();
+        // 先检查本地是否已有缓存，避免重复下载
+        const witch4 = renderer.guideImages.witch_4;
+        const hasCache = witch4 && witch4.frames.some(f => f && f.loaded);
+        if (!hasCache) {
+          cloudStorage.preloadGuideGroup(4, renderer).catch(err => {
+            console.error('[Debug] 触发图鉴引导下载失败:', err);
+          });
+        } else {
+          console.log('[Debug] witch_guide_4 本地缓存已存在，跳过下载');
+        }
+      }
       if (debugHit.action === 'debug_endGame') {
         console.log('[CardBook] debug_endGame 前 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
         game.state = 'gameover';
@@ -872,6 +888,24 @@ function handleInput(x, y) {
         }
       }
       // 引导阶段点击其他区域不响应
+      return;
+    }
+
+    // 卡牌图鉴引导交互处理（简化版：Phase 1 高亮图标 → 弹出女巫+对话框 → 点击推进）
+    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+      if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2) {
+        // Phase 1/2: 女巫+对话框阶段，点击对话框推进
+        if (renderer.cardBookGuideNextBtnRect) {
+          const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideNextBtnRect]);
+          if (btnHit) {
+            vibrate();
+            game.advanceCardBookGuide();
+            return;
+          }
+        }
+        return;
+      }
+      // Phase 3: 退场动画中，阻塞输入
       return;
     }
 

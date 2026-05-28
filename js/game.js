@@ -694,6 +694,32 @@ class Game {
     }
     this._shopGuideExitStartTime = null;
 
+    // 卡牌图鉴引导（独立于游戏进度，永久保留）
+    const savedCardBookGuidePhase = this.storageManager.loadCardBookGuidePhase();
+    if (savedCardBookGuidePhase !== null) {
+      this.cardBookGuidePhase = savedCardBookGuidePhase;
+    } else if (savedProgress && savedProgress.cardBookGuidePhase !== undefined) {
+      this.cardBookGuidePhase = savedProgress.cardBookGuidePhase;
+    } else if (this.cardBookGuidePhase === undefined) {
+      this.cardBookGuidePhase = 0;
+    }
+    if (savedProgress && savedProgress._cardBookGuideStartTime !== undefined) {
+      this._cardBookGuideStartTime = savedProgress._cardBookGuideStartTime;
+    }
+    if (savedProgress && savedProgress._cardBookGuideTextStartTime !== undefined) {
+      this._cardBookGuideTextStartTime = savedProgress._cardBookGuideTextStartTime;
+    }
+    if (savedProgress && savedProgress._cardBookGuideText2StartTime !== undefined) {
+      this._cardBookGuideText2StartTime = savedProgress._cardBookGuideText2StartTime;
+    }
+    if (this.cardBookGuidePhase === 1 && !this._cardBookGuideStartTime) {
+      this._cardBookGuideStartTime = Date.now() - 2000;
+    }
+    if (this.cardBookGuidePhase === 3 && !this._cardBookGuideExitStartTime) {
+      this._cardBookGuideExitStartTime = Date.now() - 2000;
+    }
+    this._cardBookGuideExitStartTime = this._cardBookGuideExitStartTime || null;
+
     // 追踪本实例的所有 setTimeout，restart 时统一清除防止闭包泄漏
     this._timeoutIds = [];
     this._destroyed = false;
@@ -808,6 +834,12 @@ class Game {
     this.shopGuidePhase = (p.shopGuidePhase !== undefined) ? p.shopGuidePhase : 0;
     if (p._shopGuideStartTime !== undefined) this._shopGuideStartTime = p._shopGuideStartTime;
     if (p._shopGuideTextStartTime !== undefined) this._shopGuideTextStartTime = p._shopGuideTextStartTime;
+    // 恢复卡牌图鉴引导状态
+    this.cardBookGuidePhase = (p.cardBookGuidePhase !== undefined) ? p.cardBookGuidePhase : 0;
+    if (p._cardBookGuideStartTime !== undefined) this._cardBookGuideStartTime = p._cardBookGuideStartTime;
+    if (p._cardBookGuideTextStartTime !== undefined) this._cardBookGuideTextStartTime = p._cardBookGuideTextStartTime;
+    if (p._cardBookGuideText2StartTime !== undefined) this._cardBookGuideText2StartTime = p._cardBookGuideText2StartTime;
+    if (p._cardBookGuideExitStartTime !== undefined) this._cardBookGuideExitStartTime = p._cardBookGuideExitStartTime;
 
     // 修复：恢复后清理手牌中的 null 占位符并重新补牌
     if (this.state === 'playing') {
@@ -1019,6 +1051,15 @@ class Game {
       }
     }
 
+    // 第3回合后台按需下载卡牌图鉴引导帧序列（witch_guide_4）
+    if (this.round === 3 && this.cardBookGuidePhase === 0) {
+      if (this.cloudStorage && this.renderer) {
+        this.cloudStorage.preloadGuideGroup(4, this.renderer).catch(err => {
+          console.error('[CardBookGuide] 按需下载 witch_guide_4 失败:', err);
+        });
+      }
+    }
+
     this.state = 'playing';
   }
 
@@ -1097,6 +1138,29 @@ class Game {
       this.storageManager.saveProgress();
       if (this.shopGuidePhase >= 4) {
         this.storageManager.saveShopGuidePhase(this.shopGuidePhase);
+      }
+    }
+  }
+
+  advanceCardBookGuide() {
+    if (this.cardBookGuidePhase < 1 || this.cardBookGuidePhase > 2) return;
+
+    this.cardBookGuidePhase++;
+
+    if (this.cardBookGuidePhase === 2) {
+      this._cardBookGuideText2StartTime = Date.now();
+    }
+
+    // Phase 3（退场）：触发退场动画
+    if (this.cardBookGuidePhase >= 3) {
+      this.cardBookGuidePhase = 3;
+      this._cardBookGuideExitStartTime = Date.now();
+    }
+
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      if (this.cardBookGuidePhase >= 4) {
+        this.storageManager.saveCardBookGuidePhase(this.cardBookGuidePhase);
       }
     }
   }

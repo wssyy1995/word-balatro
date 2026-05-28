@@ -97,6 +97,10 @@ class CloudStorageManager {
     for (let f = 1; f <= 8; f++) {
       this.defaultGuideFileMap[`witch_guide_3_${f}`] = `${guideBase}/witch_guide_3/${f}.png`;
     }
+    // witch_guide_4（卡牌图鉴引导）
+    for (let f = 1; f <= 8; f++) {
+      this.defaultGuideFileMap[`witch_guide_4_${f}`] = `${guideBase}/witch_guide_4/${f}.png`;
+    }
   }
 
   init() {

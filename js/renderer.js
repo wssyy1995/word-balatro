@@ -54,11 +54,13 @@ class Renderer {
       witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 180 },
       witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
       witch_3: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
+      witch_4: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
     };
     // 预分配帧槽位，等待云存储注入
     for (let i = 0; i < 9; i++) this.guideImages.witch_1.frames[i] = { img: null, loaded: false };
     for (let i = 0; i < 11; i++) this.guideImages.witch_2.frames[i] = { img: null, loaded: false };
     for (let i = 0; i < 8; i++) this.guideImages.witch_3.frames[i] = { img: null, loaded: false };
+    for (let i = 0; i < 8; i++) this.guideImages.witch_4.frames[i] = { img: null, loaded: false };
 
     // 加载 top bar 图标
     this.topIcon = null;
@@ -1805,6 +1807,13 @@ class Renderer {
           }
         }
       }
+
+      // 卡牌图鉴引导触发检查（第3关商店）
+      if (game.round === 3 && game.cardBookGuidePhase === 0 && game.cardBookUnlocked) {
+        game.cardBookGuidePhase = 1;
+        game._cardBookGuideStartTime = Date.now();
+        game._cardBookGuideTextStartTime = Date.now();
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'life_extended') {
@@ -1895,6 +1904,8 @@ class Renderer {
         panelH = Math.round(bookH / s);
       }
 
+      // 图鉴引导阶段（Phase 1~3），card_book 不画自己的遮罩，由 guide evenodd 蒙层统一控制背景暗化
+      const isGuideOverlay = game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: game._closingCardBook,
         closeStartTime: game._closeCardBookStartTime,
@@ -1902,7 +1913,7 @@ class Renderer {
         height: panelH,
         bgColor: null,
         borderColor: null,
-        overlayAlpha: 0.78,
+        overlayAlpha: isGuideOverlay ? 0 : 0.78,
         closeDuration: 300,
         elapsed,
         onCloseComplete: () => {
@@ -2222,6 +2233,15 @@ class Renderer {
 
         ctx.restore();
       }
+    }
+
+    // 卡牌图鉴引导覆盖层（覆盖在 card_book 弹窗之上）
+    // Phase 1: 高亮图标 + 女巫弹出 + 第一段文本
+    // Phase 2: 女巫 + 第二段文本
+    // Phase 3: 退场动画
+    // Phase 4: 结束，不再渲染
+    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+      this._drawCardBookGuideOverlay(game);
     }
 
     // 调试菜单（最后绘制，确保在最上层）
@@ -2640,6 +2660,244 @@ class Renderer {
 
       // 点击区域扩大为整个对话框
       this.shopGuideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+    }
+  }
+
+  // ===== 卡牌图鉴引导覆盖层 =====
+  _drawCardBookGuideOverlay(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+    let phase = game.cardBookGuidePhase;
+
+    const GUIDE_TEXTS = [
+      '',
+      '太棒了！你通过了女巫的试炼，获得了第一张女巫的词牌！',
+      '每张女巫词牌都具有特殊的能量，记得\'装备\'上，它们会在后面的冒险中一直陪着你，即使试炼失败重来。加油吧冒险家，等待你收回26张词牌。',
+    ];
+
+    const FADE_DURATION = 500;
+    const DELAY_BEFORE_FADE = 500;
+    const WITCH_DELAY = 1000; // 聚光灯显示后，延迟 1 秒再弹出女巫
+    const startTime = game._cardBookGuideStartTime || Date.now();
+    const elapsed = Date.now() - startTime;
+
+    // Phase 1: 前 500ms 保持正常商店画面
+    if (phase === 1 && elapsed < DELAY_BEFORE_FADE) {
+      return;
+    }
+
+    // Phase 1: 500ms~1500ms 只画 evenodd 蒙层+金色边框（聚光灯），不弹出女巫
+    const showWitch = phase !== 1 || elapsed >= DELAY_BEFORE_FADE + WITCH_DELAY;
+
+    // Phase 3 退场检查：600ms 后结束
+    if (phase === 3) {
+      const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+      if (exitElapsed >= 600) {
+        game.cardBookGuidePhase = 4;
+        game._cardBookGuideExitStartTime = null;
+        if (game.storageManager) {
+          game.storageManager.saveProgress();
+          game.storageManager.saveCardBookGuidePhase(4);
+        }
+        return;
+      }
+    }
+
+    // 自动推进后同步本地 phase 变量
+    if (game.cardBookGuidePhase !== phase) {
+      phase = game.cardBookGuidePhase;
+    }
+
+    // === 蒙层 alpha ===
+    let overlayAlpha;
+    if (phase === 1) {
+      overlayAlpha = 0.75 * Math.min(Math.max(0, elapsed - DELAY_BEFORE_FADE) / FADE_DURATION, 1);
+    } else if (phase === 3) {
+      const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+      overlayAlpha = 0.75 * Math.max(0, 1 - exitElapsed / 500);
+    } else {
+      overlayAlpha = 0.75;
+    }
+
+    // === Phase 1/2: evenodd 挖空图标 + 金色边框 ===
+    const spotRect = this.cardBookIconRect;
+    if ((phase === 1 || phase === 2) && spotRect) {
+      const spotPad = 10 * s;
+      const spotX = spotRect.x - spotPad;
+      const spotY = spotRect.y - spotPad;
+      const spotW = spotRect.w + spotPad * 2;
+      const spotH = spotRect.h + spotPad * 2;
+      const spotR = 14 * s;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      const r = spotR;
+      ctx.moveTo(spotX + r, spotY);
+      ctx.lineTo(spotX + spotW - r, spotY);
+      ctx.quadraticCurveTo(spotX + spotW, spotY, spotX + spotW, spotY + r);
+      ctx.lineTo(spotX + spotW, spotY + spotH - r);
+      ctx.quadraticCurveTo(spotX + spotW, spotY + spotH, spotX + spotW - r, spotY + spotH);
+      ctx.lineTo(spotX + r, spotY + spotH);
+      ctx.quadraticCurveTo(spotX, spotY + spotH, spotX, spotY + spotH - r);
+      ctx.lineTo(spotX, spotY + r);
+      ctx.quadraticCurveTo(spotX, spotY, spotX + r, spotY);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+      ctx.fill('evenodd');
+      ctx.restore();
+
+      // 金色呼吸边框
+      const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
+      ctx.save();
+      ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+      ctx.lineWidth = 2.5 * s;
+      ctx.setLineDash([6 * s, 4 * s]);
+      this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
+      ctx.setLineDash([]);
+      ctx.restore();
+    } else if (phase >= 3) {
+      // Phase 3: 全屏蒙层
+      ctx.save();
+      ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+    }
+
+    // Phase 1 聚光灯显示期间（500ms~1500ms），只画聚光灯，不弹出女巫；Phase 2 正常显示女巫
+    if (phase === 1 && !showWitch) {
+      return;
+    }
+
+    // === Phase 1/2: 女巫帧动画 + 对话框 ===
+    const isPhase1 = phase === 1;
+    const isPhase2 = phase === 2;
+    const fullText = GUIDE_TEXTS[phase] || '';
+
+    const POPUP_DURATION = 600;
+    const POST_POPUP_DELAY = 500;
+    // Phase 1: 文本等弹出动画完成后开始显示；Phase 2: 女巫和对话框保持不动，文本立即开始显示
+    const textStartTime = isPhase1
+      ? (game._cardBookGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY
+      : (game._cardBookGuideText2StartTime || Date.now());
+    const charInterval = 65;
+    const textElapsed = Date.now() - textStartTime;
+    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+    const displayText = fullText.slice(0, visibleChars);
+    const isTextComplete = visibleChars >= fullText.length;
+
+    const dialogPadX = 20 * s;
+    const dialogTargetX = dialogPadX;
+    const imgW = 180 * s;
+    const imgH = 220 * s;
+    const imgTargetX = dialogTargetX;
+    const imgTargetY = H * 0.6 - imgH;
+
+    const dialogW = W - dialogPadX * 2;
+    const dialogH = 130 * s;
+    const dialogR = 12 * s;
+    const dialogTargetY = H * 0.6;
+
+    let imgX, imgY, dialogDrawX, dialogDrawY;
+    if (phase === 1) {
+      // Phase 1：女巫和对话框从屏幕外弹出（计时起点对齐到聚光灯显示后）
+      const popupElapsed = elapsed - DELAY_BEFORE_FADE - WITCH_DELAY;
+      const popupDelay = 100;
+      if (popupElapsed > popupDelay) {
+        const popupProgress = Math.min((popupElapsed - popupDelay) / POPUP_DURATION, 1);
+        const eased = Easing.easeOutBackStrong(popupProgress);
+        imgX = -imgW + (imgTargetX + imgW) * eased;
+        dialogDrawX = W + (dialogTargetX - W) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else {
+        imgX = -imgW;
+        dialogDrawX = W;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+    } else if (phase === 2) {
+      // Phase 2：女巫和对话框保持显示，不需要重新弹出
+      imgX = imgTargetX;
+      dialogDrawX = dialogTargetX;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
+    } else if (phase === 3) {
+      const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+      const exitProgress = Math.min(exitElapsed / 600, 1);
+      const eased = Easing.easeOutBackStrong(exitProgress);
+      imgX = imgTargetX - (imgTargetX + imgW) * eased;
+      dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
+    }
+
+    // 女巫引导图片
+    const imgData = this.guideImages.witch_4;
+    if (imgData && imgData.loaded) {
+      const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+      const frame = imgData.frames[frameIdx];
+      if (frame && frame.loaded && frame.img) {
+        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      }
+    }
+
+    // 对话框背景
+    this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+    // 逐字显示文字
+    ctx.save();
+    ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const textPad = 18 * s;
+    const textX = dialogDrawX + textPad;
+    const textY = dialogDrawY + textPad;
+    const textMaxW = dialogW - textPad * 2;
+    const lineHeight = 24 * s;
+
+    let line = '';
+    let currentY = textY;
+    for (let i = 0; i < displayText.length; i++) {
+      const ch = displayText[i];
+      const testLine = line + ch;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > textMaxW && line !== '') {
+        ctx.fillText(line, textX, currentY);
+        line = ch;
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) ctx.fillText(line, textX, currentY);
+    ctx.restore();
+
+    // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+    this.cardBookGuideNextBtnRect = null;
+    if (isTextComplete && phase !== 3) {
+      const btnSize = 16 * s;
+      const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+      const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(btnX + btnSize / 2, btnY + btnSize);
+      ctx.lineTo(btnX, btnY);
+      ctx.lineTo(btnX + btnSize, btnY);
+      ctx.closePath();
+      ctx.fillStyle = '#c4a35a';
+      ctx.fill();
+      const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+      ctx.globalAlpha = pulse;
+      ctx.fill();
+      ctx.restore();
+
+      this.cardBookGuideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     }
   }
 
@@ -5714,6 +5972,7 @@ class Renderer {
       { label: '上传bg_icon', action: 'debug_upload_bg_icon' },
       { label: '触发新人引导', action: 'debug_triggerGuide' },
       { label: '触发商店引导', action: 'debug_triggerShopGuide' },
+      { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;
