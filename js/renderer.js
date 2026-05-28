@@ -50,17 +50,33 @@ class Renderer {
     this.bgLoaded = false;
     
     // 新手引导帧序列（由 cloudStorage 在预加载时注入，不再使用本地图片）
+    // witch_1/2/3 使用单帧数组，witch_4 使用精灵图（单张大图 + 坐标）
     this.guideImages = {
       witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 180 },
       witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
       witch_3: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
-      witch_4: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
+      witch_4: {
+        type: 'spritesheet',
+        img: null,
+        loaded: false,
+        frameCount: 8,
+        frameDelay: 200,
+        frameCoords: [
+          { x: 0, y: 0, w: 360, h: 360 },
+          { x: 360, y: 0, w: 360, h: 360 },
+          { x: 720, y: 0, w: 360, h: 360 },
+          { x: 1080, y: 0, w: 360, h: 360 },
+          { x: 0, y: 360, w: 360, h: 360 },
+          { x: 360, y: 360, w: 360, h: 360 },
+          { x: 720, y: 360, w: 360, h: 360 },
+          { x: 1080, y: 360, w: 360, h: 360 },
+        ],
+      },
     };
     // 预分配帧槽位，等待云存储注入
     for (let i = 0; i < 9; i++) this.guideImages.witch_1.frames[i] = { img: null, loaded: false };
     for (let i = 0; i < 11; i++) this.guideImages.witch_2.frames[i] = { img: null, loaded: false };
     for (let i = 0; i < 8; i++) this.guideImages.witch_3.frames[i] = { img: null, loaded: false };
-    for (let i = 0; i < 8; i++) this.guideImages.witch_4.frames[i] = { img: null, loaded: false };
 
     // 加载 top bar 图标
     this.topIcon = null;
@@ -2834,13 +2850,13 @@ class Renderer {
       dialogDrawY = dialogTargetY;
     }
 
-    // 女巫引导图片
+    // 女巫引导图片（witch_4 使用精灵图渲染）
     const imgData = this.guideImages.witch_4;
-    if (imgData && imgData.loaded) {
+    if (imgData && imgData.loaded && imgData.img) {
       const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-      const frame = imgData.frames[frameIdx];
-      if (frame && frame.loaded && frame.img) {
-        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      const coord = imgData.frameCoords[frameIdx];
+      if (coord) {
+        ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
       }
     }
 

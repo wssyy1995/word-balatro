@@ -410,7 +410,7 @@ function handleInput(x, y) {
         if (game.storageManager) game.storageManager.saveProgress();
         // 先检查本地是否已有缓存，避免重复下载
         const witch4 = renderer.guideImages.witch_4;
-        const hasCache = witch4 && witch4.frames.some(f => f && f.loaded);
+        const hasCache = witch4 && witch4.loaded;
         if (!hasCache) {
           cloudStorage.preloadGuideGroup(4, renderer).catch(err => {
             console.error('[Debug] 触发图鉴引导下载失败:', err);
