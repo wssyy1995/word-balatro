@@ -388,6 +388,21 @@ function handleInput(x, y) {
           cloudStorage.injectGuideToRenderer(renderer);
         });
       }
+      if (debugHit.action === 'debug_triggerShopGuide') {
+        game.shopGuidePhase = 1;
+        game._shopGuideStartTime = Date.now();
+        if (game.storageManager) game.storageManager.saveProgress();
+        // 先检查本地是否已有缓存，避免重复下载
+        const witch3 = renderer.guideImages.witch_3;
+        const hasCache = witch3 && witch3.frames.some(f => f && f.loaded);
+        if (!hasCache) {
+          cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
+            console.error('[Debug] 触发商店引导下载失败:', err);
+          });
+        } else {
+          console.log('[Debug] witch_guide_3 本地缓存已存在，跳过下载');
+        }
+      }
       if (debugHit.action === 'debug_endGame') {
         console.log('[CardBook] debug_endGame 前 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
         game.state = 'gameover';
@@ -846,6 +861,20 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'shop') {
+    // 商店女巫技能引导：优先处理引导点击，禁用其他交互
+    if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
+      if (renderer.shopGuideNextBtnRect) {
+        const btnHit = renderer.hitTest(x, y, [renderer.shopGuideNextBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game.advanceShopGuide();
+          return;
+        }
+      }
+      // 引导阶段点击其他区域不响应
+      return;
+    }
+
     // 检测卡牌图鉴图标点击
     if (renderer.cardBookIconRect && game.cardBookUnlocked) {
       const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);

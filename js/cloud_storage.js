@@ -93,6 +93,10 @@ class CloudStorageManager {
     for (let f = 1; f <= 13; f++) {
       this.defaultGuideFileMap[`witch_guide_2_${f}`] = `${guideBase}/witch_guide_2/${f}.png`;
     }
+    // witch_guide_3（商店女巫技能引导）
+    for (let f = 1; f <= 8; f++) {
+      this.defaultGuideFileMap[`witch_guide_3_${f}`] = `${guideBase}/witch_guide_3/${f}.png`;
+    }
   }
 
   init() {
@@ -840,6 +844,41 @@ class CloudStorageManager {
         resolve();
       };
     });
+  }
+
+  // 按需下载指定 guide 组（如 witch_guide_3），并注入 renderer
+  async preloadGuideGroup(groupNum, renderer) {
+    const prefix = `witch_guide_${groupNum}_`;
+    const names = Object.keys(this.guideFileMap).filter(n => n.startsWith(prefix));
+    if (names.length === 0) {
+      this.log(`没有 guide 组 ${groupNum} 的云存储映射，跳过下载`);
+      return;
+    }
+
+    this.log(`开始按需下载 guide 组 ${groupNum}，共${names.length}张`);
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadGuideImage(name);
+      }));
+    }
+
+    // 注入 renderer
+    const groupKey = `witch_${groupNum}`;
+    const group = this.guideImages[groupKey];
+    const rendererGroup = renderer.guideImages[groupKey];
+    if (group && rendererGroup && group.frames) {
+      group.frames.forEach((frame, idx) => {
+        if (frame && frame.loaded && frame.img && rendererGroup.frames[idx]) {
+          rendererGroup.frames[idx] = { img: frame.img, loaded: true };
+        }
+      });
+      if (rendererGroup.frames.every(f => f && f.loaded)) {
+        rendererGroup.loaded = true;
+      }
+      this.log(`已按需注入 guide 组 ${groupNum}: ${rendererGroup.frames.filter(f => f && f.loaded).length}/${rendererGroup.frames.length}帧`);
+    }
   }
 
   // 将云缓存 guide 帧序列注入到 renderer 的 guideImages

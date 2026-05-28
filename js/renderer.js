@@ -53,10 +53,12 @@ class Renderer {
     this.guideImages = {
       witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 180 },
       witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
+      witch_3: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
     };
     // 预分配帧槽位，等待云存储注入
     for (let i = 0; i < 9; i++) this.guideImages.witch_1.frames[i] = { img: null, loaded: false };
     for (let i = 0; i < 11; i++) this.guideImages.witch_2.frames[i] = { img: null, loaded: false };
+    for (let i = 0; i < 8; i++) this.guideImages.witch_3.frames[i] = { img: null, loaded: false };
 
     // 加载 top bar 图标
     this.topIcon = null;
@@ -1772,6 +1774,37 @@ class Renderer {
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
       }
+
+      // 商店女巫技能引导触发检查
+      if (game.round === 2 && game.shopGuidePhase === 0) {
+        game.shopGuidePhase = 1;
+        game._shopGuideStartTime = Date.now();
+      }
+      // 商店引导覆盖层
+      if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
+        this._drawShopGuideOverlay(game);
+      } else if (game.shopGuidePhase === 3 && game._shopGuideExitStartTime) {
+        const exitElapsed = Date.now() - game._shopGuideExitStartTime;
+        if (exitElapsed < 600) {
+          // 0~600ms：女巫+对话框弹出去，蒙层保持
+          this._drawShopGuideOverlay(game);
+        } else if (exitElapsed < 1100) {
+          // 600~1100ms：蒙层从 0.75 渐变到透明（500ms 变亮）
+          const fadeProgress = (exitElapsed - 600) / 500;
+          ctx.save();
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        } else {
+          // 1100ms 后彻底结束
+          game.shopGuidePhase = 4;
+          game._shopGuideExitStartTime = null;
+          if (game.storageManager) {
+            game.storageManager.saveProgress();
+            game.storageManager.saveShopGuidePhase(4);
+          }
+        }
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'life_extended') {
@@ -2401,6 +2434,212 @@ class Renderer {
         ctx.drawImage(hasVowelData.img, cardX, cardY, curW, curH);
         ctx.restore();
       }
+    }
+  }
+
+  // ===== 商店女巫技能引导覆盖层 =====
+  _drawShopGuideOverlay(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+    const phase = game.shopGuidePhase;
+    const GUIDE_TEXT = '找到女巫了！准备接收她的试炼吧，但一定要小心她的约束规则。';
+
+    // 获取聚光灯目标区域（从 shopRenderer 获取，回退到底部中间区域）
+    const spotRect = (this.shopRenderer && this.shopRenderer.shopGuideSpotRect)
+      ? this.shopRenderer.shopGuideSpotRect
+      : { x: 15 * s, y: H * 0.65, w: W - 30 * s, h: 120 * s };
+    const spotPad = 10 * s;
+    const spotX = spotRect.x - spotPad;
+    const spotY = spotRect.y - spotPad;
+    const spotW = spotRect.w + spotPad * 2;
+    const spotH = spotRect.h + spotPad * 2;
+    const spotR = 14 * s;
+
+    const startTime = game._shopGuideStartTime || Date.now();
+    const elapsed = Date.now() - startTime;
+    const FADE_DURATION = 500;
+    const WAIT_DURATION = 1000;
+
+    // Phase 1: 聚光灯淡入 + 等待，超时自动进入 Phase 2
+    if (phase === 1 && elapsed >= FADE_DURATION + WAIT_DURATION) {
+      game.shopGuidePhase = 2;
+      game._shopGuideTextStartTime = Date.now();
+      // 本帧继续绘制 Phase 1 的蒙层，下一帧自然进入 Phase 2，避免闪白
+    }
+
+    // === 1. 聚光灯蒙层（evenodd 挖空）===
+    let overlayAlpha;
+    if (phase === 1) {
+      overlayAlpha = 0.75 * Math.min(elapsed / FADE_DURATION, 1);
+    } else {
+      // Phase 2 和 Phase 3（退场前 600ms 内）蒙层保持 0.75，淡出由 render() 统一处理
+      overlayAlpha = 0.75;
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    // 外矩形（顺时针）
+    ctx.rect(0, 0, W, H);
+    // 内矩形（逆时针挖空）—— 圆角矩形
+    const r = spotR;
+    ctx.moveTo(spotX + r, spotY);
+    ctx.lineTo(spotX + spotW - r, spotY);
+    ctx.quadraticCurveTo(spotX + spotW, spotY, spotX + spotW, spotY + r);
+    ctx.lineTo(spotX + spotW, spotY + spotH - r);
+    ctx.quadraticCurveTo(spotX + spotW, spotY + spotH, spotX + spotW - r, spotY + spotH);
+    ctx.lineTo(spotX + r, spotY + spotH);
+    ctx.quadraticCurveTo(spotX, spotY + spotH, spotX, spotY + spotH - r);
+    ctx.lineTo(spotX, spotY + r);
+    ctx.quadraticCurveTo(spotX, spotY, spotX + r, spotY);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+    ctx.fill('evenodd');
+    ctx.restore();
+
+    // Phase 1 只画蒙层（和聚光灯边框），不画女巫
+    if (phase === 1) {
+      // 聚光灯区域金色边框（呼吸效果）
+      const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
+      ctx.save();
+      ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+      ctx.lineWidth = 2.5 * s;
+      ctx.setLineDash([6 * s, 4 * s]);
+      this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
+      ctx.setLineDash([]);
+      ctx.restore();
+      return;
+    }
+
+    // === Phase 2 & 3: 女巫帧动画 + 对话框 ===
+    const fullText = GUIDE_TEXT;
+
+    // 弹出动画与文字延迟参数
+    const POPUP_DURATION = 600;
+    const POST_POPUP_DELAY = 500;
+
+    // 计算文字开始时间：对话框弹出完成后延迟 500ms 再开始（参考 witch_guide_1）
+    const textStartTime = (game._shopGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
+    const charInterval = 65;
+    const textElapsed = Date.now() - textStartTime;
+    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+    const displayText = fullText.slice(0, visibleChars);
+    const isTextComplete = visibleChars >= fullText.length;
+
+    // 女巫和对话框布局（与 witch_guide_1/2 保持一致）
+    const dialogPadX = 20 * s;
+    const dialogTargetX = dialogPadX;
+    const imgW = 180 * s;
+    const imgH = 220 * s;
+    const imgTargetX = dialogTargetX;
+    const imgTargetY = H * 0.6 - imgH;
+
+    const dialogW = W - dialogPadX * 2;
+    const dialogH = 130 * s;
+    const dialogR = 12 * s;
+    const dialogTargetY = H * 0.6;
+
+    let imgX, imgY, dialogDrawX, dialogDrawY;
+    if (phase === 2) {
+      const phase2Start = game._shopGuideTextStartTime || Date.now();
+      const popupElapsed = Date.now() - phase2Start;
+      // 前 100ms 延迟后开始弹出
+      const popupStart = 100;
+      if (popupElapsed > popupStart) {
+        const popupProgress = Math.min((popupElapsed - popupStart) / POPUP_DURATION, 1);
+        const eased = Easing.easeOutBackStrong(popupProgress);
+        imgX = -imgW + (imgTargetX + imgW) * eased;
+        dialogDrawX = W + (dialogTargetX - W) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else {
+        imgX = -imgW;
+        dialogDrawX = W;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+    } else if (phase === 3) {
+      // 退场：女巫向左、对话框向右弹出去
+      const exitElapsed = Date.now() - (game._shopGuideExitStartTime || Date.now());
+      const exitProgress = Math.min(exitElapsed / 600, 1);
+      const eased = Easing.easeOutBackStrong(exitProgress);
+      imgX = imgTargetX - (imgTargetX + imgW) * eased;
+      dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
+    } else {
+      imgX = imgTargetX;
+      dialogDrawX = dialogTargetX;
+      imgY = imgTargetY;
+      dialogDrawY = dialogTargetY;
+    }
+
+    // 女巫引导图片（帧序列动画）
+    const imgData = this.guideImages.witch_3;
+    if (imgData && imgData.loaded) {
+      const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+      const frame = imgData.frames[frameIdx];
+      if (frame && frame.loaded && frame.img) {
+        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      }
+    }
+
+    // 对话框背景
+    this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+    // 逐字显示文字
+    ctx.save();
+    ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+
+    const textPad = 18 * s;
+    const textX = dialogDrawX + textPad;
+    const textY = dialogDrawY + textPad;
+    const textMaxW = dialogW - textPad * 2;
+    const lineHeight = 24 * s;
+
+    let line = '';
+    let currentY = textY;
+    for (let i = 0; i < displayText.length; i++) {
+      const ch = displayText[i];
+      const testLine = line + ch;
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > textMaxW && line !== '') {
+        ctx.fillText(line, textX, currentY);
+        line = ch;
+        currentY += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    if (line) ctx.fillText(line, textX, currentY);
+    ctx.restore();
+
+    // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+    this.shopGuideNextBtnRect = null;
+    if (isTextComplete && phase !== 3) {
+      const btnSize = 16 * s;
+      const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+      const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(btnX + btnSize / 2, btnY + btnSize);
+      ctx.lineTo(btnX, btnY);
+      ctx.lineTo(btnX + btnSize, btnY);
+      ctx.closePath();
+      ctx.fillStyle = '#c4a35a';
+      ctx.fill();
+      const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+      ctx.globalAlpha = pulse;
+      ctx.fill();
+      ctx.restore();
+
+      // 点击区域扩大为整个对话框
+      this.shopGuideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     }
   }
 
@@ -5474,6 +5713,7 @@ class Renderer {
       { label: '上传witch', action: 'debug_upload_witch' },
       { label: '上传bg_icon', action: 'debug_upload_bg_icon' },
       { label: '触发新人引导', action: 'debug_triggerGuide' },
+      { label: '触发商店引导', action: 'debug_triggerShopGuide' },
       { label: '结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;

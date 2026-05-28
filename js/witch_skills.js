@@ -1,13 +1,31 @@
 // ===== 女巫技能配置 =====
 const WITCH_SKILLS = [
-  { level: 3, name: '女巫 Lv.3', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
-  { level: 5, name: '女巫 Lv.5', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
-  { level: 8, name: '女巫 Lv.8', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
-  { level: 11, name: '女巫 Lv.11',  reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位'},
-  { level: 14, name: '女巫 Lv.14', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化'},
-  { level: 16, name: '女巫 Lv.16', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
-  { level: 18, name: '女巫 Lv.18', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化' },
-  { level: 21, name: '女巫 Lv.21',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' }
+  { level: 3, name: '女巫_A', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
+  { level: 5, name: '女巫_B', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
+  { level: 8, name: '女巫_C',  reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位'},
+  { level: 11, name: '女巫_D', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
+  { level: 14, name: '女巫_E', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化'},
+  { level: 16, name: '女巫_F', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
+  { level: 18, name: '女巫_G', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' },
+  { level: 21, name: '女巫_H',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 24, name: '女巫_I',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 27, name: '女巫_J',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 30, name: '女巫_K', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 33, name: '女巫_L', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 36, name: '女巫_M', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 39, name: '女巫_N', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 42, name: '女巫_O', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 45, name: '女巫_P', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 48, name: '女巫_Q', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 51, name: '女巫_R', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 54, name: '女巫_S', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 57, name: '女巫_T', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 60, name: '女巫_U', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 63, name: '女巫_V', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 66, name: '女巫_W', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 69, name: '女巫_X', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 72, name: '女巫_Y', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 75, name: '女巫_Z', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' }
 
 ];
 

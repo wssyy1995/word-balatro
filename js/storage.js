@@ -101,6 +101,9 @@ class StorageManager {
       settlementData: game.settlementData || null,
       guidePhase: game.guidePhase,
       _guideOverlayStartTime: game._guideOverlayStartTime,
+      shopGuidePhase: game.shopGuidePhase,
+      _shopGuideStartTime: game._shopGuideStartTime,
+      _shopGuideTextStartTime: game._shopGuideTextStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
       timestamp: Date.now(),
       version: 1
@@ -153,6 +156,15 @@ class StorageManager {
 
   loadGuidePhase() {
     return this.get('guide_phase', null);
+  }
+
+  // ===== 商店女巫技能引导（独立于游戏进度，永久保留）=====
+  saveShopGuidePhase(phase) {
+    return this.set('shop_guide_phase', phase);
+  }
+
+  loadShopGuidePhase() {
+    return this.get('shop_guide_phase', null);
   }
 
   // ===== 最高分 =====

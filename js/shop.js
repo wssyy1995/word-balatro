@@ -1005,6 +1005,8 @@ class ShopRenderer {
 
     // 容器背景
     this.parent.roundRect(moduleX, moduleY, moduleW, moduleH, 10 * s, '#f5f0e6', '#c4a35a', 1.5 * s);
+    // 保存模块位置供商店引导聚光灯使用
+    this.shopGuideSpotRect = { x: moduleX, y: moduleY, w: moduleW, h: moduleH };
 
     // 目标分数行
     const targetY = moduleY + 20 * s;

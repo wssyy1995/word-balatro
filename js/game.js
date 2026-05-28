@@ -668,6 +668,32 @@ class Game {
     }
     this._guideCardGiftStartTime = null;
 
+    // 商店女巫技能引导（独立于游戏进度，永久保留）
+    const savedShopGuidePhase = this.storageManager.loadShopGuidePhase();
+    if (savedShopGuidePhase !== null) {
+      this.shopGuidePhase = savedShopGuidePhase;
+    } else if (savedProgress && savedProgress.shopGuidePhase !== undefined) {
+      this.shopGuidePhase = savedProgress.shopGuidePhase;
+    } else if (this.shopGuidePhase === undefined) {
+      this.shopGuidePhase = 0;
+    }
+    // 恢复商店引导时间戳
+    if (savedProgress && savedProgress._shopGuideStartTime !== undefined) {
+      this._shopGuideStartTime = savedProgress._shopGuideStartTime;
+    }
+    if (savedProgress && savedProgress._shopGuideTextStartTime !== undefined) {
+      this._shopGuideTextStartTime = savedProgress._shopGuideTextStartTime;
+    }
+    // Phase 1 恢复时若缺少 startTime，设为过去值让延迟立即结束
+    if (this.shopGuidePhase === 1 && !this._shopGuideStartTime) {
+      this._shopGuideStartTime = Date.now() - 2000;
+    }
+    // Phase 2 恢复时若缺少 textStartTime，重新开始文字动画
+    if (this.shopGuidePhase === 2 && !this._shopGuideTextStartTime) {
+      this._shopGuideTextStartTime = Date.now();
+    }
+    this._shopGuideExitStartTime = null;
+
     // 追踪本实例的所有 setTimeout，restart 时统一清除防止闭包泄漏
     this._timeoutIds = [];
     this._destroyed = false;
@@ -778,6 +804,10 @@ class Game {
 
     // 恢复引导状态
     this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
+    // 恢复商店引导状态
+    this.shopGuidePhase = (p.shopGuidePhase !== undefined) ? p.shopGuidePhase : 0;
+    if (p._shopGuideStartTime !== undefined) this._shopGuideStartTime = p._shopGuideStartTime;
+    if (p._shopGuideTextStartTime !== undefined) this._shopGuideTextStartTime = p._shopGuideTextStartTime;
 
     // 修复：恢复后清理手牌中的 null 占位符并重新补牌
     if (this.state === 'playing') {
@@ -980,6 +1010,15 @@ class Game {
       this._guideOverlayStartTime = Date.now();
     }
 
+    // 第2回合后台按需下载商店引导帧序列（witch_guide_3），避免进入商店时等待
+    if (this.round === 2 && this.shopGuidePhase === 0) {
+      if (this.cloudStorage && this.renderer) {
+        this.cloudStorage.preloadGuideGroup(3, this.renderer).catch(err => {
+          console.error('[ShopGuide] 按需下载 witch_guide_3 失败:', err);
+        });
+      }
+    }
+
     this.state = 'playing';
   }
 
@@ -1034,6 +1073,30 @@ class Game {
       // 引导完成时单独持久化，防止游戏结束后 clearProgress 丢失
       if (this.guidePhase >= 5) {
         this.storageManager.saveGuidePhase(this.guidePhase);
+      }
+    }
+  }
+
+  advanceShopGuide() {
+    if (this.shopGuidePhase < 1 || this.shopGuidePhase > 2) return;
+
+    this.shopGuidePhase++;
+
+    if (this.shopGuidePhase === 2) {
+      this._shopGuideTextStartTime = Date.now();
+    }
+
+    // 阶段3（退场）：触发退场动画
+    if (this.shopGuidePhase >= 3) {
+      this.shopGuidePhase = 3;
+      this._shopGuideExitStartTime = Date.now();
+      this._shopGuideTextStartTime = null;
+    }
+
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      if (this.shopGuidePhase >= 4) {
+        this.storageManager.saveShopGuidePhase(this.shopGuidePhase);
       }
     }
   }
