@@ -1282,8 +1282,11 @@ function restartGame() {
     renderer.gameOverRenderer.animStartTime = null;
   }
   game = new Game();
+  game.cloudStorage = cloudStorage;
+  game.renderer = renderer;
   wx.game = game;
   console.log('[CardBook] restartGame 后, 新实例 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
+  game._preloadWitchAvatars();
   game._potionSelectedLetter = null;
   game._potionUpgrading = null;
   game._randomUpgradePopup = null;
