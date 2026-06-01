@@ -67,12 +67,11 @@ async function startPreload() {
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
   const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
 
-  // 只有新用户或引导未完成的用户才需要下载 guide 帧序列
+  // 只有新用户或引导未完成的用户才需要下载 guide 精灵图
   const savedProgress = wx.getStorageSync('word_balatro_progress');
   const needGuide = !savedProgress || (
     savedProgress.guidePhase !== undefined && savedProgress.guidePhase < 5
   );
-  const guideNames = needGuide ? Object.keys(cloudStorage.guideFileMap) : [];
 
   // 判断是否有存档恢复（同 startGame 中的逻辑）
   const isExpired = savedProgress && savedProgress.timestamp &&
@@ -96,7 +95,8 @@ async function startPreload() {
   }
 
   // 注：witch 头像仍改为回合级按需下载，但 witch_card 在存档恢复时预加载
-  const total = shopNames.length + bgIconNames.length + guideNames.length;
+  const guideStepCount = needGuide ? 2 : 0; // witch_guide_1 + witch_guide_2
+  const total = shopNames.length + bgIconNames.length + guideStepCount;
 
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -114,7 +114,10 @@ async function startPreload() {
   await cloudStorage.preloadShopCardImages(onProgress);
   await cloudStorage.preloadBgIconImages(onProgress);
   if (needGuide) {
-    await cloudStorage.preloadGuideImages(onProgress);
+    await cloudStorage.preloadGuideGroup(1, renderer);
+    onProgress();
+    await cloudStorage.preloadGuideGroup(2, renderer);
+    onProgress();
   }
 
   // 存档恢复时：并行预加载所有已解锁的 witch_card
@@ -384,7 +387,8 @@ function handleInput(x, y) {
         if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
         if (game.storageManager) game.storageManager.saveProgress();
         // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入
-        cloudStorage.preloadGuideImages().then(() => {
+        const guideGroupNum = game.guidePhase === 1 ? 1 : 2;
+        cloudStorage.preloadGuideGroup(guideGroupNum, renderer).then(() => {
           cloudStorage.injectGuideToRenderer(renderer);
         });
       }
@@ -394,7 +398,7 @@ function handleInput(x, y) {
         if (game.storageManager) game.storageManager.saveProgress();
         // 先检查本地是否已有缓存，避免重复下载
         const witch3 = renderer.guideImages.witch_3;
-        const hasCache = witch3 && witch3.frames.some(f => f && f.loaded);
+        const hasCache = witch3 && witch3.loaded;
         if (!hasCache) {
           cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
             console.error('[Debug] 触发商店引导下载失败:', err);
@@ -502,6 +506,28 @@ function handleInput(x, y) {
           if (game.storageManager) {
             game.storageManager.saveEquippedWitchCard(game.equippedWitchCard);
           }
+          return;
+        }
+      }
+
+      // 检测翻页按钮（点击区域可能超出详情面板，优先处理）
+      if (renderer.cardBookPrevBtnRect) {
+        const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+        if (prevHit && game.cardBookPage > 0) {
+          vibrate();
+          game.cardBookPage--;
+          game._cardBookDetailLevel = null;
+          game._closingCardBookDetail = false;
+          return;
+        }
+      }
+      if (renderer.cardBookNextBtnRect) {
+        const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+        if (nextHit) {
+          vibrate();
+          game.cardBookPage++;
+          game._cardBookDetailLevel = null;
+          game._closingCardBookDetail = false;
           return;
         }
       }

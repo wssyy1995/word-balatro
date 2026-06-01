@@ -14,7 +14,7 @@ class CloudStorageManager {
     this.witchFileMap = {};   // { name: fileID }
     this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
-    this.guideFileMap = {};   // { 'witch_guide_1_1': fileID, ... }
+    this.guideFileMap = {};   // { 'witch_guide_1_spritesheet': fileID, ... }
     this.initialized = false;
     this.uploading = false;
     this.debugLogs = [];
@@ -83,23 +83,13 @@ class CloudStorageManager {
       'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
 
-    // 默认 guide 帧序列云文件映射（witch_guide_1 和 witch_guide_2 分开配置，帧数可独立调整）
+    // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
     this.defaultGuideFileMap = {};
     const guideBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/guide';
-    // witch_guide_1
-    for (let f = 1; f <= 21; f++) {
-      this.defaultGuideFileMap[`witch_guide_1_${f}`] = `${guideBase}/witch_guide_1/${f}.png`;
-    }
-    // witch_guide_2
-    for (let f = 1; f <= 13; f++) {
-      this.defaultGuideFileMap[`witch_guide_2_${f}`] = `${guideBase}/witch_guide_2/${f}.png`;
-    }
-    // witch_guide_3（商店女巫技能引导）
-    for (let f = 1; f <= 8; f++) {
-      this.defaultGuideFileMap[`witch_guide_3_${f}`] = `${guideBase}/witch_guide_3/${f}.png`;
-    }
-    // witch_guide_4（卡牌图鉴引导）- 使用精灵图（单张大图）
-    this.defaultGuideFileMap[`witch_guide_4_spritesheet`] = `${guideBase}/witch_guide_4/spritesheet.png`;
+    this.defaultGuideFileMap['witch_guide_1_spritesheet'] = `${guideBase}/witch_guide_1/spritesheet.png`;
+    this.defaultGuideFileMap['witch_guide_2_spritesheet'] = `${guideBase}/witch_guide_2/spritesheet.png`;
+    this.defaultGuideFileMap['witch_guide_3_spritesheet'] = `${guideBase}/witch_guide_3/spritesheet.png`;
+    this.defaultGuideFileMap['witch_guide_4_spritesheet'] = `${guideBase}/witch_guide_4/spritesheet.png`;
   }
 
   init() {
@@ -347,7 +337,12 @@ class CloudStorageManager {
         fileType = 'witch_card';
       } else if (relPath.includes('/')) {
         // 其他子目录（witch_guide）：witch_guide_1/1.png → cloud: witch/guide/witch_guide_1/1.png
-        name = relPath.replace(/\.png$/i, '').replace(/\//g, '_'); // witch_guide_1_1
+        // witch_guide_1~4 均使用精灵图，只上传 spritesheet.png
+        if (relPath.startsWith('witch_guide_1/') || relPath.startsWith('witch_guide_2/') ||
+            relPath.startsWith('witch_guide_3/') || relPath.startsWith('witch_guide_4/')) {
+          if (fileName !== 'spritesheet.png') continue; // 跳过旧帧图，只上传精灵图
+        }
+        name = relPath.replace(/\.png$/i, '').replace(/\//g, '_'); // witch_guide_1_spritesheet
         cloudPath = `witch/guide/${relPath}`;
         fileType = 'guide';
       } else {
@@ -758,19 +753,32 @@ class CloudStorageManager {
     for (let i = 0; i < names.length; i += batchSize) {
       const batch = names.slice(i, i + batchSize);
       await Promise.all(batch.map(async name => {
-        await this._loadGuideImage(name);
+        if (name.endsWith('_spritesheet')) {
+          const match = name.match(/^witch_guide_(\d+)_spritesheet$/);
+          if (match) {
+            await this._loadGuideSpritesheet(name, match[1]);
+          }
+        } else {
+          await this._loadGuideImage(name);
+        }
         if (onProgress) onProgress();
       }));
     }
-    const groups = Object.keys(this.guideImages);
-    let loadedCount = 0;
-    let totalFrames = 0;
-    groups.forEach(gk => {
+
+    let frameLoaded = 0;
+    let frameTotal = 0;
+    Object.keys(this.guideImages).forEach(gk => {
       const frames = this.guideImages[gk].frames;
-      totalFrames += frames.length;
-      loadedCount += frames.filter(f => f && f.loaded).length;
+      frameTotal += frames.length;
+      frameLoaded += frames.filter(f => f && f.loaded).length;
     });
-    this.log('guide 下载完成：' + loadedCount + '/' + totalFrames + '帧成功');
+
+    let sheetLoaded = 0;
+    Object.keys(this.guideSpritesheets).forEach(gk => {
+      if (this.guideSpritesheets[gk].loaded) sheetLoaded++;
+    });
+
+    this.log(`guide 下载完成：帧序列 ${frameLoaded}/${frameTotal}，精灵图 ${sheetLoaded} 张`);
   }
 
   async _loadGuideImage(name) {
@@ -944,7 +952,7 @@ class CloudStorageManager {
       return;
     }
 
-    // 传统帧序列模式（witch_guide_1/2/3）
+    // 传统帧序列模式（兜底）
     const prefix = `witch_guide_${groupNum}_`;
     const names = Object.keys(this.guideFileMap).filter(n => n.startsWith(prefix));
     if (names.length === 0) {

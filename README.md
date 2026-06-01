@@ -529,12 +529,12 @@ BGM 支持循环播放，音量 0.3。
 
 - **上传**：
   - `uploadShopCards()`：批量上传 `images/shop_card/` 到云存储
-  - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`、`witch_guide_2`），witch 头像上传至 `witch/`，guide 帧序列上传至 `witch/guide/`
+  - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`~`witch_guide_4`），witch 头像上传至 `witch/`，guide 精灵图上传至 `witch/guide/`（自动跳过各目录下的旧单帧图）
   - `uploadBgIconImages()`：上传背景图到 `bg_icon/`
 - **下载**：
   - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
   - `preloadBgIconImages()`：预加载页下载背景图
-  - `preloadGuideImages()`：按需下载（仅新用户/引导未完成时）
+  - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的精灵图并注入渲染器；预加载页通过它下载 witch_guide_1/2
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
 - **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` 将云缓存图片覆盖到渲染器
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
@@ -612,8 +612,10 @@ BGM 支持循环播放，音量 0.3。
 | 卡牌 | 女巫 | 技能名称 | 效果 |
 |------|------|---------|------|
 | witch_card_3 | 爱莉亚 | each_round_coin_plus1 | 每回合结算，基础金币 +1 |
-| witch_card_5 | 柏丽桑忒 | each_round_hand_plus1 | 每回合出牌次数 +1，基础金币 -1 |
+| witch_card_5 | 柏丽桑忒 | each_round_hand_plus1 | 每回合出牌次数 +1，但基础金币 -2 |
 | witch_card_8 | 喀薇娅 | illegal_words_one | 每回合首次非法单词不扣除出牌次数 |
+| witch_card_11 | 德莱薇尔 | last_letter_double | 单词最后一个字母分数算两次（含 per_card 女巫牌加成） |
+| witch_card_14 | 艾莉瑟瑞丝 | witch_skill_protect | 有女巫技能的回合，首次出牌跳过约束检查 |
 
 > 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。
 
@@ -659,7 +661,7 @@ BGM 支持循环播放，音量 0.3。
 
 **持久化**：引导完成状态（`guidePhase ≥ 5`）通过 `storage.saveGuidePhase()` **独立存储**，即使游戏结束 `clearProgress()` 也不会清除。同一位玩家终身只显示一次引导。
 
-**预加载**：guide 帧序列仅在预加载页**按需下载**（判断 `savedProgress.guidePhase < 5` 或存档不存在），已完成引导的用户不下载，节省流量。
+**预加载**：预加载页仅下载新手引导 witch_guide_1/2 精灵图（判断 `savedProgress.guidePhase < 5` 或存档不存在）。witch_guide_3（商店引导）和 witch_guide_4（图鉴引导）均为**回合级按需下载**，不占用预加载流量。
 
 ### 5.1.1 商店女巫技能引导（witch_guide_3）
 
@@ -667,8 +669,8 @@ BGM 支持循环播放，音量 0.3。
 
 | Phase | 内容 | 动画 |
 |-------|------|------|
-| 1 | 聚光灯挖空效果聚焦下一回合女巫技能模块，女巫+对话框果冻弹出 | witch_3 帧动画 + 逐字显示 |
-| 2 | 解释女巫技能的作用与影响 | 继续 witch_3 帧动画 + 逐字显示 |
+| 1 | 聚光灯挖空效果聚焦下一回合女巫技能模块，女巫+对话框果冻弹出 | witch_3 精灵图 + 逐字显示 |
+| 2 | 解释女巫技能的作用与影响 | 继续 witch_3 精灵图 + 逐字显示 |
 | 3 | 退场动画 | 女巫+对话框淡出，恢复正常商店交互 |
 
 **持久化**：`shopGuidePhase` 独立存储，游戏结束不清除。
@@ -806,7 +808,7 @@ letterUpgrades = Map {
 - 直接通关（进入 settlement）
 - 刷新商店（重新生成 6 款商品）
 - 上传 shop_card 图片到云存储
-- 上传 witch 图片到云存储（含 guide 帧序列）
+- 上传 witch 图片到云存储（含 guide 精灵图）
 - 上传 bg_icon 图片到云存储
 - **触发新人引导**（强制回到 Phase 1）
 - 结束游戏（进入 gameover）
@@ -852,6 +854,8 @@ letterUpgrades = Map {
 | v1.6.0 | 2026-05-26 | 新增女巫牌"对称之美"；争分夺秒改为水晶球；商店改为全局重掷按钮（3 金币刷新全部）；新增卡牌图鉴系统（第 3 关解锁，收集/装备女巫牌）；顶部布局与灵动岛适配优化 |
 | v1.6.1 | 2026-05-27 | 拆分"对称之美"为"双子合影"+"首尾呼应"两张独立女巫牌；修复首字连击详情显示倍率增值；修复 haste_play 永久不耗牌 bug |
 | v1.7.0 | 2026-05-28 | 目标分数改为分段系数曲线；新增商店女巫技能引导（witch_guide_3）；新增卡牌图鉴引导（witch_guide_4）；witch_guide_4 改用精灵图；优化配置 |
+| v1.7.1 | 2026-06-01 | witch_guide_3 改为精灵图；预加载页不再下载 witch_guide_3/4；上传逻辑跳过精灵图目录下的旧帧图 |
+| v1.7.2 | 2026-06-01 | witch_guide_1/2/3 统一改为精灵图（1/2/3 各 14 帧 4×4 拼接，4 为 20 帧 4×5）；预加载页改用 `preloadGuideGroup`；cloud_storage 统一 spritesheet 下载/注入管道；修复 guide 缓存检测的 `.frames` 遗留引用 |
 
 ---
 

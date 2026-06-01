@@ -49,18 +49,15 @@ class Renderer {
     this.bgImage = null;
     this.bgLoaded = false;
     
-    // 新手引导帧序列（由 cloudStorage 在预加载时注入，不再使用本地图片）
-    // witch_1/2/3 使用单帧数组，witch_4 使用精灵图（单张大图 + 坐标）
+    // 新手引导（由 cloudStorage 在预加载时注入，不再使用本地图片）
+    // witch_1~4 均使用精灵图（单张大图 + 坐标）
     this.guideImages = {
-      witch_1: { frames: [], loaded: false, frameCount: 9, frameDelay: 180 },
-      witch_2: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
-      witch_3: { frames: [], loaded: false, frameCount: 8, frameDelay: 200 },
-      witch_4: {
+      witch_1: {
         type: 'spritesheet',
         img: null,
         loaded: false,
-        frameCount: 20,
-        frameDelay: 120,
+        frameCount: 16,
+        frameDelay: 150,
         frameCoords: [
           { x: 0, y: 0, w: 360, h: 360 },
           { x: 360, y: 0, w: 360, h: 360 },
@@ -78,17 +75,81 @@ class Renderer {
           { x: 360, y: 1080, w: 360, h: 360 },
           { x: 720, y: 1080, w: 360, h: 360 },
           { x: 1080, y: 1080, w: 360, h: 360 },
-          { x: 0, y: 1440, w: 360, h: 360 },
-          { x: 360, y: 1440, w: 360, h: 360 },
-          { x: 720, y: 1440, w: 360, h: 360 },
-          { x: 1080, y: 1440, w: 360, h: 360 },
+        ],
+      },
+      witch_2: {
+        type: 'spritesheet',
+        img: null,
+        loaded: false,
+        frameCount: 14,
+        frameDelay: 150,
+        frameCoords: [
+          { x: 0, y: 0, w: 360, h: 360 },
+          { x: 360, y: 0, w: 360, h: 360 },
+          { x: 720, y: 0, w: 360, h: 360 },
+          { x: 1080, y: 0, w: 360, h: 360 },
+          { x: 0, y: 360, w: 360, h: 360 },
+          { x: 360, y: 360, w: 360, h: 360 },
+          { x: 720, y: 360, w: 360, h: 360 },
+          { x: 1080, y: 360, w: 360, h: 360 },
+          { x: 0, y: 720, w: 360, h: 360 },
+          { x: 360, y: 720, w: 360, h: 360 },
+          { x: 720, y: 720, w: 360, h: 360 },
+          { x: 1080, y: 720, w: 360, h: 360 },
+          { x: 0, y: 1080, w: 360, h: 360 },
+          { x: 360, y: 1080, w: 360, h: 360 },
+        ],
+      },
+      witch_3: {
+        type: 'spritesheet',
+        img: null,
+        loaded: false,
+        frameCount: 16,
+        frameDelay: 150,
+        frameCoords: [
+          { x: 0, y: 0, w: 360, h: 360 },
+          { x: 360, y: 0, w: 360, h: 360 },
+          { x: 720, y: 0, w: 360, h: 360 },
+          { x: 1080, y: 0, w: 360, h: 360 },
+          { x: 0, y: 360, w: 360, h: 360 },
+          { x: 360, y: 360, w: 360, h: 360 },
+          { x: 720, y: 360, w: 360, h: 360 },
+          { x: 1080, y: 360, w: 360, h: 360 },
+          { x: 0, y: 720, w: 360, h: 360 },
+          { x: 360, y: 720, w: 360, h: 360 },
+          { x: 720, y: 720, w: 360, h: 360 },
+          { x: 1080, y: 720, w: 360, h: 360 },
+          { x: 0, y: 1080, w: 360, h: 360 },
+          { x: 360, y: 1080, w: 360, h: 360 },
+          { x: 720, y: 1080, w: 360, h: 360 },
+          { x: 1080, y: 1080, w: 360, h: 360 },
+        ],
+      },
+      witch_4: {
+        type: 'spritesheet',
+        img: null,
+        loaded: false,
+        frameCount: 14,
+        frameDelay: 150,
+        frameCoords: [
+          { x: 0, y: 0, w: 360, h: 360 },
+          { x: 360, y: 0, w: 360, h: 360 },
+          { x: 720, y: 0, w: 360, h: 360 },
+          { x: 1080, y: 0, w: 360, h: 360 },
+          { x: 0, y: 360, w: 360, h: 360 },
+          { x: 360, y: 360, w: 360, h: 360 },
+          { x: 720, y: 360, w: 360, h: 360 },
+          { x: 1080, y: 360, w: 360, h: 360 },
+          { x: 0, y: 720, w: 360, h: 360 },
+          { x: 360, y: 720, w: 360, h: 360 },
+          { x: 720, y: 720, w: 360, h: 360 },
+          { x: 1080, y: 720, w: 360, h: 360 },
+          { x: 0, y: 1080, w: 360, h: 360 },
+          { x: 360, y: 1080, w: 360, h: 360 },
         ],
       },
     };
-    // 预分配帧槽位，等待云存储注入
-    for (let i = 0; i < 9; i++) this.guideImages.witch_1.frames[i] = { img: null, loaded: false };
-    for (let i = 0; i < 11; i++) this.guideImages.witch_2.frames[i] = { img: null, loaded: false };
-    for (let i = 0; i < 8; i++) this.guideImages.witch_3.frames[i] = { img: null, loaded: false };
+    // witch_1~4 均使用精灵图，无需预分配帧槽位
 
     // 加载 top bar 图标
     this.topIcon = null;
@@ -2385,12 +2446,12 @@ class Renderer {
       dialogDrawY = dialogTargetY;
     }
 
-    // 女巫引导图片（均为帧序列动画）
-    if (imgData && imgData.loaded) {
+    // 女巫引导图片（精灵图）
+    if (imgData && imgData.loaded && imgData.img) {
       const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-      const frame = imgData.frames[frameIdx];
-      if (frame && frame.loaded && frame.img) {
-        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      const coord = imgData.frameCoords[frameIdx];
+      if (coord) {
+        ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
       }
     }
 
@@ -2623,13 +2684,13 @@ class Renderer {
       dialogDrawY = dialogTargetY;
     }
 
-    // 女巫引导图片（帧序列动画）
+    // 女巫引导图片（witch_3 使用精灵图渲染）
     const imgData = this.guideImages.witch_3;
-    if (imgData && imgData.loaded) {
+    if (imgData && imgData.loaded && imgData.img) {
       const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-      const frame = imgData.frames[frameIdx];
-      if (frame && frame.loaded && frame.img) {
-        ctx.drawImage(frame.img, imgX, imgY, imgW, imgH);
+      const coord = imgData.frameCoords[frameIdx];
+      if (coord) {
+        ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
       }
     }
 
@@ -5992,7 +6053,7 @@ class Renderer {
       { label: '当前分+100', action: 'debug_addScore' },
       { label: '增加10金币', action: 'debug_addGold' },
       { label: '跳转至X回合', action: 'debug_jumpToRound' },
-      { label: '直接通关', action: 'debug_winRound' },
+      { label: '✅直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
       { label: '5张女巫牌', action: 'debug_addWitchSlot' },
       { label: '上传shop_card', action: 'debug_upload_shop_card' },
@@ -6001,7 +6062,7 @@ class Renderer {
       { label: '触发新人引导', action: 'debug_triggerGuide' },
       { label: '触发商店引导', action: 'debug_triggerShopGuide' },
       { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
-      { label: '结束游戏', action: 'debug_endGame' },
+      { label: '👻结束游戏', action: 'debug_endGame' },
     ];
     const itemW = 130 * s;
     const itemH = 34 * s;

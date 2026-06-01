@@ -294,7 +294,7 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
-function calcWordScore(cards, jokers, pendingCheck = null) {
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
@@ -362,6 +362,13 @@ function calcWordScore(cards, jokers, pendingCheck = null) {
   for (let i = 0; i < cards.length; i++) {
     const cardScore = letterGod ? maxBaseScore : cards[i].score;
     baseScore += cardScore * cardMults[i] + cardAddScores[i];
+  }
+
+  // === 装备卡牌：德莱薇尔 - 最后一个字母分数算两次（含 per_card 女巫牌加成） ===
+  if (equippedCardSkill === 'last_letter_double' && cards.length > 0) {
+    const lastIdx = cards.length - 1;
+    const lastCardScore = letterGod ? maxBaseScore : cards[lastIdx].score;
+    baseScore += lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
   }
 
   for (const j of activeJokers) {
@@ -645,6 +652,7 @@ class Game {
     this._hastePlayStartTime = null;
     this._letterGodAnim = null;
     this._debugLabelShow = null;
+    this._witchSkillProtectUsed = false;
 
     // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
     const savedGuidePhase = this.storageManager.loadGuidePhase();
@@ -761,6 +769,7 @@ class Game {
     this.extraSafety = p.extraSafety || 0;
     this.extraLetters = p.extraLetters || 0;
     this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
+    this._witchSkillProtectUsed = p._witchSkillProtectUsed !== undefined ? p._witchSkillProtectUsed : false;
     this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
     this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
     this.cardBookUnlocked = this.storageManager ? this.storageManager.loadCardBookUnlocked() : false;
@@ -1001,6 +1010,7 @@ class Game {
     this.extraLetters = 0;
     this.witchSkillPassed = true;
     this._illegalWordShieldUsed = false;
+    this._witchSkillProtectUsed = false;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     // 清除所有女巫牌的动画状态，防止上一回合的动画残留
@@ -1328,36 +1338,44 @@ class Game {
 
     // === 女巫技能约束检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    if (witchSkill && !checkSkill(witchSkill.skill, this, playedInOrder)) {
-      this.witchSkillPassed = false;
-      this.pendingCheck.state = 'witch_failed';
-      this.pendingCheck.resolveTime = Date.now();
-      this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
-      this.pendingCheck._witchFailAnimStart = Date.now();
-      this._witchStarBurstAuto = true; // 触发 HUD 女巫头像星星动画
-      if (witchSkill.angry_tip) {
-        this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
-      }
-      if (this.audioManager) this.audioManager.play('invalid');
-      if (!this._hastePlayActive) {
-        this.handsLeft--;
-      }
-      if (this.handsLeft <= 0) {
-        const triggered = this._checkLifeExtension();
-        if (!triggered) {
-          this._delay(() => {
-            this.state = 'gameover';
-            this.gameOverReason = 'out_of_hands';
-            if (this.storageManager) {
-              this.storageManager.setHighScore(this.totalScore);
-              this.storageManager.updateStats(this);
-              this.storageManager.clearProgress();
-            }
-          }, 1500);
+    if (witchSkill) {
+      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过约束检查
+      const hasProtect = equippedCardSkill === 'witch_skill_protect';
+      if (hasProtect && !this._witchSkillProtectUsed) {
+        this._witchSkillProtectUsed = true;
+        console.log('[EquippedSkill] witch_skill_protect skipped skill check');
+        // 跳过约束检查，witchSkillPassed 保持 true
+      } else if (!checkSkill(witchSkill.skill, this, playedInOrder)) {
+        this.witchSkillPassed = false;
+        this.pendingCheck.state = 'witch_failed';
+        this.pendingCheck.resolveTime = Date.now();
+        this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
+        this.pendingCheck._witchFailAnimStart = Date.now();
+        this._witchStarBurstAuto = true; // 触发 HUD 女巫头像星星动画
+        if (witchSkill.angry_tip) {
+          this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
         }
+        if (this.audioManager) this.audioManager.play('invalid');
+        if (!this._hastePlayActive) {
+          this.handsLeft--;
+        }
+        if (this.handsLeft <= 0) {
+          const triggered = this._checkLifeExtension();
+          if (!triggered) {
+            this._delay(() => {
+              this.state = 'gameover';
+              this.gameOverReason = 'out_of_hands';
+              if (this.storageManager) {
+                this.storageManager.setHighScore(this.totalScore);
+                this.storageManager.updateStats(this);
+                this.storageManager.clearProgress();
+              }
+            }, 1500);
+          }
+        }
+        if (this.storageManager) this.storageManager.saveProgress();
+        return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
       }
-      if (this.storageManager) this.storageManager.saveProgress();
-      return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
     // === 字母之神触发（limit 型女巫牌，优先处理）===
@@ -1385,7 +1403,11 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(played, this.jokers, this.pendingCheck);
+    // 获取装备卡牌技能名
+    const equippedCard = this.equippedWitchCard ? WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`) : null;
+    const equippedCardSkill = equippedCard ? equippedCard.card_skill_name : null;
+
+    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkill);
 
     // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
@@ -1698,7 +1720,7 @@ class Game {
         if (cardConfig.card_skill_name === 'each_round_coin_plus1') {
           baseGold += 1;
         } else if (cardConfig.card_skill_name === 'each_round_hand_plus1') {
-          baseGold -= 1;
+          baseGold -= 2;
         }
       }
     }
