@@ -110,6 +110,7 @@ class StorageManager {
       _cardBookGuideText2StartTime: game._cardBookGuideText2StartTime,
       _cardBookGuideExitStartTime: game._cardBookGuideExitStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
+      reviveUsed: game.reviveUsed || false,
       timestamp: Date.now(),
       version: 1
     };

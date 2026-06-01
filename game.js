@@ -10,6 +10,34 @@ const { CloudStorageManager } = require('./js/cloud_storage');
 // 获取 Canvas 上下文
 wx.onShow(() => {
   console.log('[Game] 切回前台');
+
+  // === 分享复活检测 ===
+  if (shareReviveState && shareReviveState.resolving && game && game.state === 'gameover') {
+    const stayed = Date.now() - shareReviveState.startTime;
+    console.log('[ShareRevive] 分享界面停留时间:', stayed, 'ms');
+    if (stayed >= 2500) {
+      console.log('[ShareRevive] 判定分享成功，执行复活');
+      game._closingGameOver = true;
+      game._closeStartTime = Date.now();
+      setTimeout(() => {
+        if (game && game.state === 'gameover') {
+          game.revive();
+          if (renderer.gameOverRenderer) {
+            renderer.gameOverRenderer.animStartTime = null;
+            renderer.gameOverRenderer.lastGameOverReason = null;
+          }
+          game.hintToast = { text: '复活成功！', expireAt: Date.now() + 2000 };
+        }
+      }, 200);
+    } else {
+      console.log('[ShareRevive] 分享取消或停留时间不足');
+      if (game) {
+        game._reviveBtnPressed = false;
+        game.hintToast = { text: '分享后才可以复活哦~', expireAt: Date.now() + 2000 };
+      }
+    }
+    shareReviveState = null;
+  }
 });
 
 wx.onHide(() => {
@@ -92,6 +120,9 @@ ctx.scale(scaleDpr, scaleDpr);
 // 游戏全局状态
 let game = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
+
+// 分享复活状态
+let shareReviveState = null; // { startTime: number, resolving: boolean }
 
 // 云存储管理器
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
@@ -1327,19 +1358,20 @@ function handleInput(x, y) {
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {
       const reviveHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.reviveBtnRect]);
       if (reviveHit) {
+        if (game.reviveUsed) {
+          game.hintToast = { text: '本局已使用过复活', expireAt: Date.now() + 2000 };
+          return;
+        }
         vibrate();
         game._reviveBtnPressed = true;
         game._reviveBtnPressTime = Date.now();
-        setTimeout(() => {
-          game._reviveBtnPressed = false;
-          game._closingGameOver = true;
-          game._closeStartTime = Date.now();
-          setTimeout(() => {
-            game.revive();
-            renderer.gameOverRenderer.animStartTime = null;
-            renderer.gameOverRenderer.lastGameOverReason = null;
-          }, 200);
-        }, 150);
+
+        // 拉起分享复活
+        shareReviveState = { startTime: Date.now(), resolving: true };
+        wx.shareAppMessage({
+          title: `我在 Word Balatro 挑战到了第 ${game.round} 关，快来帮我！`,
+          query: `from=revive&round=${game.round}&score=${game.totalScore}`
+        });
         return;
       }
     }

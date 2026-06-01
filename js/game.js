@@ -604,6 +604,7 @@ class Game {
       this.baseHandSize = 9;
       this.totalScore = 0;
       this.gameOverReason = null;
+      this.reviveUsed = false;
       this.roundScores = [];
       this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
       console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
@@ -792,6 +793,7 @@ class Game {
     this._newWitchCardThisShop = null;
     this._cardBookIconFlashStart = null;
     this.gameOverReason = p.gameOverReason || null;
+    this.reviveUsed = p.reviveUsed || false;
     this.target = p.target;
     this._maxHandSize = p._maxHandSize;
     this._seedMinLen = p._seedMinLen;
@@ -2000,6 +2002,8 @@ class Game {
     this._reviveBtnPressed = false;
     this._reviveBtnPressTime = null;
     this._showingRankList = false;
+    this.reviveUsed = true;
+    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   nextRound() {
