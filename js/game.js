@@ -643,6 +643,8 @@ class Game {
     this._lifeExtensionBtnPressed = false;
     this._restartBtnPressed = false;
     this._restartBtnPressTime = null;
+    this._reviveBtnPressed = false;
+    this._reviveBtnPressTime = null;
     this._closingGameOver = false;
     this._closeStartTime = null;
     this._witchStarBurst = null;
@@ -1291,6 +1293,7 @@ class Game {
           this.gameOverReason = 'forbidden_word';
           if (this.storageManager) {
             this.storageManager.setHighScore(this.totalScore);
+            uploadScore(this.storageManager.getHighScore());
             this.storageManager.updateStats(this);
             this.storageManager.clearProgress();
           }
@@ -1326,6 +1329,7 @@ class Game {
             this.gameOverReason = 'out_of_hands';
             if (this.storageManager) {
               this.storageManager.setHighScore(this.totalScore);
+              uploadScore(this.storageManager.getHighScore());
               this.storageManager.updateStats(this);
               this.storageManager.clearProgress();
             }
@@ -1367,6 +1371,7 @@ class Game {
               this.gameOverReason = 'out_of_hands';
               if (this.storageManager) {
                 this.storageManager.setHighScore(this.totalScore);
+                uploadScore(this.storageManager.getHighScore());
                 this.storageManager.updateStats(this);
                 this.storageManager.clearProgress();
               }
@@ -1580,6 +1585,7 @@ class Game {
         this.gameOverReason = 'out_of_hands';
         if (this.storageManager) {
           this.storageManager.setHighScore(this.totalScore);
+          uploadScore(this.storageManager.getHighScore());
           this.storageManager.updateStats(this);
           this.storageManager.clearProgress();
         }
@@ -1982,6 +1988,20 @@ class Game {
     this._showSettlement();
   }
 
+  // 原地复活：gameover 时恢复 1 次出牌机会
+  revive() {
+    this.handsLeft = 1;
+    this.state = 'playing';
+    this.gameOverReason = null;
+    this._closingGameOver = false;
+    this._closeStartTime = null;
+    this._restartBtnPressed = false;
+    this._restartBtnPressTime = null;
+    this._reviveBtnPressed = false;
+    this._reviveBtnPressTime = null;
+    this._showingRankList = false;
+  }
+
   nextRound() {
     if (this.audioManager) this.audioManager.play('levelup');
     
@@ -2117,4 +2137,13 @@ class Game {
   }
 }
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand };
+function uploadScore(score) {
+  if (!wx.setUserCloudStorage) return;
+  wx.setUserCloudStorage({
+    KVDataList: [{ key: 'score', value: String(score) }],
+    success: () => console.log('[Rank] 分数上传成功', score),
+    fail: (err) => console.error('[Rank] 分数上传失败', err),
+  });
+}
+
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScore };

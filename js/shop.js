@@ -1311,24 +1311,12 @@ class ConfirmBuyRenderer {
     ctx.restore();
 
     // === 标题下装饰线 ===
-    ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
-    ctx.strokeStyle = 'rgba(196,163,90,0.5)';
-    ctx.lineWidth = 1 * s;
     const decoLineY = py + 56 * s + contentYShift;
     const decoLineW = pw * 0.5;
     const decoLineX = px + (pw - decoLineW) / 2;
-    ctx.beginPath();
-    ctx.moveTo(decoLineX, decoLineY);
-    ctx.lineTo(decoLineX + decoLineW, decoLineY);
-    ctx.stroke();
-    // 中间小菱形
     ctx.save();
-    ctx.translate(W / 2, decoLineY);
-    ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = gold;
-    ctx.fillRect(-3 * s, -3 * s, 6 * s, 6 * s);
-    ctx.restore();
+    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    this.parent._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: gold });
     ctx.restore();
 
     // === 卡牌尺寸计算 ===

@@ -4,5 +4,6 @@
   "networkTimeout": {
     "request": 5000,
     "connectSocket": 5000
-  }
+  },
+  "openDataContext": "openDataContext"
 }

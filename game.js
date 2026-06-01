@@ -1,5 +1,5 @@
 // 微信小游戏入口
-const { Game } = require('./js/game');
+const { Game, uploadScore } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
@@ -29,6 +29,50 @@ function vibrate() {
   if (!isDevTools && wx.vibrateShort) {
     try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
   }
+}
+
+// ===== 排行榜相关 =====
+let openDataContext = null;
+let isRankShowing = false;
+
+function getOpenDataContext() {
+  if (!openDataContext && wx.getOpenDataContext) {
+    openDataContext = wx.getOpenDataContext();
+  }
+  return openDataContext;
+}
+
+function showRankList() {
+    const odc = getOpenDataContext();
+  if (!odc) {
+      return;
+  }
+  isRankShowing = true;
+  if (game) game._showingRankList = true;
+
+  // OffScreenCanvas 模式：主域设置 sharedCanvas 的宽高（开放域不能设）
+  const sharedCanvas = odc.canvas;
+  if (sharedCanvas) {
+    try {
+      sharedCanvas.width = canvas.width;
+      sharedCanvas.height = canvas.height;
+      } catch (e) {
+      console.warn('sharedCanvas set failed', e.message);    }
+  } else {
+    }
+
+  odc.postMessage({
+    action: 'show',
+    scaleDpr,
+  });
+  }
+
+function hideRankList() {
+  const odc = getOpenDataContext();
+  if (!odc) return;
+  isRankShowing = false;
+  if (game) game._showingRankList = false;
+  odc.postMessage({ action: 'hide' });
 }
 
 // 设置画布尺寸（适配 Retina 高分屏）
@@ -429,6 +473,7 @@ function handleInput(x, y) {
         game.gameOverReason = 'debug';
         if (game.storageManager) {
           game.storageManager.setHighScore(game.totalScore);
+          uploadScore(game.storageManager.getHighScore());
           game.storageManager.updateStats(game);
           // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
           game.storageManager.saveProgress();
@@ -1270,6 +1315,45 @@ function handleInput(x, y) {
   if (game.state === 'gameover') {
     if (game._closingGameOver) return;
     if (game._restartBtnPressed) return;
+    if (game._reviveBtnPressed) return;
+
+    // 排行榜显示时，点击任意位置关闭
+    if (isRankShowing) {
+      hideRankList();
+      return;
+    }
+
+    // 复活按钮
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {
+      const reviveHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.reviveBtnRect]);
+      if (reviveHit) {
+        vibrate();
+        game._reviveBtnPressed = true;
+        game._reviveBtnPressTime = Date.now();
+        setTimeout(() => {
+          game._reviveBtnPressed = false;
+          game._closingGameOver = true;
+          game._closeStartTime = Date.now();
+          setTimeout(() => {
+            game.revive();
+            renderer.gameOverRenderer.animStartTime = null;
+            renderer.gameOverRenderer.lastGameOverReason = null;
+          }, 200);
+        }, 150);
+        return;
+      }
+    }
+
+    // 排行榜按钮
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.rankBtnRect) {
+      const rankHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.rankBtnRect]);
+      if (rankHit) {
+        vibrate();
+        showRankList();
+        return;
+      }
+    }
+
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.restartBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.restartBtnRect]);
       if (btnHit) {
@@ -1282,7 +1366,7 @@ function handleInput(x, y) {
           game._closeStartTime = Date.now();
           setTimeout(() => {
             restartGame();
-          }, 300);
+          }, 200);
         }, 150);
         return;
       }

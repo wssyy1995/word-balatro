@@ -207,6 +207,21 @@ class Renderer {
     } catch (e) {
       this.scoreLineLoaded = false;
     }
+
+    // 加载游戏结束弹窗按钮图片
+    this.gameOverBtnImages = {};
+    const goBtnNames = ['relive_button', 'restart_button', 'rank_button'];
+    goBtnNames.forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/${name}.png`;
+        img.onload = () => { this.gameOverBtnImages[name] = { img, loaded: true }; };
+        img.onerror = () => { this.gameOverBtnImages[name] = { img: null, loaded: false }; };
+        this.gameOverBtnImages[name] = { img, loaded: false };
+      } catch (e) {
+        this.gameOverBtnImages[name] = { img: null, loaded: false };
+      }
+    });
     
         // 加载错误图标
     this.errorIcon = null;
@@ -426,6 +441,19 @@ class Renderer {
       this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
     
+    // 加载游戏结束弹窗小女巫图
+    this.failWitchImg = null;
+    this.failWitchLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/fail_witch.png';
+      img.onload = () => { this.failWitchLoaded = true; };
+      img.onerror = () => { this.failWitchLoaded = false; };
+      this.failWitchImg = img;
+    } catch (e) {
+      this.failWitchLoaded = false;
+    }
+
     // 加载空位替代图片
     ['empty_witch_card', 'empty_potion_card'].forEach((name) => {
       try {
@@ -2336,6 +2364,17 @@ class Renderer {
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
+    }
+
+    // 绘制开放数据域（排行榜，OffScreenCanvas 模式）
+    if (game._showingRankList) {
+      const odc = wx.getOpenDataContext ? wx.getOpenDataContext() : null;
+      if (odc && odc.canvas) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(odc.canvas, 0, 0, W, H);
+        ctx.restore();
+      }
     }
   }
 
@@ -5869,12 +5908,48 @@ class Renderer {
     ctx.restore();
   }
 
+  // ===== 绘制标题下方装饰分割线（含中间小菱形，菱形与线间距 3px）=====
+  _drawTitleDivider(ctx, x, y, w, s, options = {}) {
+    const {
+      color = '#c4a35a',
+      lineWidth = 1.2,
+      hasDiamond = true,
+      diamondSize = 6,
+      diamondColor = '#c4a35a',
+      gap = 10
+    } = options;
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth * s;
+    const cx = x + w / 2;
+    const gapPx = gap * s;
+    // 左线
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(cx - gapPx, y);
+    ctx.stroke();
+    // 右线
+    ctx.beginPath();
+    ctx.moveTo(cx + gapPx, y);
+    ctx.lineTo(x + w, y);
+    ctx.stroke();
+    if (hasDiamond) {
+      ctx.save();
+      ctx.translate(cx, y);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = diamondColor;
+      ctx.fillRect(-diamondSize * s / 2, -diamondSize * s / 2, diamondSize * s, diamondSize * s);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   // ===== 绘制弹窗面板（遮罩 + 入场 + 背景 + 关闭动画）=====
   _drawModalPanel(ctx, W, H, s, config) {
     const {
       isClosing, closeStartTime, closeDuration = 200, closeOffset = 40,
       width = 300, height = 340, enterOffset = 25, enterDuration = 350,
-      overlayAlpha = 0.65, overlayFadeInDuration = 200,
+      overlayAlpha = 0.7, overlayFadeInDuration = 200,
       bgColor = '#faf6ee', borderColor = '#c4a35a', borderRadius = 14, borderWidth = 1.5,
       onCloseComplete, elapsed
     } = config;
@@ -6205,12 +6280,71 @@ class GameOverRenderer {
     const panel = this.parent._drawModalPanel(ctx, W, H, s, {
       isClosing,
       closeStartTime: game._closeStartTime,
-      width: 300, height: 290, enterOffset: 25, closeOffset: 40,
+      width: 300, height: 310, enterOffset: 25, closeOffset: 40,
+      overlayAlpha: 0.75,
       elapsed,
       onCloseComplete: () => {}
     });
     if (!panel) return;
     const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+
+    // 小女巫（趴在弹窗顶部，底部重叠 10px）
+    if (this.parent.failWitchImg && this.parent.failWitchLoaded) {
+      const witchW = 180 * s;
+      const witchH = witchW * 0.97;
+      const witchY = py + 25 * s - witchH;
+      const witchX = W / 2 - witchW / 2;
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
+      ctx.shadowBlur = 8 * s;
+      ctx.shadowOffsetY = 4 * s;
+      ctx.drawImage(this.parent.failWitchImg, witchX, witchY, witchW, witchH);
+      ctx.restore();
+
+      // 失落竖线（小女巫右上角，4道紫色竖线，起始点交错）
+      const lineBaseX = witchX + witchW - 41 * s;
+      const lineBaseY = witchY + 27 * s;
+      const lineData = [
+        { offsetX: 0, top: 0, len: 18 },    // 第1道：顶部最高，最长
+        { offsetX: 5, top: 2, len: 13 },      // 第2道：顶部稍低，次长
+        { offsetX: 10, top: 5, len: 13 },     // 第3道：顶部更低，中等
+        { offsetX: 15, top: 10, len: 9 },     // 第4道
+      ];
+      ctx.save();
+      ctx.fillStyle = '#6b5b95';
+      lineData.forEach((d) => {
+        const lx = lineBaseX + d.offsetX * s;
+        const ly = lineBaseY + d.top * s;
+        ctx.fillRect(lx, ly, 2 * s, d.len * s);
+      });
+      ctx.restore();
+
+      // 小女巫左右点缀星星（Canvas 绘制，圆角）
+      const drawStar = (cx, cy, outerR, innerR, color) => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle = (i * Math.PI / 5) - Math.PI / 2;
+          ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        }
+        ctx.closePath();
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 1.8 * s;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.fill();
+        ctx.restore();
+      };
+      // 右边三颗
+      drawStar(witchX + witchW + 8 * s, witchY + 105 * s, 5.5 * s, 2.75 * s, '#6b5b95');  // 紫色大星
+      drawStar(witchX + witchW + 20 * s, witchY + 128 * s, 4 * s, 2 * s, '#c4a35a');      // 金色中星
+      drawStar(witchX + witchW + 2 * s, witchY + 145 * s, 2.5 * s, 1.25 * s, '#c4a35a');  // 金色小星
+      // 左边两颗
+      drawStar(witchX - 8 * s, witchY + 95 * s, 4 * s, 2 * s, '#6b5b95');                 // 紫色
+      drawStar(witchX - 2 * s, witchY + 118 * s, 3 * s, 1.5 * s, '#c4a35a');              // 金色
+    }
 
     // 标题
     const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
@@ -6226,24 +6360,22 @@ class GameOverRenderer {
 
     // 分隔线
     const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
+    const line1Y = py + 62 * s + line1Anim.yShift;
+    const line1W = pw - 60 * s;
     ctx.save();
     ctx.globalAlpha = line1Anim.alpha;
-    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    const line1Y = py + 62 * s + line1Anim.yShift;
-    ctx.moveTo(px + 30 * s, line1Y);
-    ctx.lineTo(px + pw - 30 * s, line1Y);
-    ctx.stroke();
+    this.parent._drawTitleDivider(ctx, px + 30 * s, line1Y, line1W, s);
     ctx.restore();
 
     // 数据行
     const lineY = py + 92 * s;
     const lineH = 38 * s;
 
+    const highScore = game.storageManager ? game.storageManager.getHighScore() : 0;
     const items = [
-      { label: '到达关卡', value: `第 ${game.round} 关` },
-      { label: '最终得分', value: `${game.totalScore}` },
+      { label: '到达回合', value: `${game.round}` },
+      { label: '本局总分', value: `${game.totalScore}` },
+      { label: '历史最高', value: `${highScore}` },
     ];
 
     items.forEach((item, i) => {
@@ -6264,43 +6396,91 @@ class GameOverRenderer {
       ctx.restore();
     });
 
-    // 分隔线 + 提示文字
+    // 按钮基础位置（先定义，供提示文字引用）
+    const btnH = 56 * s;
+    const btnBaseY = py + ph - btnH - 12 * s;
+
+    // 分隔线 + 提示文字（紧贴按钮上方）
     const hintAnim = Easing.fadeIn(elapsed, 400, 250, 6 * s);
-    const hintY = lineY + items.length * lineH + 12 * s + hintAnim.yShift;
+    const hintTextY = btnBaseY - 23 * s + hintAnim.yShift;  // 提示文字在按钮上方 23px
+    const hintLineY = hintTextY - 14 * s;                   // 分隔线在提示文字上方 14px
     ctx.save();
     ctx.globalAlpha = hintAnim.alpha;
-    ctx.strokeStyle = '#c4a35a';
-    ctx.lineWidth = 1.2 * s;
+    ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+    ctx.lineWidth = 1 * s;
     ctx.beginPath();
-    ctx.moveTo(px + 30 * s, hintY);
-    ctx.lineTo(px + pw - 30 * s, hintY);
+    ctx.moveTo(px + 30 * s, hintLineY);
+    ctx.lineTo(px + pw - 30 * s, hintLineY);
     ctx.stroke();
 
     ctx.font = `${Math.floor(13 * s)}px sans-serif`;
     ctx.fillStyle = '#888';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('再试一次吧，巫师学徒！', W / 2, hintY + 22 * s);
+    ctx.fillText('还差一点，再多收集几张词牌吧！', W / 2, hintTextY);
     ctx.restore();
 
-    // 重新开始按钮
+    // 三个按钮横排：复活 | 重新开始 | 排行榜
     const btnAnim = Easing.fadeIn(elapsed, 480, 250, 10 * s);
-    const btnW = 160 * s;
-    const btnH = 46 * s;
-    const btnX = (W - btnW) / 2;
-    const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
+    const btnGap = 5 * s;
+    const sidePad = 8 * s;
+    const btnW = (pw - sidePad * 2 - btnGap * 2) / 3;
+    const btnY = btnBaseY + btnAnim.yShift;
+    const btnStartX = px + sidePad;
+
     ctx.save();
     ctx.globalAlpha = btnAnim.alpha;
 
-    // 重新开始按钮
-    this.parent._drawScaledButton(ctx, '重新开始', btnX, btnY, btnW, btnH, s, game._restartBtnPressed, { color: '#c4a35a', radius: 8 });
+    const drawImgBtn = (name, x, y, w, h, pressed) => {
+      const data = this.parent.gameOverBtnImages[name];
+      const offsetY = pressed ? 2 * s : 0;
+      ctx.save();
+      ctx.translate(x + w / 2, y + h / 2 + offsetY);
+      if (data && data.loaded && data.img) {
+        const img = data.img;
+        const imgRatio = img.width / img.height;
+        const btnRatio = w / h;
+        let drawW, drawH;
+        if (imgRatio > btnRatio) {
+          drawW = w;
+          drawH = w / imgRatio;
+        } else {
+          drawH = h;
+          drawW = h * imgRatio;
+        }
+        ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
+      } else {
+        // fallback：圆角矩形底色 + 文字
+        const fallbackColor = name === 'relive_button' ? '#5cb85c' : name === 'restart_button' ? '#c4a35a' : '#6a9fd4';
+        this.parent.roundRect(-w / 2, -h / 2, w, h, 8 * s, fallbackColor);
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const label = name === 'relive_button' ? '复活' : name === 'restart_button' ? '重新开始' : '排行榜';
+        ctx.fillText(label, 0, 0);
+      }
+      ctx.restore();
+    };
 
-    // 闭合 closing 动画的 globalAlpha
+    // 复活按钮（左）
+    const reviveX = btnStartX;
+    drawImgBtn('relive_button', reviveX, btnY, btnW, btnH, game._reviveBtnPressed);
+
+    // 重新开始按钮（中）
+    const restartX = btnStartX + btnW + btnGap;
+    drawImgBtn('restart_button', restartX, btnY, btnW, btnH, game._restartBtnPressed);
+
+    // 排行榜按钮（右）
+    const rankX = btnStartX + (btnW + btnGap) * 2;
+    drawImgBtn('rank_button', rankX, btnY, btnW, btnH, game._rankBtnPressed);
+
     ctx.restore();
 
     // 存储点击区域（动画完成后固定位置）
-    const finalBtnY = py + ph - btnH - 28 * s;
-    this.restartBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
+    this.restartBtnRect = { x: restartX, y: btnBaseY, w: btnW, h: btnH };
+    this.rankBtnRect = { x: rankX, y: btnBaseY, w: btnW, h: btnH };
+    this.reviveBtnRect = { x: reviveX, y: btnBaseY, w: btnW, h: btnH };
   }
 }
 

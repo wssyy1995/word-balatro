@@ -56,15 +56,11 @@ class SettlementRenderer {
 
     // 分隔线
     const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
+    const line1Y = py + 55 * s + line1Anim.yShift;
+    const line1W = pw - 60 * s;
     ctx.save();
     ctx.globalAlpha = line1Anim.alpha * closeAlpha;
-    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    const line1Y = py + 55 * s + line1Anim.yShift;
-    ctx.moveTo(px + 30 * s, line1Y);
-    ctx.lineTo(px + pw - 30 * s, line1Y);
-    ctx.stroke();
+    this.parent._drawTitleDivider(ctx, px + 30 * s, line1Y, line1W, s);
     ctx.restore();
 
     // 金币明细
