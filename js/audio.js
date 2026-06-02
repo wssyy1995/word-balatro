@@ -111,6 +111,8 @@ class AudioManager {
       { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },    // 游戏结束弹窗
       { name: 'card_illegal', src: 'music/sound_effect/card_illegal.mp3' }, // 非法单词提示
       { name: 'tap', src: 'music/sound_effect/tap.mp3' },                  // 弹窗/按钮点击
+      { name: 'challenge', src: 'music/sound_effect/challenge.mp3' },      // 点击挑战按钮
+      { name: 'buy_success', src: 'music/sound_effect/buy_success.mp3' },  // 购买成功弹窗
     ];
 
     soundList.forEach(s => this.load(s.name, s.src));

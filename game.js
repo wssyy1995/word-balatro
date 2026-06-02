@@ -879,6 +879,7 @@ function handleInput(x, y) {
       const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
       if (cbHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
         game.cardBookPage = 0;
         game._cardBookAnimStartTime = Date.now();
@@ -1061,6 +1062,7 @@ function handleInput(x, y) {
       const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
       if (cbHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
         game.cardBookPage = 0;
         game._cardBookAnimStartTime = Date.now();
@@ -1244,6 +1246,7 @@ function handleInput(x, y) {
             game.confirmBuyItem = priceHit.index;
             game._confirmBuySuccess = true;
             game._confirmBuySuccessTime = Date.now();
+            if (game.audioManager) game.audioManager.play('buy_success');
           }
         }, 200);
         return;
@@ -1254,7 +1257,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
       if (btnHit && !game._challengeBtnPressed) {
         vibrate();
-        if (game.audioManager) game.audioManager.play('tap');
+        if (game.audioManager) game.audioManager.play('challenge');
         game._challengeBtnPressed = true;
         renderer.shopRenderer.challengeBtnPressed = true;
         renderer.shopRenderer.challengeBtnPressTime = Date.now();
