@@ -110,7 +110,6 @@ class StorageManager {
       _cardBookGuideText2StartTime: game._cardBookGuideText2StartTime,
       _cardBookGuideExitStartTime: game._cardBookGuideExitStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
-      reviveUsed: game.reviveUsed || false,
       timestamp: Date.now(),
       version: 1
     };
@@ -195,6 +194,23 @@ class StorageManager {
       return true;
     }
     return false;
+  }
+
+  // ===== 每日复活次数 =====
+
+  saveDailyRevive(dateStr, used = true) {
+    return this.set('daily_revive', { date: dateStr, used });
+  }
+
+  loadDailyRevive() {
+    return this.get('daily_revive', null);
+  }
+
+  isDailyReviveUsed() {
+    const data = this.loadDailyRevive();
+    if (!data) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return data.date === today && data.used === true;
   }
 
   // ===== 统计数据 =====

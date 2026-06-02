@@ -1358,8 +1358,9 @@ function handleInput(x, y) {
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {
       const reviveHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.reviveBtnRect]);
       if (reviveHit) {
-        if (game.reviveUsed) {
-          game.hintToast = { text: '本局已使用过复活', expireAt: Date.now() + 2000 };
+        const dailyReviveUsed = game.storageManager && game.storageManager.isDailyReviveUsed();
+        if (dailyReviveUsed) {
+          game.hintToast = { text: '今日复活次数已用完', expireAt: Date.now() + 2000 };
           return;
         }
         vibrate();
@@ -1369,7 +1370,7 @@ function handleInput(x, y) {
         // 拉起分享复活
         shareReviveState = { startTime: Date.now(), resolving: true };
         wx.shareAppMessage({
-          title: `我在 Word Balatro 挑战到了第 ${game.round} 关，快来帮我！`,
+          title: `我正在收集女巫词牌，快来帮我过这关！`,
           query: `from=revive&round=${game.round}&score=${game.totalScore}`
         });
         return;

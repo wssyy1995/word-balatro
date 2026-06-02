@@ -210,7 +210,7 @@ class Renderer {
 
     // 加载游戏结束弹窗按钮图片
     this.gameOverBtnImages = {};
-    const goBtnNames = ['relive_button', 'restart_button', 'rank_button'];
+    const goBtnNames = ['relive_button', 'relive_limit_button', 'restart_button', 'rank_button'];
     goBtnNames.forEach(name => {
       try {
         const img = wx.createImage();
@@ -530,21 +530,18 @@ class Renderer {
       this.previewLoadBgLoaded = false;
     }
 
-    // 加载预加载页走路小女巫精灵图
-    this.witchWalkFrames = [];
-    this.witchWalkFramesLoaded = [false, false, false, false];
-    for (let i = 1; i <= 4; i++) {
-      try {
-        const img = wx.createImage();
-        img.src = `images/small_witch_${i}.png`;
-        const idx = i - 1;
-        img.onload = () => { this.witchWalkFramesLoaded[idx] = true; };
-        img.onerror = () => { this.witchWalkFramesLoaded[idx] = false; };
-        this.witchWalkFrames.push(img);
-      } catch (e) {
-        this.witchWalkFramesLoaded[i - 1] = false;
-        this.witchWalkFrames.push(null);
-      }
+    // 加载预加载页走路小女巫精灵图（small_witch_preload 1~11 合成）
+    this.witchWalkSprite = null;
+    this.witchWalkSpriteLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/small_witch_sprite.png';
+      img.onload = () => { this.witchWalkSpriteLoaded = true; };
+      img.onerror = () => { this.witchWalkSpriteLoaded = false; };
+      this.witchWalkSprite = img;
+    } catch (e) {
+      this.witchWalkSpriteLoaded = false;
+      this.witchWalkSprite = null;
     }
 
     // 加载自定义标题字体（香萃灯粗宋 — 子集化后仅 4.4KB）
@@ -625,18 +622,19 @@ class Renderer {
       }
     }
 
-    // 走路小女巫（精灵图，位置随进度条同步，保持原始像素比例）
-    const frameIdx = Math.floor(Date.now() / 150) % 4;
-    const witchImg = this.witchWalkFrames[frameIdx];
-    if (witchImg && this.witchWalkFramesLoaded[frameIdx]) {
-      const witchBaseW = witchImg.width || 48;
-      const witchBaseH = witchImg.height || 48;
-      const witchScale = 0.85; // 等比例缩小一点点
-      const witchW = witchBaseW * s * witchScale;
-      const witchH = witchBaseH * s * witchScale;
+    // 走路小女巫（精灵图，位置随进度条同步）
+    const WITCH_FRAME_COUNT = 21;
+    const WITCH_FRAME_W = 123;
+    const WITCH_FRAME_H = 166;
+    const frameIdx = Math.floor(Date.now() / 50) % WITCH_FRAME_COUNT;
+    const witchImg = this.witchWalkSprite;
+    if (witchImg && this.witchWalkSpriteLoaded) {
+      const witchScale = 0.53; // 123 * 0.53 ≈ 65px，保持和压缩前一样的显示大小
+      const witchW = WITCH_FRAME_W * s * witchScale;
+      const witchH = WITCH_FRAME_H * s * witchScale;
       const witchX = barX + (barW * (progress / 100)) - witchW / 2;
-      const witchY = H * 0.56;
-      ctx.drawImage(witchImg, witchX, witchY, witchW, witchH);
+      const witchY = H * 0.56 + 14 * s;
+      ctx.drawImage(witchImg, frameIdx * WITCH_FRAME_W, 0, WITCH_FRAME_W, WITCH_FRAME_H, witchX, witchY, witchW, witchH);
     }
 
     // 百分比文字
@@ -2592,7 +2590,7 @@ class Renderer {
     const H = this.H;
     const s = this.scale;
     const phase = game.shopGuidePhase;
-    const GUIDE_TEXT = '找到女巫了！准备接收她的试炼吧，但一定要小心她的约束规则。';
+    const GUIDE_TEXT = '找到女巫了！准备接受她的试炼吧，但一定要小心她的规则约束。';
 
     // 获取聚光灯目标区域（从 shopRenderer 获取，回退到底部中间区域）
     const spotRect = (this.shopRenderer && this.shopRenderer.shopGuideSpotRect)
@@ -6451,13 +6449,13 @@ class GameOverRenderer {
         ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
       } else {
         // fallback：圆角矩形底色 + 文字
-        const fallbackColor = name === 'relive_button' ? '#5cb85c' : name === 'restart_button' ? '#c4a35a' : '#6a9fd4';
+        const fallbackColor = name === 'relive_button' || name === 'relive_limit_button' ? '#5cb85c' : name === 'restart_button' ? '#c4a35a' : '#6a9fd4';
         this.parent.roundRect(-w / 2, -h / 2, w, h, 8 * s, fallbackColor);
         ctx.fillStyle = '#fff';
         ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const label = name === 'relive_button' ? '复活' : name === 'restart_button' ? '重新开始' : '排行榜';
+        const label = name === 'relive_button' || name === 'relive_limit_button' ? '复活' : name === 'restart_button' ? '重新开始' : '排行榜';
         ctx.fillText(label, 0, 0);
       }
       ctx.restore();
@@ -6465,7 +6463,9 @@ class GameOverRenderer {
 
     // 复活按钮（左）
     const reviveX = btnStartX;
-    drawImgBtn('relive_button', reviveX, btnY, btnW, btnH, game._reviveBtnPressed);
+    const canRevive = !game.storageManager || !game.storageManager.isDailyReviveUsed();
+    const reviveBtnName = canRevive ? 'relive_button' : 'relive_limit_button';
+    drawImgBtn(reviveBtnName, reviveX, btnY, btnW, btnH, game._reviveBtnPressed);
 
     // 重新开始按钮（中）
     const restartX = btnStartX + btnW + btnGap;
