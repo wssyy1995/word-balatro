@@ -593,6 +593,7 @@ function handleInput(x, y) {
           vibrate();
           game.cardBookPage--;
           game._cardBookDetailLevel = null;
+          game._cardBookCellPressed = null;
           game._closingCardBookDetail = false;
           return;
         }
@@ -603,6 +604,7 @@ function handleInput(x, y) {
           vibrate();
           game.cardBookPage++;
           game._cardBookDetailLevel = null;
+          game._cardBookCellPressed = null;
           game._closingCardBookDetail = false;
           return;
         }
@@ -631,6 +633,7 @@ function handleInput(x, y) {
         vibrate();
         game.cardBookPage--;
         game._cardBookDetailLevel = null;
+        game._cardBookCellPressed = null;
         game._closingCardBookDetail = false;
         return;
       }
@@ -641,6 +644,7 @@ function handleInput(x, y) {
         vibrate();
         game.cardBookPage++;
         game._cardBookDetailLevel = null;
+        game._cardBookCellPressed = null;
         game._closingCardBookDetail = false;
         return;
       }

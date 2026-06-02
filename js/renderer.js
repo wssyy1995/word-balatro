@@ -633,7 +633,7 @@ class Renderer {
       const witchW = WITCH_FRAME_W * s * witchScale;
       const witchH = WITCH_FRAME_H * s * witchScale;
       const witchX = barX + (barW * (progress / 100)) - witchW / 2;
-      const witchY = H * 0.56 + 14 * s;
+      const witchY = H * 0.56 + 16 * s;
       ctx.drawImage(witchImg, frameIdx * WITCH_FRAME_W, 0, WITCH_FRAME_W, WITCH_FRAME_H, witchX, witchY, witchW, witchH);
     }
 
