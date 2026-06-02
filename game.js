@@ -171,7 +171,13 @@ async function startPreload() {
 
   // 注：witch 头像仍改为回合级按需下载，但 witch_card 在存档恢复时预加载
   const guideStepCount = needGuide ? 2 : 0; // witch_guide_1 + witch_guide_2
-  const total = shopNames.length + bgIconNames.length + guideStepCount;
+
+  // 扫描 music 文件，决定预加载数量
+  const fs = wx.getFileSystemManager();
+  const musicFiles = cloudStorage._scanMusicDir(fs, 'music');
+  const musicCount = musicFiles.length > 0 ? musicFiles.length : Object.keys(cloudStorage.musicFileMap).length;
+
+  const total = shopNames.length + bgIconNames.length + guideStepCount + musicCount;
 
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -194,6 +200,9 @@ async function startPreload() {
     await cloudStorage.preloadGuideGroup(2, renderer);
     onProgress();
   }
+
+  // 预加载 music 文件到本地缓存
+  await cloudStorage.preloadMusicFiles(onProgress);
 
   // 存档恢复时：并行预加载所有已解锁的 witch_card
   if (collectedWitchCards.length > 0) {
@@ -246,6 +255,9 @@ function startGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+
+  // 加载 cloudStorage 缓存的音频
+  if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
 
   // 从预加载页进入商店页时，强制刷新商店
   if (game.state === 'shop') {
@@ -453,6 +465,14 @@ function handleInput(x, y) {
           console.error('bg_icon 上传失败:', err);
         });
       }
+      if (debugHit.action === 'debug_upload_music') {
+        cloudStorage.uploadMusicFiles().then(res => {
+          game.hintToast = { text: `music 上传完成：${res.success.length} 个成功`, expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'music 上传失败', expireAt: Date.now() + 2000 };
+          console.error('music 上传失败:', err);
+        });
+      }
       if (debugHit.action === 'debug_triggerGuide') {
         game.guidePhase = 1;
         game._guideTextStartTime = Date.now();
@@ -502,6 +522,7 @@ function handleInput(x, y) {
         console.log('[CardBook] debug_endGame 前 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
         game.state = 'gameover';
         game.gameOverReason = 'debug';
+        if (game.audioManager) game.audioManager.play('game_over');
         if (game.storageManager) {
           game.storageManager.setHighScore(game.totalScore);
           uploadScore(game.storageManager.getHighScore());
@@ -527,6 +548,7 @@ function handleInput(x, y) {
       const cellHit = renderer.hitTest(x, y, renderer.cardBookCellRects);
       if (cellHit && cellHit.isUnlocked) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         if (game._cardBookCellPressed === cellHit.level) {
           // 再次点击同一张卡：复位 + 关闭详情
           game._cardBookCellPressed = null;
@@ -548,6 +570,7 @@ function handleInput(x, y) {
       const closeHit = renderer.hitTest(x, y, [renderer.cardBookCloseBtnRect]);
       if (closeHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._closingCardBook = true;
         game._closeCardBookStartTime = Date.now();
         game._cardBookDetailLevel = null;
@@ -573,6 +596,7 @@ function handleInput(x, y) {
           }
           game._cardBookEquipBtnPressed = true;
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           const level = game._cardBookDetailLevel;
           if (game.equippedWitchCard === level) {
             // 卸下
@@ -595,6 +619,7 @@ function handleInput(x, y) {
         const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
         if (prevHit && game.cardBookPage > 0) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.cardBookPage--;
           game._cardBookDetailLevel = null;
           game._cardBookCellPressed = null;
@@ -606,6 +631,7 @@ function handleInput(x, y) {
         const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
         if (nextHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.cardBookPage++;
           game._cardBookDetailLevel = null;
           game._cardBookCellPressed = null;
@@ -635,6 +661,7 @@ function handleInput(x, y) {
       const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
       if (prevHit && game.cardBookPage > 0) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game.cardBookPage--;
         game._cardBookDetailLevel = null;
         game._cardBookCellPressed = null;
@@ -646,6 +673,7 @@ function handleInput(x, y) {
       const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
       if (nextHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game.cardBookPage++;
         game._cardBookDetailLevel = null;
         game._cardBookCellPressed = null;
@@ -678,6 +706,7 @@ function handleInput(x, y) {
         const closeHit = renderer.hitTest(x, y, [renderer.changeLetterCloseRect]);
         if (closeHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game._changeLetterPopup = null;
           return;
         }
@@ -696,6 +725,7 @@ function handleInput(x, y) {
         const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
         if (btnHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           if (game._closingChangeLetter) return;
           const popup = game._changeLetterPopup;
           const card = game.hand.find(c => c && c.id === popup.cardId);
@@ -896,6 +926,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
       if (btnHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         renderer.settlementRenderer.claimBtnPressed = true;
         setTimeout(() => {
           renderer.settlementRenderer.claimBtnPressed = false;
@@ -918,6 +949,7 @@ function handleInput(x, y) {
         const hit = renderer.hitTest(x, y, wr.giftRects);
         if (hit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.witchRewardData._selectedGiftIndex = hit.index;
           game.witchRewardData._disappearStartTime = Date.now();
           game.witchRewardData._opening = true;
@@ -936,6 +968,7 @@ function handleInput(x, y) {
             const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
             if (hit) {
               vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
               wr.okBtnPressed = true;
               setTimeout(() => {
                 wr.okBtnPressed = false;
@@ -952,6 +985,7 @@ function handleInput(x, y) {
           const btnHit = renderer.hitTest(x, y, rects);
           if (btnHit) {
             vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
             if (btnHit.action === 'stash') {
               wr.stashBtnPressed = true;
               setTimeout(() => {
@@ -974,6 +1008,7 @@ function handleInput(x, y) {
           const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
           if (hit) {
             vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
             wr.okBtnPressed = true;
             setTimeout(() => {
               wr.okBtnPressed = false;
@@ -993,6 +1028,7 @@ function handleInput(x, y) {
         const btnHit = renderer.hitTest(x, y, [renderer.shopGuideNextBtnRect]);
         if (btnHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.advanceShopGuide();
           return;
         }
@@ -1009,6 +1045,7 @@ function handleInput(x, y) {
           const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideNextBtnRect]);
           if (btnHit) {
             vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
             game.advanceCardBookGuide();
             return;
           }
@@ -1048,6 +1085,7 @@ function handleInput(x, y) {
         const btnHit = renderer.hitTest(x, y, rects);
         if (btnHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game._successBtnPressed = true;
           game._successPressedBtn = btnHit.action;
           game._successBtnPressTime = Date.now();
@@ -1124,6 +1162,7 @@ function handleInput(x, y) {
       const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
       if (sellHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         const arr = game[sellHit.array];
         if (arr && arr[sellHit.index]) {
           const item = arr[sellHit.index];
@@ -1152,6 +1191,7 @@ function handleInput(x, y) {
       const rerollHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
       if (rerollHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         renderer.shopRenderer.rerollBtnPressed = { pressTime: Date.now() };
         if (game.gold >= 3) {
           game.gold -= 3;
@@ -1168,6 +1208,7 @@ function handleInput(x, y) {
       const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
       if (refreshHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         renderer.shopRenderer.refreshBtnPressed = { modIdx: refreshHit.modIdx, pressTime: Date.now() };
         if (game.gold >= 5) {
           game.gold -= 5;
@@ -1182,6 +1223,7 @@ function handleInput(x, y) {
       const priceHit = renderer.hitTest(x, y, renderer.shopRenderer.shopPriceBtnRects);
       if (priceHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         const item = game.shopItems[priceHit.index];
         if (!item) return;
         // 金币不足或已达上限，直接忽略
@@ -1212,6 +1254,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
       if (btnHit && !game._challengeBtnPressed) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._challengeBtnPressed = true;
         renderer.shopRenderer.challengeBtnPressed = true;
         renderer.shopRenderer.challengeBtnPressTime = Date.now();
@@ -1239,6 +1282,7 @@ function handleInput(x, y) {
         const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
         if (spinHit) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.startRandomSpin();
           return;
         }
@@ -1261,6 +1305,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.potionUpgradeBtnRect]);
       if (btnHit && game._potionSelectedLetter) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         // 先计算升级后的分数
         const potion = game.potionMode;
         const letter = game._potionSelectedLetter;
@@ -1304,6 +1349,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.potionStashBtnRect]);
       if (btnHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         // 将药水放入道具栏（如果不在的话）
         if (game.potionMode) {
           const alreadyStashed = game.potions && game.potions.some(p => p.effect === game.potionMode.effect);
@@ -1328,6 +1374,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.lifeExtensionBtnRect]);
       if (btnHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._lifeExtensionBtnPressed = true;
         setTimeout(() => {
           game._lifeExtensionBtnPressed = false;
@@ -1372,6 +1419,7 @@ function handleInput(x, y) {
           return;
         }
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._reviveBtnPressed = true;
         game._reviveBtnPressTime = Date.now();
 
@@ -1390,6 +1438,7 @@ function handleInput(x, y) {
       const rankHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.rankBtnRect]);
       if (rankHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         showRankList();
         return;
       }
@@ -1399,6 +1448,7 @@ function handleInput(x, y) {
       const btnHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.restartBtnRect]);
       if (btnHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._restartBtnPressed = true;
         game._restartBtnPressTime = Date.now();
         setTimeout(() => {
@@ -1436,6 +1486,9 @@ function restartGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+
+  // 加载 cloudStorage 缓存的音频
+  if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
   console.log('[CardBook] restartGame 后, 新实例 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
   game._preloadWitchAvatars();
   game._potionSelectedLetter = null;

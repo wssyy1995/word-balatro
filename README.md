@@ -23,6 +23,8 @@ word-balatro/
 ├── project.config.json  # 微信项目配置（需替换 appid）
 ├── README.md            # 本文档
 ├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
+├── openDataContext/     # 微信开放数据域 —— 好友排行榜
+│   └── index.js         # 排行榜绘制与好友数据拉取
 └── js/
     ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
     ├── words.js         # 本地核心词库（高频词含中文释义）
@@ -338,7 +340,8 @@ render(game)
 ├── _shopToGameTransition()     # 页面过渡遮罩
 ├── _drawGuideOverlay()         # 新手引导覆盖层（Phase 1~5）
 ├── _drawCloudDebugLogs()       # 云存储调试日志
-└── _drawDebugMenu()            # 调试菜单（长按 top_icon 触发）
+├── _drawDebugMenu()            # 调试菜单（长按 top_icon 触发）
+└── _drawRankList()             # 主域绘制开放数据域排行榜（OffScreenCanvas）
 ```
 
 #### 3.3.2 坐标系与适配
@@ -522,6 +525,7 @@ BGM 支持循环播放，音量 0.3。
 | `word_balatro_card_book_unlocked` | 卡牌图鉴解锁状态（跨局永久保留） |
 | `word_balatro_collected_witch_cards` | 已收集的女巫卡牌列表（跨局永久保留） |
 | `word_balatro_equipped_witch_card` | 已装备的女巫卡牌（跨局永久保留） |
+| `word_balatro_daily_revive` | 每日复活次数记录（日期 + 是否已使用） |
 
 ### 3.7 cloud_storage.js — 微信云存储
 
@@ -598,10 +602,11 @@ BGM 支持循环播放，音量 0.3。
 
 ### 4.6 卡牌图鉴（Card Book）
 
-第 3 关通关后解锁，商店页面标题旁显示图鉴图标（闪光提示新收集）。点击图标进入图鉴面板：
+第 3 关通关后解锁，商店页面标题旁显示图鉴图标（新收集时触发闪烁动画）。点击图标进入图鉴面板：
 
 - **收集机制**：每通关一个带女巫头像的关卡，自动收集该关卡对应的女巫卡牌（存入 `collectedWitchCards`）。已收集的卡牌显示彩色头像，未收集的显示灰色占位。
-- **分页浏览**：左右翻页按钮浏览全部关卡女巫牌（每页最多 6 张）。
+- **新收集闪烁动画**：图标缩放脉冲（2 秒内 3 次缩放，幅度 1.0→1.15→1.0）+ 背后紫色星星旋转光晕（`_drawGentleStars` 复用，glowMult=1.5），动画结束后自动停止。调试菜单提供「图鉴闪烁」按钮可手动触发。
+- **分页浏览**：左右翻页按钮浏览全部关卡女巫牌（每页最多 6 张），翻页时自动重置上一页的选中状态。
 - **详情与装备**：点击已收集卡牌展开详情面板，显示女巫名称、描述和技能说明；面板底部提供**装备/卸下**按钮。装备后该女巫头像会显示在商店已装备栏的最右侧。
 - **持久化**：收集状态和装备状态均跨局永久保留（`clearProgress()` 不会清除）。
 
@@ -634,7 +639,36 @@ BGM 支持循环播放，音量 0.3。
     └── out_of_hands ──→ [life_extended] ──领取──→ [shop]  （如有生命延续女巫牌）
     │
     └── out_of_hands / surrender ──→ [gameover] ──restart()──→ [playing]
+    │                                      │
+    │                                      └── 分享复活 ──→ [playing]（每日限1次）
 ```
+
+### 5.0.1 游戏结束弹窗（gameover）
+
+达到游戏结束条件（出牌耗尽、非法单词导致失败、主动投降）后弹出：
+
+```
+┌──────────────────────────────────────┐
+│         🧙‍♀️ fail_witch.png            │  ← 小女巫趴在弹窗顶部，底部重叠，带投影
+│          游 戏 结 束                  │
+│         ◇─────── 分割线 ───────◇     │  ← 金色实线 + 中间小菱形
+│  到达回合          第 N 关            │
+│  本局总分          xxxx               │
+│  历史最高          xxxx               │  ← 从本地存档读取
+│  ─────────────────────────────────   │
+│  还差一点，再多收集几张词牌吧！        │
+│  [复活]  [重新开始]  [排行榜]         │  ← 三按钮横排（图片按钮）
+└──────────────────────────────────────┘
+```
+
+**弹窗装饰细节**：
+- 顶部 `fail_witch.png` 小女巫图，底部重叠约 25px，带投影阴影
+- 女巫左右及右上方点缀圆角五角星装饰（紫色 + 金色错落分布）
+- 女巫右上角 4 道交错紫色竖线（失落符号）
+- 标题分割线采用 `_drawTitleDivider` 通用方法：金色实线 + 中间旋转 45° 小菱形
+- 弹窗蒙层透明度 0.75，关闭动画统一为向上滑动 40px + 淡出 200ms
+
+**按钮布局**：复活（左）、重新开始（中）、排行榜（右），等分三列，5px 间距。
 
 ---
 
@@ -662,6 +696,8 @@ BGM 支持循环播放，音量 0.3。
 **持久化**：引导完成状态（`guidePhase ≥ 5`）通过 `storage.saveGuidePhase()` **独立存储**，即使游戏结束 `clearProgress()` 也不会清除。同一位玩家终身只显示一次引导。
 
 **预加载**：预加载页仅下载新手引导 witch_guide_1/2 精灵图（判断 `savedProgress.guidePhase < 5` 或存档不存在）。witch_guide_3（商店引导）和 witch_guide_4（图鉴引导）均为**回合级按需下载**，不占用预加载流量。
+
+预加载页底部显示一只走路小女巫（`small_witch_sprite.png`，21 帧精灵图，50ms/帧，witchScale=0.53），位置随进度条同步前进，保持原始像素比例。
 
 ### 5.1.1 商店女巫技能引导（witch_guide_3）
 
@@ -770,6 +806,54 @@ letterUpgrades = Map {
 | `wx.request()` | 在线词典/翻译请求 |
 | `wx.showModal()` | 投降确认弹窗 |
 | `wx.vibrateShort()` | 触觉反馈 |
+| `wx.getOpenDataContext()` | 获取开放数据域（好友排行榜） |
+| `wx.setUserCloudStorage()` | 上传历史最高分到微信云端 |
+| `wx.shareAppMessage()` | 分享消息（复活分享） |
+
+---
+
+## 7.4 好友排行榜系统
+
+采用 **微信开放数据域（Open Data Context）+ OffScreenCanvas** 架构：
+
+**架构设计**
+- **开放数据域** `openDataContext/index.js`：独立 JS 运行环境，通过 `wx.getFriendCloudStorage()` 拉取好友数据，在 `sharedCanvas` 上绘制排行榜 UI
+- **主域** `game.js`：负责设置 `sharedCanvas` 的物理像素宽高（解决 ScreenCanvas 文字模糊问题），每帧通过 `ctx.drawImage(odc.canvas)` 将排行榜渲染到主画布
+- **分数上传**：打破历史最高分时，调用 `wx.setUserCloudStorage({ KVDataList: [{ key: 'score', value: String(score) }] })` 写入微信云端
+
+**排行榜弹窗 UI**
+- 深色圆角面板（`#2a2a3a` 边框 `#4a4a6a`）
+- 表头：排名、头像、昵称、分数
+- 当前玩家高亮显示（蓝色背景条）
+- 顶部标题「好友排行榜」+ 右上角红色圆形关闭按钮
+- 头像通过 `wx.createImage()` 异步加载并缓存
+
+**交互**：游戏结束弹窗点击「排行榜」按钮 → `showRankList()` → 开放域 postMessage `action: 'show'` → 主域每帧 `drawImage` 渲染。点击排行榜任意位置 → `hideRankList()` → 恢复游戏结束弹窗。
+
+**配置**：`game.json` 需添加 `"openDataContext": "openDataContext"`。
+
+---
+
+## 7.5 分享复活机制
+
+游戏结束时提供**分享复活**机会：
+
+**流程**
+1. 玩家点击「复活」按钮（`relive_button.png`）
+2. 拉起 `wx.shareAppMessage({ title: '我正在收集女巫词牌，快来帮我过这关！', query: 'from=revive&round=...' })`
+3. 玩家进入分享界面
+4. `wx.onShow` 检测切回前台后的停留时间 ≥ 2500ms，判定分享成功
+5. 执行 `game.revive()`：恢复 1 次出牌机会（`handsLeft = 1`），状态切回 `playing`
+6. 若停留时间不足，提示「分享后才可以复活哦~」
+
+**限制**
+- **每日限 1 次**：通过 `word_balatro_daily_revive` 本地存储记录（日期 + used 状态）
+- 当日已使用后，复活按钮显示为 `relive_limit_button.png`（置灰/限制状态）
+
+**复活效果**
+- 恢复 1 次出牌机会
+- 清空 gameover 相关状态（`_closingGameOver`、`_restartBtnPressed` 等）
+- 自动存档（含复活标记）
 
 ---
 
@@ -811,6 +895,7 @@ letterUpgrades = Map {
 - 上传 witch 图片到云存储（含 guide 精灵图）
 - 上传 bg_icon 图片到云存储
 - **触发新人引导**（强制回到 Phase 1）
+- **图鉴闪烁**（手动触发图鉴图标收集动画）
 - 结束游戏（进入 gameover）
 
 > 调试功能仅在开发阶段使用，上线前应移除或隐藏入口。
@@ -832,7 +917,7 @@ letterUpgrades = Map {
 |--------|------|
 | P1 | 动画系统持续完善（更多粒子效果、过渡动画） |
 | P1 | 音效资源补充与 BGM |
-| P2 | 分享功能（`wx.shareAppMessage`） |
+| ~~P2~~ | ~~分享功能（`wx.shareAppMessage`）~~ ✅ 已完成（分享复活） |
 | ~~P2~~ | ~~新手引导~~ ✅ 已完成 |
 | P3 | 皮肤系统 / 多种卡牌主题 |
 
@@ -856,7 +941,8 @@ letterUpgrades = Map {
 | v1.7.0 | 2026-05-28 | 目标分数改为分段系数曲线；新增商店女巫技能引导（witch_guide_3）；新增卡牌图鉴引导（witch_guide_4）；witch_guide_4 改用精灵图；优化配置 |
 | v1.7.1 | 2026-06-01 | witch_guide_3 改为精灵图；预加载页不再下载 witch_guide_3/4；上传逻辑跳过精灵图目录下的旧帧图 |
 | v1.7.2 | 2026-06-01 | witch_guide_1/2/3 统一改为精灵图（1/2/3 各 14 帧 4×4 拼接，4 为 20 帧 4×5）；预加载页改用 `preloadGuideGroup`；cloud_storage 统一 spritesheet 下载/注入管道；修复 guide 缓存检测的 `.frames` 遗留引用 |
+| v1.8.0 | 2026-06-02 | 接入微信小游戏好友排行榜（开放数据域 + OffScreenCanvas）；游戏结束弹窗全面改造（三按钮横排、历史最高、fail_witch 装饰）；新增分享复活机制（每日限1次）；预加载页女巫走路动画改为 21 帧精灵图；图鉴图标新增收集闪烁动画；新增 `_drawTitleDivider` 通用分割线方法 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-05-28*
+*文档基于实际代码整理，最后更新：2026-06-02*

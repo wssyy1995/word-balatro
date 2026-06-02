@@ -1193,6 +1193,8 @@ class Game {
     const idx = this.selected.indexOf(cardId);
     const card = this.hand.find(c => c && c.id === cardId);
     if (!card) return;
+    // 点击字母卡牌音效
+    if (this.audioManager) this.audioManager.play('card_placement');
     if (idx >= 0) {
       this.selected.splice(idx, 1);
       card.selected = false;
@@ -1275,7 +1277,7 @@ class Game {
     if (!valid) {
       this.pendingCheck.state = 'invalid';
       this.pendingCheck.resolveTime = Date.now();
-      if (this.audioManager) this.audioManager.play('invalid');
+      if (this.audioManager) this.audioManager.play('card_illegal');
 
       // 勇敢试错：每次非法单词倍率 +1；若同时触发容错咒文，不生效
       const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
@@ -1292,6 +1294,7 @@ class Game {
         this._delay(() => {
           this.state = 'gameover';
           this.gameOverReason = 'forbidden_word';
+          if (this.audioManager) this.audioManager.play('game_over');
           if (this.storageManager) {
             this.storageManager.setHighScore(this.totalScore);
             uploadScore(this.storageManager.getHighScore());
@@ -1328,6 +1331,7 @@ class Game {
           this._delay(() => {
             this.state = 'gameover';
             this.gameOverReason = 'out_of_hands';
+            if (this.audioManager) this.audioManager.play('game_over');
             if (this.storageManager) {
               this.storageManager.setHighScore(this.totalScore);
               uploadScore(this.storageManager.getHighScore());
@@ -1370,6 +1374,7 @@ class Game {
             this._delay(() => {
               this.state = 'gameover';
               this.gameOverReason = 'out_of_hands';
+              if (this.audioManager) this.audioManager.play('game_over');
               if (this.storageManager) {
                 this.storageManager.setHighScore(this.totalScore);
                 uploadScore(this.storageManager.getHighScore());
@@ -1531,7 +1536,7 @@ class Game {
     this.pendingCheck.wholeWordJokers = wholeWordJokers;
 
     if (this.audioManager) {
-      this.audioManager.play('valid');
+      this.audioManager.play('card_valid');
     }
 
     // 计分动画由 renderer.js 事件驱动推进，不再使用固定时间轴
@@ -1584,6 +1589,7 @@ class Game {
       if (!triggered) {
         this.state = 'gameover';
         this.gameOverReason = 'out_of_hands';
+        if (this.audioManager) this.audioManager.play('game_over');
         if (this.storageManager) {
           this.storageManager.setHighScore(this.totalScore);
           uploadScore(this.storageManager.getHighScore());
@@ -1719,6 +1725,7 @@ class Game {
   }
 
   _showSettlement() {
+    if (this.audioManager) this.audioManager.play('round_win');
     let baseGold = 4;
     // 装备卡结算加成
     if (this.equippedWitchCard) {
@@ -1879,7 +1886,7 @@ class Game {
   discard() {
     if (this.discardsLeft <= 0 || this.selected.length === 0) return false;
     
-    if (this.audioManager) this.audioManager.play('discard');
+    if (this.audioManager) this.audioManager.play('card_shuffle');
     
     const removedIndices = [];
     const discardedCards = [];

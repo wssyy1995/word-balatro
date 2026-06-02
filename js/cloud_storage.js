@@ -15,6 +15,8 @@ class CloudStorageManager {
     this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
     this.guideFileMap = {};   // { 'witch_guide_1_spritesheet': fileID, ... }
+    this.musicFileMap = {};   // { name: fileID }
+    this.musicCache = {};     // { name: localPath }
     this.initialized = false;
     this.uploading = false;
     this.debugLogs = [];
@@ -82,6 +84,9 @@ class CloudStorageManager {
     this.defaultBgIconFileMap = {
       'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
+
+    // 默认 music 云文件映射
+    this.defaultMusicFileMap = {};
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
     this.defaultGuideFileMap = {};
@@ -184,6 +189,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('guide 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 music 映射兜底
+    this.musicFileMap = { ...this.defaultMusicFileMap };
+
+    // 加载 music 的本地缓存映射
+    try {
+      const musicStored = wx.getStorageSync('cloud_music_map');
+      if (musicStored) {
+        const musicLocalMap = JSON.parse(musicStored);
+        this.musicFileMap = { ...this.musicFileMap, ...musicLocalMap };
+        this.log('music 本地缓存映射已加载，共' + Object.keys(musicLocalMap).length + '个');
+      } else {
+        this.log('无 music 本地缓存');
+      }
+    } catch (e) {
+      this.log('music 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
   }
 
@@ -1189,6 +1211,180 @@ class CloudStorageManager {
       }
     });
     this.log('已注入 bg_icon renderer: ' + count + '张');
+  }
+
+  // ===== music 文件管理 =====
+
+  // 递归扫描 music/ 目录下所有 .mp3
+  _scanMusicDir(fs, dirPath) {
+    const results = [];
+    try {
+      const entries = fs.readdirSync(dirPath);
+      for (const entry of entries) {
+        const fullPath = `${dirPath}/${entry}`;
+        const stat = fs.statSync(fullPath);
+        if (stat.isDirectory()) {
+          results.push(...this._scanMusicDir(fs, fullPath));
+        } else if (entry.endsWith('.mp3')) {
+          const relPath = fullPath.replace(/^music\//, '');
+          const name = entry.replace(/\.mp3$/i, '');
+          results.push({ localPath: fullPath, fileName: entry, relPath, name });
+        }
+      }
+    } catch (e) {}
+    return results;
+  }
+
+  // 上传 music/ 目录下所有 .mp3 到云存储
+  async uploadMusicFiles() {
+    if (this.uploading) return { success: false, message: '正在上传中...' };
+    this.uploading = true;
+
+    const results = { success: [], failed: [] };
+    const fs = wx.getFileSystemManager();
+
+    const allFiles = this._scanMusicDir(fs, 'music');
+    this.log('扫描 music/ 目录（含子目录）');
+    this.log('扫描到 ' + allFiles.length + ' 个本地 music 文件');
+
+    for (const file of allFiles) {
+      const { localPath, relPath, name } = file;
+      const cloudPath = `music/${relPath}`;
+
+      this.log('开始上传 ' + cloudPath);
+
+      let uploadRes = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: localPath,
+          });
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            this.log('上传失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (uploadRes) {
+        this.musicFileMap[name] = uploadRes.fileID;
+        results.success.push({ name, fileID: uploadRes.fileID });
+        this.log('上传成功 ' + cloudPath);
+      } else {
+        console.error('上传失败:', name, lastError);
+        this.log('上传失败 ' + cloudPath + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        results.failed.push({ name, error: lastError });
+      }
+    }
+
+    // 保存映射到本地缓存
+    try {
+      wx.setStorageSync('cloud_music_map', JSON.stringify(this.musicFileMap));
+    } catch (e) {}
+
+    this.uploading = false;
+    return results;
+  }
+
+  // 预加载 music 文件：本地有则直接使用；本地无则从云存储下载到缓存
+  async preloadMusicFiles(onProgress = null) {
+    const fs = wx.getFileSystemManager();
+    const localFiles = this._scanMusicDir(fs, 'music');
+
+    if (localFiles.length > 0) {
+      // 本地有文件：直接使用本地路径
+      this.log('检测到本地 music 文件，共' + localFiles.length + '个');
+      localFiles.forEach(file => {
+        this.musicCache[file.name] = file.localPath;
+        if (onProgress) onProgress();
+      });
+      return;
+    }
+
+    // 本地无文件：从云存储下载
+    const names = Object.keys(this.musicFileMap);
+    if (names.length === 0) {
+      this.log('没有本地 music 文件且无云存储映射，跳过预加载');
+      return;
+    }
+
+    this.log('本地无 music 文件，开始从云存储下载，共' + names.length + '个');
+
+    // 确保缓存目录存在
+    const cacheDir = `${wx.env.USER_DATA_PATH}/music_cache`;
+    try { fs.mkdirSync(cacheDir, true); } catch (e) {}
+
+    for (const name of names) {
+      const fileID = this.musicFileMap[name];
+      if (!fileID) continue;
+
+      // 获取临时 URL
+      let urlData = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await new Promise((resolve, reject) => {
+            wx.cloud.getTempFileURL({ fileList: [fileID], success: resolve, fail: reject });
+          });
+          const data = res.fileList[0];
+          if (data && data.status === 0 && data.tempFileURL) {
+            urlData = data;
+            break;
+          }
+          lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+        } catch (e) {
+          lastError = e;
+        }
+        if (attempt < 3) {
+          this.log('获取 music URL 失败，1秒后重试: ' + name);
+          await new Promise(r => setTimeout(r, 1000));
+        }
+      }
+
+      if (!urlData) {
+        this.log('获取 music URL 失败: ' + name + ' ' + (lastError && lastError.message ? lastError.message : ''));
+        continue;
+      }
+
+      // 下载到本地缓存
+      const cachePath = `${cacheDir}/${name}.mp3`;
+      try {
+        await new Promise((resolve, reject) => {
+          wx.downloadFile({
+            url: urlData.tempFileURL,
+            success: (res) => {
+              if (res.statusCode === 200) {
+                try {
+                  fs.copyFileSync(res.tempFilePath, cachePath);
+                  this.musicCache[name] = cachePath;
+                  this.log('music 下载成功: ' + name);
+                } catch (e) {
+                  this.log('music 缓存失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
+                }
+              } else {
+                this.log('music 下载失败: ' + name + ' status=' + res.statusCode);
+              }
+              resolve();
+            },
+            fail: (e) => {
+              this.log('music 下载失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
+              resolve();
+            },
+          });
+        });
+      } catch (e) {
+        this.log('music 下载异常: ' + name);
+      }
+
+      if (onProgress) onProgress();
+    }
+
+    this.log('music 下载完成，共' + Object.keys(this.musicCache).length + '个');
   }
 }
 

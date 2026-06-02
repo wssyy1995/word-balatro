@@ -77,8 +77,18 @@ class AudioManager {
     }
   }
 
+  // 从 cloudStorage 的 musicCache 加载缓存的音频
+  loadFromCloud(cloudStorage) {
+    if (!cloudStorage || !cloudStorage.musicCache) return;
+    Object.entries(cloudStorage.musicCache).forEach(([name, path]) => {
+      if (!this.sounds[name]) {
+        this.load(name, path);
+      }
+    });
+  }
+
   // 预加载所有音效（需要在游戏启动时调用）
-  preloadAll() {
+  preloadAll(cloudStorage = null) {
     // 注意：实际项目中需要将这些音效文件放入项目目录
     // 例如：audio/ 文件夹下放置以下文件
     const soundList = [
@@ -94,9 +104,20 @@ class AudioManager {
       { name: 'levelup', src: 'audio/levelup.mp3' },    // 进入下一关
       { name: 'surrender', src: 'audio/surrender.mp3' },// 投降
       { name: 'button', src: 'audio/button.mp3' },      // 按钮点击
+      { name: 'card_placement', src: 'music/sound_effect/card_placement.mp3' }, // 点击字母卡牌
+      { name: 'card_valid', src: 'music/sound_effect/card_valid.mp3' },  // 单词校验合法
+      { name: 'card_shuffle', src: 'music/sound_effect/card_shuffle.mp3' }, // 点击弃牌
+      { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },    // 回合结算弹窗
+      { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },    // 游戏结束弹窗
+      { name: 'card_illegal', src: 'music/sound_effect/card_illegal.mp3' }, // 非法单词提示
+      { name: 'tap', src: 'music/sound_effect/tap.mp3' },                  // 弹窗/按钮点击
     ];
 
     soundList.forEach(s => this.load(s.name, s.src));
+
+    // 从 cloudStorage 的本地缓存加载
+    this.loadFromCloud(cloudStorage);
+
     this.initialized = true;
   }
 }
