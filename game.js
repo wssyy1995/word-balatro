@@ -511,6 +511,10 @@ function handleInput(x, y) {
           game.storageManager.clearProgress();
         }
       }
+      if (debugHit.action === 'debug_flashCardBook') {
+        game._forceCardBookFlash = true;
+        game._cardBookIconFlashStart = Date.now();
+      }
       renderer.debugMenuOpen = false;
       return;
     }

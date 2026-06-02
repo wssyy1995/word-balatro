@@ -599,6 +599,7 @@ class Game {
       console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
+    this._forceCardBookFlash = false;
       this.extraSafety = 0;
       this.extraHands = 0;
       this.baseHandSize = 9;

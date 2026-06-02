@@ -3046,19 +3046,43 @@ class Renderer {
     const iconY = titleY - iconH / 2 + pressOffset - 1 * s;
     ctx.save();
 
-    // 新收集闪烁动画：持续约 2.5 秒，透明度正弦波动 2 下
-    if (game._newWitchCardThisShop && game._cardBookIconFlashStart) {
+    // 新收集闪烁动画：缩放脉冲 + 金色外发光
+    let flashScale = 1;
+    let glowAlpha = 0;
+    const isFlashing = (game._newWitchCardThisShop || game._forceCardBookFlash) && game._cardBookIconFlashStart;
+    if (isFlashing) {
       const flashElapsed = Date.now() - game._cardBookIconFlashStart;
-      if (flashElapsed < 2500) {
-        const flashAlpha = 0.6 + 0.4 * Math.sin(flashElapsed / 200);
-        ctx.globalAlpha = flashAlpha;
+      if (flashElapsed < 2000) {
+        const pulse = Math.abs(Math.sin(flashElapsed / 212));
+        flashScale = 1 + 0.15 * pulse;
+        glowAlpha = pulse;
       } else {
+        game._cardBookIconFlashStart = null;
         game._newWitchCardThisShop = null;
+        game._forceCardBookFlash = false;
       }
     }
 
+    const centerX = iconX + iconW / 2;
+    const centerY = iconY + iconH / 2;
+    const drawW = iconW * flashScale;
+    const drawH = iconH * flashScale;
+    const drawX = centerX - drawW / 2;
+    const drawY = centerY - drawH / 2;
+
+    // 闪烁时背后绘制紫色星星（通用方法 _drawGentleStars 复用）
+    if (isFlashing && game._cardBookIconFlashStart) {
+      const elapsed = Date.now() - game._cardBookIconFlashStart;
+      const duration = 2000;
+      if (elapsed < duration) {
+        const fade = elapsed > 1000 ? 1 - (elapsed - 1000) / 1000 : 1;
+        this._drawGentleStars(drawX + drawW / 2, drawY + drawH / 2, 40 * s, s, fade, 1.5);
+      }
+    }
+
+    // 绘制图标（带缩放脉冲）
     if (this.cardBookIcon && this.cardBookIconLoaded) {
-      ctx.drawImage(this.cardBookIcon, iconX, iconY, iconW, iconH);
+      ctx.drawImage(this.cardBookIcon, drawX, drawY, drawW, drawH);
     }
     ctx.restore();
     this.cardBookIconRect = { x: iconX, y: iconY, w: iconW, h: iconH };
@@ -5768,7 +5792,7 @@ class Renderer {
   }
 
   // ===== 温柔旋转星星（复用礼盒 starburst，紫色系）=====
-  _drawGentleStars(cx, cy, size, s, globalAlpha = 1) {
+  _drawGentleStars(cx, cy, size, s, globalAlpha = 1, glowMult = 1) {
     const ctx = this.ctx;
     const now = Date.now();
     const breath = 0.5 + 0.5 * Math.sin(now / 800);
@@ -5779,8 +5803,8 @@ class Renderer {
     ctx.shadowBlur = 0;
 
     // === 淡紫色径向光晕 ===
-    const glowR = size * 0.6;
-    const glowAlpha = 0.18 * breath;
+    const glowR = size * 0.6 * glowMult;
+    const glowAlpha = 0.18 * breath * glowMult;
     const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
     glowGrad.addColorStop(0, `rgba(180,140,220,${glowAlpha})`);
     glowGrad.addColorStop(0.4, `rgba(155,89,182,${glowAlpha * 0.6})`);
@@ -6136,6 +6160,7 @@ class Renderer {
       { label: '触发商店引导', action: 'debug_triggerShopGuide' },
       { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
       { label: '👻结束游戏', action: 'debug_endGame' },
+      { label: '图鉴闪烁', action: 'debug_flashCardBook' },
     ];
     const itemW = 130 * s;
     const itemH = 34 * s;
