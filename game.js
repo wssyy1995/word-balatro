@@ -374,6 +374,11 @@ wx.onTouchEnd(() => {
 });
 
 function handleInput(x, y) {
+  // 首次用户交互时尝试启动 BGM（真机音频必须在用户触摸事件回调内首次播放）
+  if (game.audioManager && !game.audioManager.bgmStarted) {
+    game.audioManager.tryStartBGM();
+  }
+
   // 新手引导阶段：优先处理引导点击，禁用其他交互
   if (game.guidePhase >= 1 && game.guidePhase <= 4) {
     if (renderer.guideNextBtnRect) {
@@ -748,7 +753,6 @@ function handleInput(x, y) {
               if (game.potions && game.potions[popup.potionIndex]) {
                 game.potions.splice(popup.potionIndex, 1);
               }
-              if (game.audioManager) game.audioManager.play('upgrade');
               if (game.storageManager) game.storageManager.saveProgress();
               game._changeLetterPopup = null;
               game._closingChangeLetter = false;

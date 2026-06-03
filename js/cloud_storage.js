@@ -85,8 +85,18 @@ class CloudStorageManager {
       'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
 
-    // 默认 music 云文件映射
-    this.defaultMusicFileMap = {};
+    // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
+    this.defaultMusicFileMap = {
+      'buy_success': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/buy_success.mp3',
+      'card_illegal': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_illegal.mp3',
+      'card_placement': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_placement.mp3',
+      'card_shuffle': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_shuffle.mp3',
+      'card_valid': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_valid.mp3',
+      'challenge': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/challange.mp3',
+      'game_over': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/game_over.mp3',
+      'round_win': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/round_win.mp3',
+      'tap': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/tap.mp3',
+    };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
     this.defaultGuideFileMap = {};

@@ -5,6 +5,8 @@ class AudioManager {
     this.bgm = null;
     this.enabled = true;
     this.initialized = false;
+    this.bgmStarted = false; // BGM 是否已启动（真机首次播放需用户交互）
+    this._firstInteraction = false; // 是否有过用户交互
   }
 
   // 加载音效
@@ -19,18 +21,33 @@ class AudioManager {
     const audio = wx.createInnerAudioContext();
     audio.src = src;
     audio.volume = 0.6;
+    audio.obeyMuteSwitch = false; // ← 关键：真机静音模式下也能播放
     this.sounds[name] = audio;
   }
 
-  // 播放音效
+  // 播放音效（支持懒加载：真机上预加载失败时，播放时重新尝试加载）
   play(name) {
-    if (!this.enabled || !this.sounds[name]) return;
-    const audio = this.sounds[name];
+    if (!this.enabled) return;
+
+    // 真机兼容：首次用户交互标记（用于后续启动 BGM）
+    this._firstInteraction = true;
+
+    let audio = this.sounds[name];
+    if (!audio) {
+      // 预加载时没找到，尝试懒加载（可能是路径问题或实例超限）
+      const lazySrc = this._findSrcByName(name);
+      if (lazySrc) {
+        this.load(name, lazySrc);
+        audio = this.sounds[name];
+      }
+    }
+    if (!audio) return;
+
     audio.stop();
     audio.play();
   }
 
-  // 播放背景音乐
+  // 播放背景音乐（需在用户交互后调用）
   playBGM(src) {
     if (!this.enabled) return;
     if (this.bgm) {
@@ -41,7 +58,25 @@ class AudioManager {
     this.bgm.src = src;
     this.bgm.loop = true;
     this.bgm.volume = 0.3;
+    this.bgm.obeyMuteSwitch = false; // ← 关键：真机静音模式下也能播放
     this.bgm.play();
+    this.bgmStarted = true;
+  }
+
+  // 尝试启动 BGM（在用户交互后调用）
+  tryStartBGM(src = 'music/bg/bg_music.mp3') {
+    if (this.bgmStarted || !this._firstInteraction) return;
+
+    // 先检查 BGM 文件是否存在，避免文件缺失时抛 readFile 报错
+    const fs = wx.getFileSystemManager();
+    try {
+      fs.accessSync(src);
+    } catch (e) {
+      // BGM 文件不存在，静默跳过
+      return;
+    }
+
+    this.playBGM(src);
   }
 
   // 停止背景音乐
@@ -75,6 +110,8 @@ class AudioManager {
       } catch (e) {}
       this.bgm = null;
     }
+    this.bgmStarted = false;
+    this._firstInteraction = false;
   }
 
   // 从 cloudStorage 的 musicCache 加载缓存的音频
@@ -92,28 +129,20 @@ class AudioManager {
     // 注意：实际项目中需要将这些音效文件放入项目目录
     // 例如：audio/ 文件夹下放置以下文件
     const soundList = [
-      { name: 'select', src: 'audio/select.mp3' },      // 选牌
-      { name: 'deselect', src: 'audio/deselect.mp3' },  // 取消选牌
-      { name: 'play', src: 'audio/play.mp3' },          // 出牌
-      { name: 'discard', src: 'audio/discard.mp3' },    // 弃牌
-      { name: 'valid', src: 'audio/valid.mp3' },        // 合法单词
-      { name: 'invalid', src: 'audio/invalid.mp3' },    // 非法单词
-      { name: 'score', src: 'audio/score.mp3' },        // 得分
-      { name: 'upgrade', src: 'audio/upgrade.mp3' },    // 升级
-      { name: 'buy', src: 'audio/buy.mp3' },            // 购买
-      { name: 'levelup', src: 'audio/levelup.mp3' },    // 进入下一关
-      { name: 'surrender', src: 'audio/surrender.mp3' },// 投降
-      { name: 'button', src: 'audio/button.mp3' },      // 按钮点击
-      { name: 'card_placement', src: 'music/sound_effect/card_placement.mp3' }, // 点击字母卡牌
-      { name: 'card_valid', src: 'music/sound_effect/card_valid.mp3' },  // 单词校验合法
-      { name: 'card_shuffle', src: 'music/sound_effect/card_shuffle.mp3' }, // 点击弃牌
-      { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },    // 回合结算弹窗
-      { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },    // 游戏结束弹窗
+      // 有云存储映射，预加载页自动下载到缓存
+      { name: 'buy_success', src: 'music/sound_effect/buy_success.mp3' },   // 购买成功弹窗
       { name: 'card_illegal', src: 'music/sound_effect/card_illegal.mp3' }, // 非法单词提示
-      { name: 'tap', src: 'music/sound_effect/tap.mp3' },                  // 弹窗/按钮点击
-      { name: 'challenge', src: 'music/sound_effect/challenge.mp3' },      // 点击挑战按钮
-      { name: 'buy_success', src: 'music/sound_effect/buy_success.mp3' },  // 购买成功弹窗
+      { name: 'card_placement', src: 'music/sound_effect/card_placement.mp3' }, // 点击字母卡牌
+      { name: 'card_shuffle', src: 'music/sound_effect/card_shuffle.mp3' }, // 点击弃牌
+      { name: 'card_valid', src: 'music/sound_effect/card_valid.mp3' },     // 单词校验合法
+      { name: 'challenge', src: 'music/sound_effect/challenge.mp3' },       // 点击挑战按钮
+      { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },       // 游戏结束弹窗
+      { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },       // 回合结算弹窗
+      { name: 'tap', src: 'music/sound_effect/tap.mp3' },                   // 弹窗/按钮点击
     ];
+
+    // 保存映射用于懒加载
+    this._soundList = soundList;
 
     soundList.forEach(s => this.load(s.name, s.src));
 
@@ -121,6 +150,13 @@ class AudioManager {
     this.loadFromCloud(cloudStorage);
 
     this.initialized = true;
+  }
+
+  // 根据名称查找音效路径（懒加载用）
+  _findSrcByName(name) {
+    if (!this._soundList) return null;
+    const found = this._soundList.find(s => s.name === name);
+    return found ? found.src : null;
   }
 }
 

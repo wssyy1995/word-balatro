@@ -1199,13 +1199,11 @@ class Game {
       this.selected.splice(idx, 1);
       card.selected = false;
       if (this.animManager) this.animManager.cardDeselect(card);
-      if (this.audioManager) this.audioManager.play('deselect');
     } else {
       if (this.selected.length >= 9) return;
       this.selected.push(cardId);
       card.selected = true;
       if (this.animManager) this.animManager.cardSelect(card);
-      if (this.audioManager) this.audioManager.play('select');
     }
   }
 
@@ -1364,7 +1362,6 @@ class Game {
         if (witchSkill.angry_tip) {
           this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
         }
-        if (this.audioManager) this.audioManager.play('invalid');
         if (!this._hastePlayActive) {
           this.handsLeft--;
         }
@@ -1607,7 +1604,7 @@ class Game {
     this.score += score;
     this.totalScore += score;
     if (this.audioManager) {
-      this._delay(() => this.audioManager.play('score'), 200);
+      this._delay(() => {}, 200);
     }
   }
 
@@ -2057,7 +2054,6 @@ class Game {
       }
     });
     this.selected = [];
-    if (this.audioManager) this.audioManager.play('deselect');
   }
 
   update(deltaTime) {
