@@ -565,7 +565,6 @@ Renderer.prototype.render = function(game) {
         ctx.restore();
       }
     }
-  }
-};
+  };
 
 module.exports = { Renderer };

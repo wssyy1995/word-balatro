@@ -1,1 +1,1 @@
-module.exports = require('./render');
+module.exports = require('./render/index');
