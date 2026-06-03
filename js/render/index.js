@@ -9,7 +9,6 @@ require('./popup')(Renderer);
 require('./guide')(Renderer);
 require('./cardbook')(Renderer);
 require('./debug')(Renderer);
-require('./gameover')(Renderer);
 
 // ===== 主渲染入口 =====
 Renderer.prototype.render = function(game) {

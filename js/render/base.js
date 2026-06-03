@@ -4,6 +4,7 @@ const { SettlementRenderer, WitchRewardRenderer } = require('../settlement');
 const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('../shop');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { Easing } = require('../animation');
+const { GameOverRenderer } = require('./gameover');
 
 class Renderer {
   constructor(ctx, width, height) {
