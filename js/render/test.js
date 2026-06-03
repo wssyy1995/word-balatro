@@ -148,6 +148,8 @@
         drawImage: () => {},
         measureText: () => ({ width: 100 }),
         setLineDash: () => {},
+        createLinearGradient: () => ({ addColorStop: () => {} }),
+        createRadialGradient: () => ({ addColorStop: () => {} }),
         translate: () => {},
         scale: () => {},
         rotate: () => {},
