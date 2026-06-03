@@ -1076,7 +1076,7 @@ class ShopRenderer {
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       ctx.drawImage(this.parent.shopIcon, nrTitleStartX, nrTitleY - nrTitleIconSize / 2 - 1 * s, nrTitleIconSize, nrTitleIconSize);
     }
-    ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY - 3);
+    ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY - 2);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
