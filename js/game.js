@@ -239,7 +239,7 @@ function findAllValidWordsInHand(hand) {
     }
 
     seenWords.add(word);
-    const preview = calcWordScore(wordCards, []);
+    const preview = calcWordScore(wordCards, [], null, null, this._lastPlayedLetters);
     if (preview.valid) {
       results.push({ word, cards: wordCards, score: preview.score });
     }
@@ -260,13 +260,14 @@ function findValidWordInHand(hand) {
 
 // 判断单张卡是否匹配女巫牌的 trigger 条件
 // index: 卡牌在单词中的位置（从0开始），用于 initial_vowel 等需要位置信息的 trigger
-function _matchCardTrigger(card, trigger, index = -1) {
+function _matchCardTrigger(card, trigger, index = -1, joker = null) {
   switch (trigger) {
     case 'letter_a': return card.letter === 'A';
     case 'letter_e': return card.letter === 'E';
     case 'has_vowel': return 'AEIOU'.includes(card.letter);
     case 'high_letter': return ['J','Q','X','Z'].includes(card.letter);
     case 'initial_vowel': return index === 0 && 'AEIOU'.includes(card.letter);
+    case 'predicted_letter': return joker && card.letter === (joker._predictedLetter || '');
     default: return false;
   }
 }
@@ -290,15 +291,12 @@ function _matchWordTrigger(cards, trigger) {
       const word = cards.map(c => c.letter.toLowerCase()).join('');
       return word.length >= 2 && word[0] === word[word.length - 1];
     }
-    case 'no_duplicate': {
-      const word = cards.map(c => c.letter.toLowerCase()).join('');
-      return new Set(word.split('')).size === word.length;
-    }
+
     default: return false;
   }
 }
 
-function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = null) {
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = null, lastPlayedLetters = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
@@ -329,7 +327,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
     switch (j.scope) {
       case 'per_card':
         cards.forEach((c, i) => {
-          if (_matchCardTrigger(c, j.trigger, i)) {
+          if (_matchCardTrigger(c, j.trigger, i, j)) {
             if (j.operation === 'add') {
               cardAddScores[i] += j.value;
             } else {
@@ -346,6 +344,23 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
           wwMatched = pendingCheck?.endEdValid || false;
         } else if (j.trigger === 'end_s') {
           wwMatched = pendingCheck?.endSValid || false;
+        } else if (j.trigger === 'no_duplicate') {
+          // 消元术：与上一手无重复字母时触发
+          const currentLetters = new Set(cards.map(c => c.letter.toUpperCase()));
+          const lastLetters = lastPlayedLetters;
+          if (!lastLetters || lastLetters.size === 0) {
+            wwMatched = true; // 第一手默认触发
+          } else {
+            // 检查是否有交集
+            let hasOverlap = false;
+            for (const letter of currentLetters) {
+              if (lastLetters.has(letter)) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            wwMatched = !hasOverlap;
+          }
         } else {
           wwMatched = _matchWordTrigger(cards, j.trigger);
         }
@@ -807,6 +822,7 @@ class Game {
     this._seedMinLen = p._seedMinLen;
     this._seedMaxLen = p._seedMaxLen;
     this._lastInitialLetter = p._lastInitialLetter || null;
+    this._lastPlayedLetters = p._lastPlayedLetters || null;
 
     // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
     const sanitizeCard = (card) => {
@@ -1025,6 +1041,7 @@ class Game {
     this._witchSkillProtectUsed = false;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
+    this._lastPlayedLetters = null; // 新回合开始，清除上一手字母记录
     // 清除所有女巫牌的动画状态，防止上一回合的动画残留
     (this.jokers || []).forEach(j => {
       if (j) {
@@ -1037,6 +1054,11 @@ class Game {
         j._wwJumpStart = null;
         j._wwJumpDone = false;
         j._ruleBreakerFlash = false;
+        // 预言家：回合开始时随机预言一个字母
+        if (j.trigger === 'predicted_letter') {
+          const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+          j._predictedLetter = letters[Math.floor(Math.random() * letters.length)];
+        }
       }
     });
 
@@ -1425,7 +1447,7 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkill);
+    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkill, this._lastPlayedLetters);
 
     // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
@@ -1471,6 +1493,8 @@ class Game {
         }
       });
       this._lastInitialLetter = currentInitial;
+    // 记录本手打出的字母集合（供消元术下一手对比）
+    this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
     }
 
     // 计算每个字母跳跃时触发的女巫牌索引（scope === 'per_card'）
@@ -1483,7 +1507,7 @@ class Game {
         const joker = jokers[j];
         if (!joker || joker._disabled) continue;
         if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
-        if (_matchCardTrigger(card, joker.trigger, i)) triggered.push(j);
+        if (_matchCardTrigger(card, joker.trigger, i, joker)) triggered.push(j);
       }
       jokerTriggers.push(triggered);
     }

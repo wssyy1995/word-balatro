@@ -761,9 +761,11 @@ class Renderer {
     // 计算内容高度
     const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
     const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
+    const hasPredicted = joker.trigger === 'predicted_letter' && joker._predictedLetter;
     let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
     if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
     if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
+    if (hasPredicted) contentH += lineH + 2 * s; // 预言字母
     if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
     const popupH = contentH;
     const popupY = cardY + cardH + 6 * s + 2 * s;
@@ -856,6 +858,18 @@ class Renderer {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(`剩余次数：${joker.usesLeft} / ${joker.limit}`, popupX + pad, cy);
+      ctx.restore();
+    }
+
+    // 预言字母（预言家牌）
+    if (hasPredicted) {
+      cy += lineH + 2 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#9b59b6';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`预言字母：${joker._predictedLetter}`, popupX + pad, cy);
       ctx.restore();
     }
 
@@ -1139,7 +1153,7 @@ class Renderer {
   }
 
   // 绘制已购买道具卡牌（cover模式裁剪到空位大小+底部蒙层+名字）
-  _drawPropCard(ctx, prop, x, y, w, h, s, showDisabled = true) {
+  _drawPropCard(ctx, prop, x, y, w, h, s, showDisabled = true, showPredicted = true) {
     const iconName = prop.trigger || prop.effect;
     const iconData = this.shopCardImages[iconName];
     let offsetY = prop._jumpOffsetY || 0;
@@ -1278,6 +1292,27 @@ class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(`${prop.usesLeft}`, badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 0.5 * s);
+      ctx.restore();
+    }
+
+    // 预言字母标记（预言家牌，右上角）
+    if (showPredicted && prop.trigger === 'predicted_letter' && prop._predictedLetter) {
+      ctx.save();
+      const badgeSize = 16 * s;
+      const badgeX = x + w - badgeSize - 2 * s;
+      const badgeY = finalY + 2 * s;
+      ctx.beginPath();
+      ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = '#9b59b6';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+      ctx.font = `bold ${Math.max(9, Math.floor(10 * s))}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(prop._predictedLetter, badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 0.5 * s);
       ctx.restore();
     }
 
@@ -6182,9 +6217,9 @@ class Renderer {
     const items = [
       { label: '重置出牌次数', action: 'debug_resetHands' },
       { label: '当前分+100', action: 'debug_addScore' },
-      { label: '增加10金币', action: 'debug_addGold' },
+      { label: '💰 增加100金币', action: 'debug_addGold' },
       { label: '跳转至X回合', action: 'debug_jumpToRound' },
-      { label: '✅直接通关', action: 'debug_winRound' },
+      { label: '✅ 直接通关', action: 'debug_winRound' },
       { label: '刷新商店', action: 'debug_refreshShop' },
       { label: '5张女巫牌', action: 'debug_addWitchSlot' },
       { label: '上传shop_card', action: 'debug_upload_shop_card' },
@@ -6194,7 +6229,7 @@ class Renderer {
       { label: '触发新人引导', action: 'debug_triggerGuide' },
       { label: '触发商店引导', action: 'debug_triggerShopGuide' },
       { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
-      { label: '👻结束游戏', action: 'debug_endGame' },
+      { label: '👻 结束游戏', action: 'debug_endGame' },
       { label: '图鉴闪烁', action: 'debug_flashCardBook' },
     ];
     const itemW = 130 * s;

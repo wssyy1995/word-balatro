@@ -42,7 +42,8 @@ const SHOP_POOL = {
     {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:6, desc:'每次打出与上次首字母相同的单词，本牌倍率+3；中断后重置'},
     {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:5, cost:9, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+5'},
     {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:9, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
-    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'单词中所有字母均不重复，倍率+2；若有重复，倍率-1'}
+    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
+    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:6, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -398,7 +399,7 @@ class ShopRenderer {
         ctx.rotate(rotation * Math.PI / 180);
         ctx.translate(-(sx + slotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, joker, sx, oSlotY, slotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, joker, sx, oSlotY, slotW, oSlotH, s, true, false);
         ctx.restore();
       } else if (joker) {
         const isSelected = !game._jokerSortState && this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i;
@@ -434,7 +435,7 @@ class ShopRenderer {
           const drawH = oSlotH * scale;
           const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
-          this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s);
+          this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s, true, false);
           ctx.restore();
 
           // 排序状态下不响应点击
@@ -713,7 +714,7 @@ class ShopRenderer {
         const scaledH = oSlotH * LIFT_SCALE;
         const drawX = state.currentX - scaledW / 2;
         const drawY = state.currentY - scaledH / 2 + LIFT_Y;
-        this.parent._drawPropCard(ctx, joker, drawX, drawY, scaledW, scaledH, s);
+        this.parent._drawPropCard(ctx, joker, drawX, drawY, scaledW, scaledH, s, true, false);
         ctx.restore();
       }
     }

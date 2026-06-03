@@ -52,7 +52,9 @@ class CloudStorageManager {
       'double_same':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_same.png',
       'initial_succession':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/initial_succession.png',
       'end_s':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/end_s.png',
-      'end_ed':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/end_ed.png'
+      'end_ed':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/end_ed.png',
+      'predicted_letter':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/predicted_letter.png',
+      'no_duplicate':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/no_duplicate.png'
     };
 
     // 默认 witch 图片云文件映射

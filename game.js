@@ -498,7 +498,7 @@ function handleInput(x, y) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(100);
       if (debugHit.action === 'debug_addGold') {
-        game.gold += 10;
+        game.gold += 100;
         if (game.storageManager) game.storageManager.saveProgress();
       }
       if (debugHit.action === 'debug_jumpToRound') {
