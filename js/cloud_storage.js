@@ -97,6 +97,8 @@ class CloudStorageManager {
       'round_win': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/round_win.mp3',
       'tap': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/tap.mp3',
       'card_sell': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_sell.mp3',
+      'card_book_page': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_book_page.mp3',
+      'card_jump': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_jump.mp3',
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）

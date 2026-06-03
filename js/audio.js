@@ -140,6 +140,8 @@ class AudioManager {
       { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },       // 回合结算弹窗
       { name: 'tap', src: 'music/sound_effect/tap.mp3' },                   // 弹窗/按钮点击
       { name: 'card_sell', src: 'music/sound_effect/card_sell.mp3' },       // 售出道具
+      { name: 'card_book_page', src: 'music/sound_effect/card_book_page.mp3' }, // 图鉴翻页
+      { name: 'card_jump', src: 'music/sound_effect/card_jump.mp3' },       // 字母牌跳跃
     ];
 
     // 保存映射用于懒加载

@@ -624,7 +624,7 @@ function handleInput(x, y) {
         const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
         if (prevHit && game.cardBookPage > 0) {
           vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
+          if (game.audioManager) game.audioManager.play('card_book_page');
           game.cardBookPage--;
           game._cardBookDetailLevel = null;
           game._cardBookCellPressed = null;
@@ -636,7 +636,7 @@ function handleInput(x, y) {
         const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
         if (nextHit) {
           vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
+          if (game.audioManager) game.audioManager.play('card_book_page');
           game.cardBookPage++;
           game._cardBookDetailLevel = null;
           game._cardBookCellPressed = null;
@@ -666,7 +666,7 @@ function handleInput(x, y) {
       const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
       if (prevHit && game.cardBookPage > 0) {
         vibrate();
-        if (game.audioManager) game.audioManager.play('tap');
+        if (game.audioManager) game.audioManager.play('card_book_page');
         game.cardBookPage--;
         game._cardBookDetailLevel = null;
         game._cardBookCellPressed = null;
@@ -678,7 +678,7 @@ function handleInput(x, y) {
       const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
       if (nextHit) {
         vibrate();
-        if (game.audioManager) game.audioManager.play('tap');
+        if (game.audioManager) game.audioManager.play('card_book_page');
         game.cardBookPage++;
         game._cardBookDetailLevel = null;
         game._cardBookCellPressed = null;
@@ -1227,7 +1227,55 @@ function handleInput(x, y) {
       }
     }
 
-    // 点击价格按钮直接购买（跳过确认弹窗）
+    // 二次确认框点击处理（优先于其他交互）
+    if (game._buyConfirmPopup) {
+      const popup = game._buyConfirmPopup;
+      // 确认按钮
+      if (popup.confirmRect) {
+        const confirmHit = renderer.hitTest(x, y, [popup.confirmRect]);
+        if (confirmHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          // 确认按钮按下动画
+          game._buyConfirmBtnPressed = true;
+          game._buyConfirmBtnPressTime = Date.now();
+          const itemIndex = popup.itemIndex;
+          const itemData = popup.item;
+          // 延迟 150ms 执行购买
+          setTimeout(() => {
+            game._confirmBuyItemData = itemData;
+            const success = buyItem(game, itemIndex);
+            if (success) {
+              game.confirmBuyItem = itemIndex;
+              game._confirmBuySuccess = true;
+              game._confirmBuySuccessTime = Date.now();
+              if (game.audioManager) game.audioManager.play('buy_success');
+            }
+            game._buyConfirmPopup = null;
+            game._buyConfirmBtnPressed = false;
+            renderer.shopRenderer.priceBtnPressed = null;
+          }, 150);
+          return;
+        }
+      }
+      // 取消按钮
+      if (popup.cancelRect) {
+        const cancelHit = renderer.hitTest(x, y, [popup.cancelRect]);
+        if (cancelHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game._buyConfirmPopup = null;
+          renderer.shopRenderer.priceBtnPressed = null;
+          return;
+        }
+      }
+      // 点击确认框外部：关闭
+      game._buyConfirmPopup = null;
+      renderer.shopRenderer.priceBtnPressed = null;
+      return;
+    }
+
+    // 点击价格按钮：显示二次确认框
     if (renderer.shopRenderer && renderer.shopRenderer.shopPriceBtnRects) {
       const priceHit = renderer.hitTest(x, y, renderer.shopRenderer.shopPriceBtnRects);
       if (priceHit) {
@@ -1244,18 +1292,12 @@ function handleInput(x, y) {
         // 按下动效
         renderer.shopRenderer.priceBtnPressed = { index: priceHit.index, pressTime: Date.now() };
 
-        setTimeout(() => {
-          renderer.shopRenderer.priceBtnPressed = null;
-          // 执行购买
-          game._confirmBuyItemData = item ? {...item} : null;
-          const success = buyItem(game, priceHit.index);
-          if (success) {
-            game.confirmBuyItem = priceHit.index;
-            game._confirmBuySuccess = true;
-            game._confirmBuySuccessTime = Date.now();
-            if (game.audioManager) game.audioManager.play('buy_success');
-          }
-        }, 200);
+        // 显示二次确认气泡框
+        game._buyConfirmPopup = {
+          itemIndex: priceHit.index,
+          item: {...item},
+          startTime: Date.now(),
+        };
         return;
       }
     }

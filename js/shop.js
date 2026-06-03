@@ -1229,6 +1229,104 @@ class ShopRenderer {
     ctx.fillText('挑战', challengeBtnX + challengeBtnW / 2, challengeBtnY + challengeBtnH / 2 + pressOffset);
     ctx.restore();
     this.nextRoundBtnRect = { x: challengeBtnX, y: challengeBtnY, w: challengeBtnW, h: challengeBtnH };
+
+    // === 二次确认气泡框（点击价格按钮后弹出）===
+    if (game._buyConfirmPopup) {
+      const popup = game._buyConfirmPopup;
+      const elapsed = Date.now() - popup.startTime;
+      const enterDuration = 250;
+      const t = Math.min(elapsed / enterDuration, 1);
+      const ease = Easing.easeOutBack(t);
+
+      // 找到对应价格按钮的位置
+      const priceBtnRect = this.shopPriceBtnRects.find(r => r.index === popup.itemIndex);
+      if (priceBtnRect) {
+        const bubbleW = 200 * s;
+        const bubbleH = 84 * s;
+        const triangleH = 8 * s;
+        const bubbleX = Math.max(10 * s, Math.min(W - bubbleW - 10 * s, priceBtnRect.x + priceBtnRect.w / 2 - bubbleW / 2));
+        const bubbleY = priceBtnRect.y + priceBtnRect.h + triangleH + 2;
+
+        // 入场动画：从下方弹出 + 淡入
+        const offsetY = (1 - ease) * 15 * s;
+        const finalBubbleY = bubbleY + offsetY;
+        const alpha = t;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+
+        // 气泡背景 + 边框（带外部阴影）
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = 3 * s;
+        ctx.shadowOffsetY = 5 * s;
+        ctx.shadowOffsetX = 0;
+        this.parent.roundRect(bubbleX, finalBubbleY, bubbleW, bubbleH, 10 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+        ctx.restore();
+
+        // 顶部小三角（向上指向价格按钮）—— 实心三角形，颜色与边框一致
+        ctx.save();
+        const tx = priceBtnRect.x + priceBtnRect.w / 2;
+        const ty = finalBubbleY;
+        ctx.fillStyle = '#c4a35a';
+        ctx.beginPath();
+        ctx.moveTo(tx - 10 * s, ty);
+        ctx.lineTo(tx + 10 * s, ty);
+        ctx.lineTo(tx, ty - triangleH);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+
+        // 标题文字
+        ctx.save();
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`花费 ${popup.item.cost} 金币购买此卡牌？`, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
+        ctx.restore();
+
+        // 按钮区域
+        const btnW = 72 * s;
+        const btnH = 28 * s;
+        const btnY = finalBubbleY + 42 * s;
+        const gap = 10 * s;
+        const totalBtnW = btnW * 2 + gap;
+        const cancelX = bubbleX + (bubbleW - totalBtnW) / 2;
+        const confirmX = cancelX + btnW + gap;
+
+        // 取消按钮（米色）
+        this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#c4a35a', 1 * s);
+        ctx.save();
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('取消', cancelX + btnW / 2, btnY + btnH / 2);
+        ctx.restore();
+
+        // 确认按钮（紫色）
+        let confirmPressOffset = 0;
+        if (game._buyConfirmBtnPressed) {
+          const cpe = Date.now() - game._buyConfirmBtnPressTime;
+          if (cpe < 150) confirmPressOffset = 2 * s;
+        }
+        this.parent.roundRect(confirmX, btnY + confirmPressOffset, btnW, btnH, 6 * s, '#5e2d7a', '#4a1f5e', 1 * s);
+        ctx.save();
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('确认', confirmX + btnW / 2, btnY + confirmPressOffset + btnH / 2);
+        ctx.restore();
+
+        // 记录按钮 hitTest 区域
+        popup.confirmRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
+        popup.cancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
+
+        ctx.restore();
+      }
+    }
   }
 }
 

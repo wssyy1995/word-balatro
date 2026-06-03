@@ -4027,6 +4027,15 @@ class Renderer {
             const jumpElapsed = elapsed - letterJumpStart;
             const steps = pc.perCardSteps || [];
             const stepIdx = Math.floor(jumpElapsed / letterInterval);
+            // 每张字母牌开始跳跃时播放音效
+            if (jumpElapsed >= 0 && stepIdx >= 0 && stepIdx < steps.length) {
+              if (pc._lastJumpStepIdx !== stepIdx) {
+                pc._lastJumpStepIdx = stepIdx;
+                if (game.audioManager) game.audioManager.play('card_jump');
+              }
+            } else {
+              pc._lastJumpStepIdx = -1;
+            }
             isAllJumped = stepIdx >= steps.length;
             const stepInfo = isAllJumped ? null : steps[stepIdx];
             const cardIdx = isAllJumped
