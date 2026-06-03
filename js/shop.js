@@ -315,6 +315,8 @@ class ShopRenderer {
     // 左区4格：女巫牌
     // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
     if (game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp._shouldRemove) {
+      // 记录空位入场动画（缩放弹出 + 果冻感）
+      game._emptySlotAppearAnim = { type: 'jokers', index: game._sellingProp.index, startTime: Date.now() };
       game.jokers.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
@@ -368,7 +370,28 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
+        // 空位：售出后显示缩放弹出 + 果冻感动画
+        let emptyScale = 1;
+        let emptyAlpha = 1;
+        if (game._emptySlotAppearAnim && game._emptySlotAppearAnim.type === 'jokers' && game._emptySlotAppearAnim.index === i) {
+          const elapsed = Date.now() - game._emptySlotAppearAnim.startTime;
+          const appearDuration = 400;
+          if (elapsed < appearDuration) {
+            const t = elapsed / appearDuration;
+            emptyScale = Easing.easeOutBack(t);
+            emptyAlpha = Math.min(t * 1.5, 1);
+          }
+          if (elapsed >= appearDuration) {
+            game._emptySlotAppearAnim = null;
+          }
+        }
+        ctx.save();
+        ctx.globalAlpha = emptyAlpha;
+        ctx.translate(sx + slotW / 2 + slideOffsetX, oSlotY + oSlotH / 2);
+        ctx.scale(emptyScale, emptyScale);
+        ctx.translate(-(sx + slotW / 2 + slideOffsetX), -(oSlotY + oSlotH / 2));
         this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'witch');
+        ctx.restore();
       }
 
       // 售出按钮（选中时，带回弹出现动画）
@@ -417,6 +440,8 @@ class ShopRenderer {
     // 右区2格：药水牌
     // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
     if (game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp._shouldRemove) {
+      // 记录空位入场动画（缩放弹出 + 果冻感）
+      game._emptySlotAppearAnim = { type: 'potions', index: game._sellingProp.index, startTime: Date.now() };
       game.potions.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
@@ -470,7 +495,28 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
+        // 空位：售出后显示缩放弹出 + 果冻感动画
+        let emptyScale = 1;
+        let emptyAlpha = 1;
+        if (game._emptySlotAppearAnim && game._emptySlotAppearAnim.type === 'potions' && game._emptySlotAppearAnim.index === i) {
+          const elapsed = Date.now() - game._emptySlotAppearAnim.startTime;
+          const appearDuration = 400;
+          if (elapsed < appearDuration) {
+            const t = elapsed / appearDuration;
+            emptyScale = Easing.easeOutBack(t);
+            emptyAlpha = Math.min(t * 1.5, 1);
+          }
+          if (elapsed >= appearDuration) {
+            game._emptySlotAppearAnim = null;
+          }
+        }
+        ctx.save();
+        ctx.globalAlpha = emptyAlpha;
+        ctx.translate(sx + slotW / 2 + slideOffsetX, oSlotY + oSlotH / 2);
+        ctx.scale(emptyScale, emptyScale);
+        ctx.translate(-(sx + slotW / 2 + slideOffsetX), -(oSlotY + oSlotH / 2));
         this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'potion');
+        ctx.restore();
       }
 
       // 售出按钮（选中时，带回弹出现动画）

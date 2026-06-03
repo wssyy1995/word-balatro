@@ -139,6 +139,7 @@ class AudioManager {
       { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },       // 游戏结束弹窗
       { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },       // 回合结算弹窗
       { name: 'tap', src: 'music/sound_effect/tap.mp3' },                   // 弹窗/按钮点击
+      { name: 'card_sell', src: 'music/sound_effect/card_sell.mp3' },       // 售出道具
     ];
 
     // 保存映射用于懒加载

@@ -863,6 +863,7 @@ function handleInput(x, y) {
         const joker = game.jokers[witchHit.jokerIndex];
         if (joker && joker._disabled) return;
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
           game._witchDetailPopup = null;
         } else {
@@ -897,6 +898,7 @@ function handleInput(x, y) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
       if (potionHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         const potion = game.potions[potionHit.potionIndex];
         if (!potion) return;
         // 字母置换药水：游戏中直接使用，弹出选择弹窗
@@ -1153,6 +1155,7 @@ function handleInput(x, y) {
       const propHit = renderer.hitTest(x, y, renderer.shopRenderer.shopOwnedPropRects);
       if (propHit) {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         const prev = renderer.shopRenderer.shopSelectedOwned;
         if (prev && prev.type === propHit.array && prev.index === propHit.index) {
           renderer.shopRenderer.shopSelectedOwned = null;
@@ -1168,7 +1171,7 @@ function handleInput(x, y) {
       const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
       if (sellHit) {
         vibrate();
-        if (game.audioManager) game.audioManager.play('tap');
+        if (game.audioManager) game.audioManager.play('card_sell');
         const arr = game[sellHit.array];
         if (arr && arr[sellHit.index]) {
           const item = arr[sellHit.index];
