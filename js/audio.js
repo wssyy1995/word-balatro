@@ -142,6 +142,8 @@ class AudioManager {
       { name: 'card_sell', src: 'music/sound_effect/card_sell.mp3' },       // 售出道具
       { name: 'card_book_page', src: 'music/sound_effect/card_book_page.mp3' }, // 图鉴翻页
       { name: 'card_jump', src: 'music/sound_effect/card_jump.mp3' },       // 字母牌跳跃
+      { name: 'answer_tone', src: 'music/sound_effect/answer_tone.mp3' },   // 字母跳跃触发女巫牌
+      { name: 'word_score', src: 'music/sound_effect/word_score.mp3' },     // 计分总数弹出
     ];
 
     // 保存映射用于懒加载

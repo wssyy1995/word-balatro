@@ -4027,11 +4027,13 @@ class Renderer {
             const jumpElapsed = elapsed - letterJumpStart;
             const steps = pc.perCardSteps || [];
             const stepIdx = Math.floor(jumpElapsed / letterInterval);
-            // 每张字母牌开始跳跃时播放音效
+            // 每张字母牌开始跳跃时播放音效（触发女巫牌用 answer_tone，否则用 card_jump）
             if (jumpElapsed >= 0 && stepIdx >= 0 && stepIdx < steps.length) {
               if (pc._lastJumpStepIdx !== stepIdx) {
                 pc._lastJumpStepIdx = stepIdx;
-                if (game.audioManager) game.audioManager.play('card_jump');
+                const stepInfo = steps[stepIdx];
+                const jumpSound = (stepInfo && stepInfo.jokerIdx !== null) ? 'answer_tone' : 'card_jump';
+                if (game.audioManager) game.audioManager.play(jumpSound);
               }
             } else {
               pc._lastJumpStepIdx = -1;
@@ -4246,7 +4248,7 @@ class Renderer {
           if (phase >= 3 && !pc._flyingScoreStarted) {
             pc._flyingScoreStarted = true;
             const totalScore = pc.multHalfResult?.halvedScore ?? pc.result.score;
-            this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY);
+            this._startFlyingScore(totalScore, maskX + maskW + 10 * s, wordAreaY, game);
           }
 
           // 检测全部动画完成，调用 game.completePlayHand()
@@ -4544,10 +4546,14 @@ class Renderer {
         }
       }
 
-      // 数字变化时触发一次脉冲（类似金币动画）
-      if (this.lastMultValue !== displayValue) {
+      // 数字变化时触发一次脉冲（类似金币动画），首次出现也播放
+      const isFirstMultShow = this.lastMultValue === null && displayValue !== null;
+      if (isFirstMultShow || this.lastMultValue !== displayValue) {
         this.lastMultValue = displayValue;
         this.multAnim = { startTime: Date.now(), duration: 400 };
+        // currentStep >= 1 表示触发了 whole_word 女巫牌，用 answer_tone；否则（首次基础倍率）用 card_jump
+        const multSound = currentStep >= 1 ? 'answer_tone' : 'card_jump';
+        if (game && game.audioManager) game.audioManager.play(multSound);
       }
 
       // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半（提前 100ms）
@@ -6023,7 +6029,7 @@ class Renderer {
   }
 
   // ===== 飞行总分动画（果冻弹出 + 停留 + 淡出） =====
-  _startFlyingScore(value, startX, startY) {
+  _startFlyingScore(value, startX, startY, game) {
     this.flyingScore = {
       value,
       startX, startY,
@@ -6031,6 +6037,8 @@ class Renderer {
     };
     // 锁定 HUD 分数动画，等飞行结束后再更新
     this._scoreUpdateLocked = true;
+    // 播放总分弹出音效
+    if (game && game.audioManager) game.audioManager.play('word_score');
   }
 
   _updateAndDrawFlyingScore(ctx, s, game) {

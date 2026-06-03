@@ -1283,7 +1283,11 @@ class ShopRenderer {
         ctx.fillStyle = '#5a4a2a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`花费 ${popup.item.cost} 金币购买此卡牌？`, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
+        const isCrystalBall = popup.item.type === 'crystal';
+        const confirmText = isCrystalBall
+          ? `花费 ${popup.item.cost} 金币购买此卡牌，并立即生效？`
+          : `花费 ${popup.item.cost} 金币购买此卡牌？`;
+        ctx.fillText(confirmText, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
         ctx.restore();
 
         // 按钮区域

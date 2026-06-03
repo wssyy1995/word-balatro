@@ -1359,6 +1359,7 @@ class Game {
         this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
         this.pendingCheck._witchFailAnimStart = Date.now();
         this._witchStarBurstAuto = true; // 触发 HUD 女巫头像星星动画
+        if (this.audioManager) this.audioManager.play('card_illegal');
         if (witchSkill.angry_tip) {
           this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
         }
