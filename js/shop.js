@@ -1302,7 +1302,7 @@ class ConfirmBuyRenderer {
 
     // === 标题：购买成功 ===
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;
     ctx.textAlign = 'center';
@@ -1315,7 +1315,7 @@ class ConfirmBuyRenderer {
     const decoLineW = pw * 0.5;
     const decoLineX = px + (pw - decoLineW) / 2;
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     this.parent._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: gold });
     ctx.restore();
 
@@ -1343,7 +1343,7 @@ class ConfirmBuyRenderer {
 
     // === 卡牌图片（带金色边框 + 高光）===
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
 
     // 卡牌无背景，直接展示图片
 
@@ -1371,18 +1371,16 @@ class ConfirmBuyRenderer {
     ctx.restore();
 
     // === 光彩夺目效果（金色脉动光晕 + 四角闪烁星）===
-    if (!isClosing) {
-      ctx.save();
-      ctx.globalAlpha = contentAlpha;
-      this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
-      ctx.restore();
-    }
+    ctx.save();
+    ctx.globalAlpha = contentAlpha * closeAlpha;
+    this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
+    ctx.restore();
 
     // === 底部飘带图片 ===
     let bandH = 0;
     if (this.parent.buySuccessBandImg && this.parent.buySuccessBandLoaded) {
       ctx.save();
-      if (!isClosing) ctx.globalAlpha = contentAlpha;
+      ctx.globalAlpha = contentAlpha * closeAlpha;
       const bandW = 160 * s;
       bandH = bandW * (this.parent.buySuccessBandImg.height || 60) / (this.parent.buySuccessBandImg.width || 400);
       const bandX = (W - bandW) / 2;
@@ -1394,7 +1392,7 @@ class ConfirmBuyRenderer {
     // === 卡牌名称 ===
     const nameY = cardY + cardH/2 + 8 * s + bandH + contentYShift;
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.fillStyle = darkBlue;
     ctx.textAlign = 'center';
@@ -1406,7 +1404,7 @@ class ConfirmBuyRenderer {
     const descY = nameY + 24 * s;
     const descMaxW = pw - 40 * s; // 留出左右边距
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.font = `${Math.floor(12 * s)}px sans-serif`;
     ctx.fillStyle = '#555';
     ctx.textAlign = 'center';
@@ -1418,7 +1416,7 @@ class ConfirmBuyRenderer {
     // === 底部分隔线 ===
     const bottomLineY = descY + descH + 10 * s;
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
     ctx.lineWidth = 1 * s;
     const blW = pw * 0.55;
@@ -1443,7 +1441,7 @@ class ConfirmBuyRenderer {
     const isPotion = item.type === 'potion';
     const isChangeLetter = isPotion && item.effect === 'change_letter';
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
 
     if (isPotion && !isChangeLetter) {
       // 普通药水牌：两个按钮（立即使用 + 暂存）
@@ -1552,7 +1550,7 @@ class ConfirmBuyRenderer {
 
     // 标题
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'center';
@@ -1574,7 +1572,7 @@ class ConfirmBuyRenderer {
 
     // 卡牌图片（居中，变大）
     ctx.save();
-    if (!isClosing) ctx.globalAlpha = contentAlpha;
+    ctx.globalAlpha = contentAlpha * closeAlpha;
     let imgBottom = py + 70 * s + contentYShift;
     if (iconData && iconData.loaded && iconData.img) {
       const containerAspect = (pw * 0.65) / (130 * s);

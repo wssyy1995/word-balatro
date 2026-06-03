@@ -752,7 +752,7 @@ function handleInput(x, y) {
               if (game.storageManager) game.storageManager.saveProgress();
               game._changeLetterPopup = null;
               game._closingChangeLetter = false;
-            }, 200);
+            }, 300);
           } else {
             // 条件不满足，直接关闭（无动画）
             game._changeLetterPopup = null;

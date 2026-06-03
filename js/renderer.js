@@ -1741,8 +1741,8 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    ctx.globalAlpha = opacity;
     ctx.save();
+    ctx.globalAlpha *= opacity;
     ctx.translate(drawX + w / 2, drawY + h / 2);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(scale, scale);
@@ -4919,6 +4919,7 @@ class Renderer {
       borderRadius: 12, borderWidth: 2,
       overlayAlpha: 0.5, overlayFadeInDuration: 200,
       enterOffset: 30,
+      closeDuration: 300,
       elapsed,
       onCloseComplete: () => {}
     });
@@ -6310,7 +6311,8 @@ class GameOverRenderer {
       onCloseComplete: () => {}
     });
     if (!panel) return;
-    const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+    const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
+    const ca = closeAlpha;
 
     // 小女巫（趴在弹窗顶部，底部重叠 10px）
     if (this.parent.failWitchImg && this.parent.failWitchLoaded) {
@@ -6319,6 +6321,7 @@ class GameOverRenderer {
       const witchY = py + 25 * s - witchH;
       const witchX = W / 2 - witchW / 2;
       ctx.save();
+      ctx.globalAlpha = ca;
       ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
       ctx.shadowBlur = 8 * s;
       ctx.shadowOffsetY = 4 * s;
@@ -6335,6 +6338,7 @@ class GameOverRenderer {
         { offsetX: 15, top: 10, len: 9 },     // 第4道
       ];
       ctx.save();
+      ctx.globalAlpha = ca;
       ctx.fillStyle = '#6b5b95';
       lineData.forEach((d) => {
         const lx = lineBaseX + d.offsetX * s;
@@ -6361,6 +6365,8 @@ class GameOverRenderer {
         ctx.fill();
         ctx.restore();
       };
+      ctx.save();
+      ctx.globalAlpha = ca;
       // 右边三颗
       drawStar(witchX + witchW + 8 * s, witchY + 105 * s, 5.5 * s, 2.75 * s, '#6b5b95');  // 紫色大星
       drawStar(witchX + witchW + 20 * s, witchY + 128 * s, 4 * s, 2 * s, '#c4a35a');      // 金色中星
@@ -6368,12 +6374,13 @@ class GameOverRenderer {
       // 左边两颗
       drawStar(witchX - 8 * s, witchY + 95 * s, 4 * s, 2 * s, '#6b5b95');                 // 紫色
       drawStar(witchX - 2 * s, witchY + 118 * s, 3 * s, 1.5 * s, '#c4a35a');              // 金色
+      ctx.restore();
     }
 
     // 标题
     const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
     ctx.save();
-    ctx.globalAlpha = titleAnim.alpha;
+    ctx.globalAlpha = titleAnim.alpha * ca;
     ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
     ctx.fillStyle = '#1a2f4a';
     ctx.textAlign = 'center';
@@ -6387,7 +6394,7 @@ class GameOverRenderer {
     const line1Y = py + 62 * s + line1Anim.yShift;
     const line1W = pw - 60 * s;
     ctx.save();
-    ctx.globalAlpha = line1Anim.alpha;
+    ctx.globalAlpha = line1Anim.alpha * ca;
     this.parent._drawTitleDivider(ctx, px + 30 * s, line1Y, line1W, s);
     ctx.restore();
 
@@ -6406,7 +6413,7 @@ class GameOverRenderer {
       const itemAnim = Easing.fadeIn(elapsed, 180 + i * 60, 250, 8 * s);
       const y = lineY + i * lineH + itemAnim.yShift;
       ctx.save();
-      ctx.globalAlpha = itemAnim.alpha;
+      ctx.globalAlpha = itemAnim.alpha * ca;
       ctx.font = `${Math.floor(14 * s)}px sans-serif`;
       ctx.fillStyle = '#555';
       ctx.textAlign = 'left';
@@ -6429,7 +6436,7 @@ class GameOverRenderer {
     const hintTextY = btnBaseY - 23 * s + hintAnim.yShift;  // 提示文字在按钮上方 23px
     const hintLineY = hintTextY - 14 * s;                   // 分隔线在提示文字上方 14px
     ctx.save();
-    ctx.globalAlpha = hintAnim.alpha;
+    ctx.globalAlpha = hintAnim.alpha * ca;
     ctx.strokeStyle = 'rgba(196,163,90,0.5)';
     ctx.lineWidth = 1 * s;
     ctx.beginPath();
@@ -6453,7 +6460,7 @@ class GameOverRenderer {
     const btnStartX = px + sidePad;
 
     ctx.save();
-    ctx.globalAlpha = btnAnim.alpha;
+    ctx.globalAlpha = btnAnim.alpha * ca;
 
     const drawImgBtn = (name, x, y, w, h, pressed) => {
       const data = this.parent.gameOverBtnImages[name];
