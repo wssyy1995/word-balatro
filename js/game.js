@@ -2115,6 +2115,7 @@ class Game {
 
   startRandomSpin() {
     if (this._randomUpgradePopup && this._randomUpgradePopup.phase !== 'idle') return;
+    if (this.audioManager) this.audioManager.play('spin_wheel');
 
     const handLetters = [...new Set(this.hand.filter(c => c).map(c => c.letter))];
     const targetLetter = handLetters.length > 0

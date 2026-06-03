@@ -213,6 +213,7 @@ class ShopRenderer {
     this.parent = renderer;
     this.shopSelectedOwned = null; // { type: 'jokers'|'potions', index: number } 或 null
     this.shopSellBtnRect = null;
+    this.shopUseBtnRect = null;
     this.shopOwnedPropRects = [];
     this.sellBtnAnimStart = null;
     this.lastSelectedOwned = null;
@@ -243,11 +244,7 @@ class ShopRenderer {
     }
     this.lastSelectedOwned = currentSelected ? {...currentSelected} : null;
 
-    // 3秒后自动消失
-    if (this.sellBtnAnimStart && Date.now() - this.sellBtnAnimStart > 3000) {
-      this.shopSelectedOwned = null;
-      this.sellBtnAnimStart = null;
-    }
+    // 按钮不再自动消失（点击其他地方或切换选中才关闭）
 
     const top = (this.parent.safeTop || 0) + 20;
 
@@ -367,8 +364,10 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, joker, sx, oSlotY, slotW, oSlotH, s);
         ctx.restore();
       } else if (joker) {
-        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
+        const isSelected = this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i;
+        const selectedOffsetY = isSelected ? -3 * s : 0;
+        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY + selectedOffsetY, slotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
         let emptyScale = 1;
@@ -396,8 +395,9 @@ class ShopRenderer {
 
       // 售出按钮（选中时，带回弹出现动画）
       if (this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i && joker && !isSelling) {
-        const sellBtnH = 16 * s;
-        const sellBtnY = oSlotY + oSlotH + 2 * s;
+        const sellBtnH = 20 * s;
+        const selectedOffsetY = -3 * s;
+        const sellBtnY = oSlotY + oSlotH + 2 * s + selectedOffsetY;
 
         // 出现动画（easeOutBack：从卡牌底部向下弹出）
         let appearScale = 1;
@@ -416,8 +416,8 @@ class ShopRenderer {
         const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
 
         ctx.save();
-        this.parent.roundRect(finalX, finalY, finalW, finalH, 3 * s * appearScale, '#c0392b');
-        ctx.font = `bold ${Math.floor(8 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+        this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
+        ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -492,8 +492,10 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, potion, sx, oSlotY, slotW, oSlotH, s);
         ctx.restore();
       } else if (potion) {
-        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY, slotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, index: i, array: 'potions' });
+        const isSelected = this.shopSelectedOwned && this.shopSelectedOwned.type === 'potions' && this.shopSelectedOwned.index === i;
+        const selectedOffsetY = isSelected ? -3 * s : 0;
+        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY + selectedOffsetY, slotW, oSlotH, s);
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
         let emptyScale = 1;
@@ -519,10 +521,11 @@ class ShopRenderer {
         ctx.restore();
       }
 
-      // 售出按钮（选中时，带回弹出现动画）
+      // 售出按钮 + 使用按钮（选中时，带回弹出现动画）
       if (this.shopSelectedOwned && this.shopSelectedOwned.type === 'potions' && this.shopSelectedOwned.index === i && potion && !isSelling) {
-        const sellBtnH = 16 * s;
-        const sellBtnY = oSlotY + oSlotH + 2 * s;
+        const btnH = 20 * s;
+        const selectedOffsetY = -3 * s;
+        const btnY = oSlotY + oSlotH + 2 * s + selectedOffsetY;
 
         // 出现动画（easeOutBack：从卡牌底部向下弹出）
         let appearScale = 1;
@@ -535,30 +538,91 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const finalW = slotW * appearScale;
-        const finalH = sellBtnH * appearScale;
-        const finalX = sx + (slotW - finalW) / 2;
-        const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
+        const canUse = potion.effect === 'random_upgrade' || potion.effect === 'upgrade_letter';
 
-        ctx.save();
-        this.parent.roundRect(finalX, finalY, finalW, finalH, 3 * s * appearScale, '#c0392b');
-        ctx.font = `bold ${Math.floor(8 * s * Math.max(appearScale, 0.5))}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const coinSize = 10 * s * appearScale;
-        const sellText = String(Math.round(potion.cost / 2));
-        const textW = ctx.measureText(sellText).width;
-        const contentW = coinSize + 2 * s + textW;
-        const startX = finalX + (finalW - contentW) / 2;
-        const midY = finalY + finalH / 2;
-        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-          ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+        if (canUse) {
+          // 两个按钮并排，宽度保持 slotW 不变，整体以卡牌中心为基准偏移
+          const gap = 4 * s;
+          const sellBtnW = slotW;
+          const useBtnW = slotW;
+          const totalW = sellBtnW + gap + useBtnW;
+          let baseStartX = sx + slotW / 2 - totalW / 2;
+          // 确保使用按钮右边缘不超出屏幕（至少留 2px 间距）
+          const useRightEdge = baseStartX + totalW;
+          if (useRightEdge > W - 2 * s) {
+            baseStartX -= (useRightEdge - (W - 2 * s));
+          }
+          const startX = baseStartX + totalW * (1 - appearScale) / 2;
+
+          // 售出按钮（红色）
+          const sellFinalW = sellBtnW * appearScale;
+          const sellFinalH = btnH * appearScale;
+          const sellFinalX = startX;
+          const sellFinalY = btnY + appearOffsetY + (btnH - sellFinalH) / 2;
+
+          ctx.save();
+          this.parent.roundRect(sellFinalX, sellFinalY, sellFinalW, sellFinalH, 5 * s * appearScale, '#c0392b');
+          ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const coinSize = 10 * s * appearScale;
+          const sellText = String(Math.round(potion.cost / 2));
+          const textW = ctx.measureText(sellText).width;
+          const contentW = coinSize + 2 * s + textW;
+          const coinStartX = sellFinalX + (sellFinalW - contentW) / 2;
+          const midY = sellFinalY + sellFinalH / 2;
+          if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+            ctx.drawImage(this.parent.coinIcon, coinStartX, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillText(sellText, coinStartX + coinSize + 2 * s + textW / 2, midY);
+          ctx.restore();
+
+          // 使用按钮（绿色）
+          const useFinalW = useBtnW * appearScale;
+          const useFinalH = btnH * appearScale;
+          const useFinalX = startX + (sellBtnW + gap) * appearScale;
+          const useFinalY = btnY + appearOffsetY + (btnH - useFinalH) / 2;
+
+          ctx.save();
+          this.parent.roundRect(useFinalX, useFinalY, useFinalW, useFinalH, 5 * s * appearScale, '#1e8449');
+          ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('使用', useFinalX + useFinalW / 2, useFinalY + useFinalH / 2);
+          ctx.restore();
+
+          this.shopSellBtnRect = { x: sellFinalX, y: sellFinalY, w: sellFinalW, h: sellFinalH, index: i, array: 'potions' };
+          this.shopUseBtnRect = { x: useFinalX, y: useFinalY, w: useFinalW, h: useFinalH, index: i, array: 'potions', effect: potion.effect };
+        } else {
+          // 仅售出按钮（不可使用的药水）
+          const finalW = slotW * appearScale;
+          const finalH = btnH * appearScale;
+          const finalX = sx + (slotW - finalW) / 2;
+          const finalY = btnY + appearOffsetY + (btnH - finalH) / 2;
+
+          ctx.save();
+          this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
+          ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const coinSize = 10 * s * appearScale;
+          const sellText = String(Math.round(potion.cost / 2));
+          const textW = ctx.measureText(sellText).width;
+          const contentW = coinSize + 2 * s + textW;
+          const startX = finalX + (finalW - contentW) / 2;
+          const midY = finalY + finalH / 2;
+          if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+            ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
+          ctx.restore();
+
+          this.shopSellBtnRect = { x: sx, y: btnY, w: slotW, h: btnH, index: i, array: 'potions' };
+          this.shopUseBtnRect = null;
         }
-        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
-        ctx.restore();
-
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'potions' };
       }
     }
 
@@ -1278,15 +1342,16 @@ class ShopRenderer {
         ctx.restore();
 
         // 标题文字
-        ctx.save();
-        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
-        ctx.fillStyle = '#5a4a2a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
         const isCrystalBall = popup.item.type === 'crystal';
         const confirmText = isCrystalBall
           ? `花费 ${popup.item.cost} 金币购买此卡牌，并立即生效？`
           : `花费 ${popup.item.cost} 金币购买此卡牌？`;
+        ctx.save();
+        const confirmFontSize = isCrystalBall ? 11 : 13;
+        ctx.font = `bold ${Math.floor(confirmFontSize * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
         ctx.fillText(confirmText, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
         ctx.restore();
 

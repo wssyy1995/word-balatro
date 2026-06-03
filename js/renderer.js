@@ -3594,7 +3594,8 @@ class Renderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.fillText('目标分', c3, barY + barH * 0.32 + 4 * s);
 
-      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      const targetFontSize = game.target >= 10000 ? 18 : 22;
+      ctx.font = `bold ${Math.floor(targetFontSize * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
       ctx.fillText(String(game.target), c3, barY + barH * 0.68 - 2 * s + 4 * s);
 
@@ -3614,7 +3615,8 @@ class Renderer {
       ctx.save();
       ctx.translate(c4, barY + barH * 0.68 - 2 * s + 4);
       ctx.scale(scoreScale, scoreScale);
-      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      const scoreFontSize = game.score >= 10000 ? 18 : 22;
+      ctx.font = `bold ${Math.floor(scoreFontSize * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -3658,7 +3660,8 @@ class Renderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.fillText('目标分', targetCX, barY + barH * 0.32);
 
-      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      const targetFontSize2 = game.target >= 10000 ? 18 : 22;
+      ctx.font = `bold ${Math.floor(targetFontSize2 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
       ctx.fillText(String(game.target), targetCX, barY + barH * 0.68 - 2 * s);
 
@@ -3677,7 +3680,8 @@ class Renderer {
       ctx.save();
       ctx.translate(scoreCX, barY + barH * 0.68 - 2 * s);
       ctx.scale(scoreScale, scoreScale);
-      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      const scoreFontSize2 = game.score >= 10000 ? 18 : 22;
+      ctx.font = `bold ${Math.floor(scoreFontSize2 * s)}px Georgia, serif`;
       ctx.fillStyle = darkBlue;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';

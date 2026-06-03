@@ -1189,6 +1189,27 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测使用按钮点击（随机强化 / 字母升级药水）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopUseBtnRect) {
+      const useHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopUseBtnRect]);
+      if (useHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const arr = game[useHit.array];
+        if (arr && arr[useHit.index]) {
+          const potion = arr[useHit.index];
+          // 从道具栏移除并进入使用页面
+          arr.splice(useHit.index, 1);
+          game.potionMode = {...potion};
+          game._prePotionState = 'shop';
+          game.state = 'potion';
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress();
+        }
+        return;
+      }
+    }
+
     // 点击商店页面其他地方，关闭售出按钮
     if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
       renderer.shopRenderer.shopSelectedOwned = null;
