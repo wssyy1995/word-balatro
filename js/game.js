@@ -1660,7 +1660,8 @@ class Game {
       }
     });
 
-    // 旧牌飞出
+    // 旧牌飞出（同时播放洗牌音效）
+    if (this.audioManager) this.audioManager.play('card_shuffle');
     finalPlayedCards.forEach((card, i) => {
       card._flyIndex = removedIndices[i];
       card.selected = false;
@@ -1827,6 +1828,7 @@ class Game {
       this.witchRewardData.consolationGold = bonusGold;
       this.gold += bonusGold;
     }
+    if (this.audioManager) this.audioManager.play('buy_success');
     this.witchRewardData.phase = 'result';
   }
 
