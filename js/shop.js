@@ -1081,8 +1081,8 @@ class ShopRenderer {
     }
     // 中文和冒号下移 2px，数字保持不动
     ctx.textAlign = 'left';
-    ctx.fillText(nrPrefix, textBaseX, nrTitleY);
-    ctx.fillText(nrNumber, textBaseX + nrPrefixW, nrTitleY - 1);
+    ctx.fillText(nrPrefix, textBaseX, nrTitleY - 1);
+    ctx.fillText(nrNumber, textBaseX + nrPrefixW, nrTitleY - 2);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
