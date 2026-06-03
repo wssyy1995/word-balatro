@@ -312,8 +312,8 @@ class ShopRenderer {
     // 左区4格：女巫牌
     // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
     if (game._sellingProp && game._sellingProp.type === 'jokers' && game._sellingProp._shouldRemove) {
-      // 记录空位入场动画（缩放弹出 + 果冻感）
-      game._emptySlotAppearAnim = { type: 'jokers', index: game._sellingProp.index, startTime: Date.now() };
+      // 记录空位入场动画（缩放弹出 + 果冻感）——空位在数组末尾（移除后的新空位）
+      game._emptySlotAppearAnim = { type: 'jokers', index: game.jokers.length - 1, startTime: Date.now() };
       game.jokers.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
@@ -440,8 +440,8 @@ class ShopRenderer {
     // 右区2格：药水牌
     // 延迟移除：在循环开始前统一 splice，避免循环中数组变动导致闪烁
     if (game._sellingProp && game._sellingProp.type === 'potions' && game._sellingProp._shouldRemove) {
-      // 记录空位入场动画（缩放弹出 + 果冻感）
-      game._emptySlotAppearAnim = { type: 'potions', index: game._sellingProp.index, startTime: Date.now() };
+      // 记录空位入场动画（缩放弹出 + 果冻感）——空位在数组末尾（移除后的新空位）
+      game._emptySlotAppearAnim = { type: 'potions', index: game.potions.length - 1, startTime: Date.now() };
       game.potions.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
