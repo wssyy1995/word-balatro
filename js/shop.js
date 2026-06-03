@@ -1060,23 +1060,29 @@ class ShopRenderer {
     const moduleW = W - 30 * s;
 
     // —— 下一回合 —— 标题（参照卡牌商店样式）
-    const nrTitleText = `下一回合：${game.round + 1}`;
+    const nrPrefix = '下一回合：';
+    const nrNumber = String(game.round + 1);
     ctx.save();
     ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
     ctx.fillStyle = '#8b7d5a';
-    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const nrTitleY = moduleY - 14 * s;
-    const nrTitleW = ctx.measureText(nrTitleText).width;
+    const nrPrefixW = ctx.measureText(nrPrefix).width;
+    const nrNumberW = ctx.measureText(nrNumber).width;
+    const nrTitleW = nrPrefixW + nrNumberW;
     const nrTitleIconSize = 14 * s;
     const nrTitleIconGap = 6 * s;
     const nrTitleTotalW = nrTitleIconSize * 2 + nrTitleIconGap * 2 + nrTitleW;
     const nrTitleStartX = (W - nrTitleTotalW) / 2;
+    const textBaseX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap;
 
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       ctx.drawImage(this.parent.shopIcon, nrTitleStartX, nrTitleY - nrTitleIconSize / 2 - 1 * s, nrTitleIconSize, nrTitleIconSize);
     }
-    ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY - 2);
+    // 中文和冒号下移 2px，数字保持不动
+    ctx.textAlign = 'left';
+    ctx.fillText(nrPrefix, textBaseX, nrTitleY);
+    ctx.fillText(nrNumber, textBaseX + nrPrefixW, nrTitleY - 2);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
