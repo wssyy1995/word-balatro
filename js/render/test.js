@@ -216,16 +216,21 @@
 
   // ===== 4. render() 调用测试 =====
   if (renderer) {
-    const mockGame = {
+    const baseMock = {
       state: 'playing',
       round: 1,
       score: 0,
       targetScore: 100,
       gold: 10,
+      handsLeft: 3,
+      discardsLeft: 3,
+      maxJokerSlots: 4,
       hand: [],
       selectedCards: [],
       jokers: [],
+      potions: [],
       shopItems: [],
+      flyingCards: [],
       shopGuidePhase: 0,
       cardBookGuidePhase: 0,
       cardBookUnlocked: false,
@@ -242,9 +247,30 @@
       _shopGuideExitStartTime: null,
       _cardBookGuideStartTime: null,
       _cardBookGuideTextStartTime: null,
+      _lifeExtensionAnim: null,
+      _disableWitchAnim: null,
+      _changeLetterHint: null,
+      _witchStarBurst: null,
+      _witchStarBurstAuto: false,
+      _witchAngryTip: null,
+      _playHandAnimCompleted: false,
+      _hastePlayActive: false,
+      _hastePlayStartTime: null,
+      _debugLabelShow: null,
+      pendingCheck: null,
       storageManager: null,
       debugMenuOpen: false,
+      getSelectedCards: () => [],
+      completePlayHand: () => {},
+      audioManager: { play: () => {} },
     };
+
+    const mockGame = new Proxy(baseMock, {
+      get(target, prop) {
+        if (prop in target) return target[prop];
+        return null;
+      },
+    });
 
     try {
       renderer.render(mockGame);
