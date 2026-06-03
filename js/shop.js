@@ -769,7 +769,7 @@ class ShopRenderer {
     ctx.fillText(costText, curX, midY);
 
     // 记录全局重掷按钮点击区域
-    this.shopGlobalRerollBtnRect = { x: rerollBtnX, y: rerollBtnY, w: rerollBtnW, h: rerollBtnH };
+    this.shopGlobalRerollBtnRect = { x: rerollBtnX - 2, y: rerollBtnY - 2, w: rerollBtnW + 4, h: rerollBtnH + 4 };
 
     ctx.restore();
 
@@ -1040,7 +1040,7 @@ class ShopRenderer {
         const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
         ctx.fillText(btnText, btnTextX, midY);
 
-        this.shopPriceBtnRects.push({ x: btnX, y: btnY, w: btnW, h: btnH, index: itemIdx });
+        this.shopPriceBtnRects.push({ x: btnX - 2, y: btnY - 2, w: btnW + 4, h: btnH + 4, index: itemIdx });
       }
 
       // 两张卡牌都售罄时，显示刷新按钮
