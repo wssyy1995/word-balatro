@@ -5111,6 +5111,10 @@ class Renderer {
         cardScale = 1;
       } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
         showNewScore = true;
+        if (!anim._scoreSoundPlayed) {
+          anim._scoreSoundPlayed = true;
+          if (game.audioManager) game.audioManager.play('word_score');
+        }
         const pulseState = {
           startTime: anim.startTime + popDuration + holdOldDuration,
           duration: scoreChangeDuration
