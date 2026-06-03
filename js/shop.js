@@ -1060,7 +1060,7 @@ class ShopRenderer {
     const moduleW = W - 30 * s;
 
     // —— 下一回合 —— 标题（参照卡牌商店样式）
-    const nrTitleText = '下一回合';
+    const nrTitleText = `下一回合：${game.round + 1}`;
     ctx.save();
     ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
     ctx.fillStyle = '#8b7d5a';
@@ -1076,7 +1076,7 @@ class ShopRenderer {
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       ctx.drawImage(this.parent.shopIcon, nrTitleStartX, nrTitleY - nrTitleIconSize / 2 - 1 * s, nrTitleIconSize, nrTitleIconSize);
     }
-    ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY);
+    ctx.fillText(nrTitleText, nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW / 2, nrTitleY - 3);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
