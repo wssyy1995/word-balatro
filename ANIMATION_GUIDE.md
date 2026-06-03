@@ -118,12 +118,65 @@ draw(ctx, game, W, H, s) {
 
 **若后续需要新增类似复杂弹窗，优先扩展 `_drawModalPanel` 的配置参数，而非新开手写模板。**
 
+### 弹窗关闭时的内容淡出规范 ⭐⭐⭐
+
+`_drawModalPanel` 返回 `closeAlpha`（关闭时从 1→0 线性淡出），但**只应用到遮罩和面板背景**。弹窗内的所有内容（文字、图片、按钮、装饰线）必须由调用者手动乘上 `closeAlpha`。
+
+#### ✅ 正确做法
+
+```javascript
+const panel = this._drawModalPanel(...);
+if (!panel) return;
+const { px, py, pw, ph, closeAlpha } = panel;
+
+// 标题
+const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+ctx.save();
+ctx.globalAlpha = titleAnim.alpha * closeAlpha;  // ← 必须乘 closeAlpha
+ctx.fillText('标题', x, y + titleAnim.yShift);
+ctx.restore();
+
+// 图片也一样
+ctx.save();
+ctx.globalAlpha = closeAlpha;  // ← 图片没有 fadeIn，直接乘 closeAlpha
+ctx.drawImage(img, x, y, w, h);
+ctx.restore();
+```
+
+#### ❌ 错误做法
+
+```javascript
+// 错误 1：完全忘了乘 closeAlpha
+ctx.save();
+ctx.globalAlpha = titleAnim.alpha;  // 关闭时 titleAnim.alpha = 1，内容不淡出！
+ctx.fillText('标题', x, y);
+ctx.restore();
+
+// 错误 2：用 if (!isClosing) 条件控制，关闭时完全不绘制
+if (!isClosing) {
+  ctx.save();
+  ctx.globalAlpha = contentAlpha;
+  this._drawCardGlow(...);  // 关闭时光晕直接消失，不是淡出
+  ctx.restore();
+}
+```
+
+#### 常见遗漏清单
+
+| 元素 | 是否容易遗漏 | 示例 |
+|------|-------------|------|
+| 标题文字 | ✅ | `ctx.globalAlpha = titleAnim.alpha` 忘了 `* closeAlpha` |
+| 图片（drawImage） | ✅ | 图片没有 fadeIn，需直接 `ctx.globalAlpha = closeAlpha` |
+| 装饰线/分隔线 | ✅ | `_drawTitleDivider` 调用前需设 alpha |
+| 按钮 | ✅ | `_drawScaledButton` 调用前需设 alpha |
+| 自定义装饰（星星、竖线） | ✅ | 直接 `fillRect` / `drawStar` 无 alpha 控制 |
+
 ### `_drawModalPanel` 已内部处理的事项
 
 调用者**不需要也不应该**自己处理：
 - ✅ 遮罩绘制（含淡入/淡出）
 - ✅ 面板背景 + 边框绘制
-- ✅ 关闭进度计算（`closeProgress`、`closeAlpha`、`closeSlideY`）
+- ✅ 关闭进度计算（`closeProgress`、`closeAlpha`）
 - ✅ 入场 easeOutBack 计算
 - ✅ `ctx.save()` / `ctx.restore()`（方法内部已配对）
 
@@ -131,6 +184,7 @@ draw(ctx, game, W, H, s) {
 - 弹窗标题、分隔线、内容列表
 - 按钮、关闭图标
 - 内容淡入（用 `Easing.fadeIn`）
+- **关闭淡出（必须乘 `closeAlpha`）** — 见下文「弹窗关闭时的内容淡出规范」
 
 ---
 
@@ -335,16 +389,30 @@ if (!panel) return;
 
 // 绘制标题
 ctx.save();
-ctx.globalAlpha = titleAnim.alpha;
+ctx.globalAlpha = titleAnim.alpha * closeAlpha;
 ctx.fillText('标题', x, y);
 ctx.restore();
 
 // 绘制按钮
 ctx.save();
-ctx.globalAlpha = btnAnim.alpha;
+ctx.globalAlpha = btnAnim.alpha * closeAlpha;
 this._drawScaledBtn(...);
 ctx.restore();
 ```
+
+### 子方法覆盖 `globalAlpha` 的风险（`drawCard` 案）
+
+调用 `drawCard()` 时要特别小心：该方法内部会直接设置 `ctx.globalAlpha`，如果放在弹窗的 `closeAlpha` 环境下，**必须确保 `drawCard` 不会覆盖外层的 alpha**。
+
+```javascript
+// drawCard 内部实现（简化）
+ctx.save();
+ctx.globalAlpha *= opacity;  // ✅ 正确：乘上 opacity，保留外层 closeAlpha
+// 绘制卡牌...
+ctx.restore();
+```
+
+**如果子方法内部是 `ctx.globalAlpha = opacity`（赋值而非相乘），就会覆盖外层的 `closeAlpha`，导致卡牌不随弹窗淡出。**
 
 ---
 
@@ -439,6 +507,8 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
 - [ ] **Renderer 子方法没有访问父方法局部变量**
 - [ ] **保命/惩罚/拦截机制覆盖了所有触发路径**
 - [ ] **新增动画已查第十章决策流程，有注释说明未命中原因**
+- [ ] **弹窗关闭时所有内容都乘了 `closeAlpha`（文字、图片、按钮、装饰线）**
+- [ ] **调用 `drawCard()` 等子方法时，确认其 `globalAlpha` 是 `*=` 而非 `=`**
 - [ ] 通过 `node --check` 语法检查
 - [ ] 在微信开发者工具中实际运行验证
 
@@ -642,6 +712,116 @@ if (witchSkill && witchSkill.skill === 'letter_a_mult_half') {
 const currentWitchSkill = getSkillForLevel(game.round);
 const multHalfResult = pc.multHalfResult;  // 由 game.js 计算后挂载到 pendingCheck
 ```
+
+### Bug 11：弹窗关闭时内容未同步淡出（`closeAlpha` 遗漏案）⭐⭐⭐
+
+**影响范围**：`js/renderer.js` `GameOverRenderer` / `js/shop.js` `ConfirmBuyRenderer` / `js/renderer.js` `drawChangeLetterPopup`
+
+#### 问题描述
+
+`_drawModalPanel` 采用"外包"模式：只负责绘制遮罩和面板背景，返回 `closeAlpha`，内容由各 Renderer 自行绘制。但多个 Renderer 中大量内容（图片、文字、装饰线、按钮）**完全没有乘 `closeAlpha`**，导致关闭时背景淡出了，内容还保持不透明，视觉上像被"拆开"。
+
+#### 错误代码（反模式）
+
+```javascript
+// ❌ GameOverRenderer：标题忘了乘 closeAlpha
+const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+ctx.save();
+ctx.globalAlpha = titleAnim.alpha;  // 关闭时 elapsed=99999，alpha=1，完全不淡出！
+ctx.fillText('游戏结束', x, y);
+ctx.restore();
+
+// ❌ ConfirmBuyRenderer：用 if (!isClosing) 条件控制
+if (!isClosing) {
+  ctx.save();
+  ctx.globalAlpha = contentAlpha;
+  this.parent._drawCardGlow(...);  // 关闭时光晕直接消失，不是淡出
+  ctx.restore();
+}
+```
+
+#### 修复
+
+```javascript
+// ✅ 所有内容统一乘 closeAlpha
+ctx.save();
+ctx.globalAlpha = titleAnim.alpha * closeAlpha;
+ctx.fillText('游戏结束', x, y);
+ctx.restore();
+
+// ✅ ConfirmBuyRenderer：去掉 if (!isClosing)，统一使用 contentAlpha * closeAlpha
+ctx.save();
+ctx.globalAlpha = contentAlpha * closeAlpha;
+this.parent._drawCardGlow(...);
+ctx.restore();
+```
+
+#### 踩过的坑
+
+| 现象 | 根因 | 修复 |
+|------|------|------|
+| 关闭时背景变透明了，文字/图片还留在屏幕上 | 内容绘制时忘了 `* closeAlpha` | GameOverRenderer 所有内容统一 `* closeAlpha` |
+| 关闭时光晕突然消失（不是淡出） | `if (!isClosing)` 导致关闭时直接不绘制 `_drawCardGlow` | 去掉条件判断，改为 `contentAlpha * closeAlpha` |
+| 字母置换弹窗关闭速度异常快 | `_drawModalPanel` 默认 `closeDuration=200ms`，但旧版是 300ms | 显式传入 `closeDuration: 300` |
+
+---
+
+### Bug 12：`drawCard` 覆盖外层 `globalAlpha`（弹窗内卡牌不淡出案）
+
+**影响范围**：`js/renderer.js` `drawCard()` → 所有在弹窗内调用 `drawCard` 的场景
+
+#### 问题描述
+
+`drawCard()` 内部为了支持 `card.animOffset.opacity`，在开头设置了 `ctx.globalAlpha = opacity`。当弹窗关闭时，调用方已经设置了 `ctx.globalAlpha = closeAlpha`（如 0.5），但 `drawCard` 进入后直接覆盖为 `opacity`（默认 1），导致**卡牌图片完全不随弹窗淡出**。
+
+#### 错误代码（反模式）
+
+```javascript
+// drawCard 内部（旧代码）
+ctx.globalAlpha = opacity;  // ← 直接赋值，覆盖外层 closeAlpha
+ctx.save();
+// ... 绘制卡牌 ...
+ctx.restore();
+```
+
+#### 修复
+
+```javascript
+// drawCard 内部（修复后）
+ctx.save();
+ctx.globalAlpha *= opacity;  // ← 相乘，保留外层 closeAlpha
+// ... 绘制卡牌 ...
+ctx.restore();
+```
+
+**注意**：`save()` 必须先于 `globalAlpha` 修改，否则 `restore()` 恢复的是被污染后的值。
+
+---
+
+### Bug 13：尝试"整体缩放"改动时 `save/restore` 严重不匹配 ⭐⭐⭐
+
+**影响范围**：所有使用 `_drawModalPanel` 的弹窗
+
+#### 问题描述
+
+试图把所有弹窗关闭动画从"淡出+上移"改为"缩放至 0.3 + 淡出"时，需要在 `_drawModalPanel` 和各 Renderer 中添加统一的外层 `ctx.save()/ctx.scale()/ctx.restore()` 包裹。
+
+但弹窗内容本身已有大量独立的 `ctx.save()/restore()`（标题、分隔线、列表项、按钮各自一对）。新增外层包裹后，极易导致：
+- `save` 次数 ≠ `restore` 次数
+- Canvas 状态栈泄漏或下溢
+- 绘制错乱（出现"无数个嵌套页面"）
+
+#### 教训
+
+| 方案 | 可行性 | 原因 |
+|------|--------|------|
+| 给每个 Renderer 加外层 `save/scale/restore` | ❌ 风险极高 | 原有代码中 save/restore 嵌套复杂，人工包裹极易不匹配 |
+| 重构 `_drawModalPanel` 接受 `drawContent` 回调 | ✅ 推荐 | 由 `_drawModalPanel` 统一 `save/scale/restore`，调用方只负责绘制内容，不管理状态 |
+| 使用离屏 Canvas 统一缩放 | ⚠️ 性能开销 | 每帧创建/绘制离屏画布，低端机可能掉帧 |
+
+**结论**：若要实现弹窗整体缩放，优先重构 `_drawModalPanel` 为回调模式，**禁止**在各 Renderer 中手动添加外层 save/restore 包裹。
+
+---
 
 ### Bug 7：数字更新动画未复用通用方案（`_targetRollAnim` 案）
 
@@ -853,7 +1033,7 @@ this._drawModalPanel(ctx, W, H, s, config)
   // config: isClosing, closeStartTime, width, height, borderRadius, borderWidth,
   //         overlayAlpha, overlayFadeInDuration, enterOffset, closeOffset,
   //         elapsed, onCloseComplete
-  // 返回: { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha }
+  // 返回: { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha, closeScale }
 
 // 数字脉冲
 this._calcPulseScale(animState, maxScale = 0.3)

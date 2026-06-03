@@ -509,8 +509,20 @@ gap = 8 * scale
 | `levelup` | audio/levelup.mp3 | 进入下一关 |
 | `surrender` | audio/surrender.mp3 | 投降 |
 | `button` | audio/button.mp3 | 按钮点击 |
+| `card_placement` | music/sound_effect/card_placement.mp3 | 点击字母卡牌 |
+| `card_valid` | music/sound_effect/card_valid.mp3 | 单词校验合法 |
+| `card_shuffle` | music/sound_effect/card_shuffle.mp3 | 点击弃牌 |
+| `round_win` | music/sound_effect/round_win.mp3 | 回合结算弹窗 |
+| `game_over` | music/sound_effect/game_over.mp3 | 游戏结束弹窗 |
+| `card_illegal` | music/sound_effect/card_illegal.mp3 | 非法单词提示 |
+| `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 |
+| `challenge` | music/sound_effect/challenge.mp3 | 点击挑战按钮 |
+| `buy_success` | music/sound_effect/buy_success.mp3 | 购买成功弹窗 |
 
-BGM 支持循环播放，音量 0.3。
+**音频管理**：
+- 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
+- BGM 支持循环播放，音量 0.3
+- 所有音频文件通过 **云存储** 管理（`music/` 目录），预加载页自动下载到本地缓存；`audio/` 目录下为旧版本地音效（向后兼容）
 
 ---
 
@@ -894,6 +906,7 @@ letterUpgrades = Map {
 - 上传 shop_card 图片到云存储
 - 上传 witch 图片到云存储（含 guide 精灵图）
 - 上传 bg_icon 图片到云存储
+- **上传 music 文件到云存储**
 - **触发新人引导**（强制回到 Phase 1）
 - **图鉴闪烁**（手动触发图鉴图标收集动画）
 - 结束游戏（进入 gameover）
@@ -908,15 +921,14 @@ letterUpgrades = Map {
 
 1. **在线词库依赖**：网络不佳时生僻词可能误判为非法
 2. **中文释义有限**：仅本地高频词有中文释义，其余需在线查询
-3. **音效文件缺失**：代码已预留音频接口，但 `audio/` 目录下文件需自行准备
-4. **iPhone 刘海适配**：已通过 `safeTop` 做了基础适配，极端机型可能需要微调
+3. **iPhone 刘海适配**：已通过 `safeTop` 做了基础适配，极端机型可能需要微调
 
 ### 后续优化方向
 
 | 优先级 | 功能 |
 |--------|------|
 | P1 | 动画系统持续完善（更多粒子效果、过渡动画） |
-| P1 | 音效资源补充与 BGM |
+| ~~P1~~ | ~~音效资源补充与 BGM~~ ✅ 已完成（音效云存储管理 + BGM 循环播放） |
 | ~~P2~~ | ~~分享功能（`wx.shareAppMessage`）~~ ✅ 已完成（分享复活） |
 | ~~P2~~ | ~~新手引导~~ ✅ 已完成 |
 | P3 | 皮肤系统 / 多种卡牌主题 |
@@ -942,7 +954,8 @@ letterUpgrades = Map {
 | v1.7.1 | 2026-06-01 | witch_guide_3 改为精灵图；预加载页不再下载 witch_guide_3/4；上传逻辑跳过精灵图目录下的旧帧图 |
 | v1.7.2 | 2026-06-01 | witch_guide_1/2/3 统一改为精灵图（1/2/3 各 14 帧 4×4 拼接，4 为 20 帧 4×5）；预加载页改用 `preloadGuideGroup`；cloud_storage 统一 spritesheet 下载/注入管道；修复 guide 缓存检测的 `.frames` 遗留引用 |
 | v1.8.0 | 2026-06-02 | 接入微信小游戏好友排行榜（开放数据域 + OffScreenCanvas）；游戏结束弹窗全面改造（三按钮横排、历史最高、fail_witch 装饰）；新增分享复活机制（每日限1次）；预加载页女巫走路动画改为 21 帧精灵图；图鉴图标新增收集闪烁动画；新增 `_drawTitleDivider` 通用分割线方法 |
+| v1.8.1 | 2026-06-03 | 音效系统完善（新增 challenge、buy_success 等音效触发点）；音乐云存储管理（music 上传/预加载/本地缓存）；修复弹窗关闭时内容与背景不同步淡出（所有弹窗内容统一乘 `closeAlpha`，`drawCard` 改为 `globalAlpha *= opacity`） |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-02*
+*文档基于实际代码整理，最后更新：2026-06-03*
