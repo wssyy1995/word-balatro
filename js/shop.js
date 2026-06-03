@@ -1064,7 +1064,7 @@ class ShopRenderer {
     const nrNumber = String(game.round + 1);
     ctx.save();
     ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#8b7d5a';
+    ctx.fillStyle = '#8b6914';
     ctx.textBaseline = 'middle';
     const nrTitleY = moduleY - 14 * s;
     const nrPrefixW = ctx.measureText(nrPrefix).width;
@@ -1082,7 +1082,7 @@ class ShopRenderer {
     // 中文和冒号下移 2px，数字保持不动
     ctx.textAlign = 'left';
     ctx.fillText(nrPrefix, textBaseX, nrTitleY);
-    ctx.fillText(nrNumber, textBaseX + nrPrefixW, nrTitleY - 2);
+    ctx.fillText(nrNumber, textBaseX + nrPrefixW, nrTitleY - 1);
     if (this.parent.shopIcon && this.parent.shopIconLoaded) {
       const nrRightIconX = nrTitleStartX + nrTitleIconSize + nrTitleIconGap + nrTitleW + nrTitleIconGap;
       ctx.save();
