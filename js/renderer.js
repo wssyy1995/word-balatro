@@ -4078,6 +4078,14 @@ class Renderer {
               });
               accumulatedScore += score;
             }
+            // 装备卡牌：德莱薇尔 - 最后一个字母分数算两次
+            if (pc.result && pc.result._lastLetterDouble > 0) {
+              if (stepInfo && stepInfo.isDouble) {
+                accumulatedScore += pc.result._lastLetterDouble;
+              } else if (isAllJumped) {
+                accumulatedScore += pc.result._lastLetterDouble;
+              }
+            }
 
             // 清除女巫牌状态
             jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });

@@ -365,10 +365,12 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
   }
 
   // === 装备卡牌：德莱薇尔 - 最后一个字母分数算两次（含 per_card 女巫牌加成） ===
+  let lastLetterDoubleExtra = 0;
   if (equippedCardSkill === 'last_letter_double' && cards.length > 0) {
     const lastIdx = cards.length - 1;
     const lastCardScore = letterGod ? maxBaseScore : cards[lastIdx].score;
-    baseScore += lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
+    lastLetterDoubleExtra = lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
+    baseScore += lastLetterDoubleExtra;
   }
 
   for (const j of activeJokers) {
@@ -378,7 +380,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
   }
 
   const totalScore = Math.ceil(baseScore * mult);
-  return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace };
+  return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace, _lastLetterDouble: lastLetterDoubleExtra };
 }
 
 // 从释义字符串开头提取词性标记，如 n./v./adj./n&v./adj&adv.
@@ -1343,6 +1345,10 @@ class Game {
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
+    // 获取装备卡牌技能名（提前到约束检查之前）
+    const equippedCard = this.equippedWitchCard ? WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`) : null;
+    const equippedCardSkill = equippedCard ? equippedCard.card_skill_name : null;
+
     // === 女巫技能约束检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (witchSkill) {
@@ -1411,10 +1417,6 @@ class Game {
       };
       if (this.storageManager) this.storageManager.saveProgress();
     }
-
-    // 获取装备卡牌技能名
-    const equippedCard = this.equippedWitchCard ? WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`) : null;
-    const equippedCardSkill = equippedCard ? equippedCard.card_skill_name : null;
 
     const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkill);
 
@@ -1499,6 +1501,13 @@ class Game {
           perCardSteps.push({ cardIdx: i, jokerIdx: jIdx });
         });
       }
+    }
+    // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃一次（动画体现）
+    if (equippedCardSkill === 'last_letter_double' && playedInOrder.length > 0) {
+      const lastIdx = playedInOrder.length - 1;
+      const lastTriggered = jokerTriggers[lastIdx] || [];
+      const lastJokerIdx = lastTriggered.length > 0 ? lastTriggered[lastTriggered.length - 1] : null;
+      perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
     }
     this.pendingCheck.perCardSteps = perCardSteps;
     this.pendingCheck.jokerTriggers = jokerTriggers;
