@@ -479,11 +479,20 @@ function handleInput(x, y) {
 
   // 新手引导阶段：优先处理引导点击，禁用其他交互
   if (game.guidePhase >= 1 && game.guidePhase <= 4) {
-    if (renderer.guideNextBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.guideNextBtnRect]);
+    if (renderer.guideDialogRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.guideDialogRect]);
       if (btnHit) {
-        vibrate();
-        game.advanceGuide();
+        const now = Date.now();
+        if (game._guideTapTime && now - game._guideTapTime < 300) {
+          game._guideSkipTyping = true;
+          vibrate();
+          return;
+        }
+        game._guideTapTime = now;
+        if (renderer.guideNextBtnRect) {
+          vibrate();
+          game.advanceGuide();
+        }
         return;
       }
     }
@@ -1130,12 +1139,22 @@ function handleInput(x, y) {
   if (game.state === 'shop') {
     // 商店女巫技能引导：优先处理引导点击，禁用其他交互
     if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
-      if (renderer.shopGuideNextBtnRect) {
-        const btnHit = renderer.hitTest(x, y, [renderer.shopGuideNextBtnRect]);
+      if (renderer.shopGuideDialogRect) {
+        const btnHit = renderer.hitTest(x, y, [renderer.shopGuideDialogRect]);
         if (btnHit) {
-          vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
-          game.advanceShopGuide();
+          const now = Date.now();
+          if (game._shopGuideTapTime && now - game._shopGuideTapTime < 300) {
+            game._shopGuideSkipTyping = true;
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            return;
+          }
+          game._shopGuideTapTime = now;
+          if (renderer.shopGuideNextBtnRect) {
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            game.advanceShopGuide();
+          }
           return;
         }
       }
@@ -1147,12 +1166,22 @@ function handleInput(x, y) {
     if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
       if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2) {
         // Phase 1/2: 女巫+对话框阶段，点击对话框推进
-        if (renderer.cardBookGuideNextBtnRect) {
-          const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideNextBtnRect]);
+        if (renderer.cardBookGuideDialogRect) {
+          const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideDialogRect]);
           if (btnHit) {
-            vibrate();
-            if (game.audioManager) game.audioManager.play('tap');
-            game.advanceCardBookGuide();
+            const now = Date.now();
+            if (game._cardBookGuideTapTime && now - game._cardBookGuideTapTime < 300) {
+              game._cardBookGuideSkipTyping = true;
+              vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
+              return;
+            }
+            game._cardBookGuideTapTime = now;
+            if (renderer.cardBookGuideNextBtnRect) {
+              vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
+              game.advanceCardBookGuide();
+            }
             return;
           }
         }

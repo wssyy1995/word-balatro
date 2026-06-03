@@ -2459,7 +2459,9 @@ class Renderer {
       : (game._guideTextStartTime || Date.now());
     const charInterval = 65; // 每 65ms 显示一个字
     const elapsed = Date.now() - textStartTime;
-    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(elapsed / charInterval)));
+    const visibleChars = game._guideSkipTyping
+      ? fullText.length
+      : Math.max(0, Math.min(fullText.length, Math.floor(elapsed / charInterval)));
     const displayText = fullText.slice(0, visibleChars);
     const isTextComplete = visibleChars >= fullText.length;
 
@@ -2562,6 +2564,8 @@ class Renderer {
     ctx.restore();
 
     // === 4. 倒三角按钮（文字显示完全后才显示，Phase 5 退场时不显示）===
+    // 对话框区域始终可点击（用于双击跳过打字）
+    this.guideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     this.guideNextBtnRect = null;
     if (isTextComplete && phase !== 5) {
       const btnSize = 16 * s;
@@ -2704,7 +2708,9 @@ class Renderer {
     const textStartTime = (game._shopGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
     const charInterval = 65;
     const textElapsed = Date.now() - textStartTime;
-    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+    const visibleChars = game._shopGuideSkipTyping
+      ? fullText.length
+      : Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
     const displayText = fullText.slice(0, visibleChars);
     const isTextComplete = visibleChars >= fullText.length;
 
@@ -2800,6 +2806,8 @@ class Renderer {
     ctx.restore();
 
     // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+    // 对话框区域始终可点击（用于双击跳过打字）
+    this.shopGuideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     this.shopGuideNextBtnRect = null;
     if (isTextComplete && phase !== 3) {
       const btnSize = 16 * s;
@@ -2945,7 +2953,9 @@ class Renderer {
       : (game._cardBookGuideText2StartTime || Date.now());
     const charInterval = 65;
     const textElapsed = Date.now() - textStartTime;
-    const visibleChars = Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+    const visibleChars = game._cardBookGuideSkipTyping
+      ? fullText.length
+      : Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
     const displayText = fullText.slice(0, visibleChars);
     const isTextComplete = visibleChars >= fullText.length;
 
@@ -3039,6 +3049,8 @@ class Renderer {
     ctx.restore();
 
     // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+    // 对话框区域始终可点击（用于双击跳过打字）
+    this.cardBookGuideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
     this.cardBookGuideNextBtnRect = null;
     if (isTextComplete && phase !== 3) {
       const btnSize = 16 * s;

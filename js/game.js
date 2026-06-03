@@ -1145,6 +1145,8 @@ class Game {
 
     this.guidePhase++;
     this._guideTextStartTime = Date.now();
+    this._guideSkipTyping = false;
+    this._guideTapTime = null;
 
     // 阶段5（完成）：先触发退场动画，再清理引导状态
     if (this.guidePhase >= 5) {
@@ -1167,6 +1169,8 @@ class Game {
     if (this.shopGuidePhase < 1 || this.shopGuidePhase > 2) return;
 
     this.shopGuidePhase++;
+    this._shopGuideSkipTyping = false;
+    this._shopGuideTapTime = null;
 
     if (this.shopGuidePhase === 2) {
       this._shopGuideTextStartTime = Date.now();
@@ -1191,6 +1195,8 @@ class Game {
     if (this.cardBookGuidePhase < 1 || this.cardBookGuidePhase > 2) return;
 
     this.cardBookGuidePhase++;
+    this._cardBookGuideSkipTyping = false;
+    this._cardBookGuideTapTime = null;
 
     if (this.cardBookGuidePhase === 2) {
       this._cardBookGuideText2StartTime = Date.now();
