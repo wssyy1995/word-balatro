@@ -290,6 +290,10 @@ function _matchWordTrigger(cards, trigger) {
       const word = cards.map(c => c.letter.toLowerCase()).join('');
       return word.length >= 2 && word[0] === word[word.length - 1];
     }
+    case 'no_duplicate': {
+      const word = cards.map(c => c.letter.toLowerCase()).join('');
+      return new Set(word.split('')).size === word.length;
+    }
     default: return false;
   }
 }
@@ -351,6 +355,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
           } else {
             mult = Math.ceil(mult * j.value);
           }
+        } else if (j.penalty !== undefined) {
+          // 双刃剑：未触发时执行惩罚
+          mult += j.penalty;
         }
         break;
       }
@@ -2072,6 +2079,18 @@ class Game {
     // 更新动画
     if (this.animManager) {
       this.animManager.update(Date.now());
+    }
+
+    // === 女巫牌排序动画状态归零（退出排序后的清理）===
+    if (!this._jokerSortState && this.jokers) {
+      this.jokers.forEach((joker) => {
+        if (!joker) return;
+        joker._sortOffsetX = 0;
+        joker._sortOffsetY = 0;
+        joker._sortScale = 1;
+        joker._sortOpacity = 1;
+        joker._sortGlow = 0;
+      });
     }
     // 清除过期的 hintToast
     if (this.hintToast && Date.now() > this.hintToast.expireAt) {

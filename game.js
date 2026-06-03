@@ -350,7 +350,69 @@ wx.onTouchMove((e) => {
     }
   }
 
+  // 取消女巫牌长按候选（移动超过阈值）
+  if (game._pendingJokerSelect && touchStartPos) {
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.x;
+    const dy = touch.clientY - touchStartPos.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      if (game._pendingJokerSelectTimer) {
+        clearTimeout(game._pendingJokerSelectTimer);
+        game._pendingJokerSelectTimer = null;
+      }
+      game._pendingJokerSelect = null;
+    }
+  }
 
+  // 更新女巫牌排序拖动位置与插入槽位
+  if (game._jokerSortState) {
+    const touch = e.touches[0];
+    game._jokerSortState.currentX = touch.clientX;
+    game._jokerSortState.currentY = touch.clientY;
+
+    // 计算 insertSlot（手指最接近哪个槽位中心）
+    const s = renderer.scale || 1;
+    const W = renderer.canvasWidth || 375;
+    const actualWitchSlots = game.maxJokerSlots || 4;
+    const ownedW = actualWitchSlots >= 5 ? W - 8 * s : W - 20 * s;
+    const ownedX = actualWitchSlots >= 5 ? 4 * s : 10 * s;
+    const oPadX = 10 * s;
+    const oDividerW = 1.5 * s;
+    const BASE_GAP = 6 * s;
+    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
+    const actualTotalSlots = actualWitchSlots + 2;
+    const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
+    const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
+    const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const oWitchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
+    const oLeftStartX = ownedX + oPadX - oWitchShift - (actualWitchSlots >= 5 ? 2 * s : 0);
+
+    let insertSlot = actualWitchSlots;
+    for (let i = 0; i < actualWitchSlots; i++) {
+      const slotCenterX = oLeftStartX + i * (slotW + actualGap) + slotW / 2;
+      if (touch.clientX < slotCenterX) {
+        insertSlot = i;
+        break;
+      }
+    }
+    // 如果在槽位边缘附近，保持原位（与 demo 一致）
+    const fromIndex = game._jokerSortState.fromIndex;
+    if (insertSlot > 0 && insertSlot < actualWitchSlots) {
+      const mid = (oLeftStartX + (insertSlot - 1) * (slotW + actualGap) + slotW / 2 + oLeftStartX + insertSlot * (slotW + actualGap) + slotW / 2) / 2;
+      if (touch.clientX < mid) insertSlot--;
+    } else if (insertSlot === actualWitchSlots) {
+      const edge = oLeftStartX + (actualWitchSlots - 1) * (slotW + actualGap) + slotW + actualGap / 2;
+      if (touch.clientX < edge) insertSlot = actualWitchSlots - 1;
+    }
+    // 在目标槽位附近范围内保持原位（仅在原位或紧邻右侧时生效）
+    if (insertSlot === fromIndex || insertSlot === fromIndex + 1) {
+      const fromCenterX = oLeftStartX + fromIndex * (slotW + actualGap) + slotW / 2;
+      if (Math.abs(touch.clientX - fromCenterX) < slotW * 0.4) {
+        insertSlot = fromIndex;
+      }
+    }
+    game._jokerSortState.insertSlot = insertSlot;
+  }
 
   if (!renderer.cloudLogDragging) return;
   const touch = e.touches[0];
@@ -370,6 +432,42 @@ wx.onTouchEnd(() => {
     clearTimeout(longPressTimer);
     longPressTimer = null;
   }
+
+  // 女巫牌短按：执行选中（手指松开时显示售出按钮）
+  if (game._pendingJokerSelect) {
+    if (game._pendingJokerSelectTimer) {
+      clearTimeout(game._pendingJokerSelectTimer);
+      game._pendingJokerSelectTimer = null;
+    }
+    const index = game._pendingJokerSelect.index;
+    game._pendingJokerSelect = null;
+    if (game.audioManager) game.audioManager.play('tap');
+    const prev = renderer.shopRenderer.shopSelectedOwned;
+    if (prev && prev.type === 'jokers' && prev.index === index) {
+      renderer.shopRenderer.shopSelectedOwned = null;
+    } else {
+      renderer.shopRenderer.shopSelectedOwned = { type: 'jokers', index };
+    }
+  }
+
+  // 女巫牌排序完成：从原位置取出，插入到目标位置
+  if (game._jokerSortState) {
+    const state = game._jokerSortState;
+    const fromIndex = state.fromIndex;
+    const insertSlot = state.insertSlot;
+
+    if (insertSlot !== fromIndex && game.jokers && game.jokers[fromIndex]) {
+      // 取出被拖动的牌
+      const item = game.jokers.splice(fromIndex, 1)[0];
+      // 插入到目标位置（已移除自身，若目标在原位置之后需减 1）
+      const adjustedInsertSlot = insertSlot > fromIndex ? insertSlot - 1 : insertSlot;
+      game.jokers.splice(adjustedInsertSlot, 0, item);
+      if (game.storageManager) game.storageManager.saveProgress();
+    }
+
+    game._jokerSortState = null;
+  }
+
   touchStartPos = null;
 });
 
@@ -826,6 +924,7 @@ function handleInput(x, y) {
         vibrate();
         renderer.pressedBtn = 'reset';
         if (game.animManager) game.animManager.buttonPress(renderer.resetBtnRect);
+        if (game.audioManager) game.audioManager.play('card_placement');
         game.clearSelection();
         return;
       }
@@ -1154,6 +1253,25 @@ function handleInput(x, y) {
     if (renderer.shopRenderer && renderer.shopRenderer.shopOwnedPropRects) {
       const propHit = renderer.hitTest(x, y, renderer.shopRenderer.shopOwnedPropRects);
       if (propHit) {
+        // 女巫牌支持长按排序（400ms），药水牌保持原有短按逻辑
+        if (propHit.array === 'jokers') {
+          game._pendingJokerSelect = { index: propHit.index, startTime: Date.now() };
+          game._pendingJokerSelectTimer = setTimeout(() => {
+            game._pendingJokerSelect = null;
+            game._pendingJokerSelectTimer = null;
+            // 进入排序状态
+            game._jokerSortState = {
+              fromIndex: propHit.index,
+              insertSlot: propHit.index,
+              currentX: x,
+              currentY: y,
+            };
+            // 取消当前选中状态，避免排序时显示售出按钮
+            renderer.shopRenderer.shopSelectedOwned = null;
+          }, 400);
+          return;
+        }
+        // 药水牌：保持短按逻辑
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         const prev = renderer.shopRenderer.shopSelectedOwned;

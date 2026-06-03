@@ -40,8 +40,9 @@ const SHOP_POOL = {
     {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5, cost:8, desc:'相邻重复字母，倍率+5'},
     {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, cost:8, desc:'单词首尾字母相同，倍率+8'},
     {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:6, desc:'每次打出与上次首字母相同的单词，本牌倍率+3；中断后重置'},
-    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:6, cost:9, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+5'},
-    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:5, cost:9, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+4'}
+    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:5, cost:9, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+5'},
+    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:9, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
+    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'单词中所有字母均不重复，倍率+2；若有重复，倍率-1'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -71,7 +72,7 @@ function _shuffle(arr) {
 
 function generateShopItems(game) {
   const items = [];
-  const equippedWitchNames = new Set((game.jokers || []).map(j => j.name));
+  const equippedWitchNames = new Set((game.jokers || []).filter(j => j).map(j => j.name));
 
   // 女巫牌：过滤已装备的，确保有2张可展示
   let witchPool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
@@ -98,7 +99,7 @@ function refreshModule(game, modIdx) {
   let pool;
 
   if (type === 'witch') {
-    const equippedWitchNames = new Set((game.jokers || []).map(j => j.name));
+    const equippedWitchNames = new Set((game.jokers || []).filter(j => j).map(j => j.name));
     pool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
     if (pool.length < 2) pool = SHOP_POOL.witch;
   } else {
@@ -317,6 +318,9 @@ class ShopRenderer {
       game.jokers.splice(game._sellingProp.index, 1);
       game._sellingProp = null;
     }
+    // lerp 工具函数
+    const lerp = (a, b, t) => a + (b - a) * t;
+
     for (let i = 0; i < actualWitchSlots; i++) {
       const sx = oLeftStartX + i * (slotW + actualGap);
       const joker = oJokers[i];
@@ -336,6 +340,39 @@ class ShopRenderer {
           const t = Math.min(tRaw, 1);
           slideOffsetX = -(slotW + actualGap) * Easing.easeOutBack(t);
         }
+      }
+
+      // === 排序动画目标值计算 ===
+      let targetOffsetX = 0;
+      let targetOffsetY = 0;
+      let targetScale = 1;
+      let targetOpacity = 1;
+      let targetGlow = 0;
+      if (game._jokerSortState) {
+        const { fromIndex, insertSlot } = game._jokerSortState;
+        if (i === fromIndex) {
+          // 被拖动的牌在原位：半透明空位占位
+          targetOpacity = 0.25;
+        } else {
+          // 其他牌：根据 insertSlot 自动腾位置
+          if (insertSlot < fromIndex) {
+            if (i >= insertSlot && i < fromIndex) targetOffsetX = slotW + actualGap;
+          } else if (insertSlot > fromIndex) {
+            if (i > fromIndex && i <= insertSlot) targetOffsetX = -(slotW + actualGap);
+          }
+          targetScale = 1;
+          targetOpacity = 0.85;
+        }
+      }
+
+      // lerp 平滑过渡（持久化在 joker 对象上）
+      const speed = (game._jokerSortState && i === game._jokerSortState.fromIndex) ? 0.45 : 0.22;
+      if (joker) {
+        joker._sortOffsetX = lerp(joker._sortOffsetX || 0, targetOffsetX, speed);
+        joker._sortOffsetY = lerp(joker._sortOffsetY || 0, targetOffsetY, speed);
+        joker._sortScale = lerp(joker._sortScale || 1, targetScale, speed);
+        joker._sortOpacity = lerp(joker._sortOpacity || 1, targetOpacity, speed);
+        joker._sortGlow = lerp(joker._sortGlow || 0, targetGlow, speed);
       }
 
       if (isSelling && joker) {
@@ -364,10 +401,89 @@ class ShopRenderer {
         this.parent._drawPropCard(ctx, joker, sx, oSlotY, slotW, oSlotH, s);
         ctx.restore();
       } else if (joker) {
-        const isSelected = this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i;
+        const isSelected = !game._jokerSortState && this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i;
         const selectedOffsetY = isSelected ? -3 * s : 0;
-        this.parent._drawPropCard(ctx, joker, sx + slideOffsetX, oSlotY + selectedOffsetY, slotW, oSlotH, s);
-        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
+        const sortX = joker._sortOffsetX || 0;
+        const sortY = joker._sortOffsetY || 0;
+        const scale = joker._sortScale || 1;
+        const opacity = joker._sortOpacity || 1;
+        const glow = joker._sortGlow || 0;
+
+        if (game._jokerSortState && game._jokerSortState.fromIndex === i) {
+          // 被拖动的牌在原位：绘制半透明空位占位
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          this.parent._drawEmptySlot(ctx, sx + slideOffsetX + sortX, oSlotY + sortY, slotW * scale, oSlotH * scale, s, 'witch');
+          ctx.restore();
+        } else {
+          // 正常牌（排序状态下带轻微抖动）
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          if (glow > 0.01) {
+            ctx.shadowColor = `rgba(162,155,254,${glow})`;
+            ctx.shadowBlur = 22 * s;
+          }
+          let shakeX = 0;
+          let shakeY = 0;
+          if (game._jokerSortState) {
+            const t = Date.now();
+            shakeX = Math.sin(t / 45 + i * 2.1) * 0.6 * s;
+            shakeY = Math.cos(t / 45 + i * 1.6) * 0.6 * s;
+          }
+          const drawW = slotW * scale;
+          const drawH = oSlotH * scale;
+          const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
+          const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
+          this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s);
+          ctx.restore();
+
+          // 排序状态下不响应点击
+          if (!game._jokerSortState) {
+            this.shopOwnedPropRects.push({ x: sx + slideOffsetX + sortX, y: oSlotY + selectedOffsetY + sortY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
+          }
+        }
+
+        // 售出按钮（排序状态下不显示）
+        if (!game._jokerSortState && isSelected && !isSelling) {
+          const sellBtnH = 20 * s;
+          const sellBtnY = oSlotY + oSlotH + 2 * s + selectedOffsetY;
+
+          // 出现动画（easeOutBack：从卡牌底部向下弹出）
+          let appearScale = 1;
+          let appearOffsetY = 0;
+          if (this.sellBtnAnimStart) {
+            const ae = Date.now() - this.sellBtnAnimStart;
+            const ap = Math.min(ae / 200, 1);
+            const ease = Easing.easeOutBack(ap);
+            appearScale = ease;
+            appearOffsetY = -(1 - ease) * 8 * s;
+          }
+
+          const finalW = slotW * appearScale;
+          const finalH = sellBtnH * appearScale;
+          const finalX = sx + slideOffsetX + sortX + (slotW - finalW) / 2;
+          const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
+
+          ctx.save();
+          this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
+          ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const coinSize = 10 * s * appearScale;
+          const sellText = String(Math.round(joker.cost / 2));
+          const textW = ctx.measureText(sellText).width;
+          const contentW = coinSize + 2 * s + textW;
+          const startX = finalX + (finalW - contentW) / 2;
+          const midY = finalY + finalH / 2;
+          if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+            ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
+          ctx.restore();
+
+          this.shopSellBtnRect = { x: sx + slideOffsetX + sortX, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'jokers' };
+        }
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
         let emptyScale = 1;
@@ -391,49 +507,6 @@ class ShopRenderer {
         ctx.translate(-(sx + slotW / 2 + slideOffsetX), -(oSlotY + oSlotH / 2));
         this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'witch');
         ctx.restore();
-      }
-
-      // 售出按钮（选中时，带回弹出现动画）
-      if (this.shopSelectedOwned && this.shopSelectedOwned.type === 'jokers' && this.shopSelectedOwned.index === i && joker && !isSelling) {
-        const sellBtnH = 20 * s;
-        const selectedOffsetY = -3 * s;
-        const sellBtnY = oSlotY + oSlotH + 2 * s + selectedOffsetY;
-
-        // 出现动画（easeOutBack：从卡牌底部向下弹出）
-        let appearScale = 1;
-        let appearOffsetY = 0;
-        if (this.sellBtnAnimStart) {
-          const ae = Date.now() - this.sellBtnAnimStart;
-          const ap = Math.min(ae / 200, 1);
-          const ease = Easing.easeOutBack(ap);
-          appearScale = ease;
-          appearOffsetY = -(1 - ease) * 8 * s;
-        }
-
-        const finalW = slotW * appearScale;
-        const finalH = sellBtnH * appearScale;
-        const finalX = sx + (slotW - finalW) / 2;
-        const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
-
-        ctx.save();
-        this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
-        ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const coinSize = 10 * s * appearScale;
-        const sellText = String(Math.round(joker.cost / 2));
-        const textW = ctx.measureText(sellText).width;
-        const contentW = coinSize + 2 * s + textW;
-        const startX = finalX + (finalW - contentW) / 2;
-        const midY = finalY + finalH / 2;
-        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-          ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
-        }
-        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
-        ctx.restore();
-
-        this.shopSellBtnRect = { x: sx, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'jokers' };
       }
     }
 
@@ -623,6 +696,25 @@ class ShopRenderer {
           this.shopSellBtnRect = { x: sx, y: btnY, w: slotW, h: btnH, index: i, array: 'potions' };
           this.shopUseBtnRect = null;
         }
+      }
+    }
+
+    // === 绘制被拖动的女巫牌（排序状态）===
+    if (game._jokerSortState) {
+      const state = game._jokerSortState;
+      const joker = game.jokers[state.fromIndex];
+      if (joker) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(155,89,182,0.7)';
+        ctx.shadowBlur = 24 * s;
+        const LIFT_SCALE = 1.08;
+        const LIFT_Y = -16 * s;
+        const scaledW = slotW * LIFT_SCALE;
+        const scaledH = oSlotH * LIFT_SCALE;
+        const drawX = state.currentX - scaledW / 2;
+        const drawY = state.currentY - scaledH / 2 + LIFT_Y;
+        this.parent._drawPropCard(ctx, joker, drawX, drawY, scaledW, scaledH, s);
+        ctx.restore();
       }
     }
 

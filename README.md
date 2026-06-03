@@ -2,7 +2,7 @@
 
 ## 1. 项目概述
 
-**Word Balatro**（游戏内标题 `Words Witch Game`）是一款基于 **Canvas 2D** 的微信小游戏。玩家从手牌中选取字母卡牌拼出合法英文单词，根据字母分数和单词长度计算得分，在限定出牌次数内达到目标分数即可进入下一关。游戏融合了 Roguelike 元素（女巫牌、水晶球、魔法药水），每局体验各不相同。
+**Word Balatro**（游戏内标题 `女巫的词牌`）是一款基于 **Canvas 2D** 的微信小游戏。玩家从手牌中选取字母卡牌拼出合法英文单词，根据字母分数和单词长度计算得分，在限定出牌次数内达到目标分数即可进入下一关。游戏融合了 Roguelike 元素（女巫牌、水晶球、魔法药水），每局体验各不相同。
 
 | 属性 | 说明 |
 |------|------|
@@ -22,9 +22,12 @@ word-balatro/
 ├── game.json            # 小游戏配置（竖屏、无状态栏）
 ├── project.config.json  # 微信项目配置（需替换 appid）
 ├── README.md            # 本文档
+├── test_full.js         # 全量测试脚本（离线词库校验等）
 ├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
+├── raw_words/           # 原始词库数据（构建脚本输入）
 ├── openDataContext/     # 微信开放数据域 —— 好友排行榜
 │   └── index.js         # 排行榜绘制与好友数据拉取
+├── scripts/             # 构建脚本（词库生成、精灵图打包等）
 └── js/
     ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
     ├── words.js         # 本地核心词库（高频词含中文释义）
@@ -401,7 +404,7 @@ gap = 8 * scale
 #### 3.3.6 商店页面布局
 
 ```
-        Words Witch Game
+        女巫的词牌
         💰 金币胶囊
 
 ┌─────────────────────────────┐
@@ -497,32 +500,27 @@ gap = 8 * scale
 
 | 音效名 | 文件 | 触发时机 |
 |--------|------|---------|
-| `select` | audio/select.mp3 | 选牌 |
-| `deselect` | audio/deselect.mp3 | 取消选牌 |
-| `play` | audio/play.mp3 | 点击出牌 |
-| `discard` | audio/discard.mp3 | 弃牌 |
-| `valid` | audio/valid.mp3 | 单词合法 |
-| `invalid` | audio/invalid.mp3 | 单词非法/约束失败 |
-| `score` | audio/score.mp3 | 分数计入 |
-| `upgrade` | audio/upgrade.mp3 | 药水升级 |
-| `buy` | audio/buy.mp3 | 商店购买 |
-| `levelup` | audio/levelup.mp3 | 进入下一关 |
-| `surrender` | audio/surrender.mp3 | 投降 |
-| `button` | audio/button.mp3 | 按钮点击 |
 | `card_placement` | music/sound_effect/card_placement.mp3 | 点击字母卡牌 |
 | `card_valid` | music/sound_effect/card_valid.mp3 | 单词校验合法 |
 | `card_shuffle` | music/sound_effect/card_shuffle.mp3 | 点击弃牌 |
+| `card_illegal` | music/sound_effect/card_illegal.mp3 | 非法单词提示 |
+| `card_jump` | music/sound_effect/card_jump.mp3 | 字母牌跳跃动画 |
+| `answer_tone` | music/sound_effect/answer_tone.mp3 | 字母跳跃触发女巫牌 |
+| `word_score` | music/sound_effect/word_score.mp3 | 计分总数弹出（含药水升级分数变化） |
 | `round_win` | music/sound_effect/round_win.mp3 | 回合结算弹窗 |
 | `game_over` | music/sound_effect/game_over.mp3 | 游戏结束弹窗 |
-| `card_illegal` | music/sound_effect/card_illegal.mp3 | 非法单词提示 |
-| `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 |
-| `challenge` | music/sound_effect/challenge.mp3 | 点击挑战按钮 |
 | `buy_success` | music/sound_effect/buy_success.mp3 | 购买成功弹窗 |
+| `card_sell` | music/sound_effect/card_sell.mp3 | 售出道具 |
+| `card_book_page` | music/sound_effect/card_book_page.mp3 | 图鉴翻页 |
+| `challenge` | music/sound_effect/challenge.mp3 | 点击挑战按钮 |
+| `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 |
+| `levelup` | music/sound_effect/levelup.mp3 | 进入下一关 |
+| `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） |
 
 **音频管理**：
 - 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
 - BGM 支持循环播放，音量 0.3
-- 所有音频文件通过 **云存储** 管理（`music/` 目录），预加载页自动下载到本地缓存；`audio/` 目录下为旧版本地音效（向后兼容）
+- 所有音频文件通过 **云存储** 管理（`music/` 目录），预加载页自动下载到本地缓存
 
 ---
 
@@ -563,7 +561,7 @@ gap = 8 * scale
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 10 种 | 4-10 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
+| **女巫牌**（witch） | 15 种 | 4-10 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
 | **水晶球**（crystal） | 6 种 | 3-8 金币 | 购买即生效 | 蓝色 |
 | **魔法药水**（potion） | 4 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
 
@@ -955,6 +953,7 @@ letterUpgrades = Map {
 | v1.7.2 | 2026-06-01 | witch_guide_1/2/3 统一改为精灵图（1/2/3 各 14 帧 4×4 拼接，4 为 20 帧 4×5）；预加载页改用 `preloadGuideGroup`；cloud_storage 统一 spritesheet 下载/注入管道；修复 guide 缓存检测的 `.frames` 遗留引用 |
 | v1.8.0 | 2026-06-02 | 接入微信小游戏好友排行榜（开放数据域 + OffScreenCanvas）；游戏结束弹窗全面改造（三按钮横排、历史最高、fail_witch 装饰）；新增分享复活机制（每日限1次）；预加载页女巫走路动画改为 21 帧精灵图；图鉴图标新增收集闪烁动画；新增 `_drawTitleDivider` 通用分割线方法 |
 | v1.8.1 | 2026-06-03 | 音效系统完善（新增 challenge、buy_success 等音效触发点）；音乐云存储管理（music 上传/预加载/本地缓存）；修复弹窗关闭时内容与背景不同步淡出（所有弹窗内容统一乘 `closeAlpha`，`drawCard` 改为 `globalAlpha *= opacity`） |
+| v1.8.2 | 2026-06-03 | 药水升级动画分数变化时播放 `word_score` 音效；商店金币购买按钮和重掷按钮点击区域扩大 2px；售出卡牌后空位占位图片添加果冻弹出动画；商店下一回合标题颜色统一为 `#8b6914` |
 
 ---
 

@@ -4289,11 +4289,11 @@ class Renderer {
 
         const errText = '单词不存在';
         ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
-        ctx.fillStyle = '#e74c3c';
+        ctx.fillStyle = '#c0392b';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         const errTextWidth = ctx.measureText(errText).width;
-        const errIconSize = 14 * s;
+        const errIconSize = 18 * s;
         const errTotalWidth = errIconSize + 4 * s + errTextWidth;
         const errBaseX = W / 2 - errTotalWidth / 2;
         const errY = wordAreaY + 22 * s + 3 * s + 5 * s + 2 * s;
