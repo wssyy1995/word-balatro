@@ -142,6 +142,7 @@
         fill: () => {},
         stroke: () => {},
         arc: () => {},
+        arcTo: () => {},
         quadraticCurveTo: () => {},
         clip: () => {},
         drawImage: () => {},
