@@ -1,4 +1,5 @@
 const { Easing } = require('../animation');
+const { LETTER_SCORE } = require('../data');
 
 module.exports = function extendAnimation(Renderer) {
     Renderer.prototype.updateAnimations = function() {
