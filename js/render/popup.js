@@ -1026,7 +1026,7 @@ module.exports = function extendPopup(Renderer) {
       const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
 
       const panelW = 280;
-      const panelH = 340;
+      const panelH = game._feedbackPage === 'feedback' ? 360 : 340;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
@@ -1045,6 +1045,8 @@ module.exports = function extendPopup(Renderer) {
           game._settingsPopup = null;
           game._closingSettings = false;
           game._closeSettingsStartTime = null;
+          game._feedbackPage = 'main';
+          game._feedbackText = '';
         }
       });
 
@@ -1055,13 +1057,17 @@ module.exports = function extendPopup(Renderer) {
       this.settingsSoundRect = null;
       this.settingsRankRect = null;
       this.settingsFeedbackRect = null;
+      this.feedbackBackRect = null;
+      this.feedbackInputRect = null;
+      this.feedbackSubmitRect = null;
       this.settingsCloseRect = { x: 0, y: 0, w: W, h: H };
 
       const contentAlpha = closeAlpha;
+      const isFeedback = game._feedbackPage === 'feedback';
 
-      // === 标题：设置 ===
+      // === 标题区域 ===
       const titleY = py + 28 * s;
-      const titleText = '设置';
+      const titleText = isFeedback ? '问题反馈' : '设置';
       ctx.save();
       ctx.globalAlpha = contentAlpha;
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
@@ -1086,7 +1092,6 @@ module.exports = function extendPopup(Renderer) {
       ctx.lineTo(W / 2 + titleW / 2 + decoGap + decoLineW, decoY);
       ctx.stroke();
 
-      // 小菱形
       const diamondSize = 3 * s;
       ctx.fillStyle = '#c4a35a';
       [
@@ -1103,166 +1108,261 @@ module.exports = function extendPopup(Renderer) {
       });
       ctx.restore();
 
-      // === 设置项列表 ===
-      const items = [
-        {
-          key: 'sound',
-          icon: '🔊',
-          title: '音效',
-          subtitle: '开启或关闭游戏音效',
-          type: 'switch',
-          value: game.settings && game.settings.soundEnabled !== false
-        },
-        {
-          key: 'rank',
-          icon: '🏆',
-          title: '排行榜',
-          subtitle: '查看全球玩家排行',
-          type: 'arrow'
-        },
-        {
-          key: 'feedback',
-          icon: '✏️',
-          title: '问题反馈',
-          subtitle: '告诉我们你的建议与问题',
-          type: 'arrow'
-        }
-      ];
-
-      const itemH = 72 * s;
-      const itemStartY = titleY + 35 * s;
-      const iconSize = 36 * s;
-      const iconBgColor = '#3a2e1e';
-
-      items.forEach((item, i) => {
-        const itemY = itemStartY + i * itemH;
-        const centerY = itemY + itemH / 2;
-
-        // 图标圆形背景
-        const iconX = px + 22 * s;
-        const iconY = centerY;
+      if (isFeedback) {
+        // ===== 问题反馈页 =====
+        // 返回箭头（标题左侧）
+        const backBtnSize = 32 * s;
+        const backX = px + 14 * s;
+        const backY = titleY - backBtnSize / 2;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.beginPath();
-        ctx.arc(iconX + iconSize / 2, iconY, iconSize / 2, 0, Math.PI * 2);
-        ctx.fillStyle = iconBgColor;
-        ctx.fill();
+        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.fillStyle = game._feedbackBackPressed ? '#8b6914' : '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('‹', backX + backBtnSize / 2, titleY);
+        ctx.restore();
+        this.feedbackBackRect = { x: backX, y: backY, w: backBtnSize, h: backBtnSize };
+
+        // 输入框区域
+        const inputX = px + 20 * s;
+        const inputY = titleY + 30 * s;
+        const inputW = pw - 40 * s;
+        const inputH = 120 * s;
+        const isInputPressed = game._feedbackInputFocused;
+
+        // 输入框背景
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this.roundRect(inputX, inputY, inputW, inputH, 8 * s, '#faf6ee', isInputPressed ? '#8b6914' : '#d4c8a8', 1 * s);
         ctx.restore();
 
-        // 图标文字（emoji）
+        // 输入框文字
+        const text = game._feedbackText || '';
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.font = `${Math.floor(18 * s)}px sans-serif`;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = text ? '#3a2e1e' : '#a09888';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        const displayText = text || '点击输入反馈内容...';
+        // 简单换行绘制
+        const maxWidth = inputW - 16 * s;
+        const lineHeight = 20 * s;
+        let line = '';
+        let lineY = inputY + 10 * s;
+        for (let i = 0; i < displayText.length; i++) {
+          const testLine = line + displayText[i];
+          const testWidth = ctx.measureText(testLine).width;
+          if (testWidth > maxWidth && i > 0) {
+            if (lineY + lineHeight > inputY + inputH - 10 * s) {
+              ctx.fillText(line + '...', inputX + 8 * s, lineY);
+              break;
+            }
+            ctx.fillText(line, inputX + 8 * s, lineY);
+            line = displayText[i];
+            lineY += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        if (lineY <= inputY + inputH - 10 * s) {
+          ctx.fillText(line, inputX + 8 * s, lineY);
+        }
+        ctx.restore();
+
+        // 字数统计
+        ctx.save();
+        ctx.globalAlpha = contentAlpha * 0.6;
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#8a7a6a';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${text.length}/100`, inputX + inputW - 8 * s, inputY + inputH + 12 * s);
+        ctx.restore();
+
+        this.feedbackInputRect = { x: inputX, y: inputY, w: inputW, h: inputH };
+
+        // 提交按钮
+        const submitW = 120 * s;
+        const submitH = 40 * s;
+        const submitX = W / 2 - submitW / 2;
+        const submitY = inputY + inputH + 30 * s;
+        const isSubmitPressed = game._feedbackSubmitPressed;
+        const isSubmitting = game._feedbackSubmitting;
+        const pressOffset = isSubmitPressed ? 1 * s : 0;
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        const submitColor = isSubmitting ? '#a09070' : '#8b6914';
+        this.roundRect(submitX, submitY + pressOffset, submitW, submitH, 8 * s, submitColor, submitColor, 1 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(item.icon, iconX + iconSize / 2, iconY);
+        ctx.fillText(isSubmitting ? '提交中...' : '提交', W / 2, submitY + pressOffset + submitH / 2);
         ctx.restore();
 
-        // 标题
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-        ctx.fillStyle = '#3a2e1e';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.title, iconX + iconSize + 14 * s, centerY - 7 * s);
-        ctx.restore();
+        this.feedbackSubmitRect = { x: submitX, y: submitY, w: submitW, h: submitH };
 
-        // 副标题
-        ctx.save();
-        ctx.globalAlpha = contentAlpha * 0.7;
-        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#8a7a6a';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.subtitle, iconX + iconSize + 14 * s, centerY + 11 * s);
-        ctx.restore();
-
-        // 右侧控件
-        const ctrlRightX = px + pw - 22 * s;
-        if (item.type === 'switch') {
-          const swW = 50 * s;
-          const swH = 26 * s;
-          const swX = ctrlRightX - swW;
-          const swY = centerY - swH / 2;
-          const isOn = item.value;
-          const isPressed = game._settingsSoundPressed;
-          const pressOffset = isPressed ? 1 * s : 0;
-
-          // 开关背景
+        // Toast 提示
+        if (game._feedbackSubmitToast && Date.now() < game._feedbackSubmitToast.expireAt) {
+          const toastText = game._feedbackSubmitToast.text;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
-          this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
-          ctx.restore();
-
-          // "开"/"关" 文字
-          ctx.save();
-          ctx.globalAlpha = contentAlpha;
-          ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          const toastW = ctx.measureText(toastText).width + 24 * s;
+          const toastH = 30 * s;
+          const toastX = W / 2 - toastW / 2;
+          const toastY = py + ph - 50 * s;
+          ctx.fillStyle = 'rgba(58, 46, 30, 0.85)';
+          this.roundRect(toastX, toastY, toastW, toastH, 6 * s, 'rgba(58, 46, 30, 0.85)');
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          const labelText = isOn ? '开' : '关';
-          ctx.fillText(labelText, swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
+          ctx.fillText(toastText, W / 2, toastY + toastH / 2);
           ctx.restore();
+        } else {
+          game._feedbackSubmitToast = null;
+        }
 
-          // 圆点
-          const dotR = 10 * s;
-          const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
-          const dotY = swY + pressOffset + swH / 2;
+      } else {
+        // ===== 设置主页 =====
+        const items = [
+          { key: 'sound', icon: '🔊', title: '音效', subtitle: '开启或关闭游戏音效', type: 'switch', value: game.settings && game.settings.soundEnabled !== false },
+          { key: 'rank', icon: '🏆', title: '排行榜', subtitle: '查看全球玩家排行', type: 'arrow' },
+          { key: 'feedback', icon: '✏️', title: '问题反馈', subtitle: '告诉我们你的建议与问题', type: 'arrow' }
+        ];
+
+        const itemH = 72 * s;
+        const itemStartY = titleY + 35 * s;
+        const iconSize = 36 * s;
+        const iconBgColor = '#3a2e1e';
+
+        items.forEach((item, i) => {
+          const itemY = itemStartY + i * itemH;
+          const centerY = itemY + itemH / 2;
+
+          // 图标圆形背景
+          const iconX = px + 22 * s;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.beginPath();
-          ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
-          ctx.fillStyle = '#fff';
+          ctx.arc(iconX + iconSize / 2, centerY, iconSize / 2, 0, Math.PI * 2);
+          ctx.fillStyle = iconBgColor;
           ctx.fill();
           ctx.restore();
 
-          // 记录点击区域
-          this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
-        } else if (item.type === 'arrow') {
+          // 图标文字
           ctx.save();
-          ctx.globalAlpha = contentAlpha * 0.6;
+          ctx.globalAlpha = contentAlpha;
+          ctx.font = `${Math.floor(18 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.icon, iconX + iconSize / 2, centerY);
+          ctx.restore();
+
+          // 标题
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
           ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-          ctx.fillStyle = '#8a7a6a';
-          ctx.textAlign = 'center';
+          ctx.fillStyle = '#3a2e1e';
+          ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText('›', ctrlRightX - 4 * s, centerY);
+          ctx.fillText(item.title, iconX + iconSize + 14 * s, centerY - 7 * s);
           ctx.restore();
 
-          // 记录整行点击区域
-          const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
-          if (item.key === 'rank') this.settingsRankRect = rect;
-          if (item.key === 'feedback') this.settingsFeedbackRect = rect;
-        }
-
-        // 分隔线（非最后一项）
-        if (i < items.length - 1) {
-          const lineY = itemY + itemH;
-          const linePad = 18 * s;
+          // 副标题
           ctx.save();
-          ctx.globalAlpha = contentAlpha * 0.35;
-          ctx.strokeStyle = '#c4a35a';
-          ctx.lineWidth = 0.8 * s;
-          ctx.beginPath();
-          ctx.moveTo(px + linePad, lineY);
-          ctx.lineTo(px + pw - linePad, lineY);
-          ctx.stroke();
-
-          // 小菱形装饰
-          ctx.fillStyle = '#c4a35a';
-          ctx.globalAlpha = contentAlpha * 0.5;
-          ctx.beginPath();
-          ctx.moveTo(W / 2, lineY - 3 * s);
-          ctx.lineTo(W / 2 + 3 * s, lineY);
-          ctx.lineTo(W / 2, lineY + 3 * s);
-          ctx.lineTo(W / 2 - 3 * s, lineY);
-          ctx.closePath();
-          ctx.fill();
+          ctx.globalAlpha = contentAlpha * 0.7;
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#8a7a6a';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.subtitle, iconX + iconSize + 14 * s, centerY + 11 * s);
           ctx.restore();
-        }
-      });
+
+          // 右侧控件
+          const ctrlRightX = px + pw - 22 * s;
+          if (item.type === 'switch') {
+            const swW = 50 * s;
+            const swH = 26 * s;
+            const swX = ctrlRightX - swW;
+            const swY = centerY - swH / 2;
+            const isOn = item.value;
+            const pressOffset = game._settingsSoundPressed ? 1 * s : 0;
+
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
+            ctx.restore();
+
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(isOn ? '开' : '关', swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
+            ctx.restore();
+
+            const dotR = 10 * s;
+            const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            ctx.beginPath();
+            ctx.arc(dotX, swY + pressOffset + swH / 2, dotR, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.restore();
+
+            this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
+          } else if (item.type === 'arrow') {
+            ctx.save();
+            ctx.globalAlpha = contentAlpha * 0.6;
+            ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+            ctx.fillStyle = '#8a7a6a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('›', ctrlRightX - 4 * s, centerY);
+            ctx.restore();
+
+            const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
+            if (item.key === 'rank') this.settingsRankRect = rect;
+            if (item.key === 'feedback') this.settingsFeedbackRect = rect;
+          }
+
+          // 分隔线
+          if (i < items.length - 1) {
+            const lineY = itemY + itemH;
+            const linePad = 18 * s;
+            ctx.save();
+            ctx.globalAlpha = contentAlpha * 0.35;
+            ctx.strokeStyle = '#c4a35a';
+            ctx.lineWidth = 0.8 * s;
+            ctx.beginPath();
+            ctx.moveTo(px + linePad, lineY);
+            ctx.lineTo(px + pw - linePad, lineY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#c4a35a';
+            ctx.globalAlpha = contentAlpha * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(W / 2, lineY - 3 * s);
+            ctx.lineTo(W / 2 + 3 * s, lineY);
+            ctx.lineTo(W / 2, lineY + 3 * s);
+            ctx.lineTo(W / 2 - 3 * s, lineY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+      }
     }
 
 };

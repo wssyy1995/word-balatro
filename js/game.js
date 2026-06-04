@@ -689,6 +689,16 @@ class Game {
     this._settingsRankPressed = false;
     this._settingsFeedbackPressed = false;
 
+    // 问题反馈
+    this._feedbackPage = 'main';           // 'main' | 'feedback'
+    this._feedbackTransition = null;       // { from, to, startTime, duration }
+    this._feedbackText = '';
+    this._feedbackInputFocused = false;
+    this._feedbackBackPressed = false;
+    this._feedbackSubmitPressed = false;
+    this._feedbackSubmitting = false;
+    this._feedbackSubmitToast = null;
+
     // 加载用户设置
     this.settings = this.storageManager.getSettings();
     if (this.audioManager) {

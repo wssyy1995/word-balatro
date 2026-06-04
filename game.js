@@ -104,6 +104,31 @@ function hideRankList() {
   odc.postMessage({ action: 'hide' });
 }
 
+// 提交问题反馈到云数据库
+async function submitFeedback(text) {
+  if (!game) return;
+  game._feedbackSubmitting = true;
+  try {
+    const db = wx.cloud.database();
+    const collection = db.collection('feedback');
+    await collection.add({
+      data: {
+        text,
+        createTime: db.serverDate(),
+        round: game.round || 0,
+        version: '1.9.0'
+      }
+    });
+    game._feedbackSubmitToast = { text: '反馈提交成功，感谢！', expireAt: Date.now() + 2000 };
+    game._feedbackText = '';
+  } catch (e) {
+    console.error('反馈提交失败:', e);
+    game._feedbackSubmitToast = { text: '提交失败，请稍后重试', expireAt: Date.now() + 2000 };
+  } finally {
+    game._feedbackSubmitting = false;
+  }
+}
+
 // 设置画布尺寸（适配 Retina 高分屏）
 const WIDTH = info.windowWidth;
 const HEIGHT = info.windowHeight;
@@ -315,11 +340,17 @@ wx.onTouchStart((e) => {
 
   // 设置弹窗交互（优先处理）
   if (game._settingsPopup && !game._closingSettings) {
-    // 点击弹窗外区域关闭
     const settingsCloseHit = renderer.settingsCloseRect && renderer.hitTest(x, y, [renderer.settingsCloseRect]);
+
+    // 主页按钮
     const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
     const rankHit = renderer.settingsRankRect && renderer.hitTest(x, y, [renderer.settingsRankRect]);
     const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
+
+    // 反馈页按钮
+    const feedbackBackHit = renderer.feedbackBackRect && renderer.hitTest(x, y, [renderer.feedbackBackRect]);
+    const feedbackInputHit = renderer.feedbackInputRect && renderer.hitTest(x, y, [renderer.feedbackInputRect]);
+    const feedbackSubmitHit = renderer.feedbackSubmitRect && renderer.hitTest(x, y, [renderer.feedbackSubmitRect]);
 
     if (soundHit) {
       game._settingsSoundPressed = true;
@@ -333,10 +364,29 @@ wx.onTouchStart((e) => {
       game._settingsFeedbackPressed = true;
       return;
     }
-    if (settingsCloseHit && !soundHit && !rankHit && !feedbackHit) {
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
+    if (feedbackBackHit) {
+      game._feedbackBackPressed = true;
+      return;
+    }
+    if (feedbackInputHit) {
+      game._feedbackInputFocused = true;
+      return;
+    }
+    if (feedbackSubmitHit) {
+      game._feedbackSubmitPressed = true;
+      return;
+    }
+
+    // 点击弹窗外区域：主页直接关闭，反馈页则返回主页
+    if (settingsCloseHit) {
+      if (game._feedbackPage === 'feedback') {
+        game._feedbackPage = 'main';
+        game._feedbackText = '';
+      } else {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+      }
       return;
     }
   }
@@ -369,6 +419,16 @@ wx.onTouchMove((e) => {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
     if (!hit) game._settingsSoundPressed = false;
+  }
+  if (game._feedbackBackPressed && renderer.feedbackBackRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
+    if (!hit) game._feedbackBackPressed = false;
+  }
+  if (game._feedbackSubmitPressed && renderer.feedbackSubmitRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
+    if (!hit) game._feedbackSubmitPressed = false;
   }
 
   // 移出卡牌图鉴图标区域时取消按下状态
@@ -510,15 +570,37 @@ wx.onTouchEnd(() => {
     }
     if (game._settingsFeedbackPressed) {
       game._settingsFeedbackPressed = false;
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
-      if (wx.openCustomerServiceChat) {
-        wx.openCustomerServiceChat({
-          extInfo: { url: '' },
-          corpId: '',
-          success: () => {},
-          fail: (err) => { console.log('打开客服失败', err); }
-        });
+      game._feedbackPage = 'feedback';
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    // 反馈页交互
+    if (game._feedbackBackPressed) {
+      game._feedbackBackPressed = false;
+      game._feedbackPage = 'main';
+      game._feedbackText = '';
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._feedbackInputFocused) {
+      game._feedbackInputFocused = false;
+      // 弹出系统输入框
+      wx.showModal({
+        title: '请输入反馈内容',
+        editable: true,
+        placeholderText: '最多100字',
+        success: (res) => {
+          if (res.confirm && res.content) {
+            game._feedbackText = res.content.slice(0, 100);
+          }
+        }
+      });
+    }
+    if (game._feedbackSubmitPressed) {
+      game._feedbackSubmitPressed = false;
+      if (game._feedbackText && game._feedbackText.trim() && !game._feedbackSubmitting) {
+        submitFeedback(game._feedbackText.trim());
+      } else if (!game._feedbackText || !game._feedbackText.trim()) {
+        game._feedbackSubmitToast = { text: '请输入反馈内容', expireAt: Date.now() + 2000 };
       }
     }
   }

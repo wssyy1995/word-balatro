@@ -1,5 +1,6 @@
 // ===== Renderer 组装入口 =====
 const { Renderer } = require('./base');
+const { WITCH_SKILLS } = require('../witch_skills');
 
 require('./effects')(Renderer);
 require('./animation')(Renderer);
