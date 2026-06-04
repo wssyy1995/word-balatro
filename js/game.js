@@ -681,6 +681,21 @@ class Game {
     this._debugLabelShow = null;
     this._witchSkillProtectUsed = false;
 
+    // 设置弹窗
+    this._settingsPopup = null;
+    this._closingSettings = false;
+    this._closeSettingsStartTime = null;
+    this._settingsSoundPressed = false;
+    this._settingsRankPressed = false;
+    this._settingsFeedbackPressed = false;
+
+    // 加载用户设置
+    this.settings = this.storageManager.getSettings();
+    if (this.audioManager) {
+      this.audioManager.setSoundEnabled(this.settings.soundEnabled !== false);
+      this.audioManager.setMusicEnabled(this.settings.musicEnabled !== false);
+    }
+
     // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
     const savedGuidePhase = this.storageManager.loadGuidePhase();
     if (savedGuidePhase !== null) {

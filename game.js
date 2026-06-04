@@ -274,6 +274,7 @@ function startGame() {
 // 长按检测状态
 let longPressTimer = null;
 let touchStartPos = null;
+let longPressTriggered = false;
 const LONG_PRESS_DURATION = 600; // 600ms 长按
 const LONG_PRESS_MOVE_THRESHOLD = 10; // 移动超过 10px 取消长按
 
@@ -298,15 +299,45 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 检测 top_icon 长按（打开/关闭调试菜单）
+  // 检测 top_icon：单击打开设置，长按打开调试菜单
   if (renderer.topIconRect) {
     const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
     if (iconHit) {
+      longPressTriggered = false;
       longPressTimer = setTimeout(() => {
         longPressTimer = null;
+        longPressTriggered = true;
         renderer.debugMenuOpen = !renderer.debugMenuOpen;
       }, LONG_PRESS_DURATION);
       return; // 长按期间不触发其他交互
+    }
+  }
+
+  // 设置弹窗交互（优先处理）
+  if (game._settingsPopup && !game._closingSettings) {
+    // 点击弹窗外区域关闭
+    const settingsCloseHit = renderer.settingsCloseRect && renderer.hitTest(x, y, [renderer.settingsCloseRect]);
+    const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
+    const rankHit = renderer.settingsRankRect && renderer.hitTest(x, y, [renderer.settingsRankRect]);
+    const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
+
+    if (soundHit) {
+      game._settingsSoundPressed = true;
+      return;
+    }
+    if (rankHit) {
+      game._settingsRankPressed = true;
+      return;
+    }
+    if (feedbackHit) {
+      game._settingsFeedbackPressed = true;
+      return;
+    }
+    if (settingsCloseHit && !soundHit && !rankHit && !feedbackHit) {
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
     }
   }
 
@@ -331,6 +362,13 @@ wx.onTouchMove((e) => {
       clearTimeout(longPressTimer);
       longPressTimer = null;
     }
+  }
+
+  // 移出设置弹窗按钮区域时取消按下状态
+  if (game._settingsSoundPressed && renderer.settingsSoundRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
+    if (!hit) game._settingsSoundPressed = false;
   }
 
   // 移出卡牌图鉴图标区域时取消按下状态
@@ -434,6 +472,57 @@ wx.onTouchEnd(() => {
     longPressTimer = null;
   }
 
+  // top_icon 短按：打开设置弹窗（长按未触发时）
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
+    const iconHit = renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.topIconRect]);
+    if (iconHit) {
+      if (game._settingsPopup) {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+      } else {
+        game._settingsPopup = { startTime: Date.now() };
+        game._closingSettings = false;
+        game._closeSettingsStartTime = null;
+        if (game.audioManager) game.audioManager.play('tap');
+      }
+    }
+  }
+  longPressTriggered = false;
+
+  // 设置弹窗交互处理（松开时）
+  if (game._settingsPopup && !game._closingSettings) {
+    if (game._settingsSoundPressed) {
+      game._settingsSoundPressed = false;
+      game.settings.soundEnabled = !game.settings.soundEnabled;
+      if (game.audioManager) {
+        game.audioManager.setSoundEnabled(game.settings.soundEnabled);
+      }
+      if (game.storageManager) {
+        game.storageManager.saveSettings(game.settings);
+      }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._settingsRankPressed) {
+      game._settingsRankPressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      showRankList();
+    }
+    if (game._settingsFeedbackPressed) {
+      game._settingsFeedbackPressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      if (wx.openCustomerServiceChat) {
+        wx.openCustomerServiceChat({
+          extInfo: { url: '' },
+          corpId: '',
+          success: () => {},
+          fail: (err) => { console.log('打开客服失败', err); }
+        });
+      }
+    }
+  }
+
   // 女巫牌短按：执行选中（手指松开时显示售出按钮）
   if (game._pendingJokerSelect) {
     if (game._pendingJokerSelectTimer) {
@@ -473,6 +562,9 @@ wx.onTouchEnd(() => {
 });
 
 function handleInput(x, y) {
+  // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
+  if (game._settingsPopup && !game._closingSettings) return;
+
   // 首次用户交互时尝试启动 BGM（真机音频必须在用户触摸事件回调内首次播放）
   if (game.audioManager && !game.audioManager.bgmStarted) {
     game.audioManager.tryStartBGM();

@@ -4,6 +4,8 @@ class AudioManager {
     this.sounds = {};
     this.bgm = null;
     this.enabled = true;
+    this.soundEnabled = true;  // 音效开关
+    this.musicEnabled = true;  // 音乐/BGM 开关
     this.initialized = false;
     this.bgmStarted = false; // BGM 是否已启动（真机首次播放需用户交互）
     this._firstInteraction = false; // 是否有过用户交互
@@ -27,7 +29,7 @@ class AudioManager {
 
   // 播放音效（支持懒加载：真机上预加载失败时，播放时重新尝试加载）
   play(name) {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.soundEnabled) return;
 
     // 真机兼容：首次用户交互标记（用于后续启动 BGM）
     this._firstInteraction = true;
@@ -49,7 +51,7 @@ class AudioManager {
 
   // 播放背景音乐（需在用户交互后调用）
   playBGM(src) {
-    if (!this.enabled) return;
+    if (!this.enabled || !this.musicEnabled) return;
     if (this.bgm) {
       this.bgm.stop();
       this.bgm.destroy();
@@ -65,7 +67,7 @@ class AudioManager {
 
   // 尝试启动 BGM（在用户交互后调用）
   tryStartBGM(src = 'music/bg/bg_music.mp3') {
-    if (this.bgmStarted || !this._firstInteraction) return;
+    if (this.bgmStarted || !this._firstInteraction || !this.musicEnabled) return;
 
     // 先检查 BGM 文件是否存在，避免文件缺失时抛 readFile 报错
     const fs = wx.getFileSystemManager();
@@ -89,7 +91,22 @@ class AudioManager {
   // 设置音效开关
   setEnabled(enabled) {
     this.enabled = enabled;
+    this.soundEnabled = enabled;
+    this.musicEnabled = enabled;
     if (!enabled) {
+      this.stopBGM();
+    }
+  }
+
+  // 设置音效开关（独立于 BGM）
+  setSoundEnabled(enabled) {
+    this.soundEnabled = enabled;
+  }
+
+  // 设置音乐/BGM 开关
+  setMusicEnabled(enabled) {
+    this.musicEnabled = enabled;
+    if (!enabled && this.bgm) {
       this.stopBGM();
     }
   }

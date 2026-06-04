@@ -316,15 +316,52 @@ class CloudStorageManager {
     }
 
     this.log('开始下载 shop_card 图片，共' + names.length + '张');
-    // 分批加载，每批 5 张，避免并行过多导致内存峰值过高
-    const batchSize = 5;
-    for (let i = 0; i < names.length; i += batchSize) {
-      const batch = names.slice(i, i + batchSize);
-      await Promise.all(batch.map(async name => {
+
+    // === 批量获取临时 URL（带重试，失败则回退到逐个获取）===
+    let urlMap = {};
+    const fileList = names.map(name => this.cloudFileMap[name]).filter(Boolean);
+
+    for (let batchAttempt = 1; batchAttempt <= 2; batchAttempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({ fileList, success: resolve, fail: reject });
+        });
+        if (res.fileList && res.fileList.length > 0) {
+          res.fileList.forEach(item => {
+            if (item.status === 0 && item.tempFileURL) {
+              const name = names.find(n => this.cloudFileMap[n] === item.fileID);
+              if (name) urlMap[name] = item.tempFileURL;
+            }
+          });
+        }
+        break;
+      } catch (e) {
+        this.log('批量获取 shop_card URL 失败(' + batchAttempt + '/2): ' + (e && e.message ? e.message : String(e)));
+        if (batchAttempt < 2) await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    // 批量获取失败后，剩余未获取到的逐个回退获取（_loadCloudImage 内部自带3次URL重试+2次图片加载重试）
+    const missingNames = names.filter(n => !urlMap[n] && this.cloudFileMap[n]);
+    if (missingNames.length > 0) {
+      this.log('批量获取未覆盖 ' + missingNames.length + ' 个 shop_card，逐个回退获取');
+      for (const name of missingNames) {
         await this._loadCloudImage(name);
-        if (onProgress) onProgress();
+      }
+    }
+
+    // === 分批并行加载图片（每批 6 张，控制内存峰值）===
+    const batchSize = 6;
+    const loadedNames = names.filter(n => urlMap[n]);
+    for (let i = 0; i < loadedNames.length; i += batchSize) {
+      const batch = loadedNames.slice(i, i + batchSize);
+      await Promise.all(batch.map(name => {
+        return this._loadCloudImage(name, urlMap[name]).then(() => {
+          if (onProgress) onProgress();
+        });
       }));
     }
+
     const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
     const failed = names.filter(n => !this.shopCardImages[n] || !this.shopCardImages[n].loaded);
     this.log('下载完成：' + loaded.length + '/' + names.length + '张成功');
@@ -466,48 +503,53 @@ class CloudStorageManager {
     }
   }
 
-  async _loadCloudImage(name) {
+  async _loadCloudImage(name, tempURL = null) {
     // 重复加载防护：已加载成功则直接跳过
     const existing = this.shopCardImages[name];
     if (existing && existing.loaded && existing.img) {
       return;
     }
 
-    const fileID = this.cloudFileMap[name];
-    if (!fileID) return;
+    let finalURL = tempURL;
 
-    // getTempFileURL 重试3次
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
+    // 未传入 URL 时，自行获取临时 URL
+    if (!finalURL) {
+      const fileID = this.cloudFileMap[name];
+      if (!fileID) return;
+
+      let urlData = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await new Promise((resolve, reject) => {
+            wx.cloud.getTempFileURL({
+              fileList: [fileID],
+              success: resolve,
+              fail: reject,
+            });
           });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
+          const data = res.fileList[0];
+          if (data && data.status === 0 && data.tempFileURL) {
+            urlData = data;
+            break;
+          }
+          lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+        } catch (e) {
+          lastError = e;
         }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
+        if (attempt < 3) {
+          this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+          await new Promise(r => setTimeout(r, 1000));
+        }
       }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
 
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-      return;
+      if (!urlData) {
+        const detail = lastError ? lastError.message : 'unknown';
+        this.log('获取临时URL失败: ' + name + ' detail=' + detail);
+        this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+        return;
+      }
+      finalURL = urlData.tempFileURL;
     }
 
     // 释放旧 Image 像素数据，防止 Native 层 ArrayBuffer 堆积
@@ -515,26 +557,36 @@ class CloudStorageManager {
       existing.img.src = '';
     }
 
-    // wx.createImage 加载图片
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.log('下载完成: ' + name);
-        this.shopCardImages[name] = {
-          img,
-          loaded: true,
-          width: img.width || 0,
-          height: img.height || 0,
+    // wx.createImage 加载图片（带重试）
+    let loadSuccess = false;
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const img = wx.createImage();
+      loadSuccess = await new Promise((resolve) => {
+        img.onload = () => {
+          this.log('下载完成: ' + name);
+          this.shopCardImages[name] = {
+            img,
+            loaded: true,
+            width: img.width || 0,
+            height: img.height || 0,
+          };
+          resolve(true);
         };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        resolve();
-      };
-    });
+        img.onerror = (e) => {
+          this.log('图片加载失败(' + attempt + '/2): ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+          resolve(false);
+        };
+        img.src = finalURL;
+      });
+      if (loadSuccess) break;
+      if (attempt < 2) {
+        this.log('图片加载重试: ' + name);
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    if (!loadSuccess) {
+      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+    }
   }
 
   async _loadWitchImage(name) {
@@ -1337,71 +1389,102 @@ class CloudStorageManager {
     const cacheDir = `${wx.env.USER_DATA_PATH}/music_cache`;
     try { fs.mkdirSync(cacheDir, true); } catch (e) {}
 
-    for (const name of names) {
-      const fileID = this.musicFileMap[name];
-      if (!fileID) continue;
+    // === 批量获取临时 URL（带重试，失败则回退到逐个获取）===
+    let urlMap = {};
+    const fileList = names.map(name => this.musicFileMap[name]).filter(Boolean);
 
-      // 获取临时 URL
-      let urlData = null;
-      let lastError = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const res = await new Promise((resolve, reject) => {
-            wx.cloud.getTempFileURL({ fileList: [fileID], success: resolve, fail: reject });
-          });
-          const data = res.fileList[0];
-          if (data && data.status === 0 && data.tempFileURL) {
-            urlData = data;
-            break;
-          }
-          lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-        } catch (e) {
-          lastError = e;
-        }
-        if (attempt < 3) {
-          this.log('获取 music URL 失败，1秒后重试: ' + name);
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      }
-
-      if (!urlData) {
-        this.log('获取 music URL 失败: ' + name + ' ' + (lastError && lastError.message ? lastError.message : ''));
-        continue;
-      }
-
-      // 下载到本地缓存
-      const cachePath = `${cacheDir}/${name}.mp3`;
+    for (let batchAttempt = 1; batchAttempt <= 2; batchAttempt++) {
       try {
-        await new Promise((resolve, reject) => {
-          wx.downloadFile({
-            url: urlData.tempFileURL,
-            success: (res) => {
-              if (res.statusCode === 200) {
-                try {
-                  fs.copyFileSync(res.tempFilePath, cachePath);
-                  this.musicCache[name] = cachePath;
-                  this.log('music 下载成功: ' + name);
-                } catch (e) {
-                  this.log('music 缓存失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
-                }
-              } else {
-                this.log('music 下载失败: ' + name + ' status=' + res.statusCode);
-              }
-              resolve();
-            },
-            fail: (e) => {
-              this.log('music 下载失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
-              resolve();
-            },
-          });
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({ fileList, success: resolve, fail: reject });
         });
+        if (res.fileList && res.fileList.length > 0) {
+          res.fileList.forEach(item => {
+            if (item.status === 0 && item.tempFileURL) {
+              const name = names.find(n => this.musicFileMap[n] === item.fileID);
+              if (name) urlMap[name] = item.tempFileURL;
+            }
+          });
+        }
+        break; // 成功则跳出重试
       } catch (e) {
-        this.log('music 下载异常: ' + name);
+        this.log('批量获取 music URL 失败(' + batchAttempt + '/2): ' + (e && e.message ? e.message : String(e)));
+        if (batchAttempt < 2) await new Promise(r => setTimeout(r, 800));
       }
-
-      if (onProgress) onProgress();
     }
 
+    // 批量获取失败后，剩余未获取到的逐个回退获取（内部自带3次重试）
+    const missingNames = names.filter(n => !urlMap[n] && this.musicFileMap[n]);
+    if (missingNames.length > 0) {
+      this.log('批量获取未覆盖 ' + missingNames.length + ' 个，逐个回退获取');
+      for (const name of missingNames) {
+        const fileID = this.musicFileMap[name];
+        let urlData = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            const res = await new Promise((resolve, reject) => {
+              wx.cloud.getTempFileURL({ fileList: [fileID], success: resolve, fail: reject });
+            });
+            const data = res.fileList[0];
+            if (data && data.status === 0 && data.tempFileURL) {
+              urlData = data.tempFileURL;
+              break;
+            }
+          } catch (e) {}
+          if (attempt < 3) await new Promise(r => setTimeout(r, 1000));
+        }
+        if (urlData) urlMap[name] = urlData;
+      }
+    }
+
+    // === 并行下载所有文件（带重试）===
+    const downloadOne = (name, tempURL) => {
+      const cachePath = `${cacheDir}/${name}.mp3`;
+      return new Promise((resolve) => {
+        wx.downloadFile({
+          url: tempURL,
+          success: (res) => {
+            if (res.statusCode === 200) {
+              try {
+                fs.copyFileSync(res.tempFilePath, cachePath);
+                this.musicCache[name] = cachePath;
+                this.log('music 下载成功: ' + name);
+              } catch (e) {
+                this.log('music 缓存失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
+              }
+            } else {
+              this.log('music 下载失败: ' + name + ' status=' + res.statusCode);
+            }
+            resolve();
+          },
+          fail: (e) => {
+            this.log('music 下载失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
+            resolve();
+          },
+        });
+      });
+    };
+
+    const downloadTasks = names.map(async name => {
+      let tempURL = urlMap[name];
+      if (!tempURL) {
+        this.log('无可用 URL，跳过: ' + name);
+        if (onProgress) onProgress();
+        return;
+      }
+
+      // 首次下载
+      await downloadOne(name, tempURL);
+      // 若失败则重试1次
+      if (!this.musicCache[name]) {
+        this.log('music 下载重试: ' + name);
+        await new Promise(r => setTimeout(r, 500));
+        await downloadOne(name, tempURL);
+      }
+      if (onProgress) onProgress();
+    });
+
+    await Promise.allSettled(downloadTasks);
     this.log('music 下载完成，共' + Object.keys(this.musicCache).length + '个');
   }
 }

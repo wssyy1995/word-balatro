@@ -549,6 +549,11 @@ Renderer.prototype.render = function(game) {
       this._drawCardBookGuideOverlay(game);
     }
 
+    // 设置弹窗
+    if (game._settingsPopup) {
+      this.drawSettingsPopup(game);
+    }
+
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
