@@ -33,7 +33,20 @@ word-balatro/
     ├── words.js         # 本地核心词库（高频词含中文释义）
     ├── expand_words.js  # 扩展离线词库（补充高频词）
     ├── game.js          # Game 核心类 + 工具函数（计分、校验、保底、发牌）
-    ├── renderer.js      # Canvas 主渲染器：所有 UI、动画、粒子、HUD
+    ├── renderer.js      # 渲染器入口薄层：require('./render/index')
+    ├── render/          # Renderer 模块化目录（原 6600+ 行 renderer.js 拆分）
+    │   ├── base.js      # Renderer 核心类、构造函数、通用工具
+    │   ├── index.js     # 模块组装入口、render(game) 状态机调度
+    │   ├── effects.js   # 道具卡牌渲染、星辰燔边粒子
+    │   ├── animation.js # 飞星/飞分/闪光粒子动画
+    │   ├── hud.js       # 顶部标题栏、HUD（回合/目标分/女巫头像）
+    │   ├── playing.js   # 主玩法画面（手牌矩阵、道具栏、预览、按钮）
+    │   ├── popup.js     # 弹窗系统（换字母/药水/升级/续命）
+    │   ├── guide.js     # 新手引导覆盖层
+    │   ├── cardbook.js  # 卡牌图鉴图标与详情
+    │   ├── debug.js     # 调试菜单、云日志
+    │   ├── gameover.js  # GameOverRenderer 独立类
+    │   └── test.js      # 渲染层自测脚本
     ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
     ├── settlement.js    # 回合金币结算弹窗 + 女巫奖励渲染
     ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
@@ -41,7 +54,7 @@ word-balatro/
     ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
     ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
     ├── witch_skills.js  # 女巫技能约束与奖励
-    └── input.js         # InputHandler 类（备用，入口未直接使用）
+    └── input.js         # InputHandler 类（触摸事件处理，game.js 入口引用）
 ```
 
 ---
@@ -106,6 +119,9 @@ word-balatro/
 | `settlementData` | Object | 回合结算弹窗数据 |
 | `witchRewardData` | Object | 女巫奖励阶段数据（gift / result） |
 | `pendingCheck` | Object | 单词校验状态机（checking / valid / invalid / witch_failed） |
+| `cardBookUnlocked` | boolean | 卡牌图鉴是否已解锁（第 3 关通关后） |
+| `cardBookOpen` | boolean | 图鉴面板是否打开 |
+| `cardBookPage` | number | 图鉴当前页码 |
 | `_reduceTargetAnim` | Object | 目标分数减免动画状态 |
 | `_changeLetterPopup` | Object | 字母置换弹窗状态 |
 | `_hastePlayActive` | boolean | 争分夺秒生效中（前 20 秒出牌不耗次数） |
@@ -1059,6 +1075,7 @@ letterUpgrades = Map {
 | v1.8.0 | 2026-06-02 | 接入微信小游戏好友排行榜（开放数据域 + OffScreenCanvas）；游戏结束弹窗全面改造（三按钮横排、历史最高、fail_witch 装饰）；新增分享复活机制（每日限1次）；预加载页女巫走路动画改为 21 帧精灵图；图鉴图标新增收集闪烁动画；新增 `_drawTitleDivider` 通用分割线方法 |
 | v1.8.1 | 2026-06-03 | 音效系统完善（新增 challenge、buy_success 等音效触发点）；音乐云存储管理（music 上传/预加载/本地缓存）；修复弹窗关闭时内容与背景不同步淡出（所有弹窗内容统一乘 `closeAlpha`，`drawCard` 改为 `globalAlpha *= opacity`） |
 | v1.8.2 | 2026-06-03 | 药水升级动画分数变化时播放 `word_score` 音效；商店金币购买按钮和重掷按钮点击区域扩大 2px；售出卡牌后空位占位图片添加果冻弹出动画；商店下一回合标题颜色统一为 `#8b6914` |
+| v1.9.0 | 2026-06-03 | Renderer 模块化重构：6600+ 行 `js/renderer.js` 拆分为 `js/render/` 目录下的 11 个聚焦模块（base/effects/animation/hud/playing/popup/guide/cardbook/debug/gameover/index）；入口 `js/renderer.js` 改为薄层 `require('./render/index')`；新增 `js/render/test.js` 自测脚本 |
 
 ---
 
