@@ -1,6 +1,6 @@
 # 动画开发规范（Animation Coding Standards）
 
-> 适用范围：`js/renderer.js`、`js/shop.js`、`js/settlement.js`、`js/game.js` 及所有新增 Renderer
+> 适用范围：`js/render/*.js`、`js/shop.js`、`js/settlement.js`、`js/game.js` 及所有新增 Renderer
 > 生效分支：`refactor/animation-generalization` 合并后全分支生效
 
 ---
@@ -71,8 +71,8 @@ const fadeEase  = Easing.easeInOutQuad(progress);
 | 弹窗 | 文件 | 状态 |
 |------|------|------|
 | 结算弹窗 | `settlement.js` | ✅ 已迁移 |
-| 游戏结束弹窗 | `renderer.js` | ✅ 已迁移 |
-| 字母置换弹窗 | `renderer.js` | ✅ 已迁移 |
+| 游戏结束弹窗 | `js/render/gameover.js` | ✅ 已迁移 |
+| 字母置换弹窗 | `js/render/popup.js` | ✅ 已迁移 |
 | 确认购买弹窗 | `shop.js` | ⚠️ 特殊，暂保留手写（见例外） |
 
 ### ✅ 标准用法
@@ -277,11 +277,11 @@ ctx.scale(scoreScale, scoreScale);
 
 | 场景 | 文件 | maxScale | 说明 |
 |------|------|----------|------|
-| HUD 当前分数 | renderer.js | 0.20 | 分数变化时 |
-| 金币胶囊 | renderer.js | 0.30 | 金币变化时 |
-| 基础倍率 | renderer.js | 0.28 | 倍率变化时 |
-| 目标分数减免 | shop.js | 0.20 | 购买 reduce_target 后，目标数字放大回弹 |
-| 药水升级分数 | renderer.js | 0.20 | `_drawPotionUpgradeAnim` 计算脉冲后写入 `card._scoreScale`，`drawCard` 读取并应用缩放 |
+| HUD 当前分数 | `js/render/hud.js` | 0.20 | 分数变化时 |
+| 金币胶囊 | `js/render/hud.js` | 0.30 | 金币变化时 |
+| 基础倍率 | `js/render/playing.js` | 0.28 | 倍率变化时 |
+| 目标分数减免 | `js/shop.js` | 0.20 | 购买 reduce_target 后，目标数字放大回弹 |
+| 药水升级分数 | `js/render/popup.js` | 0.20 | `_drawPotionUpgradeAnim` 计算脉冲后写入 `card._scoreScale`，`drawCard` 读取并应用缩放 |
 
 ### 返回值
 
@@ -293,11 +293,11 @@ ctx.scale(scoreScale, scoreScale);
 
 ---
 
-## 六、按钮按压 — 必须使用 `_drawScaledBtn`
+## 六、按钮按压 — 必须使用 `_drawScaledButton`
 
 ### 规则
 
-所有可点击按钮的按压反馈（按下缩小，松手回弹），统一使用 `Renderer._drawScaledBtn()`。
+所有可点击按钮的按压反馈（按下缩小，松手回弹），统一使用 `Renderer._drawScaledButton()`。
 
 ### ✅ 正确做法
 
@@ -305,19 +305,24 @@ ctx.scale(scoreScale, scoreScale);
 // 在 Renderer 中定义按钮状态
 this.restartBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
 
-// 绘制时判断是否按下
+// 绘制时传入 pressed 状态
 const isPressed = game._restartBtnPressed;
-const pressScale = isPressed ? 0.92 : 1;
 
-this._drawScaledBtn(ctx, btnX, btnY, btnW, btnH, 8 * s,
-  '#c4a35a', null, pressScale, '重新开始', '#fff', 16 * s);
+this._drawScaledButton(ctx, '重新开始', btnX, btnY, btnW, btnH, s, isPressed, {
+  color: '#c4a35a',
+  radius: 8,
+  textColor: '#fff'
+});
 ```
 
 ### 参数
 
 ```javascript
-_drawScaledBtn(ctx, x, y, w, h, r, fill, stroke, scale, text, textColor, fontSize)
-// scale: 1 为正常，0.92 为按下状态
+_drawScaledButton(ctx, label, x, y, w, h, s, pressed, options = {})
+// label: 按钮文字
+// s: 响应式缩放比例
+// pressed: true 为按下状态（内部自动缩放到 0.95）
+// options: { color, textColor, radius, stroke, lineWidth }
 // 文字会自动居中
 ```
 
@@ -333,7 +338,7 @@ _drawScaledBtn(ctx, x, y, w, h, r, fill, stroke, scale, text, textColor, fontSiz
 
 ```javascript
 // 在绘制完卡牌图片后调用
-this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, contentAlpha);
+this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
 
 // contentAlpha: 如果外层有淡入动画，传入当前透明度（默认 1）
 ```
@@ -396,7 +401,7 @@ ctx.restore();
 // 绘制按钮
 ctx.save();
 ctx.globalAlpha = btnAnim.alpha * closeAlpha;
-this._drawScaledBtn(...);
+this._drawScaledButton(ctx, "按钮文字", x, y, w, h, s, isPressed, { color: "#c4a35a" });
 ctx.restore();
 ```
 
@@ -405,7 +410,7 @@ ctx.restore();
 调用 `drawCard()` 时要特别小心：该方法内部会直接设置 `ctx.globalAlpha`，如果放在弹窗的 `closeAlpha` 环境下，**必须确保 `drawCard` 不会覆盖外层的 alpha**。
 
 ```javascript
-// drawCard 内部实现（简化）
+// drawCard 内部实现（js/render/base.js，简化）
 ctx.save();
 ctx.globalAlpha *= opacity;  // ✅ 正确：乘上 opacity，保留外层 closeAlpha
 // 绘制卡牌...
@@ -480,7 +485,7 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
    → 使用 Easing.fadeIn
 
 5. 是否是按钮按压反馈？
-   → 使用 _drawScaledBtn
+   → 使用 _drawScaledButton（或 drawImgBtn 用于图片按钮）
 
 6. 是否是卡牌金色光晕？
    → 使用 _drawCardGlow
@@ -501,7 +506,7 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
 - [ ] 弹窗使用了 `_drawModalPanel`（除非在"例外清单"中）
 - [ ] 数字脉冲使用了 `_calcPulseScale`
 - [ ] 内容淡入使用了 `Easing.fadeIn`
-- [ ] 按钮按压使用了 `_drawScaledBtn`
+- [ ] 按钮按压使用了 `_drawScaledButton`
 - [ ] 动画状态命名符合规范（`_closingXxx` / `_closeXxxStartTime`）
 - [ ] **串行动画基于统一时间轴，没有引入独立计时器（如 `_xxxAnimStart = Date.now()`）**
 - [ ] **Renderer 子方法没有访问父方法局部变量**
@@ -535,7 +540,7 @@ this.animStartTime = Date.now();  // 弹窗/元素入场开始时间
 
 ### Bug 4：串行动画的时间基准错位（`letter_god` 重构案）⭐⭐⭐
 
-**影响范围**：`js/game.js` `playHand()`、`js/renderer.js` `_drawLetterGodAnim()` / `drawPlaying()`
+**影响范围**：`js/game.js` `playHand()`、`js/render/animation.js` `_drawLetterGodAnim()` / `js/render/playing.js` `drawPlaying()`
 
 #### 问题描述
 
@@ -633,7 +638,7 @@ if (phase >= 3 && pc._flyingScoreStarted && !this.flyingScore && !game._playHand
 
 ### Bug 5：串行动画时间基准不统一（`letter_a_mult_half` 惩罚动画案）⭐⭐⭐
 
-**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2→3过渡
+**影响范围**：`js/render/playing.js` `drawPlaying()` 阶段2→3过渡
 
 #### 问题描述
 
@@ -692,7 +697,7 @@ if (afterBase >= readyTime) {
 
 ### Bug 6：Renderer 子方法访问父方法局部变量（`witchSkill is not defined`）
 
-**影响范围**：`js/renderer.js` `drawPlaying()`
+**影响范围**：`js/render/playing.js` `drawPlaying()`
 
 #### 问题描述
 
@@ -715,7 +720,7 @@ const multHalfResult = pc.multHalfResult;  // 由 game.js 计算后挂载到 pen
 
 ### Bug 11：弹窗关闭时内容未同步淡出（`closeAlpha` 遗漏案）⭐⭐⭐
 
-**影响范围**：`js/renderer.js` `GameOverRenderer` / `js/shop.js` `ConfirmBuyRenderer` / `js/renderer.js` `drawChangeLetterPopup`
+**影响范围**：`js/render/gameover.js` `GameOverRenderer` / `js/shop.js` `ConfirmBuyRenderer` / `js/render/popup.js` `drawChangeLetterPopup`
 
 #### 问题描述
 
@@ -768,7 +773,7 @@ ctx.restore();
 
 ### Bug 12：`drawCard` 覆盖外层 `globalAlpha`（弹窗内卡牌不淡出案）
 
-**影响范围**：`js/renderer.js` `drawCard()` → 所有在弹窗内调用 `drawCard` 的场景
+**影响范围**：`js/render/base.js` `drawCard()` → 所有在弹窗内调用 `drawCard` 的场景
 
 #### 问题描述
 
@@ -800,7 +805,7 @@ ctx.restore();
 
 ### Bug 13：尝试"整体缩放"改动时 `save/restore` 严重不匹配 ⭐⭐⭐
 
-**影响范围**：所有使用 `_drawModalPanel` 的弹窗
+**影响范围**：所有使用 `_drawModalPanel` 的弹窗（定义于 `js/render/effects.js`）
 
 #### 问题描述
 
@@ -883,7 +888,7 @@ _checkLifeExtension() { /* ... */ return triggered; }
 
 ### Bug 9：第二个方块数字更新与女巫跳跃时间基准不同步
 
-**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2 逻辑推进区 + 数字渲染区
+**影响范围**：`js/render/playing.js` `drawPlaying()` 阶段2 逻辑推进区 + 数字渲染区
 
 #### 问题描述
 
@@ -928,7 +933,7 @@ const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
 
 ### Bug 10：whole_word 标签显示时长与女巫跳跃动画不一致
 
-**影响范围**：`js/renderer.js` `drawPlaying()` 阶段2 标签绘制
+**影响范围**：`js/render/playing.js` `drawPlaying()` 阶段2 标签绘制
 
 #### 问题描述
 
@@ -1025,7 +1030,7 @@ Easing.fadeIn(elapsed, delay, duration = 250, offsetY = 0)
                               // 返回 { alpha, yShift }
 ```
 
-### `Renderer` 通用绘制方法（`js/renderer.js`）
+### `Renderer` 通用绘制方法（`js/render/` 各模块）
 
 ```javascript
 // 弹窗模板
@@ -1040,10 +1045,10 @@ this._calcPulseScale(animState, maxScale = 0.3)
   // 返回: { scale, progress }
 
 // 按钮按压
-this._drawScaledBtn(ctx, x, y, w, h, r, fill, stroke, scale, text, textColor, fontSize)
+this._drawScaledButton(ctx, label, x, y, w, h, s, pressed, options = {})
 
 // 卡牌光晕
-this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, contentAlpha = 1)
+this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s)
 ```
 
 ### `AnimationManager`（`js/animation.js`）
