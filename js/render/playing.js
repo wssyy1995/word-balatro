@@ -1,6 +1,7 @@
 const { Easing } = require('../animation');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { SHOP_POOL } = require('../shop');
+const { formatMeaning } = require('../game');
 
 module.exports = function extendPlaying(Renderer) {
     Renderer.prototype.drawPlaying = function(game) {
@@ -299,7 +300,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.restore();
   
           if (pc.meaning) {
-            const mText = require('./game').formatMeaning(pc.meaning);
+            const mText = formatMeaning(pc.meaning);
             ctx.font = `${Math.floor(11 * s)}px sans-serif`;
             ctx.fillStyle = '#777';
             ctx.textAlign = 'center';

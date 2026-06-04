@@ -145,6 +145,7 @@ class AudioManager {
       { name: 'answer_tone', src: 'music/sound_effect/answer_tone.mp3' },   // 字母跳跃触发女巫牌
       { name: 'word_score', src: 'music/sound_effect/word_score.mp3' },     // 计分总数弹出
       { name: 'spin_wheel', src: 'music/sound_effect/spin_wheel.mp3' },     // 转盘旋转
+      { name: 'levelup', src: 'music/sound_effect/levelup.mp3' },             // 进入下一关
     ];
 
     // 保存映射用于懒加载
