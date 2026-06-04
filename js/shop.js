@@ -1420,11 +1420,11 @@ class ShopRenderer {
 
         // 气泡背景 + 边框（带外部阴影）
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowColor = 'rgba(0,0,0,0.14)';
         ctx.shadowBlur = 3 * s;
         ctx.shadowOffsetY = 5 * s;
         ctx.shadowOffsetX = 0;
-        this.parent.roundRect(bubbleX, finalBubbleY, bubbleW, bubbleH, 10 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+        this.parent.roundRect(bubbleX, finalBubbleY, bubbleW, bubbleH, 10 * s, '#faf6ee', '#c4a35a', 2.0 * s);
         ctx.restore();
 
         // 顶部小三角（向上指向价格按钮）—— 实心三角形，颜色与边框一致
@@ -1460,32 +1460,68 @@ class ShopRenderer {
         const btnY = finalBubbleY + 42 * s;
         const gap = 10 * s;
         const totalBtnW = btnW * 2 + gap;
-        const cancelX = bubbleX + (bubbleW - totalBtnW) / 2;
-        const confirmX = cancelX + btnW + gap;
+        const confirmX = bubbleX + (bubbleW - totalBtnW) / 2;
+        const cancelX = confirmX + btnW + gap;
+
+        // 确认按钮（金色，与"生效"按钮同色）
+        let confirmPressOffset = 0;
+        if (game._buyConfirmBtnPressed) {
+          const cpe = Date.now() - game._buyConfirmBtnPressTime;
+          if (cpe < 150) confirmPressOffset = 2 * s;
+        }
+        const confirmBtnY = btnY + confirmPressOffset;
+
+        // 投影
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.parent.roundRect(confirmX, confirmBtnY, btnW, btnH, 6 * s, '#c4a35a', '#a08030', 1 * s);
+        ctx.restore();
+
+        // 顶部高光条
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(confirmX + 4 * s, confirmBtnY + 2 * s);
+        ctx.lineTo(confirmX + btnW - 4 * s, confirmBtnY + 2 * s);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('确认', confirmX + btnW / 2, confirmBtnY + btnH / 2);
+        ctx.restore();
 
         // 取消按钮（米色）
-        this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#c4a35a', 1 * s);
+        // 投影
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#d4b87a', 1 * s);
+        ctx.restore();
+
+        // 顶部高光条
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        ctx.moveTo(cancelX + 4 * s, btnY + 2 * s);
+        ctx.lineTo(cancelX + btnW - 4 * s, btnY + 2 * s);
+        ctx.stroke();
+        ctx.restore();
+
         ctx.save();
         ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = '#5a4a2a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('取消', cancelX + btnW / 2, btnY + btnH / 2);
-        ctx.restore();
-
-        // 确认按钮（紫色）
-        let confirmPressOffset = 0;
-        if (game._buyConfirmBtnPressed) {
-          const cpe = Date.now() - game._buyConfirmBtnPressTime;
-          if (cpe < 150) confirmPressOffset = 2 * s;
-        }
-        this.parent.roundRect(confirmX, btnY + confirmPressOffset, btnW, btnH, 6 * s, '#5e2d7a', '#4a1f5e', 1 * s);
-        ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('确认', confirmX + btnW / 2, btnY + confirmPressOffset + btnH / 2);
         ctx.restore();
 
         // 记录按钮 hitTest 区域
