@@ -1026,7 +1026,7 @@ module.exports = function extendPopup(Renderer) {
       const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
 
       const panelW = 280;
-      const panelH = game._feedbackPage === 'feedback' ? 360 : 340;
+      const panelH = 340;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
@@ -1046,7 +1046,7 @@ module.exports = function extendPopup(Renderer) {
           game._closingSettings = false;
           game._closeSettingsStartTime = null;
           game._feedbackPage = 'main';
-          game._feedbackText = '';
+          game._feedbackTransition = null;
         }
       });
 
@@ -1063,179 +1063,128 @@ module.exports = function extendPopup(Renderer) {
       this.settingsCloseRect = { x: 0, y: 0, w: W, h: H };
 
       const contentAlpha = closeAlpha;
-      const isFeedback = game._feedbackPage === 'feedback';
 
-      // === 标题区域 ===
-      const titleY = py + 28 * s;
-      const titleText = isFeedback ? '问题反馈' : '设置';
+      function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+
+      // 计算页面切换状态
+      let fromPage = game._feedbackPage || 'main';
+      let toPage = null;
+      let fromX = 0;
+      let toX = pw;
+
+      if (game._feedbackTransition) {
+        const trans = game._feedbackTransition;
+        let t = (Date.now() - trans.startTime) / trans.duration;
+        t = Math.max(0, Math.min(1, t));
+        const ease = easeInOutQuad(t);
+
+        if (t >= 1) {
+          game._feedbackPage = trans.to;
+          game._feedbackTransition = null;
+          fromPage = game._feedbackPage || 'main';
+          fromX = 0;
+        } else {
+          fromPage = trans.from;
+          toPage = trans.to;
+          fromX = -pw * ease;
+          toX = pw * (1 - ease);
+        }
+      }
+
+      // 使用 clip 限制绘制在弹窗内部
       ctx.save();
-      ctx.globalAlpha = contentAlpha;
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#5a4a2a';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const titleW = ctx.measureText(titleText).width;
-      ctx.fillText(titleText, W / 2, titleY);
-
-      // 标题左右装饰线 + 小菱形
-      const decoGap = 12 * s;
-      const decoLineW = 40 * s;
-      const decoY = titleY;
-      ctx.strokeStyle = '#c4a35a';
-      ctx.lineWidth = 1 * s;
+      const clipR = 16 * s;
       ctx.beginPath();
-      ctx.moveTo(W / 2 - titleW / 2 - decoGap - decoLineW, decoY);
-      ctx.lineTo(W / 2 - titleW / 2 - decoGap, decoY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(W / 2 + titleW / 2 + decoGap, decoY);
-      ctx.lineTo(W / 2 + titleW / 2 + decoGap + decoLineW, decoY);
-      ctx.stroke();
+      ctx.moveTo(px + clipR, py);
+      ctx.lineTo(px + pw - clipR, py);
+      ctx.arcTo(px + pw, py, px + pw, py + ph, clipR);
+      ctx.lineTo(px + pw, py + ph - clipR);
+      ctx.arcTo(px + pw, py + ph, px, py + ph, clipR);
+      ctx.lineTo(px + clipR, py + ph);
+      ctx.arcTo(px, py + ph, px, py, clipR);
+      ctx.lineTo(px, py + clipR);
+      ctx.arcTo(px, py, px + pw, py, clipR);
+      ctx.closePath();
+      ctx.clip();
 
-      const diamondSize = 3 * s;
-      ctx.fillStyle = '#c4a35a';
-      [
-        { x: W / 2 - titleW / 2 - decoGap - decoLineW / 2, y: decoY },
-        { x: W / 2 + titleW / 2 + decoGap + decoLineW / 2, y: decoY }
-      ].forEach(d => {
-        ctx.beginPath();
-        ctx.moveTo(d.x, d.y - diamondSize);
-        ctx.lineTo(d.x + diamondSize, d.y);
-        ctx.lineTo(d.x, d.y + diamondSize);
-        ctx.lineTo(d.x - diamondSize, d.y);
-        ctx.closePath();
-        ctx.fill();
-      });
+      // 绘制各页面
+      if (fromPage === 'main') {
+        drawMainPage.call(this, fromX);
+      } else if (fromPage === 'feedback') {
+        drawFeedbackPage.call(this, fromX);
+      }
+
+      if (toPage) {
+        if (toPage === 'main') {
+          drawMainPage.call(this, toX);
+        } else if (toPage === 'feedback') {
+          drawFeedbackPage.call(this, toX);
+        }
+      }
+
       ctx.restore();
 
-      if (isFeedback) {
-        // ===== 问题反馈页 =====
-        // 返回箭头（标题左侧）
-        const backBtnSize = 32 * s;
-        const backX = px + 14 * s;
-        const backY = titleY - backBtnSize / 2;
+      // Toast 提示
+      if (game._feedbackSubmitToast) {
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
-        ctx.fillStyle = game._feedbackBackPressed ? '#8b6914' : '#5a4a2a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('‹', backX + backBtnSize / 2, titleY);
-        ctx.restore();
-        this.feedbackBackRect = { x: backX, y: backY, w: backBtnSize, h: backBtnSize };
-
-        // 输入框区域
-        const inputX = px + 20 * s;
-        const inputY = titleY + 30 * s;
-        const inputW = pw - 40 * s;
-        const inputH = 120 * s;
-        const isInputPressed = game._feedbackInputFocused;
-
-        // 输入框背景
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        this.roundRect(inputX, inputY, inputW, inputH, 8 * s, '#faf6ee', isInputPressed ? '#8b6914' : '#d4c8a8', 1 * s);
-        ctx.restore();
-
-        // 输入框文字
-        const text = game._feedbackText || '';
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
-        ctx.fillStyle = text ? '#3a2e1e' : '#a09888';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'top';
-        const displayText = text || '点击输入反馈内容...';
-        // 简单换行绘制
-        const maxWidth = inputW - 16 * s;
-        const lineHeight = 20 * s;
-        let line = '';
-        let lineY = inputY + 10 * s;
-        for (let i = 0; i < displayText.length; i++) {
-          const testLine = line + displayText[i];
-          const testWidth = ctx.measureText(testLine).width;
-          if (testWidth > maxWidth && i > 0) {
-            if (lineY + lineHeight > inputY + inputH - 10 * s) {
-              ctx.fillText(line + '...', inputX + 8 * s, lineY);
-              break;
-            }
-            ctx.fillText(line, inputX + 8 * s, lineY);
-            line = displayText[i];
-            lineY += lineHeight;
-          } else {
-            line = testLine;
-          }
-        }
-        if (lineY <= inputY + inputH - 10 * s) {
-          ctx.fillText(line, inputX + 8 * s, lineY);
-        }
-        ctx.restore();
-
-        // 字数统计
-        ctx.save();
-        ctx.globalAlpha = contentAlpha * 0.6;
-        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-        ctx.fillStyle = '#8a7a6a';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(`${text.length}/100`, inputX + inputW - 8 * s, inputY + inputH + 12 * s);
-        ctx.restore();
-
-        this.feedbackInputRect = { x: inputX, y: inputY, w: inputW, h: inputH };
-
-        // 提交按钮
-        const submitW = 120 * s;
-        const submitH = 40 * s;
-        const submitX = W / 2 - submitW / 2;
-        const submitY = inputY + inputH + 30 * s;
-        const isSubmitPressed = game._feedbackSubmitPressed;
-        const isSubmitting = game._feedbackSubmitting;
-        const pressOffset = isSubmitPressed ? 1 * s : 0;
-
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        const submitColor = isSubmitting ? '#a09070' : '#8b6914';
-        this.roundRect(submitX, submitY + pressOffset, submitW, submitH, 8 * s, submitColor, submitColor, 1 * s);
-        ctx.restore();
-
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        const toastText = game._feedbackSubmitToast;
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        const toastTextW = ctx.measureText(toastText).width;
+        const toastW = Math.min(pw - 40 * s, toastTextW + 24 * s);
+        const toastH = 34 * s;
+        const toastX = W / 2 - toastW / 2;
+        const toastY = py + ph - 50 * s;
+        this.roundRect(toastX, toastY, toastW, toastH, 17 * s, 'rgba(0,0,0,0.75)');
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(isSubmitting ? '提交中...' : '提交', W / 2, submitY + pressOffset + submitH / 2);
+        ctx.fillText(toastText, W / 2, toastY + toastH / 2);
+        ctx.restore();
+      }
+
+      // === 内部函数：绘制设置主页 ===
+      function drawMainPage(offsetX) {
+        ctx.save();
+        ctx.translate(offsetX, 0);
+
+        // === 标题：设置 ===
+        const titleY = py + 32 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('设置', W / 2, titleY);
         ctx.restore();
 
-        this.feedbackSubmitRect = { x: submitX, y: submitY, w: submitW, h: submitH };
-
-        // Toast 提示
-        if (game._feedbackSubmitToast && Date.now() < game._feedbackSubmitToast.expireAt) {
-          const toastText = game._feedbackSubmitToast.text;
-          ctx.save();
-          ctx.globalAlpha = contentAlpha;
-          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
-          const toastW = ctx.measureText(toastText).width + 24 * s;
-          const toastH = 30 * s;
-          const toastX = W / 2 - toastW / 2;
-          const toastY = py + ph - 50 * s;
-          ctx.fillStyle = 'rgba(58, 46, 30, 0.85)';
-          this.roundRect(toastX, toastY, toastW, toastH, 6 * s, 'rgba(58, 46, 30, 0.85)');
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(toastText, W / 2, toastY + toastH / 2);
-          ctx.restore();
-        } else {
-          game._feedbackSubmitToast = null;
-        }
-
-      } else {
-        // ===== 设置主页 =====
+        // === 设置项列表 ===
         const items = [
-          { key: 'sound', icon: '🔊', title: '音效', subtitle: '开启或关闭游戏音效', type: 'switch', value: game.settings && game.settings.soundEnabled !== false },
-          { key: 'rank', icon: '🏆', title: '排行榜', subtitle: '查看全球玩家排行', type: 'arrow' },
-          { key: 'feedback', icon: '✏️', title: '问题反馈', subtitle: '告诉我们你的建议与问题', type: 'arrow' }
+          {
+            key: 'sound',
+            icon: '🔊',
+            title: '音效',
+            subtitle: '开启或关闭游戏音效',
+            type: 'switch',
+            value: game.settings && game.settings.soundEnabled !== false
+          },
+          {
+            key: 'rank',
+            icon: '🏆',
+            title: '排行榜',
+            subtitle: '查看全球玩家排行',
+            type: 'arrow'
+          },
+          {
+            key: 'feedback',
+            icon: '✏️',
+            title: '问题反馈',
+            subtitle: '告诉我们你的建议与问题',
+            type: 'arrow'
+          }
         ];
 
         const itemH = 72 * s;
@@ -1249,22 +1198,23 @@ module.exports = function extendPopup(Renderer) {
 
           // 图标圆形背景
           const iconX = px + 22 * s;
+          const iconY = centerY;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.beginPath();
-          ctx.arc(iconX + iconSize / 2, centerY, iconSize / 2, 0, Math.PI * 2);
+          ctx.arc(iconX + iconSize / 2, iconY, iconSize / 2, 0, Math.PI * 2);
           ctx.fillStyle = iconBgColor;
           ctx.fill();
           ctx.restore();
 
-          // 图标文字
+          // 图标文字（emoji）
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.font = `${Math.floor(18 * s)}px sans-serif`;
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.icon, iconX + iconSize / 2, centerY);
+          ctx.fillText(item.icon, iconX + iconSize / 2, iconY);
           ctx.restore();
 
           // 标题
@@ -1295,32 +1245,39 @@ module.exports = function extendPopup(Renderer) {
             const swX = ctrlRightX - swW;
             const swY = centerY - swH / 2;
             const isOn = item.value;
-            const pressOffset = game._settingsSoundPressed ? 1 * s : 0;
+            const isPressed = game._settingsSoundPressed;
+            const pressOffset = isPressed ? 1 * s : 0;
 
+            // 开关背景
             ctx.save();
             ctx.globalAlpha = contentAlpha;
             this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
             ctx.restore();
 
+            // "开"/"关" 文字
             ctx.save();
             ctx.globalAlpha = contentAlpha;
             ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(isOn ? '开' : '关', swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
+            const labelText = isOn ? '开' : '关';
+            ctx.fillText(labelText, swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
             ctx.restore();
 
+            // 圆点
             const dotR = 10 * s;
             const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
+            const dotY = swY + pressOffset + swH / 2;
             ctx.save();
             ctx.globalAlpha = contentAlpha;
             ctx.beginPath();
-            ctx.arc(dotX, swY + pressOffset + swH / 2, dotR, 0, Math.PI * 2);
+            ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
             ctx.fill();
             ctx.restore();
 
+            // 记录点击区域
             this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
           } else if (item.type === 'arrow') {
             ctx.save();
@@ -1332,12 +1289,13 @@ module.exports = function extendPopup(Renderer) {
             ctx.fillText('›', ctrlRightX - 4 * s, centerY);
             ctx.restore();
 
+            // 记录整行点击区域
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
             if (item.key === 'rank') this.settingsRankRect = rect;
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
           }
 
-          // 分隔线
+          // 分隔线（非最后一项）
           if (i < items.length - 1) {
             const lineY = itemY + itemH;
             const linePad = 18 * s;
@@ -1350,6 +1308,7 @@ module.exports = function extendPopup(Renderer) {
             ctx.lineTo(px + pw - linePad, lineY);
             ctx.stroke();
 
+            // 小菱形装饰
             ctx.fillStyle = '#c4a35a';
             ctx.globalAlpha = contentAlpha * 0.5;
             ctx.beginPath();
@@ -1362,6 +1321,117 @@ module.exports = function extendPopup(Renderer) {
             ctx.restore();
           }
         });
+
+        ctx.restore();
+      }
+
+      // === 内部函数：绘制问题反馈页 ===
+      function drawFeedbackPage(offsetX) {
+        ctx.save();
+        ctx.translate(offsetX, 0);
+
+        // 返回按钮
+        const backY = py + 24 * s;
+        const backLabel = '‹  返回';
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const backW = ctx.measureText(backLabel).width;
+        ctx.fillText(backLabel, px + 18 * s, backY);
+        ctx.restore();
+
+        // 记录返回点击区域
+        this.feedbackBackRect = { x: px + 18 * s - 8 * s, y: backY - 14 * s, w: backW + 16 * s, h: 28 * s };
+
+        // 标题：问题反馈
+        const titleY = py + 32 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('问题反馈', W / 2, titleY);
+        ctx.restore();
+
+        // 输入框区域
+        const inputX = px + 20 * s;
+        const inputW = pw - 40 * s;
+        const inputH = 120 * s;
+        const inputY = titleY + 40 * s;
+
+        // 输入框背景
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this.roundRect(inputX, inputY, inputW, inputH, 8 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+        ctx.restore();
+
+        // 输入框文字
+        const feedbackText = game._feedbackText || '';
+        const placeholder = '请描述你遇到的问题（最多100字）';
+        const textX = inputX + 12 * s;
+        const textY = inputY + 14 * s;
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        if (feedbackText) {
+          ctx.fillStyle = '#3a2e1e';
+          const maxTextW = inputW - 24 * s;
+          const lines = this._wrapText(ctx, feedbackText, maxTextW, 14 * s);
+          const lineHeight = 20 * s;
+          lines.forEach((line, i) => {
+            if (i * lineHeight < inputH - 35 * s) {
+              ctx.fillText(line, textX, textY + i * lineHeight);
+            }
+          });
+        } else {
+          ctx.fillStyle = '#b0a898';
+          ctx.fillText(placeholder, textX, textY);
+        }
+
+        // 字数统计
+        const countText = `${feedbackText.length} / 100`;
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#b0a898';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(countText, inputX + inputW - 10 * s, inputY + inputH - 8 * s);
+        ctx.restore();
+
+        // 记录输入框点击区域
+        this.feedbackInputRect = { x: inputX, y: inputY, w: inputW, h: inputH };
+
+        // 提交按钮
+        const btnW = 140 * s;
+        const btnH = 42 * s;
+        const btnX = W / 2 - btnW / 2;
+        const btnY = py + ph - btnH - 28 * s;
+        const isSubmitting = game._feedbackSubmitting;
+        const isPressed = game._feedbackSubmitPressed;
+        const pressOffset = isPressed ? 2 * s : 0;
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        const btnBg = isSubmitting ? 'rgba(196,163,90,0.5)' : '#c4a35a';
+        this.roundRect(btnX, btnY + pressOffset, btnW, btnH, 8 * s, btnBg);
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const btnLabel = isSubmitting ? '提交中...' : '提交';
+        ctx.fillText(btnLabel, W / 2, btnY + pressOffset + btnH / 2);
+        ctx.restore();
+
+        // 记录提交按钮点击区域
+        this.feedbackSubmitRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+        ctx.restore();
       }
     }
 
