@@ -319,9 +319,116 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 
 ---
 
-### 3.3 renderer.js — Canvas 渲染层
+### 3.3 js/render/ — Canvas 渲染层（模块化）
 
-#### 3.3.1 渲染架构
+原 `js/renderer.js`（6600+ 行单文件）已拆分为 `js/render/` 目录下的聚焦模块，入口 `js/renderer.js` 现为薄层：
+
+```js
+module.exports = require('./render/index');
+```
+
+#### 3.3.1 模块目录
+
+```
+js/render/
+├── index.js         # 组装入口：加载扩展模块，定义 render(game) 状态机
+├── base.js          # Renderer 核心类、构造函数、通用工具方法
+├── effects.js       # 道具卡牌渲染、星辰燔边粒子系统
+├── animation.js     # 字母之神飞星、飞分、闪光粒子
+├── hud.js           # 顶部标题栏、HUD（回合/目标分/女巫头像）
+├── playing.js       # 主玩法界面（手牌矩阵、道具栏、预览、按钮）
+├── popup.js         # 弹窗系统（换字母/药水/升级/续命/通用面板）
+├── guide.js         # 新手引导覆盖层（playing/shop/cardbook 三阶段）
+├── cardbook.js      # 卡牌图鉴图标与详情弹窗
+├── debug.js         # 调试菜单、云存储日志面板
+├── gameover.js      # GameOverRenderer 独立类
+└── test.js          # 自测脚本（mock Canvas + game，验证加载与渲染）
+```
+
+| 模块 | 行数 | 职责 | 导出方式 |
+|------|------|------|----------|
+| `base.js` | ~980 | `Renderer` 类定义、构造函数、通用工具 | `class Renderer` |
+| `effects.js` | ~747 | 道具卡牌绘制（含自毁/禁用动画）、粒子 | 函数扩展 |
+| `animation.js` | ~365 | 飞星、飞分、闪光、脉冲 | 函数扩展 |
+| `hud.js` | ~482 | 顶部栏、金币胶囊、回合/目标分 | 函数扩展 |
+| `playing.js` | ~1132 | 主玩法画面、手牌矩阵、底部按钮 | 函数扩展 |
+| `popup.js` | ~1016 | 各类弹窗、通用面板 `_drawModalPanel` | 函数扩展 |
+| `guide.js` | ~664 | 三阶段新手引导覆盖层 | 函数扩展 |
+| `cardbook.js` | ~298 | 图鉴图标、详情翻页 | 函数扩展 |
+| `debug.js` | ~122 | 云日志、调试菜单 | 函数扩展 |
+| `gameover.js` | ~234 | **独立类** `GameOverRenderer` | 独立类 |
+| `index.js` | ~569 | 组装所有扩展、定义 `render()` 状态机 | 组装入口 |
+
+#### 3.3.2 导出规范
+
+本项目使用两种导出模式，**新增代码必须按此选择**：
+
+**模式 A：函数扩展（Prototype Extension）**
+
+向 `Renderer.prototype` 追加绘制方法。适用于大部分模块。
+
+```js
+// js/render/xxx.js
+module.exports = function extendXxx(Renderer) {
+  Renderer.prototype.someMethod = function(game) {
+    // this.ctx / this.scale / this.W / this.H 均可直接访问
+  };
+};
+```
+
+在 `index.js` 中加载：
+
+```js
+require('./hud')(Renderer);      // ✅ 先 require，再调用并传入 Renderer
+```
+
+**模式 B：独立类（Standalone Class）**
+
+不挂载到 `Renderer.prototype`，而是在 `Renderer` 构造函数中实例化为子渲染器。
+
+```js
+// js/render/gameover.js
+class GameOverRenderer {
+  constructor(renderer) {
+    this.parent = renderer;  // 通过 parent 访问共享工具
+  }
+  draw(ctx, game, W, H, s) { ... }
+}
+module.exports = { GameOverRenderer };
+```
+
+在 `base.js` 中加载：
+
+```js
+const { GameOverRenderer } = require('./gameover');
+// 在 Renderer 构造函数中：
+this.gameOverRenderer = new GameOverRenderer(this);
+```
+
+> ⚠️ **关键区别**：独立类**不能**在 `index.js` 里写成 `require('./gameover')(Renderer);`，因为它导出的是对象而非函数。
+
+> ⚠️ **微信小游戏 `require` 不支持目录自动解析**，必须用显式路径：`require('./render/index')`。
+
+#### 3.3.3 后续开发规范
+
+| 功能领域 | 目标文件 |
+|----------|----------|
+| 通用工具（`roundRect`、碰撞检测等） | `base.js` |
+| 顶部栏 / HUD / 金币 / 回合信息 | `hud.js` |
+| 主玩法画面（手牌、道具、预览、按钮） | `playing.js` |
+| 弹窗 / Modal / 覆盖层 | `popup.js` |
+| 新手引导覆盖层 | `guide.js` |
+| 动画效果（飞分、闪光、粒子） | `animation.js` |
+| 视觉特效（边框发光、卡牌特效） | `effects.js` |
+| 图鉴相关 | `cardbook.js` |
+| 调试工具 | `debug.js` |
+| 新的子渲染器（独立类） | 新建文件（模式 B）|
+
+- **命名**：公开方法无前缀（`drawHUD`），私有/内部方法用 `_`（`_drawPropCard`）
+- **`index.js` 保持薄层**：只负责 `require` 扩展和 `render()` 状态机，不写具体绘制逻辑
+- **加载顺序**：`base.js` 必须先加载拿到 `Renderer` 类，扩展模块任意顺序
+
+#### 3.3.4 渲染架构
 
 采用**按帧渲染**，全部使用 Canvas 2D API，无 DOM。
 
@@ -329,14 +436,14 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 render(game)
 ├── 清空画布 → 绘制背景图（云存储注入 bg_icon/bg.png，回退纯色 #0a1628）
 ├── 状态分流
-│   ├── playing  → drawHUD() + drawPlaying()
-│   ├── settlement → drawHUD() + drawCoinCapsule() + settlementRenderer.draw()
+│   ├── playing      → drawHUD() + drawPlaying()
+│   ├── settlement   → drawHUD() + settlementRenderer.draw()
 │   ├── witch_reward → witchRewardRenderer.draw()
-│   ├── shop     → drawTopHeader() + drawCoinCapsule() + shopRenderer.draw()
-│   │              └── confirmBuyRenderer.draw()（如有购买弹窗）
-│   ├── potion   → drawPotion()（字母升级/随机强化不显示顶部栏）
-│   ├── life_extended → drawLifeExtension()
-│   └── gameover → drawHUD() + drawPlaying() + gameOverRenderer.draw()
+│   ├── shop         → drawTopHeader() + shopRenderer.draw()
+│   │                  └── confirmBuyRenderer.draw()（如有购买弹窗）
+│   ├── potion       → drawPotion()（字母升级/随机强化不显示顶部栏）
+│   ├── life_extended → drawHUD() + drawPlaying() + 续命弹窗
+│   └── gameover     → drawHUD() + drawPlaying() + gameOverRenderer.draw()
 ├── updateAnimations()
 ├── _updateAndDrawSparkles()    # 烟花粒子
 ├── _updateAndDrawFlyingScore() # 飞行总分
@@ -347,7 +454,7 @@ render(game)
 └── _drawRankList()             # 主域绘制开放数据域排行榜（OffScreenCanvas）
 ```
 
-#### 3.3.2 坐标系与适配
+#### 3.3.5 坐标系与适配
 
 ```
 baseScale = min(windowWidth / 375, windowHeight / 667)
@@ -362,7 +469,7 @@ gap = 8 * scale
 > 注：当手牌数 > 9（额外手牌效果）时，布局自动切换为 4 列自适应 + 最后一行居中。
 > 针对灵动岛机型（iOS safeTop ≥ 59）增加顶部安全区域 padding。
 
-#### 3.3.3 卡牌渲染
+#### 3.3.6 卡牌渲染
 
 使用 `card_template.png` / `card_template_selected.png` 作为背景，叠加文字：
 - 大写字母（Georgia 粗体，32px，深蓝 `#1a2f4a`）
@@ -373,7 +480,7 @@ gap = 8 * scale
 
 卡牌支持动画偏移：`animOffset`（飞入/飞出）、`selectOffset`（选中上移）、`jumpOffsetY`（字母跳跃）。
 
-#### 3.3.4 手牌与道具栏布局
+#### 3.3.7 手牌与道具栏布局
 
 ```
 ┌─────────────────────────────┐
@@ -393,7 +500,7 @@ gap = 8 * scale
 └─────────────────────────────┘
 ```
 
-#### 3.3.5 分数预览方块
+#### 3.3.8 分数预览方块
 
 选中 ≥2 张牌时显示两个方块：
 - 左方块（蓝色背景）：字母基础分累加
@@ -401,7 +508,7 @@ gap = 8 * scale
 
 出牌合法后，左方块上方可能显示 `xN`（per_card 女巫牌倍率提示）。
 
-#### 3.3.6 商店页面布局
+#### 3.3.9 商店页面布局
 
 ```
         女巫的词牌
@@ -430,7 +537,7 @@ gap = 8 * scale
 - 已装备栏支持点击选中 + 售出（红色按钮，easeOutBack 弹出动画）
 - 女巫牌槽位 >4 时，卡牌自动重叠排列以适应屏幕
 
-#### 3.3.7 购买成功弹窗
+#### 3.3.10 购买成功弹窗
 
 点击价格按钮 → 扣除金币 → 显示成功弹窗：
 - **女巫牌**：展示"装备"按钮 → 加入 `jokers[]`
@@ -440,7 +547,7 @@ gap = 8 * scale
 
 弹窗动画：easeOutBack 入场 + 内容渐入 + 关闭时上滑淡出。
 
-#### 3.3.8 回合金币结算弹窗
+#### 3.3.11 回合金币结算弹窗
 
 达到目标分数后弹出：
 ```
@@ -458,7 +565,7 @@ gap = 8 * scale
 
 > 注：`extraDiscards = this.discardsLeft`，即剩余弃牌次数直接折算为金币。
 
-#### 3.3.9 药水升级页面（potion 状态）
+#### 3.3.12 药水升级页面（potion 状态）
 
 进入后显示 A-Z 字母矩阵，选中字母后点击升级：
 - **字母升级**：指定字母分数 +10（加法叠加，全局，跨回合保留）
@@ -466,8 +573,6 @@ gap = 8 * scale
 - **字母置换**：将手牌中选中的一张牌替换为指定字母（游戏中直接使用）
 
 升级后启动弹出动画（oldScore → newScore），播放升级音效。
-
----
 
 ### 3.4 animation.js — 动画系统
 
