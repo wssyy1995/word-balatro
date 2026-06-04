@@ -1,3 +1,4 @@
+// require('./js/render/test');
 // 微信小游戏入口
 const { Game, uploadScore } = require('./js/game');
 const { Renderer } = require('./js/renderer');
