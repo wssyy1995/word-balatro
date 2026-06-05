@@ -428,15 +428,6 @@ class Renderer {
       this.gameProgressLoaded = false;
     }
 
-    // 主页背景图和按钮图不走本地加载，强制从云存储下载后通过 injectBgIconToRenderer 注入
-    // 避免微信开发者工具预编译时扫描不存在的本地路径报 ENOENT
-    this.homePageImage = null;
-    this.homePageLoaded = false;
-    this.homeStartImage = null;
-    this.homeStartLoaded = false;
-    this.homeRankingImage = null;
-    this.homeRankingLoaded = false;
-
     // 加载购买成功弹窗底部飘带
     this.buySuccessBandImg = null;
     this.buySuccessBandLoaded = false;

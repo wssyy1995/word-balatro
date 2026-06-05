@@ -84,10 +84,7 @@ class CloudStorageManager {
 
     // 默认 bg_icon 图片云文件映射
     this.defaultBgIconFileMap = {
-      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png',
-      'home_page': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/home_page.png',
-      'home_ranking': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/home_ranking.png',
-      'home_start': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/home_start.png'
+      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
@@ -1272,25 +1269,14 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer
+  // 将云缓存 bg_icon 图片注入到 renderer 的 bgImage
   injectBgIconToRenderer(renderer) {
     let count = 0;
     Object.keys(this.bgIconImages).forEach(name => {
       const data = this.bgIconImages[name];
       if (data && data.loaded && data.img) {
-        if (name === 'bg') {
-          renderer.bgImage = data.img;
-          renderer.bgLoaded = true;
-        } else if (name === 'home_page') {
-          renderer.homePageImage = data.img;
-          renderer.homePageLoaded = true;
-        } else if (name === 'home_start') {
-          renderer.homeStartImage = data.img;
-          renderer.homeStartLoaded = true;
-        } else if (name === 'home_ranking') {
-          renderer.homeRankingImage = data.img;
-          renderer.homeRankingLoaded = true;
-        }
+        renderer.bgImage = data.img;
+        renderer.bgLoaded = true;
         count++;
       }
     });

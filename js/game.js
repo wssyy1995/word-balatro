@@ -602,7 +602,7 @@ class Game {
       this._potionSelectedLetter = null;
       this._potionUpgrading = null;
       this._randomUpgradePopup = null;
-      this.state = 'home';
+      this.state = 'playing';
       this.shopItems = null;
       this.safetyRounds = 3;
       this.extraDiscards = 0;
@@ -617,14 +617,13 @@ class Game {
       this._cardBookDetailStartTime = null;
       this._closeCardBookDetailStartTime = null;
       this._cardBookEquipBtnPressed = false;
-      this._cardBookCloseBtnPressed = false;
       this._cardBookCellPressed = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
       this.equippedWitchCard = this.storageManager.loadEquippedWitchCard();
       console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
-      this._forceCardBookFlash = false;
+    this._forceCardBookFlash = false;
       this.extraSafety = 0;
       this.extraHands = 0;
       this.baseHandSize = 9;
@@ -633,10 +632,7 @@ class Game {
       this.roundScores = [];
       this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
       console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
-      // 第一回合延迟到点击 home_start 后初始化
-      this.deck = null;
-      this.hand = null;
-      this.target = null;
+      this.resetRound();
     }
 
     // 公共初始化（新游戏和恢复都需要）
@@ -692,7 +688,6 @@ class Game {
     this._settingsSoundPressed = false;
     this._settingsRankPressed = false;
     this._settingsFeedbackPressed = false;
-    this._settingsCloseBtnPressed = false;
 
     // 问题反馈
     this._feedbackPage = 'main';           // 'main' | 'feedback'
@@ -840,7 +835,6 @@ class Game {
     this._cardBookDetailStartTime = null;
     this._closeCardBookDetailStartTime = null;
     this._cardBookEquipBtnPressed = false;
-    this._cardBookCloseBtnPressed = false;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCard = this.storageManager ? this.storageManager.loadEquippedWitchCard() : null;
@@ -1363,7 +1357,7 @@ class Game {
           if (this.audioManager) this.audioManager.play('game_over');
           if (this.storageManager) {
             this.storageManager.setHighScore(this.totalScore);
-            uploadScore(this.storageManager.getHighScore(), this._userInfo);
+            uploadScore(this.storageManager.getHighScore());
             this.storageManager.updateStats(this);
             this.storageManager.clearProgress();
           }
@@ -1400,7 +1394,7 @@ class Game {
             if (this.audioManager) this.audioManager.play('game_over');
             if (this.storageManager) {
               this.storageManager.setHighScore(this.totalScore);
-              uploadScore(this.storageManager.getHighScore(), this._userInfo);
+              uploadScore(this.storageManager.getHighScore());
               this.storageManager.updateStats(this);
               this.storageManager.clearProgress();
             }
@@ -1447,7 +1441,7 @@ class Game {
               if (this.audioManager) this.audioManager.play('game_over');
               if (this.storageManager) {
                 this.storageManager.setHighScore(this.totalScore);
-                uploadScore(this.storageManager.getHighScore(), this._userInfo);
+                uploadScore(this.storageManager.getHighScore());
                 this.storageManager.updateStats(this);
                 this.storageManager.clearProgress();
               }
@@ -1667,7 +1661,7 @@ class Game {
         if (this.audioManager) this.audioManager.play('game_over');
         if (this.storageManager) {
           this.storageManager.setHighScore(this.totalScore);
-          uploadScore(this.storageManager.getHighScore(), this._userInfo);
+          uploadScore(this.storageManager.getHighScore());
           this.storageManager.updateStats(this);
           this.storageManager.clearProgress();
         }
@@ -2085,34 +2079,11 @@ class Game {
     this._reviveBtnPressed = false;
     this._reviveBtnPressTime = null;
     this._showingRankList = false;
-    this._rankPopup = null;
-    this._rankTab = null;
-    this._globalRankData = null;
-    this._globalRankLoading = false;
-    this._selfOpenId = '';
-
-    // 用户信息 + 隐私授权
-    this._userInfo = null;          // { nickname, avatarUrl }
-    this._userInfoPopup = false;    // 是否显示用户信息获取弹窗
-    this._userInfoSkipPressed = false; // "暂不授权"按下状态
-    this._avatarCache = {};         // 头像图片缓存 { openid: Image }
-
-    // 主页按钮
-    this._homeStartPressed = false;
-    this._homeRankingPressed = false;
-
     if (this.storageManager) {
       const today = new Date().toISOString().slice(0, 10);
       this.storageManager.saveDailyRevive(today, true);
       this.storageManager.saveProgress();
     }
-  }
-
-  startFirstRound() {
-    this.resetRound();
-    this.state = 'playing';
-    this._preloadWitchAvatars();
-    if (this.storageManager) this.storageManager.saveProgress();
   }
 
   nextRound() {
@@ -2262,29 +2233,13 @@ class Game {
   }
 }
 
-function uploadScore(score, userInfo) {
+function uploadScore(score) {
   if (!wx.setUserCloudStorage) return;
   wx.setUserCloudStorage({
     KVDataList: [{ key: 'score', value: String(score) }],
     success: () => console.log('[Rank] 分数上传成功', score),
     fail: (err) => console.error('[Rank] 分数上传失败', err),
   });
-
-  // 同时上传全球排行榜（带上昵称头像）
-  if (wx.cloud && wx.cloud.callFunction) {
-    wx.cloud.callFunction({
-      name: 'updateRank',
-      data: {
-        score,
-        nickname: userInfo?.nickname || '',
-        avatarUrl: userInfo?.avatarUrl || ''
-      }
-    }).then(res => {
-      console.log('[GlobalRank] 上传成功', res.result);
-    }).catch(err => {
-      console.error('[GlobalRank] 上传失败', err);
-    });
-  }
 }
 
 module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScore };

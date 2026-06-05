@@ -1,9 +1,0 @@
-{
-  "name": "updateRank",
-  "version": "1.0.0",
-  "description": "更新全球排行榜分数",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~3.0.1"
-  }
-}

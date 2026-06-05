@@ -1239,7 +1239,7 @@ module.exports = function extendPopup(Renderer) {
             key: 'rank',
             iconKey: 'rank',
             title: '排行榜',
-            subtitle: '查看好友、全球玩家排行',
+            subtitle: '查看好友排行',
             type: 'arrow'
           },
           {
