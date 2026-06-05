@@ -330,6 +330,10 @@ wx.getUserInfo({
     if (res.data && res.data[0]) {
       selfOpenId = res.data[0].openid;
     }
+    // 授权完成后若排行榜正在显示但数据为空，自动重新拉取
+    if (isVisible && rankData.length === 0) {
+      fetchRankData();
+    }
   }
 });
 

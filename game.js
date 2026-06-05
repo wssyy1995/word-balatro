@@ -400,6 +400,12 @@ wx.onTouchStart((e) => {
     }
   }
 
+  // 排行榜显示时，点击任意位置关闭（全局兜底，所有状态通用）
+  if (isRankShowing) {
+    hideRankList();
+    return;
+  }
+
   handleInput(x, y);
 });
 
