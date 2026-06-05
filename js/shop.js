@@ -1498,8 +1498,8 @@ class ShopRenderer {
         const btnY = finalBubbleY + 42 * s;
         const gap = 10 * s;
         const totalBtnW = btnW * 2 + gap;
-        const confirmX = bubbleX + (bubbleW - totalBtnW) / 2;
-        const cancelX = confirmX + btnW + gap;
+        const cancelX = bubbleX + (bubbleW - totalBtnW) / 2;
+        const confirmX = cancelX + btnW + gap;
 
         // 确认按钮（金色，与"生效"按钮同色）
         let confirmPressOffset = 0;

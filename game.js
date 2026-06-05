@@ -398,6 +398,7 @@ wx.onTouchStart((e) => {
 
     // 点击关闭按钮：延迟关闭（带按下反馈）
     if (settingsCloseBtnHit) {
+      vibrate();
       game._settingsCloseBtnPressed = true;
       if (game.audioManager) game.audioManager.play('tap');
       return;
@@ -446,7 +447,9 @@ wx.onTouchStart((e) => {
     };
     const rankCloseBtnHit = renderer.hitTest(x, y, [rankCloseBtnRect]);
     if (rankCloseBtnHit) {
+      vibrate();
       game._rankCloseBtnPressed = true;
+      if (game.audioManager) game.audioManager.play('tap');
       const odc = getOpenDataContext();
       if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: true });
       return;
