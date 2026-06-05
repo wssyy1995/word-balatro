@@ -1287,7 +1287,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillStyle = '#3a2e1e';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.title, iconX + iconSize + 14 * s, centerY - 7 * s);
+          ctx.fillText(item.title, iconX + iconSize + 11 * s, centerY - 7 * s);
           ctx.restore();
 
           // 副标题
@@ -1297,7 +1297,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillStyle = '#8a7a6a';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.subtitle, iconX + iconSize + 14 * s, centerY + 11 * s);
+          ctx.fillText(item.subtitle, iconX + iconSize + 11 * s, centerY + 11 * s);
           ctx.restore();
 
           // 右侧控件

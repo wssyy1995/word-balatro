@@ -9,6 +9,9 @@ let rankData = [];
 let selfOpenId = '';
 const avatarCache = {};
 let scale = 1; // 由主域传入的 scaleDpr
+let closeBtnPressed = false; // 关闭按钮按压状态（由主域同步）
+let canvasWidth = 375;
+let canvasHeight = 667;
 
 function sp(v) {
   return Math.floor(v * scale);
@@ -61,6 +64,7 @@ function clipRoundRect(x, y, w, h, r) {
 
 async function drawRankList() {
   const { W, H } = getCanvasSize();
+  ctx.clearRect(0, 0, W, H);
   const frame = _drawRankPanelFrame();
 
   const { contentX, contentW, rowH, startY, panelY, panelH } = frame;
@@ -134,8 +138,8 @@ async function drawRankList() {
 }
 
 function getCanvasSize() {
-  let W = sharedCanvas.width;
-  let H = sharedCanvas.height;
+  let W = sharedCanvas.width || canvasWidth;
+  let H = sharedCanvas.height || canvasHeight;
   if (!W || !H) {
     W = 375;
     H = 667;
@@ -243,15 +247,16 @@ function _drawRankPanelFrame() {
   const closeSize = sp(28);
   const closeX = panelX + panelW - closeSize - sp(14);
   const closeY = panelY + sp(14);
+  const closePressOffset = closeBtnPressed ? sp(2) : 0;
   ctx.fillStyle = 'rgba(255,107,107,0.9)';
   ctx.beginPath();
-  ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+  ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2 + closePressOffset, closeSize / 2, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = `bold ${Math.floor(closeSize * 0.65)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - sp(2));
+  ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - sp(2) + closePressOffset);
 
   // 表头
   const rowH = sp(52);
@@ -276,6 +281,7 @@ function _drawRankPanelFrame() {
 
 function drawLoading() {
   const { W, H } = getCanvasSize();
+  ctx.clearRect(0, 0, W, H);
   console.log('[OpenData] drawLoading', W, H, 'scale', scale);
   const frame = _drawRankPanelFrame();
 
@@ -289,6 +295,7 @@ function drawLoading() {
 
 function drawError(msg) {
   const { W, H } = getCanvasSize();
+  ctx.clearRect(0, 0, W, H);
   const frame = _drawRankPanelFrame();
 
   ctx.fillStyle = '#ff6b6b';
@@ -362,8 +369,14 @@ wx.onMessage((msg) => {
     case 'show':
       drawMode = 'full';
       if (msg.scaleDpr) scale = msg.scaleDpr;
+      if (msg.canvasWidth) canvasWidth = msg.canvasWidth;
+      if (msg.canvasHeight) canvasHeight = msg.canvasHeight;
+      try {
+        if (msg.canvasWidth) sharedCanvas.width = msg.canvasWidth;
+        if (msg.canvasHeight) sharedCanvas.height = msg.canvasHeight;
+      } catch (e) {}
       isVisible = true;
-      console.log('[OpenData] received show, canvas size', sharedCanvas.width, sharedCanvas.height, 'scale', scale);
+      console.log('[OpenData] received show, canvas size', canvasWidth, canvasHeight, 'scale', scale);
       fetchRankData();
       break;
     case 'showList':
@@ -390,6 +403,16 @@ wx.onMessage((msg) => {
         drawFriendList(listRect.w, listRect.rowH);
       } else {
         drawRankList();
+      }
+      break;
+    case 'closeBtnPress':
+      closeBtnPressed = msg.pressed || false;
+      if (isVisible) {
+        if (drawMode === 'list' && listRect) {
+          drawFriendList(listRect.w, listRect.rowH);
+        } else {
+          drawRankList();
+        }
       }
       break;
   }

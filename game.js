@@ -60,6 +60,16 @@ function vibrate() {
   }
 }
 
+// ===== 键盘输入监听（反馈文本框用）=====
+wx.onKeyboardInput((res) => {
+  if (game && res.value !== undefined) {
+    game._feedbackText = res.value.slice(0, 100);
+  }
+});
+wx.onKeyboardConfirm(() => {
+  wx.hideKeyboard();
+});
+
 // ===== 排行榜相关 =====
 let openDataContext = null;
 let isRankShowing = false;
@@ -93,8 +103,10 @@ function showRankList() {
   odc.postMessage({
     action: 'show',
     scaleDpr,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
   });
-  }
+}
 
 function hideRankList() {
   const odc = getOpenDataContext();
@@ -333,7 +345,11 @@ wx.onTouchStart((e) => {
       longPressTimer = setTimeout(() => {
         longPressTimer = null;
         longPressTriggered = true;
-        renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        // 仅在开发版或体验版开放调试菜单
+        const env = wx.getAccountInfoSync ? wx.getAccountInfoSync().miniProgram.envVersion : 'release';
+        if (env === 'develop' || env === 'trial') {
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        }
       }, LONG_PRESS_DURATION);
       return; // 长按期间不触发其他交互
     }
@@ -341,6 +357,8 @@ wx.onTouchStart((e) => {
 
   // 设置弹窗交互（优先处理）
   if (game._settingsPopup && !game._closingSettings) {
+    // 精确检测关闭按钮（延迟关闭）
+    const settingsCloseBtnHit = renderer.settingsCloseBtnRect && renderer.hitTest(x, y, [renderer.settingsCloseBtnRect]);
     const settingsCloseHit = renderer.settingsCloseRect && renderer.hitTest(x, y, [renderer.settingsCloseRect]);
 
     // 主页按钮
@@ -378,8 +396,16 @@ wx.onTouchStart((e) => {
       return;
     }
 
-    // 点击弹窗外区域：主页直接关闭，反馈页则返回主页
+    // 点击关闭按钮：延迟关闭（带按下反馈）
+    if (settingsCloseBtnHit) {
+      game._settingsCloseBtnPressed = true;
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+
+    // 点击弹窗外区域：直接关闭
     if (settingsCloseHit) {
+      wx.hideKeyboard();
       if (game._feedbackPage === 'feedback') {
         game._feedbackPage = 'main';
         game._feedbackText = '';
@@ -400,8 +426,31 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 排行榜显示时，点击任意位置关闭（全局兜底，所有状态通用）
+  // 排行榜显示时，优先检测关闭按钮（延迟关闭），否则点击任意位置关闭
   if (isRankShowing) {
+    // 估算排行榜关闭按钮区域（与开放域 drawRankList 中关闭按钮位置一致）
+    const s = renderer.scale || 1;
+    const panelW = Math.min(renderer.W * 0.9, 340 * s);
+    const panelH = Math.min(renderer.H * 0.75, 520 * s);
+    const panelX = (renderer.W - panelW) / 2;
+    const panelY = (renderer.H - panelH) / 2;
+    const closeSize = 28 * s;
+    const closeX = panelX + panelW - closeSize - 14 * s;
+    const closeY = panelY + 14 * s;
+    const hitPad = 10 * s;
+    const rankCloseBtnRect = {
+      x: closeX - hitPad,
+      y: closeY - hitPad,
+      w: closeSize + hitPad * 2,
+      h: closeSize + hitPad * 2
+    };
+    const rankCloseBtnHit = renderer.hitTest(x, y, [rankCloseBtnRect]);
+    if (rankCloseBtnHit) {
+      game._rankCloseBtnPressed = true;
+      const odc = getOpenDataContext();
+      if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: true });
+      return;
+    }
     hideRankList();
     return;
   }
@@ -427,6 +476,11 @@ wx.onTouchMove((e) => {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
     if (!hit) game._settingsSoundPressed = false;
   }
+  if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
+    if (!hit) game._settingsCloseBtnPressed = false;
+  }
   if (game._feedbackBackPressed && renderer.feedbackBackRect) {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
@@ -436,6 +490,31 @@ wx.onTouchMove((e) => {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
     if (!hit) game._feedbackSubmitPressed = false;
+  }
+  // 移出排行榜关闭按钮区域时取消按下状态
+  if (game._rankCloseBtnPressed) {
+    const touch = e.touches[0];
+    const s = renderer.scale || 1;
+    const panelW = Math.min(renderer.W * 0.9, 340 * s);
+    const panelH = Math.min(renderer.H * 0.75, 520 * s);
+    const panelX = (renderer.W - panelW) / 2;
+    const panelY = (renderer.H - panelH) / 2;
+    const closeSize = 28 * s;
+    const closeX = panelX + panelW - closeSize - 14 * s;
+    const closeY = panelY + 14 * s;
+    const hitPad = 10 * s;
+    const rankCloseBtnRect = {
+      x: closeX - hitPad,
+      y: closeY - hitPad,
+      w: closeSize + hitPad * 2,
+      h: closeSize + hitPad * 2
+    };
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [rankCloseBtnRect]);
+    if (!hit) {
+      game._rankCloseBtnPressed = false;
+      const odc = getOpenDataContext();
+      if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: false });
+    }
   }
 
   // 移出卡牌图鉴图标区域时取消按下状态
@@ -453,6 +532,15 @@ wx.onTouchMove((e) => {
     const btnHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookEquipBtnRect]);
     if (!btnHit) {
       game._cardBookEquipBtnPressed = false;
+    }
+  }
+
+  // 移出卡牌图鉴关闭按钮区域时取消按下状态
+  if (game._cardBookCloseBtnPressed && renderer.cardBookCloseBtnRect) {
+    const touch = e.touches[0];
+    const closeHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookCloseBtnRect]);
+    if (!closeHit) {
+      game._cardBookCloseBtnPressed = false;
     }
   }
 
@@ -573,6 +661,7 @@ wx.onTouchEnd(() => {
       game._settingsRankPressed = false;
       game._closingSettings = true;
       game._closeSettingsStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
       showRankList();
     }
     if (game._settingsFeedbackPressed) {
@@ -586,20 +675,18 @@ wx.onTouchEnd(() => {
       game._feedbackBackPressed = false;
       game._feedbackPage = 'main';
       game._feedbackText = '';
+      wx.hideKeyboard();
       if (game.audioManager) game.audioManager.play('tap');
     }
     if (game._feedbackInputFocused) {
       game._feedbackInputFocused = false;
-      // 弹出系统输入框
-      wx.showModal({
-        title: '请输入反馈内容',
-        editable: true,
-        placeholderText: '最多100字',
-        success: (res) => {
-          if (res.confirm && res.content) {
-            game._feedbackText = res.content.slice(0, 100);
-          }
-        }
+      // 直接弹出系统键盘
+      wx.showKeyboard({
+        defaultValue: game._feedbackText || '',
+        maxLength: 100,
+        multiple: false,
+        confirmHold: true,
+        confirmType: 'done'
       });
     }
     if (game._feedbackSubmitPressed) {
@@ -609,6 +696,14 @@ wx.onTouchEnd(() => {
       } else if (!game._feedbackText || !game._feedbackText.trim()) {
         game._feedbackSubmitToast = { text: '请输入反馈内容', expireAt: Date.now() + 2000 };
       }
+    }
+
+    // 设置弹窗关闭按钮松开时直接关闭整个弹窗
+    if (game._settingsCloseBtnPressed) {
+      game._settingsCloseBtnPressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      wx.hideKeyboard();
     }
   }
 
@@ -645,6 +740,21 @@ wx.onTouchEnd(() => {
     }
 
     game._jokerSortState = null;
+  }
+
+  // 卡牌图鉴关闭按钮松开时关闭
+  if (game._cardBookCloseBtnPressed) {
+    game._cardBookCloseBtnPressed = false;
+    game._closingCardBook = true;
+    game._closeCardBookStartTime = Date.now();
+  }
+
+  // 排行榜关闭按钮松开时关闭
+  if (game._rankCloseBtnPressed) {
+    game._rankCloseBtnPressed = false;
+    const odc = getOpenDataContext();
+    if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: false });
+    hideRankList();
   }
 
   touchStartPos = null;
@@ -687,7 +797,7 @@ function handleInput(x, y) {
     const debugHit = renderer.hitTest(x, y, renderer.debugMenuRects);
     if (debugHit) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
-      if (debugHit.action === 'debug_addScore') game.addScore(100);
+      if (debugHit.action === 'debug_addScore') game.addScore(1000);
       if (debugHit.action === 'debug_addGold') {
         game.gold += 100;
         if (game.storageManager) game.storageManager.saveProgress();
@@ -859,17 +969,13 @@ function handleInput(x, y) {
       }
     }
 
-    // 先检测关闭按钮（X）
+    // 先检测关闭按钮（X）——延迟关闭，带按下反馈
     if (renderer.cardBookCloseBtnRect) {
       const closeHit = renderer.hitTest(x, y, [renderer.cardBookCloseBtnRect]);
       if (closeHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        game._closingCardBook = true;
-        game._closeCardBookStartTime = Date.now();
-        game._cardBookDetailLevel = null;
-        game._closingCardBookDetail = false;
-        game._cardBookCellPressed = null;
+        game._cardBookCloseBtnPressed = true;
         return;
       }
     }
@@ -1663,6 +1769,7 @@ function handleInput(x, y) {
         // 启动页面过渡动画
         game._shopToGameTransition = { startTime: Date.now() };
         setTimeout(() => {
+          renderer.lastScore = 0;
           game.nextRound();
         }, 400);
         return;

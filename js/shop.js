@@ -118,14 +118,15 @@ function refreshModule(game, modIdx) {
 
 function buyItem(game, idx) {
   const item = game.shopItems[idx];
-  if (!item || game.gold < item.cost) return false;
+  const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+  if (!item || game.gold < finalCost) return false;
 
   // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
   if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return false;
   const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
   if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return false;
 
-  game.gold -= item.cost;
+  game.gold -= finalCost;
 
   if (game.audioManager) game.audioManager.play('buy');
 
@@ -157,7 +158,12 @@ function upgradeLetter(game, letter) {
   if (!game.potionMode) return false;
 
   const potion = game.potionMode;
-  const value = potion.value || (potion.effect === 'upgrade_letter' ? 10 : 2);
+  let value = potion.value || (potion.effect === 'upgrade_letter' ? 10 : 2);
+
+  // 随机强化：使用转盘生成的随机倍数，而不是药水定义中的固定 value
+  if (potion.effect === 'random_upgrade' && game._randomUpgradePopup) {
+    value = game._randomUpgradePopup.randomMult || value;
+  }
 
   const existing = letterUpgrades.get(letter) || {};
   let totalMult = existing.mult || 1;
@@ -167,15 +173,18 @@ function upgradeLetter(game, letter) {
     // 字母强化：加法叠加（分数 + value）
     totalAdd += value;
   } else {
-    // 随机强化：乘法叠加（分数 × value）
+    // 随机强化：乘法叠加（分数 × value），之前的 add 也要乘
     totalMult *= value;
+    totalAdd = Math.floor(totalAdd * value);
   }
 
   letterUpgrades.set(letter, { mult: totalMult, add: totalAdd });
+  console.log('[upgradeLetter] letter:', letter, 'value:', value, 'totalMult:', totalMult, 'totalAdd:', totalAdd);
 
   // 同步更新当前手牌中该字母的所有卡牌分数
   const baseScore = LETTER_SCORE[letter];
   const newScore = Math.floor(baseScore * totalMult) + totalAdd;
+  console.log('[upgradeLetter] baseScore:', baseScore, 'newScore:', newScore);
   game.hand.forEach(card => {
     if (card && card.letter === letter) {
       card.baseScore = baseScore;
@@ -1059,7 +1068,8 @@ class ShopRenderer {
         const btnH = 22 * s;
         const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
         const coinSize = 15 * s;
-        const canAfford = game.gold >= item.cost;
+        const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+        const canAfford = game.gold >= finalCost;
 
         // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
         const isWitch = item.type === 'witch';
@@ -1078,7 +1088,7 @@ class ShopRenderer {
           btnText = '余额不足';
           showCoin = true;
         } else {
-          btnText = String(item.cost);
+          btnText = String(finalCost);
           showCoin = true;
         }
         const isActive = canAfford && !atLimit;
@@ -1132,6 +1142,29 @@ class ShopRenderer {
         ctx.textBaseline = 'middle';
         const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
         ctx.fillText(btnText, btnTextX, midY);
+
+        // 8折标签（右上角小徽章）
+        if (game._shopDiscountActive) {
+          const tagText = '8折';
+          const tagH = 12 * s;
+          const tagFont = `bold ${Math.floor(9 * s)}px sans-serif`;
+          ctx.save();
+          ctx.font = tagFont;
+          const tagW = ctx.measureText(tagText).width + 6 * s;
+          const tagX = btnX + btnW - tagW + 2 * s;
+          const tagY = btnY - tagH / 2 + pressOffset;
+          ctx.fillStyle = '#e74c3c';
+          ctx.beginPath();
+          ctx.arc(tagX + tagH / 2, tagY + tagH / 2, tagH / 2, Math.PI / 2, Math.PI * 3 / 2);
+          ctx.arc(tagX + tagW - tagH / 2, tagY + tagH / 2, tagH / 2, Math.PI * 3 / 2, Math.PI / 2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2 + 0.5 * s);
+          ctx.restore();
+        }
 
         this.shopPriceBtnRects.push({ x: btnX - 2, y: btnY - 2, w: btnW + 4, h: btnH + 4, index: itemIdx });
       }
@@ -1220,11 +1253,15 @@ class ShopRenderer {
     // 目标分数行
     const targetY = moduleY + 20 * s;
     ctx.save();
+    const tsIconSize = 20 * s;
+    if (this.parent.targetScoreIconLoaded && this.parent.targetScoreIcon) {
+      ctx.drawImage(this.parent.targetScoreIcon, moduleX + 18 * s, targetY - tsIconSize / 2 - 1 * s, tsIconSize, tsIconSize);
+    }
     ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🎯 目标分数', moduleX + 18 * s, targetY);
+    ctx.fillText('目标分数', moduleX + 18 * s + tsIconSize + 4 * s, targetY);
     ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
     ctx.fillStyle = '#5a4a2a';
     ctx.textAlign = 'right';
@@ -1441,10 +1478,11 @@ class ShopRenderer {
         ctx.restore();
 
         // 标题文字
+        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * 0.8) : popup.item.cost;
         const isCrystalBall = popup.item.type === 'crystal';
         const confirmText = isCrystalBall
-          ? `花费 ${popup.item.cost} 金币购买此卡牌，并立即生效？`
-          : `花费 ${popup.item.cost} 金币购买此卡牌？`;
+          ? `花费 ${popupFinalCost} 金币购买此卡牌，并立即生效？`
+          : `花费 ${popupFinalCost} 金币购买此卡牌？`;
         ctx.save();
         const confirmFontSize = isCrystalBall ? 11 : 13;
         ctx.font = `bold ${Math.floor(confirmFontSize * s)}px sans-serif`;
@@ -1998,7 +2036,8 @@ class ConfirmBuyRenderer {
 
       // coin 图标 + 金额
       const coinSize = 20 * s;
-      const priceText = String(item.cost);
+      const popupFinalCost2 = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+      const priceText = String(popupFinalCost2);
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
       const textW = ctx.measureText(priceText).width;
       const contentW = coinSize + 6 * s + textW;

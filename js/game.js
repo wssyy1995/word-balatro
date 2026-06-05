@@ -617,6 +617,7 @@ class Game {
       this._cardBookDetailStartTime = null;
       this._closeCardBookDetailStartTime = null;
       this._cardBookEquipBtnPressed = false;
+      this._cardBookCloseBtnPressed = false;
       this._cardBookCellPressed = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
       this.equippedWitchCard = this.storageManager.loadEquippedWitchCard();
@@ -681,10 +682,15 @@ class Game {
     this._debugLabelShow = null;
     this._witchSkillProtectUsed = false;
 
+    // 装备女巫卡牌跨回合状态
+    this._shopDiscountActive = false;   // 菲兰瑟娅：本回合商店8折
+    this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
+
     // 设置弹窗
     this._settingsPopup = null;
     this._closingSettings = false;
     this._closeSettingsStartTime = null;
+    this._settingsCloseBtnPressed = false;
     this._settingsSoundPressed = false;
     this._settingsRankPressed = false;
     this._settingsFeedbackPressed = false;
@@ -835,6 +841,8 @@ class Game {
     this._cardBookDetailStartTime = null;
     this._closeCardBookDetailStartTime = null;
     this._cardBookEquipBtnPressed = false;
+    this._cardBookCloseBtnPressed = false;
+    this._rankCloseBtnPressed = false;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCard = this.storageManager ? this.storageManager.loadEquippedWitchCard() : null;
@@ -903,6 +911,10 @@ class Game {
     if (p._cardBookGuideTextStartTime !== undefined) this._cardBookGuideTextStartTime = p._cardBookGuideTextStartTime;
     if (p._cardBookGuideText2StartTime !== undefined) this._cardBookGuideText2StartTime = p._cardBookGuideText2StartTime;
     if (p._cardBookGuideExitStartTime !== undefined) this._cardBookGuideExitStartTime = p._cardBookGuideExitStartTime;
+
+    // 恢复装备女巫卡牌跨回合状态
+    if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
+    if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
 
     // 修复：恢复后清理手牌中的 null 占位符并重新补牌
     if (this.state === 'playing') {
@@ -1053,6 +1065,16 @@ class Game {
     this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters);
     this.selected = [];
     this.score = 0;
+    // 格莱薇妮娅：下回合初始分加上溢出加成（延迟500ms后更新，让HUD先显示0再做缩放动画）
+    if (this._overflowBonus > 0) {
+      const bonus = this._overflowBonus;
+      this._overflowBonus = 0;
+      setTimeout(() => {
+        this.score = bonus;
+        if (this.storageManager) this.storageManager.saveProgress();
+      }, 500);
+      console.log('[EquippedSkill] score_overflow will apply after 500ms, bonus:', bonus);
+    }
     this.handsLeft = 4 + this.extraHands;
     // 应用装备的女巫卡牌回合技能
     this._applyEquippedCardBonus('round');
@@ -1805,6 +1827,19 @@ class Game {
           baseGold += 1;
         } else if (cardConfig.card_skill_name === 'each_round_hand_plus1') {
           baseGold -= 2;
+        } else if (cardConfig.card_skill_name === 'shop_discount') {
+          // 菲兰瑟娅：超过目标分20%则本回合商店打8折
+          if (this.score >= this.target * 1.2) {
+            this._shopDiscountActive = true;
+            console.log('[EquippedSkill] shop_discount activated, score:', this.score, 'target:', this.target);
+          }
+        } else if (cardConfig.card_skill_name === 'score_overflow') {
+          // 格莱薇妮娅：溢出分的10%计入下回合初始分
+          const overflow = this.score - this.target;
+          if (overflow > 0) {
+            this._overflowBonus = Math.round(overflow * 0.1);
+            console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow);
+          }
         }
       }
     }
@@ -2092,6 +2127,7 @@ class Game {
     this.roundScores.push({ round: this.round, score: this.score });
     this.round++;
     this.shopItems = null;
+    this._shopDiscountActive = false; // 菲兰瑟娅折扣只持续一回合商店
     this.resetRound();
     this._preloadWitchAvatars();
     if (this.storageManager) this.storageManager.saveProgress();
@@ -2177,9 +2213,13 @@ class Game {
           const newScore = Math.floor(baseScore * totalMult) + totalAdd;
           const oldScore = Math.floor(baseScore * (existing.mult || 1)) + totalAdd;
 
+          console.log('[RandomUpgrade] 抽奖倍率:', popup.randomMult, '目标字母:', letter, '基础分:', LETTER_SCORE[letter]);
+          console.log('[RandomUpgrade] 升级前 letterUpgrades:', JSON.stringify(letterUpgrades.get(letter)));
           const savedPotionMode = this.potionMode;
           upgradeLetter(this, letter);
           this.potionMode = savedPotionMode; // 保留 potionMode 让转盘背景继续显示
+          const upgradedCard = this.hand.find(c => c && c.letter === letter);
+          console.log('[RandomUpgrade] 升级后字母牌分数:', upgradedCard ? upgradedCard.score : 'N/A', 'upgradeMult:', upgradedCard ? upgradedCard.upgradeMult : 'N/A');
 
           this._potionUpgrading = {
             startTime: Date.now(),

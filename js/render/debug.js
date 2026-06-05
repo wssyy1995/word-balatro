@@ -71,7 +71,7 @@ module.exports = function extendDebug(Renderer) {
     Renderer.prototype._drawDebugMenu = function(ctx, game, x, y, s) {
       const items = [
         { label: '重置出牌次数', action: 'debug_resetHands' },
-        { label: '当前分+100', action: 'debug_addScore' },
+        { label: '当前分+1000', action: 'debug_addScore' },
         { label: '💰 增加100金币', action: 'debug_addGold' },
         { label: '跳转至X回合', action: 'debug_jumpToRound' },
         { label: '✅ 直接通关', action: 'debug_winRound' },

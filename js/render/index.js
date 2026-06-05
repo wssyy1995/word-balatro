@@ -570,6 +570,9 @@ Renderer.prototype.render = function(game) {
       if (odc && odc.canvas) {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
+        // 先兜底画一层蒙层，防止 ODC 绘制异常时窗口背后透明
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, W, H);
         ctx.drawImage(odc.canvas, 0, 0, W, H);
         ctx.restore();
       }

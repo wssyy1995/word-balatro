@@ -390,6 +390,19 @@ class Renderer {
       this.cardDisableIconLoaded = false;
     }
 
+    // 加载目标分数图标
+    this.targetScoreIcon = null;
+    this.targetScoreIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/target_score_icon.png';
+      img.onload = () => { this.targetScoreIconLoaded = true; };
+      img.onerror = () => { this.targetScoreIconLoaded = false; };
+      this.targetScoreIcon = img;
+    } catch (e) {
+      this.targetScoreIconLoaded = false;
+    }
+
     // 加载卡牌背景图
     this.cardTemplate = null;
     this.cardTemplateLoaded = false;
