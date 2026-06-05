@@ -475,7 +475,7 @@ module.exports = function extendPlaying(Renderer) {
   
             if (phase >= 2) {
               const wjList = pc.wholeWordJokers || [];
-              const STEP_DURATION = 400; // 每一步固定 400ms
+              const STEP_DURATION = 350; // 每一步固定 350ms
   
               // 阶段2时间基准
               if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
@@ -530,7 +530,7 @@ module.exports = function extendPlaying(Renderer) {
                 // letter_a_mult_half 惩罚动画：提前 100ms 开始，总时长 700ms，结束延迟 100ms
                 const PENALTY_START_OFFSET = -100; // 提前 100ms
                 const PENALTY_DURATION = 700;      // 动画总时长 700ms
-                const POST_PENALTY_WAIT = 350;     // 惩罚后等待 350ms（不变）
+                const POST_PENALTY_WAIT = 300;     // 惩罚后等待 300ms
   
                 if (afterBase >= readyTime + PENALTY_START_OFFSET) {
                   if (pc.multHalfResult?.triggered && !pc._multHalfAnimDone) {
@@ -806,7 +806,7 @@ module.exports = function extendPlaying(Renderer) {
       if (valid && showSecondBox && pc.multHalfResult?.triggered) {
         const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
         const baseMultDelay = 500;
-        const STEP_DURATION = 400;
+        const STEP_DURATION = 350;
         const totalSteps = 1 + (pc.wholeWordJokers || []).length;
         const postWait = 200;
         const readyTime = totalSteps * STEP_DURATION + postWait;
@@ -835,7 +835,7 @@ module.exports = function extendPlaying(Renderer) {
         const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
   
         const baseMultDelay = 500;
-        const STEP_DURATION = 400;
+        const STEP_DURATION = 350;
   
         // 计算当前步
         let currentStep = -1;
