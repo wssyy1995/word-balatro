@@ -524,7 +524,7 @@ module.exports = function extendPlaying(Renderer) {
               if (phase < 3) {
                 // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 300ms)
                 const totalSteps = 1 + wjList.length;
-                const postWait = 300; // 全部完成后强制等待 300ms
+                const postWait = 200; // 全部完成后强制等待 200ms
                 const readyTime = totalSteps * STEP_DURATION + postWait;
   
                 // letter_a_mult_half 惩罚动画：提前 100ms 开始，总时长 700ms，结束延迟 100ms
@@ -808,7 +808,7 @@ module.exports = function extendPlaying(Renderer) {
         const baseMultDelay = 500;
         const STEP_DURATION = 400;
         const totalSteps = 1 + (pc.wholeWordJokers || []).length;
-        const postWait = 300;
+        const postWait = 200;
         const readyTime = totalSteps * STEP_DURATION + postWait;
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const penaltyElapsed = afterBase - (readyTime - 100); // 提前 100ms
@@ -884,7 +884,7 @@ module.exports = function extendPlaying(Renderer) {
         // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半（提前 100ms）
         if (pc.multHalfResult?.triggered) {
           const totalSteps = 1 + wjList.length;
-          const postWait = 300;
+          const postWait = 200;
           const readyTime = totalSteps * STEP_DURATION + postWait;
           const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
           const penaltyElapsed = afterBase - (readyTime - 100); // 提前 100ms
