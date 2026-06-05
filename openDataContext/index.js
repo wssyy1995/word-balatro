@@ -3,6 +3,8 @@ const sharedCanvas = wx.getSharedCanvas();
 const ctx = sharedCanvas.getContext('2d');
 
 let isVisible = false;
+let drawMode = 'full'; // 'full' | 'list'
+let listRect = null; // { w, rowH }
 let rankData = [];
 let selfOpenId = '';
 const avatarCache = {};
@@ -188,6 +190,81 @@ function getCanvasSize() {
   return { W, H };
 }
 
+// 只绘制好友列表（无弹窗框架，供主域贴入）
+// w 和 rowH 是逻辑像素，内部乘以 scale 转为物理像素
+function drawFriendList(w, rowH) {
+  const { W, H } = getCanvasSize();
+  ctx.clearRect(0, 0, W, H);
+
+  const pw = Math.floor(w * scale);
+  const rh = Math.floor(rowH * scale);
+  const maxRows = Math.floor(H / rh);
+
+  for (let i = 0; i < Math.min(rankData.length, maxRows); i++) {
+    const player = rankData[i];
+    const y = i * rh;
+    const isSelf = player.openid === selfOpenId;
+
+    // 行背景
+    if (isSelf) {
+      ctx.fillStyle = 'rgba(196, 163, 90, 0.18)';
+      ctx.fillRect(0, y, pw, rh);
+    } else if (i % 2 === 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(0, y, pw, rh);
+    }
+
+    // 排名
+    ctx.fillStyle = i < 3 ? '#ffd700' : '#aaa';
+    ctx.font = `bold ${Math.floor(W * 0.035)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), pw * 0.12, y + rh / 2);
+
+    // 头像
+    const avatarX = pw * 0.32;
+    const avatarY = y + rh / 2;
+    const avatarR = Math.min(rh * 0.35, sp(18));
+    if (player.avatarImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(player.avatarImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#555';
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 昵称
+    ctx.fillStyle = isSelf ? '#f5f0e6' : '#ccc';
+    ctx.font = `${Math.floor(W * 0.028)}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const nick = player.nickname || '匿名';
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, pw * 0.42, y + rh / 2);
+
+    // 分数
+    const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(score, pw * 0.92, y + rh / 2);
+  }
+
+  if (rankData.length === 0) {
+    ctx.fillStyle = '#888';
+    ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('暂无好友数据', pw / 2, H / 2);
+  }
+}
+
 function drawLoading() {
   const { W, H } = getCanvasSize();
   console.log('[OpenData] drawLoading', W, H, 'scale', scale);
@@ -230,7 +307,12 @@ function fetchRankData() {
       Promise.all(data.map(p => loadAvatar(p.avatarUrl).then(img => {
         p.avatarImg = img;
       }))).then(() => {
-        if (isVisible) drawRankList();
+        if (!isVisible) return;
+        if (drawMode === 'list' && listRect) {
+          drawFriendList(listRect.w, listRect.rowH);
+        } else {
+          drawRankList();
+        }
       });
     },
     fail: (err) => {
@@ -255,18 +337,37 @@ wx.getUserInfo({
 wx.onMessage((msg) => {
   switch (msg.action) {
     case 'show':
+      drawMode = 'full';
       if (msg.scaleDpr) scale = msg.scaleDpr;
       isVisible = true;
       console.log('[OpenData] received show, canvas size', sharedCanvas.width, sharedCanvas.height, 'scale', scale);
       fetchRankData();
       break;
+    case 'showList':
+      drawMode = 'list';
+      if (msg.scaleDpr) scale = msg.scaleDpr;
+      if (msg.rect) listRect = msg.rect;
+      isVisible = true;
+      if (rankData.length > 0) {
+        if (listRect) drawFriendList(listRect.w, listRect.rowH);
+      } else {
+        fetchRankData();
+      }
+      break;
     case 'hide':
       isVisible = false;
+      drawMode = 'full';
+      listRect = null;
       const size = getCanvasSize();
       ctx.clearRect(0, 0, size.W, size.H);
       break;
     case 'resize':
-      if (isVisible) drawRankList();
+      if (!isVisible) return;
+      if (drawMode === 'list' && listRect) {
+        drawFriendList(listRect.w, listRect.rowH);
+      } else {
+        drawRankList();
+      }
       break;
   }
 });

@@ -27,7 +27,9 @@ Renderer.prototype.render = function(game) {
       ctx.fillRect(0, 0, W, H);
     }
     // 根据状态绘制不同界面
-    if (game.state === 'playing') {
+    if (game.state === 'home') {
+      this.drawHomePage(game);
+    } else if (game.state === 'playing') {
       this.drawHUD(game);
       // 自动触发 HUD 女巫头像星星动画（约束失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
       if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {
@@ -505,30 +507,34 @@ Renderer.prototype.render = function(game) {
         this.cardBookNextBtnRect = { x: btnX - hitPadding, y: btnY - hitPadding, w: btnSize + hitPadding * 2, h: btnSize + hitPadding * 2 };
       }
 
-      // 右上角关闭按钮（X）
+      // 右上角关闭按钮（图片）
       const closeBtnSize = 28 * s;
       const closeBtnX = px + pw - closeBtnSize - 10 * s + 12;
       const closeBtnY = py + 10 * s - 16;
+      const cbPressOffset = game._cardBookCloseBtnPressed ? 2 * s : 0;
       ctx.save();
-      // 绘制圆形背景
-      ctx.beginPath();
-      ctx.arc(closeBtnX + closeBtnSize / 2, closeBtnY + closeBtnSize / 2, closeBtnSize / 2, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(40, 28, 18, 0.85)';
-      ctx.lineWidth = 1 * s;
-      ctx.stroke();
-      // 绘制 X
-      const xPad = 8 * s;
-      ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
-      ctx.lineWidth = 1.5 * s;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(closeBtnX + xPad, closeBtnY + xPad);
-      ctx.lineTo(closeBtnX + closeBtnSize - xPad, closeBtnY + closeBtnSize - xPad);
-      ctx.moveTo(closeBtnX + closeBtnSize - xPad, closeBtnY + xPad);
-      ctx.lineTo(closeBtnX + xPad, closeBtnY + closeBtnSize - xPad);
-      ctx.stroke();
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeBtnX, closeBtnY + cbPressOffset, closeBtnSize, closeBtnSize);
+      } else {
+        // 兜底：绘制圆形背景 + X
+        ctx.beginPath();
+        ctx.arc(closeBtnX + closeBtnSize / 2, closeBtnY + cbPressOffset + closeBtnSize / 2, closeBtnSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(40, 28, 18, 0.85)';
+        ctx.lineWidth = 1 * s;
+        ctx.stroke();
+        const xPad = 8 * s;
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(closeBtnX + xPad, closeBtnY + cbPressOffset + xPad);
+        ctx.lineTo(closeBtnX + closeBtnSize - xPad, closeBtnY + cbPressOffset + closeBtnSize - xPad);
+        ctx.moveTo(closeBtnX + closeBtnSize - xPad, closeBtnY + cbPressOffset + xPad);
+        ctx.lineTo(closeBtnX + xPad, closeBtnY + cbPressOffset + closeBtnSize - xPad);
+        ctx.stroke();
+      }
       ctx.restore();
       this.cardBookCloseBtnRect = { x: closeBtnX - 3, y: closeBtnY - 3, w: closeBtnSize + 6, h: closeBtnSize + 6 };
 
@@ -560,16 +566,264 @@ Renderer.prototype.render = function(game) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
     }
 
-    // 绘制开放数据域（排行榜，OffScreenCanvas 模式）
-    if (game._showingRankList) {
+    // 绘制排行榜弹窗（好友/全球 Tab 切换）
+    if (game._rankPopup) {
+      this.drawRankPopup(game);
+    }
+
+    // 用户信息获取弹窗（最高优先级，最后绘制）
+    if (game._userInfoPopup) {
+      this.drawUserInfoPopup(game);
+    }
+  };
+
+  // ===== 排行榜弹窗（主域绘制，统一框架 + Tab 切换） =====
+  Renderer.prototype.drawRankPopup = function(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    const panelW = Math.min(W * 0.9, 340 * s);
+    const panelH = Math.min(H * 0.75, 520 * s);
+    const panelX = (W - panelW) / 2;
+    const panelY = (H - panelH) / 2;
+
+    // 背景遮罩
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(0, 0, W, H);
+
+    // 弹窗背景
+    this.roundRect(panelX, panelY, panelW, panelH, 16 * s, '#2a2a3a', '#4a4a6a');
+
+    // 标题
+    ctx.fillStyle = '#f5f0e6';
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('排行榜', W / 2, panelY + 18 * s);
+
+    // Tab 按钮
+    const tabW = 80 * s;
+    const tabH = 32 * s;
+    const tabY = panelY + 50 * s;
+    const tabGap = 8 * s;
+    const totalTabW = tabW * 2 + tabGap;
+    const tabStartX = W / 2 - totalTabW / 2;
+    const isFriend = game._rankTab === 'friend';
+
+    // 好友 Tab
+    const friendX = tabStartX;
+    this.roundRect(friendX, tabY, tabW, tabH, 6 * s, isFriend ? '#c4a35a' : 'rgba(255,255,255,0.08)', null);
+    ctx.fillStyle = isFriend ? '#1a2f4a' : '#ccc';
+    ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('好友', friendX + tabW / 2, tabY + tabH / 2);
+
+    // 全球 Tab
+    const globalX = tabStartX + tabW + tabGap;
+    this.roundRect(globalX, tabY, tabW, tabH, 6 * s, !isFriend ? '#c4a35a' : 'rgba(255,255,255,0.08)', null);
+    ctx.fillStyle = !isFriend ? '#1a2f4a' : '#ccc';
+    ctx.fillText('全球', globalX + tabW / 2, tabY + tabH / 2);
+
+    // 记录点击区域
+    this.rankTabFriendRect = { x: friendX, y: tabY, w: tabW, h: tabH };
+    this.rankTabGlobalRect = { x: globalX, y: tabY, w: tabW, h: tabH };
+
+    // 关闭按钮
+    const closeSize = 28 * s;
+    const closeX = panelX + panelW - closeSize - 14 * s;
+    const closeY = panelY + 14 * s;
+    ctx.fillStyle = 'rgba(255,107,107,0.9)';
+    ctx.beginPath();
+    ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(closeSize * 0.65)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 2 * s);
+    this.rankCloseBtnRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+
+    // 表头
+    const rowH = 52 * s;
+    const headerY = panelY + 90 * s;
+    const contentX = panelX + 16 * s;
+    const contentW = panelW - 32 * s;
+
+    ctx.fillStyle = 'rgba(196,163,90,0.15)';
+    ctx.fillRect(contentX, headerY, contentW, rowH);
+
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('排名', contentX + contentW * 0.12, headerY + rowH / 2);
+    ctx.fillText('玩家', contentX + contentW * 0.45, headerY + rowH / 2);
+    ctx.textAlign = 'right';
+    ctx.fillText('分数', contentX + contentW * 0.92, headerY + rowH / 2);
+
+    // 内容区域
+    const listY = headerY + rowH + 4 * s;
+    const listHeight = panelY + panelH - listY - 16 * s;
+
+    if (isFriend) {
+      // 贴入开放数据域的好友列表
       const odc = wx.getOpenDataContext ? wx.getOpenDataContext() : null;
       if (odc && odc.canvas) {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(odc.canvas, 0, 0, W, H);
+        const dprScale = this.dpr || 1;
+        ctx.drawImage(odc.canvas,
+          0, 0, Math.floor(contentW * dprScale), Math.floor(listHeight * dprScale),
+          contentX, listY, contentW, listHeight
+        );
         ctx.restore();
       }
+    } else {
+      // 绘制全球榜列表
+      this._drawGlobalRankList(ctx, game, contentX, listY, contentW, listHeight, rowH, s);
     }
+  };
+
+  // ===== 用户信息获取弹窗（已简化为 DOM 按钮覆盖模式，Canvas 层不再绘制内容）=====
+  Renderer.prototype.drawUserInfoPopup = function(game) {
+    // 授权按钮由 createUserInfoButton DOM 元素直接覆盖在主页"开始游戏"按钮位置
+    // 此处不再绘制任何内容
+  };
+
+  Renderer.prototype._drawGlobalRankList = function(ctx, game, x, y, w, h, rowH, s) {
+    const data = game._globalRankData;
+    if (!data || data.length === 0) {
+      ctx.fillStyle = '#888';
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(game._globalRankLoading ? '加载中...' : '暂无数据', x + w / 2, y + h / 2);
+      return;
+    }
+
+    const maxRows = Math.floor(h / rowH);
+    for (let i = 0; i < Math.min(data.length, maxRows); i++) {
+      const player = data[i];
+      const rowY = y + i * rowH;
+      const isSelf = player.openid === game._selfOpenId;
+
+      // 行背景
+      if (isSelf) {
+        ctx.fillStyle = 'rgba(196, 163, 90, 0.18)';
+        ctx.fillRect(x, rowY, w, rowH);
+      } else if (i % 2 === 1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.04)';
+        ctx.fillRect(x, rowY, w, rowH);
+      }
+
+      // 排名
+      ctx.fillStyle = i < 3 ? '#ffd700' : '#aaa';
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(player.rank), x + w * 0.12, rowY + rowH / 2);
+
+      // 头像
+      const avatarX = x + w * 0.32;
+      const avatarY = rowY + rowH / 2;
+      const avatarR = Math.min(rowH * 0.35, 18 * s);
+      const cachedImg = game._avatarCache && game._avatarCache[player.openid];
+      if (cachedImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(cachedImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = '#555';
+        ctx.beginPath();
+        ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 昵称
+      ctx.fillStyle = isSelf ? '#f5f0e6' : '#ccc';
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const nick = player.nickname || '匿名';
+      ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, x + w * 0.42, rowY + rowH / 2);
+
+      // 分数
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(player.score), x + w * 0.92, rowY + rowH / 2);
+    }
+  };
+
+  // ===== 游戏主页 =====
+  Renderer.prototype.drawHomePage = function(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    // 背景
+    if (this.homePageLoaded && this.homePageImage) {
+      ctx.drawImage(this.homePageImage, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#1a2f4a';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 按钮尺寸
+    const btnW = 160 * s;
+    const btnGap = 20 * s;
+
+    // home_start 按钮
+    const startH = this.homeStartLoaded && this.homeStartImage
+      ? btnW * (this.homeStartImage.height / this.homeStartImage.width)
+      : 48 * s;
+    const startX = (W - btnW) / 2;
+    const startY = H * 0.6 - startH / 2;
+    const startPress = game._homeStartPressed ? 2 * s : 0;
+
+    if (this.homeStartLoaded && this.homeStartImage) {
+      ctx.drawImage(this.homeStartImage, startX, startY + startPress, btnW, startH);
+    } else {
+      ctx.fillStyle = '#c4a35a';
+      this.roundRect(startX, startY + startPress, btnW, startH, 8 * s, '#c4a35a', null);
+      ctx.fillStyle = '#1a2f4a';
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('开始游戏', startX + btnW / 2, startY + startPress + startH / 2);
+    }
+    this.homeStartRect = { x: startX, y: startY, w: btnW, h: startH };
+
+    // home_ranking 按钮（授权模式下由 DOM 按钮覆盖，不绘制）
+    const rankingH = this.homeRankingLoaded && this.homeRankingImage
+      ? btnW * (this.homeRankingImage.height / this.homeRankingImage.width)
+      : 48 * s;
+    const rankingX = (W - btnW) / 2;
+    const rankingY = startY + startH + btnGap;
+
+    if (!game._userInfoPopup) {
+      const rankingPress = game._homeRankingPressed ? 2 * s : 0;
+      if (this.homeRankingLoaded && this.homeRankingImage) {
+        ctx.drawImage(this.homeRankingImage, rankingX, rankingY + rankingPress, btnW, rankingH);
+      } else {
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        this.roundRect(rankingX, rankingY + rankingPress, btnW, rankingH, 8 * s, 'rgba(255,255,255,0.15)', null);
+        ctx.fillStyle = '#ccc';
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('排行榜', rankingX + btnW / 2, rankingY + rankingPress + rankingH / 2);
+      }
+    }
+    this.homeRankingRect = { x: rankingX, y: rankingY, w: btnW, h: rankingH };
   };
 
 module.exports = { Renderer };

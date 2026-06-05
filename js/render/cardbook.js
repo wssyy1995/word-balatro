@@ -1,4 +1,5 @@
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
+const { Easing } = require('../animation');
 
 module.exports = function extendCardbook(Renderer) {
     Renderer.prototype._drawCardBookIcon = function(game, titleX, titleY, titleW) {

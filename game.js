@@ -71,13 +71,14 @@ function getOpenDataContext() {
   return openDataContext;
 }
 
-function showRankList() {
-    const odc = getOpenDataContext();
-  if (!odc) {
-      return;
-  }
+function showRankList(tab = 'friend') {
+  const odc = getOpenDataContext();
+  if (!odc) return;
   isRankShowing = true;
-  if (game) game._showingRankList = true;
+  if (game) {
+    game._rankPopup = true;
+    game._rankTab = tab;
+  }
 
   // OffScreenCanvas 模式：主域设置 sharedCanvas 的宽高（开放域不能设）
   const sharedCanvas = odc.canvas;
@@ -85,23 +86,283 @@ function showRankList() {
     try {
       sharedCanvas.width = canvas.width;
       sharedCanvas.height = canvas.height;
-      } catch (e) {
-      console.warn('sharedCanvas set failed', e.message);    }
-  } else {
+    } catch (e) {
+      console.warn('sharedCanvas set failed', e.message);
     }
-
-  odc.postMessage({
-    action: 'show',
-    scaleDpr,
-  });
   }
+
+  if (tab === 'friend') {
+    const W = renderer.W;
+    const H = renderer.H;
+    const s = renderer.scale;
+    const panelW = Math.min(W * 0.9, 340 * s);
+    const panelH = Math.min(H * 0.75, 520 * s);
+    const panelX = (W - panelW) / 2;
+    const panelY = (H - panelH) / 2;
+    const contentW = panelW - 32 * s;
+    const rowH = 52 * s;
+
+    odc.postMessage({
+      action: 'showList',
+      scaleDpr,
+      rect: {
+        w: Math.floor(contentW),
+        rowH: Math.floor(rowH)
+      }
+    });
+  } else if (tab === 'global') {
+    odc.postMessage({ action: 'hide' });
+    loadGlobalRank();
+  }
+}
 
 function hideRankList() {
   const odc = getOpenDataContext();
   if (!odc) return;
   isRankShowing = false;
-  if (game) game._showingRankList = false;
+  if (game) {
+    game._rankPopup = null;
+    game._rankTab = null;
+    game._globalRankLoading = false;
+  }
   odc.postMessage({ action: 'hide' });
+}
+
+async function loadGlobalRank() {
+  if (!game) return;
+  game._globalRankLoading = true;
+  game._globalRankData = null;
+  try {
+    const res = await wx.cloud.callFunction({ name: 'getGlobalRank', data: { limit: 50 } });
+    if (res.result && res.result.success) {
+      game._globalRankData = res.result.list || [];
+      game._selfOpenId = res.result.selfData ? res.result.selfData.openid : '';
+      // 预加载头像
+      preloadAvatars(game._globalRankData);
+    }
+  } catch (e) {
+    console.error('loadGlobalRank error', e);
+  } finally {
+    game._globalRankLoading = false;
+  }
+}
+
+function preloadAvatars(list) {
+  if (!game || !list) return;
+  game._avatarCache = game._avatarCache || {};
+  list.forEach(player => {
+    if (player.avatarUrl && !game._avatarCache[player.openid]) {
+      const img = wx.createImage();
+      img.src = player.avatarUrl;
+      img.onload = () => {
+        if (game) game._avatarCache[player.openid] = img;
+      };
+      img.onerror = () => {
+        if (game) game._avatarCache[player.openid] = null;
+      };
+    }
+  });
+}
+
+// ===== 隐私授权相关 =====
+let userInfoButton = null;
+let privacyAuthCallback = null;
+
+function checkPrivacyAuth(onComplete) {
+  if (!game) return;
+  if (game._userInfo) {
+    onComplete?.();
+    return;
+  }
+  privacyAuthCallback = onComplete;
+
+  // 先查询隐私协议状态
+  if (wx.getPrivacySetting) {
+    wx.getPrivacySetting({
+      success: (res) => {
+        if (res.needAuthorization) {
+          // 需要隐私协议授权，调用微信官方弹窗
+          if (wx.requirePrivacyAuthorize) {
+            wx.requirePrivacyAuthorize({
+              success: () => {
+                console.log('[Privacy] 官方隐私弹窗已同意');
+                // 官方弹窗同意后，直接尝试 getUserInfo（测试是否无需 createUserInfoButton）
+                tryGetUserInfo();
+              },
+              fail: () => {
+                console.log('[Privacy] 官方隐私弹窗已拒绝');
+                privacyAuthCallback = null;
+              }
+            });
+          } else {
+            // 不支持官方弹窗，直接尝试获取用户信息
+            tryGetUserInfo();
+          }
+        } else {
+          // 隐私协议已同意，直接尝试获取用户信息
+          tryGetUserInfo();
+        }
+      },
+      fail: () => {
+        // 查询失败，直接尝试
+        tryGetUserInfo();
+      }
+    });
+  } else {
+    tryGetUserInfo();
+  }
+}
+
+function tryGetUserInfo() {
+  if (!wx.getUserInfo) {
+    // 不支持 getUserInfo，直接进入游戏（不弹 createUserInfoButton）
+    if (privacyAuthCallback) {
+      privacyAuthCallback();
+      privacyAuthCallback = null;
+    }
+    return;
+  }
+  wx.getUserInfo({
+    withCredentials: false,
+    lang: 'zh_CN',
+    success: (res) => {
+      if (res.userInfo) {
+        const { nickName, avatarUrl } = res.userInfo;
+        game._userInfo = { nickname: nickName, avatarUrl };
+        syncUserInfoToCloud(nickName, avatarUrl);
+        console.log('[Privacy] 直接获取用户信息成功', nickName);
+      } else {
+        console.log('[Privacy] getUserInfo 返回成功但无 userInfo');
+      }
+      // 无论是否获取到用户信息，都执行回调进入游戏
+      if (privacyAuthCallback) {
+        privacyAuthCallback();
+        privacyAuthCallback = null;
+      }
+    },
+    fail: (err) => {
+      console.log('[Privacy] getUserInfo 失败，不弹 createUserInfoButton，直接进入游戏', err);
+      // 失败也不弹窗，直接进入游戏（全球榜显示匿名玩家）
+      if (privacyAuthCallback) {
+        privacyAuthCallback();
+        privacyAuthCallback = null;
+      }
+    }
+  });
+}
+
+function checkRankingAuth() {
+  if (!game) return;
+
+  // 已获取用户信息，直接打开好友榜
+  if (game._userInfo) {
+    showRankList('friend');
+    return;
+  }
+
+  // 先检查隐私协议
+  if (wx.getPrivacySetting) {
+    wx.getPrivacySetting({
+      success: (res) => {
+        if (res.needAuthorization && wx.requirePrivacyAuthorize) {
+          wx.requirePrivacyAuthorize({
+            success: () => {
+              console.log('[Privacy] 排行榜：隐私协议已同意');
+              showUserInfoPopup();
+            },
+            fail: () => {
+              console.log('[Privacy] 排行榜：隐私协议已拒绝');
+            }
+          });
+        } else {
+          showUserInfoPopup();
+        }
+      },
+      fail: () => showUserInfoPopup()
+    });
+  } else {
+    showUserInfoPopup();
+  }
+}
+
+function syncUserInfoToCloud(nickname, avatarUrl) {
+  if (!wx.cloud || !wx.cloud.callFunction) return;
+  wx.cloud.callFunction({
+    name: 'syncUserInfo',
+    data: { nickname, avatarUrl }
+  }).then(res => {
+    console.log('[Privacy] syncUserInfo 成功', res.result);
+  }).catch(err => {
+    console.error('[Privacy] syncUserInfo 失败', err);
+  });
+}
+
+function showUserInfoPopup() {
+  if (!game) return;
+  game._userInfoPopup = true;
+  // 延迟创建底部按钮
+  setTimeout(() => createUserInfoBtn(), 100);
+}
+
+function createUserInfoBtn() {
+  if (!wx.createUserInfoButton || !game || !game._userInfoPopup) return;
+
+  const W = renderer.W;
+  const H = renderer.H;
+  const s = renderer.scale;
+
+  // 与主页"排行榜"按钮对齐（用户点击排行榜后，显示授权按钮覆盖原位置）
+  const btnW = 160 * s;
+  const startH = renderer.homeStartImage ? btnW * (renderer.homeStartImage.height / renderer.homeStartImage.width) : 48 * s;
+  const startY = H * 0.6 - startH / 2;
+  const btnGap = 20 * s;
+  const rankingH = renderer.homeRankingImage ? btnW * (renderer.homeRankingImage.height / renderer.homeRankingImage.width) : 48 * s;
+  const rankingX = (W - btnW) / 2;
+  const rankingY = startY + startH + btnGap;
+
+  if (userInfoButton) {
+    userInfoButton.destroy();
+    userInfoButton = null;
+  }
+
+  userInfoButton = wx.createUserInfoButton({
+    type: 'text',
+    text: '授权查看排行榜',
+    style: {
+      left: Math.floor(rankingX),
+      top: Math.floor(rankingY),
+      width: Math.floor(btnW),
+      height: Math.floor(rankingH),
+      lineHeight: Math.floor(rankingH),
+      backgroundColor: 'rgba(255,255,255,0.15)',
+      color: '#ccc',
+      textAlign: 'center',
+      fontSize: Math.floor(16 * s),
+      borderRadius: Math.floor(8 * s),
+      fontWeight: 'bold',
+    }
+  });
+
+  userInfoButton.onTap((res) => {
+    console.log('[Privacy] rankingAuthButton onTap', res.errMsg || 'ok');
+    if (res.userInfo) {
+      const { nickName, avatarUrl } = res.userInfo;
+      game._userInfo = { nickname: nickName, avatarUrl };
+      syncUserInfoToCloud(nickName, avatarUrl);
+    } else {
+      console.log('[Privacy] 用户拒绝授权头像昵称');
+    }
+    hideUserInfoPopup();
+    showRankList('friend');
+  });
+}
+
+function hideUserInfoPopup() {
+  if (game) game._userInfoPopup = false;
+  if (userInfoButton) {
+    userInfoButton.destroy();
+    userInfoButton = null;
+  }
 }
 
 // 提交问题反馈到云数据库
@@ -146,6 +407,7 @@ ctx.scale(scaleDpr, scaleDpr);
 // 游戏全局状态
 let game = null;
 const renderer = new Renderer(ctx, WIDTH, HEIGHT);
+renderer.dpr = scaleDpr;
 
 // 分享复活状态
 let shareReviveState = null; // { startTime: number, resolving: boolean }
@@ -285,15 +547,20 @@ function startGame() {
   // 加载 cloudStorage 缓存的音频
   if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
 
-  // 从预加载页进入商店页时，强制刷新商店
-  if (game.state === 'shop') {
-    game.shopItems = generateShopItems(game);
-  }
+  // 保存恢复后的状态，然后统一进入主页
+  // 新游戏 state 已经是 'home'，不需要恢复，设为 null 触发 startFirstRound
+  game._homeRestoreState = game.state === 'home' ? null : game.state;
+  game.state = 'home';
+
+  // 从预加载页进入商店页时，强制刷新商店（恢复存档后点击开始再处理）
+  // 移到主页点击 home_start 后处理
 
   transitionStartTime = Date.now();
 
-  // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）
-  game._preloadWitchAvatars();
+  // 游戏启动后按需预加载女巫头像（恢复存档的用户提前预加载）
+  if (game._homeRestoreState !== 'home') {
+    game._preloadWitchAvatars();
+  }
 }
 
 // 长按检测状态
@@ -308,10 +575,35 @@ wx.onTouchStart((e) => {
   // 预加载阶段不响应触摸
   if (!preloadComplete) return;
 
+  // 排行榜授权按钮显示时，由 DOM 按钮独立处理
+  if (userInfoButton) return;
+
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
   touchStartPos = { x, y };
+
+  // ===== 主页按钮交互 =====
+  if (game.state === 'home') {
+    if (renderer.homeStartRect) {
+      const startHit = renderer.hitTest(x, y, [renderer.homeStartRect]);
+      if (startHit) {
+        game._homeStartPressed = true;
+        if (game.audioManager) game.audioManager.play('tap');
+        return;
+      }
+    }
+    if (renderer.homeRankingRect) {
+      const rankHit = renderer.hitTest(x, y, [renderer.homeRankingRect]);
+      if (rankHit) {
+        game._homeRankingPressed = true;
+        if (game.audioManager) game.audioManager.play('tap');
+        return;
+      }
+    }
+    // 主页状态屏蔽其他交互
+    return;
+  }
 
   // 日志区域触摸（优先处理滚动）
   if (renderer.cloudLogRect) {
@@ -338,8 +630,16 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 设置弹窗交互（优先处理）
-  if (game._settingsPopup && !game._closingSettings) {
+  // 设置弹窗交互（优先处理，排行榜显示时跳过）
+  if (game._settingsPopup && !game._closingSettings && !isRankShowing) {
+    // 优先检测右上角关闭按钮
+    const settingsCloseBtnHit = renderer.settingsCloseBtnRect && renderer.hitTest(x, y, [renderer.settingsCloseBtnRect]);
+    if (settingsCloseBtnHit) {
+      game._settingsCloseBtnPressed = true;
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+
     const settingsCloseHit = renderer.settingsCloseRect && renderer.hitTest(x, y, [renderer.settingsCloseRect]);
 
     // 主页按钮
@@ -377,8 +677,15 @@ wx.onTouchStart((e) => {
       return;
     }
 
+    // 点击面板内部空白处：不关闭弹窗
+    const panelHit = renderer.settingsPanelRect && renderer.hitTest(x, y, [renderer.settingsPanelRect]);
+    if (panelHit) {
+      return;
+    }
+
     // 点击弹窗外区域：主页直接关闭，反馈页则返回主页
-    if (settingsCloseHit) {
+    // 但如果排行榜正在显示，优先让点击穿透到排行榜关闭逻辑
+    if (settingsCloseHit && !isRankShowing) {
       if (game._feedbackPage === 'feedback') {
         game._feedbackPage = 'main';
         game._feedbackText = '';
@@ -414,7 +721,24 @@ wx.onTouchMove((e) => {
     }
   }
 
+  // 移出主页按钮区域时取消按下状态
+  if (game._homeStartPressed && renderer.homeStartRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.homeStartRect]);
+    if (!hit) game._homeStartPressed = false;
+  }
+  if (game._homeRankingPressed && renderer.homeRankingRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.homeRankingRect]);
+    if (!hit) game._homeRankingPressed = false;
+  }
+
   // 移出设置弹窗按钮区域时取消按下状态
+  if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
+    if (!hit) game._settingsCloseBtnPressed = false;
+  }
   if (game._settingsSoundPressed && renderer.settingsSoundRect) {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
@@ -437,6 +761,15 @@ wx.onTouchMove((e) => {
     const iconHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookIconRect]);
     if (!iconHit) {
       game._cardBookIconPressed = false;
+    }
+  }
+
+  // 移出图鉴关闭按钮区域时取消按下状态
+  if (game._cardBookCloseBtnPressed && renderer.cardBookCloseBtnRect) {
+    const touch = e.touches[0];
+    const btnHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookCloseBtnRect]);
+    if (!btnHit) {
+      game._cardBookCloseBtnPressed = false;
     }
   }
 
@@ -526,6 +859,53 @@ wx.onTouchEnd(() => {
   game._cardBookIconPressed = false;
   game._cardBookEquipBtnPressed = false;
 
+  // 排行榜授权按钮显示时，清理 Canvas 按钮状态但不触发逻辑
+  if (userInfoButton) {
+    game._homeStartPressed = false;
+    game._homeRankingPressed = false;
+    return;
+  }
+
+  // 主页 home_start 按钮释放
+  if (game._homeStartPressed) {
+    game._homeStartPressed = false;
+    setTimeout(() => {
+      if (!game || game.state !== 'home') return;
+      checkPrivacyAuth(() => {
+        if (!game) return;
+        game.state = game._homeRestoreState || 'playing';
+        if (!game._homeRestoreState && game.startFirstRound) {
+          game.startFirstRound();
+        }
+      });
+    }, 150);
+    return;
+  }
+
+  // 主页 home_ranking 按钮释放
+  if (game._homeRankingPressed) {
+    game._homeRankingPressed = false;
+    setTimeout(() => {
+      if (!game || game.state !== 'home') return;
+      checkRankingAuth();
+    }, 150);
+    return;
+  }
+
+  // 卡牌图鉴关闭按钮：延迟150ms后关闭
+  if (game._cardBookCloseBtnPressed) {
+    game._cardBookCloseBtnPressed = false;
+    setTimeout(() => {
+      if (!game || !game.cardBookOpen || game._closingCardBook) return;
+      game._closingCardBook = true;
+      game._closeCardBookStartTime = Date.now();
+      game._cardBookDetailLevel = null;
+      game._closingCardBookDetail = false;
+      game._cardBookCellPressed = null;
+    }, 150);
+    return;
+  }
+
   // 取消未触发的长按定时器
   if (longPressTimer) {
     clearTimeout(longPressTimer);
@@ -549,8 +929,8 @@ wx.onTouchEnd(() => {
   }
   longPressTriggered = false;
 
-  // 设置弹窗交互处理（松开时）
-  if (game._settingsPopup && !game._closingSettings) {
+  // 设置弹窗交互处理（松开时，排行榜显示时跳过）
+  if (game._settingsPopup && !game._closingSettings && !isRankShowing) {
     if (game._settingsSoundPressed) {
       game._settingsSoundPressed = false;
       game.settings.soundEnabled = !game.settings.soundEnabled;
@@ -564,8 +944,7 @@ wx.onTouchEnd(() => {
     }
     if (game._settingsRankPressed) {
       game._settingsRankPressed = false;
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
       showRankList();
     }
     if (game._settingsFeedbackPressed) {
@@ -574,29 +953,59 @@ wx.onTouchEnd(() => {
       if (game.audioManager) game.audioManager.play('tap');
     }
 
+    // 关闭按钮：延迟150ms后关闭，让用户看到按下动画
+    if (game._settingsCloseBtnPressed) {
+      game._settingsCloseBtnPressed = false;
+      setTimeout(() => {
+        if (!game || !game._settingsPopup || game._closingSettings) return;
+        if (game._feedbackPage === 'feedback') {
+          game._feedbackPage = 'main';
+          game._feedbackText = '';
+        } else {
+          game._closingSettings = true;
+          game._closeSettingsStartTime = Date.now();
+        }
+      }, 150);
+      return;
+    }
+
     // 反馈页交互
     if (game._feedbackBackPressed) {
       game._feedbackBackPressed = false;
       game._feedbackPage = 'main';
       game._feedbackText = '';
       if (game.audioManager) game.audioManager.play('tap');
+      wx.hideKeyboard();
     }
     if (game._feedbackInputFocused) {
       game._feedbackInputFocused = false;
-      // 弹出系统输入框
-      wx.showModal({
-        title: '请输入反馈内容',
-        editable: true,
-        placeholderText: '最多100字',
-        success: (res) => {
-          if (res.confirm && res.content) {
-            game._feedbackText = res.content.slice(0, 100);
-          }
-        }
+      // 直接唤起系统键盘
+      wx.showKeyboard({
+        defaultValue: game._feedbackText || '',
+        maxLength: 100,
+        multiple: true,
+        confirmHold: true,
+        confirmType: 'done'
       });
+      // 确保只注册一次键盘监听
+      if (!game._keyboardListenersRegistered) {
+        game._keyboardListenersRegistered = true;
+        wx.onKeyboardInput((res) => {
+          if (game) {
+            game._feedbackText = (res.value || '').slice(0, 100);
+          }
+        });
+        wx.onKeyboardConfirm(() => {
+          wx.hideKeyboard();
+        });
+        wx.onKeyboardComplete(() => {
+          wx.hideKeyboard();
+        });
+      }
     }
     if (game._feedbackSubmitPressed) {
       game._feedbackSubmitPressed = false;
+      wx.hideKeyboard();
       if (game._feedbackText && game._feedbackText.trim() && !game._feedbackSubmitting) {
         submitFeedback(game._feedbackText.trim());
       } else if (!game._feedbackText || !game._feedbackText.trim()) {
@@ -645,7 +1054,48 @@ wx.onTouchEnd(() => {
 
 function handleInput(x, y) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
-  if (game._settingsPopup && !game._closingSettings) return;
+  // 但如果排行榜正在显示，允许点击关闭排行榜
+  if (game._settingsPopup && !game._closingSettings && !isRankShowing) return;
+
+  // 排行榜弹窗输入处理
+  if (isRankShowing) {
+    const closeHit = renderer.rankCloseBtnRect && renderer.hitTest(x, y, [renderer.rankCloseBtnRect]);
+    const friendTabHit = renderer.rankTabFriendRect && renderer.hitTest(x, y, [renderer.rankTabFriendRect]);
+    const globalTabHit = renderer.rankTabGlobalRect && renderer.hitTest(x, y, [renderer.rankTabGlobalRect]);
+
+    if (closeHit) {
+      if (game.audioManager) game.audioManager.play('tap');
+      hideRankList();
+      return;
+    }
+
+    if (friendTabHit && game._rankTab !== 'friend') {
+      if (game.audioManager) game.audioManager.play('tap');
+      game._rankTab = 'friend';
+      showRankList('friend');
+      return;
+    }
+
+    if (globalTabHit && game._rankTab !== 'global') {
+      if (game.audioManager) game.audioManager.play('tap');
+      game._rankTab = 'global';
+      showRankList('global');
+      return;
+    }
+
+    // 点击弹窗内部不关闭
+    const panelW = Math.min(renderer.W * 0.9, 340 * renderer.scale);
+    const panelH = Math.min(renderer.H * 0.75, 520 * renderer.scale);
+    const panelX = (renderer.W - panelW) / 2;
+    const panelY = (renderer.H - panelH) / 2;
+    if (x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH) {
+      return;
+    }
+
+    // 点击弹窗外部关闭
+    hideRankList();
+    return;
+  }
 
   // 首次用户交互时尝试启动 BGM（真机音频必须在用户触摸事件回调内首次播放）
   if (game.audioManager && !game.audioManager.bgmStarted) {
@@ -812,7 +1262,7 @@ function handleInput(x, y) {
         if (game.audioManager) game.audioManager.play('game_over');
         if (game.storageManager) {
           game.storageManager.setHighScore(game.totalScore);
-          uploadScore(game.storageManager.getHighScore());
+          uploadScore(game.storageManager.getHighScore(), game._userInfo);
           game.storageManager.updateStats(game);
           // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
           game.storageManager.saveProgress();
@@ -858,11 +1308,7 @@ function handleInput(x, y) {
       if (closeHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        game._closingCardBook = true;
-        game._closeCardBookStartTime = Date.now();
-        game._cardBookDetailLevel = null;
-        game._closingCardBookDetail = false;
-        game._cardBookCellPressed = null;
+        game._cardBookCloseBtnPressed = true;
         return;
       }
     }
@@ -1797,12 +2243,6 @@ function handleInput(x, y) {
     if (game._closingGameOver) return;
     if (game._restartBtnPressed) return;
     if (game._reviveBtnPressed) return;
-
-    // 排行榜显示时，点击任意位置关闭
-    if (isRankShowing) {
-      hideRankList();
-      return;
-    }
 
     // 复活按钮
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {

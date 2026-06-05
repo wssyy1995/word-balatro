@@ -53,6 +53,7 @@
     "disableSWC": true
   },
   "compileType": "game",
+  "cloudfunctionRoot": "cloudfunctions/",
   "libVersion": "3.14.0",
   "appid": "wx499c473a2f322520",
   "projectname": "word-balatro",

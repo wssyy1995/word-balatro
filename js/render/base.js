@@ -297,6 +297,19 @@ class Renderer {
     } catch (e) {
       this.cardBookRightBtnLoaded = false;
     }
+
+    // 加载弹窗关闭按钮
+    this.popCloseImage = null;
+    this.popCloseLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/pop_close.png';
+      img.onload = () => { this.popCloseLoaded = true; };
+      img.onerror = () => { this.popCloseLoaded = false; };
+      this.popCloseImage = img;
+    } catch (e) {
+      this.popCloseLoaded = false;
+    }
     
     // 加载女巫礼物图标
     this.witchGiftIcon = null;
@@ -415,7 +428,16 @@ class Renderer {
       this.gameProgressLoaded = false;
     }
 
-        // 加载购买成功弹窗底部飘带
+    // 主页背景图和按钮图不走本地加载，强制从云存储下载后通过 injectBgIconToRenderer 注入
+    // 避免微信开发者工具预编译时扫描不存在的本地路径报 ENOENT
+    this.homePageImage = null;
+    this.homePageLoaded = false;
+    this.homeStartImage = null;
+    this.homeStartLoaded = false;
+    this.homeRankingImage = null;
+    this.homeRankingLoaded = false;
+
+    // 加载购买成功弹窗底部飘带
     this.buySuccessBandImg = null;
     this.buySuccessBandLoaded = false;
     try {
@@ -428,6 +450,21 @@ class Renderer {
       this.buySuccessBandLoaded = false;
     }
     
+    // 设置弹窗图标
+    this.settingIcons = {};
+    const settingIconNames = ['sound', 'rank', 'feedback'];
+    settingIconNames.forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/setting_${name}.png`;
+        img.onload = () => { this.settingIcons[name] = { img, loaded: true, width: img.width, height: img.height }; };
+        img.onerror = () => { this.settingIcons[name] = { img: null, loaded: false, width: 0, height: 0 }; };
+        this.settingIcons[name] = { img, loaded: false, width: 0, height: 0 };
+      } catch (e) {
+        this.settingIcons[name] = { img: null, loaded: false, width: 0, height: 0 };
+      }
+    });
+
     // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）
     this.shopCardImages = {};
     const shopCardNames = new Set();

@@ -1060,9 +1060,60 @@ module.exports = function extendPopup(Renderer) {
       this.feedbackBackRect = null;
       this.feedbackInputRect = null;
       this.feedbackSubmitRect = null;
+      this.settingsPanelRect = { x: px, y: py, w: pw, h: ph };
       this.settingsCloseRect = { x: 0, y: 0, w: W, h: H };
 
       const contentAlpha = closeAlpha;
+
+      // === 内层细边框（参考购买成功弹窗） ===
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      const inset = 4 * s;
+      const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
+      ctx.moveTo(ix + ir, iy);
+      ctx.lineTo(ix + iw - ir, iy);
+      ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+      ctx.lineTo(ix + iw, iy + ih - ir);
+      ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+      ctx.lineTo(ix + ir, iy + ih);
+      ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+      ctx.lineTo(ix, iy + ir);
+      ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // === 右上角关闭按钮（在所有边框之后绘制，确保在最上层） ===
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 10;
+      const closeY = py + 10 * s - 10;
+      const pressOffset = game._settingsCloseBtnPressed ? 2 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + pressOffset, closeSize, closeSize);
+      } else {
+        // 兜底：绘制 X
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + pressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + pressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + pressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + pressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + pressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
+      ctx.restore();
+      this.settingsCloseBtnRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
 
       function easeInOutQuad(t) {
         return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -1128,10 +1179,13 @@ module.exports = function extendPopup(Renderer) {
 
       // Toast 提示
       if (game._feedbackSubmitToast) {
-        ctx.save();
-        ctx.globalAlpha = contentAlpha;
-        const toastText = game._feedbackSubmitToast;
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        if (Date.now() > game._feedbackSubmitToast.expireAt) {
+          game._feedbackSubmitToast = null;
+        } else {
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
+          const toastText = game._feedbackSubmitToast.text;
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         const toastTextW = ctx.measureText(toastText).width;
         const toastW = Math.min(pw - 40 * s, toastTextW + 24 * s);
         const toastH = 34 * s;
@@ -1144,9 +1198,10 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText(toastText, W / 2, toastY + toastH / 2);
         ctx.restore();
       }
+    }
 
-      // === 内部函数：绘制设置主页 ===
-      function drawMainPage(offsetX) {
+    // === 内部函数：绘制设置主页 ===
+    function drawMainPage(offsetX) {
         ctx.save();
         ctx.translate(offsetX, 0);
 
@@ -1161,11 +1216,20 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText('设置', W / 2, titleY);
         ctx.restore();
 
+        // === 标题下装饰线（参考购买成功弹窗） ===
+        const decoLineY = py + 52 * s;
+        const decoLineW = pw * 0.5;
+        const decoLineX = px + (pw - decoLineW) / 2;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+        ctx.restore();
+
         // === 设置项列表 ===
         const items = [
           {
             key: 'sound',
-            icon: '🔊',
+            iconKey: 'sound',
             title: '音效',
             subtitle: '开启或关闭游戏音效',
             type: 'switch',
@@ -1173,14 +1237,14 @@ module.exports = function extendPopup(Renderer) {
           },
           {
             key: 'rank',
-            icon: '🏆',
+            iconKey: 'rank',
             title: '排行榜',
-            subtitle: '查看全球玩家排行',
+            subtitle: '查看好友、全球玩家排行',
             type: 'arrow'
           },
           {
             key: 'feedback',
-            icon: '✏️',
+            iconKey: 'feedback',
             title: '问题反馈',
             subtitle: '告诉我们你的建议与问题',
             type: 'arrow'
@@ -1189,38 +1253,37 @@ module.exports = function extendPopup(Renderer) {
 
         const itemH = 72 * s;
         const itemStartY = titleY + 35 * s;
-        const iconSize = 36 * s;
-        const iconBgColor = '#3a2e1e';
+        const iconSize = 50 * s;
 
         items.forEach((item, i) => {
           const itemY = itemStartY + i * itemH;
           const centerY = itemY + itemH / 2;
 
-          // 图标圆形背景
+          // 图标图片
           const iconX = px + 22 * s;
           const iconY = centerY;
-          ctx.save();
-          ctx.globalAlpha = contentAlpha;
-          ctx.beginPath();
-          ctx.arc(iconX + iconSize / 2, iconY, iconSize / 2, 0, Math.PI * 2);
-          ctx.fillStyle = iconBgColor;
-          ctx.fill();
-          ctx.restore();
-
-          // 图标文字（emoji）
-          ctx.save();
-          ctx.globalAlpha = contentAlpha;
-          ctx.font = `${Math.floor(18 * s)}px sans-serif`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(item.icon, iconX + iconSize / 2, iconY);
-          ctx.restore();
+          const iconData = item.iconKey && this.settingIcons && this.settingIcons[item.iconKey];
+          if (iconData && iconData.loaded && iconData.img) {
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            const drawSize = iconSize * 0.8;
+            const aspect = iconData.width / iconData.height;
+            let dw = drawSize, dh = drawSize;
+            if (aspect > 1) {
+              dh = drawSize / aspect;
+            } else if (aspect < 1) {
+              dw = drawSize * aspect;
+            }
+            const dx = iconX + iconSize / 2 - dw / 2;
+            const dy = iconY - dh / 2;
+            ctx.drawImage(iconData.img, dx, dy, dw, dh);
+            ctx.restore();
+          }
 
           // 标题
           ctx.save();
           ctx.globalAlpha = contentAlpha;
-          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
           ctx.fillStyle = '#3a2e1e';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
@@ -1331,26 +1394,26 @@ module.exports = function extendPopup(Renderer) {
         ctx.translate(offsetX, 0);
 
         // 返回按钮
-        const backY = py + 24 * s;
-        const backLabel = '‹  返回';
+        const backY = py + 26 * s;
+        const backLabel = '‹';
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
         ctx.fillStyle = '#8b6914';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         const backW = ctx.measureText(backLabel).width;
-        ctx.fillText(backLabel, px + 18 * s, backY);
+        ctx.fillText(backLabel, px + 14 * s, backY);
         ctx.restore();
 
-        // 记录返回点击区域
-        this.feedbackBackRect = { x: px + 18 * s - 8 * s, y: backY - 14 * s, w: backW + 16 * s, h: 28 * s };
+        // 记录返回点击区域（加大）
+        this.feedbackBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
 
         // 标题：问题反馈
         const titleY = py + 32 * s;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
         ctx.fillStyle = '#5a4a2a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
