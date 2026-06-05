@@ -293,6 +293,26 @@ function drawError(msg) {
 
 function fetchRankData() {
   drawLoading();
+  // 先串行获取用户信息（含授权），避免与 getFriendCloudStorage 并行触发两个授权弹窗
+  wx.getUserInfo({
+    openIdList: ['selfOpenId'],
+    lang: 'zh_CN',
+    success: (userRes) => {
+      if (userRes.data && userRes.data[0]) {
+        selfOpenId = userRes.data[0].openid;
+      }
+      // 拿到授权后再拉取好友排行
+      _doFetchFriendRank();
+    },
+    fail: (err) => {
+      console.error('[OpenData] getUserInfo fail', err);
+      // 即使 getUserInfo 失败，仍尝试拉取好友排行（可能已授权过）
+      _doFetchFriendRank();
+    }
+  });
+}
+
+function _doFetchFriendRank() {
   wx.getFriendCloudStorage({
     keyList: ['score'],
     success: (res) => {
@@ -323,19 +343,8 @@ function fetchRankData() {
 }
 
 // 获取自己的 openid 用于高亮
-wx.getUserInfo({
-  openIdList: ['selfOpenId'],
-  lang: 'zh_CN',
-  success: (res) => {
-    if (res.data && res.data[0]) {
-      selfOpenId = res.data[0].openid;
-    }
-    // 授权完成后若排行榜正在显示但数据为空，自动重新拉取
-    if (isVisible && rankData.length === 0) {
-      fetchRankData();
-    }
-  }
-});
+// 注：不再在顶层立即调用 wx.getUserInfo，避免与 fetchRankData 中的 wx.getFriendCloudStorage
+// 同时触发两个授权弹窗。改为在 fetchRankData 内串行执行：先 getUserInfo → 再 getFriendCloudStorage
 
 // 监听主域消息
 wx.onMessage((msg) => {
