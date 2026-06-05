@@ -61,56 +61,9 @@ function clipRoundRect(x, y, w, h, r) {
 
 async function drawRankList() {
   const { W, H } = getCanvasSize();
+  const frame = _drawRankPanelFrame();
 
-  // 背景遮罩
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  ctx.fillRect(0, 0, W, H);
-
-  // 弹窗背景
-  const panelW = Math.min(W * 0.9, sp(340));
-  const panelH = Math.min(H * 0.75, sp(520));
-  const panelX = (W - panelW) / 2;
-  const panelY = (H - panelH) / 2;
-  roundRect(panelX, panelY, panelW, panelH, sp(16), '#2a2a3a', '#4a4a6a');
-
-  // 标题
-  ctx.fillStyle = '#f5f0e6';
-  ctx.font = `bold ${Math.floor(W * 0.055)}px Georgia, serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'top';
-  ctx.fillText('好友排行榜', W / 2, panelY + sp(18));
-
-  // 关闭按钮
-  const closeSize = sp(28);
-  const closeX = panelX + panelW - closeSize - sp(14);
-  const closeY = panelY + sp(14);
-  ctx.fillStyle = 'rgba(255,107,107,0.9)';
-  ctx.beginPath();
-  ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.font = `bold ${Math.floor(closeSize * 0.65)}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - sp(2));
-
-  // 表头
-  const rowH = sp(52);
-  const startY = panelY + sp(58);
-  const contentX = panelX + sp(16);
-  const contentW = panelW - sp(32);
-
-  ctx.fillStyle = 'rgba(196,163,90,0.15)';
-  ctx.fillRect(contentX, startY, contentW, rowH);
-
-  ctx.fillStyle = '#c4a35a';
-  ctx.font = `bold ${Math.floor(W * 0.032)}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('排名', contentX + contentW * 0.12, startY + rowH / 2);
-  ctx.fillText('玩家', contentX + contentW * 0.45, startY + rowH / 2);
-  ctx.textAlign = 'right';
-  ctx.fillText('分数', contentX + contentW * 0.92, startY + rowH / 2);
+  const { contentX, contentW, rowH, startY, panelY, panelH } = frame;
 
   // 玩家列表
   const listY = startY + rowH + sp(4);
@@ -265,30 +218,87 @@ function drawFriendList(w, rowH) {
   }
 }
 
+function _drawRankPanelFrame() {
+  const { W, H } = getCanvasSize();
+
+  // 背景遮罩
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+  ctx.fillRect(0, 0, W, H);
+
+  // 弹窗背景
+  const panelW = Math.min(W * 0.9, sp(340));
+  const panelH = Math.min(H * 0.75, sp(520));
+  const panelX = (W - panelW) / 2;
+  const panelY = (H - panelH) / 2;
+  roundRect(panelX, panelY, panelW, panelH, sp(16), '#2a2a3a', '#4a4a6a');
+
+  // 标题
+  ctx.fillStyle = '#f5f0e6';
+  ctx.font = `bold ${Math.floor(W * 0.055)}px Georgia, serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillText('好友排行榜', W / 2, panelY + sp(18));
+
+  // 关闭按钮
+  const closeSize = sp(28);
+  const closeX = panelX + panelW - closeSize - sp(14);
+  const closeY = panelY + sp(14);
+  ctx.fillStyle = 'rgba(255,107,107,0.9)';
+  ctx.beginPath();
+  ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.floor(closeSize * 0.65)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - sp(2));
+
+  // 表头
+  const rowH = sp(52);
+  const startY = panelY + sp(58);
+  const contentX = panelX + sp(16);
+  const contentW = panelW - sp(32);
+
+  ctx.fillStyle = 'rgba(196,163,90,0.15)';
+  ctx.fillRect(contentX, startY, contentW, rowH);
+
+  ctx.fillStyle = '#c4a35a';
+  ctx.font = `bold ${Math.floor(W * 0.032)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('排名', contentX + contentW * 0.12, startY + rowH / 2);
+  ctx.fillText('玩家', contentX + contentW * 0.45, startY + rowH / 2);
+  ctx.textAlign = 'right';
+  ctx.fillText('分数', contentX + contentW * 0.92, startY + rowH / 2);
+
+  return { panelX, panelY, panelW, panelH, contentX, contentW, rowH, startY, W, H };
+}
+
 function drawLoading() {
   const { W, H } = getCanvasSize();
   console.log('[OpenData] drawLoading', W, H, 'scale', scale);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  ctx.fillRect(0, 0, W, H);
+  const frame = _drawRankPanelFrame();
+
+  // 在内容区显示 loading 文字
   ctx.fillStyle = '#aaa';
   ctx.font = `${Math.floor(W * 0.04)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('排行榜加载中...', W / 2, H / 2);
+  ctx.fillText('⏳ 排行榜加载中...', W / 2, frame.panelY + frame.panelH / 2 + sp(20));
 }
 
 function drawError(msg) {
   const { W, H } = getCanvasSize();
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  ctx.fillRect(0, 0, W, H);
+  const frame = _drawRankPanelFrame();
+
   ctx.fillStyle = '#ff6b6b';
   ctx.font = `${Math.floor(W * 0.035)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(msg || '加载失败', W / 2, H / 2 - sp(10));
+  ctx.fillText(msg || '加载失败', W / 2, frame.panelY + frame.panelH / 2 - sp(10));
   ctx.fillStyle = '#aaa';
   ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
-  ctx.fillText('请检查隐私授权后重试', W / 2, H / 2 + sp(20));
+  ctx.fillText('请检查隐私授权后重试', W / 2, frame.panelY + frame.panelH / 2 + sp(20));
 }
 
 function fetchRankData() {
