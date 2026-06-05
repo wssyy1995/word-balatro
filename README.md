@@ -194,7 +194,7 @@ word-balatro/
 保留字段：round, gold, jokers, potions, totalScore, roundScores, letterUpgrades, baseHandSize, maxJokerSlots
 重置字段：
 - score=0, handsLeft=4+extraHands, discardsLeft=3+extraDiscards
-- target = 150 + 50 × round × (round - 1)
+- target = calcBaseTarget(round)（分段系数累加，见 3.2.3）
 - deck=createDeck(), hand=drawWithSafety()（保底词长度受女巫技能影响）
 - 排除字母：若女巫技能为 no_letter_a，牌堆中移除所有 A
 - selected=[], crystalEffects 生效后清空
@@ -244,6 +244,8 @@ for each flat_bonus 女巫牌:
 | 首字连击 | `initial_succession` | whole_word | 连续打出同首字母单词 | 每次 mult +3，中断后重置 |
 | 回到过去 | `end_ed` | whole_word | 单词末尾加 "ed" 也合法 | mult +5 |
 | 复制魔法 | `end_s` | whole_word | 单词末尾加 "s" 也合法 | mult +3 |
+| 消元术 | `no_duplicate` | whole_word | 与上一手无重复字母 | mult +2（否则 -1） |
+| 预言家 | `predicted_letter` | per_card | 回合开始时预言的字母 | 该字母分数 +100 |
 
 > 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
@@ -259,12 +261,12 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 |---------|------|
 | 第 1 关 | 150（基准） |
 | 第 2~5 关 | 100 |
-| 第 6~10 关 | 50 |
-| 第 11~20 关 | 60 |
-| 第 21~30 关 | 70 |
-| 第 31~40 关 | 80 |
-| 第 41~50 关 | 90 |
-| 第 51~80 关 | 100 |
+| 第 6~10 关 | 40 |
+| 第 11~20 关 | 50 |
+| 第 21~30 关 | 60 |
+| 第 31~40 关 | 70 |
+| 第 41~50 关 | 80 |
+| 第 51~80 关 | 90 |
 
 | 关卡 | 目标分数 |
 |------|---------|
@@ -273,8 +275,8 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 | 3 | 450 |
 | 4 | 750 |
 | 5 | 1150 |
-| 6 | 1400 |
-| 10 | 2900 |
+| 6 | 1350 |
+| 10 | 2550 |
 
 #### 3.2.4 保底机制（Safety）
 
@@ -752,6 +754,8 @@ gap = 8 * scale
 | witch_card_8 | 喀薇娅 | illegal_words_one | 每回合首次非法单词不扣除出牌次数 |
 | witch_card_11 | 德莱薇尔 | last_letter_double | 单词最后一个字母分数算两次（含 per_card 女巫牌加成） |
 | witch_card_14 | 艾莉瑟瑞丝 | witch_skill_protect | 有女巫技能的回合，首次出牌跳过约束检查 |
+| witch_card_16 | 菲兰瑟娅 | shop_discount | 每回合分数超过目标分20%，则该回合的卡牌商店打8折 |
+| witch_card_18 | 格莱薇妮娅 | score_overflow | 每回合溢出分数（超过目标分部分）的10%计入下回合初始分 |
 
 > 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。
 
@@ -1079,6 +1083,7 @@ letterUpgrades = Map {
 | v1.8.2 | 2026-06-03 | 药水升级动画分数变化时播放 `word_score` 音效；商店金币购买按钮和重掷按钮点击区域扩大 2px；售出卡牌后空位占位图片添加果冻弹出动画；商店下一回合标题颜色统一为 `#8b6914` |
 | v1.9.0 | 2026-06-03 | Renderer 模块化重构：6600+ 行 `js/renderer.js` 拆分为 `js/render/` 目录下的 11 个聚焦模块（base/effects/animation/hud/playing/popup/guide/cardbook/debug/gameover/index）；入口 `js/renderer.js` 改为薄层 `require('./render/index')`；新增 `js/render/test.js` 自测脚本 |
 | v1.9.1 | 2026-06-05 | 移除全球排行榜与主页系统，保留好友排行榜及设置弹窗 UI 改进；`global_ranking` 分支独立保留完整排行榜功能 |
+| v1.9.2 | 2026-06-05 | 新增菲兰瑟娅/格莱薇妮娅两张图鉴女巫卡牌；目标分数分段系数下调（6~50关系数各降10）；修复随机强化药水实际倍率未生效的bug；排行榜/设置/图鉴关闭按钮添加按压反馈；反馈键盘体验优化；调试面板增加版本限制；商店目标分数图标替换为图片 |
 
 ---
 

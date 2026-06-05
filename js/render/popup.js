@@ -218,7 +218,7 @@ module.exports = function extendPopup(Renderer) {
       const popup = game._changeLetterPopup;
       if (!popup) return;
   
-      const { LETTER_SCORE } = require('./data');
+      const { LETTER_SCORE } = require('../data');
   
       const elapsed = Date.now() - (popup.startTime || Date.now());
       const panel = this._drawModalPanel(ctx, W, H, s, {
