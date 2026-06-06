@@ -751,6 +751,9 @@ wx.onTouchEnd(() => {
     game._cardBookCloseBtnPressed = false;
     game._closingCardBook = true;
     game._closeCardBookStartTime = Date.now();
+    game._cardBookCellPressed = null;
+    game._cardBookDetailLevel = null;
+    game._closingCardBookDetail = false;
   }
 
   // 排行榜关闭按钮松开时关闭
