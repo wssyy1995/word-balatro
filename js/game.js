@@ -2033,6 +2033,19 @@ class Game {
       }
       // 2. 洗牌
       this.deck = shuffle([...this.deck]);
+
+      // 赫丝佩瑞丝：弃牌后补入的字母排除原弃牌字母
+      const discardedLetters = discardedCards.map(c => c.letter);
+      if (this.equippedWitchCard === 21) {
+        this.deck = this.deck.filter(c => !discardedLetters.includes(c.letter));
+        const need = discardedCards.length;
+        if (this.deck.length < need) {
+          const extraDeck = createDeck();
+          const filteredExtra = extraDeck.filter(c => !discardedLetters.includes(c.letter));
+          this.deck = [...this.deck, ...filteredExtra];
+        }
+      }
+
       // 3. 从牌堆顶部补牌
       const need = discardedCards.length;
       const newCards = this.deck.splice(0, need);
