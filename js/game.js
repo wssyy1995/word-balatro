@@ -1936,8 +1936,8 @@ class Game {
     if (hit) {
       this.witchRewardData.rewardItem = createRewardItem(skill.reward);
     } else if (rate < 1) {
-      // 鼓励奖：随机 1~3 金币
-      const bonusGold = Math.floor(Math.random() * 3) + 1;
+      // 鼓励奖：随机 1~5 金币
+      const bonusGold = Math.floor(Math.random() * 5) + 1;
       this.witchRewardData.consolationGold = bonusGold;
       this.gold += bonusGold;
     }
