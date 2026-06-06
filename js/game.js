@@ -1919,6 +1919,9 @@ class Game {
         };
         this.state = 'witch_reward';
       } else {
+        // 进入商店前取消所有女巫牌禁用状态
+        (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+        this._disableWitchAnim = null;
         this.state = 'shop';
         this._checkCardBookUnlock();
         this.shopItems = generateShopItems(this);
@@ -1966,6 +1969,9 @@ class Game {
               this.gold *= 2;
             }
           }
+          // 进入商店前取消所有女巫牌禁用状态
+          (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+          this._disableWitchAnim = null;
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);
@@ -1978,6 +1984,9 @@ class Game {
               this.potions.push({ ...data.rewardItem });
             }
           }
+          // 进入商店前取消所有女巫牌禁用状态
+          (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+          this._disableWitchAnim = null;
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);
