@@ -1078,9 +1078,9 @@ class Game {
       console.log('[EquippedSkill] score_overflow will apply after 500ms, bonus:', bonus);
     }
     this.handsLeft = 4 + this.extraHands;
+    this.discardsLeft = 3 + this.extraDiscards;
     // 应用装备的女巫卡牌回合技能
     this._applyEquippedCardBonus('round');
-    this.discardsLeft = 3 + this.extraDiscards;
     this.extraHands = 0;
     this.extraDiscards = 0;
     this.extraSafety = 0;
@@ -2111,6 +2111,16 @@ class Game {
         break;
       case 'illegal_words_one':
         // 回合级标记在 resetRound 中重置，实际生效在 playHand 非法单词逻辑中
+        break;
+      case 'witch_skill_extra_hands':
+        if (timing === 'round') {
+          const ws = getSkillForLevel(this.round, this._shuffledSkills);
+          if (ws && ws.skill) {
+            this.handsLeft += 1;
+            this.discardsLeft += 1;
+            console.log('[EquippedSkill] witch_skill_extra_hands applied, handsLeft:', this.handsLeft, 'discardsLeft:', this.discardsLeft);
+          }
+        }
         break;
     }
   }
