@@ -372,9 +372,9 @@ Renderer.prototype.render = function(game) {
       // 内容区域（在面板内部，留出边距给背景图边框）
       const contentPad = 36 * s;
       const contentX = px + contentPad;
-      const contentY = py + contentPad;
+      const contentY = cbDrawY + contentPad;
       const contentW = pw - contentPad * 2;
-      const contentH = ph - contentPad * 2;
+      const contentH = cbDrawH - contentPad * 2;
       const cellGap = 12 * s;
 
       // 固定格子宽高比为 3:4（竖向），优先以宽度计算
@@ -632,7 +632,7 @@ Renderer.prototype.render = function(game) {
       // 右上角关闭按钮（图片）
       const closeBtnSize = 28 * s;
       const closeBtnX = px + pw - closeBtnSize - 10 * s + 12;
-      const closeBtnY = py + 10 * s - 16;
+      const closeBtnY = cbDrawY + 10 * s - 16;
       const cbPressOffset = game._cardBookCloseBtnPressed ? 2 * s : 0;
       ctx.save();
       if (this.popCloseLoaded && this.popCloseImage) {
