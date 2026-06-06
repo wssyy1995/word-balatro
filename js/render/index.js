@@ -356,7 +356,7 @@ Renderer.prototype.render = function(game) {
       const countText = `${collectedCount}/${totalCount}`;
       ctx.save();
       ctx.font = `bold ${Math.floor(12 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#8b6f3e';
+      ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(countText, px + pw / 2, py + 50 * s);
