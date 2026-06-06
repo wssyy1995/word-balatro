@@ -264,8 +264,8 @@ Renderer.prototype.render = function(game) {
       // === 标题：词牌图鉴（完整参考女巫奖励样式）===
       const cbTitleText = '词牌图鉴';
       const cbTitleFontSize = 24 * s;
-      // 标题放在书本上方；x/26 标签底部距书本顶部 20px（实际像素）
-      const cbTitleY = cbDrawY - 20 - 30 * s;
+      // 标题与副标题完全独立定位，不依赖 card_book.png 位置
+      const cbTitleY = py + 28 * s;
 
       ctx.font = `bold ${Math.floor(cbTitleFontSize)}px Georgia, serif`;
       const cbTextMetrics = ctx.measureText(cbTitleText);
@@ -359,7 +359,7 @@ Renderer.prototype.render = function(game) {
       ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(countText, px + pw / 2, cbTitleY + 20 * s);
+      ctx.fillText(countText, px + pw / 2, py + 50 * s);
       ctx.restore();
 
       // === 图鉴内容：4 格布局 + 翻页 ===
