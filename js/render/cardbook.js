@@ -68,7 +68,13 @@ module.exports = function extendCardbook(Renderer) {
         const badgeX = iconX + iconW - badgeW * 0.6 + 2 * s;
         const badgeY = iconY - badgeH * 0.4 - 2 * s;
         ctx.save();
-        ctx.drawImage(this.newBadgeIcon, badgeX, badgeY, badgeW, badgeH);
+        // 微弱呼吸效果：±4%，周期约 2 秒
+        const pulse = 1 + 0.04 * Math.sin(Date.now() / 318);
+        const drawW = badgeW * pulse;
+        const drawH = badgeH * pulse;
+        const drawX = badgeX - (drawW - badgeW) / 2;
+        const drawY = badgeY - (drawH - badgeH) / 2;
+        ctx.drawImage(this.newBadgeIcon, drawX, drawY, drawW, drawH);
         ctx.restore();
       }
 
