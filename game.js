@@ -1182,16 +1182,6 @@ function handleInput(x, y) {
       }
     }
 
-    // 调试：点击第一个分数方块显示华丽 x2 标签
-    if (renderer.firstBoxRect) {
-      const boxHit = renderer.hitTest(x, y, [renderer.firstBoxRect]);
-      if (boxHit) {
-        vibrate();
-        game._debugLabelShow = { startTime: Date.now(), text: 'x2' };
-        return;
-      }
-    }
-
     // 检测出牌按钮
     if (renderer.playBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
