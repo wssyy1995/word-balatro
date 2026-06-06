@@ -575,7 +575,7 @@ Renderer.prototype.render = function(game) {
           const tagText = '已装备';
           const tagTextW = ctx.measureText(tagText).width;
           const tagW = tagTextW + tagPad * 2;
-          const tagX = pos.x + cellW - tagW - 3 * s + 2;
+          const tagX = pos.x + cellW - tagW - 3 * s + 4;
           const tagY = pos.y + 3 * s;
 
           ctx.fillStyle = 'rgba(107,76,138,0.9)';
