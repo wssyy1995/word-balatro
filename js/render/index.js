@@ -569,13 +569,13 @@ Renderer.prototype.render = function(game) {
         // 已装备标识（右上角小标签）
         if (isUnlocked && game.equippedWitchCard === level) {
           ctx.save();
-          const tagH = 16 * s;
-          const tagPad = 4 * s;
-          ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+          const tagH = 18 * s;
+          const tagPad = 5 * s;
+          ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
           const tagText = '已装备';
           const tagTextW = ctx.measureText(tagText).width;
           const tagW = tagTextW + tagPad * 2;
-          const tagX = pos.x + cellW - tagW - 3 * s;
+          const tagX = pos.x + cellW - tagW - 3 * s + 2;
           const tagY = pos.y + 3 * s;
 
           ctx.fillStyle = 'rgba(107,76,138,0.9)';
