@@ -355,7 +355,7 @@ Renderer.prototype.render = function(game) {
       const totalCount = WITCH_SKILLS.length;
       const countText = `${collectedCount}/${totalCount}`;
       ctx.save();
-      ctx.font = `bold ${Math.floor(10 * s)}px Georgia, serif`;
+      ctx.font = `bold ${Math.floor(12 * s)}px Georgia, serif`;
       ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
