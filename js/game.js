@@ -2246,10 +2246,11 @@ class Game {
           const mult = popup.randomMult || 2;
           const existing = letterUpgrades.get(letter) || {};
           const totalMult = (existing.mult || 1) * mult;
-          const totalAdd = existing.add || 0;
+          const oldAdd = existing.add || 0;
+          const newAdd = Math.floor(oldAdd * mult);
           const baseScore = LETTER_SCORE[letter];
-          const newScore = Math.floor(baseScore * totalMult) + totalAdd;
-          const oldScore = Math.floor(baseScore * (existing.mult || 1)) + totalAdd;
+          const newScore = Math.floor(baseScore * totalMult) + newAdd;
+          const oldScore = Math.floor(baseScore * (existing.mult || 1)) + oldAdd;
 
           console.log('[RandomUpgrade] 抽奖倍率:', popup.randomMult, '目标字母:', letter, '基础分:', LETTER_SCORE[letter]);
           console.log('[RandomUpgrade] 升级前 letterUpgrades:', JSON.stringify(letterUpgrades.get(letter)));
@@ -2265,7 +2266,7 @@ class Game {
             oldScore,
             newScore,
             upgradeMult: totalMult,
-            upgradeAdd: totalAdd,
+            upgradeAdd: newAdd,
             randomMult: popup.randomMult
           };
           popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
