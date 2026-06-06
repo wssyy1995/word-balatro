@@ -428,7 +428,7 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 排行榜显示时，优先检测关闭按钮（延迟关闭），否则点击任意位置关闭
+  // 排行榜显示时，优先检测关闭按钮（延迟关闭），点击面板外部才关闭
   if (isRankShowing) {
     // 估算排行榜关闭按钮区域（与开放域 drawRankList 中关闭按钮位置一致）
     const s = renderer.scale || 1;
@@ -453,6 +453,11 @@ wx.onTouchStart((e) => {
       if (game.audioManager) game.audioManager.play('tap');
       const odc = getOpenDataContext();
       if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: true });
+      return;
+    }
+    // 点击面板内部（非关闭按钮）不关闭
+    const insidePanel = x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH;
+    if (insidePanel) {
       return;
     }
     hideRankList();
