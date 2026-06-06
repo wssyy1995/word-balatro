@@ -32,7 +32,6 @@ module.exports = function extendCardbook(Renderer) {
           glowAlpha = pulse;
         } else {
           game._cardBookIconFlashStart = null;
-          game._newWitchCardThisShop = null;
           game._forceCardBookFlash = false;
         }
       }
@@ -59,6 +58,22 @@ module.exports = function extendCardbook(Renderer) {
         ctx.drawImage(this.cardBookIcon, drawX, drawY, drawW, drawH);
       }
       ctx.restore();
+
+      // NEW! 角标（闪烁结束后显示）
+      if (game._cardBookNewBadge && this.newBadgeIcon && this.newBadgeIconLoaded) {
+        const badgeW = 32 * s;
+        const badgeH = this.newBadgeIcon.height
+          ? badgeW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
+          : badgeW;
+        const badgeX = iconX + iconW - badgeW * 0.6 + 2 * s;
+        const badgeY = iconY - badgeH * 0.4 - 2 * s;
+        ctx.save();
+        ctx.translate(badgeX + badgeW / 2, badgeY + badgeH / 2);
+        ctx.rotate(Math.PI / 6);
+        ctx.drawImage(this.newBadgeIcon, -badgeW / 2, -badgeH / 2, badgeW, badgeH);
+        ctx.restore();
+      }
+
       this.cardBookIconRect = { x: iconX, y: iconY, w: iconW, h: iconH };
     }
 

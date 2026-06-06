@@ -262,6 +262,17 @@ class Renderer {
     } catch (e) {
       this.cardBookIconLoaded = false;
     }
+    this.newBadgeIcon = null;
+    this.newBadgeIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/new.png';
+      img.onload = () => { this.newBadgeIconLoaded = true; };
+      img.onerror = () => { this.newBadgeIconLoaded = false; };
+      this.newBadgeIcon = img;
+    } catch (e) {
+      this.newBadgeIconLoaded = false;
+    }
     this.cardBookImage = null;
     this.cardBookImageLoaded = false;
     try {
@@ -388,6 +399,19 @@ class Renderer {
       this.cardDisableIcon = img;
     } catch (e) {
       this.cardDisableIconLoaded = false;
+    }
+
+    // 加载 discount 标签图标
+    this.discountIcon = null;
+    this.discountIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/discount.png';
+      img.onload = () => { this.discountIconLoaded = true; };
+      img.onerror = () => { this.discountIconLoaded = false; };
+      this.discountIcon = img;
+    } catch (e) {
+      this.discountIconLoaded = false;
     }
 
     // 加载目标分数图标

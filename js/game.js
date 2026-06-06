@@ -10,7 +10,7 @@ const { AnimationManager } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -624,7 +624,8 @@ class Game {
       console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
-    this._forceCardBookFlash = false;
+      this._forceCardBookFlash = false;
+      this._cardBookNewBadge = false;
       this.extraSafety = 0;
       this.extraHands = 0;
       this.baseHandSize = 9;
@@ -683,7 +684,7 @@ class Game {
     this._witchSkillProtectUsed = false;
 
     // 装备女巫卡牌跨回合状态
-    this._shopDiscountActive = false;   // 菲兰瑟娅：本回合商店8折
+    this._shopDiscountActive = false;   // 菲兰瑟娅：本回合商店6折
     this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
 
     // 设置弹窗
@@ -849,6 +850,7 @@ class Game {
     console.log('[CardBook] 存档恢复加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
     this._newWitchCardThisShop = null;
     this._cardBookIconFlashStart = null;
+    this._cardBookNewBadge = false;
     this.gameOverReason = p.gameOverReason || null;
     this.target = p.target;
     this._maxHandSize = p._maxHandSize;
@@ -1828,8 +1830,8 @@ class Game {
         } else if (cardConfig.card_skill_name === 'each_round_hand_plus1') {
           baseGold -= 2;
         } else if (cardConfig.card_skill_name === 'shop_discount') {
-          // 菲兰瑟娅：超过目标分20%则本回合商店打8折
-          if (this.score >= this.target * 1.2) {
+          // 菲兰瑟娅：超过目标分30%则本回合商店打6折
+          if (this.score >= this.target * 1.3) {
             this._shopDiscountActive = true;
             console.log('[EquippedSkill] shop_discount activated, score:', this.score, 'target:', this.target);
           }
@@ -1878,6 +1880,10 @@ class Game {
         console.log('[CardBook] 收集新卡 level=' + level + ', 当前:', JSON.stringify(this.collectedWitchCards));
         this._newWitchCardThisShop = level;
         this._cardBookIconFlashStart = Date.now();
+        this._cardBookNewBadge = false;
+        setTimeout(() => {
+          this._cardBookNewBadge = true;
+        }, 2000);
         if (this.storageManager) {
           const ok = this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
           if (!ok) {

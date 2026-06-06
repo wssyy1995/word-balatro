@@ -207,7 +207,7 @@ Renderer.prototype.render = function(game) {
           bookW = bookH * imgAspect;
         }
         panelW = Math.round(bookW / s);
-        panelH = Math.round(bookH / s);
+        panelH = Math.round(bookH / s) + 70;
       }
 
       // 图鉴引导阶段（Phase 1~3），card_book 不画自己的遮罩，由 guide evenodd 蒙层统一控制背景暗化
@@ -242,24 +242,125 @@ Renderer.prototype.render = function(game) {
         ctx.save();
         ctx.globalAlpha = contentAlpha;
 
-      // 绘制 card_book.png 背景
+      // 绘制 card_book.png 背景（顶部留出 70dp 给标题/计数器）
+      let cbDrawX = px, cbDrawY = py, cbDrawW = pw, cbDrawH = ph;
       if (this.cardBookImage && this.cardBookImageLoaded) {
         const imgAspect = this.cardBookImage.width / this.cardBookImage.height;
         const panelAspect = pw / ph;
-        let drawW, drawH, drawX, drawY;
         if (imgAspect > panelAspect) {
-          drawW = pw;
-          drawH = drawW / imgAspect;
-          drawX = px;
-          drawY = py + (ph - drawH) / 2;
+          cbDrawW = pw;
+          cbDrawH = cbDrawW / imgAspect;
+          cbDrawX = px;
+          cbDrawY = py + 70 * s;
         } else {
-          drawH = ph;
-          drawW = drawH * imgAspect;
-          drawX = px + (pw - drawW) / 2;
-          drawY = py;
+          cbDrawH = ph - 70 * s;
+          cbDrawW = cbDrawH * imgAspect;
+          cbDrawX = px + (pw - cbDrawW) / 2;
+          cbDrawY = py + 70 * s;
         }
-        ctx.drawImage(this.cardBookImage, drawX, drawY, drawW, drawH);
+        ctx.drawImage(this.cardBookImage, cbDrawX, cbDrawY, cbDrawW, cbDrawH);
       }
+
+      // === 标题：词牌图鉴（完整参考女巫奖励样式）===
+      const cbTitleText = '词牌图鉴';
+      const cbTitleFontSize = 24 * s;
+      // 标题放在书本上方；x/26 标签底部距书本顶部 20px（实际像素）
+      const cbTitleY = cbDrawY - 20 - 30 * s;
+
+      ctx.font = `bold ${Math.floor(cbTitleFontSize)}px Georgia, serif`;
+      const cbTextMetrics = ctx.measureText(cbTitleText);
+      const cbTextWidth = cbTextMetrics.width;
+
+      const cbLineY = cbTitleY;
+      const cbSolidSize = 1.5 * s;
+      const cbHollowSize = 2 * s;
+      const cbGap = 8 * s;
+      const cbSolidToHollow = 8 * s;
+      const cbLineOffset = 3 * s;
+      const cbLineLength = 45 * s;
+
+      const cbLeftSolidX = px + pw / 2 - cbTextWidth / 2 - cbGap;
+      const cbLeftHollowX = cbLeftSolidX - cbSolidToHollow;
+      const cbLeftLineEndX = cbLeftHollowX - cbLineLength;
+      const cbRightSolidX = px + pw / 2 + cbTextWidth / 2 + cbGap;
+      const cbRightHollowX = cbRightSolidX + cbSolidToHollow;
+      const cbRightLineEndX = cbRightHollowX + cbLineLength;
+
+      ctx.save();
+
+      // 左侧装饰
+      ctx.save();
+      ctx.translate(cbLeftSolidX, cbLineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-cbSolidSize, -cbSolidSize, cbSolidSize * 2, cbSolidSize * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(cbLeftHollowX, cbLineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-cbHollowSize, -cbHollowSize, cbHollowSize * 2, cbHollowSize * 2);
+      ctx.restore();
+
+      const cbLeftLineStartX = cbLeftHollowX - cbLineOffset;
+      const cbLeftGrad = ctx.createLinearGradient(cbLeftLineStartX, cbLineY, cbLeftLineEndX, cbLineY);
+      cbLeftGrad.addColorStop(0, '#c4a35a');
+      cbLeftGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = cbLeftGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(cbLeftLineStartX, cbLineY);
+      ctx.lineTo(cbLeftLineEndX, cbLineY);
+      ctx.stroke();
+
+      // 右侧装饰
+      ctx.save();
+      ctx.translate(cbRightSolidX, cbLineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-cbSolidSize, -cbSolidSize, cbSolidSize * 2, cbSolidSize * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(cbRightHollowX, cbLineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-cbHollowSize, -cbHollowSize, cbHollowSize * 2, cbHollowSize * 2);
+      ctx.restore();
+
+      const cbRightLineStartX = cbRightHollowX + cbLineOffset;
+      const cbRightGrad = ctx.createLinearGradient(cbRightLineStartX, cbLineY, cbRightLineEndX, cbLineY);
+      cbRightGrad.addColorStop(0, '#c4a35a');
+      cbRightGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = cbRightGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(cbRightLineStartX, cbLineY);
+      ctx.lineTo(cbRightLineEndX, cbLineY);
+      ctx.stroke();
+
+      // 标题文字
+      ctx.font = `bold ${Math.floor(cbTitleFontSize)}px Georgia, serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(cbTitleText, px + pw / 2, cbTitleY);
+      ctx.restore();
+
+      // x/26 标签（在标题下方）
+      const collectedCount = (game.collectedWitchCards || []).length;
+      const totalCount = WITCH_SKILLS.length;
+      const countText = `${collectedCount}/${totalCount}`;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(10 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(countText, px + pw / 2, cbTitleY + 20 * s);
+      ctx.restore();
 
       // === 图鉴内容：4 格布局 + 翻页 ===
       const allLevels = WITCH_SKILLS.map(s => s.level);
@@ -368,6 +469,29 @@ Renderer.prototype.render = function(game) {
           ctx.fillText('?', pos.x + cellW / 2, pos.y + cellH / 2);
         }
         ctx.restore();
+
+        // 新增卡牌 NEW! 标签（右上角）
+        if (game._newWitchCardThisShop === level && this.newBadgeIcon && this.newBadgeIconLoaded) {
+          const baseW = 30 * s;
+          // 缓慢缩放呼吸效果：幅度 ±10%，周期约 1.3 秒
+          const pulse = 1 + 0.1 * Math.sin(Date.now() / 212);
+          const tagW = baseW * pulse;
+          // 保持 new.png 原始宽高比，不压缩
+          const tagH = this.newBadgeIcon.height
+            ? tagW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
+            : tagW;
+          const tagX = pos.x + cellW - tagW + 2 * s;
+          const tagY = pos.y - 2 * s;
+          ctx.save();
+          // 白色半透明背景蒙层（比 new 图标小一点）
+          const maskW = tagW * 0.85;
+          const maskH = tagH * 0.85;
+          const maskX = tagX + (tagW - maskW) / 2;
+          const maskY = tagY + (tagH - maskH) / 2;
+          this.roundRect(maskX, maskY, maskW, maskH, 3 * s, 'rgba(255,255,255,0.5)');
+          ctx.drawImage(this.newBadgeIcon, tagX, tagY, tagW, tagH);
+          ctx.restore();
+        }
 
         // 记录已解锁卡牌点击区域（使用原始位置，不受按下偏移影响）
         if (isUnlocked) {

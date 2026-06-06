@@ -5,6 +5,7 @@ const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
 
@@ -956,6 +957,11 @@ function handleInput(x, y) {
       if (cellHit && cellHit.isUnlocked) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
+        // 点击新增卡牌后，NEW 标签消失
+        if (game._newWitchCardThisShop === cellHit.level) {
+          game._newWitchCardThisShop = null;
+          game._cardBookNewBadge = false;
+        }
         if (game._cardBookCellPressed === cellHit.level) {
           // 再次点击同一张卡：复位 + 关闭详情
           game._cardBookCellPressed = null;
@@ -1285,9 +1291,18 @@ function handleInput(x, y) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
-        game.cardBookPage = 0;
+        // 如果有新收集的卡牌，自动翻到对应页码
+        if (game._newWitchCardThisShop) {
+          const allLevels = WITCH_SKILLS.map(s => s.level);
+          const itemsPerPage = 4;
+          const levelIndex = allLevels.indexOf(game._newWitchCardThisShop);
+          game.cardBookPage = levelIndex >= 0 ? Math.floor(levelIndex / itemsPerPage) : 0;
+        } else {
+          game.cardBookPage = 0;
+        }
         game._cardBookAnimStartTime = Date.now();
         game._closingCardBook = false;
+        game._cardBookNewBadge = false;
         return;
       }
     }
@@ -1489,9 +1504,18 @@ function handleInput(x, y) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
-        game.cardBookPage = 0;
+        // 如果有新收集的卡牌，自动翻到对应页码
+        if (game._newWitchCardThisShop) {
+          const allLevels = WITCH_SKILLS.map(s => s.level);
+          const itemsPerPage = 4;
+          const levelIndex = allLevels.indexOf(game._newWitchCardThisShop);
+          game.cardBookPage = levelIndex >= 0 ? Math.floor(levelIndex / itemsPerPage) : 0;
+        } else {
+          game.cardBookPage = 0;
+        }
         game._cardBookAnimStartTime = Date.now();
         game._closingCardBook = false;
+        game._cardBookNewBadge = false;
         return;
       }
     }

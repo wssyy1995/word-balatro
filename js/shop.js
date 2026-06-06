@@ -112,13 +112,13 @@ function refreshModule(game, modIdx) {
   game.shopItems[startIdx] = shuffled[0];
   game.shopItems[startIdx + 1] = shuffled[1];
 
-  if (game.audioManager) game.audioManager.play('select');
+  if (game.audioManager) game.audioManager.play('card_sell');
   if (game.storageManager) game.storageManager.saveProgress();
 }
 
 function buyItem(game, idx) {
   const item = game.shopItems[idx];
-  const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+  const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
   if (!item || game.gold < finalCost) return false;
 
   // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
@@ -1068,7 +1068,7 @@ class ShopRenderer {
         const btnH = 22 * s;
         const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
         const coinSize = 15 * s;
-        const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+        const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
         const canAfford = game.gold >= finalCost;
 
         // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
@@ -1132,37 +1132,59 @@ class ShopRenderer {
         ctx.restore();
 
         // 金币图标 + 文案（整体居中）
-        const contentStartX = btnX + (btnW - contentW) / 2;
         const midY = btnY + btnH / 2 + pressOffset;
-        if (showCoin && this.parent.coinIcon && this.parent.coinIconLoaded) {
-          ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
-        }
-        ctx.fillStyle = isActive ? '#8b6914' : '#999';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
-        ctx.fillText(btnText, btnTextX, midY);
-
-        // 8折标签（右上角小徽章）
-        if (game._shopDiscountActive) {
-          const tagText = '8折';
-          const tagH = 12 * s;
-          const tagFont = `bold ${Math.floor(9 * s)}px sans-serif`;
-          ctx.save();
-          ctx.font = tagFont;
-          const tagW = ctx.measureText(tagText).width + 6 * s;
-          const tagX = btnX + btnW - tagW + 2 * s;
-          const tagY = btnY - tagH / 2 + pressOffset;
-          ctx.fillStyle = '#e74c3c';
-          ctx.beginPath();
-          ctx.arc(tagX + tagH / 2, tagY + tagH / 2, tagH / 2, Math.PI / 2, Math.PI * 3 / 2);
-          ctx.arc(tagX + tagW - tagH / 2, tagY + tagH / 2, tagH / 2, Math.PI * 3 / 2, Math.PI / 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
+        if (game._shopDiscountActive && isActive) {
+          // 显示原价（灰色删除线）+ 折后价
+          const originalText = String(item.cost);
+          const discountText = String(finalCost);
+          ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+          const originalW = ctx.measureText(originalText).width;
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          const discountW = ctx.measureText(discountText).width;
+          const innerGap = 4 * s;
+          const totalTextW = originalW + innerGap + discountW;
+          const totalContentW = showCoin ? coinSize + 4 * s + totalTextW : totalTextW;
+          const contentStartX = btnX + (btnW - totalContentW) / 2;
+          if (showCoin && this.parent.coinIcon && this.parent.coinIconLoaded) {
+            ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
+          }
+          const textStartX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
+          // 原价（灰色，删除线）
+          ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+          ctx.fillStyle = '#aaa';
+          ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2 + 0.5 * s);
+          ctx.fillText(originalText, textStartX, midY);
+          ctx.strokeStyle = '#aaa';
+          ctx.lineWidth = 1 * s;
+          ctx.beginPath();
+          ctx.moveTo(textStartX - 1 * s, midY);
+          ctx.lineTo(textStartX + originalW + 1 * s, midY);
+          ctx.stroke();
+          // 折后价
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          ctx.fillStyle = '#8b6914';
+          ctx.fillText(discountText, textStartX + originalW + innerGap, midY);
+        } else {
+          const contentStartX = btnX + (btnW - contentW) / 2;
+          if (showCoin && this.parent.coinIcon && this.parent.coinIconLoaded) {
+            ctx.drawImage(this.parent.coinIcon, contentStartX, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillStyle = isActive ? '#8b6914' : '#999';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          const btnTextX = showCoin ? contentStartX + coinSize + 4 * s : contentStartX;
+          ctx.fillText(btnText, btnTextX, midY);
+        }
+
+        // discount.png 标签（右上角）
+        if (game._shopDiscountActive && this.parent.discountIcon && this.parent.discountIconLoaded) {
+          const tagW = 22 * s;
+          const tagH = tagW;
+          const tagX = btnX + btnW - tagW * 0.7;
+          const tagY = btnY - tagH * 0.5 + pressOffset;
+          ctx.save();
+          ctx.drawImage(this.parent.discountIcon, tagX, tagY, tagW, tagH);
           ctx.restore();
         }
 
@@ -1478,7 +1500,7 @@ class ShopRenderer {
         ctx.restore();
 
         // 标题文字
-        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * 0.8) : popup.item.cost;
+        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * 0.6) : popup.item.cost;
         const isCrystalBall = popup.item.type === 'crystal';
         const confirmText = isCrystalBall
           ? `花费 ${popupFinalCost} 金币购买此卡牌，并立即生效？`
@@ -2036,7 +2058,7 @@ class ConfirmBuyRenderer {
 
       // coin 图标 + 金额
       const coinSize = 20 * s;
-      const popupFinalCost2 = game._shopDiscountActive ? Math.round(item.cost * 0.8) : item.cost;
+      const popupFinalCost2 = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
       const priceText = String(popupFinalCost2);
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
       const textW = ctx.measureText(priceText).width;

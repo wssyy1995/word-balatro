@@ -52,7 +52,7 @@ const WITCH_CARDS = [
   { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'illegal_words_one',card_skill_desc:'每回合,首次非法单词不扣除出牌次数'},
   { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'last_letter_double',card_skill_desc:'单词最后一个字母，触发结算2次'},
   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'witch_skill_protect',card_skill_desc:'有女巫的回合,首次出牌不会触发约束规则'},
-  { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'shop_discount',card_skill_desc:'每回合分数超过目标分20%，则该回合的卡牌商店打8折'},
+  { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'shop_discount',card_skill_desc:'每回合分数超过目标分30%，则该回合的卡牌商店打6折'},
   { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'score_overflow',card_skill_desc:'每回合溢出分数（超过目标分部分）的10%计入下回合初始分'}
 
 ];
