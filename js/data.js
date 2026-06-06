@@ -11,7 +11,7 @@ const LETTER_SCORE = {
 const LETTER_DISTRIBUTION = {
   A:8, B:2, C:3, D:4, E:8, F:3, G:3, H:2, I:8,
   J:2, K:2, L:4, M:3, N:5, O:7, P:3, Q:2, R:5,
-  S:4, T:5, U:4, V:2, W:3, X:2, Y:2, Z:2
+  S:4, T:5, U:5, V:2, W:2, X:2, Y:2, Z:2
 };
 
 // 人头牌标记
