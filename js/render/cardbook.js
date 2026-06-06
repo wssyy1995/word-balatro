@@ -74,6 +74,12 @@ module.exports = function extendCardbook(Renderer) {
         const drawH = badgeH * pulse;
         const drawX = badgeX - (drawW - badgeW) / 2;
         const drawY = badgeY - (drawH - badgeH) / 2;
+        // 白色半透明背景蒙层
+        const maskW = drawW * 0.85;
+        const maskH = drawH * 0.85;
+        const maskX = drawX + (drawW - maskW) / 2;
+        const maskY = drawY + (drawH - maskH) / 2;
+        this.roundRect(maskX, maskY, maskW, maskH, 3 * s, 'rgba(255,255,255,0.8)');
         ctx.drawImage(this.newBadgeIcon, drawX, drawY, drawW, drawH);
         ctx.restore();
       }

@@ -485,7 +485,7 @@ Renderer.prototype.render = function(game) {
           const maskH = tagH * 0.85;
           const maskX = tagX + (tagW - maskW) / 2;
           const maskY = tagY + (tagH - maskH) / 2;
-          this.roundRect(maskX, maskY, maskW, maskH, 3 * s, 'rgba(255,255,255,0.5)');
+          this.roundRect(maskX + 2, maskY, maskW, maskH, 3 * s, 'rgba(255,255,255,0.8)');
           ctx.drawImage(this.newBadgeIcon, tagX, tagY, tagW, tagH);
           ctx.restore();
         }
