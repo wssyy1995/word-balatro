@@ -61,16 +61,14 @@ module.exports = function extendCardbook(Renderer) {
 
       // NEW! 角标（闪烁结束后显示）
       if (game._cardBookNewBadge && this.newBadgeIcon && this.newBadgeIconLoaded) {
-        const badgeW = 32 * s;
+        const badgeW = 28 * s;
         const badgeH = this.newBadgeIcon.height
           ? badgeW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
           : badgeW;
         const badgeX = iconX + iconW - badgeW * 0.6 + 2 * s;
         const badgeY = iconY - badgeH * 0.4 - 2 * s;
         ctx.save();
-        ctx.translate(badgeX + badgeW / 2, badgeY + badgeH / 2);
-        ctx.rotate(Math.PI / 6);
-        ctx.drawImage(this.newBadgeIcon, -badgeW / 2, -badgeH / 2, badgeW, badgeH);
+        ctx.drawImage(this.newBadgeIcon, badgeX, badgeY, badgeW, badgeH);
         ctx.restore();
       }
 
