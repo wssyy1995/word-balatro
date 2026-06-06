@@ -9,9 +9,9 @@ const LETTER_SCORE = {
 
 // 字母分布（98张牌）
 const LETTER_DISTRIBUTION = {
-  A:9, B:2, C:2, D:4, E:12, F:2, G:3, H:2, I:9,
-  J:1, K:1, L:4, M:2, N:6, O:8, P:2, Q:1, R:6,
-  S:4, T:6, U:4, V:2, W:2, X:1, Y:2, Z:1
+  A:8, B:2, C:3, D:4, E:9, F:2, G:3, H:2, I:8,
+  J:2, K:2, L:4, M:3, N:5, O:7, P:3, Q:2, R:5,
+  S:4, T:5, U:4, V:2, W:3, X:2, Y:2, Z:2
 };
 
 // 人头牌标记
