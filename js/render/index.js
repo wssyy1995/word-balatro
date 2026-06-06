@@ -472,10 +472,7 @@ Renderer.prototype.render = function(game) {
 
         // 新增卡牌 NEW! 标签（右上角）
         if (game._newWitchCardThisShop === level && this.newBadgeIcon && this.newBadgeIconLoaded) {
-          const baseW = 30 * s;
-          // 缓慢缩放呼吸效果：幅度 ±10%，周期约 1.3 秒
-          const pulse = 1 + 0.1 * Math.sin(Date.now() / 212);
-          const tagW = baseW * pulse;
+          const tagW = 36 * s;
           // 保持 new.png 原始宽高比，不压缩
           const tagH = this.newBadgeIcon.height
             ? tagW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
