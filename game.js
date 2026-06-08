@@ -308,6 +308,36 @@ function startGame() {
 
   // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）
   game._preloadWitchAvatars();
+
+  // ===== 分享转发初始化 =====
+  wx.showShareMenu({ withShareTicket: true });
+
+  // 被动转发：用户点击右上角转发时，返回 Canvas 截图
+  wx.onShareAppMessage(() => {
+    try {
+      const tempFilePath = canvas.toTempFilePathSync({
+        x: 0,
+        y: 0,
+        width: canvas.width,
+        height: canvas.height,
+        destWidth: 500,
+        destHeight: 400,
+        fileType: 'png',
+        quality: 0.85
+      });
+      return {
+        title: `我在女巫的词牌闯到了第${game?.round || 1}关，来挑战我吧！`,
+        imageUrl: tempFilePath,
+        query: `from=share&round=${game?.round || 1}&score=${game?.totalScore || 0}`
+      };
+    } catch (e) {
+      console.warn('[Share] Canvas 截图失败:', e);
+      return {
+        title: `我在女巫的词牌闯到了第${game?.round || 1}关，来挑战我吧！`,
+        query: `from=share&round=${game?.round || 1}&score=${game?.totalScore || 0}`
+      };
+    }
+  });
 }
 
 // 长按检测状态
