@@ -318,7 +318,15 @@ module.exports = function extendCardbook(Renderer) {
           const toastPadY = 4 * s;
           const toastW = toastTextW + toastPadX * 2;
           const toastH = 20 * s;
-          const toastX = btnX + btnW / 2 - toastW / 2;
+          let toastX = btnX + btnW / 2 - toastW / 2;
+          // 右边界限制：toast 右边距屏幕右侧至少 2px
+          if (toastX + toastW > W - 2) {
+            toastX = W - 2 - toastW;
+          }
+          // 左边界限制：toast 左边距屏幕左侧至少 2px
+          if (toastX < 2) {
+            toastX = 2;
+          }
           const toastY = btnY - toastH - 6 * s;
           const toastFadeIn = Math.min(1, toastElapsed / 150);
           const toastFadeOut = toastElapsed > 2000 ? (2500 - toastElapsed) / 500 : 1;
