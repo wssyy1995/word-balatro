@@ -248,7 +248,7 @@ Renderer.prototype.render = function(game) {
       const eqTabW = 76 * s;
       const tabGap = 4 * s;
       const tabStartX = px + 20 * s;
-      const tabY = py + 51 * s;
+      const tabY = py + 53 * s;
       const currentTab = game._cardBookTab || 'all';
       const equippedCount = (game.equippedWitchCards || []).length;
 
@@ -452,7 +452,7 @@ Renderer.prototype.render = function(game) {
       ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
-      ctx.fillText(countText, px + pw - 20 * s, py + 50 * s);
+      ctx.fillText(countText, px + pw - 22 * s, py + 50 * s);
       ctx.restore();
 
       // === 图鉴内容：4 格布局 + 翻页 ===
