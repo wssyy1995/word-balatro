@@ -1,0 +1,6 @@
+{
+  "name": "baiduDict",
+  "version": "1.0.0",
+  "description": "百度翻译词典版查询云函数",
+  "main": "index.js"
+}

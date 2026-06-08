@@ -1781,6 +1781,14 @@ function handleInput(x, y) {
               game._confirmBuySuccess = true;
               game._confirmBuySuccessTime = Date.now();
               if (game.audioManager) game.audioManager.play('buy_success');
+              // 上报：卡牌购买
+              if (typeof wx !== 'undefined' && wx.reportEvent) {
+                const typeMap = { witch: '1', crystal: '2', potion: '3' };
+                wx.reportEvent("card_buy", {
+                  "card_type": typeMap[itemData.type] || itemData.type,
+                  "card_name": itemData.name
+                });
+              }
             }
             game._buyConfirmPopup = null;
             game._buyConfirmBtnPressed = false;

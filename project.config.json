@@ -52,6 +52,7 @@
     "swc": false,
     "disableSWC": true
   },
+  "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "game",
   "libVersion": "3.14.0",
   "appid": "wx499c473a2f322520",

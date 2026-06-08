@@ -12,6 +12,13 @@ class GameOverRenderer {
     if (!isClosing && this.lastGameOverReason !== game.gameOverReason) {
       this.animStartTime = Date.now();
       this.lastGameOverReason = game.gameOverReason;
+      // 上报：游戏结束（弹窗首次显示）
+      if (typeof wx !== 'undefined' && wx.reportEvent) {
+        wx.reportEvent("gameover", {
+          "round": game.round,
+          "current_coin": game.gold
+        });
+      }
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;

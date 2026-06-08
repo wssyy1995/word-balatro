@@ -23,6 +23,107 @@ function requestPromise(options) {
   });
 }
 
+// ===== 百度翻译词典版 API（前端不存密钥，token 从云函数获取，本地缓存7天）=====
+const BAIDU_TOKEN_CACHE_KEY = 'baidu_dict_token_v1';
+const BAIDU_TOKEN_CACHE_DAYS = 7;
+
+let _baiduAccessToken = null;
+let _baiduTokenExpireAt = 0;
+
+// 从本地缓存加载 token
+function loadBaiduToken() {
+  try {
+    const cached = wx.getStorageSync(BAIDU_TOKEN_CACHE_KEY);
+    if (cached && cached.token && cached.expireAt > Date.now()) {
+      _baiduAccessToken = cached.token;
+      _baiduTokenExpireAt = cached.expireAt;
+      return true;
+    }
+  } catch (e) {}
+  _baiduAccessToken = null;
+  _baiduTokenExpireAt = 0;
+  return false;
+}
+
+// 保存 token 到本地缓存（有效期7天）
+function saveBaiduToken(token) {
+  const expireAt = Date.now() + BAIDU_TOKEN_CACHE_DAYS * 24 * 60 * 60 * 1000;
+  _baiduAccessToken = token;
+  _baiduTokenExpireAt = expireAt;
+  try {
+    wx.setStorageSync(BAIDU_TOKEN_CACHE_KEY, { token, expireAt });
+  } catch (e) {}
+}
+
+// 调用云函数刷新 token
+async function refreshBaiduToken() {
+  try {
+    const res = await wx.cloud.callFunction({ name: 'baiduDict', data: {} });
+    if (res.result && res.result.code === 0 && res.result.access_token) {
+      saveBaiduToken(res.result.access_token);
+      console.log('[BaiduDict] token refreshed via cloud function, cache 7 days');
+      return res.result.access_token;
+    }
+    console.log('[BaiduDict] cloud function returned error:', res.result);
+  } catch (e) {
+    console.log('[BaiduDict] cloud function failed:', e.message || e);
+  }
+  return null;
+}
+
+// 获取可用 token（优先缓存，过期则调云函数刷新）
+async function getBaiduAccessToken() {
+  const now = Date.now();
+  // 内存或本地缓存有效（留60秒缓冲）
+  if (_baiduAccessToken && _baiduTokenExpireAt > now + 60000) {
+    return _baiduAccessToken;
+  }
+  // 尝试从本地 storage 加载
+  if (loadBaiduToken() && _baiduTokenExpireAt > now + 60000) {
+    return _baiduAccessToken;
+  }
+  // 调云函数刷新
+  return refreshBaiduToken();
+}
+
+// 调用百度词典版接口（带 token 失效自动重试）
+async function baiduDictRequest(word, retry = true) {
+  const accessToken = await getBaiduAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const resp = await requestPromise({
+      url: `https://aip.baidubce.com/rpc/2.0/mt/texttrans-with-dict/v1?access_token=${accessToken}`,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { from: 'en', to: 'zh', q: word },
+      timeout: 5000
+    });
+
+    // token 失效，清除缓存并重试一次
+    if (resp.statusCode === 401 || resp.data?.error_code === 110 || resp.data?.error_code === 111) {
+      console.log('[BaiduDict] token expired, will refresh via cloud function');
+      _baiduAccessToken = null;
+      _baiduTokenExpireAt = 0;
+      try { wx.removeStorageSync(BAIDU_TOKEN_CACHE_KEY); } catch (e) {}
+      if (retry) {
+        const newToken = await refreshBaiduToken();
+        if (newToken) {
+          return baiduDictRequest(word, false);
+        }
+      }
+      return null;
+    }
+
+    if (resp.statusCode === 200 && resp.data?.result?.trans_result?.[0]) {
+      return resp.data.result.trans_result[0];
+    }
+  } catch (e) {
+    console.log(`[BaiduDict] request "${word}" failed:`, e.message || e);
+  }
+  return null;
+}
+
 // 工具函数
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
@@ -457,25 +558,6 @@ function isValidWord(word) {
   return false;
 }
 
-// 后台调用 MyMemory 把英文定义译成中文
-async function fetchChineseTranslation(word, enDef, pos) {
-  try {
-    const transResp = await requestPromise({
-      url: `https://api.mymemory.translated.net/get?q=${encodeURIComponent(enDef.slice(0, 120))}&langpair=en|zh-CN`,
-      method: 'GET',
-      timeout: 5000
-    });
-    if (transResp.statusCode === 200 && transResp.data?.responseData?.translatedText) {
-      const zhDef = transResp.data.responseData.translatedText;
-      if (zhDef && !zhDef.includes('MYMEMORY WARNING')) {
-        wordMeaningCache.set(word, { entries: [{ pos, def: zhDef }], pos, meaning: zhDef });
-      }
-    }
-  } catch (e) {
-    // 翻译失败，保留英文定义
-  }
-}
-
 async function isValidWordOnline(word) {
   word = word.toLowerCase();
   // 防御性检查（该函数也可能被单独调用）
@@ -506,36 +588,56 @@ async function isValidWordOnline(word) {
   console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) requesting...`);
 
   try {
-    const resp = await requestPromise({
-      url: `https://api.dictionaryapi.dev/api/v2/entries/en/${word}`,
-      method: 'GET',
-      timeout: 3000
-    });
+    const result = await baiduDictRequest(word);
 
-    if (resp.statusCode === 200) {
-      console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) VALID`);
-      onlineWordCache.add(word);
-      wordCheckState.set(word, 'valid');
+    if (result && result.dict) {
+      const dict = typeof result.dict === 'string' ? JSON.parse(result.dict) : result.dict;
+      const simple = dict?.word_result?.simple_means;
+      const from = simple?.from || '';
 
-      if (Array.isArray(resp.data) && resp.data[0]?.meanings?.length > 0) {
-        const entries = resp.data[0].meanings.slice(0, 2).map(m => ({
-          pos: m.partOfSpeech || '',
-          def: m.definitions?.[0]?.definition || ''
-        }));
+      // 白名单：只有 original(标准词)、deformation(变形词)、green(专有名词) 算有效
+      // net/netdata 等未知类型视为无效（网络拼凑词）
+      const VALID_FROM_TYPES = ['original', 'deformation', 'green'];
+      const isValid = VALID_FROM_TYPES.includes(from);
 
-        // 如果还没有释义缓存，先存入英文定义，再后台翻译中文
-        if (!wordMeaningCache.has(word)) {
-          const enDef = entries[0]?.def || '';
-          const pos = entries[0]?.pos || '';
-          wordMeaningCache.set(word, { entries: [{ pos, def: enDef }], pos, meaning: enDef });
-          fetchChineseTranslation(word, enDef, pos);
+      if (isValid) {
+        console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) VALID (from=${from})`);
+        onlineWordCache.add(word);
+        wordCheckState.set(word, 'valid');
+
+        // 缓存中文释义
+        if (!wordMeaningCache.has(word) && simple) {
+          const wordMeans = simple.word_means || [];
+          const symbols = simple.symbols?.[0];
+          const parts = symbols?.parts || [];
+          const phEn = symbols?.ph_en || '';
+          const phAm = symbols?.ph_am || '';
+
+          // 构建 entries（取前2个词性）
+          const entries = parts.slice(0, 2).map(p => ({
+            pos: p.part || p.part_name || '',
+            def: (p.means || []).slice(0, 3).join('；')
+          }));
+
+          // 汇总释义
+          const meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
+
+          wordMeaningCache.set(word, {
+            entries: entries.length > 0 ? entries : [{ pos: '', def: meaning }],
+            pos: entries[0]?.pos || '',
+            meaning,
+            phEn,
+            phAm
+          });
         }
+        checkingWords.delete(word);
+        return true;
+      } else {
+        console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (from=netdata)`);
       }
-      checkingWords.delete(word);
-      return true;
+    } else {
+      console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (no dict)`);
     }
-    // 404 或其他状态码：单词不存在或接口异常
-    console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (status=${resp.statusCode})`);
   } catch (e) {
     console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) ERROR:`, e.message || e);
   }
@@ -1039,6 +1141,13 @@ class Game {
   }
 
   resetRound() {
+    // 上报：回合开始
+    if (typeof wx !== 'undefined' && wx.reportEvent) {
+      wx.reportEvent("round_start", {
+        "round": this.round
+      });
+    }
+
     wordCheckState.clear();
     this.pendingCheck = null;
 
@@ -1513,7 +1622,7 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
+    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
     // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
@@ -1833,6 +1942,13 @@ class Game {
   }
 
   _showSettlement() {
+    // 上报：回合通关
+    if (typeof wx !== 'undefined' && wx.reportEvent) {
+      wx.reportEvent("round_pass", {
+        "round": this.round
+      });
+    }
+
     if (this.audioManager) this.audioManager.play('round_win');
     let baseGold = 4;
     // 装备卡结算加成（多张叠加）
