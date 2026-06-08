@@ -316,10 +316,10 @@ function startGame() {
   wx.onShareAppMessage(() => {
     try {
       const tempFilePath = canvas.toTempFilePathSync({
-        x: 0,
-        y: 0,
-        width: canvas.width,
-        height: canvas.height,
+        x: Math.floor(canvas.width * 0.1),
+        y: Math.floor(canvas.height * 0.1),
+        width: Math.floor(canvas.width * 0.8),
+        height: Math.floor(canvas.height * 0.8),
         destWidth: 500,
         destHeight: 400,
         fileType: 'png',
