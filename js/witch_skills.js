@@ -5,10 +5,10 @@ const WITCH_SKILLS = [
   { level: 8, name: '女巫_C',  reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位'},
   { level: 11, name: '女巫_D', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
   { level: 14, name: '女巫_E', reward: 'card_random_upgrade',rate:0.5,reward_desc: '有概率获得一张: 随机强化'},
-  { level: 16, name: '女巫_F', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1' },
-  { level: 18, name: '女巫_G', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化' },
+  { level: 16, name: '女巫_F', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化'},
+  { level: 18, name: '女巫_G', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1'  },
   { level: 21, name: '女巫_H',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
-  { level: 24, name: '女巫_I',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
+  { level: 24, name: '女巫_I',  reward: 'shop_discount_5',rate:0.3,reward_desc: '本回合卡牌商店，打5折' },
   { level: 27, name: '女巫_J',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
   { level: 30, name: '女巫_K', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
   { level: 33, name: '女巫_L', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
@@ -53,7 +53,9 @@ const WITCH_CARDS = [
   { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'last_letter_double',card_skill_desc:'单词最后一个字母，触发结算2次'},
   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'witch_skill_protect',card_skill_desc:'有女巫的回合,首次出牌不会触发约束规则'},
   { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'shop_discount',card_skill_desc:'每回合分数超过目标分30%，则该回合的卡牌商店打6折'},
-  { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'score_overflow',card_skill_desc:'每回合溢出分数（超过目标分部分）的10%计入下回合初始分'}
+  { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'score_overflow',card_skill_desc:'每回合溢出分数（超过目标分部分）的10%计入下回合初始分'},
+  { card_id: 'witch_card_21', witch_name: '赫丝佩瑞丝', witch_desc:'异界来客，裂隙彼岸之人',card_skill_name: 'out_card_different',card_skill_desc:'每次弃牌后补入的字母,一定会排除原弃牌字母'},
+  { card_id: 'witch_card_24', witch_name: '伊洛薇尔', witch_desc:'暮光行者，昼夜的守门人',card_skill_name: 'witch_skill_extra_hands',card_skill_desc:'若本回合有女巫，出牌和弃牌次数均+1'}
 
 ];
 
@@ -118,6 +120,7 @@ function getRewardName(rewardType) {
     'global_letter_1': '额外字母',
     'global_witch_card_1': '女巫槽位+1',
     'double_coin': '金币翻倍',
+    'shop_discount_5': '商店5折',
   };
   return map[rewardType] || rewardType;
 }
@@ -185,6 +188,14 @@ function createRewardItem(rewardType) {
         value: 1,
         desc: '本赛局女巫牌槽位+1'
       };
+    case 'shop_discount_5':
+      return {
+        name: '商店5折',
+        type: 'buff',
+        effect: 'shop_discount_5',
+        value: 0.5,
+        desc: '本回合卡牌商店所有商品打5折'
+      };
     default:
       return null;
   }
@@ -211,6 +222,11 @@ function giveReward(rewardType, game) {
     }
     case 'global_witch_card_1': {
       game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
+      return true;
+    }
+    case 'shop_discount_5': {
+      game._shopDiscountActive = true;
+      game._shopDiscountRate = 0.5;
       return true;
     }
     default:

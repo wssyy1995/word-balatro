@@ -99,6 +99,7 @@ class StorageManager {
       _seedMaxLen: game._seedMaxLen,
       _lastInitialLetter: game._lastInitialLetter || null,
       _shopDiscountActive: game._shopDiscountActive || false,
+      _shopDiscountRate: game._shopDiscountRate || 0.6,
       _overflowBonus: game._overflowBonus || 0,
       settlementData: game.settlementData || null,
       guidePhase: game.guidePhase,

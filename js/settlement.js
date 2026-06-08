@@ -480,6 +480,28 @@ class WitchRewardRenderer {
               ctx.fill();
               ctx.restore();
             }
+          } else if (rewardItem.effect === 'shop_discount_5') {
+            // === shop_discount_5: discount.png 图标 ===
+            const iconSize = 70 * s;
+            if (this.parent.discountIcon && this.parent.discountIconLoaded) {
+              ctx.save();
+              ctx.drawImage(this.parent.discountIcon, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
+              ctx.restore();
+            } else {
+              // 兜底：圆形 + "5折" 文字
+              const iconR = 35 * s;
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+              ctx.fillStyle = '#e74c3c';
+              ctx.fill();
+              ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+              ctx.fillStyle = '#fff';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('5折', W / 2, iconCY);
+              ctx.restore();
+            }
           } else {
             // === global_hand_1 / global_letter_1 奖励布局 ===
             // 圆形占位图标

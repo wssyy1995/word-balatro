@@ -684,7 +684,8 @@ class Game {
     this._witchSkillProtectUsed = false;
 
     // 装备女巫卡牌跨回合状态
-    this._shopDiscountActive = false;   // 菲兰瑟娅：本回合商店6折
+    this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
+    this._shopDiscountRate = 0.6;       // 默认折扣率
     this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
 
     // 设置弹窗
@@ -916,6 +917,7 @@ class Game {
 
     // 恢复装备女巫卡牌跨回合状态
     if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
+    if (p._shopDiscountRate !== undefined) this._shopDiscountRate = p._shopDiscountRate;
     if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
 
     // 修复：恢复后清理手牌中的 null 占位符并重新补牌
@@ -1833,6 +1835,7 @@ class Game {
           // 菲兰瑟娅：超过目标分30%则本回合商店打6折
           if (this.score >= this.target * 1.3) {
             this._shopDiscountActive = true;
+            this._shopDiscountRate = 0.6;
             console.log('[EquippedSkill] shop_discount activated, score:', this.score, 'target:', this.target);
           }
         } else if (cardConfig.card_skill_name === 'score_overflow') {
@@ -1967,6 +1970,9 @@ class Game {
               this.maxJokerSlots = (this.maxJokerSlots || 4) + 1;
             } else if (data.rewardItem.effect === 'double_coin') {
               this.gold *= 2;
+            } else if (data.rewardItem.effect === 'shop_discount_5') {
+              this._shopDiscountActive = true;
+              this._shopDiscountRate = 0.5;
             }
           }
           // 进入商店前取消所有女巫牌禁用状态
@@ -2165,7 +2171,8 @@ class Game {
     this.roundScores.push({ round: this.round, score: this.score });
     this.round++;
     this.shopItems = null;
-    this._shopDiscountActive = false; // 菲兰瑟娅折扣只持续一回合商店
+    this._shopDiscountActive = false; // 折扣只持续一回合商店
+    this._shopDiscountRate = 0.6;
     this.resetRound();
     this._preloadWitchAvatars();
     if (this.storageManager) this.storageManager.saveProgress();

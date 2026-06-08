@@ -118,7 +118,7 @@ function refreshModule(game, modIdx) {
 
 function buyItem(game, idx) {
   const item = game.shopItems[idx];
-  const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
+  const finalCost = game._shopDiscountActive ? Math.round(item.cost * game._shopDiscountRate) : item.cost;
   if (!item || game.gold < finalCost) return false;
 
   // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
@@ -1068,7 +1068,7 @@ class ShopRenderer {
         const btnH = 22 * s;
         const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
         const coinSize = 15 * s;
-        const finalCost = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
+        const finalCost = game._shopDiscountActive ? Math.round(item.cost * game._shopDiscountRate) : item.cost;
         const canAfford = game.gold >= finalCost;
 
         // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
@@ -1500,7 +1500,7 @@ class ShopRenderer {
         ctx.restore();
 
         // 标题文字
-        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * 0.6) : popup.item.cost;
+        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * game._shopDiscountRate) : popup.item.cost;
         const isCrystalBall = popup.item.type === 'crystal';
         const confirmText = isCrystalBall
           ? `花费 ${popupFinalCost} 金币购买此卡牌，并立即生效？`
@@ -2058,7 +2058,7 @@ class ConfirmBuyRenderer {
 
       // coin 图标 + 金额
       const coinSize = 20 * s;
-      const popupFinalCost2 = game._shopDiscountActive ? Math.round(item.cost * 0.6) : item.cost;
+      const popupFinalCost2 = game._shopDiscountActive ? Math.round(item.cost * game._shopDiscountRate) : item.cost;
       const priceText = String(popupFinalCost2);
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
       const textW = ctx.measureText(priceText).width;
