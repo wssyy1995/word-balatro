@@ -219,15 +219,6 @@ module.exports = function extendCardbook(Renderer) {
         });
       }
   
-      // 已装备计数（按钮左侧）
-      const equippedCount = (game.equippedWitchCards || []).length;
-      const countText = `已装备 ${equippedCount}/3`;
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = equippedCount >= 3 ? '#c43a3a' : '#8b6fae';
-      ctx.textAlign = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(countText, btnX - 6 * s, btnY + btnH / 2);
-
       // 右上角装备按钮
       const isEquipped = game.equippedWitchCards.includes(level);
       const btnPressOffset = game._cardBookEquipBtnPressed ? 1 * s : 0;
