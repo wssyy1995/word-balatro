@@ -352,24 +352,26 @@ Renderer.prototype.render = function(game) {
 
       // === Tab 切换：全部 / 已装备 ===
       const tabH = 24 * s;
-      const tabW = 56 * s;
+      const allTabW = 48 * s;
+      const eqTabW = 86 * s;
       const tabGap = 4 * s;
       const tabStartX = px + 20 * s;
       const tabY = py + 46 * s;
       const currentTab = game._cardBookTab || 'all';
+      const equippedCount = (game.equippedWitchCards || []).length;
 
       this.cardBookTabRects = [];
 
-      // 绘制 "全部" tab
+      // 绘制 "全部" tab（背景始终不透明）
       const allTabX = tabStartX;
       ctx.save();
       ctx.beginPath();
       const tabR = 5 * s;
       ctx.moveTo(allTabX + tabR, tabY);
-      ctx.lineTo(allTabX + tabW - tabR, tabY);
-      ctx.quadraticCurveTo(allTabX + tabW, tabY, allTabX + tabW, tabY + tabR);
-      ctx.lineTo(allTabX + tabW, tabY + tabH - tabR);
-      ctx.quadraticCurveTo(allTabX + tabW, tabY + tabH, allTabX + tabW - tabR, tabY + tabH);
+      ctx.lineTo(allTabX + allTabW - tabR, tabY);
+      ctx.quadraticCurveTo(allTabX + allTabW, tabY, allTabX + allTabW, tabY + tabR);
+      ctx.lineTo(allTabX + allTabW, tabY + tabH - tabR);
+      ctx.quadraticCurveTo(allTabX + allTabW, tabY + tabH, allTabX + allTabW - tabR, tabY + tabH);
       ctx.lineTo(allTabX + tabR, tabY + tabH);
       ctx.quadraticCurveTo(allTabX, tabY + tabH, allTabX, tabY + tabH - tabR);
       ctx.lineTo(allTabX, tabY + tabR);
@@ -377,50 +379,69 @@ Renderer.prototype.render = function(game) {
       ctx.closePath();
       if (currentTab === 'all') {
         ctx.fillStyle = '#faf6ee';
-        ctx.fill();
         ctx.strokeStyle = '#c4a35a';
         ctx.lineWidth = 1 * s;
+        ctx.fill();
         ctx.stroke();
       } else {
-        ctx.fillStyle = 'rgba(250,246,238,0.3)';
+        ctx.fillStyle = '#d5cbb8';
         ctx.fill();
       }
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = currentTab === 'all' ? '#1a2f4a' : '#aaa';
+      ctx.fillStyle = currentTab === 'all' ? '#1a2f4a' : '#7a7060';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('全部', allTabX + tabW / 2, tabY + tabH / 2);
+      ctx.fillText('全部', allTabX + allTabW / 2, tabY + tabH / 2);
       ctx.restore();
-      this.cardBookTabRects.push({ x: allTabX, y: tabY, w: tabW, h: tabH, tab: 'all' });
+      this.cardBookTabRects.push({ x: allTabX, y: tabY, w: allTabW, h: tabH, tab: 'all' });
 
-      // 绘制 "已装备" tab
-      const eqTabX = allTabX + tabW + tabGap;
+      // 绘制 "已装备" tab（深紫色，背景始终不透明，文案带计数小字）
+      const eqTabX = allTabX + allTabW + tabGap;
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(eqTabX + tabR, tabY);
-      ctx.lineTo(eqTabX + tabW - tabR, tabY);
-      ctx.quadraticCurveTo(eqTabX + tabW, tabY, eqTabX + tabW, tabY + tabR);
-      ctx.lineTo(eqTabX + tabW, tabY + tabH - tabR);
-      ctx.quadraticCurveTo(eqTabX + tabW, tabY + tabH, eqTabX + tabW - tabR, tabY + tabH);
+      ctx.lineTo(eqTabX + eqTabW - tabR, tabY);
+      ctx.quadraticCurveTo(eqTabX + eqTabW, tabY, eqTabX + eqTabW, tabY + tabR);
+      ctx.lineTo(eqTabX + eqTabW, tabY + tabH - tabR);
+      ctx.quadraticCurveTo(eqTabX + eqTabW, tabY + tabH, eqTabX + eqTabW - tabR, tabY + tabH);
       ctx.lineTo(eqTabX + tabR, tabY + tabH);
       ctx.quadraticCurveTo(eqTabX, tabY + tabH, eqTabX, tabY + tabH - tabR);
       ctx.lineTo(eqTabX, tabY + tabR);
       ctx.quadraticCurveTo(eqTabX, tabY, eqTabX + tabR, tabY);
       ctx.closePath();
       if (currentTab === 'equipped') {
-        ctx.fillStyle = '#6b4c8a';
+        ctx.fillStyle = '#5a3d7a';
         ctx.fill();
       } else {
-        ctx.fillStyle = 'rgba(107,76,138,0.3)';
+        ctx.fillStyle = '#8a7ab0';
         ctx.fill();
       }
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = currentTab === 'equipped' ? '#fff' : '#aaa';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('已装备', eqTabX + tabW / 2, tabY + tabH / 2);
       ctx.restore();
-      this.cardBookTabRects.push({ x: eqTabX, y: tabY, w: tabW, h: tabH, tab: 'equipped' });
+
+      // 已装备 tab 文字：主文字 + 计数小字
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      const eqMainText = '已装备';
+      const eqCountText = ` (${equippedCount}/3)`;
+      const eqMainW = ctx.measureText(eqMainText).width;
+      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+      const eqCountW = ctx.measureText(eqCountText).width;
+      const eqTextTotalW = eqMainW + eqCountW;
+      const eqTextStartX = eqTabX + (eqTabW - eqTextTotalW) / 2;
+
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(eqMainText, eqTextStartX, tabY + tabH / 2);
+
+      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,0.75)';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(eqCountText, eqTextStartX + eqMainW, tabY + tabH / 2);
+      ctx.restore();
+      this.cardBookTabRects.push({ x: eqTabX, y: tabY, w: eqTabW, h: tabH, tab: 'equipped' });
 
       // x/26 标签（在标题下方偏右）
       const collectedCount = (game.collectedWitchCards || []).length;
