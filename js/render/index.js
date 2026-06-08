@@ -358,7 +358,7 @@ Renderer.prototype.render = function(game) {
       const cbTitleText = '词牌图鉴';
       const cbTitleFontSize = 24 * s;
       // 标题与副标题完全独立定位，不依赖 card_book.png 位置
-      const cbTitleY = py + 28 * s;
+      const cbTitleY = py + 18 * s;
 
       ctx.font = `bold ${Math.floor(cbTitleFontSize)}px Georgia, serif`;
       const cbTextMetrics = ctx.measureText(cbTitleText);
