@@ -1038,7 +1038,7 @@ function handleInput(x, y) {
           } else {
             // 装备（最多3张）
             if (equippedArr.length >= 3) {
-              game._equipFullToast = { text: '已达最大装备数量（3张），请先卸下其他卡牌', startTime: Date.now() };
+              game._equipFullToast = { text: '已达最大装备数（3张），请先卸下其他词牌', startTime: Date.now() };
               return;
             }
             game.equippedWitchCards = [...equippedArr, level];
