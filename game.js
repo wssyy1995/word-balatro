@@ -471,10 +471,10 @@ wx.onTouchStart((e) => {
     const closeY = panelY + 14 * s;
     const hitPad = 20 * s;
     const rankCloseBtnRect = {
-      x: closeX - hitPad,
+      x: closeX - hitPad - 10 * s,
       y: closeY - hitPad,
-      w: closeSize + hitPad * 2,
-      h: closeSize + hitPad * 2
+      w: closeSize + hitPad * 2 + 10 * s,
+      h: closeSize + hitPad * 2 + 10 * s
     };
     const rankCloseBtnHit = renderer.hitTest(x, y, [rankCloseBtnRect]);
     if (rankCloseBtnHit) {
