@@ -567,7 +567,7 @@ Renderer.prototype.render = function(game) {
         }
 
         // 已装备标识（右上角小标签）
-        if (isUnlocked && game.equippedWitchCard === level) {
+        if (isUnlocked && game.equippedWitchCards.includes(level)) {
           ctx.save();
           const tagH = 18 * s;
           const tagPad = 5 * s;

@@ -1015,17 +1015,22 @@ function handleInput(x, y) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
           const level = game._cardBookDetailLevel;
-          if (game.equippedWitchCard === level) {
+          const equippedArr = game.equippedWitchCards || [];
+          if (equippedArr.includes(level)) {
             // 卸下
-            game.equippedWitchCard = null;
+            game.equippedWitchCards = equippedArr.filter(l => l !== level);
             console.log('[Equipped] 卸下 witch_card_' + level);
           } else {
-            // 装备（单选，自动替换）
-            game.equippedWitchCard = level;
-            console.log('[Equipped] 装备 witch_card_' + level);
+            // 装备（最多3张）
+            if (equippedArr.length >= 3) {
+              game._equipFullToast = { text: '已达最大装备数量（3张），请先卸下其他卡牌', startTime: Date.now() };
+              return;
+            }
+            game.equippedWitchCards = [...equippedArr, level];
+            console.log('[Equipped] 装备 witch_card_' + level, '当前:', game.equippedWitchCards);
           }
           if (game.storageManager) {
-            game.storageManager.saveEquippedWitchCard(game.equippedWitchCard);
+            game.storageManager.saveEquippedWitchCard(game.equippedWitchCards);
           }
           return;
         }

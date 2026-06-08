@@ -271,12 +271,15 @@ class StorageManager {
 
   // ===== 已装备女巫卡牌（跨局永久保留）=====
 
-  saveEquippedWitchCard(level) {
-    return this.set('equipped_witch_card', level);
+  saveEquippedWitchCard(levels) {
+    return this.set('equipped_witch_card', levels);
   }
 
   loadEquippedWitchCard() {
-    return this.get('equipped_witch_card', null);
+    const loaded = this.get('equipped_witch_card', null);
+    if (loaded === null) return [];
+    if (typeof loaded === 'number') return [loaded];
+    return Array.isArray(loaded) ? loaded : [];
   }
 
   // ===== 设置 =====

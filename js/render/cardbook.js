@@ -208,7 +208,7 @@ module.exports = function extendCardbook(Renderer) {
       if (cardConfig.card_skill_desc) {
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#8b6fae';
-        ctx.fillText('卡牌技能', textX, textY);
+        ctx.fillText('词牌技能', textX, textY);
         textY += 18 * s;
   
         ctx.font = `${Math.floor(14 * s)}px sans-serif`;
@@ -219,8 +219,17 @@ module.exports = function extendCardbook(Renderer) {
         });
       }
   
+      // 已装备计数（按钮左侧）
+      const equippedCount = (game.equippedWitchCards || []).length;
+      const countText = `已装备 ${equippedCount}/3`;
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = equippedCount >= 3 ? '#c43a3a' : '#8b6fae';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(countText, btnX - 6 * s, btnY + btnH / 2);
+
       // 右上角装备按钮
-      const isEquipped = game.equippedWitchCard === level;
+      const isEquipped = game.equippedWitchCards.includes(level);
       const btnPressOffset = game._cardBookEquipBtnPressed ? 1 * s : 0;
       const drawBtnY = btnY + btnPressOffset;
   
@@ -297,6 +306,50 @@ module.exports = function extendCardbook(Renderer) {
         }
       }
   
+      // 装备已满3张提示
+      if (game._equipFullToast) {
+        const toastElapsed = Date.now() - game._equipFullToast.startTime;
+        if (toastElapsed > 2500) {
+          game._equipFullToast = null;
+        } else {
+          const toastText = game._equipFullToast.text;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          const toastTextW = ctx.measureText(toastText).width;
+          const toastPadX = 8 * s;
+          const toastPadY = 4 * s;
+          const toastW = toastTextW + toastPadX * 2;
+          const toastH = 20 * s;
+          const toastX = btnX + btnW / 2 - toastW / 2;
+          const toastY = btnY - toastH - 6 * s;
+          const toastFadeIn = Math.min(1, toastElapsed / 150);
+          const toastFadeOut = toastElapsed > 2000 ? (2500 - toastElapsed) / 500 : 1;
+          const toastAlpha = toastFadeIn * toastFadeOut;
+
+          ctx.save();
+          ctx.globalAlpha = toastAlpha * alpha;
+          ctx.fillStyle = 'rgba(200, 60, 60, 0.92)';
+          const tr = 4 * s;
+          ctx.beginPath();
+          ctx.moveTo(toastX + tr, toastY);
+          ctx.lineTo(toastX + toastW - tr, toastY);
+          ctx.quadraticCurveTo(toastX + toastW, toastY, toastX + toastW, toastY + tr);
+          ctx.lineTo(toastX + toastW, toastY + toastH - tr);
+          ctx.quadraticCurveTo(toastX + toastW, toastY + toastH, toastX + toastW - tr, toastY + toastH);
+          ctx.lineTo(toastX + tr, toastY + toastH);
+          ctx.quadraticCurveTo(toastX, toastY + toastH, toastX, toastY + toastH - tr);
+          ctx.lineTo(toastX, toastY + tr);
+          ctx.quadraticCurveTo(toastX, toastY, toastX + tr, toastY);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(toastText, toastX + toastW / 2, toastY + toastH / 2);
+          ctx.restore();
+        }
+      }
+
       // 记录按钮点击区域
       this.cardBookEquipBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
   

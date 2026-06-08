@@ -59,6 +59,7 @@ class CloudStorageManager {
 
     // 默认 witch 图片云文件映射
     this.defaultWitchFileMap = {
+      'witch_24': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_24.png',
       'witch_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_21.png',
       'witch_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_18.png',
       'witch_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_16.png',
@@ -80,6 +81,7 @@ class CloudStorageManager {
       'witch_card_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_16.png',
       'witch_card_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_18.png',
       'witch_card_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_21.png',
+      'witch_card_24': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_24.png'
     };
 
     // 默认 bg_icon 图片云文件映射

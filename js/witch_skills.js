@@ -8,7 +8,7 @@ const WITCH_SKILLS = [
   { level: 16, name: '女巫_F', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化'},
   { level: 18, name: '女巫_G', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1'  },
   { level: 21, name: '女巫_H',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
-  { level: 24, name: '女巫_I',  reward: 'shop_discount_5',rate:0.3,reward_desc: '本回合卡牌商店，打5折' },
+  { level: 24, name: '女巫_I',  reward: 'shop_discount_5',rate:1,reward_desc: '本回合卡牌商店，打5折' },
   { level: 27, name: '女巫_J',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
   { level: 30, name: '女巫_K', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
   { level: 33, name: '女巫_L', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },

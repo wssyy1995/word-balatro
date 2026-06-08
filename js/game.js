@@ -239,7 +239,7 @@ function findAllValidWordsInHand(hand) {
     }
 
     seenWords.add(word);
-    const preview = calcWordScore(wordCards, [], null, null, this._lastPlayedLetters);
+    const preview = calcWordScore(wordCards, [], null, [], this._lastPlayedLetters);
     if (preview.valid) {
       results.push({ word, cards: wordCards, score: preview.score });
     }
@@ -296,7 +296,7 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
-function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = null, lastPlayedLetters = null) {
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
@@ -386,13 +386,17 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkill = n
     baseScore += cardScore * cardMults[i] + cardAddScores[i];
   }
 
-  // === 装备卡牌：德莱薇尔 - 最后一个字母分数算两次（含 per_card 女巫牌加成） ===
+  // === 装备卡牌：德莱薇尔 - 最后一个字母分数算多次（含 per_card 女巫牌加成，多张叠加） ===
   let lastLetterDoubleExtra = 0;
-  if (equippedCardSkill === 'last_letter_double' && cards.length > 0) {
+  const doubleCount = (equippedCardSkills || []).filter(s => s === 'last_letter_double').length;
+  if (doubleCount > 0 && cards.length > 0) {
     const lastIdx = cards.length - 1;
     const lastCardScore = letterGod ? maxBaseScore : cards[lastIdx].score;
-    lastLetterDoubleExtra = lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
-    baseScore += lastLetterDoubleExtra;
+    for (let i = 0; i < doubleCount; i++) {
+      const extra = lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
+      lastLetterDoubleExtra += extra;
+      baseScore += extra;
+    }
   }
 
   for (const j of activeJokers) {
@@ -620,7 +624,7 @@ class Game {
       this._cardBookCloseBtnPressed = false;
       this._cardBookCellPressed = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
-      this.equippedWitchCard = this.storageManager.loadEquippedWitchCard();
+      this.equippedWitchCards = this.storageManager.loadEquippedWitchCard();
       console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
       this._newWitchCardThisShop = null;
       this._cardBookIconFlashStart = null;
@@ -847,7 +851,7 @@ class Game {
     this._rankCloseBtnPressed = false;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
-    this.equippedWitchCard = this.storageManager ? this.storageManager.loadEquippedWitchCard() : null;
+    this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
     console.log('[CardBook] 存档恢复加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
     this._newWitchCardThisShop = null;
     this._cardBookIconFlashStart = null;
@@ -1088,8 +1092,8 @@ class Game {
     this.extraSafety = 0;
     this.extraLetters = 0;
     this.witchSkillPassed = true;
-    this._illegalWordShieldUsed = false;
-    this._witchSkillProtectUsed = false;
+    this._illegalWordShieldUsed = 0;
+    this._witchSkillProtectUsed = 0;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     this._lastPlayedLetters = null; // 新回合开始，清除上一手字母记录
@@ -1398,17 +1402,19 @@ class Game {
         // 触发容错咒文动画：跳跃 + 紫色光晕
         shieldJoker._triggered = true;
         shieldJoker._shieldAnimStart = Date.now();
-      } else if (this.equippedWitchCard && !this._illegalWordShieldUsed) {
-        // 检查是否装备了 illegal_words_one 技能的女巫卡牌
-        const eqCard = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
-        if (eqCard && eqCard.card_skill_name === 'illegal_words_one') {
-          this._illegalWordShieldUsed = true;
-          console.log('[EquippedSkill] illegal_words_one shielded illegal word');
+      } else {
+        // 检查装备卡牌：喀薇娅 - 非法单词保护（每张提供1次，可叠加）
+        let shieldCount = 0;
+        for (const level of this.equippedWitchCards || []) {
+          const eqCard = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+          if (eqCard && eqCard.card_skill_name === 'illegal_words_one') shieldCount++;
+        }
+        if (shieldCount > this._illegalWordShieldUsed) {
+          this._illegalWordShieldUsed++;
+          console.log('[EquippedSkill] illegal_words_one shielded illegal word, used:', this._illegalWordShieldUsed, 'total:', shieldCount);
         } else if (!this._hastePlayActive) {
           this.handsLeft--;
         }
-      } else if (!this._hastePlayActive) {
-        this.handsLeft--;
       }
       if (this.handsLeft <= 0) {
         const triggered = this._checkLifeExtension();
@@ -1431,18 +1437,21 @@ class Game {
       return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
     }
 
-    // 获取装备卡牌技能名（提前到约束检查之前）
-    const equippedCard = this.equippedWitchCard ? WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`) : null;
-    const equippedCardSkill = equippedCard ? equippedCard.card_skill_name : null;
+    // 获取所有装备卡牌技能名
+    const equippedCardSkills = [];
+    for (const level of this.equippedWitchCards || []) {
+      const card = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (card) equippedCardSkills.push(card.card_skill_name);
+    }
 
     // === 女巫技能约束检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (witchSkill) {
-      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过约束检查
-      const hasProtect = equippedCardSkill === 'witch_skill_protect';
-      if (hasProtect && !this._witchSkillProtectUsed) {
-        this._witchSkillProtectUsed = true;
-        console.log('[EquippedSkill] witch_skill_protect skipped skill check');
+      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过约束检查（多张叠加次数）
+      const protectCount = equippedCardSkills.filter(s => s === 'witch_skill_protect').length;
+      if (protectCount > this._witchSkillProtectUsed) {
+        this._witchSkillProtectUsed++;
+        console.log('[EquippedSkill] witch_skill_protect skipped skill check, used:', this._witchSkillProtectUsed, 'total:', protectCount);
         // 跳过约束检查，witchSkillPassed 保持 true
       } else if (!checkSkill(witchSkill.skill, this, playedInOrder)) {
         this.witchSkillPassed = false;
@@ -1504,7 +1513,7 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkill, this._lastPlayedLetters);
+    const result = calcWordScore(played, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
     // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
@@ -1590,12 +1599,15 @@ class Game {
         });
       }
     }
-    // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃一次（动画体现）
-    if (equippedCardSkill === 'last_letter_double' && playedInOrder.length > 0) {
+    // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃（每张叠加一次动画）
+    const doubleCount = equippedCardSkills.filter(s => s === 'last_letter_double').length;
+    if (doubleCount > 0 && playedInOrder.length > 0) {
       const lastIdx = playedInOrder.length - 1;
       const lastTriggered = jokerTriggers[lastIdx] || [];
       const lastJokerIdx = lastTriggered.length > 0 ? lastTriggered[lastTriggered.length - 1] : null;
-      perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
+      for (let i = 0; i < doubleCount; i++) {
+        perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
+      }
     }
     this.pendingCheck.perCardSteps = perCardSteps;
     this.pendingCheck.jokerTriggers = jokerTriggers;
@@ -1823,29 +1835,41 @@ class Game {
   _showSettlement() {
     if (this.audioManager) this.audioManager.play('round_win');
     let baseGold = 4;
-    // 装备卡结算加成
-    if (this.equippedWitchCard) {
-      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
-      if (cardConfig) {
-        if (cardConfig.card_skill_name === 'each_round_coin_plus1') {
-          baseGold += 1;
-        } else if (cardConfig.card_skill_name === 'each_round_hand_plus1') {
-          baseGold -= 2;
-        } else if (cardConfig.card_skill_name === 'shop_discount') {
-          // 菲兰瑟娅：超过目标分30%则本回合商店打6折
-          if (this.score >= this.target * 1.3) {
-            this._shopDiscountActive = true;
-            this._shopDiscountRate = 0.6;
-            console.log('[EquippedSkill] shop_discount activated, score:', this.score, 'target:', this.target);
-          }
-        } else if (cardConfig.card_skill_name === 'score_overflow') {
-          // 格莱薇妮娅：溢出分的10%计入下回合初始分
-          const overflow = this.score - this.target;
-          if (overflow > 0) {
-            this._overflowBonus = Math.round(overflow * 0.1);
-            console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow);
-          }
-        }
+    // 装备卡结算加成（多张叠加）
+    let coinBonus = 0;
+    let handPenalty = 0;
+    let discountCount = 0;
+    let overflowCount = 0;
+    for (const level of this.equippedWitchCards || []) {
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (!cardConfig) continue;
+      switch (cardConfig.card_skill_name) {
+        case 'each_round_coin_plus1':
+          coinBonus += 1;
+          break;
+        case 'each_round_hand_plus1':
+          handPenalty += 2;
+          break;
+        case 'shop_discount':
+          discountCount++;
+          break;
+        case 'score_overflow':
+          overflowCount++;
+          break;
+      }
+    }
+    baseGold += coinBonus - handPenalty;
+    if (discountCount > 0 && this.score >= this.target * 1.3) {
+      // 每张额外折扣40%，最低2折
+      this._shopDiscountActive = true;
+      this._shopDiscountRate = Math.max(0.2, 1 - 0.4 * discountCount);
+      console.log('[EquippedSkill] shop_discount activated, count:', discountCount, 'rate:', this._shopDiscountRate, 'score:', this.score, 'target:', this.target);
+    }
+    if (overflowCount > 0) {
+      const overflow = this.score - this.target;
+      if (overflow > 0) {
+        this._overflowBonus = Math.round(overflow * 0.1 * overflowCount);
+        console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow, 'count:', overflowCount);
       }
     }
     const extraHands = this.handsLeft * 2;
@@ -2051,7 +2075,8 @@ class Game {
 
       // 赫丝佩瑞丝：弃牌后补入的字母排除原弃牌字母
       const discardedLetters = discardedCards.map(c => c.letter);
-      if (this.equippedWitchCard === 21) {
+      const hasOutCardDifferent = (this.equippedWitchCards || []).some(l => l === 21);
+      if (hasOutCardDifferent) {
         this.deck = this.deck.filter(c => !discardedLetters.includes(c.letter));
         const need = discardedCards.length;
         if (this.deck.length < need) {
@@ -2109,34 +2134,36 @@ class Game {
     this.totalScore += delta;
   }
 
-  // 应用装备的女巫卡牌技能 bonus
+  // 应用装备的女巫卡牌技能 bonus（多张叠加）
   _applyEquippedCardBonus(timing) {
-    if (!this.equippedWitchCard) return;
-    const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${this.equippedWitchCard}`);
-    if (!cardConfig) return;
-    switch (cardConfig.card_skill_name) {
-      case 'each_round_coin_plus1':
-        // 结算加成在 _showSettlement 中处理
-        break;
-      case 'each_round_hand_plus1':
-        if (timing === 'round') {
-          this.handsLeft += 1;
-          console.log('[EquippedSkill] each_round_hand_plus1 applied, handsLeft:', this.handsLeft);
-        }
-        break;
-      case 'illegal_words_one':
-        // 回合级标记在 resetRound 中重置，实际生效在 playHand 非法单词逻辑中
-        break;
-      case 'witch_skill_extra_hands':
-        if (timing === 'round') {
-          const ws = getSkillForLevel(this.round, this._shuffledSkills);
-          if (ws && ws.skill) {
+    if (!this.equippedWitchCards || this.equippedWitchCards.length === 0) return;
+    for (const level of this.equippedWitchCards) {
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (!cardConfig) continue;
+      switch (cardConfig.card_skill_name) {
+        case 'each_round_coin_plus1':
+          // 结算加成在 _showSettlement 中处理
+          break;
+        case 'each_round_hand_plus1':
+          if (timing === 'round') {
             this.handsLeft += 1;
-            this.discardsLeft += 1;
-            console.log('[EquippedSkill] witch_skill_extra_hands applied, handsLeft:', this.handsLeft, 'discardsLeft:', this.discardsLeft);
+            console.log('[EquippedSkill] each_round_hand_plus1 applied, handsLeft:', this.handsLeft);
           }
-        }
-        break;
+          break;
+        case 'illegal_words_one':
+          // 回合级标记在 resetRound 中重置，实际生效在 playHand 非法单词逻辑中
+          break;
+        case 'witch_skill_extra_hands':
+          if (timing === 'round') {
+            const ws = getSkillForLevel(this.round, this._shuffledSkills);
+            if (ws && ws.skill) {
+              this.handsLeft += 1;
+              this.discardsLeft += 1;
+              console.log('[EquippedSkill] witch_skill_extra_hands applied, handsLeft:', this.handsLeft, 'discardsLeft:', this.discardsLeft);
+            }
+          }
+          break;
+      }
     }
   }
 
