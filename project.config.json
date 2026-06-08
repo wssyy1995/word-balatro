@@ -13,6 +13,10 @@
       {
         "type": "folder",
         "value": "scripts"
+      },
+      {
+        "type": "folder",
+        "value": "cloudfunctions"
       }
     ],
     "include": []
