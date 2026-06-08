@@ -959,6 +959,21 @@ function handleInput(x, y) {
   
   // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
   if (game.cardBookOpen && !game._closingCardBook) {
+    // 0. 检测 tab 切换按钮
+    if (renderer.cardBookTabRects) {
+      const tabHit = renderer.hitTest(x, y, renderer.cardBookTabRects);
+      if (tabHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._cardBookTab = tabHit.tab;
+        game.cardBookPage = 0;
+        game._cardBookCellPressed = null;
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
+        return;
+      }
+    }
+
     // 1. 先检测是否点击了已解锁卡牌（最高优先级）
     if (renderer.cardBookCellRects && renderer.cardBookCellRects.length > 0) {
       const cellHit = renderer.hitTest(x, y, renderer.cardBookCellRects);

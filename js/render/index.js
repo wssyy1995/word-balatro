@@ -350,23 +350,104 @@ Renderer.prototype.render = function(game) {
       ctx.fillText(cbTitleText, px + pw / 2, cbTitleY);
       ctx.restore();
 
-      // x/26 标签（在标题下方）
+      // === Tab 切换：全部 / 已装备 ===
+      const tabH = 24 * s;
+      const tabW = 56 * s;
+      const tabGap = 4 * s;
+      const tabStartX = px + 20 * s;
+      const tabY = py + 46 * s;
+      const currentTab = game._cardBookTab || 'all';
+
+      this.cardBookTabRects = [];
+
+      // 绘制 "全部" tab
+      const allTabX = tabStartX;
+      ctx.save();
+      ctx.beginPath();
+      const tabR = 5 * s;
+      ctx.moveTo(allTabX + tabR, tabY);
+      ctx.lineTo(allTabX + tabW - tabR, tabY);
+      ctx.quadraticCurveTo(allTabX + tabW, tabY, allTabX + tabW, tabY + tabR);
+      ctx.lineTo(allTabX + tabW, tabY + tabH - tabR);
+      ctx.quadraticCurveTo(allTabX + tabW, tabY + tabH, allTabX + tabW - tabR, tabY + tabH);
+      ctx.lineTo(allTabX + tabR, tabY + tabH);
+      ctx.quadraticCurveTo(allTabX, tabY + tabH, allTabX, tabY + tabH - tabR);
+      ctx.lineTo(allTabX, tabY + tabR);
+      ctx.quadraticCurveTo(allTabX, tabY, allTabX + tabR, tabY);
+      ctx.closePath();
+      if (currentTab === 'all') {
+        ctx.fillStyle = '#faf6ee';
+        ctx.fill();
+        ctx.strokeStyle = '#c4a35a';
+        ctx.lineWidth = 1 * s;
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = 'rgba(250,246,238,0.3)';
+        ctx.fill();
+      }
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = currentTab === 'all' ? '#1a2f4a' : '#aaa';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('全部', allTabX + tabW / 2, tabY + tabH / 2);
+      ctx.restore();
+      this.cardBookTabRects.push({ x: allTabX, y: tabY, w: tabW, h: tabH, tab: 'all' });
+
+      // 绘制 "已装备" tab
+      const eqTabX = allTabX + tabW + tabGap;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(eqTabX + tabR, tabY);
+      ctx.lineTo(eqTabX + tabW - tabR, tabY);
+      ctx.quadraticCurveTo(eqTabX + tabW, tabY, eqTabX + tabW, tabY + tabR);
+      ctx.lineTo(eqTabX + tabW, tabY + tabH - tabR);
+      ctx.quadraticCurveTo(eqTabX + tabW, tabY + tabH, eqTabX + tabW - tabR, tabY + tabH);
+      ctx.lineTo(eqTabX + tabR, tabY + tabH);
+      ctx.quadraticCurveTo(eqTabX, tabY + tabH, eqTabX, tabY + tabH - tabR);
+      ctx.lineTo(eqTabX, tabY + tabR);
+      ctx.quadraticCurveTo(eqTabX, tabY, eqTabX + tabR, tabY);
+      ctx.closePath();
+      if (currentTab === 'equipped') {
+        ctx.fillStyle = '#6b4c8a';
+        ctx.fill();
+      } else {
+        ctx.fillStyle = 'rgba(107,76,138,0.3)';
+        ctx.fill();
+      }
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = currentTab === 'equipped' ? '#fff' : '#aaa';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('已装备', eqTabX + tabW / 2, tabY + tabH / 2);
+      ctx.restore();
+      this.cardBookTabRects.push({ x: eqTabX, y: tabY, w: tabW, h: tabH, tab: 'equipped' });
+
+      // x/26 标签（在标题下方偏右）
       const collectedCount = (game.collectedWitchCards || []).length;
       const totalCount = WITCH_SKILLS.length;
       const countText = `${collectedCount}/${totalCount}`;
       ctx.save();
       ctx.font = `bold ${Math.floor(12 * s)}px Georgia, serif`;
       ctx.fillStyle = '#c4a35a';
-      ctx.textAlign = 'center';
+      ctx.textAlign = 'right';
       ctx.textBaseline = 'top';
-      ctx.fillText(countText, px + pw / 2, py + 50 * s);
+      ctx.fillText(countText, px + pw - 20 * s, py + 50 * s);
       ctx.restore();
 
       // === 图鉴内容：4 格布局 + 翻页 ===
-      const allLevels = WITCH_SKILLS.map(s => s.level);
+      let allLevels;
+      if (currentTab === 'equipped') {
+        // 已装备 tab：按 WITCH_SKILLS 顺序展示已装备的 level
+        const equippedSet = new Set(game.equippedWitchCards || []);
+        allLevels = WITCH_SKILLS.map(s => s.level).filter(l => equippedSet.has(l));
+      } else {
+        allLevels = WITCH_SKILLS.map(s => s.level);
+      }
       const itemsPerPage = 4;
-      const totalPages = Math.ceil(allLevels.length / itemsPerPage);
-      const page = Math.min(game.cardBookPage || 0, totalPages - 1);
+      const totalPages = Math.max(1, Math.ceil(allLevels.length / itemsPerPage));
+      // 切换 tab 时如果当前页超出范围则重置
+      let page = Math.min(game.cardBookPage || 0, totalPages - 1);
+      if (page < 0) page = 0;
       const pageLevels = allLevels.slice(page * itemsPerPage, (page + 1) * itemsPerPage);
 
       // 内容区域（在面板内部，留出边距给背景图边框）
