@@ -530,32 +530,6 @@ wx.onTouchMove((e) => {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
     if (!hit) game._feedbackSubmitPressed = false;
   }
-  // 移出排行榜关闭按钮区域时取消按下状态
-  if (game._rankCloseBtnPressed) {
-    const touch = e.touches[0];
-    const s = renderer.scale || 1;
-    const panelW = Math.min(renderer.W * 0.9, 340 * s);
-    const panelH = Math.min(renderer.H * 0.75, 520 * s);
-    const panelX = (renderer.W - panelW) / 2;
-    const panelY = (renderer.H - panelH) / 2;
-    const closeSize = 28 * s;
-    const closeX = panelX + panelW - closeSize - 14 * s;
-    const closeY = panelY + 14 * s;
-    const hitPad = 10 * s;
-    const rankCloseBtnRect = {
-      x: closeX - hitPad,
-      y: closeY - hitPad,
-      w: closeSize + hitPad * 2,
-      h: closeSize + hitPad * 2
-    };
-    const hit = renderer.hitTest(touch.clientX, touch.clientY, [rankCloseBtnRect]);
-    if (!hit) {
-      game._rankCloseBtnPressed = false;
-      const odc = getOpenDataContext();
-      if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: false });
-    }
-  }
-
   // 移出卡牌图鉴图标区域时取消按下状态
   if (game._cardBookIconPressed && renderer.cardBookIconRect) {
     const touch = e.touches[0];
