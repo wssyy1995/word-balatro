@@ -179,6 +179,35 @@ const TRANSITION_DURATION = 600;
 
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
+  // 上报用户登录信息（fire-and-forget，不阻塞预加载）
+  try {
+    wx.cloud.callFunction({
+      name: 'login',
+      data: {
+        brand: info.brand,
+        model: info.model,
+        system: info.system,
+        platform: info.platform,
+        language: info.language,
+        version: info.version,
+        SDKVersion: info.SDKVersion,
+        screenWidth: info.screenWidth,
+        screenHeight: info.screenHeight,
+        pixelRatio: info.pixelRatio
+      }
+    }).then(res => {
+      if (res.result && res.result.isNew) {
+        console.log('[Login] 新用户已创建:', res.result.openid);
+      } else if (res.result && res.result.openid) {
+        console.log('[Login] 老用户登录更新:', res.result.openid);
+      }
+    }).catch(err => {
+      console.warn('[Login] 登录上报失败:', err);
+    });
+  } catch (e) {
+    console.warn('[Login] 登录上报异常:', e);
+  }
+
   const shopNames = Object.keys(cloudStorage.cloudFileMap);
   const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
 

@@ -1,0 +1,6 @@
+{
+  "name": "login",
+  "version": "1.0.0",
+  "description": "用户登录信息上报与更新",
+  "main": "index.js"
+}
