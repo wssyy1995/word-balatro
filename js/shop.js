@@ -603,7 +603,24 @@ class ShopRenderer {
           const sellFinalY = btnY + appearOffsetY + (btnH - sellFinalH) / 2;
 
           ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s * appearScale;
+          ctx.shadowOffsetY = 2 * s * appearScale;
           this.parent.roundRect(sellFinalX, sellFinalY, sellFinalW, sellFinalH, 5 * s * appearScale, '#c0392b');
+          ctx.restore();
+
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s * appearScale;
+          ctx.beginPath();
+          const sellHighlightY = sellFinalY + 2 * s * appearScale;
+          ctx.moveTo(sellFinalX + 3 * s * appearScale, sellHighlightY);
+          ctx.lineTo(sellFinalX + sellFinalW - 3 * s * appearScale, sellHighlightY);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
           ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
@@ -627,7 +644,24 @@ class ShopRenderer {
           const useFinalY = btnY + appearOffsetY + (btnH - useFinalH) / 2;
 
           ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s * appearScale;
+          ctx.shadowOffsetY = 2 * s * appearScale;
           this.parent.roundRect(useFinalX, useFinalY, useFinalW, useFinalH, 5 * s * appearScale, '#1e8449');
+          ctx.restore();
+
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s * appearScale;
+          ctx.beginPath();
+          const useHighlightY = useFinalY + 2 * s * appearScale;
+          ctx.moveTo(useFinalX + 3 * s * appearScale, useHighlightY);
+          ctx.lineTo(useFinalX + useFinalW - 3 * s * appearScale, useHighlightY);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
           ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
@@ -645,7 +679,24 @@ class ShopRenderer {
           const finalY = btnY + appearOffsetY + (btnH - finalH) / 2;
 
           ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s * appearScale;
+          ctx.shadowOffsetY = 2 * s * appearScale;
           this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
+          ctx.restore();
+
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s * appearScale;
+          ctx.beginPath();
+          const singleHighlightY = finalY + 2 * s * appearScale;
+          ctx.moveTo(finalX + 3 * s * appearScale, singleHighlightY);
+          ctx.lineTo(finalX + finalW - 3 * s * appearScale, singleHighlightY);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
           ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
@@ -1038,21 +1089,23 @@ class ShopRenderer {
         const isAlwaysBuyablePotion = isPotion && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
         const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
         const potionFull = (game.potions || []).length >= 2;
-        const atLimit = (isWitch && witchFull) || (isPotion && potionFull && !isAlwaysBuyablePotion);
+        const isWitchFull = isWitch && witchFull;
+        const isPotionFull = isPotion && potionFull && !isAlwaysBuyablePotion;
+        const atLimit = isWitchFull || isPotionFull;
 
-        // 确定按钮文案和是否显示金币图标
+        // 女巫牌满时仍显示正常价格（点击后进提示弹窗），药水满时显示"已达上限"
         let btnText, showCoin;
-        if (atLimit) {
-          btnText = '已达上限';
-          showCoin = false;
-        } else if (!canAfford) {
+        if (!canAfford) {
           btnText = '余额不足';
           showCoin = true;
+        } else if (isPotionFull) {
+          btnText = '已达上限';
+          showCoin = false;
         } else {
           btnText = String(finalCost);
           showCoin = true;
         }
-        const isActive = canAfford && !atLimit;
+        const isActive = canAfford && !isPotionFull;
 
         // 先计算按钮宽度
         ctx.save();
@@ -1425,7 +1478,7 @@ class ShopRenderer {
       const priceBtnRect = this.shopPriceBtnRects.find(r => r.index === popup.itemIndex);
       if (priceBtnRect) {
         const bubbleW = 200 * s;
-        const bubbleH = 84 * s;
+        const bubbleH = popup.witchFull ? 92 * s : 84 * s;
         const triangleH = 8 * s;
         const bubbleX = Math.max(10 * s, Math.min(W - bubbleW - 10 * s, priceBtnRect.x + priceBtnRect.w / 2 - bubbleW / 2));
         const bubbleY = priceBtnRect.y + priceBtnRect.h + triangleH + 2;
@@ -1460,94 +1513,145 @@ class ShopRenderer {
         ctx.fill();
         ctx.restore();
 
-        // 标题文字
-        const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * game._shopDiscountRate) : popup.item.cost;
-        const isCrystalBall = popup.item.type === 'crystal';
-        const confirmText = isCrystalBall
-          ? `花费 ${popupFinalCost} 金币购买此卡牌，并立即生效？`
-          : `花费 ${popupFinalCost} 金币购买此卡牌？`;
-        ctx.save();
-        const confirmFontSize = isCrystalBall ? 11 : 13;
-        ctx.font = `bold ${Math.floor(confirmFontSize * s)}px sans-serif`;
-        ctx.fillStyle = '#5a4a2a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(confirmText, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
-        ctx.restore();
+        if (popup.witchFull) {
+          // 女巫牌槽位已满提示
+          const jokerCount = (game.jokers || []).length;
+          const maxSlots = game.maxJokerSlots;
+          const tipText = `女巫牌槽位已达上限（${jokerCount}/${maxSlots}），请先售出一张`;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#8b4513';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          const tipMaxW = bubbleW - 20 * s;
+          const tipLineHeight = 16 * s;
+          const tipY = finalBubbleY + 14 * s;
+          drawWrappedText(ctx, tipText, bubbleX + bubbleW / 2, tipY, tipMaxW, tipLineHeight);
+          ctx.restore();
+        } else {
+          // 标题文字
+          const popupFinalCost = game._shopDiscountActive ? Math.round(popup.item.cost * game._shopDiscountRate) : popup.item.cost;
+          const isCrystalBall = popup.item.type === 'crystal';
+          const confirmText = isCrystalBall
+            ? `花费 ${popupFinalCost} 金币购买此卡牌，并立即生效？`
+            : `花费 ${popupFinalCost} 金币购买此卡牌？`;
+          ctx.save();
+          const confirmFontSize = isCrystalBall ? 11 : 13;
+          ctx.font = `bold ${Math.floor(confirmFontSize * s)}px sans-serif`;
+          ctx.fillStyle = '#5a4a2a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(confirmText, bubbleX + bubbleW / 2, finalBubbleY + 24 * s);
+          ctx.restore();
+        }
 
         // 按钮区域
         const btnW = 72 * s;
-        const btnH = 28 * s;
-        const btnY = finalBubbleY + 42 * s;
-        const gap = 10 * s;
-        const totalBtnW = btnW * 2 + gap;
-        const cancelX = bubbleX + (bubbleW - totalBtnW) / 2;
-        const confirmX = cancelX + btnW + gap;
+        const btnH = popup.witchFull ? 26 * s : 28 * s;
+        const btnY = popup.witchFull ? finalBubbleY + 54 * s : finalBubbleY + 42 * s;
 
-        // 确认按钮（金色，与"生效"按钮同色）
-        let confirmPressOffset = 0;
-        if (game._buyConfirmBtnPressed) {
-          const cpe = Date.now() - game._buyConfirmBtnPressTime;
-          if (cpe < 150) confirmPressOffset = 2 * s;
+        if (!popup.witchFull) {
+          // 确认按钮（金色，与"生效"按钮同色）
+          const gap = 10 * s;
+          const totalBtnW = btnW * 2 + gap;
+          const cancelX = bubbleX + (bubbleW - totalBtnW) / 2;
+          const confirmX = cancelX + btnW + gap;
+
+          let confirmPressOffset = 0;
+          if (game._buyConfirmBtnPressed) {
+            const cpe = Date.now() - game._buyConfirmBtnPressTime;
+            if (cpe < 150) confirmPressOffset = 2 * s;
+          }
+          const confirmBtnY = btnY + confirmPressOffset;
+
+          // 投影
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.22)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.parent.roundRect(confirmX, confirmBtnY, btnW, btnH, 6 * s, '#c4a35a', '#a08030', 1 * s);
+          ctx.restore();
+
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          ctx.moveTo(confirmX + 4 * s, confirmBtnY + 2 * s);
+          ctx.lineTo(confirmX + btnW - 4 * s, confirmBtnY + 2 * s);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('确认', confirmX + btnW / 2, confirmBtnY + btnH / 2);
+          ctx.restore();
+
+          // 取消按钮（米色）
+
+          // 投影
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.22)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#d4b87a', 1 * s);
+          ctx.restore();
+
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          ctx.moveTo(cancelX + 4 * s, btnY + 2 * s);
+          ctx.lineTo(cancelX + btnW - 4 * s, btnY + 2 * s);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#5a4a2a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('取消', cancelX + btnW / 2, btnY + btnH / 2);
+          ctx.restore();
+
+          // 记录按钮 hitTest 区域
+          popup.confirmRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
+          popup.cancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
+        } else {
+          // 女巫牌已满：只有一个取消按钮，居中
+          const cancelX = bubbleX + (bubbleW - btnW) / 2;
+
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.22)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#d4b87a', 1 * s);
+          ctx.restore();
+
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          ctx.moveTo(cancelX + 4 * s, btnY + 2 * s);
+          ctx.lineTo(cancelX + btnW - 4 * s, btnY + 2 * s);
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#5a4a2a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('取消', cancelX + btnW / 2, btnY + btnH / 2);
+          ctx.restore();
+
+          popup.confirmRect = null;
+          popup.cancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
         }
-        const confirmBtnY = btnY + confirmPressOffset;
-
-        // 投影
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.22)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(confirmX, confirmBtnY, btnW, btnH, 6 * s, '#c4a35a', '#a08030', 1 * s);
-        ctx.restore();
-
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(confirmX + 4 * s, confirmBtnY + 2 * s);
-        ctx.lineTo(confirmX + btnW - 4 * s, confirmBtnY + 2 * s);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('确认', confirmX + btnW / 2, confirmBtnY + btnH / 2);
-        ctx.restore();
-
-        // 取消按钮（米色）
-        // 投影
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.22)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(cancelX, btnY, btnW, btnH, 6 * s, '#f5f0e6', '#d4b87a', 1 * s);
-        ctx.restore();
-
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        ctx.moveTo(cancelX + 4 * s, btnY + 2 * s);
-        ctx.lineTo(cancelX + btnW - 4 * s, btnY + 2 * s);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#5a4a2a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('取消', cancelX + btnW / 2, btnY + btnH / 2);
-        ctx.restore();
-
-        // 记录按钮 hitTest 区域
-        popup.confirmRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
-        popup.cancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
 
         ctx.restore();
       }

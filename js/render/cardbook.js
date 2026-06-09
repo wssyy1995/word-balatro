@@ -225,6 +225,16 @@ module.exports = function extendCardbook(Renderer) {
         ctx.fillStyle = '#c4a35a';
       }
       ctx.fill();
+      if (!isEquipped) {
+        const pulse = Math.sin(Date.now() / 250);
+        const glowBlur = (6 + pulse * 4) * s;
+        const glowAlpha = 0.6 + pulse * 0.35;
+        ctx.shadowColor = `rgba(255,215,100,${glowAlpha})`;
+        ctx.shadowBlur = glowBlur;
+        ctx.strokeStyle = `rgba(255,235,180,${0.8 + pulse * 0.35})`;
+        ctx.lineWidth = (1.3 + pulse * 0.5) * s;
+        ctx.stroke();
+      }
       ctx.restore();
   
       // 按钮文字

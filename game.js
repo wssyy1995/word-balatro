@@ -1861,11 +1861,12 @@ function handleInput(x, y) {
         if (game.audioManager) game.audioManager.play('tap');
         const item = game.shopItems[priceHit.index];
         if (!item) return;
-        // 金币不足或已达上限，直接忽略
+        // 金币不足直接忽略
         if (game.gold < item.cost) return;
-        if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return;
         const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
         if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return;
+
+        const witchFull = item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots;
 
         // 按下动效
         renderer.shopRenderer.priceBtnPressed = { index: priceHit.index, pressTime: Date.now() };
@@ -1875,6 +1876,7 @@ function handleInput(x, y) {
           itemIndex: priceHit.index,
           item: {...item},
           startTime: Date.now(),
+          witchFull: witchFull || undefined,
         };
         return;
       }

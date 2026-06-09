@@ -105,7 +105,24 @@ module.exports = function extendPopup(Renderer) {
         const btnY = popupY + pad;
 
         ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
         this.roundRect(btnX, btnY, btnW, btnH, 5 * s, '#c0392b');
+        ctx.restore();
+
+        // 顶部高光条
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        const sellHighlightY = btnY + 2 * s;
+        ctx.moveTo(btnX + 3 * s, sellHighlightY);
+        ctx.lineTo(btnX + btnW - 3 * s, sellHighlightY);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
