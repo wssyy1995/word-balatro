@@ -484,11 +484,8 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
           // 消元术：与上一手无重复字母时触发
           const currentLetters = new Set(cards.map(c => c.letter.toUpperCase()));
           const lastLetters = lastPlayedLetters;
-          console.log('[no_duplicate] 上一手单词:', lastLetters ? Array.from(lastLetters).join('') : 'null');
-          console.log('[no_duplicate] 本手单词:', Array.from(currentLetters).join(''));
           if (!lastLetters || lastLetters.size === 0) {
             wwMatched = true; // 第一手默认触发
-            console.log('[no_duplicate] 第一手默认触发');
           } else {
             // 检查是否有交集
             let hasOverlap = false;
@@ -499,7 +496,6 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
               }
             }
             wwMatched = !hasOverlap;
-            console.log('[no_duplicate] 是否有重复:', hasOverlap, '触发结果:', wwMatched);
           }
         } else {
           wwMatched = _matchWordTrigger(cards, j.trigger);
@@ -1773,6 +1769,14 @@ class Game {
           matched = this.pendingCheck.endEdValid || false;
         } else if (joker.trigger === 'end_s') {
           matched = this.pendingCheck.endSValid || false;
+        } else if (joker.trigger === 'no_duplicate') {
+          const currentLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
+          const lastLetters = this._lastPlayedLetters;
+          if (!lastLetters || lastLetters.size === 0) {
+            matched = true;
+          } else {
+            matched = !Array.from(currentLetters).some(l => lastLetters.has(l));
+          }
         } else {
           matched = _matchWordTrigger(playedInOrder, joker.trigger);
         }
