@@ -196,16 +196,17 @@ async function startPreload() {
         pixelRatio: info.pixelRatio
       }
     }).then(res => {
-      if (res.result && res.result.isNew) {
-        console.log('[Login] 新用户已创建:', res.result.openid);
-      } else if (res.result && res.result.openid) {
-        console.log('[Login] 老用户登录更新:', res.result.openid);
+      console.log('[Login] 云函数返回:', res);
+      if (res.result && res.result.code === 0) {
+        console.log('[Login]', res.result.isNew ? '新用户已创建' : '老用户登录更新', res.result.openid);
+      } else {
+        console.warn('[Login] 云函数业务失败:', res.result);
       }
     }).catch(err => {
-      console.warn('[Login] 登录上报失败:', err);
+      console.error('[Login] 云函数调用失败:', err);
     });
   } catch (e) {
-    console.warn('[Login] 登录上报异常:', e);
+    console.error('[Login] 登录上报异常:', e);
   }
 
   const shopNames = Object.keys(cloudStorage.cloudFileMap);

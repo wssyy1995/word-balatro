@@ -20,8 +20,10 @@ const db = cloud.database();
 
 exports.main = async (event, context) => {
   const { OPENID, UNIONID, APPID } = cloud.getWXContext();
+  console.log('[Login] OPENID:', OPENID, 'UNIONID:', UNIONID);
 
   if (!OPENID) {
+    console.error('[Login] 无法获取 OPENID');
     return { code: -1, message: '无法获取 OPENID' };
   }
 
@@ -46,6 +48,7 @@ exports.main = async (event, context) => {
     const userRes = await db.collection('users').where({
       _openid: OPENID
     }).get();
+    console.log('[Login] 查询结果条数:', userRes.data.length);
 
     if (userRes.data.length === 0) {
       // 新用户：首次创建，createTime 与 lastLoginTime 同时写入
@@ -59,6 +62,7 @@ exports.main = async (event, context) => {
           deviceInfo: deviceInfo,
         }
       });
+      console.log('[Login] 新用户已创建:', OPENID);
       return { code: 0, isNew: true, openid: OPENID };
     } else {
       // 老用户：只更新 lastLoginTime 和设备信息
@@ -70,9 +74,11 @@ exports.main = async (event, context) => {
           deviceInfo: deviceInfo,
         }
       });
+      console.log('[Login] 老用户已更新:', OPENID);
       return { code: 0, isNew: false, openid: OPENID };
     }
   } catch (e) {
+    console.error('[Login] 数据库操作失败:', e);
     return { code: -1, message: e.message || '数据库操作失败' };
   }
 };
