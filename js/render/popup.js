@@ -48,7 +48,9 @@ module.exports = function extendPopup(Renderer) {
       const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
       const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
       const hasPredicted = joker.trigger === 'predicted_letter' && joker._predictedLetter;
+      const hasLastWord = joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession';
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+      if (hasLastWord) contentH += lineH + 2 * s; // 上一手单词
       if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
       if (hasPredicted && !popup.isShop) contentH += lineH + 2 * s; // 预言字母（仅限游戏页）
