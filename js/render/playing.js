@@ -847,8 +847,11 @@ module.exports = function extendPlaying(Renderer) {
         // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
         let curMult = pendingLength;
         for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
-          const joker = wjList[i].joker;
-          if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
+          const item = wjList[i];
+          const joker = item.joker;
+          if (item.isPenalty) {
+            curMult += joker.penalty;
+          } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
             curMult += joker.value;
           } else {
             curMult = Math.ceil(curMult * joker.value);
@@ -862,8 +865,11 @@ module.exports = function extendPlaying(Renderer) {
           const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
           const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
           if (stepProgress < 1.0) {
-            const joker = wjList[labelIdx].joker;
-            if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
+            const item = wjList[labelIdx];
+            const joker = item.joker;
+            if (item.isPenalty) {
+              labelText = `${joker.penalty}`;
+            } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
               labelText = `+${joker.value}`;
             } else {
               labelText = `x${joker.value}`;

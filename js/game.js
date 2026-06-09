@@ -1780,6 +1780,8 @@ class Game {
         }
         if (matched) {
           wholeWordJokers.push({ idx, joker });
+        } else if (joker.penalty !== undefined) {
+          wholeWordJokers.push({ idx, joker, isPenalty: true });
         }
       }
     });
