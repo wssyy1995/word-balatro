@@ -205,7 +205,7 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
       upgradeAdd = upgrade.add || 0;
     }
     return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
-      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd };
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true };
   });
 
   for (const letter of seedLetters) {
@@ -221,9 +221,12 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
 }
 
 function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHandSize = 9, excludeLetters = []) {
-  if (hasValidWordInHand(hand)) return;
+  const hasWord = hasValidWordInHand(hand);
+  console.log('[ensureValidWordInHand] hasValidWord:', hasWord);
+  if (hasWord) return;
 
   const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
+  console.log('[ensureValidWordInHand] seedword:', seedWord);
   const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
 
   for (const letter of seedLetters) {
@@ -256,16 +259,48 @@ function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHa
       hand[i] = seedCards[seedIdx++];
     }
   }
-  // 如果还有剩余的 seedCards，push 到末尾
-  while (seedIdx < seedCards.length) {
+  // 如果还有剩余的 seedCards 且 hand 未满，才 push 到末尾
+  while (seedIdx < seedCards.length && hand.length < maxHandSize) {
     hand.push(seedCards[seedIdx++]);
   }
+}
 
-  // 如果 hand 超过最大限制，把多余的牌塞回 deck
-  while (hand.length > maxHandSize && deck.length > 0) {
-    const extra = hand.pop();
-    if (extra) deck.unshift(extra);
+// 补牌时确保元音规则：至少2种不同元音，且每种元音不超过2张
+function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
+  const VOWELS = ['A', 'E', 'I', 'O', 'U'];
+
+  // 统计保留手牌中的元音
+  const handVowelCounts = {};
+  for (const card of hand) {
+    if (card && VOWELS.includes(card.letter)) {
+      handVowelCounts[card.letter] = (handVowelCounts[card.letter] || 0) + 1;
+    }
   }
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const drawn = deck.splice(0, need);
+
+    const vowelCounts = { ...handVowelCounts };
+    for (const card of drawn) {
+      if (VOWELS.includes(card.letter)) {
+        vowelCounts[card.letter] = (vowelCounts[card.letter] || 0) + 1;
+      }
+    }
+
+    const vowelTypes = Object.keys(vowelCounts).length;
+    const maxVowelCount = Math.max(0, ...Object.values(vowelCounts));
+
+    if (vowelTypes >= 2 && maxVowelCount <= 2) {
+      return drawn;
+    }
+
+    // 不满足，放回 deck 并重新洗牌
+    deck.push(...drawn);
+    shuffle(deck);
+  }
+
+  // 兜底：直接返回
+  return deck.splice(0, need);
 }
 
 // 频率表算法：O(|WORD_DATA|) 远快于全排列 O(n!)
@@ -1906,7 +1941,8 @@ class Game {
       this.deck = shuffle([...this.deck]);
       // 3. 从牌堆顶部补牌
       const need = finalPlayedCards.length;
-      const newCards = this.deck.splice(0, need);
+      const validHand = this.hand.filter(Boolean);
+      const newCards = drawWithVowelRules(this.deck, validHand, need);
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -1928,9 +1964,6 @@ class Game {
       });
 
       this.hand = this.hand.filter(c => c !== null);
-      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
       if (this.storageManager) this.storageManager.saveProgress();
     }, 600);
@@ -2219,7 +2252,8 @@ class Game {
 
       // 3. 从牌堆顶部补牌
       const need = discardedCards.length;
-      const newCards = this.deck.splice(0, need);
+      const validHand = this.hand.filter(Boolean);
+      const newCards = drawWithVowelRules(this.deck, validHand, need);
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -2240,12 +2274,7 @@ class Game {
         return c;
       });
 
-      // 移除未被替换的占位符
       this.hand = this.hand.filter(c => c !== null);
-
-      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
-      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       this.hand.forEach(c => { if (c) c.selected = false; });
     }, 600);
 
