@@ -2005,6 +2005,21 @@ class Game {
       witchSkill: hasWitchReward ? witchSkill : null,
     };
     this.state = 'settlement';
+
+    // 上报最高通关回合数（fire-and-forget）
+    try {
+      wx.cloud.callFunction({
+        name: 'updateBestRound',
+        data: { round: this.round }
+      }).then(res => {
+        console.log('[UpdateBestRound] 云函数返回:', res.result);
+      }).catch(err => {
+        console.error('[UpdateBestRound] 云函数调用失败:', err);
+      });
+    } catch (e) {
+      console.error('[UpdateBestRound] 上报异常:', e);
+    }
+
     if (this.storageManager) this.storageManager.saveProgress();
   }
 
