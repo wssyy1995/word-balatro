@@ -172,6 +172,24 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(joker.desc, popupX + pad, cy);
       ctx.restore();
   
+      // 上一手单词（消元术 / 首字连击）
+      if (joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession') {
+        cy += lineH + 2 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        let lastWordText = '无';
+        if (joker.trigger === 'initial_succession') {
+          lastWordText = game._lastInitialLetter || '无';
+        } else if (joker.trigger === 'no_duplicate') {
+          lastWordText = game._lastPlayedLetters ? Array.from(game._lastPlayedLetters).join('') : '无';
+        }
+        ctx.fillText(`上一手单词：${lastWordText}`, popupX + pad, cy);
+        ctx.restore();
+      }
+  
       // 倍率增值（错误即经验 / 首字连击：显示当前累加值）
       if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
         cy += lineH + 2 * s;
