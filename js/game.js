@@ -481,11 +481,11 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         } else if (j.trigger === 'end_s') {
           wwMatched = pendingCheck?.endSValid || false;
         } else if (j.trigger === 'no_duplicate') {
-          // 消元术：与上一手无重复字母时触发
+          // 消元术：与上一手无重复字母时触发，第一手不触发
           const currentLetters = new Set(cards.map(c => c.letter.toUpperCase()));
           const lastLetters = lastPlayedLetters;
           if (!lastLetters || lastLetters.size === 0) {
-            wwMatched = true; // 第一手默认触发
+            wwMatched = false; // 第一手不触发
           } else {
             // 检查是否有交集
             let hasOverlap = false;
@@ -1774,7 +1774,7 @@ class Game {
           const currentLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
           const lastLetters = prevLastPlayedLetters;
           if (!lastLetters || lastLetters.size === 0) {
-            matched = true;
+            matched = false; // 第一手不触发
           } else {
             matched = !Array.from(currentLetters).some(l => lastLetters.has(l));
           }
