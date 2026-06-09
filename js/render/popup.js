@@ -183,9 +183,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
         let lastWordText = '无';
-        if (joker.trigger === 'initial_succession') {
-          lastWordText = game._lastInitialLetter || '无';
-        } else if (joker.trigger === 'no_duplicate') {
+        if (joker.trigger === 'initial_succession' || joker.trigger === 'no_duplicate') {
           lastWordText = game._lastPlayedLetters ? Array.from(game._lastPlayedLetters).join('') : '无';
         }
         ctx.fillText(`上一手单词：${lastWordText}`, popupX + pad, cy);
