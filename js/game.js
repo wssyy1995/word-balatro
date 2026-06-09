@@ -1781,7 +1781,15 @@ class Game {
         if (matched) {
           wholeWordJokers.push({ idx, joker });
         } else if (joker.penalty !== undefined) {
-          wholeWordJokers.push({ idx, joker, isPenalty: true });
+          // no_duplicate 第一手不惩罚
+          if (joker.trigger === 'no_duplicate') {
+            const lastLetters = this._lastPlayedLetters;
+            if (lastLetters && lastLetters.size > 0) {
+              wholeWordJokers.push({ idx, joker, isPenalty: true });
+            }
+          } else {
+            wholeWordJokers.push({ idx, joker, isPenalty: true });
+          }
         }
       }
     });
