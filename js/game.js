@@ -1691,7 +1691,6 @@ class Game {
     this.pendingCheck.animPhase = 0;
 
     // === 首领连击：连续打出首字母相同的单词，本牌倍率累加+3；中断后重置 ===
-    const prevLastPlayedLetters = this._lastPlayedLetters;
     const currentInitial = playedInOrder[0]?.letter;
     if (currentInitial) {
       (this.jokers || []).forEach(j => {
@@ -1704,8 +1703,6 @@ class Game {
         }
       });
       this._lastInitialLetter = currentInitial;
-      // 记录本手打出的字母集合（供消元术下一手对比）
-      this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
     }
 
     // 计算每个字母跳跃时触发的女巫牌索引（scope === 'per_card'）
@@ -1772,7 +1769,7 @@ class Game {
           matched = this.pendingCheck.endSValid || false;
         } else if (joker.trigger === 'no_duplicate') {
           const currentLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
-          const lastLetters = prevLastPlayedLetters;
+          const lastLetters = this._lastPlayedLetters;
           if (!lastLetters || lastLetters.size === 0) {
             matched = false; // 第一手不触发
           } else {
@@ -1837,6 +1834,11 @@ class Game {
     const playedInOrder = this.pendingCheck.cardsInOrder;
     this._applyScore(result);
     this._executePlayHand(played, playedInOrder, result);
+
+    // 计分动画结束，更新上一手单词记录
+    if (playedInOrder && playedInOrder.length > 0) {
+      this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
+    }
 
     // 清除 pendingCheck，重置单词预览区
     this.pendingCheck = null;
