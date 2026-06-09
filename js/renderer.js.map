@@ -1,1 +1,0 @@
-{"version":3,"file":"renderer.js","names":["module","exports","require","'./render/index'"],"sources":["renderer.js.input.js"],"sourcesContent":["module.exports = require('./render/index');\n"],"mappings":"4xGAAAA,OAAOC,IAAUC,QAAQC","ignoreList":[]}
