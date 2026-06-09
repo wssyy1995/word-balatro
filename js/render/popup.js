@@ -180,7 +180,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`倍率增值：+${joker.value}`, popupX + pad, cy);
+        ctx.fillText(`倍率累计：+${joker.value}`, popupX + pad, cy);
         ctx.restore();
       }
   
