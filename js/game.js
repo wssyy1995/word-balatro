@@ -999,7 +999,7 @@ class Game {
     this._seedMinLen = p._seedMinLen;
     this._seedMaxLen = p._seedMaxLen;
     this._lastInitialLetter = p._lastInitialLetter || null;
-    this._lastPlayedLetters = p._lastPlayedLetters || null;
+    this._lastPlayedLetters = p._lastPlayedLetters ? new Set(p._lastPlayedLetters) : null;
 
     // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
     const sanitizeCard = (card) => {
