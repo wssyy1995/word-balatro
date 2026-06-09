@@ -41,6 +41,7 @@ module.exports = function extendPlaying(Renderer) {
   
       this.cardRects = []; // 存储卡牌点击区域
   
+      const actualWitchSlots = game.maxJokerSlots || 4;
       // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
       const propW = actualWitchSlots >= 5 ? W - 8 * s : W - 20 * s;
       const propX = actualWitchSlots >= 5 ? 4 * s : 10 * s;
@@ -53,7 +54,6 @@ module.exports = function extendPlaying(Renderer) {
       const rawSlotW = (W - 20 * s - padX * 2 - 5 * BASE_GAP - dividerW) / 6;
   
       // 实际女巫槽位
-      const actualWitchSlots = game.maxJokerSlots || 4;
       const actualTotalSlots = actualWitchSlots + 2;
   
       // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）

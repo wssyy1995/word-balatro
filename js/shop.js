@@ -260,6 +260,7 @@ class ShopRenderer {
     const top = (this.parent.safeTop || 0) + 20;
 
     // === 已购买道具卡牌栏（6格：左4女巫 + 右2药水，样式复用游戏页）===
+    const actualWitchSlots = game.maxJokerSlots || 4;
     const ownedY = top + 16 * s;
     const ownedH = 92 * s;
     const ownedW = actualWitchSlots >= 5 ? W - 18 * s : W - 30 * s;
@@ -276,8 +277,6 @@ class ShopRenderer {
     // 基准单卡宽度（固定按 4 张时的 ownedW 计算，避免宽度变化被卡牌尺寸吸收）
     const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
 
-    // 实际女巫槽位
-    const actualWitchSlots = game.maxJokerSlots || 4;
     const actualTotalSlots = actualWitchSlots + 2;
 
     // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
