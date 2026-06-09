@@ -507,8 +507,10 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
             mult = Math.ceil(mult * j.value);
           }
         } else if (j.penalty !== undefined) {
-          // 双刃剑：未触发时执行惩罚
-          mult += j.penalty;
+          // 未触发时执行惩罚（no_duplicate 第一手不惩罚）
+          if (j.trigger !== 'no_duplicate' || (lastPlayedLetters && lastPlayedLetters.size > 0)) {
+            mult += j.penalty;
+          }
         }
         break;
       }
