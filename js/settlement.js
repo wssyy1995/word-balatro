@@ -1,2 +1,849 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,m=Math.SQRT1_2,n=Math.SQRT2;var p=12,q=12,r=27,s=35,t=39,u=92,v=70,w=28,x=97,y=73,z=3,A=1,B=75,C=69,D=68,E=78,F=19,G=56,H=54,I=13,J=68,K=71,L=68,M=23,N=74,O=51,P=58,Q=56,R=40,S=12,T=19,U=83,V=5,W=65,X=21,Y=41,Z=14,_0=95,_1=4,_2=34,_3=1,_4=99,_5=31,_6=11,_7=80,_8=40,_9=46,ba=74,bb=83,bc=41,bd=3,be=61,bf=63,bg=18,bh=78,bi=64,bj=36,bk=25,bl=63,bm=82,bn=44,bo=56,bp=33,bq=64,br=2,bs=98,bt=22,bu=93,bv=95,bw=92,bx=47,by=86,bz=50,bA=40,bB=68,bC=74,bD=79,bE=88,bF=69,bG=51;var bH=56*G+bm*82+99*_4>=99*56+82*99+56*82,bI=_6*_6+bk*25+28*28>=11*w+25*11+w*25,bJ=g(2*a(f(95*68+50*bg)))<=g(a(95*95+50*bz)+a(bg*bg+68*68)),bK=g(2*a(f(U*56+36*95)))>g(a(36*36+U*U)+a(bv*bv+56*bo)),bL=g(2*a(f(bB*_7+99*99)))<=g(a(bB*68+99*_4)+a(_4*_4+80*80)),bM=g(2*a(f(21*bx+G*92)))>g(a(56*56+X*21)+a(u*92+47*47)),bN=44*44+56*Q+bq*bq<44*Q+56*bq+bq*44,bO=c((bt+bl+69+40)/4)>=c(e((a(C)+a(bl)+a(_8)+a(bt))/4)),bP=g(2*a(f(99*Q+s*q)))<=g(a(s*35+_4*_4)+a(q*q+56*Q)),bQ=c((bj+Y+bt+40)/4)<c(e((a(bA)+a(Y)+a(36)+a(22))/4)),bR=g(2*a(f(bB*3+23*23)))<=g(a(23*23+68*bB)+a(M*M+3*3)),bS=95*_0+68*bB+bA*bA>=68*bA+bA*_0+95*68,bT=25*bk+bf*bf+68*68>=D*bf+63*bk+25*68,bU=c((54+83+63+I)/4)<c(e((a(I)+a(63)+a(H)+a(U))/4)),bV=28*28+79*bD+bl*bl+1*A>=bD*28+1*79+63*1+28*bl,bW=g(2*a(f(68*12+_1*63)))<=g(a(L*L+4*_1)+a(12*p+63*bl)),bX=g(2*a(f(F*73+bh*63)))>g(a(19*19+bh*78)+a(y*73+63*63)),bY=Y*41+bg*bg+74*N+_1*_1<74*bg+41*N+4*41+18*_1,bZ=g(2*a(f(97*97+J*71)))>g(a(68*68+97*97)+a(x*97+71*71)),b0=g(2*a(f(bn*93+v*70)))>g(a(bn*bn+70*70)+a(bu*bu+v*70)),b1=g(2*a(f(23*E+bG*bG)))<=g(a(bG*bG+23*M)+a(78*78+bG*bG)),b2=5*5+18*bg+3*bd<5*3+18*5+3*bg,b3=g(2*a(f(63*92+bf*bf)))>g(a(bf*bf+bl*63)+a(92*bw+bf*bf)),b4=c((4+u+19)/3)>=c(e((a(_1)+a(92)+a(19))/3)),b5=c((bf+bC+s)/3)>=c(e((a(s)+a(63)+a(74))/3)),b6=T*T+56*56+G*G+_2*_2>=34*bo+G*34+19*G+56*T,b7=c((P+74+46)/3)<c(e((a(58)+a(74)+a(_9))/3)),b8=Q*56+83*U+80*_7+B*75<83*B+75*Q+56*_7+80*U,b9=g(2*a(f(92*S+56*bo)))>g(a(u*u+56*56)+a(56*bo+12*S)),ca=c((bm+73+K)/3)<c(e((a(bm)+a(y)+a(71))/3)),cb=g(2*a(f(L*5+F*F)))>g(a(68*L+19*19)+a(5*V+F*F)),cc=c((21+22+74+G)/4)<c(e((a(G)+a(X)+a(bt)+a(ba))/4)),cd=56*56+13*I+95*95+V*5<56*13+_0*Q+V*95+13*V,ce=99*_4+t*39+q*q+bz*50<bz*99+_4*t+t*q+q*bz,cf=22*bt+br*2+11*11>=11*2+br*22+bt*11,cg=g(2*a(f(bj*36+bw*22)))>g(a(bw*92+36*36)+a(bt*22+36*36)),ch=g(2*a(f(83*23+68*D)))<=g(a(68*68+83*U)+a(M*23+D*D)),ci=_5*31+18*18+M*23+75*B>=31*M+18*_5+B*bg+M*B,cj=c((bn+50+21)/3)>=c(e((a(50)+a(44)+a(21))/3)),ck=g(2*a(f(bn*J+Y*36)))<=g(a(bn*bn+41*41)+a(J*J+36*bj));var cl,cm,cn,o,co;var cp,cq,cw,cz,cA;var cB,cs,ct,cu,cv;var cx,lX,lY;var cy=+bL;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cC={f:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cD="";var cE=new Array(20);cD=cC.f("定确1+折5计总存暂hpwpypxp取领IP",2);cE[0]=cD.s(2);cD=cC.f("sbagmisocxamnimniscrawon",3);cE[1]=cD.s(3);cD=cC.f("888#用使即立emagemanpilcffubepythsup励奖巫女币金础基csed励奖得获555#fff#tfigtfellliftnofevas",4);cE[2]=cD.s(4);cD=cC.f("有没都么什epocsxednidnuorthgireulavlebalelacsesahpahplahtdiwrolocroolf",5);cE[3]=cD.s(5);cD=cC.f("盒礼个一择选htgnelgnisaEdedaoltArahctceffetluserthgiehtfihSynIedafetatorsuidaroTevomoTenilretnecekortselddimtnerap",6);cE[4]=cD.s(6);cD=cC.f("stropxec3c47e#e3795b#e60cfd#e87d5f#hcaErof73fa4d#a2a4a5#245c5f#6e0f5f#a4f2a1#despalea53a4c#erotser",7);cE[5]=cD.s(7);cD=cC.f("gninepo_dloGesabtceRpiksnocInioctceRlliftxeTllif",8);cE[6]=cD.s(8);cD=cC.f("tceRdnuorhtaPesolcdenifednudloGlatot1× 数次牌弃余剩2× 数次牌出余剩roloCtxetdevloser_emiTtratsgnisolCsistceRtfigtceRntBkoegamIwardhtdiWeniletalsnartngilAtxethtaPnigebelytSllif",9);cE[7]=cD.s(9);cD=cC.f("rulBwodahssdnaHartxetceRekortsahplAesolcesahPtsal_metIdrawertceRntBesu",10);cE[8]=cD.s(10);cD=cC.f("nioc_elbuodkcaBtuOesaetesffOesolctesffOretnenoitamina/.txeTerusaemelytSekortsahplAlabolg",11);cE[9]=cD.s(11);cD=cC.f("ahplAyalrevotceRntBmialcnocItnuocsidcibuCtuOesaexoBtfiGward_desserPntBkotceRntBhsatspotSroloCddaenilesaBtxet",12);cE[10]=cD.s(12);cD=cC.f("wolGdraCward_sdracsiDartxedesserPntBesuemiTtratSminanocItfiGhctiw",13);cE[11]=cD.s(13);cD=cC.f("segamIdraCpohstsrubratSward_ataDtnemelttesemiTtratSesolcdedaoLnocInioc",14);cE[12]=cD.s(14);cD=cC.f("5_tnuocsid_pohsataDdraweRhctiwemiTtratSesolc_dloGnoitalosnocetelpmoCesolCnolenaPladoMward_desserPntBmialcdesserPntBhsats",15);cE[13]=cD.s(15);cD=cC.f("oTevruCcitardauq",16);cE[14]=cD.s(16);cD=cC.f("emiTtratSgninepo_rediviDeltiTward_nottuBdelacSward_emiTtratSpilFnioc",17);cE[15]=cD.s(17);cD=cC.f("reredneRtnemeltteSdedaoLnocItnuocsiddraweRhctiWevlosertnemeltteSgnisolc_)0,09,361,691(abgrataDtnemeltteStsalxednItfiGdetceles_",18);cE[16]=cD.s(18);cD=cC.f("reredneRdraweRhctiWdraweRhctiWgnisolc_emiTtratSraeppasid_dedaoLnocItfiGhctiw",19);cE[17]=cD.s(19);cD=cC.f("tneidarGlaidaRetaerc)4.0,09,361,691(abgr)5.0,09,361,691(abgrtneidarGraeniLetaerc",20);cE[18]=cD.s(20);cD=cC.f("emiTtratSdraweRhctiWesolc_",26);cE[19]=cD.s(26);var cF="12,l,Me},DS,D6,N,c,),C6,I,K,X,Bm,r,w,S,:,Y,B?,C,Ec,E,FS,g,Q,D),CI,M,h,I),6,a,s,Bh,b6,1,Bc,BI,8,A,BS,D,Qw";function cG(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cH=cG(cF);if(cy){cl=cE[4][13];cm="8";cn=cH[0];o=cE[4][15];co=cE[9][3];cp=cE[6][4];cq=cE[2][6];cw="x";cz="y";cA="w";cB="h";cs=cu="";ct=cE[13][0];cv=cE[10][4];cx=cE[5][13];lX=cE[16][6];lY=cE[17][3]}if(cy&&bI){cs="F"}if(cy&&bP){cu="_lastPhase"}if(cy&&ce){cs+=cp;cs+=cq}if(cy&&cd){cu+=ct}if(cy&&cc){cu+=cv}if(cy&&ch){cs+="5"}if(cy&&bI){cs+="A6"}if(cy&&ci){cs+="D71"}if(cy&&cf){cs+="352"}if(cy&&ch){cs+="0D"}if(cy&&bJ){cs+="AB"}if(cy&&ci){cs+="99"}if(cy&&bH){cs+="86C"}if(cy&&bI){cs+="1"}if(cy&&bP){cs+="511"}if(cy&&ch){cs+="8"}if(cy&&bV){cs+="F10"}if(cy&&b5){cs+="61"}if(cy&&cf){cs+="47"}if(cy&&ci){cs+="50"}if(cy&&ch){cs+="63"}if(cy&&bP){cs+="13D"}if(cy&&ck){cs+="2F"}if(cy&&cj){cs+="7BE"}if(cy&&bR){cs+="C00"}if(cy&&bR){cs+="690"}if(cy&&bW){cs+="F6"}if(cy&&bS){cs+="1"}if(cy&&bH){cs+="DBE"}if(cy&&ck){cs+="AB3"}if(cy&&b6){cs+="1"}if(cy&&bH){cs+="1"}if(cy&&bV){cs+="9"}if(cy&&ci){cs+="D"}if(cy&&bO){cs+="5"}if(cy&&cf){cs+="34"}if(cy&&bT){cs+="7F2"}if(cy&&bI){cs+="A1"}if(cy&&ci){cs+="B35"}if(cy&&ck){cs+="9"}if(cy&&cf){cs+="7E1"}if(cy&&bL){cs+="D"}if(cy&&ch){cs+="B6"}if(cy&&ck){cs+="79"}if(cy&&b5){cs+="BD"}if(cy&&bT){cs+="B5"}if(cy&&bV){cs+="E1"}if(cy&&bO){cs+="4F"}if(cy&&bS){cs+="224"}if(cy&&cf){cs+="8"}if(cy&&b6){cs+="06"}if(cy&&bJ){cs+="16F"}if(cy&&bI){cs+="68"}if(cy&&b1){cs+="32"}if(cy&&bI){cs+="B6"}cD=null;cF=null;if(cy&&bT){cs+="C2"}if(cy&&b5){cs+="A"}if(cy&&ch){cs+="96C"}if(cy&&bV){cs+="FB"}if(cy&&b6){cs+="65"}if(cy&&bI){cs+="9E8"}if(cy&&b4){cs+="8"}if(cy&&ck){cs+="E"}if(cy&&b6){cs+="79"}if(cy&&bO){cs+="AB"}if(cy&&bO){cs+="A7"}if(cy&&bV){cs+="0"}if(cy&&b4){cs+="0"}if(cy&&bJ){cs+="172"}if(cy&&ch){cs+="C7F"}if(cy&&bI){cs+="97"}if(cy&&ch){cs+="2"}if(cy&&bR){cs+="67"}if(cy&&bO){cs+="812"}if(cy&&cf){cs+="401"}if(cy&&bT){cs+="D"}if(cy&&b5){cs+="CE"}if(cy&&ck){cs+="06"}if(cy&&bT){cs+="468"}if(cy&&cj){cs+="01"}if(cy&&bS){cs+="09"}if(cy&&bO){cs+="E22"}cy=0;if((""+j)[cl](9)!=cm){this["F5A6D713520DAB9986C15118F106147506313D2F7BEC00690F61DBEAB3119D5347F2A1B3597E1DB679BDB5E14F22480678A3F6FDAC24A8C700EA1A03AD25BF4D7E18261092A0DF21884C1D16C7312D13"[cl](cn)]++}cI();const{[o]:Easing}=require(co);class SettlementRenderer{constructor(a){var b=cE;this[b[4][0]]=a;this[b[11][1]]=null;this[b[16][1]]=null;this[b[13][1]]=false}draw(a,b,c,d,e){var f=cE,g=cH,h=f[12],i=f[4],j=f[13],k=f[7],l=f[3],m=f[9],n=f[0],o=f[8],p=f[2],q=f[15],r=f[5],s=f[6],t=g[4],u=g[7],v=g[8],w=g[10],x=g[11],y=g[13],z=g[14],A=g[18],B=g[23],C=f[16][1],D=f[11][1],E=f[1][0],F=i[0],mp=l[2],mq=r[2],G=i[8],H=p[0],I=f[9][0],J=l[3],K=p[1],L=l[0],M=i[9],N=s[2],O=k[0],P=r[3],Q=k[2],R=p[3],S=f[10][0],T=i[1],U=s[0],V=r[0],mH=l[6],mI=l[7],W=r[1],X=l[8];const Y=b[h[2]];if(!Y)return;const Z=b[f[16][3]];if(!Z&&this[C]!==Y){this[D]=Date[E]();this[C]=Y}const _0=Z?g[1]:Date[E]()-this[D];const _1=this[F][j[2]](a,c,d,e,{[k[8]]:Z,[h[1]]:b[j[5]],[mp]:g[2],[i[10]]:g[3],[m[4]]:t,[m[5]]:g[5],[mq]:_0,[j[3]]:()=>{}});if(!_1)return;const{[n[2]]:_2,[n[3]]:_3,[n[4]]:_4,[n[5]]:_5,[mq]:_6,[o[3]]:_7}=_1;const _8=Easing[G](_0,g[6],u,8*e);a[H]();a[I]=_8[J]*_7;const _9=`第 ${Y[l[9]]} 关结算`;a[K]=`bold ${Math[L](v*e)}px Georgia, serif`;const ba=a[m[2]](_9)[mp];const bb=g[9]*e;const bc=ba+bb+6*e;const bd=c/2-bc/2;const be=_3+w*e+_8[M];if(this[F][N]&&this[F][h[0]]){a[k[5]](this[F][N],bd,be-bb/2,bb,bb)}a[K]=`bold ${Math[L](v*e)}px Georgia, serif`;a[O]=P;a[Q]=R;a[S]=T;a[U](_9,bd+bb+6*e,be);a[V]();const bf=Easing[G](_0,x,u,6*e);const bg=_3+g[12]*e+bf[M];const bh=_4-y*e;a[H]();a[I]=bf[J]*_7;this[F][q[2]](a,_2+z*e,bg,bh,e);a[V]();const bi=_3+g[15]*e;const bj=g[16]*e;const bk=[{[mH]:p[9],[mI]:`+${Y[f[6][4]]}`},{[mH]:k[12],[mI]:`+${Y[o[5]]}`},{[mH]:k[13],[mI]:`+${Y[f[11][3]]}`}];bk[f[5][8]]((b,c)=>{const d=Easing[G](_0,g[17]+c*y,u,8*e);const f=bi+c*bj+d[M];a[H]();a[I]=d[J]*_7;a[K]=`${Math[L](A*e)}px sans-serif`;a[O]=p[6];a[Q]=R;a[S]=T;a[U](b[mH],_2+w*e,f);a[K]=`bold ${Math[L](A*e)}px sans-serif`;a[O]=W;a[Q]=X;a[U](b[mI],_2+_4-w*e,f);a[V]()});const bl=Easing[G](_0,g[19],u,6*e);const bm=bi+bk[i[16]]*bj+10*e+bl[M];a[H]();a[I]=bl[J]*_7;a[m[1]]=W;a[k[4]]=1.2*e;a[k[1]]();a[i[5]](_2+z*e,bm);a[i[4]](_2+_4-z*e,bm);a[i[2]]();a[K]=`bold ${Math[L](g[20]*e)}px sans-serif`;a[O]=P;a[Q]=R;a[S]=T;a[U](n[7],_2+w*e,bm+t*e);a[K]=`bold ${Math[L](v*e)}px Georgia, serif`;a[O]=W;a[Q]=X;a[U](`+${Y[k[14]]}`,_2+_4-w*e,bm+t*e);a[V]();const bn=Easing[G](_0,g[21],u,10*e);const bo=x*e;const bp=g[22]*e;const bq=(c-bo)/2;const br=_3+_5-bp-B*e+bn[M];a[H]();a[I]=bn[J]*_7;this[F][q[1]](a,n[1],bq,br,bo,bp,e,this[j[1]],{[l[1]]:W,[i[6]]:8});a[V]();a[V]();const bs=_3+_5-bp-B*e;this[f[10][7]]={[cw]:bq,[cz]:bs,[cA]:bo,[cB]:bp}}}function cI(){if(cE[7][15]!==typeof Map)Map[cs]=1}class WitchRewardRenderer{constructor(a){var b=cE,c=b[10],d=b[7];this[b[4][0]]=a;this[c[2]]=null;this[b[8][0]]=null;this[d[6]]=null;this[b[6][3]]=null;this[c[3]]=false;this[b[13][0]]=false;this[b[11][2]]=false;this[b[15][0]]=null;this[d[7]]=[];this[cu]=null}draw(a,b,c,d,e){var f=cE,g=cH,h=f[13],i=f[7],j=f[9],k=f[2],l=f[3],m=f[5],n=f[0],o=f[16],p=f[12],q=f[11],r=f[17],s=f[1],t=f[6],u=f[4],v=f[8],w=f[18],x=f[10],y=f[15],z=g[14],A=g[25],B=g[2],C=g[3],D=g[6],E=g[26],F=g[5],G=g[28],H=g[29],I=g[18],J=g[9],K=g[30],L=g[31],M=g[32],N=g[33],O=g[10],P=g[23],Q=g[34],R=g[35],S=g[22],T=g[8],U=g[38],V=g[39],W=s[0],X=i[9],Y=s[3],Z=k[0],_0=l[4],_1=k[4],_2=i[0];var _3=t[1],_4=j[0],_5=m[1],_6=k[1],_7=l[0],nj=l[2],_8=i[3],_9=u[7],ba=n[0],bb=m[0],bc=j[1],bd=i[4],be=v[4],bf=w[0],bg=x[1],bh=o[2],bi=i[1],bj=u[5],bk=u[4],nx=u[2],bl=i[2],bm=u[3],bn=x[0],bo=u[1],bp=t[0],bq=i[7],br=o[0],bs=s[2],bt=i[10],bu=l[5],bv=u[0],bw=f[11][0],bx=f[17][0],by=i[5],bz=x[4],bA=x[5],bB=t[3],bC=x[2],bD=v[0],bE=i[6],bF=u[11],bG=y[0],nU=u[10],bH=k[7],bI=w[1],bJ=v[1],bK=u[12],bL=s[5],bM=t[2],bN=f[12][0];var bO=s[1],bP=m[5],bQ=k[2],bR=k[5],bS=x[6],bT=m[4],bU=k[8],bV=y[1],bW=n[1],bX=x[3],oc=l[1],od=u[6],bY=u[14],bZ=s[6],b0=f[14][0],b1=n[6],b2=h[0],ok=i[11],b3=m[6],b4=h[4];const b5=b[h[6]];if(!b5)return;const b6=Date[W]()-(b5[X]||Date[W]());const b7=g[24];const b8=Math[Y](b6/b7,1);const b9=Easing[j[6]](b8);const ca=(1-b9)*z*e;const cb=b8;a[Z]();const cc=b5[_0]===_1?.65:.45;a[_2]=`rgba(0,0,0,${cc*Math[Y](b6/A,1)})`;a[_3](0,0,c,d);a[_4]=cb;const cd=_5;const ce=m[3];const cf=B*e;const cg=b5[_0]===_1?B*e:C*e;const ch=(c-cf)/2;const ci=(d-cg)/2+ca;if(b5[_0]===_1){const h=D*e;const i=z*e;const n=h*3+i*2;const q=(c-n)/2;const s=d/2+ca-h/2;const t=k[10];const u=E*e;const v=s-F*e;a[_6]=`bold ${Math[_7](u)}px Georgia, serif`;const w=a[j[2]](t);const x=w[nj];const y=v;const B=1.5*e;const C=2*e;const J=8*e;const K=8*e;const L=3*e;const M=g[27]*e;const N=c/2-x/2-J;const O=N-K;const P=O-M;const Q=c/2+x/2+J;const R=Q+K;const S=R+M;a[Z]();a[Z]();a[_8](N,y);a[_9](Math[ba]/4);a[_2]=_5;a[_3](-B,-B,B*2,B*2);a[bb]();a[Z]();a[_8](O,y);a[_9](Math[ba]/4);a[bc]=_5;a[bd]=1.2*e;a[be](-C,-C,C*2,C*2);a[bb]();const T=O-L;const U=a[bf](T,y,P,y);U[bg](0,_5);U[bg](1,bh);a[bc]=U;a[bd]=1*e;a[bi]();a[bj](T,y);a[bk](P,y);a[nx]();a[Z]();a[_8](Q,y);a[_9](Math[ba]/4);a[_2]=_5;a[_3](-B,-B,B*2,B*2);a[bb]();a[Z]();a[_8](R,y);a[_9](Math[ba]/4);a[bc]=_5;a[bd]=1.2*e;a[be](-C,-C,C*2,C*2);a[bb]();const V=R+L;const X=a[bf](V,y,S,y);X[bg](0,_5);X[bg](1,bh);a[bc]=X;a[bd]=1*e;a[bi]();a[bj](V,y);a[bk](S,y);a[nx]();a[bb]();a[Z]();a[_6]=`bold ${Math[_7](u)}px Georgia, serif`;a[bl]=bm;a[bn]=bo;const _0=a[bf](c/2,v-10*e,c/2,v+10*e);_0[bg](0,m[9]);_0[bg](.5,m[10]);_0[bg](1,m[11]);a[_2]=_0;a[bp](t,c/2,v);a[bb]();this[bq]=[];for(let c=0;c<3;c++){const d=q+c*(h+i);const j=s;const m=d+h/2;const n=j+h/2;if(b5[br]===undefined||c===b5[br]){this[p[3]](a,m,n,h,e)}if(b5[br]!==undefined){if(c===b5[br]){let c=1;let d=1;if(b5[f[6][5]]){const a=Date[W]()-b5[f[15][3]];if(a<G){c=Math[bs](a/D)*.2+1.1;d=.6+Math[bs](a/g[13])*.4}else if(!b5[bt]){b5[bt]=true;b[o[4]]()}}a[Z]();a[_4]=Math[f[1][4]](0,Math[Y](d,1));a[_8](m,n);a[bu](c,c);if(this[bv][bw]&&this[bv][bx]){a[by](this[bv][bw],-h/2,-h/2,h,h)}else{this[bz](a,0,0,H*e,e)}a[bb]()}else{const b=Date[W]()-(b5[r[1]]||Date[W]());const c=A;const d=Math[Y](b/c,1);const f=1-Easing[bA](d);const g=1-d;if(g>0){a[Z]();a[_4]=g;a[_8](m,n);a[bu](f,f);if(this[bv][bw]&&this[bv][bx]){a[by](this[bv][bw],-h/2,-h/2,h,h)}else{this[bz](a,0,0,H*e,e)}a[bb]()}}}else{const b=Math[bs](Date[W]()/G+c*.5)*.05;const f=1+b;a[Z]();a[_8](m,n);a[bu](f,f);if(this[bv][bw]&&this[bv][bx]){a[by](this[bv][bw],-h/2,-h/2,h,h)}else{this[bz](a,0,0,H*e,e)}a[bb]();this[bq][k[11]]({[cw]:d,[cz]:j,[cA]:h,[cB]:h,[l[10]]:c})}}if(b5[br]===undefined){a[_6]=`bold ${Math[_7](I*e)}px sans-serif`;a[_2]=_5;a[bl]=bm;a[bn]=bo;a[bp](f[4][17],c/2,s+h+g[4]*e)}this[bB]=null;this[bC]=null;this[bD]=null;this[bE]=null}else if(b5[_0]===bF){if(this[cu]!==bF){this[bG]=null}this[cu]=b5[_0];a[bb]();const s=this[bv][h[2]](a,c,d,e,{[i[8]]:b[r[2]],[p[1]]:b[f[19][0]],[nj]:B,[nU]:C,[f[10][8]]:.45,[m[2]]:Date[W]()-(b5[X]||Date[W]()),[h[3]]:()=>{}});if(!s)return;const{[n[2]]:t,[n[3]]:u,[n[4]]:v,[n[5]]:w,[f[8][3]]:x}=s;a[Z]();a[_4]=x;if(b5[bF]){a[Z]();a[_6]=`bold ${Math[_7](J*e)}px Georgia, serif`;a[_2]=ce;a[bl]=bm;a[bn]=bo;a[bp](bH,c/2,u+K*e);a[bb]();a[Z]();a[bc]=bI;a[bd]=1*e;const b=u+L*e;const d=v*.5;const r=t+(v-d)/2;a[bi]();a[bj](r,b);a[bk](r+d,b);a[nx]();a[Z]();a[_8](c/2,b);a[_9](Math[ba]/4);a[_2]=cd;a[_3](-3*e,-3*e,6*e,6*e);a[bb]();a[bb]();const s=b5[bJ];if(s&&s[k[12]]===k[13]){const b=u+M*e;if(s[bK]===j[7]){if(!this[bG])this[bG]=Date[W]();const d=Date[W]()-this[bG];const f=N;const g=Math[Y](d/f,1);const h=2;const i=h*Math[ba]*2*Easing[bA](g);const j=Math[bL](i);const k=D*e;a[Z]();a[_8](c/2,b);a[bu](j,1);if(this[bv][bM]&&this[bv][bN]){a[by](this[bv][bM],-k/2,-k/2,k,k)}else{a[bi]();a[bO](0,0,k/2,0,Math[ba]*2);a[_2]=bP;a[bQ]();a[bc]=_5;a[bd]=3*e;a[nx]()}a[bb]();if(g<1){const d=(1-g)*.4;a[Z]();a[_4]=d;a[bi]();a[bO](c/2,b,k*.7,0,Math[ba]*2);a[_2]=bR;a[bQ]();a[bb]()}}else if(s[bK]===h[7]){const d=H*e;if(this[bv][bS]&&this[bv][o[5]]){a[Z]();a[by](this[bv][bS],c/2-d/2,b-d/2,d,d);a[bb]()}else{const d=O*e;a[Z]();a[bi]();a[bO](c/2,b,d,0,Math[ba]*2);a[_2]=m[12];a[bQ]();a[_6]=`bold ${Math[_7](J*e)}px sans-serif`;a[_2]=bR;a[bl]=bm;a[bn]=bo;a[bp](n[8],c/2,b);a[bb]()}}else{const d=O*e;a[Z]();a[bi]();a[bO](c/2,b,d,0,Math[ba]*2);a[_2]=bT;a[bQ]();a[bd]=2*e;a[bc]=_5;a[nx]();a[bb]();a[Z]();a[_6]=`bold ${Math[_7](P*e)}px sans-serif`;a[_2]=_5;a[bl]=bm;a[bn]=bo;a[bp](n[9],c/2,b);a[bb]()}const d=b+Q*e;a[Z]();a[_6]=`bold ${Math[_7](I*e)}px sans-serif`;a[_2]=ce;a[bl]=bm;a[bn]=bo;a[bp](s[bU],c/2,d);a[bb]();const f=R*e;const g=S*e;const i=(c-f)/2;const k=u+w-g-P*e;this[bv][bV](a,bW,i,k,f,g,e,this[bX],{[oc]:_5,[od]:8});this[bE]={[cw]:i,[cz]:k,[cA]:f,[cB]:g};this[bC]=null;this[bD]=null;this[bB]=null}else if(s){const b=v*.4;const d=g[36]*e;let h=b,j=d;const m=b5[bJ][bK];const n=this[bv][p[4]][m];if(n&&n[bY]&&n[bZ]&&n[nj]>0&&n[nU]>0){const a=b/d;const c=n[nj]/n[nU];if(a>c){j=d;h=j*c}else{h=b;j=h/c}}const o=c/2;const r=u+g[37]*e+j/2;const s=o-h/2;const x=r-j/2;a[Z]();a[bi]();const y=4*e;a[bj](s+y,x);a[bk](s+h-y,x);a[b0](s+h,x,s+h,x+y);a[bk](s+h,x+j-y);a[b0](s+h,x+j,s+h-y,x+j);a[bk](s+y,x+j);a[b0](s,x+j,s,x+j-y);a[bk](s,x+y);a[b0](s,x,s+y,x);a[i[16]]();a[k[14]]();if(n&&n[bY]&&n[bZ]){a[by](n[bZ],s,x,h,j)}a[bb]();this[bv][q[4]](a,s,x,h,j,e);const z=x+j+T*e;a[Z]();a[_6]=`bold ${Math[_7](g[20]*e)}px sans-serif`;a[_2]=ce;a[bl]=bm;a[bn]=bo;a[bp](b5[bJ][k[15]],c/2,z);a[bb]();const A=z+E*e;a[Z]();a[_6]=`${Math[_7](U*e)}px sans-serif`;a[_2]=k[6];a[bl]=bm;a[bn]=bo;a[bp](b5[bJ][bU],c/2,A);a[bb]();const B=A+P*e;a[Z]();a[bc]=f[18][2];a[bd]=1*e;const C=v*.55;const D=t+(v-C)/2;a[bi]();a[bj](D,B);a[bk](D+C,B);a[nx]();a[Z]();a[_8](c/2,B);a[_9](Math[ba]/4);a[_2]=cd;a[_3](-2.5*e,-2.5*e,5*e,5*e);a[bb]();a[bb]();const F=S*e;const G=V*e;const H=U*e;const I=u+w-F-J*e;const K=b5[bJ][l[11]]===k[16];if(K){const b=(c-G)/2;this[bv][bV](a,b1,b,I,G,F,e,this[b2],{[oc]:bT,[ok]:b3,[od]:8,[nx]:_5});this[bC]={[cw]:b,[cz]:I,[cA]:G,[cB]:F};this[bD]=null}else{const b=G*2+H;const d=(c-b)/2;this[bv][bV](a,k[17],d,I,G,F,e,this[q[2]],{[oc]:_5,[od]:8});const f=d+G+H;this[bv][bV](a,b1,f,I,G,F,e,this[b2],{[oc]:bT,[ok]:b3,[od]:8,[nx]:_5});this[bC]={[cw]:f,[cz]:I,[cA]:G,[cB]:F};this[bD]={[cw]:d,[cz]:I,[cA]:G,[cB]:F}}this[bE]=null;this[bB]=null}}else if(b5[b4]){a[Z]();a[_6]=`bold ${Math[_7](J*e)}px Georgia, serif`;a[_2]=ce;a[bl]=bm;a[bn]=bo;a[bp](bH,c/2,u+K*e);a[bb]();a[Z]();a[bc]=bI;a[bd]=1*e;const b=u+L*e;const d=v*.5;const f=t+(v-d)/2;a[bi]();a[bj](f,b);a[bk](f+d,b);a[nx]();a[Z]();a[_8](c/2,b);a[_9](Math[ba]/4);a[_2]=cd;a[_3](-3*e,-3*e,6*e,6*e);a[bb]();a[bb]();const g=u+M*e;if(!this[bG])this[bG]=Date[W]();const h=Date[W]()-this[bG];const i=N;const j=Math[Y](h/i,1);const k=2;const l=k*Math[ba]*2*Easing[bA](j);const m=Math[bL](l);const n=D*e;a[Z]();a[_8](c/2,g);a[bu](m,1);if(this[bv][bM]&&this[bv][bN]){a[by](this[bv][bM],-n/2,-n/2,n,n)}else{a[bi]();a[bO](0,0,n/2,0,Math[ba]*2);a[_2]=bP;a[bQ]();a[bc]=_5;a[bd]=3*e;a[nx]()}a[bb]();if(j<1){const b=(1-j)*.4;a[Z]();a[_4]=b;a[bi]();a[bO](c/2,g,n*.7,0,Math[ba]*2);a[_2]=bR;a[bQ]();a[bb]()}const o=g+Q*e;a[Z]();a[_6]=`bold ${Math[_7](I*e)}px sans-serif`;a[_2]=ce;a[bl]=bm;a[bn]=bo;a[bp](`+${b5[b4]} 金币`,c/2,o);a[bb]();const p=R*e;const q=S*e;const r=(c-p)/2;const s=u+w-q-P*e;this[bv][bV](a,bW,r,s,p,q,e,this[bX],{[oc]:_5,[od]:8});this[bE]={[cw]:r,[cz]:s,[cA]:p,[cB]:q};this[bC]=null;this[bD]=null;this[bB]=null}else{a[Z]();a[_6]=`bold ${Math[_7](T*e)}px Georgia, serif`;a[_2]=k[18];a[bl]=bm;a[bn]=bo;a[bp](l[12],c/2,u+w/2-g[40]*e);a[bb]();const b=V*e;const d=F*e;const f=(c-b)/2;const h=u+w-d-F*e;this[bv][bV](a,n[10],f,h,b,d,e,this[bX],{[oc]:_5,[od]:8});this[bE]={[cw]:f,[cz]:h,[cA]:b,[cB]:d};this[bC]=null;this[bD]=null;this[bB]=null}a[bb]();return}a[bb]()}_drawStarburst(a,b,c,d,e){var f=cE,g=cH,h=f[1],i=f[7],j=h[2],k=f[10][1],l=i[0],m=i[1],n=h[1],o=f[0][0],p=f[2][2];const q=Date[h[0]]();const r=.5+.5*Math[j](q/g[28]);a[f[2][0]]();a[f[7][3]](b,c);a[f[8][6]]=0;const s=d*.6;const t=.15*r;const u=a[f[18][3]](0,0,d*.2,0,0,s);u[k](0,`rgba(255,215,100,${t})`);u[k](.4,`rgba(196,163,90,${t*.6})`);u[k](1,f[16][2]);a[l]=u;a[m]();a[n](0,0,s,0,Math[o]*2);a[p]();const v=g[18];for(let b=0;b<v;b++){const c=b*137.5;const f=d*(.3+.45*Math[h[7]](Math[j](c)));const i=c+q/g[41];const k=.5+.5*Math[j](q/g[24]+b*2.5);const r=(1+.6*Math[j](b*3))*e;a[l]=`rgba(255,230,150,${.9*k})`;a[m]();a[n](Math[h[5]](i)*f,Math[j](i)*f,r,0,Math[o]*2);a[p]()}a[f[5][0]]()}_drawGiftBox(a,b,c,d,e){var f=cE,g=f[1],h=f[7],i=g[4],j=h[0],k=f[5][7],l=f[6][1],m=h[1],n=g[1],o=f[0][0],p=f[2][2];const q=d;const r=d*.75;const s=b-q/2;const t=c-r/2;const u=Math[i](2,4*e);this[f[4][0]][f[7][17]](s,t,q,r,u,f[5][1]);a[j]=k;const v=Math[i](2,d*.12);a[l](s+q/2-v/2,t,v,r);a[l](s,t+r/2-v/2,q,v);a[j]=k;a[m]();a[n](b-d*.1,t-d*.02,d*.08,0,Math[o]*2);a[p]();a[m]();a[n](b+d*.1,t-d*.02,d*.08,0,Math[o]*2);a[p]()}}module[cx]={[lX]:SettlementRenderer,[lY]:WitchRewardRenderer};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjoxLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowOCJ9)
-//# sourceMappingURL=settlement.js.map
+const { Easing } = require('./animation');
+
+// ===== 金币结算弹窗渲染 =====
+class SettlementRenderer {
+  constructor(renderer) {
+    this.parent = renderer;
+    this.animStartTime = null;
+    this.lastSettlementData = null;
+    this.claimBtnPressed = false;
+  }
+
+  draw(ctx, game, W, H, s) {
+    const settlement = game.settlementData;
+    if (!settlement) return;
+
+    // 新的弹窗出现时重置动画
+    const isClosing = game._closingSettlement;
+    if (!isClosing && this.lastSettlementData !== settlement) {
+      this.animStartTime = Date.now();
+      this.lastSettlementData = settlement;
+    }
+
+    const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
+    const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+      isClosing,
+      closeStartTime: game._closeStartTime,
+      width: 300, height: 340, enterOffset: 25, closeOffset: 40,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
+
+    // 标题（带金币图标）
+    const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+    ctx.save();
+    ctx.globalAlpha = titleAnim.alpha * closeAlpha;
+    const titleText = `第 ${settlement.round} 关结算`;
+    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    const titleW = ctx.measureText(titleText).width;
+    const coinSize = 22 * s;
+    const titleTotalW = titleW + coinSize + 6 * s;
+    const titleStartX = W / 2 - titleTotalW / 2;
+    const titleY = py + 35 * s + titleAnim.yShift;
+    // 金币图标
+    if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+      ctx.drawImage(this.parent.coinIcon, titleStartX, titleY - coinSize / 2, coinSize, coinSize);
+    }
+    // 标题文字
+    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(titleText, titleStartX + coinSize + 6 * s, titleY);
+    ctx.restore();
+
+    // 分隔线
+    const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
+    const line1Y = py + 55 * s + line1Anim.yShift;
+    const line1W = pw - 60 * s;
+    ctx.save();
+    ctx.globalAlpha = line1Anim.alpha * closeAlpha;
+    this.parent._drawTitleDivider(ctx, px + 30 * s, line1Y, line1W, s);
+    ctx.restore();
+
+    // 金币明细
+    const lineY = py + 85 * s;
+    const lineH = 36 * s;
+    const items = [
+      { label: '基础金币', value: `+${settlement.baseGold}` },
+      { label: '剩余出牌次数 ×2', value: `+${settlement.extraHands}` },
+      { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}` },
+    ];
+
+    items.forEach((item, i) => {
+      const itemAnim = Easing.fadeIn(elapsed, 180 + i * 60, 250, 8 * s);
+      const y = lineY + i * lineH + itemAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = itemAnim.alpha * closeAlpha;
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#555';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(item.label, px + 35 * s, y);
+
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'right';
+      ctx.fillText(item.value, px + pw - 35 * s, y);
+      ctx.restore();
+    });
+
+    // 总分隔线 + 总计
+    const totalAnim = Easing.fadeIn(elapsed, 400, 250, 6 * s);
+    const totalY = lineY + items.length * lineH + 10 * s + totalAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = totalAnim.alpha * closeAlpha;
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 1.2 * s;
+    ctx.beginPath();
+    ctx.moveTo(px + 30 * s, totalY);
+    ctx.lineTo(px + pw - 30 * s, totalY);
+    ctx.stroke();
+
+    ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('总计', px + 35 * s, totalY + 25 * s);
+
+    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#c4a35a';
+    ctx.textAlign = 'right';
+    ctx.fillText(`+${settlement.totalGold}`, px + pw - 35 * s, totalY + 25 * s);
+    ctx.restore();
+
+    // 领取按钮
+    const btnAnim = Easing.fadeIn(elapsed, 480, 250, 10 * s);
+    const btnW = 140 * s;
+    const btnH = 44 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
+    ctx.save();
+    ctx.globalAlpha = btnAnim.alpha * closeAlpha;
+    this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.claimBtnPressed, { color: '#c4a35a', radius: 8 });
+    ctx.restore();
+
+    // 闭合 closing 动画的 globalAlpha
+    ctx.restore();
+
+    // 存储点击区域（动画完成后固定位置）
+    const finalBtnY = py + ph - btnH - 28 * s;
+    this.claimBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
+  }
+}
+
+// ===== 女巫奖励弹窗渲染 =====
+class WitchRewardRenderer {
+  constructor(renderer) {
+    this.parent = renderer;
+    this.stashBtnRect = null;
+    this.useBtnRect = null;
+    this.okBtnRect = null;
+    this.skipRect = null;
+    this.okBtnPressed = false;
+    this.stashBtnPressed = false;
+    this.useBtnPressed = false;
+    this.coinFlipStartTime = null;
+    this.giftRects = [];
+    this._lastPhase = null;
+  }
+
+  draw(ctx, game, W, H, s) {
+    const data = game.witchRewardData;
+    if (!data) return;
+
+    // 弹出动效（easeOutBack）
+    const elapsed = Date.now() - (data.startTime || Date.now());
+    const enterDuration = 350;
+    const enterProgress = Math.min(elapsed / enterDuration, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+    const panelOffsetY = (1 - enterEase) * 30 * s;
+    const contentAlpha = enterProgress;
+
+    // 画遮罩（带淡入）— gift 阶段深黑，result 阶段浅遮罩
+    ctx.save();
+    const overlayAlpha = data.phase === 'gift' ? 0.65 : 0.45;
+    ctx.fillStyle = `rgba(0,0,0,${overlayAlpha * Math.min(elapsed / 200, 1)})`;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.globalAlpha = contentAlpha;
+
+    const gold = '#c4a35a';
+    const darkBlue = '#1a2f4a';
+
+    // result 阶段仍需要弹窗面板尺寸
+    const pw = 300 * s;
+    const ph = data.phase === 'gift' ? 300 * s : 340 * s;
+    const px = (W - pw) / 2;
+    const py = (H - ph) / 2 + panelOffsetY;
+
+    if (data.phase === 'gift') {
+      // === 3个礼盒横排 ===
+      const giftSize = 80 * s;
+      const giftGap = 30 * s;
+      const totalWidth = giftSize * 3 + giftGap * 2;
+      const startX = (W - totalWidth) / 2;
+      const giftY = H / 2 + panelOffsetY - giftSize / 2;
+
+      // === 标题：女巫奖励（Canvas 绘制）===
+      const titleText = '女巫奖励';
+      const titleFontSize = 24 * s;
+      const titleY = giftY - 40 * s;
+
+      // 先设置字体以测量文字宽度
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      const textMetrics = ctx.measureText(titleText);
+      const textWidth = textMetrics.width;
+
+      // 文字两侧装饰线参数
+      const lineY = titleY;
+      const solidSize = 1.5 * s;
+      const hollowSize = 2 * s;
+      const gap = 8 * s;             // 文字到实心菱形
+      const solidToHollow = 8 * s;   // 实心菱形到空心菱形
+      const lineOffset = 3 * s;      // 线与空心菱形之间的间距
+      const lineLength = 45 * s;     // 线起点到线末端
+
+      const leftSolidX = W / 2 - textWidth / 2 - gap;
+      const leftHollowX = leftSolidX - solidToHollow;
+      const leftLineEndX = leftHollowX - lineLength;
+      const rightSolidX = W / 2 + textWidth / 2 + gap;
+      const rightHollowX = rightSolidX + solidToHollow;
+      const rightLineEndX = rightHollowX + lineLength;
+
+      ctx.save();
+
+      // --- 左侧（从右到左：实心小菱形 → 空心菱形 → 渐变线）---
+      // 1. 实心小菱形（最靠近文字）
+      ctx.save();
+      ctx.translate(leftSolidX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      // 2. 空心菱形
+      ctx.save();
+      ctx.translate(leftHollowX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      // 3. 渐变线（从空心菱形外侧向外变淡）
+      const leftLineStartX = leftHollowX - lineOffset;
+      const leftGrad = ctx.createLinearGradient(leftLineStartX, lineY, leftLineEndX, lineY);
+      leftGrad.addColorStop(0, '#c4a35a');
+      leftGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = leftGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(leftLineStartX, lineY);
+      ctx.lineTo(leftLineEndX, lineY);
+      ctx.stroke();
+
+      // --- 右侧（从左到右：实心小菱形 → 空心菱形 → 渐变线）---
+      // 1. 实心小菱形（最靠近文字）
+      ctx.save();
+      ctx.translate(rightSolidX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      // 2. 空心菱形
+      ctx.save();
+      ctx.translate(rightHollowX, lineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      // 3. 渐变线（从空心菱形外侧向外变淡）
+      const rightLineStartX = rightHollowX + lineOffset;
+      const rightGrad = ctx.createLinearGradient(rightLineStartX, lineY, rightLineEndX, lineY);
+      rightGrad.addColorStop(0, '#c4a35a');
+      rightGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = rightGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(rightLineStartX, lineY);
+      ctx.lineTo(rightLineEndX, lineY);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // 金色渐变文字
+      ctx.save();
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textGrad = ctx.createLinearGradient(W / 2, titleY - 10 * s, W / 2, titleY + 10 * s);
+      textGrad.addColorStop(0, '#f5d78e');
+      textGrad.addColorStop(0.5, '#dfc06e');
+      textGrad.addColorStop(1, '#b5973e');
+      ctx.fillStyle = textGrad;
+      ctx.fillText(titleText, W / 2, titleY);
+      ctx.restore();
+
+      this.giftRects = [];
+
+      for (let i = 0; i < 3; i++) {
+        const gx = startX + i * (giftSize + giftGap);
+        const gy = giftY;
+        const cx = gx + giftSize / 2;
+        const cy = gy + giftSize / 2;
+
+        // 每个礼盒背后都有淡淡的金色光晕+旋转小星星
+        // 已选中时，只给被选中的礼盒画光晕；未选中时三个都画
+        if (data._selectedGiftIndex === undefined || i === data._selectedGiftIndex) {
+          this._drawStarburst(ctx, cx, cy, giftSize, s);
+        }
+
+        if (data._selectedGiftIndex !== undefined) {
+          if (i === data._selectedGiftIndex) {
+            // 被选中的礼盒：闪烁（原有逻辑）
+            let pulse = 1;
+            let alpha = 1;
+            if (data._opening) {
+              const openElapsed = Date.now() - data._openingStartTime;
+              if (openElapsed < 800) {
+                pulse = Math.sin(openElapsed / 80) * 0.2 + 1.1;
+                alpha = 0.6 + Math.sin(openElapsed / 60) * 0.4;
+              } else if (!data._resolved) {
+                data._resolved = true;
+                game.resolveWitchReward();
+              }
+            }
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, Math.min(alpha, 1));
+            ctx.translate(cx, cy);
+            ctx.scale(pulse, pulse);
+            if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+              ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+            } else {
+              this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+            }
+            ctx.restore();
+          } else {
+            // 未选中的礼盒：淡出+缩小消失
+            const disappearElapsed = Date.now() - (data._disappearStartTime || Date.now());
+            const disappearDuration = 200;
+            const disappearProgress = Math.min(disappearElapsed / disappearDuration, 1);
+            const scale = 1 - Easing.easeOutCubic(disappearProgress);
+            const fadeAlpha = 1 - disappearProgress;
+
+            if (fadeAlpha > 0) {
+              ctx.save();
+              ctx.globalAlpha = fadeAlpha;
+              ctx.translate(cx, cy);
+              ctx.scale(scale, scale);
+              if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+                ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+              } else {
+                this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+              }
+              ctx.restore();
+            }
+          }
+        } else {
+          // 未选择任何礼盒：呼吸动画（略微错开相位）
+          const breath = Math.sin(Date.now() / 800 + i * 0.5) * 0.05;
+          const pulse = 1 + breath;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(pulse, pulse);
+          if (this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+            ctx.drawImage(this.parent.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+          } else {
+            this._drawGiftBox(ctx, 0, 0, 70 * s, s);
+          }
+          ctx.restore();
+
+          // 保存点击区域
+          this.giftRects.push({ x: gx, y: gy, w: giftSize, h: giftSize, index: i });
+        }
+      }
+
+      // 提示文字
+      if (data._selectedGiftIndex === undefined) {
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('选择一个礼盒', W / 2, giftY + giftSize + 25 * s);
+      }
+
+      this.skipRect = null;
+      this.stashBtnRect = null;
+      this.useBtnRect = null;
+      this.okBtnRect = null;
+    } else if (data.phase === 'result') {
+      // 首次进入 result 阶段时重置金币翻转时间基准
+      if (this._lastPhase !== 'result') {
+        this.coinFlipStartTime = null;
+      }
+      this._lastPhase = data.phase;
+
+      // result 阶段使用 _drawModalPanel（自带遮罩+面板+关闭动画）
+      ctx.restore();
+
+      const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+        isClosing: game._closingWitchReward,
+        closeStartTime: game._closeWitchRewardStartTime,
+        width: 300, height: 340,
+        overlayAlpha: 0.45,
+        elapsed: Date.now() - (data.startTime || Date.now()),
+        onCloseComplete: () => {}
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+
+      if (data.result) {
+        // === 标题：获得奖励 ===
+        ctx.save();
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('获得奖励', W / 2, py + 38 * s);
+        ctx.restore();
+
+        // === 标题下装饰线 ===
+        ctx.save();
+        ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+        ctx.lineWidth = 1 * s;
+        const decoLineY = py + 56 * s;
+        const decoLineW = pw * 0.5;
+        const decoLineX = px + (pw - decoLineW) / 2;
+        ctx.beginPath();
+        ctx.moveTo(decoLineX, decoLineY);
+        ctx.lineTo(decoLineX + decoLineW, decoLineY);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(W / 2, decoLineY);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = gold;
+        ctx.fillRect(-3 * s, -3 * s, 6 * s, 6 * s);
+        ctx.restore();
+        ctx.restore();
+
+        const rewardItem = data.rewardItem;
+
+        if (rewardItem && rewardItem.type === 'buff') {
+          const iconCY = py + 135 * s;
+
+          if (rewardItem.effect === 'double_coin') {
+            // === double_coin: 大金币翻面动画 ===
+            if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();
+            const flipElapsed = Date.now() - this.coinFlipStartTime;
+            const flipDuration = 2500;
+            const flipProgress = Math.min(flipElapsed / flipDuration, 1);
+            const rotations = 2;
+            const angle = rotations * Math.PI * 2 * Easing.easeOutCubic(flipProgress);
+            const scaleX = Math.cos(angle);
+            const coinSize = 80 * s;
+
+            ctx.save();
+            ctx.translate(W / 2, iconCY);
+            ctx.scale(scaleX, 1);
+            if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+              ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
+            } else {
+              ctx.beginPath();
+              ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
+              ctx.fillStyle = '#f5c542';
+              ctx.fill();
+              ctx.strokeStyle = '#c4a35a';
+              ctx.lineWidth = 3 * s;
+              ctx.stroke();
+            }
+            ctx.restore();
+
+            // 闪光效果（翻转结束时）
+            if (flipProgress < 1) {
+              const shineAlpha = (1 - flipProgress) * 0.4;
+              ctx.save();
+              ctx.globalAlpha = shineAlpha;
+              ctx.beginPath();
+              ctx.arc(W / 2, iconCY, coinSize * 0.7, 0, Math.PI * 2);
+              ctx.fillStyle = '#fff';
+              ctx.fill();
+              ctx.restore();
+            }
+          } else if (rewardItem.effect === 'shop_discount_5') {
+            // === shop_discount_5: discount.png 图标 ===
+            const iconSize = 70 * s;
+            if (this.parent.discountIcon && this.parent.discountIconLoaded) {
+              ctx.save();
+              ctx.drawImage(this.parent.discountIcon, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
+              ctx.restore();
+            } else {
+              // 兜底：圆形 + "5折" 文字
+              const iconR = 35 * s;
+              ctx.save();
+              ctx.beginPath();
+              ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+              ctx.fillStyle = '#e74c3c';
+              ctx.fill();
+              ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+              ctx.fillStyle = '#fff';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('5折', W / 2, iconCY);
+              ctx.restore();
+            }
+          } else {
+            // === global_hand_1 / global_letter_1 奖励布局 ===
+            // 圆形占位图标
+            const iconR = 35 * s;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+            ctx.fillStyle = '#f5f0e6';
+            ctx.fill();
+            ctx.lineWidth = 2 * s;
+            ctx.strokeStyle = '#c4a35a';
+            ctx.stroke();
+            ctx.restore();
+
+            // 图标内部居中文字 "+1"
+            ctx.save();
+            ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+            ctx.fillStyle = '#c4a35a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+1', W / 2, iconCY);
+            ctx.restore();
+          }
+
+          // 下方文字 rewardItem.desc
+          const descY = iconCY + 65 * s;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.fillStyle = darkBlue;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(rewardItem.desc, W / 2, descY);
+          ctx.restore();
+
+          // 底部单个按钮"领取"
+          const btnW = 130 * s;
+          const btnH = 44 * s;
+          const btnX = (W - btnW) / 2;
+          const btnY = py + ph - btnH - 28 * s;
+          this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
+          this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+          this.stashBtnRect = null;
+          this.useBtnRect = null;
+          this.skipRect = null;
+        } else if (rewardItem) {
+          // === 卡牌尺寸计算 ===
+          const cardMaxW = pw * 0.4;
+          const cardMaxH = 110 * s;
+          let cardW = cardMaxW, cardH = cardMaxH;
+          const iconName = data.rewardItem.effect;
+          const iconData = this.parent.shopCardImages[iconName];
+          if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
+            const containerAspect = cardMaxW / cardMaxH;
+            const aspect = iconData.width / iconData.height;
+            if (containerAspect > aspect) {
+              cardH = cardMaxH;
+              cardW = cardH * aspect;
+            } else {
+              cardW = cardMaxW;
+              cardH = cardW / aspect;
+            }
+          }
+          const cardCX = W / 2;
+          const cardCY = py + 72 * s + cardH / 2;
+          const cardX = cardCX - cardW / 2;
+          const cardY = cardCY - cardH / 2;
+
+          // === 卡牌图片（圆角裁剪）===
+          ctx.save();
+          ctx.beginPath();
+          const cr = 4 * s;
+          ctx.moveTo(cardX + cr, cardY);
+          ctx.lineTo(cardX + cardW - cr, cardY);
+          ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cr);
+          ctx.lineTo(cardX + cardW, cardY + cardH - cr);
+          ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cr, cardY + cardH);
+          ctx.lineTo(cardX + cr, cardY + cardH);
+          ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cr);
+          ctx.lineTo(cardX, cardY + cr);
+          ctx.quadraticCurveTo(cardX, cardY, cardX + cr, cardY);
+          ctx.closePath();
+          ctx.clip();
+
+          if (iconData && iconData.loaded && iconData.img) {
+            ctx.drawImage(iconData.img, cardX, cardY, cardW, cardH);
+          }
+          ctx.restore();
+
+          // === 光彩效果（金色脉动光晕 + 闪烁星）===
+          this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
+
+          // === 卡牌名称 ===
+          const nameY = cardY + cardH + 20 * s;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.fillStyle = darkBlue;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(data.rewardItem.name, W / 2, nameY);
+          ctx.restore();
+
+          // === 卡牌描述 ===
+          const descY = nameY + 24 * s;
+          ctx.save();
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#555';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(data.rewardItem.desc, W / 2, descY);
+          ctx.restore();
+
+          // === 底部分隔线 ===
+          const bottomLineY = descY + 28 * s;
+          ctx.save();
+          ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+          ctx.lineWidth = 1 * s;
+          const blW = pw * 0.55;
+          const blX = px + (pw - blW) / 2;
+          ctx.beginPath();
+          ctx.moveTo(blX, bottomLineY);
+          ctx.lineTo(blX + blW, bottomLineY);
+          ctx.stroke();
+          ctx.save();
+          ctx.translate(W / 2, bottomLineY);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = gold;
+          ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+          ctx.restore();
+          ctx.restore();
+
+          // === 按钮 ===
+          const collectBtnH = 44 * s;
+          const btnW = 120 * s;
+          const btnGap = 12 * s;
+          const btnY = py + ph - collectBtnH - 22 * s;
+
+          const isGameScope = data.rewardItem.scope === 'game';
+          if (isGameScope) {
+            // scope:game 的奖励只展示"暂存"按钮（居中）
+            const stashX = (W - btnW) / 2;
+            this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
+            this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+            this.useBtnRect = null;
+          } else {
+            // 默认：立即使用 + 暂存
+            const totalW = btnW * 2 + btnGap;
+            const startX = (W - totalW) / 2;
+
+            // 立即使用（金色背景）
+            this.parent._drawScaledButton(ctx, '立即使用', startX, btnY, btnW, collectBtnH, s, this.useBtnPressed, { color: '#c4a35a', radius: 8 });
+
+            // 暂存（米色边框按钮）
+            const stashX = startX + btnW + btnGap;
+            this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
+
+            this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+            this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
+          }
+          this.okBtnRect = null;
+          this.skipRect = null;
+        }
+      } else if (data.consolationGold) {
+        // === 鼓励奖：获得奖励 ===
+        ctx.save();
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('获得奖励', W / 2, py + 38 * s);
+        ctx.restore();
+
+        // === 标题下装饰线 ===
+        ctx.save();
+        ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+        ctx.lineWidth = 1 * s;
+        const decoLineY = py + 56 * s;
+        const decoLineW = pw * 0.5;
+        const decoLineX = px + (pw - decoLineW) / 2;
+        ctx.beginPath();
+        ctx.moveTo(decoLineX, decoLineY);
+        ctx.lineTo(decoLineX + decoLineW, decoLineY);
+        ctx.stroke();
+        ctx.save();
+        ctx.translate(W / 2, decoLineY);
+        ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = gold;
+        ctx.fillRect(-3 * s, -3 * s, 6 * s, 6 * s);
+        ctx.restore();
+        ctx.restore();
+
+        // === 金币翻面动画（复用 double_coin 样式）===
+        const iconCY = py + 135 * s;
+        if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();
+        const flipElapsed = Date.now() - this.coinFlipStartTime;
+        const flipDuration = 2500;
+        const flipProgress = Math.min(flipElapsed / flipDuration, 1);
+        const rotations = 2;
+        const angle = rotations * Math.PI * 2 * Easing.easeOutCubic(flipProgress);
+        const scaleX = Math.cos(angle);
+        const coinSize = 80 * s;
+
+        ctx.save();
+        ctx.translate(W / 2, iconCY);
+        ctx.scale(scaleX, 1);
+        if (this.parent.coinIcon && this.parent.coinIconLoaded) {
+          ctx.drawImage(this.parent.coinIcon, -coinSize / 2, -coinSize / 2, coinSize, coinSize);
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, coinSize / 2, 0, Math.PI * 2);
+          ctx.fillStyle = '#f5c542';
+          ctx.fill();
+          ctx.strokeStyle = '#c4a35a';
+          ctx.lineWidth = 3 * s;
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        // 闪光效果（翻转结束时）
+        if (flipProgress < 1) {
+          const shineAlpha = (1 - flipProgress) * 0.4;
+          ctx.save();
+          ctx.globalAlpha = shineAlpha;
+          ctx.beginPath();
+          ctx.arc(W / 2, iconCY, coinSize * 0.7, 0, Math.PI * 2);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // === 金币数文字 ===
+        const descY = iconCY + 65 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`+${data.consolationGold} 金币`, W / 2, descY);
+        ctx.restore();
+
+        // 底部单个按钮"领取"
+        const btnW = 130 * s;
+        const btnH = 44 * s;
+        const btnX = (W - btnW) / 2;
+        const btnY = py + ph - btnH - 28 * s;
+        this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
+        this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+        this.stashBtnRect = null;
+        this.useBtnRect = null;
+        this.skipRect = null;
+      } else {
+        // 没中（rate=1 时不会进入这里）
+        ctx.save();
+        ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('什么都没有', W / 2, py + ph / 2 - 15 * s);
+        ctx.restore();
+
+        // 确定按钮
+        const btnW = 120 * s;
+        const btnH = 40 * s;
+        const btnX = (W - btnW) / 2;
+        const btnY = py + ph - btnH - 40 * s;
+        this.parent._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
+        this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+        this.stashBtnRect = null;
+        this.useBtnRect = null;
+        this.skipRect = null;
+      }
+
+      ctx.restore();
+      return;
+    }
+
+    ctx.restore();
+  }
+
+  _drawStarburst(ctx, cx, cy, size, s) {
+    const now = Date.now();
+    const breath = 0.5 + 0.5 * Math.sin(now / 800);
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.shadowBlur = 0;
+
+    // === 金色径向光晕（礼盒背后，呼吸脉动）===
+    const glowR = size * 0.6;
+    const glowAlpha = 0.15 * breath;
+    const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
+    glowGrad.addColorStop(0, `rgba(255,215,100,${glowAlpha})`);
+    glowGrad.addColorStop(0.4, `rgba(196,163,90,${glowAlpha * 0.6})`);
+    glowGrad.addColorStop(1, 'rgba(196,163,90,0)');
+
+    ctx.fillStyle = glowGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, glowR, 0, Math.PI * 2);
+    ctx.fill();
+
+    // === 散落小星星（绕中心缓慢旋转+闪烁）===
+    const starCount = 14;
+    for (let i = 0; i < starCount; i++) {
+      const seed = i * 137.5;
+      const dist = size * (0.3 + 0.45 * Math.abs(Math.sin(seed)));
+      const angle = seed + now / 1500;
+      const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
+      const starSize = (1 + 0.6 * Math.sin(i * 3)) * s;
+
+      ctx.fillStyle = `rgba(255,230,150,${0.9 * twinkle})`;
+      ctx.beginPath();
+      ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, starSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  _drawGiftBox(ctx, cx, cy, size, s) {
+    const boxW = size;
+    const boxH = size * 0.75;
+    const x = cx - boxW / 2;
+    const y = cy - boxH / 2;
+    const r = Math.max(2, 4 * s);
+
+    // 盒身
+    this.parent.roundRect(x, y, boxW, boxH, r, '#c4a35a');
+
+    // 十字丝带
+    ctx.fillStyle = '#d4af37';
+    const ribbonW = Math.max(2, size * 0.12);
+    ctx.fillRect(x + boxW / 2 - ribbonW / 2, y, ribbonW, boxH);
+    ctx.fillRect(x, y + boxH / 2 - ribbonW / 2, boxW, ribbonW);
+
+    // 蝴蝶结
+    ctx.fillStyle = '#d4af37';
+    ctx.beginPath();
+    ctx.arc(cx - size * 0.1, y - size * 0.02, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + size * 0.1, y - size * 0.02, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+module.exports = { SettlementRenderer, WitchRewardRenderer };

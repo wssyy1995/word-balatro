@@ -1,2 +1,366 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,n=Math.SQRT1_2,p=Math.SQRT2;var q=50,r=30,s=32,t=55,u=21,v=80,w=5,x=65,y=7,z=97,A=85,B=84,C=29,D=62,E=13,F=49,H=7,J=44,K=21,L=96,M=19,N=83,O=58,P=50,Q=63,R=99,S=97,T=63,U=50,V=28,W=75,X=77,Y=60,Z=95,_0=15,_1=73,_2=51,_3=88,_4=5,_5=71,_6=78,_7=82,_8=91,_9=87,ba=67,bb=9,bc=77,bd=23,be=3,bf=5,bg=15,bh=15,bi=59,bj=22,bk=68,bl=3,bm=51,bn=52,bo=17,bp=12,bq=1,br=37,bs=77,bt=41,bu=91,bv=36,bw=25,bx=76,by=12,bz=11,bA=92,bB=66,bC=18,bD=30,bE=81,bF=23,bG=62,bH=59,bI=29,bJ=71;var bK=g(2*a(f(D*62+44*bG)))<=g(a(D*D+44*44)+a(bG*62+62*62)),bL=c((_8+7+L+50)/4)>=c(e((a(_8)+a(y)+a(96)+a(q))/4)),bM=g(2*a(f(59*r+51*15)))<=g(a(51*bm+59*59)+a(r*30+15*15)),bN=g(2*a(f(23*15+96*96)))>g(a(23*bF+L*L)+a(bh*bh+96*96)),bO=g(2*a(f(bq*71+bi*58)))<=g(a(bq*1+59*bi)+a(71*71+O*58)),bP=c((bG+91+bz+bh)/4)>=c(e((a(15)+a(91)+a(bz)+a(bG))/4)),bQ=bH*bH+bo*17+3*be<59*3+3*bo+bo*bH,bR=by*12+P*P+97*97<P*97+z*by+12*P,bS=g(2*a(f(80*_6+_2*_7)))<=g(a(v*v+51*51)+a(_6*78+_7*_7)),bT=88*88+by*by+bv*36+X*X>=77*by+bv*X+by*_3+_3*bv,bU=g(2*a(f(x*x+92*S)))>g(a(bA*bA+65*x)+a(65*x+97*S)),bV=62*D+bw*25+1*1+M*19<25*19+M*D+62*bq+1*bw,bW=g(2*a(f(L*15+12*Y)))<=g(a(12*12+L*L)+a(60*60+15*_0)),bX=q*q+bJ*71+99*R+bC*18<18*71+R*q+71*99+q*bC,bY=c((41+Q+O)/3)>=c(e((a(Q)+a(58)+a(41))/3)),bZ=g(2*a(f(_0*15+E*73)))<=g(a(15*15+E*E)+a(_0*15+73*_1)),b0=g(2*a(f(J*62+_6*_6)))<=g(a(44*J+78*_6)+a(62*bG+78*78)),b1=c((15+3+t)/3)>=c(e((a(t)+a(15)+a(3))/3)),b2=g(2*a(f(73*bh+80*z)))<=g(a(80*80+73*73)+a(15*15+z*97)),b3=c((S+32+be)/3)<c(e((a(s)+a(97)+a(3))/3)),b4=c((81+bh+bI+59)/4)<c(e((a(59)+a(bh)+a(bE)+a(bI))/4)),b5=bl*bl+ba*67+5*5+29*29<67*29+3*w+29*bl+5*67,b6=g(2*a(f(bq*y+76*76)))>g(a(bx*76+bq*bq)+a(76*76+7*y)),b7=21*21+bd*23+T*63>=21*T+T*23+bd*u,b8=g(2*a(f(92*Y+bD*_1)))>g(a(bA*92+bD*bD)+a(_1*73+60*Y)),b9=c((V+bn+99)/3)<c(e((a(V)+a(bn)+a(R))/3)),ca=g(2*a(f(15*15+51*44)))>g(a(51*51+15*bg)+a(J*44+bg*bg)),cb=c((55+71+84+D)/4)>=c(e((a(t)+a(bJ)+a(62)+a(84))/4)),cc=U*50+49*49+bc*bc+5*5>=bc*49+U*w+F*U+w*77,cd=c((67+65+y+84)/4)>=c(e((a(67)+a(84)+a(x)+a(7))/4)),ce=g(2*a(f(bC*15+bj*17)))<=g(a(18*18+bj*22)+a(17*bo+bg*bg)),cf=c((bn+X+bq+63)/4)<c(e((a(1)+a(63)+a(52)+a(X))/4)),cg=g(2*a(f(66*60+bm*bc)))<=g(a(bB*bB+bm*51)+a(77*bc+60*60)),ch=bj*22+bE*81+51*51+71*bJ>=22*bJ+71*bE+bE*bm+51*bj,ci=g(2*a(f(92*92+Z*96)))>g(a(bA*bA+95*Z)+a(L*96+92*bA)),cj=c((H+12+82+85)/4)<c(e((a(85)+a(_7)+a(7)+a(12))/4)),ck=82*82+J*44+bn*52+49*F<44*82+bn*49+_7*bn+49*J,cl=c((91+bE+t+be)/4)<c(e((a(91)+a(bE)+a(t)+a(be))/4)),cm=g(2*a(f(bl*97+63*Q)))>g(a(Q*63+bl*bl)+a(63*Q+97*S)),cn=c((30+81+65+bB)/4)<c(e((a(r)+a(81)+a(66)+a(65))/4));var m,co,o,cp,cq,G,I,cs,ct,cu;var cv,cw,cx,cy;var cz=+!ca,cA=+!ca;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cB={g:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cC="";var cD=new Array(22);cC=cB.g("otdixvyvIP",2);cD[0]=cC.s(2);cC=cB.g("xtccraxamsocniswon",3);cD[1]=cC.s(3);cC=cB.g("pohsmorftfeltnofdnahyalpratshsupllifdnifezisefilevas",4);cD[2]=cC.s(4);cC=cB.g("HdracWdracdilavsdracetatsepahsroolfrolocyacederocseulavelacs",5);cD[3]=cC.s(5);cC=cB.g("dIdracelddimoTeniletatorgnisaEretlifrettelsrekojYtratsXtratshtgnelmodnar",6);cD[4]=cC.s(6);cC=cB.g("yticapo6b95b9#a53a4c#stropxeatad/..ffffff#007dff#erotser",7);cD[5]=cC.s(7);cC=cB.g("draCwarddedargpuerocSdloerocSwentceRllifdeepStornoitarudtxeTllifnoitatorselkraps",8);cD[6]=cC.s(8);cC=cB.g("erocSesabratSward_stceRdracesahPminadIdraCxamminAerocsngilAtxethtaPesolcerocStsalhtaPnigebetalsnartelytSllifemiTtratsepytotorp",9);cD[7]=cC.s(9);cC=cB.g("edoMnoitoptesffOminaxednIrekojdereggirt_erocs_drowrulBwodahssdIdraCtih",10);cD[8]=cC.s(10);cC=cB.g("elacSerocs_kcaBtuOesaeemiTevlosertluMedargpuroloCwodahsahplAlabolgerocSgniylf",11);cD[9]=cC.s(11);cC=cB.g("cibuCtuOesaeenilesaBtxetEROCS_RETTELnoitamina/..reganaMoiduakcehCgnidnep",12);cD[10]=cC.s(12);cC=cB.g("sdIdraCdeyalp",13);cD[11]=cC.s(13);cC=cB.g("stceRporPhctiwselkrapSnwaps_xednIdoGrettelminAdoGrettel_",14);cD[12]=cC.s(14);cC=cB.g("elacSesluPclac_tsruBratSnwaps_etatSnoitoPerp_minAesluPerocs_",15);cD[13]=cC.s(15);cC=cB.g(")53.0,0,0,0(abgrsnoitaminAetadpugnidargpUnoitop_",16);cD[14]=cC.s(16);cC=cB.g("gnortSkcaBtuOesaeerocSgniylFtrats_deyalPdnuoSerocs_",17);cD[15]=cC.s(17);cC=cB.g("minAdoGretteLward_dekcoLetadpUerocs_",18);cD[16]=cC.s(18);cC=cB.g("pupoPedargpUmodnar_tratSminAdoGrettel_",19);cD[17]=cC.s(19);cC=cB.g(")52.0,0,512,552(abgr",20);cD[18]=cC.s(20);cC=cB.g(")7.0,552,552,552(abgr)58.0,281,98,551(abgr",21);cD[19]=cC.s(21);cC=cB.g("minAedargpUnoitoPward_selkrapSwarDdnAetadpu_",22);cD[20]=cC.s(22);cC=cB.g("erocSgniylFwarDdnAetadpu_",25);cD[21]=cC.s(25);var cE="14,G,C,DQ,Gu,Bu,M,B,Ea,K|,D&,a,Fk,I&,A,T=,H4,|";function cF(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cG=cF(cE);if(cz){m=cD[4][7];co=cD[10][2];o=cD[10][3];cp=cD[5][3];cq=cD[5][4];G="x";I="y";cs=cD[3][3];ct=cD[7][4];cu="";cv="w";cw="h";cx="W";cy="H"}if(cz&&bZ){cu="fill"}if(cz&&bU){cu+=cs}cz=0;cC=null;cE=null;const{[m]:Easing}=require(co);const{[o]:LETTER_SCORE}=require(cp);module[cq]=function a(a){if(cA&&cl){cu+=ct}cA=0;var b=cD,c=cG,d=b[20],e=b[7][0];a[e][b[14][1]]=function(){};a[e][b[12][2]]=function(a,b,d=c[0],e=null){var f=cD,g=f[3],h=f[5],i=f[0],j=f[2],k=f[1],l=f[4][0];const m=this[g[0]];const n=e||[h[1],h[2]];for(let c=0;c<d;c++){const c=Math[l]()*Math[i[0]]*2;const d=1+Math[l]()*2.5;this[f[6][0]][j[5]]({[G]:a,[I]:b,[i[2]]:Math[k[2]](c)*d*m,[i[1]]:Math[k[1]](c)*d*m-1.5*m,[j[1]]:1,[g[3]]:.015+Math[l]()*.02,[j[2]]:(1.5+Math[l]()*2.5)*m,[g[4]]:n[Math[g[5]](Math[l]()*n[f[4][1]])]})}};a[e][b[13][2]]=function(a,b,d=c[1],e=null){var f=cD,g=f[3],h=f[5],i=f[0],j=f[6],k=f[2],l=f[1],m=f[4][0],n=f[0][0];const o=this[g[0]];const p=e||[h[1],h[2]];for(let c=0;c<d;c++){const c=Math[m]()*Math[n]*2;const d=.6+Math[m]()*1;this[j[0]][k[5]]({[G]:a,[I]:b,[i[2]]:Math[l[2]](c)*d*o,[i[1]]:Math[l[1]](c)*d*o-.6*o,[k[1]]:1,[g[3]]:.01+Math[m]()*.012,[k[2]]:(1.2+Math[m]()*1.8)*o,[g[4]]:p[Math[g[5]](Math[m]()*p[f[4][1]])],[g[6]]:k[6],[j[1]]:Math[m]()*Math[n]*2,[j[4]]:(Math[m]()-.5)*.12})}};a[e][d[0]]=function(a,b){var c=cD,d=c[6],e=c[4],f=c[2],g=c[3],h=c[6][0],i=c[0][1],j=c[2][1];if(this[h][e[1]]===0)return;a[f[0]]();this[h]=this[h][e[6]](e=>{var h=cD,k=h[7],l=h[4],m=h[1],n=h[7][4],o=h[0][0],p=h[2][2];e[G]+=e[c[0][2]];e[I]+=e[i];e[i]+=.08*b;e[j]-=e[g[3]];e[d[1]]+=e[d[4]]||0;if(e[j]>0){a[c[9][1]]=Math[c[1][3]](0,e[j]);a[c[7][2]]=e[g[4]];if(e[g[6]]===f[6]){a[h[2][0]]();a[k[3]](e[G],e[I]);a[l[8]](e[h[6][1]]);a[n]();for(let b=0;b<4;b++){const c=Math[o]/2*b;const d=b%2===0?e[p]:e[p]*.35;a[l[9]](Math[m[2]](c)*d,Math[m[1]](c)*d)}a[k[6]]();a[cu]();a[h[5][0]]()}else{a[n]();a[m[4]](e[G],e[I],e[p],0,Math[o]*2);a[cu]()}return true}return false});a[c[5][0]]()};a[e][b[15][1]]=function(a,b,c,d){var e=cD,f=e[4],g=e[10][1];this[e[9][0]]={[e[3][1]]:a,[f[2]]:b,[f[3]]:c,[e[7][1]]:Date[e[1][0]]()};this[e[16][0]]=true;if(d&&d[g])d[g][e[2][7]](e[8][2])};a[e][b[21][0]]=function(a,b,c){var d=cD,e=cG,f=d[9],g=d[7],h=d[2],i=d[3],j=d[5],k=d[4],l=d[9][0],m=d[1][0],gl=g[1],n=k[2],o=k[3],p=d[6][2],q=i[1],r=d[16][0],s=g[5],t=i[2];if(!this[l])return;const u=this[l];const v=Date[m]()-u[gl];const w=e[2];const x=e[3];const y=e[4];const z=w+x+y;a[h[0]]();a[h[9]]=`bold ${Math[i[5]](e[5]*b)}px Georgia, serif`;a[g[2]]=j[5];a[g[7]]=h[10];a[d[10][4]]=d[4][10];a[f[2]]=d[18][0];a[d[8][1]]=e[0]*b;if(v<w){const c=v/w;const f=Easing[d[15][2]](c);const h=f;const j=(1-f)*e[6]*b;a[g[3]](u[n],u[o]+j);a[i[0]](h,h);a[p](`+${u[q]}`,0,0)}else if(v<w+x){this[r]=false;a[p](`+${u[q]}`,u[n],u[o])}else if(v<z){this[r]=false;const b=(v-w-x)/y;a[f[1]]=1-b;a[p](`+${u[q]}`,u[n],u[o])}else{this[l]=null;this[r]=false;if(this[s]!==c[t]){this[g[8]]={[h[11]]:this[s],[d[0][4]]:c[t],[gl]:Date[m](),[d[6][3]]:e[7]};this[s]=c[t]}}a[j[0]]()};a[e][b[16][1]]=function(a){var b=cD,c=cG,d=b[1],e=b[3],f=b[8],g=b[7],h=b[4],i=b[9],j=b[19],k=b[5],l=b[12],m=b[2],n=b[0],o=c[8],p=l[0],q=f[0],r=b[1][0],gI=g[1],s=h[1],t=b[10][0],u=l[1],v=h[4],w=m[3],x=n[0],y=m[8],z=n[3],A=b[3][8],B=b[13][0],C=f[1],D=g[2];const E=this[d[5]];const F=this[e[0]];const H=a[p];if(!H)return;if(!H[q])H[q]={};const J=Date[r]()-H[gI];const K=o;const L=c[9];const M=c[2];const N=H[g[9]];const O=H[b[11][0]];const P=[N,...O[h[6]](a=>a!==N)];let Q=K+L;for(let a=1;a<P[s];a++){Q+=M+L}if(J>=Q){a[p]=null;if(a[t]&&a[t][e[7]]===e[9]){a[t][i[4]]=Date[r]()-o;a[t][g[10]]=1}const c=a[t]?.[u]??-1;if(c>=0&&a[v][c]){a[v][c][f[3]]=false;a[v][c][b[17][0]]=null}return}const R=a[t]?.[u]??-1;const S=this[b[12][3]]?.[w](a=>a[f[4]]===R);const T=this[g[11]]||[];const U=a=>T[w](b=>b[h[11]]===a);let V,W;let X=null;if(J<K){const a=J/K;const c=Easing[b[10][5]](a);const d=U(N);if(S&&d){V=S[G]+S[cv]/2+(d[G]+d[cv]/2-S[G]-S[cv]/2)*c;W=S[I]+S[cw]/2+(d[I]+d[cw]/2-S[I]-S[cw]/2)*c}}else{let a=K;if(J<a+L){const a=U(N);if(a){V=a[G]+a[cv]/2;W=a[I]+a[cw]/2}X=N;H[q][N]=true}else{a+=L;for(let b=1;b<P[s];b++){const e=P[b-1];const f=P[b];if(J<a+M){const b=(J-a)/M;const g=U(e);const h=U(f);if(g&&h){const a=g[G]+g[cv]/2;const e=g[I]+g[cw]/2;const f=h[G]+h[cv]/2;const i=h[I]+h[cw]/2;V=a+(f-a)*b;const j=c[10]*F;W=e+(i-e)*b-Math[d[1]](b*Math[x])*j}X=f;break}a+=M;if(J<a+L){const a=U(f);if(a){V=a[G]+a[cv]/2;W=a[I]+a[cw]/2}X=f;H[q][f]=true;break}a+=L}}}if(X){let d=null;if(a[y])d=a[y][w](a=>a&&a[z]===X);if(!d&&a[t]&&a[t][A]){d=a[t][A][w](a=>a[z]===X)}if(d&&!d[B]){d[B]={[gI]:Date[r](),[b[6][3]]:c[11]}}}if(V!==undefined&&W!==undefined){E[b[2][0]]();const a=J/c[12];E[i[2]]=j[0];E[C]=c[13]*F;E[D]=k[6];this[g[12]](E,V,W,7*F,3*F,5,a);E[C]=0;E[D]=j[1];E[g[4]]();E[d[4]](V,W,2*F,0,Math[x]*2);E[cu]();E[k[0]]()}};a[e][d[1]]=function(a){var b=cD,c=cG,d=b[1],e=b[7],f=b[9],g=b[2],h=b[8],i=b[6],j=b[3],k=c[2],l=b[14][0],g4=b[7][1],m=b[15][0],n=b[10][1],g7=b[3][0],o=b[2][0],p=b[5][0],ha=b[4][5],hb=b[9][3],q=b[1][3],r=b[13][1];const s=this[d[5]];const t=this[cx];const u=this[cy];const v=a[l];const w=Date[d[0]]();const x=w-v[g4];if(x<c[14]){const d=k;const l=k;const r=c[7];const w=c[15];const y=c[16];let z=1;let A=1;let B=false;let C=1;if(x<d){const a=x/d;z=Easing[f[5]](a)}else if(x<d+l){z=1}else if(x<d+l+r){B=true;if(!v[m]){v[m]=true;if(a[n])a[n][g[7]](h[2])}const c={[g4]:v[g4]+d+l,[i[3]]:r};C=this[b[13][3]](c,.2)[g7]}else if(x<d+l+r+w){B=true;z=1}else{const a=(x-d-l-r-w)/y;z=1-a*.5;A=1-a;B=true}s[o]();s[e[2]]=b[14][2];s[i[5]](0,0,t,u);s[p]();s[o]();s[e[3]](t/2,u/2);s[g7](2,2);const D={[ha]:v[ha],[j[2]]:B?v[i[6]]:v[i[7]],[e[13]]:LETTER_SCORE[v[ha]],[i[8]]:B,[hb]:B?v[hb]||1:1,[h[5]]:{[g7]:Math[q](0,z),[b[5][7]]:Math[q](0,A)}};if(x>=d+l&&x<d+l+r){D[f[6]]=C}this[i[9]](D,-this[j[10]]/2,-this[j[11]]/2);s[p]()}else{a[l]=null;a[b[17][1]]=null;a[h[6]]=null;a[j[7]]=a[r]||g[12];a[r]=null}}};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDozMCJ9)
-//# sourceMappingURL=animation.js.map
+const { Easing } = require('../animation');
+const { LETTER_SCORE } = require('../data');
+
+module.exports = function extendAnimation(Renderer) {
+    Renderer.prototype.updateAnimations = function() {
+      // 动画更新（后续实现）
+    }
+
+    Renderer.prototype._spawnSparkles = function(cx, cy, count = 20, colors = null) {
+      const s = this.scale;
+      const palette = colors || ['#ffd700', '#ffffff'];
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1 + Math.random() * 2.5;
+        this.sparkles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(angle) * speed * s,
+          vy: Math.sin(angle) * speed * s - 1.5 * s,
+          life: 1,
+          decay: 0.015 + Math.random() * 0.02,
+          size: (1.5 + Math.random() * 2.5) * s,
+          color: palette[Math.floor(Math.random() * palette.length)],
+        });
+      }
+    }
+
+    Renderer.prototype._spawnStarBurst = function(cx, cy, count = 16, colors = null) {
+      const s = this.scale;
+      const palette = colors || ['#ffd700', '#ffffff'];
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 0.6 + Math.random() * 1.0;
+        this.sparkles.push({
+          x: cx,
+          y: cy,
+          vx: Math.cos(angle) * speed * s,
+          vy: Math.sin(angle) * speed * s - 0.6 * s,
+          life: 1,
+          decay: 0.010 + Math.random() * 0.012,
+          size: (1.2 + Math.random() * 1.8) * s,
+          color: palette[Math.floor(Math.random() * palette.length)],
+          shape: 'star',
+          rotation: Math.random() * Math.PI * 2,
+          rotSpeed: (Math.random() - 0.5) * 0.12,
+        });
+      }
+    }
+
+    Renderer.prototype._updateAndDrawSparkles = function(ctx, s) {
+      if (this.sparkles.length === 0) return;
+      ctx.save();
+      this.sparkles = this.sparkles.filter(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08 * s; // 重力
+        p.life -= p.decay;
+        p.rotation += p.rotSpeed || 0;
+        if (p.life > 0) {
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.fillStyle = p.color;
+          if (p.shape === 'star') {
+            ctx.save();
+            ctx.translate(p.x, p.y);
+            ctx.rotate(p.rotation);
+            ctx.beginPath();
+            for (let k = 0; k < 4; k++) {
+              const a = (Math.PI / 2) * k;
+              const r = k % 2 === 0 ? p.size : p.size * 0.35;
+              ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          } else {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          return true;
+        }
+        return false;
+      });
+      ctx.restore();
+    }
+
+    Renderer.prototype._startFlyingScore = function(value, startX, startY, game) {
+      this.flyingScore = {
+        value,
+        startX, startY,
+        startTime: Date.now(),
+      };
+      // 锁定 HUD 分数动画，等飞行结束后再更新
+      this._scoreUpdateLocked = true;
+      // 播放总分弹出音效
+      if (game && game.audioManager) game.audioManager.play('word_score');
+    }
+
+    Renderer.prototype._updateAndDrawFlyingScore = function(ctx, s, game) {
+      if (!this.flyingScore) return;
+      const fs = this.flyingScore;
+      const elapsed = Date.now() - fs.startTime;
+  
+      const appearDuration = 300;
+      const holdDuration = 600;
+      const fadeDuration = 150;
+      const totalDuration = appearDuration + holdDuration + fadeDuration;
+  
+      ctx.save();
+      ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(255,215,0,0.25)';
+      ctx.shadowBlur = 20 * s;
+  
+      if (elapsed < appearDuration) {
+        // 阶段1: 果冻弹出（easeOutBackStrong）
+        const progress = elapsed / appearDuration;
+        const ease = Easing.easeOutBackStrong(progress);
+        const scale = ease;
+        const offsetY = (1 - ease) * 15 * s;
+  
+        ctx.translate(fs.startX, fs.startY + offsetY);
+        ctx.scale(scale, scale);
+        ctx.fillText(`+${fs.value}`, 0, 0);
+      } else if (elapsed < appearDuration + holdDuration) {
+        // 阶段2: 停留（弹出结束时解锁 HUD）
+        this._scoreUpdateLocked = false;
+        ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
+      } else if (elapsed < totalDuration) {
+        // 阶段3: 淡出
+        this._scoreUpdateLocked = false;
+        const fadeProgress = (elapsed - appearDuration - holdDuration) / fadeDuration;
+        ctx.globalAlpha = 1 - fadeProgress;
+        ctx.fillText(`+${fs.value}`, fs.startX, fs.startY);
+      } else {
+        // 动画结束
+        this.flyingScore = null;
+        this._scoreUpdateLocked = false;
+        if (this.lastScore !== game.score) {
+          this.scoreAnim = { from: this.lastScore, to: game.score, startTime: Date.now(), duration: 400 };
+          this.lastScore = game.score;
+        }
+      }
+      ctx.restore();
+    }
+
+    Renderer.prototype._drawLetterGodAnim = function(game) {
+      const ctx = this.ctx;
+      const s = this.scale;
+      const anim = game._letterGodAnim;
+      if (!anim) return;
+  
+      if (!anim.hitCardIds) anim.hitCardIds = {};
+      const elapsed = Date.now() - anim.startTime;
+      const flyDuration = 1000;
+      const stayDuration = 350;
+      const jumpDuration = 300;
+      const maxCardId = anim.maxCardId;
+      const orderedIds = anim.playedCardIds;
+      const sequence = [maxCardId, ...orderedIds.filter(id => id !== maxCardId)];
+  
+      // 计算总时长
+      let totalDuration = flyDuration + stayDuration;
+      for (let i = 1; i < sequence.length; i++) {
+        totalDuration += jumpDuration + stayDuration;
+      }
+  
+      // 动画完成
+      if (elapsed >= totalDuration) {
+        game._letterGodAnim = null;
+        if (game.pendingCheck && game.pendingCheck.state === 'valid') {
+          // 字母之神完成后，重置时间基准并进入阶段1（字母跳跃）
+          // resolveTime 设为当前时间减去 letterJumpStart(1000ms)，
+          // 这样 jumpElapsed 从 0 开始，第一个字母立即开始跳跃，不会显示 0
+          game.pendingCheck.resolveTime = Date.now() - 1000;
+          game.pendingCheck.animPhase = 1;
+        }
+        const letterGodIdx = game.pendingCheck?.letterGodIndex ?? -1;
+        if (letterGodIdx >= 0 && game.jokers[letterGodIdx]) {
+          game.jokers[letterGodIdx]._triggered = false;
+          game.jokers[letterGodIdx]._letterGodAnimStart = null;
+        }
+        return;
+      }
+  
+      // 获取女巫牌位置
+      const letterGodIdx = game.pendingCheck?.letterGodIndex ?? -1;
+      const witchRect = this.witchPropRects?.find(r => r.jokerIndex === letterGodIdx);
+      const cardRects = this.cardRects || [];
+      const getCardRect = (cardId) => cardRects.find(r => r.cardId === cardId);
+  
+      // 幽光流焰由 _drawPropCard 统一绘制，此处不再重复绘制紫色呼吸光晕
+  
+      // ===== 计算星星位置 =====
+      let starX, starY;
+      let currentCardId = null;
+  
+      if (elapsed < flyDuration) {
+        const t = elapsed / flyDuration;
+        const eased = Easing.easeOutCubic(t);
+        const maxRect = getCardRect(maxCardId);
+        if (witchRect && maxRect) {
+          starX = witchRect.x + witchRect.w / 2 + (maxRect.x + maxRect.w / 2 - witchRect.x - witchRect.w / 2) * eased;
+          starY = witchRect.y + witchRect.h / 2 + (maxRect.y + maxRect.h / 2 - witchRect.y - witchRect.h / 2) * eased;
+        }
+      } else {
+        let t0 = flyDuration;
+        if (elapsed < t0 + stayDuration) {
+          const maxRect = getCardRect(maxCardId);
+          if (maxRect) {
+            starX = maxRect.x + maxRect.w / 2;
+            starY = maxRect.y + maxRect.h / 2;
+          }
+          currentCardId = maxCardId;
+          anim.hitCardIds[maxCardId] = true;
+        } else {
+          t0 += stayDuration;
+          for (let i = 1; i < sequence.length; i++) {
+            const fromId = sequence[i - 1];
+            const toId = sequence[i];
+            if (elapsed < t0 + jumpDuration) {
+              const t = (elapsed - t0) / jumpDuration;
+              const fromRect = getCardRect(fromId);
+              const toRect = getCardRect(toId);
+              if (fromRect && toRect) {
+                const fromX = fromRect.x + fromRect.w / 2;
+                const fromY = fromRect.y + fromRect.h / 2;
+                const toX = toRect.x + toRect.w / 2;
+                const toY = toRect.y + toRect.h / 2;
+                starX = fromX + (toX - fromX) * t;
+                const jumpHeight = 40 * s;
+                starY = fromY + (toY - fromY) * t - Math.sin(t * Math.PI) * jumpHeight;
+              }
+              currentCardId = toId;
+              break;
+            }
+            t0 += jumpDuration;
+            if (elapsed < t0 + stayDuration) {
+              const toRect = getCardRect(toId);
+              if (toRect) {
+                starX = toRect.x + toRect.w / 2;
+                starY = toRect.y + toRect.h / 2;
+              }
+              currentCardId = toId;
+              anim.hitCardIds[toId] = true;
+              break;
+            }
+            t0 += stayDuration;
+          }
+        }
+      }
+  
+      // 设置当前停留卡牌的分数脉冲
+      if (currentCardId) {
+        let card = null;
+        if (game.hand) card = game.hand.find(c => c && c.id === currentCardId);
+        if (!card && game.pendingCheck && game.pendingCheck.cards) {
+          card = game.pendingCheck.cards.find(c => c.id === currentCardId);
+        }
+        if (card && !card._scorePulseAnim) {
+          card._scorePulseAnim = { startTime: Date.now(), duration: 500 };
+        }
+      }
+  
+      // ===== 绘制星星 =====
+      if (starX !== undefined && starY !== undefined) {
+        ctx.save();
+        // 星星自转角度（飞行过程中缓慢旋转）
+        const starRot = elapsed / 800;
+        ctx.shadowColor = 'rgba(155,89,182,0.85)';
+        ctx.shadowBlur = 14 * s;
+        ctx.fillStyle = '#9b59b6';
+        this._drawStar(ctx, starX, starY, 7 * s, 3 * s, 5, starRot);
+        ctx.shadowBlur = 0;
+        // 中心高光点
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.arc(starX, starY, 2 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    Renderer.prototype._drawPotionUpgradeAnim = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const anim = game._potionUpgrading;
+      const now = Date.now();
+      const elapsed = now - anim.startTime;
+  
+      if (elapsed < 1800) {
+        const popDuration = 300;
+        const holdOldDuration = 300;
+        const scoreChangeDuration = 400;
+        const holdNewDuration = 700;
+        const fadeOutDuration = 100;
+  
+        let cardScale = 1;
+        let alpha = 1;
+        let showNewScore = false;
+        let scoreScale = 1;
+  
+        if (elapsed < popDuration) {
+          const t = elapsed / popDuration;
+          cardScale = Easing.easeOutBack(t);
+        } else if (elapsed < popDuration + holdOldDuration) {
+          cardScale = 1;
+        } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
+          showNewScore = true;
+          if (!anim._scoreSoundPlayed) {
+            anim._scoreSoundPlayed = true;
+            if (game.audioManager) game.audioManager.play('word_score');
+          }
+          const pulseState = {
+            startTime: anim.startTime + popDuration + holdOldDuration,
+            duration: scoreChangeDuration
+          };
+          scoreScale = this._calcPulseScale(pulseState, 0.2).scale;
+        } else if (elapsed < popDuration + holdOldDuration + scoreChangeDuration + holdNewDuration) {
+          showNewScore = true;
+          cardScale = 1;
+        } else {
+          const t = (elapsed - popDuration - holdOldDuration - scoreChangeDuration - holdNewDuration) / fadeOutDuration;
+          cardScale = 1 - t * 0.5;
+          alpha = 1 - t;
+          showNewScore = true;
+        }
+  
+        // 遮罩保留，但让背景转盘依然可见
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+  
+        ctx.save();
+        ctx.translate(W / 2, H / 2);
+        ctx.scale(2, 2);
+  
+        const tempCard = {
+          letter: anim.letter,
+          score: showNewScore ? anim.newScore : anim.oldScore,
+          baseScore: LETTER_SCORE[anim.letter],
+          upgraded: showNewScore,
+          upgradeMult: showNewScore ? (anim.upgradeMult || 1) : 1,
+          animOffset: { scale: Math.max(0, cardScale), opacity: Math.max(0, alpha) }
+        };
+  
+        if (elapsed >= popDuration + holdOldDuration && elapsed < popDuration + holdOldDuration + scoreChangeDuration) {
+          tempCard._scoreScale = scoreScale;
+        }
+  
+        this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2);
+        ctx.restore();
+      } else {
+        game._potionUpgrading = null;
+        game._randomUpgradePopup = null;
+        game.potionMode = null; // 动画结束后才真正清除药水
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+      }
+    }
+
+};

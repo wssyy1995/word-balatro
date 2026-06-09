@@ -1,2 +1,108 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,r=Math.LN10,u=Math.LN2,w=Math.LOG10E,y=Math.PI,A=Math.SQRT1_2,C=Math.SQRT2;var E=11,G=75,I=51,K=83,M=45,O=33,Q=17,S=33,U=81,W=54,Y=61,_0=55,_2=30,_3=36,_4=27,_5=1,_6=12,_7=17,_8=87,_9=45,ba=35,bb=73,bc=20,bd=55,be=2,bf=56,bg=3,bh=24,bi=38,bj=33,bk=74,bl=74,bm=23,bn=21,bo=17,bp=19,bq=77,br=4,bs=57,bt=81,bu=51,bv=22,bw=76,bx=78,by=38,bz=11,bA=31,bL=2,bM=8,bN=87,bO=77,bP=22,bQ=28,bR=20,bS=55,bT=17,bU=80,bV=11,bW=44,bX=75,bY=2,bZ=51,b0=23,b1=4,b2=75,b3=63,b4=81,b5=38,b6=25,b7=8,b8=18,b9=27,ca=26,cb=14,cc=72,cd=65,ce=45,cf=79,cg=20,ch=41;var ci=81*U+72*72+bP*bP+11*bz<11*cc+bP*11+72*81+U*22,cj=bu*bu+bw*76+b9*27+bZ*51<bZ*27+bw*51+51*76+27*bu,ck=20*20+27*b9+45*45>=20*ce+27*20+ce*27,cl=25*b6+45*45+bQ*28<b6*M+28*b6+M*bQ,cm=c((bw+br+K)/3)>=c(e((a(bw)+a(83)+a(br))/3)),cn=bb*bb+bW*bW+W*54<bb*44+44*54+54*bb,co=g(2*a(f(ce*bt+81*14)))>g(a(b4*81+ce*45)+a(bt*bt+cb*cb)),cp=bo*17+bs*bs+b9*27<27*bo+bo*57+bs*27,cq=br*4+S*S+bQ*28+55*55<33*br+br*28+bQ*_0+55*S,cs=g(2*a(f(bx*bx+75*61)))<=g(a(bx*bx+b2*b2)+a(bx*bx+Y*61)),ct=g(2*a(f(Y*U+81*bQ)))>g(a(Y*61+81*81)+a(bQ*28+U*81)),cu=c((bO+b7+45+bi)/4)>=c(e((a(38)+a(8)+a(ce)+a(77))/4)),cv=1*_5+33*33+77*bO<77*_5+O*77+_5*O,cw=25*b6+79*79+Q*Q+ce*45>=ce*25+17*ce+b6*cf+79*17,cx=g(2*a(f(17*45+bM*bM)))>g(a(8*bM+_7*_7)+a(8*8+45*45)),cy=c((55+72+2)/3)<c(e((a(72)+a(bY)+a(55))/3)),cz=c((bk+17+55)/3)>=c(e((a(_7)+a(bk)+a(55))/3)),cA=g(2*a(f(22*bv+cd*ce)))<=g(a(65*cd+22*bv)+a(bv*bv+45*45)),cB=38*by+33*33+54*W+_7*_7>=54*_7+33*38+by*54+17*33,cC=bm*bm+b9*b9+cf*79+_2*_2>=_2*79+bm*_2+b9*23+cf*b9,cD=2*2+30*_2+by*38<2*_2+_2*by+38*2,cE=_2*_2+ba*ba+18*b8>=_2*35+b8*_2+35*b8,cF=g(2*a(f(54*44+17*bT)))<=g(a(W*W+17*17)+a(44*bW+17*bT)),cG=77*77+bt*81+b1*b1+27*b9>=27*77+81*4+bO*81+4*b9,cH=c((b0+bf+_9)/3)>=c(e((a(23)+a(_9)+a(bf))/3)),cI=c((17+41+51+cf)/4)>=c(e((a(ch)+a(51)+a(17)+a(79))/4)),cJ=g(2*a(f(_4*28+87*bg)))<=g(a(bN*87+_4*_4)+a(3*bg+28*bQ)),cK=c((76+bM+63+_3)/4)<c(e((a(b3)+a(bw)+a(36)+a(bM))/4)),cL=55*bS+bz*bz+bQ*28+bk*bk>=74*bS+28*74+11*28+55*11,cM=25*b6+63*63+17*bo>=b6*bo+bo*63+63*b6,cN=c((22+30+4+20)/4)<c(e((a(bR)+a(br)+a(_2)+a(22))/4)),cO=c((81+23+76)/3)<c(e((a(23)+a(81)+a(bw))/3)),cP=38*bi+bb*73+_7*_7<17*bb+73*38+bi*_7,cQ=g(2*a(f(38*ce+M*E)))>g(a(45*M+38*38)+a(E*11+ce*ce)),cR=g(2*a(f(_5*_8+55*81)))>g(a(_5*1+55*bd)+a(_8*87+81*U)),cS=bO*77+br*br+Y*61+75*75<75*4+77*Y+4*bO+Y*75,cT=bS*55+17*Q+bg*bg<17*55+3*Q+55*bg,cU=g(2*a(f(21*b2+36*55)))<=g(a(_3*36+bn*21)+a(_0*55+b2*75)),cV=g(2*a(f(17*11+11*11)))<=g(a(bT*bT+E*11)+a(E*E+bz*11)),cW=c((bW+12+W+8)/4)>=c(e((a(W)+a(12)+a(bW)+a(b7))/4));var i,j,k,l,m,n,o,p,q,s,t,cX,v,cY,x,cZ,z,c0,B,c1,D,c2,F,c3,H,c4,J,c5,L,c6,N,c7,P,c8,R,c9,T,da,V,db,X,dc,Z,dd,_1,de;var df,dg,bB,bC,bD,bE,bF,bG,bH,bI,bJ,bK;var dh=+!co;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var di={e:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var dj="";var dk=new Array(13);dj=di.e("tegtessahdda",3);dk[0]=dj.s(3);dj=di.e("syektlumtxenezis",4);dk[1]=dj.s(4);dj=di.e("roolfeulav",5);dk[2]=dj.s(5);dj=di.e("seulaveteled",6);dk[3]=dj.s(6);dj=di.e("stropxesdrow/.eziSxam",7);dk[4]=dj.s(7);dj=di.e("ATAD_DROW",9);dk[5]=dj.s(9);dj=di.e("SDRAC_ECAF",10);dk[6]=dj.s(10);dj=di.e("EROCS_RETTEL",12);dk[7]=dj.s(12);dj=di.e("sdroWgnikcehc",13);dk[8]=dj.s(13);dj=di.e("tegraTesaBclacerocSretteLtegsedargpUretteletatSkcehCdrowsdrow_dnapxe/.",14);dk[9]=dj.s(14);dj=di.e("ehcaCdroWenilno",15);dk[10]=dj.s(15);dj=di.e("ehcaCgninaeMdrowATAD_DROW_DNAPXE",16);dk[11]=dj.s(16);dj=di.e("NOITUBIRTSID_RETTEL",19);dk[12]=dj.s(19);var dl='11,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Fn,",d,n,T,x,7,*,@,Bx';function dm(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var dn=dm(dl);if(dh){i="A";j="B";k="C";l="D";m="E";n="F";o="G";p="H";q="I";s="J";t="K";cX=dn[0];v="L";cY=dn[1];x="M";cZ=dn[2];z="N";c0=dn[3];B="O";c1=dn[4];D="P";c2=dn[5];F="Q";c3=dn[6];H="R";c4=dn[7];J="S";c5=dn[8];L="T";c6=dn[9];N="U";c7=dn[10];P="V";c8=dn[11];R="W";c9=dn[12];T="X";da=dn[13];V="Y";db=dn[14];X="Z";dc=dn[15];Z=dk[5][0];dd=dk[4][1];_1=dk[11][0];de=dk[9][0];df=dn[16];dg=dk[4][2];bB=dk[7][0];bC=dk[12][0];bD=dk[6][0];bE=dk[10][0];bF=dk[9][1];bG=dk[11][1];bH=dk[9][2];bI=dk[8][0];bJ=dk[9][3];bK=dk[9][4]}dh=0;dj=null;dl=null;const LETTER_SCORE={[i]:1,[j]:2,[k]:3,[l]:4,[m]:5,[n]:6,[o]:7,[p]:8,[q]:9,[s]:10,[t]:cX,[v]:cY,[x]:cZ,[z]:c0,[B]:c1,[D]:c2,[F]:c3,[H]:c4,[J]:c5,[L]:c6,[N]:c7,[P]:c8,[R]:c9,[T]:da,[V]:db,[X]:dc};const LETTER_DISTRIBUTION={[i]:8,[j]:2,[k]:3,[l]:4,[m]:8,[n]:3,[o]:3,[p]:2,[q]:8,[s]:2,[t]:2,[v]:4,[x]:3,[z]:5,[B]:7,[D]:3,[F]:2,[H]:5,[J]:4,[L]:5,[N]:5,[P]:2,[R]:2,[T]:2,[V]:2,[X]:2};const FACE_CARDS=new Set([T,V,X]);const{[Z]:WORD_DATA}=require(dd);const{[_1]:EXPAND_WORD_DATA}=require(de);class LimitedSet extends Set{constructor(a){super();this[dk[4][0]]=a}add(a){var b=dk,c=b[1],d=b[0],e=b[3];if(this[c[0]]>=this[b[4][0]]&&!this[d[1]](a)){const a=this[e[1]]()[c[1]]()[b[2][0]];this[e[0]](a)}super[d[0]](a);return this}}class LimitedMap extends Map{constructor(a){super();this[dk[4][0]]=a}set(a,b){var c=dk,d=c[1],e=c[0];if(this[d[0]]>=this[c[4][0]]&&!this[e[1]](a)){const a=this[d[3]]()[d[1]]()[c[2][0]];this[c[3][0]](a)}super[e[2]](a,b);return this}}const onlineWordCache=new LimitedSet(df);const wordCheckState=new Map;const checkingWords=new Set;const wordMeaningCache=new LimitedMap(df);const letterUpgrades=new Map;function getLetterScore(a){var b=dk,c=b[1][2],d=b[0][0];const e=LETTER_SCORE[a];const f=letterUpgrades[b[0][3]](a);let g=e;if(f){if(f[c])g=Math[b[2][1]](g*f[c]);if(f[d])g+=f[d]}return g}function calcBaseTarget(a){var b=dn;function c(a){var b=dn,c=b[18],d=b[19];if(a<=5)return b[17];if(a<=10)return c;if(a<=b[9])return d;if(a<=b[20])return b[21];if(a<=c)return b[22];if(a<=d)return b[23];return b[24]}let d=b[25];for(let b=2;b<=a;b++){d+=c(b)*(b-1)}return d}module[dg]={[bB]:LETTER_SCORE,[bC]:LETTER_DISTRIBUTION,[bD]:FACE_CARDS,[Z]:WORD_DATA,[_1]:EXPAND_WORD_DATA,[bE]:onlineWordCache,[bF]:wordCheckState,[bG]:wordMeaningCache,[bH]:letterUpgrades,[bI]:checkingWords,[bJ]:getLetterScore,[bK]:calcBaseTarget};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowNiJ9)
-//# sourceMappingURL=data.js.map
+// ===== 游戏数据 =====
+
+// 字母分数
+const LETTER_SCORE = {
+  A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
+  J:10, K:11, L:12, M:13, N:14, O:15, P:16, Q:17, R:18,
+  S:19, T:20, U:21, V:22, W:23, X:24, Y:25, Z:26
+};
+
+// 字母分布（98张牌）
+const LETTER_DISTRIBUTION = {
+  A:8, B:2, C:3, D:4, E:8, F:3, G:3, H:2, I:8,
+  J:2, K:2, L:4, M:3, N:5, O:7, P:3, Q:2, R:5,
+  S:4, T:5, U:5, V:2, W:2, X:2, Y:2, Z:2
+};
+
+// 人头牌标记
+const FACE_CARDS = new Set(['X', 'Y', 'Z']);
+
+
+const { WORD_DATA } = require('./words');
+const { EXPAND_WORD_DATA } = require('./expand_words');
+
+// 带容量上限的 Set（LRU 淘汰）
+class LimitedSet extends Set {
+  constructor(maxSize) {
+    super();
+    this.maxSize = maxSize;
+  }
+  add(value) {
+    if (this.size >= this.maxSize && !this.has(value)) {
+      const first = this.values().next().value;
+      this.delete(first);
+    }
+    super.add(value);
+    return this;
+  }
+}
+
+// 带容量上限的 Map（LRU 淘汰）
+class LimitedMap extends Map {
+  constructor(maxSize) {
+    super();
+    this.maxSize = maxSize;
+  }
+  set(key, value) {
+    if (this.size >= this.maxSize && !this.has(key)) {
+      const first = this.keys().next().value;
+      this.delete(first);
+    }
+    super.set(key, value);
+    return this;
+  }
+}
+
+// 在线校验缓存（上限 500 条）
+const onlineWordCache = new LimitedSet(500);
+
+// 在线检测状态缓存（当前回合内有效）
+const wordCheckState = new Map();
+
+// 正在检测中的单词（防并发重复请求）
+const checkingWords = new Set();
+
+// 单词释义缓存（上限 500 条）
+const wordMeaningCache = new LimitedMap(500);
+
+// 字母升级记录（跨回合保留）
+const letterUpgrades = new Map();
+
+// 获取升级后的字母分数（支持乘法 + 加法叠加）
+function getLetterScore(letter) {
+  const base = LETTER_SCORE[letter];
+  const upgrade = letterUpgrades.get(letter);
+  let score = base;
+  if (upgrade) {
+    if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+    if (upgrade.add) score += upgrade.add;
+  }
+  return score;
+}
+
+// 计算基础目标分（分段递增系数）
+// 1关=150；2~5关系数100；6~10关系数40；11~20关系数50；21~30关系数60；31~40关系数70；41~50关系数80；51~80关系数90
+function calcBaseTarget(round) {
+  function getCoefficient(r) {
+    if (r <= 5) return 100;
+    if (r <= 10) return 40;
+    if (r <= 20) return 50;
+    if (r <= 30) return 60;
+    if (r <= 40) return 70;
+    if (r <= 50) return 80;
+    return 90;
+  }
+  let target = 150;
+  for (let r = 2; r <= round; r++) {
+    target += getCoefficient(r) * (r - 1);
+  }
+  return target;
+}
+
+module.exports = {
+  LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
+  WORD_DATA, EXPAND_WORD_DATA,
+  onlineWordCache, wordCheckState,
+  wordMeaningCache, letterUpgrades, checkingWords,
+  getLetterScore, calcBaseTarget
+};

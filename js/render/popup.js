@@ -1,2 +1,1501 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,l=Math.LOG10E,p=Math.PI,r=Math.SQRT1_2,s=Math.SQRT2;var t=77,u=80,x=64,y=53,z=5,A=3,B=74,C=55,D=89,E=22,F=32,G=66,H=43,M=58,N=50,O=67,P=94,Q=66,R=77,S=77,T=11,U=81,V=58,W=55,X=35,Y=82,Z=61,_0=47,_1=5,_2=22,_3=81,_4=93,_5=91,_6=11,_7=17,_8=64,_9=26,ba=67,bb=26,bc=31,bd=17,be=66,bf=5,bg=79,bh=4,bi=44,bj=64,bk=99,bl=82,bm=35,bn=53,bo=72,bp=74,bq=91,br=1,bs=74,bt=69,bu=8,bv=32,bw=53,bx=82,by=71,bz=88,bA=23,bB=56,bC=84,bD=85,bE=72,bF=99,bG=95,bH=61,bI=31,bJ=11,bK=41,bL=34,bM=94,bN=5,bO=92,bP=63,bQ=86;var bR=5*5+22*22+66*Q<z*_2+Q*z+22*Q,bS=c((X+D+bn)/3)>=c(e((a(bn)+a(89)+a(X))/3)),bT=c((94+17+bn)/3)>=c(e((a(bM)+a(53)+a(17))/3)),bU=g(2*a(f(17*br+50*t)))<=g(a(_7*17+N*N)+a(t*t+1*1)),bV=g(2*a(f(bI*_3+U*81)))>g(a(bI*bI+U*81)+a(81*_3+81*U)),bW=g(2*a(f(11*_7+bj*64)))>g(a(bj*bj+T*T)+a(64*64+_7*17)),bX=86*bQ+58*M+72*72<M*86+86*bo+72*M,bY=g(2*a(f(V*V+br*95)))>g(a(V*58+br*br)+a(95*95+58*58)),bZ=c((91+N+99)/3)<c(e((a(99)+a(91)+a(50))/3)),b0=be*be+53*53+69*69<53*be+66*69+69*53,b1=c((4+_6+53)/3)>=c(e((a(_6)+a(bn)+a(bh))/3)),b2=c((bb+_2+32)/3)>=c(e((a(22)+a(26)+a(F))/3)),b3=g(2*a(f(50*55+66*67)))>g(a(50*N+G*66)+a(67*ba+W*W)),b4=c((81+y+34)/3)<c(e((a(bL)+a(y)+a(_3))/3)),b5=61*Z+64*x+bv*32<32*x+Z*32+64*Z,b6=_0*_0+92*92+bs*74>=47*92+bs*47+92*bs,b7=g(2*a(f(81*_9+44*82)))<=g(a(81*U+bi*44)+a(bx*bx+26*_9)),b8=c((bu+G+_7+bn)/4)>=c(e((a(bu)+a(bn)+a(17)+a(G))/4)),b9=E*22+89*89+bf*bf>=22*D+bf*E+D*5,ca=91*91+72*bo+bJ*bJ+22*22>=bJ*_5+_5*72+72*22+22*bJ,cb=bf*bf+_0*47+5*z+B*B<B*_0+5*74+z*bf+_0*z,cc=c((77+bd+bz+x)/4)<c(e((a(77)+a(bd)+a(88)+a(x))/4)),cd=43*H+bn*53+81*81+5*bf>=bn*bf+bf*H+81*bn+43*81,ce=11*11+bN*5+O*67>=O*_6+11*bN+5*O,cf=91*91+22*E+5*5+5*bN>=bf*22+91*bf+bN*_5+22*bN,cg=bH*61+bK*bK+bC*84<bK*61+bC*41+61*bC,ch=C*C+_1*_1+77*S>=5*C+77*_1+C*S,ci=g(2*a(f(x*72+89*br)))>g(a(x*x+D*D)+a(bo*72+br*1)),cj=c((17+br+79)/3)<c(e((a(bd)+a(br)+a(bg))/3)),ck=55*55+74*bs+5*5+bj*bj>=C*bs+bN*C+64*5+74*bj,cl=c((66+y+23+77)/4)>=c(e((a(66)+a(53)+a(23)+a(R))/4)),cm=94*94+67*67+X*35<bM*67+X*94+67*35,cn=bC*84+82*bx+22*E<bx*22+bC*bx+E*bC,co=g(2*a(f(17*67+_7*55)))>g(a(17*bd+17*_7)+a(C*55+O*O)),cp=c((bD+74+_7)/3)>=c(e((a(17)+a(bD)+a(74))/3)),cq=c((bl+74+22+1)/4)>=c(e((a(82)+a(74)+a(E)+a(1))/4)),cs=c((bQ+53+67+23)/4)<c(e((a(ba)+a(23)+a(53)+a(86))/4)),ct=g(2*a(f(41*41+91*bx)))<=g(a(bK*bK+91*bq)+a(bx*82+41*41)),cu=c((R+22+1)/3)>=c(e((a(E)+a(77)+a(1))/3)),cv=c((5+bs+bN)/3)<c(e((a(5)+a(bN)+a(74))/3));var k,cw,m,n,o,cx,q,cy,v,w,cz,cA,I,J,K,L,cB;var cC;var cD,cE,cF,cG;var lG;var cH,cI,cJ,cK;var cL=+ck;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cM={f:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cN="";var cO=new Array(25);cN=cM.f("交提效音置设定确ycxc选抽存暂级升换置di果效othpwpypxpIP",2);cO[0]=cN.s(2);cN=cM.f("pot榜行排wopddateggmisocnisxamyekxtcnimcrawon",3);cO[1]=cN.s(3);cN=cM.f("txetpilcmorfffid555#命续巫女延顺戏游eldi化强机随tlum级升母字dnifdnah换置母字333#eman馈反题问liechsupcsedknarbbb#888#llacenodepytniamfff#tfellliftnofevas",4);cO[2]=cN.s(4);cN=cM.f("thgirdnuorrolocHdracWdrac母字用作可dnuosworratilpseulavtimileltitoTcraahplaesahphtdiwelacsroolf",5);cO[3]=cN.s(5);cN=cM.f("...中交提mottobdedaol行排友好看查suidardIdracsrekojgnisaEhctiwsetatordesuaptcefferetteltfihSynIedafthgiehhtgnelekortsoTevomretnecoTenilelddim",6);cO[4]=cN.s(6);cN=cM.f("0b0c8c#paCenilroloCgb62239a#fOxednid8c8f7#stropxepohs/..a6a7a8#e1e2a3#0a8eff#poTefasee6faf#atad/..b2930c#cd4e8e#c3c47e#a4f2a1#245c5f#delbane0e5fdf#despalereggirtyeKnoci8a9c4d#6e0f5f#898a0b#hcaErof6b95b9#a2a4a5#4196b8#a53a4c#erotser",7);cO[5]=cN.s(7);cN=cM.f("tAeripxeelcriCsigninnipsdraCwardsgnittesnoitarudsedulcnieltitbustfeLsesukcabdeefnocIpohstxeTllif",8);cO[6]=cN.s(8);cN=cM.f("txeTparw_效音戏游闭关或启开LOOP_POHSnoitarepognisolCsiegamIwardemiTtratsepytotorphtaPesolcetalsnarthtdiWeniltceRdnuorhtaPnigebngilAtxetelytSllif",9);cO[7]=cN.s(9);cN=cM.f("noitoPwardtluMmodnarahplAesolcxednIrekojrulBwodahsedoMnoitop",10);cO[8]=cN.s(10);cN=cM.f("题问与议建的你们我诉告roloCredrobkcaBtuOesaeSDRAC_HCTIWtesffOesolchtdiWredrobtesffOretneroloCwodahstxeTerusaemelytSekortsahplAlabolg",11);cO[9]=cN.s(11);cN=cM.f("delbanEdnuosroloCdnomaidcibuCtuOesaeecaf_edargpuSLLIKS_HCTIWnoitamina/..snocIgnittesahplAyalrevosuidaRredrobEROCS_RETTELecneuqeStlumretteLtegratenilesaBtxet",12);cO[10]=cN.s(12);cN=cM.f("txeTkcabdeef_ssergorPretnenoitaruDesolcegamIesolCpopemiTtratSnipsemiTtratSminatsoob_lagelliYtesffOwodahsegaPkcabdeef_",13);cO[11]=cN.s(13);cN=cM.f("dedaoLesolCpopselkrapSnwaps_edargpu_modnarstceRporPhctiwsedargpUrettelpupoPsgnittes_emiTtratSesuapdedaoLnocIpohsretteLlanigiroemiTtratSesolc",14);cO[12]=cN.s(14);cN=cM.f("elacSesluPclac_)1.0,0,0,0(abgrslliks_hctiw/..etelpmoCesolCnolenaPladoMward_",15);cO[13]=cN.s(15);cN=cM.f(")57.0,0,0,0(abgr)60.0,0,0,0(abgrrettel_detciderpsretteLhctiWteg_leveLroFllikStegtceRkcaBkcabdeeftceRknaRsgnittessgnitteSgnisolc_denwapSkrowerif_dnalsIcimanyDsah)80.0,0,0,0(abgrretteLdetciderp_oTevruCcitardauqgnidargpUnoitop_",16);cO[14]=cN.s(16);cN=cM.f("）字001多最（题问的到遇你述描请rediviDeltiTward_tceResolCsgnittestceRlenaPsgnittespupoPsgnitteSwardnottuBdelacSward_tceRntBnipSmodnarpupoPliateDhctiw_tceRtupnIkcabdeeftceRdnuoSsgnittesstceRretteLnoitopstceRretteLegnahc",17);cO[15]=cN.s(17);cN=cM.f("minAnoisnetxEefil_tceRntBhsatSnoitoppupoPretteLegnahc_tceRtimbuSkcabdeefnoitalumucca_itlum",18);cO[16]=cN.s(18);cN=cM.f("gnittimbuSkcabdeef_pupoPedargpUmodnar_noitisnarTkcabdeef_",19);cO[17]=cN.s(19);cN=cM.f("tceRntBesolCsgnittestceRntBnoisnetxEefiltceRntBedargpUnoitop效有内局赛本，01+数分，牌母字张一择选retteLegnahCgnisolc_)3.0,281,98,551(abgrtceRkcabdeeFsgnittes)5.0,09,361,691(abgr)4.0,09,361,691(abgrtsaoTtimbuSkcabdeef_",20);cO[18]=cN.s(20);cN=cM.f("desserPdnuoSsgnittes_)7.0 ,22 ,53 ,84(abgr)53.0,09,361,691(abgrtceResolCretteLegnahcpupoPretteLegnahCwardpupoPliateDhctiWward_noitaruDnIedaFyalrevoretteLdetceleSnoitop_",21);cO[19]=cN.s(21);cN=cM.f("desserPtimbuSkcabdeef_tceResolCedargpUmodnarpupoPedargpUmodnaRwardminAedargpUnoitoPward_",22);cO[20]=cN.s(22);cN=cM.f("pupoPnoisnetxEefiLward_效有局赛本，倍4~5.1以乘数分，母字选抽击点tceRntBpawSretteLegnahcemiTtratSsgnitteSesolc_",23);cO[21]=cN.s(23);cN=cM.f(")9.0 ,032 ,042 ,542(abgrdesserPntBesolCsgnittes_desserPntBnoisnetxEefil_",24);cO[22]=cN.s(24);cN=cM.f("ZYXWVUTSRQPONMLKJIHGFEDCBA",26);cO[23]=cN.s(26);cN=cM.f("emiTtratSretteLegnahCesolc_",27);cO[24]=cN.s(27);var cP='11,F,B,J,R,CJ,D,A,DT,En,T,H,l,{,B7,Bd,f,E,L,p,*,C,$,j,n,D@,P,hT,IT,B@,Z,",Ed,K",C*,O,d,C7,Bn,z,D*,Me~,C",D7,V,N,X,G,9,Y,BT';function cQ(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cR=cQ(cP);if(cL){k=cO[4][14];cw=cO[10][7];m=cO[14][9];n=cO[10][8];o=cO[9][7];cx=cO[13][2];q=cO[7][12];cy=cO[5][25];v=cO[10][3];w=cO[12][5];cz=cO[5][19];cA=cO[5][26];I="x";J="y";K="w";L="h";cB="W";cC="H";cD="×";cE="X";cF="Y";cG="Z";lG="r";cH="开";cI="关";cJ="›";cK="‹"}cL=0;cN=null;cP=null;const{[k]:Easing}=require(cw);const{[m]:getSkillForLevel,[n]:WITCH_SKILLS,[o]:WITCH_CARDS}=require(cx);const{[q]:SHOP_POOL}=require(cy);const{[v]:LETTER_SCORE,[w]:letterUpgrades}=require(cz);module[cA]=function a(a){var b=cO,c=b[19],d=b[7][7];a[d][c[2]]=function(a,b,c){var d=cO,e=cR,f=d[4],g=d[14],h=d[5],i=d[2],j=d[3],k=d[9],l=d[1],m=d[7],n=d[0],o=d[6],p=d[11],q=e[1],r=e[5],s=e[6],t=d[8][2],u=h[10],v=f[5],w=i[1],x=j[0],y=i[12],z=l[5],A=l[2],B=j[7],C=o[3],D=p[2],E=m[11],F=d[16][0],G=d[14][2],H=p[3],M=i[0],N=m[5],O=m[2],P=f[3],Q=f[1],R=m[0],S=h[4],T=i[2],U=m[1],V=f[2],W=d[10][0],X=f[0],Y=o[0],Z=h[0],_0=i[9],_1=i[3];const _2=b[d[15][4]];if(!_2)return;const _3=b[f[15]]||[];const _4=_3[_2[t]];if(!_4)return;const _5=this[d[12][6]][_2[t]];if(!_5)return;const{[I]:_6,[J]:_7,[K]:_8,[L]:_9}=_5;const ba=10*c;const bb=e[0]*c;const bc=this[g[10]](_4[u]);const bd=bc&&bc[v]>0;let be=0;if(bd){const a=q*c;const b=8*c;be=bc[v]*(a*2)+(bc[v]-1)*b}a[w]=`${Math[x](q*c)}px sans-serif`;const bf=a[k[2]](_4[y])[j[2]];const bg=_8+e[2]*c;let bh=Math[z](bg,bf+ba*2);if(bd){bh=Math[z](bh,be+ba*2)}let bi=_6+(_8-bh)/2;const bj=5*c;bi=Math[z](bj,Math[A](bi,this[cB]-bh-bj));const bk=_4[B]!==undefined&&_4[C]!==undefined;const bl=_4[u]===D||_4[E]===F;const bm=_4[u]===g[11]&&_4[G];let bn=ba*2+bb*3+4*c;if(bl)bn+=bb+2*c;if(bk)bn+=bb+2*c;if(bm)bn+=bb+2*c;if(bd)bn+=bb+e[3]*c+4*c;const bo=bn;const bp=_7+_9+6*c+2*c;let bq=1;let br=0;if(_2[H]){const a=Date[l[0]]()-_2[H];const b=Math[A](a/e[4],1);const d=Easing[k[8]](b);bq=.5+.5*d;br=(1-d)*q*c}a[M]();a[N](bi+bh/2,bp+bo/2);a[j[1]](bq,bq);a[N](-(bi+bh/2),-(bp+bo/2));a[N](0,br);const bs=8*c;const bt=6*c;const bu=_6+_8/2;a[O]();a[P](bu-bs,bp);a[Q](bu,bp-bt);a[Q](bu+bs,bp);a[m[6]]();a[R]=S;a[T]();const bv=8*c;this[m[3]](bi,bp,bh,bo,bv,h[20],S,2*c);let bw=bp+ba+bb/2;const bx=bi+bh/2;a[M]();a[w]=`bold ${Math[x](r*c)}px Georgia, serif`;a[R]=h[15];a[U]=V;a[W]=X;a[Y](`✦ ${_4[i[16]]} ✦`,bx,bw);a[Z]();bw+=bb+4*c;a[M]();a[w]=`bold ${Math[x](s*c)}px sans-serif`;a[R]=_0;a[U]=_1;a[W]=X;a[Y](n[6],bi+ba,bw);a[Z]();bw+=bb;a[M]();a[w]=`${Math[x](q*c)}px sans-serif`;a[R]=i[17];a[U]=_1;a[W]=X;a[Y](_4[y],bi+ba,bw);a[Z]();if(_4[u]===D||_4[E]===F){bw+=bb+2*c;a[M]();a[w]=`bold ${Math[x](s*c)}px sans-serif`;a[R]=S;a[U]=_1;a[W]=X;a[Y](`倍率增值：+${_4[j[8]]}`,bi+ba,bw);a[Z]()}if(_4[B]!==undefined&&_4[C]!==undefined){bw+=bb+2*c;a[M]();a[w]=`bold ${Math[x](s*c)}px sans-serif`;a[R]=_4[C]>0?h[16]:h[27];a[U]=_1;a[W]=X;a[Y](`剩余次数：${_4[C]} / ${_4[B]}`,bi+ba,bw);a[Z]()}if(bm){bw+=bb+2*c;a[M]();a[w]=`bold ${Math[x](s*c)}px sans-serif`;a[R]=S;a[U]=_1;a[W]=X;a[Y](`预言字母：${_4[G]}`,bi+ba,bw);a[Z]()}if(bd){bw+=bb+8*c;a[M]();a[w]=`bold ${Math[x](s*c)}px sans-serif`;a[R]=_0;a[U]=_1;a[W]=X;a[Y](j[12],bi+ba,bw);a[Z]();bw+=bb+4*c;const b=q*c;const e=8*c;const g=bc[v]*(b*2)+(bc[v]-1)*e;let o=bi+(bh-g)/2+b;bc[h[5]](d=>{a[M]();a[O]();a[l[1]](o,bw,b,0,Math[n[0]]*2);a[R]=S;a[T]();a[w]=`bold ${Math[x](r*c)}px sans-serif`;a[R]=i[4];a[U]=V;a[W]=X;a[Y](d,o,bw);a[Z]();o+=b*2+e});const p=bp+bo-10*c;a[M]();a[k[1]]=d[18][4];a[m[4]]=1*c;const t=bh*.5;const u=bi+(bh-t)/2;a[O]();a[P](u,p);a[Q](u+t,p);a[f[4]]();a[Z]()}a[Z]()};a[d][c[3]]=function(a){var b=cO,c=cR,d=b[1],e=b[3],f=b[10],g=b[5],h=b[7],i=b[13],j=b[18],k=b[4],l=b[9],m=b[19],n=b[11],o=b[0],p=b[2],q=c[7],r=c[1],s=c[9],t=c[11],u=c[0],v=e[1],w=b[1][0],x=g[1],y=p[0],z=b[9][0],A=p[1],B=e[0],C=h[0],D=h[1],E=k[2],F=f[0],G=k[0],H=b[6][0],M=g[0],N=h[2],O=b[15][0],P=b[12][1],Q=f[1],R=h[3],S=g[8];const T=this[d[3]];const U=this[cB];const V=this[cC];const W=this[v];const X=a[b[16][2]];if(!X)return;const{[f[3]]:Y}=require(g[19]);const Z=Date[w]()-(X[h[8]]||Date[w]());const _0=this[i[0]](T,U,V,W,{[h[10]]:a[j[5]],[b[12][0]]:a[b[24][0]],[e[2]]:q,[k[6]]:c[8],[f[4]]:r,[l[5]]:2,[f[5]]:.5,[m[1]]:c[4],[l[4]]:s,[n[6]]:q,[g[11]]:Z,[i[1]]:()=>{}});if(!_0)return;const{[o[1]]:_1,[o[2]]:_2,[o[3]]:_3,[o[4]]:_4,[n[7]]:_5,[b[8][3]]:_6}=_0;const _7=_5;const _8=x;T[y]();T[z]=_7*_6;T[A]=`bold ${Math[B](c[10]*W)}px Georgia, serif`;T[C]=g[15];T[D]=E;T[F]=G;T[H](p[18],U/2,_2+s*W);T[M]();T[y]();T[z]=_7*_6;T[l[1]]=j[1];T[h[4]]=1*W;T[N]();T[k[3]](_1+s*W,_2+t*W);T[k[1]](_1+_3-s*W,_2+t*W);T[k[4]]();T[M]();const _9=a[p[19]][p[20]](a=>a&&a[o[7]]===X[k[16]]);if(_9){T[y]();T[z]=_7*_6;T[h[5]](U/2,_2+c[12]*W);T[v](.8,.8);this[b[6][8]](_9,-this[e[13]]/2,-this[e[14]]/2);T[M]()}const ba=b[23][0][e[9]]("");const bb=7;const bc=s*W;const bd=6*W;const be=bb*bc+(bb-1)*bd;const bf=(U-be)/2;const bg=_2+c[13]*W;this[O]=[];ba[g[5]]((a,b)=>{const d=b%bb;const e=Math[B](b/bb);const f=bf+d*(bc+bd);const h=bg+e*(bc+bd);const i=a===X[P];const j=X[Q]===a;T[y]();T[z]=_7*_6;if(i){this[R](f,h,bc,bc,6*W,g[17]);T[C]=g[6]}else if(j){this[R](f,h,bc,bc,6*W,g[12],x,2*W);T[C]=g[2]}else{this[R](f,h,bc,bc,6*W,g[7],S,1*W);T[C]=g[3]}T[A]=`bold ${Math[B](c[5]*W)}px sans-serif`;T[D]=E;T[F]=G;T[H](a,f+bc/2,h+bc/2);T[M]();if(!i){this[O][p[13]]({[I]:f,[J]:h,[K]:bc,[L]:bc,[k[9]]:a})}});if(X[Q]){const a=bg+Math[p[14]](ba[k[5]]/bb)*(bc+bd)+r*W;T[y]();T[z]=_7*_6;T[A]=`bold ${Math[B](u*W)}px sans-serif`;T[C]=x;T[D]=E;T[F]=G;T[H](`${X[P]} → ${X[Q]}`,U/2,a);T[M]()}const bh=c[14]*W;const bi=c[15]*W;const bj=(U-bh)/2;const bk=_2+_4-bi-c[2]*W;const bl=!!X[Q];T[y]();T[z]=_7*_6;this[R](bj,bk,bh,bi,8*W,bl?x:S,bl?null:p[10],bl?0:1.5*W);T[A]=`bold ${Math[B](c[16]*W)}px sans-serif`;T[C]=p[4];T[D]=E;T[F]=G;T[H](o[8],U/2,bk+bi/2);T[M]();this[b[21][1]]={[I]:bj,[J]:bk,[K]:bh,[L]:bi,[g[13]]:bl};const bm=c[3]*W;const bn=_1+_3-bm-8*W;const bo=_2+8*W;T[y]();T[z]=_7*_6;T[N]();T[d[1]](bn+bm/2,bo+bm/2,bm/2,0,Math[o[0]]*2);T[C]=b[14][3];T[p[2]]();T[A]=`bold ${Math[B](u*W)}px sans-serif`;T[C]=p[9];T[D]=E;T[F]=G;T[H](cD,bn+bm/2,bo+bm/2-1*W);T[M]();this[m[4]]={[I]:bn,[J]:bo,[K]:bm,[L]:bm}};a[d][b[8][5]]=function(a){var b=cO,c=cR,d=b[4],e=b[12],f=b[14],g=b[1],h=b[3],i=b[5],j=b[2],k=b[7],l=b[9],m=b[18],n=b[0],o=b[8],p=b[6],q=c[2],r=c[17],s=c[18],t=c[0],u=o[0],v=d[10],w=b[14][0],x=b[20][0],y=h[1],z=j[0],A=j[1],B=h[0],C=k[0],D=i[2],E=k[1],F=d[2],G=b[10][0],H=d[0],M=p[0],N=i[0],O=p[1],P=k[9],Q=i[3],R=i[1],S=k[2],T=d[3],U=d[1],V=d[4],W=b[19][0],X=p[5],Y=b[15][1],Z=b[9][3],_0=o[1],_1=b[11][1],_2=k[3];var _3=i[17],_4=i[7],_5=i[8],_6=i[6],_7=j[10],vj=i[13];if(a[u]&&a[u][v]===e[7]){this[b[20][1]](a);if(a[w]){this[x](a)}return}if(a[w]&&!a[u]){this[x](a);return}const _8=this[g[3]];const _9=this[cB];const ba=this[cC];const bb=this[y];const bc=(this[i[21]]||0)+q*bb+(this[f[4]]?10*bb:0);const bd=bc-10*bb;_8[z]();_8[A]=`bold ${Math[B](r*bb)}px Georgia, serif`;_8[C]=D;_8[E]=F;_8[G]=H;const be=j[21];const bf=_8[l[2]](be)[h[2]];_8[M](be,_9/2,bd);_8[N]();const bg=q*bb+2*bb;const bh=q*bb;const bi=10*bb-2*bb;const bj=bd-bh/2;if(this[O]&&this[e[2]]){const a=_9/2-bf/2-bi-bg;_8[P](this[O],a,bj,bg,bh);const b=_9/2+bf/2+bi;_8[z]();_8[k[5]](b+bg,bj);_8[y](-1,1);_8[P](this[O],0,0,bg,bh);_8[N]()}const bk=bd+s*bb;_8[z]();_8[A]=`bold ${Math[B](t*bb)}px sans-serif`;_8[C]=Q;_8[E]=F;_8[G]=H;_8[M](m[6],_9/2,bk);_8[N]();const bl=bk+r*bb;const bm=c[19]*bb;const bn=8*bb;const bo=R;const bp=_9/2;_8[z]();_8[l[1]]=bo;_8[k[4]]=1.5*bb;_8[S]();_8[T](bp-bn-bm,bl);_8[U](bp-bn,bl);_8[V]();_8[S]();_8[T](bp+bn,bl);_8[U](bp+bn+bm,bl);_8[V]();const bq=5*bb;_8[C]=bo;_8[S]();_8[T](bp,bl-bq);_8[U](bp+bq,bl);_8[U](bp,bl+bq);_8[U](bp-bq,bl);_8[k[6]]();_8[j[2]]();_8[N]();const br=b[23][0][h[9]]("");const bs=4;const bt=s*bb;const bu=c[20]*bb;const bv=bs*bt+(bs-1)*bu;const bw=(_9-bv)/2;const bx=bl+c[9]*bb;const by=a[u]&&a[u][v]===b[10][9];if(by&&a[W]&&![cE,cF,cG][X](a[W])){a[W]=null}const bz=a[W]||null;this[Y]=[];br[i[5]]((a,c)=>{const e=c%bs;const g=Math[B](c/bs);const h=bw+e*(bt+bu);const k=bx+g*(bt+bu);const l=bz===a;const m=!by||[cE,cF,cG][X](a);const n=8*bb;_8[z]();if(l&&m){_8[Z]=b[19][5];_8[_0]=6*bb;_8[_1]=3*bb;this[_2](h,k,bt,bt,n,i[12],R,2.5*bb)}else if(!m){_8[Z]=f[12];_8[_0]=4*bb;_8[_1]=2*bb;this[_2](h,k,bt,bt,n,_3,null,0)}else{_8[Z]=f[3];_8[_0]=4*bb;_8[_1]=2*bb;this[_2](h,k,bt,bt,n,_4,_5,1.5*bb)}_8[N]();_8[z]();_8[A]=`bold ${Math[B](r*bb)}px Georgia, serif`;if(l&&m){_8[C]=D}else if(!m){_8[C]=_6}else{_8[C]=Q}_8[E]=F;_8[G]=H;_8[M](a,h+bt/2,k+bt/2);_8[N]();if(m){this[Y][j[13]]({[I]:h,[J]:k,[K]:bt,[L]:bt,[d[9]]:a})}});const bA=bx+Math[j[14]](br[d[5]]/bs)*(bt+bu);if(bz){const a=bA+c[10]*bb;const b=LETTER_SCORE[bz];const d=letterUpgrades[g[9]](bz);const e=d?Math[B](b*(d[j[22]]||1))+(d[g[10]]||0):b;_8[z]();_8[A]=`bold ${Math[B](c[5]*bb)}px sans-serif`;_8[C]=R;_8[E]=F;_8[G]=H;_8[M](`当前字母分：${e}`,_9/2,a);_8[N]()}const bB=ba-c[21]*bb;const bC=c[14]*bb;const bD=c[22]*bb;const bE=t*bb;const bF=bC*2+bE;const bG=(_9-bF)/2;const bH=bG;const bI=bB;const bJ=!!bz&&!a[w]&&!!a[u];this[_2](bH,bI,bC,bD,10*bb,bJ?R:_5,bJ?null:_7,bJ?0:1.5*bb);_8[z]();_8[A]=`bold ${Math[B](t*bb)}px sans-serif`;_8[C]=j[4];_8[E]=F;_8[G]=H;_8[M](n[9],bH+bC/2,bI+bD/2);_8[N]();this[m[7]]={[I]:bH,[J]:bI,[K]:bC,[L]:bD,[vj]:bJ};const bK=bG+bC+bE;const bL=bB;const bM=!a[w];this[_2](bK,bL,bC,bD,10*bb,bM?_4:_3,bM?R:_7,1.5*bb);_8[z]();_8[A]=`bold ${Math[B](t*bb)}px sans-serif`;_8[C]=bM?D:_6;_8[E]=F;_8[G]=H;_8[M](n[10],bK+bC/2,bL+bD/2);_8[N]();this[b[16][3]]={[I]:bK,[J]:bL,[K]:bC,[L]:bD,[vj]:bM};if(a[w]){this[x](a)}};a[d][b[20][1]]=function(a){var b=cO,c=cR,d=b[3],e=b[5],f=b[2],g=b[10],h=b[9],i=b[6],j=b[12],k=b[0],l=b[13],m=b[7],n=b[4],o=b[1],p=b[14],q=c[2],r=c[17],s=c[0],t=c[24],u=c[25],v=c[10],w=d[1],x=f[0],y=f[1],z=d[0],A=m[0],B=e[2],C=m[1],D=n[2],E=g[0],F=n[0],G=i[0],H=e[0],M=i[1],N=m[9],O=m[5],P=e[3],Q=e[1],R=b[9][1],S=m[4],T=m[2],U=n[3],V=n[1],W=n[4],X=m[6],Y=f[2],Z=d[3],_0=n[11],_1=f[7],_2=o[0];var _3=b[11][4],_4=o[2],_5=e[22],_6=b[12][3],_7=p[0],_8=o[6],_9=b[0][0],ba=e[14],bb=o[1],bc=n[12],bd=e[12],be=o[7],bf=e[18],bg=g[2],wh=m[8],bh=b[8][4],bi=p[5],bj=e[16];const bk=this[b[1][3]];const bl=this[cB];const bm=this[cC];const bn=this[w];const bo=(this[e[21]]||0)+q*bn+(this[b[14][4]]?10*bn:0);const bp=a[b[17][1]];const bq=bo-10*bn;bk[x]();bk[y]=`bold ${Math[z](r*bn)}px Georgia, serif`;bk[A]=B;bk[C]=D;bk[E]=F;const br=f[23];const bs=bk[h[2]](br)[d[2]];bk[G](br,bl/2,bq);bk[H]();const bt=q*bn+2*bn;const bu=q*bn;const bv=10*bn-2*bn;const bw=bq-bu/2;if(this[M]&&this[j[2]]){const a=bl/2-bs/2-bv-bt;bk[N](this[M],a,bw,bt,bu);const b=bl/2+bs/2+bv;bk[x]();bk[O](b+bt,bw);bk[w](-1,1);bk[N](this[M],0,0,bt,bu);bk[H]()}const bx=bq+c[18]*bn;bk[x]();bk[y]=`bold ${Math[z](s*bn)}px sans-serif`;bk[A]=P;bk[C]=D;bk[E]=F;bk[G](b[21][2],bl/2,bx);bk[H]();const by=bx+r*bn;const bz=c[19]*bn;const bA=8*bn;const bB=Q;const bC=bl/2;bk[x]();bk[R]=bB;bk[S]=1.5*bn;bk[T]();bk[U](bC-bA-bz,by);bk[V](bC-bA,by);bk[W]();bk[T]();bk[U](bC+bA,by);bk[V](bC+bA+bz,by);bk[W]();const bD=5*bn;bk[A]=bB;bk[T]();bk[U](bC,by-bD);bk[V](bC+bD,by);bk[V](bC,by+bD);bk[V](bC-bD,by);bk[X]();bk[Y]();bk[H]();const bE=b[23][0][d[9]]("");const bF=bp&&bp[Z]===i[9];const bG=bp&&(bp[Z]===_0||bp[Z]===_1);const bH=bp?bp[g[1]]:null;const bI=c[13]*bn;const bJ=by+c[9]*bn+bI+c[23]*bn;const bK=t/u;let bL=0;let bM=-1;if(bF||bG){const a=bE[e[28]](bH);const b=a*bK+bK/2;const d=3;const f=t*d+(t-b);if(bF){const a=Date[_2]()-bp[_3];const b=Math[_4](a/c[26],1);const d=Easing[g[10]](b);bL=f*d}else{bL=f}const h=(-bL%t+t)%t;bM=Math[z](h/bK)%u}let bN=1;let bO=_5;if(bG&&bp[_6]&&!a[_7]){const a=Date[_2]()-bp[_6];bN=1+.08*Math[_8](Date[_2]()/c[4]);const b=c[27];const d=b*1.5;if(a<d){const c=Math[_8](a/(b/2)*Math[_9]);bO=c>0?ba:_5}else{bO=ba}}bk[x]();bk[T]();bk[bb](bC,bJ,bI+4*bn,0,Math[_9]*2);bk[A]=Q;bk[Y]();bk[H]();bk[x]();bk[O](bC,bJ);bk[bc](bL*Math[_9]/c[28]);const bP=[e[7],bd];const bQ=Math[_9]*2/u;const bR=-Math[_9]/2;for(let a=0;a<u;a++){const c=bR+a*bQ;const d=bR+(a+1)*bQ;const f=a===bM;bk[T]();bk[U](0,0);bk[bb](0,0,bI,c,d);bk[X]();bk[A]=f?bO:bP[a%2];bk[Y]();bk[S]=.8*bn;bk[R]=e[8];bk[W]();if(f){bk[x]();bk[R]=Q;bk[S]=2.5*bn*bN;bk[h[3]]=b[18][2];bk[b[8][1]]=10*bn*bN;bk[W]();bk[H]()}}for(let a=0;a<u;a++){const b=bR+a*bQ+bQ/2;const d=bI*.72;const e=Math[be](b)*d;const f=Math[_8](b)*d;const g=a===bM;bk[x]();bk[O](e,f);bk[bc](b+Math[_9]/2);bk[y]=`bold ${Math[z](c[20]*bn)}px sans-serif`;bk[A]=g?B:P;bk[C]=D;bk[E]=F;bk[G](bE[a],0,0);bk[H]()}const bS=u;const bT=2.5*bn;const bU=bI+8*bn;for(let a=0;a<bS;a++){const b=a*(Math[_9]*2/bS)-Math[_9]/2;const c=Math[be](b)*bU;const d=Math[_8](b)*bU;bk[T]();bk[bb](c,d,bT,0,Math[_9]*2);bk[A]=ba;bk[Y]();bk[R]=Q;bk[S]=.5*bn;bk[W]()}bk[H]();const bV=c[29]*bn;const bW=!bp||bp[Z]===f[24];const bX=bp&&(bp[Z]===_0||bp[Z]===_1);const bY=bW;bk[x]();bk[T]();bk[bb](bC,bJ,bV,0,Math[_9]*2);if(bW){bk[A]=bf;bk[R]=e[29]}else if(bF){bk[A]=bd;bk[R]=Q}else{bk[A]=ba;bk[R]=Q}bk[S]=2*bn;bk[Y]();bk[W]();bk[T]();bk[bb](bC,bJ,bV-2*bn,0,Math[_9]*2);bk[R]=l[3];bk[S]=1*bn;bk[W]();bk[C]=D;bk[E]=F;if(bW){bk[A]=f[4];bk[y]=`bold ${Math[z](s*bn)}px sans-serif`;bk[G](k[11],bC,bJ)}else if(bF&&bp[bg]){const a=Date[_2]()-bp[_3];const d=Math[_4](Math[z](a/c[30]),bp[bg][b[4][5]]-1);const e=bp[bg][d];bk[A]=P;bk[y]=`bold ${Math[z](q*bn)}px sans-serif`;bk[G](cD+e,bC,bJ)}else if(bX){let b=1;if(bp[Z]===_1&&a[_7]){const d={[wh]:a[_7][wh],[i[6]]:c[31]};b=this[l[4]](d,.25)[w]}bk[A]=P;bk[y]=`bold ${Math[z](q*bn)}px sans-serif`;bk[x]();bk[O](bC,bJ);bk[w](b,b);bk[G](cD+bp[bh],0,0);bk[H]()}bk[H]();if(bp&&bp[Z]===_1&&a[_7]&&a[_7][bh]>3){if(!a[_7][bi]){a[_7][bi]=true;this[j[8]](bC,bJ,q)}}this[b[15][5]]={[I]:bC-bV,[J]:bJ-bV,[K]:bV*2,[L]:bV*2,[e[13]]:bY,[i[10]]:true,[k[12]]:bC,[k[13]]:bJ,[lG]:bV};const bZ=bJ-bI-v*bn;const b0=v*bn;const b1=r*bn;bk[x]();bk[A]=bj;bk[T]();bk[U](bC,bZ+b1);bk[V](bC-b0/2,bZ);bk[V](bC+b0/2,bZ);bk[X]();bk[Y]();bk[R]=bf;bk[S]=1.5*bn;bk[W]();bk[T]();bk[bb](bC,bZ,3*bn,0,Math[_9]*2);bk[A]=bj;bk[Y]();bk[H]();if((bF||bG)&&bM>=0){const a=bJ+bI+c[3]*bn;const b=bE[bM];bk[x]();bk[y]=`bold ${Math[z](v*bn)}px sans-serif`;bk[A]=bG?bf:B;bk[C]=D;bk[E]=F;bk[G](`当前：${b}`,bC,a);bk[H]()}this[b[20][2]]=null};a[d][b[21][3]]=function(a){var b=cO,c=cR,d=b[1],e=b[3],f=b[7],g=b[13],h=b[4],i=b[9],j=b[0],k=b[2],l=b[18],m=b[5],n=c[32],o=c[35],p=c[36],q=c[9],r=c[3],ww=m[11],s=h[7],t=k[0],u=b[9][0],v=e[4],w=k[1],x=e[0],y=f[0],z=f[1],A=h[2],B=b[10][0],C=h[0],D=b[6][0],E=h[8],F=m[0],G=m[1];const H=this[d[3]];const M=this[cB];const N=this[cC];const O=this[e[1]];const P=a[b[16][4]];if(!P)return;const Q=Date[d[0]]()-P[f[8]];if(Q<n)return;const R=this[g[0]](H,M,N,O,{[f[10]]:false,[e[2]]:c[7],[h[6]]:c[33],[i[4]]:c[34],[i[6]]:o,[ww]:Q-n,[g[1]]:()=>{}});if(!R)return;const{[j[1]]:S,[j[2]]:T,[j[3]]:U,[j[4]]:V,[ww]:W}=R;const X=Easing[s](Q-n,c[19],p,8*O);H[t]();H[u]=X[v];H[w]=`bold ${Math[x](c[17]*O)}px Georgia, serif`;H[y]=b[5][15];H[z]=A;H[B]=C;H[D](k[25],M/2,T+o*O+X[E]);H[F]();const Y=Easing[s](Q-n,c[37],p,6*O);H[t]();H[u]=Y[v];H[i[1]]=l[1];H[f[4]]=1;H[f[2]]();const Z=T+c[38]*O+Y[E];H[h[3]](S+q*O,Z);H[h[1]](S+U-q*O,Z);H[h[4]]();H[F]();const _0=Easing[s](Q-n,c[4],p,8*O);const _1=T+c[30]*O+_0[E];H[t]();H[u]=_0[v];H[w]=`bold ${Math[x](c[16]*O)}px sans-serif`;H[y]=G;H[z]=A;H[B]=C;H[D](k[26],M/2,_1);H[w]=`${Math[x](c[20]*O)}px sans-serif`;H[y]=k[27];H[D](`下一关目标分 + ${P[k[28]]} × 2`,M/2,_1+r*O);H[F]();const _2=Easing[s](Q-n,c[39],p,10*O);const _3=c[13]*O;const _4=c[22]*O;const _5=(M-_3)/2;const _6=T+V-_4-r*O+_2[E];H[t]();H[u]=_2[v];this[b[15][6]](H,j[14],_5,_6,_3,_4,O,a[b[22][0]],{[e[15]]:G,[h[17]]:8});H[F]();const _7=T+V-_4-r*O;this[l[8]]={[I]:_5,[J]:_7,[K]:_3,[L]:_4}};a[d][b[15][7]]=function(a){var b=cO,c=cR,d=b[1],e=b[3],f=b[12],g=b[14],h=b[7],i=b[13],j=b[4],k=b[10],l=b[9],m=b[5],n=b[19],o=b[2],p=b[0],q=b[15],r=b[18],s=b[22],t=b[6],u=b[11],v=c[0],w=b[12][4],x=g[6],y=d[0],z=h[8],A=b[21][0],xb=e[2],B=m[1],C=u[0],D=o[5],E=b[17][0],F=o[0],G=l[0],H=l[1],M=h[4],N=h[2],O=j[3],P=j[1],Q=g[1],R=h[6],S=j[4],T=m[0],U=u[5],V=h[0],W=d[2],X=b[0][5],Y=e[5],Z=o[8],_0=b[6][2],_1=b[18][0];const _2=this[d[3]];const _3=this[cB];const _4=this[cC];const _5=this[e[1]];const _6=a[w];if(!_6)return;const _7=a[x];const _8=_7?c[40]:Date[y]()-_6[z];const _9=c[41];const ba=c[42];const bb=this[i[0]](_2,_3,_4,_5,{[h[10]]:_7,[f[0]]:a[A],[xb]:_9,[j[6]]:ba,[k[4]]:v,[l[5]]:1.5,[m[30]]:m[7],[l[9]]:B,[k[5]]:.55,[n[1]]:c[4],[l[4]]:c[2],[l[6]]:c[9],[m[11]]:_8,[i[1]]:()=>{a[w]=null;a[x]=false;a[A]=null;a[C]=D;a[E]=null}});if(!bb)return;const{[p[1]]:bc,[p[2]]:bd,[p[3]]:be,[p[4]]:bf,[b[8][3]]:bg}=bb;this[q[2]]=null;this[g[7]]=null;this[r[3]]=null;this[g[8]]=null;this[q[3]]=null;this[b[16][1]]=null;this[q[8]]={[I]:bc,[J]:bd,[K]:be,[L]:bf};this[q[9]]={[I]:0,[J]:0,[K]:_3,[L]:_4};const bh=bg;_2[F]();_2[G]=bh;_2[H]=B;_2[M]=1.5*_5;_2[N]();const bi=4*_5;const bj=bc+bi,bk=bd+bi,bl=be-bi*2,bm=bf-bi*2,bn=v*_5-bi;_2[O](bj+bn,bk);_2[P](bj+bl-bn,bk);_2[Q](bj+bl,bk,bj+bl,bk+bn);_2[P](bj+bl,bk+bm-bn);_2[Q](bj+bl,bk+bm,bj+bl-bn,bk+bm);_2[P](bj+bn,bk+bm);_2[Q](bj,bk+bm,bj,bk+bm-bn);_2[P](bj,bk+bn);_2[Q](bj,bk,bj+bn,bk);_2[R]();_2[S]();_2[T]();const bo=c[43]*_5;const bp=bc+be-bo-10*_5+10;const bq=bd+10*_5-10;const br=a[s[1]]?2*_5:0;_2[F]();_2[G]=bh;if(this[f[9]]&&this[U]){_2[h[9]](this[U],bp,bq+br,bo,bo)}else{_2[V]=n[6];_2[N]();_2[d[1]](bp+bo/2,bq+br+bo/2,bo/2,0,Math[p[0]]*2);_2[o[2]]();_2[H]=s[2];_2[M]=1.5*_5;_2[m[31]]=e[16];const a=8*_5;_2[N]();_2[O](bp+a,bq+br+a);_2[P](bp+bo-a,bq+br+bo-a);_2[O](bp+bo-a,bq+br+a);_2[P](bp+a,bq+br+bo-a);_2[S]()}_2[T]();this[r[9]]={[I]:bp-3,[J]:bq-3,[K]:bo+6,[L]:bo+6};function bs(a){return a<.5?2*a*a:1-Math[cO[1][11]](-2*a+2,2)/2}let bt=a[C]||D;let bu=null;let bv=0;let bw=be;if(a[E]){const b=a[E];let c=(Date[y]()-b[z])/b[t[6]];c=Math[d[5]](0,Math[W](1,c));const e=bs(c);if(c>=1){a[C]=b[X];a[E]=null;bt=a[C]||D;bv=0}else{bt=b[o[29]];bu=b[X];bv=-be*e;bw=be*(1-e)}}_2[F]();const bx=v*_5;_2[N]();_2[O](bc+bx,bd);_2[P](bc+be-bx,bd);_2[Y](bc+be,bd,bc+be,bd+bf,bx);_2[P](bc+be,bd+bf-bx);_2[Y](bc+be,bd+bf,bc,bd+bf,bx);_2[P](bc+bx,bd+bf);_2[Y](bc,bd+bf,bc,bd,bx);_2[P](bc,bd+bx);_2[Y](bc,bd,bc+be,bd,bx);_2[R]();_2[o[30]]();if(bt===D){by[Z](this,bv)}else if(bt===_0){bz[Z](this,bv)}if(bu){if(bu===D){by[Z](this,bw)}else if(bu===_0){bz[Z](this,bw)}}_2[T]();if(a[_1]){if(Date[y]()>a[_1][t[11]]){a[_1]=null}else{_2[F]();_2[G]=bh;const b=a[_1][o[31]];_2[o[1]]=`bold ${Math[e[0]](c[5]*_5)}px sans-serif`;const d=_2[l[2]](b)[xb];const f=Math[W](be-c[35]*_5,d+c[44]*_5);const i=c[45]*_5;const m=_3/2-f/2;const n=bd+bf-c[23]*_5;this[h[3]](m,n,f,i,c[46]*_5,g[13]);_2[V]=o[4];_2[h[1]]=j[2];_2[k[0]]=j[0];_2[t[0]](b,_3/2,n+i/2);_2[T]()}}function by(b){var c=cO,d=cR,e=c[7],f=c[9],g=c[5],h=c[4],i=c[10],j=c[0],k=c[15],l=c[1],m=c[2],n=c[3],o=c[6],p=d[25],q=d[23],r=d[17],s=d[6],t=m[0],u=c[9][0],v=m[1],w=n[0],x=e[0],y=e[1],z=h[2],A=i[0],B=h[0],C=o[0],D=g[0],E=g[1],xX=l[4],F=n[11],xZ=g[9],x0=n[6],x1=o[4],x2=m[6],G=h[13],x4=n[8],H=o[7],M=m[11],N=n[10],O=o[2],P=i[6],Q=l[8],R=m[3],S=g[24],T=m[4],U=e[2],V=m[2],W=h[3],X=h[1];_2[t]();_2[e[5]](b,0);const Y=bd+d[43]*_5;_2[t]();_2[u]=bh;_2[v]=`bold ${Math[w](p*_5)}px Georgia, serif`;_2[x]=g[3];_2[y]=z;_2[A]=B;_2[C](j[15],_3/2,Y);_2[D]();const Z=bd+d[18]*_5;const _0=be*.5;const _1=bc+(be-_0)/2;_2[t]();_2[u]=bh;this[k[10]](_2,_1,Z,_0,_5,{[i[11]]:E});_2[D]();const _4=[{[xX]:F,[xZ]:F,[x0]:j[16],[x1]:e[13],[x2]:G,[x4]:a[H]&&a[H][i[12]]!==false},{[xX]:M,[xZ]:M,[x0]:l[12],[x1]:h[18],[x2]:N},{[xX]:O,[xZ]:O,[x0]:c[2][15],[x1]:f[10],[x2]:N}];const _6=d[47]*_5;const _7=Y+d[48]*_5;const _8=q*_5;_4[g[5]]((b,i)=>{const m=_7+i*_6;const n=m+_6/2;const o=bc+r*_5;const F=n;const H=b[xZ]&&this[P]&&this[P][b[xZ]];if(H&&H[h[19]]&&H[Q]){_2[t]();_2[u]=bh;const a=_8*.8;const b=H[c[3][2]]/H[h[6]];let d=a,f=a;if(b>1){f=a/b}else if(b<1){d=a*b}const g=o+_8/2-d/2;const i=F-f/2;_2[e[9]](H[Q],g,i,d,f);_2[D]()}_2[t]();_2[u]=bh;_2[v]=`bold ${Math[w](d[5]*_5)}px sans-serif`;_2[x]=g[23];_2[y]=R;_2[A]=B;_2[C](b[x0],o+_8+s*_5,n-7*_5);_2[D]();_2[t]();_2[u]=bh*.7;_2[v]=`${Math[w](d[1]*_5)}px sans-serif`;_2[x]=S;_2[y]=R;_2[A]=B;_2[C](b[x1],o+_8+s*_5,n+s*_5);_2[D]();const Y=bc+be-r*_5;if(b[x2]===G){const d=q*_5;const f=p*_5;const h=Y-d;const i=n-f/2;const m=b[x4];const o=a[c[19][7]];const r=o?1*_5:0;_2[t]();_2[u]=bh;this[e[3]](h,i+r,d,f,f/2,m?g[2]:g[32]);_2[D]();_2[t]();_2[u]=bh;_2[v]=`bold ${Math[w](s*_5)}px sans-serif`;_2[x]=T;_2[y]=z;_2[A]=B;const E=m?cH:cI;_2[C](E,h+f/2+2*_5,i+r+f/2);_2[D]();const F=10*_5;const G=m?h+d-F-3*_5:h+F+3*_5;const H=i+r+f/2;_2[t]();_2[u]=bh;_2[U]();_2[l[1]](G,H,F,0,Math[j[0]]*2);_2[x]=T;_2[V]();_2[D]();this[k[2]]={[I]:h,[J]:i,[K]:d,[L]:f}}else if(b[x2]===N){_2[t]();_2[u]=bh*.6;_2[v]=`bold ${Math[w](d[0]*_5)}px sans-serif`;_2[x]=S;_2[y]=z;_2[A]=B;_2[C](cJ,Y-4*_5,n);_2[D]();const a={[I]:bc+10*_5,[J]:m,[K]:be-d[2]*_5,[L]:_6};if(b[xX]===M)this[c[14][7]]=a;if(b[xX]===O)this[c[18][3]]=a}if(i<_4[h[5]]-1){const a=m+_6;const b=d[10]*_5;_2[t]();_2[u]=bh*.35;_2[f[1]]=E;_2[e[4]]=.8*_5;_2[U]();_2[W](bc+b,a);_2[X](bc+be-b,a);_2[h[4]]();_2[x]=E;_2[u]=bh*.5;_2[U]();_2[W](_3/2,a-3*_5);_2[X](_3/2+3*_5,a);_2[X](_3/2,a+3*_5);_2[X](_3/2-3*_5,a);_2[e[6]]();_2[V]();_2[D]()}});_2[D]()}function bz(b){var c=cO,d=cR,e=c[2],f=c[7],g=c[3],h=c[5],i=c[4],j=c[15],k=d[17],l=d[5],m=d[3],n=d[2],o=d[35],p=e[0],q=c[9][0],r=e[1],s=c[3][0],t=f[0],u=f[1],v=e[3],w=c[10][0],x=i[0],y=c[6][0],z=h[0],A=i[2],B=f[3],C=h[1],D=h[6];_2[p]();_2[f[5]](b,0);const E=bd+d[25]*_5;const F=cK;_2[p]();_2[q]=bh;_2[r]=`bold ${Math[s](k*_5)}px sans-serif`;_2[t]=h[2];_2[u]=v;_2[w]=x;const G=_2[c[9][2]](F)[g[2]];_2[y](F,bc+l*_5,E);_2[z]();this[c[14][8]]={[I]:bc+l*_5-l*_5,[J]:E-d[10]*_5,[K]:G+m*_5,[L]:d[29]*_5};const H=bd+d[43]*_5;_2[p]();_2[q]=bh;_2[r]=`bold ${Math[s](k*_5)}px Georgia, serif`;_2[t]=h[3];_2[u]=A;_2[w]=x;_2[y](e[15],_3/2,H);_2[z]();const M=bc+n*_5;const N=be-o*_5;const O=d[49]*_5;const P=H+o*_5;_2[p]();_2[q]=bh;this[B](M,P,N,O,8*_5,h[20],C,1.5*_5);_2[z]();const Q=a[c[11][8]]||"";const R=j[11];const S=M+d[1]*_5;const T=P+l*_5;_2[p]();_2[q]=bh;_2[r]=`${Math[s](l*_5)}px sans-serif`;_2[u]=v;_2[w]=c[1][13];if(Q){_2[t]=h[23];const a=N-d[44]*_5;const b=this[f[14]](_2,Q,a,l*_5);const c=n*_5;b[h[5]]((a,b)=>{if(b*c<O-d[48]*_5){_2[y](a,S,T+b*c)}})}else{_2[t]=D;_2[y](R,S,T)}const U=`${Q[i[5]]} / 100`;_2[r]=`${Math[s](d[6]*_5)}px sans-serif`;_2[t]=D;_2[u]=g[17];_2[w]=i[20];_2[y](U,M+N-10*_5,P+O-8*_5);_2[z]();this[j[3]]={[I]:M,[J]:P,[K]:N,[L]:O};const V=d[37]*_5;const W=d[15]*_5;const X=_3/2-V/2;const Y=bd+bf-W-m*_5;const Z=a[c[17][2]];const _0=a[c[20][3]];const _1=_0?2*_5:0;_2[p]();_2[q]=bh;const _4=Z?c[18][2]:C;this[B](X,Y+_1,V,W,8*_5,_4);_2[r]=`bold ${Math[s](d[16]*_5)}px sans-serif`;_2[t]=e[4];_2[u]=A;_2[w]=x;const _6=Z?i[21]:c[0][17];_2[y](_6,_3/2,Y+_1+W/2);_2[z]();this[c[16][1]]={[I]:X,[J]:Y,[K]:V,[L]:W};_2[z]()}}};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDoyMCJ9)
-//# sourceMappingURL=popup.js.map
+const { Easing } = require('../animation');
+const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
+const { SHOP_POOL } = require('../shop');
+const { LETTER_SCORE, letterUpgrades } = require('../data');
+
+module.exports = function extendPopup(Renderer) {
+    Renderer.prototype._drawWitchDetailPopup = function(ctx, game, s) {
+      const popup = game._witchDetailPopup;
+      if (!popup) return;
+  
+      const jokers = game.jokers || [];
+      const joker = jokers[popup.jokerIndex];
+      if (!joker) return;
+  
+      const rect = this.witchPropRects[popup.jokerIndex];
+      if (!rect) return;
+  
+      const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
+  
+      const pad = 10 * s;
+      const lineH = 16 * s;
+  
+      // 先计算可作用字母宽度（如果有），用于动态调整弹窗宽度
+      const letters = this._getWitchLetters(joker.trigger);
+      const hasLetters = letters && letters.length > 0;
+      let lettersTotalW = 0;
+      if (hasLetters) {
+        const circleR = 12 * s;
+        const circleGap = 8 * s;
+        lettersTotalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
+      }
+  
+      // 根据效果描述文字长度动态计算弹窗宽度
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      const descW = ctx.measureText(joker.desc).width;
+      const minPopupW = cardW + 20 * s;
+      let popupW = Math.max(minPopupW, descW + pad * 2);
+      if (hasLetters) {
+        popupW = Math.max(popupW, lettersTotalW + pad * 2);
+      }
+      let popupX = cardX + (cardW - popupW) / 2;
+      // 确保弹窗不超出屏幕边缘
+      const edgePad = 5 * s;
+      popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
+  
+      // 计算内容高度
+      const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
+      const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
+      const hasPredicted = joker.trigger === 'predicted_letter' && joker._predictedLetter;
+      let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+      if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
+      if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
+      if (hasPredicted) contentH += lineH + 2 * s; // 预言字母
+      if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
+      const popupH = contentH;
+      const popupY = cardY + cardH + 6 * s + 2 * s;
+  
+      // 出现动画（easeOutBack：从卡牌底部向下弹出）
+      let appearScale = 1;
+      let appearOffsetY = 0;
+      if (popup.animStartTime) {
+        const ae = Date.now() - popup.animStartTime;
+        const ap = Math.min(ae / 200, 1);
+        const ease = Easing.easeOutBack(ap);
+        appearScale = 0.5 + 0.5 * ease;
+        appearOffsetY = (1 - ease) * 12 * s;
+      }
+  
+      ctx.save();
+      ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
+      ctx.scale(appearScale, appearScale);
+      ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
+      ctx.translate(0, appearOffsetY);
+  
+      // 小三角
+      const triW = 8 * s;
+      const triH = 6 * s;
+      const triX = cardX + cardW / 2;
+      ctx.beginPath();
+      ctx.moveTo(triX - triW, popupY);
+      ctx.lineTo(triX, popupY - triH);
+      ctx.lineTo(triX + triW, popupY);
+      ctx.closePath();
+      ctx.fillStyle = '#9b59b6';
+      ctx.fill();
+  
+      // 弹窗面板
+      const r = 8 * s;
+      this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
+  
+      let cy = popupY + pad + lineH / 2;
+      const cx = popupX + popupW / 2;
+  
+      // 名称（带星星装饰）
+      ctx.save();
+      ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`✦ ${joker.name} ✦`, cx, cy);
+      ctx.restore();
+  
+      cy += lineH + 4 * s;
+  
+      // 效果标签
+      ctx.save();
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('效果', popupX + pad, cy);
+      ctx.restore();
+  
+      cy += lineH;
+  
+      // 效果描述
+      ctx.save();
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#333';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(joker.desc, popupX + pad, cy);
+      ctx.restore();
+  
+      // 倍率增值（错误即经验 / 首字连击：显示当前累加值）
+      if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
+        cy += lineH + 2 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`倍率增值：+${joker.value}`, popupX + pad, cy);
+        ctx.restore();
+      }
+  
+      // 剩余次数（limit 型女巫牌）
+      if (joker.limit !== undefined && joker.usesLeft !== undefined) {
+        cy += lineH + 2 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = joker.usesLeft > 0 ? '#e74c3c' : '#7f8c8d';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`剩余次数：${joker.usesLeft} / ${joker.limit}`, popupX + pad, cy);
+        ctx.restore();
+      }
+  
+      // 预言字母（预言家牌）
+      if (hasPredicted) {
+        cy += lineH + 2 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`预言字母：${joker._predictedLetter}`, popupX + pad, cy);
+        ctx.restore();
+      }
+  
+      // 可作用字母
+      if (hasLetters) {
+        cy += lineH + 8 * s;
+  
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('可作用字母', popupX + pad, cy);
+        ctx.restore();
+  
+        cy += lineH + 4 * s;
+  
+        const circleR = 12 * s;
+        const circleGap = 8 * s;
+        const totalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
+        let lx = popupX + (popupW - totalW) / 2 + circleR;
+  
+        letters.forEach(letter => {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(lx, cy, circleR, 0, Math.PI * 2);
+          ctx.fillStyle = '#9b59b6';
+          ctx.fill();
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(letter, lx, cy);
+          ctx.restore();
+          lx += circleR * 2 + circleGap;
+        });
+  
+        // 底部装饰线（仅在有可作用字母时显示）
+        const decoY = popupY + popupH - 10 * s;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(155,89,182,0.3)';
+        ctx.lineWidth = 1 * s;
+        const decoW = popupW * 0.5;
+        const decoX = popupX + (popupW - decoW) / 2;
+        ctx.beginPath();
+        ctx.moveTo(decoX, decoY);
+        ctx.lineTo(decoX + decoW, decoY);
+        ctx.stroke();
+        ctx.restore();
+      }
+  
+      // 关闭弹窗整体变换
+      ctx.restore();
+    }
+
+    Renderer.prototype.drawChangeLetterPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._changeLetterPopup;
+      if (!popup) return;
+  
+      const { LETTER_SCORE } = require('../data');
+  
+      const elapsed = Date.now() - (popup.startTime || Date.now());
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: game._closingChangeLetter,
+        closeStartTime: game._closeChangeLetterStartTime,
+        width: 300, height: 410,
+        borderRadius: 12, borderWidth: 2,
+        overlayAlpha: 0.5, overlayFadeInDuration: 200,
+        enterOffset: 30,
+        closeDuration: 300,
+        elapsed,
+        onCloseComplete: () => {}
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, enterProgress, closeAlpha } = panel;
+  
+      const baseAlpha = enterProgress;
+      const gold = '#c4a35a';
+  
+      // 标题：字母置换
+      ctx.save();
+      ctx.globalAlpha = baseAlpha * closeAlpha;
+      ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('字母置换', W / 2, py + 30 * s);
+      ctx.restore();
+  
+      // 标题分隔线
+      ctx.save();
+      ctx.globalAlpha = baseAlpha * closeAlpha;
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(px + 30 * s, py + 48 * s);
+      ctx.lineTo(px + pw - 30 * s, py + 48 * s);
+      ctx.stroke();
+      ctx.restore();
+  
+      // 选中的字母卡牌（放大到 0.7，保留选中态以显示 selected.png）
+      const selectedCard = game.hand.find(c => c && c.id === popup.cardId);
+      if (selectedCard) {
+        ctx.save();
+        ctx.globalAlpha = baseAlpha * closeAlpha;
+        ctx.translate(W / 2, py + 96 * s);
+        ctx.scale(0.8, 0.8);
+        this.drawCard(selectedCard, -this.cardW / 2, -this.cardH / 2);
+        ctx.restore();
+      }
+  
+      // 字母块区域
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const lCols = 7;
+      const lBtnSize = 30 * s;
+      const lGap = 6 * s;
+      const lTotalW = lCols * lBtnSize + (lCols - 1) * lGap;
+      const lStartX = (W - lTotalW) / 2;
+      const lStartY = py + 160 * s;
+  
+      this.changeLetterRects = [];
+      letters.forEach((letter, i) => {
+        const col = i % lCols;
+        const row = Math.floor(i / lCols);
+        const lx = lStartX + col * (lBtnSize + lGap);
+        const ly = lStartY + row * (lBtnSize + lGap);
+        const isOriginal = letter === popup.originalLetter;
+        const isSelected = popup.targetLetter === letter;
+  
+        ctx.save();
+        ctx.globalAlpha = baseAlpha * closeAlpha;
+        if (isOriginal) {
+          // 置灰禁用
+          this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#e8e4dc');
+          ctx.fillStyle = '#b0a898';
+        } else if (isSelected) {
+          // 选中态：金色背景
+          this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#fdf5e0', '#c4a35a', 2 * s);
+          ctx.fillStyle = '#8b6914';
+        } else {
+          // 普通态
+          this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#f5f0e6', '#d4c9a8', 1 * s);
+          ctx.fillStyle = '#5a4a2a';
+        }
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, lx + lBtnSize / 2, ly + lBtnSize / 2);
+        ctx.restore();
+  
+        if (!isOriginal) {
+          this.changeLetterRects.push({ x: lx, y: ly, w: lBtnSize, h: lBtnSize, letter });
+        }
+      });
+  
+      // 选中的转换提示 "A → B"（金棕色）
+      if (popup.targetLetter) {
+        const arrowY = lStartY + Math.ceil(letters.length / lCols) * (lBtnSize + lGap) + 12 * s;
+        ctx.save();
+        ctx.globalAlpha = baseAlpha * closeAlpha;
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${popup.originalLetter} → ${popup.targetLetter}`, W / 2, arrowY);
+        ctx.restore();
+      }
+  
+      // 置换按钮
+      const btnW = 130 * s;
+      const btnH = 42 * s;
+      const btnX = (W - btnW) / 2;
+      const btnY = py + ph - btnH - 20 * s;
+      const canSwap = !!popup.targetLetter;
+      ctx.save();
+      ctx.globalAlpha = baseAlpha * closeAlpha;
+      this.roundRect(btnX, btnY, btnW, btnH, 8 * s,
+        canSwap ? '#c4a35a' : '#d4c9a8',
+        canSwap ? null : '#bbb', canSwap ? 0 : 1.5 * s);
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('置换', W / 2, btnY + btnH / 2);
+      ctx.restore();
+      this.changeLetterSwapBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, enabled: canSwap };
+  
+      // 关闭按钮（右上角 X）
+      const closeSize = 28 * s;
+      const closeX = px + pw - closeSize - 8 * s;
+      const closeY = py + 8 * s;
+      ctx.save();
+      ctx.globalAlpha = baseAlpha * closeAlpha;
+      ctx.beginPath();
+      ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.08)';
+      ctx.fill();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s);
+      ctx.restore();
+      this.changeLetterCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
+    }
+
+    Renderer.prototype.drawPotion = function(game) {
+      // 随机强化药水：先画转盘背景，再叠加升级动画
+      if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+        this.drawRandomUpgradePopup(game);
+        if (game._potionUpgrading) {
+          this._drawPotionUpgradeAnim(game);
+        }
+        return;
+      }
+  
+      // 其他药水：如果 potionMode 已清除，只剩动画，直接处理
+      if (game._potionUpgrading && !game.potionMode) {
+        this._drawPotionUpgradeAnim(game);
+        return;
+      }
+  
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      // LETTER_SCORE 和 letterUpgrades 已在顶部导入
+  
+      // 背景由 render() 统一绘制 bgImage，不覆盖
+  
+      // === 顶部栏（参考商店页样式）===
+      // 字母升级页面不显示设置和金币胶囊
+      // this.drawTopHeader(game);
+  
+      // 标题区域 Y 坐标（与商店页"商店"标题位置一致）
+      const titleY = top - 10 * s;
+  
+      // 标题：shop_icon.png 装饰 + "选择字母" + shop_icon.png 水平镜像
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleText = '字母升级';
+      const titleTextW = ctx.measureText(titleText).width;
+      ctx.fillText(titleText, W / 2, titleY);
+      ctx.restore();
+  
+      // 左右装饰图标
+      const decoIconW = 20 * s + 2 * s;
+      const decoIconH = 20 * s;
+      const decoGap = 10 * s - 2 * s;
+      const decoIconY = titleY - decoIconH / 2;
+      if (this.shopIcon && this.shopIconLoaded) {
+        const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
+        ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
+  
+        const rightIconX = W / 2 + titleTextW / 2 + decoGap;
+        ctx.save();
+        ctx.translate(rightIconX + decoIconW, decoIconY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
+        ctx.restore();
+      }
+  
+      // === 副标题 ===
+      const subTitleY = titleY + 52 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('选择一张字母牌，分数+10，本赛局内有效', W / 2, subTitleY);
+      ctx.restore();
+  
+      // === 分隔线（两条线 + 中间菱形）===
+      const dividerY = subTitleY + 22 * s;
+      const lineW = 80 * s;
+      const lineGap = 8 * s;
+      const lineColor = '#c4a35a';
+      const centerX = W / 2;
+      // 左线
+      ctx.save();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(centerX - lineGap - lineW, dividerY);
+      ctx.lineTo(centerX - lineGap, dividerY);
+      ctx.stroke();
+      // 右线
+      ctx.beginPath();
+      ctx.moveTo(centerX + lineGap, dividerY);
+      ctx.lineTo(centerX + lineGap + lineW, dividerY);
+      ctx.stroke();
+      // 中间菱形
+      const diamondSize = 5 * s;
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.moveTo(centerX, dividerY - diamondSize);
+      ctx.lineTo(centerX + diamondSize, dividerY);
+      ctx.lineTo(centerX, dividerY + diamondSize);
+      ctx.lineTo(centerX - diamondSize, dividerY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+  
+      // === A-Z 字母网格 ===
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const cols = 4;
+      const btnSize = 52 * s;
+      const btnGap = 13 * s;
+      const totalGridW = cols * btnSize + (cols - 1) * btnGap;
+      const gridStartX = (W - totalGridW) / 2;
+      const gridStartY = dividerY + 30 * s;
+  
+      // 王牌强化（upgrade_face）只允许选择 X/Y/Z
+      const isFaceOnly = game.potionMode && game.potionMode.effect === 'upgrade_face';
+      // 如果当前选中了不允许的字母，自动清除
+      if (isFaceOnly && game._potionSelectedLetter && !['X', 'Y', 'Z'].includes(game._potionSelectedLetter)) {
+        game._potionSelectedLetter = null;
+      }
+      const selectedLetter = game._potionSelectedLetter || null;
+  
+      this.potionLetterRects = [];
+      letters.forEach((letter, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = gridStartX + col * (btnSize + btnGap);
+        const y = gridStartY + row * (btnSize + btnGap);
+  
+        const isSelected = selectedLetter === letter;
+        const isAllowed = !isFaceOnly || ['X', 'Y', 'Z'].includes(letter);
+  
+        // 背景圆角矩形（带底部阴影，微微立体感）
+        const br = 8 * s;
+        ctx.save();
+        if (isSelected && isAllowed) {
+          // 选中状态：金色背景+阴影
+          ctx.shadowColor = 'rgba(196,163,90,0.35)';
+          ctx.shadowBlur = 6 * s;
+          ctx.shadowOffsetY = 3 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#fdf5e0', '#c4a35a', 2.5 * s);
+        } else if (!isAllowed) {
+          // 禁用状态：浅灰背景 + 淡阴影
+          ctx.shadowColor = 'rgba(0,0,0,0.06)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#e8e4dc', null, 0);
+        } else {
+          // 普通状态：米色背景 + 底部阴影
+          ctx.shadowColor = 'rgba(0,0,0,0.08)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#f5f0e6', '#d4c9a8', 1.5 * s);
+        }
+        ctx.restore();
+  
+        // 字母
+        ctx.save();
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        if (isSelected && isAllowed) {
+          ctx.fillStyle = '#8b6914';
+        } else if (!isAllowed) {
+          ctx.fillStyle = '#b0a898';
+        } else {
+          ctx.fillStyle = '#5a4a2a';
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, x + btnSize / 2, y + btnSize / 2);
+        ctx.restore();
+  
+        if (isAllowed) {
+          this.potionLetterRects.push({ x, y, w: btnSize, h: btnSize, letter });
+        }
+      });
+  
+      const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
+  
+      // === 当前字母分提示 ===
+      if (selectedLetter) {
+        const scoreTipY = gridBottomY + 18 * s;
+        const baseScore = LETTER_SCORE[selectedLetter];
+        const upgrade = letterUpgrades.get(selectedLetter);
+        const currentScore = upgrade
+          ? Math.floor(baseScore * (upgrade.mult || 1)) + (upgrade.add || 0)
+          : baseScore;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`当前字母分：${currentScore}`, W / 2, scoreTipY);
+        ctx.restore();
+      }
+  
+      // === 底部按钮区域（升级 + 暂存）===
+      const btnAreaY = H - 75 * s;
+      const potionBtnW = 130 * s;
+      const potionBtnH = 46 * s;
+      const potionBtnGap = 16 * s;
+      const totalBtnW = potionBtnW * 2 + potionBtnGap;
+      const btnStartX = (W - totalBtnW) / 2;
+  
+      // 升级按钮（需要选中字母）
+      const upgradeBtnX = btnStartX;
+      const upgradeBtnY = btnAreaY;
+      const upgradeEnabled = !!selectedLetter && !game._potionUpgrading && !!game.potionMode;
+      this.roundRect(upgradeBtnX, upgradeBtnY, potionBtnW, potionBtnH, 10 * s,
+        upgradeEnabled ? '#c4a35a' : '#d4c9a8',
+        upgradeEnabled ? null : '#bbb', upgradeEnabled ? 0 : 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('升级', upgradeBtnX + potionBtnW / 2, upgradeBtnY + potionBtnH / 2);
+      ctx.restore();
+      this.potionUpgradeBtnRect = { x: upgradeBtnX, y: upgradeBtnY, w: potionBtnW, h: potionBtnH, enabled: upgradeEnabled };
+  
+      // 暂存按钮（始终可点，除非正在动画中）
+      const stashBtnX = btnStartX + potionBtnW + potionBtnGap;
+      const stashBtnY = btnAreaY;
+      const stashEnabled = !game._potionUpgrading;
+      this.roundRect(stashBtnX, stashBtnY, potionBtnW, potionBtnH, 10 * s,
+        stashEnabled ? '#f5f0e6' : '#e8e4dc',
+        stashEnabled ? '#c4a35a' : '#bbb', 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = stashEnabled ? '#8b6914' : '#b0a898';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('暂存', stashBtnX + potionBtnW / 2, stashBtnY + potionBtnH / 2);
+      ctx.restore();
+      this.potionStashBtnRect = { x: stashBtnX, y: stashBtnY, w: potionBtnW, h: potionBtnH, enabled: stashEnabled };
+  
+      // 如果正在播放升级动画，叠加在字母选择页面上方
+      if (game._potionUpgrading) {
+        this._drawPotionUpgradeAnim(game);
+      }
+    }
+
+    Renderer.prototype.drawRandomUpgradePopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      const popup = game._randomUpgradePopup;
+  
+      // 顶部栏
+      // 随机强化页面不显示设置和金币胶囊
+      // this.drawTopHeader(game);
+  
+      const titleY = top - 10 * s;
+  
+      // 标题：shop_icon.png 装饰 + "随机强化" + shop_icon.png 水平镜像
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleText = '随机强化';
+      const titleTextW = ctx.measureText(titleText).width;
+      ctx.fillText(titleText, W / 2, titleY);
+      ctx.restore();
+  
+      // 左右装饰图标
+      const decoIconW = 20 * s + 2 * s;
+      const decoIconH = 20 * s;
+      const decoGap = 10 * s - 2 * s;
+      const decoIconY = titleY - decoIconH / 2;
+      if (this.shopIcon && this.shopIconLoaded) {
+        const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
+        ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
+  
+        const rightIconX = W / 2 + titleTextW / 2 + decoGap;
+        ctx.save();
+        ctx.translate(rightIconX + decoIconW, decoIconY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
+        ctx.restore();
+      }
+  
+      // 副标题
+      const subTitleY = titleY + 52 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('点击抽选字母，分数乘以1.5~4倍，本赛局有效', W / 2, subTitleY);
+      ctx.restore();
+  
+      // 分隔线
+      const dividerY = subTitleY + 22 * s;
+      const lineW = 80 * s;
+      const lineGap = 8 * s;
+      const lineColor = '#c4a35a';
+      const centerX = W / 2;
+      ctx.save();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(centerX - lineGap - lineW, dividerY);
+      ctx.lineTo(centerX - lineGap, dividerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(centerX + lineGap, dividerY);
+      ctx.lineTo(centerX + lineGap + lineW, dividerY);
+      ctx.stroke();
+      const diamondSize = 5 * s;
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.moveTo(centerX, dividerY - diamondSize);
+      ctx.lineTo(centerX + diamondSize, dividerY);
+      ctx.lineTo(centerX, dividerY + diamondSize);
+      ctx.lineTo(centerX - diamondSize, dividerY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+  
+      // === 圆形转盘 ===
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const isSpinning = popup && popup.phase === 'spinning';
+      const isPaused = popup && (popup.phase === 'paused' || popup.phase === 'done');
+      const targetLetter = popup ? popup.targetLetter : null;
+  
+      const wheelRadius = 160 * s;
+      const wheelCenterY = dividerY + 30 * s + wheelRadius + 50 * s;
+      const anglePerSector = 360 / 26;
+  
+      // 计算当前旋转角度和高亮字母
+      let currentAngle = 0;
+      let highlightIdx = -1;
+  
+      if (isSpinning || isPaused) {
+        const targetIdx = letters.indexOf(targetLetter);
+        const targetCenterAngle = targetIdx * anglePerSector + anglePerSector / 2;
+        const rotations = 3;
+        const finalAngle = 360 * rotations + (360 - targetCenterAngle);
+  
+        if (isSpinning) {
+          const elapsed = Date.now() - popup.spinStartTime;
+          const progress = Math.min(elapsed / 3000, 1);
+          const ease = Easing.easeOutCubic(progress);
+          currentAngle = finalAngle * ease;
+        } else {
+          currentAngle = finalAngle;
+        }
+  
+        const normalized = ((-currentAngle) % 360 + 360) % 360;
+        highlightIdx = Math.floor(normalized / anglePerSector) % 26;
+      }
+  
+      // paused 阶段：扇形闪烁约1.5次（浅金色 ↔ 金色，周期750ms）
+      let pausedPulse = 1;
+      let currentHighlightColor = '#ffe8a0';
+      if (isPaused && popup.pauseStartTime && !game._potionUpgrading) {
+        const pauseElapsed = Date.now() - popup.pauseStartTime;
+        pausedPulse = 1 + 0.08 * Math.sin(Date.now() / 200);
+        const cycle = 750; // 单个周期 750ms
+        const maxFlashTime = cycle * 1.5; // 只闪 1.5 个周期
+        if (pauseElapsed < maxFlashTime) {
+          const flash = Math.sin(pauseElapsed / (cycle / 2) * Math.PI);
+          currentHighlightColor = flash > 0 ? '#f5c542' : '#ffe8a0';
+        } else {
+          currentHighlightColor = '#f5c542'; // 之后固定金色
+        }
+      }
+  
+      // 绘制转盘外圈圆环
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, wheelCenterY, wheelRadius + 4 * s, 0, Math.PI * 2);
+      ctx.fillStyle = '#c4a35a';
+      ctx.fill();
+      ctx.restore();
+  
+      // 绘制转盘扇形（随转盘旋转）
+      ctx.save();
+      ctx.translate(centerX, wheelCenterY);
+      ctx.rotate(currentAngle * Math.PI / 180);
+  
+      const sectorColors = ['#f5f0e6', '#fdf5e0'];
+      const anglePerSectorRad = (Math.PI * 2) / 26;
+      const startOffset = -Math.PI / 2; // A 从 12 点钟开始
+  
+      for (let i = 0; i < 26; i++) {
+        const startAngle = startOffset + i * anglePerSectorRad;
+        const endAngle = startOffset + (i + 1) * anglePerSectorRad;
+        const isHighlighted = i === highlightIdx;
+  
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, wheelRadius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = isHighlighted ? currentHighlightColor : sectorColors[i % 2];
+        ctx.fill();
+        ctx.lineWidth = 0.8 * s;
+        ctx.strokeStyle = '#d4c9a8';
+        ctx.stroke();
+  
+        // 高亮扇形加金色边框
+        if (isHighlighted) {
+          ctx.save();
+          ctx.strokeStyle = '#c4a35a';
+          ctx.lineWidth = 2.5 * s * pausedPulse;
+          ctx.shadowColor = 'rgba(196,163,90,0.5)';
+          ctx.shadowBlur = 10 * s * pausedPulse;
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+  
+      // 绘制字母（径向排列，从外向内）
+      for (let i = 0; i < 26; i++) {
+        const midAngle = startOffset + i * anglePerSectorRad + anglePerSectorRad / 2;
+        const textRadius = wheelRadius * 0.72;
+        const tx = Math.cos(midAngle) * textRadius;
+        const ty = Math.sin(midAngle) * textRadius;
+        const isHighlighted = i === highlightIdx;
+  
+        ctx.save();
+        ctx.translate(tx, ty);
+        // 文字沿半径方向，底部朝向中心 → 旋转 midAngle + PI/2
+        ctx.rotate(midAngle + Math.PI / 2);
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = isHighlighted ? '#8b6914' : '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letters[i], 0, 0);
+        ctx.restore();
+      }
+  
+      // 外圈装饰圆点
+      const dotCount = 26;
+      const dotRadius = 2.5 * s;
+      const dotR = wheelRadius + 8 * s;
+      for (let i = 0; i < dotCount; i++) {
+        const angle = i * (Math.PI * 2 / dotCount) - Math.PI / 2;
+        const dx = Math.cos(angle) * dotR;
+        const dy = Math.sin(angle) * dotR;
+        ctx.beginPath();
+        ctx.arc(dx, dy, dotRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#f5c542';
+        ctx.fill();
+        ctx.strokeStyle = '#c4a35a';
+        ctx.lineWidth = 0.5 * s;
+        ctx.stroke();
+      }
+  
+      ctx.restore(); // 结束转盘旋转
+  
+      // === 中心圆形（抽选按钮 / 倍数显示）===
+      const btnRadius = 36 * s;
+      const isIdle = !popup || popup.phase === 'idle';
+      const isPausedOrDone = popup && (popup.phase === 'paused' || popup.phase === 'done');
+      const spinEnabled = isIdle;
+  
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, wheelCenterY, btnRadius, 0, Math.PI * 2);
+      if (isIdle) {
+        ctx.fillStyle = '#c0392b';
+        ctx.strokeStyle = '#a93226';
+      } else if (isSpinning) {
+        ctx.fillStyle = '#fdf5e0';
+        ctx.strokeStyle = '#c4a35a';
+      } else {
+        // paused / done：金色背景，与扇形高亮颜色一致
+        ctx.fillStyle = '#f5c542';
+        ctx.strokeStyle = '#c4a35a';
+      }
+      ctx.lineWidth = 2 * s;
+      ctx.fill();
+      ctx.stroke();
+  
+      // 按钮内阴影
+      ctx.beginPath();
+      ctx.arc(centerX, wheelCenterY, btnRadius - 2 * s, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+  
+      // 文字：idle 显示"抽选"，spinning 快速切换倍数，paused/done 定格最终倍数
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (isIdle) {
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillText('抽选', centerX, wheelCenterY);
+      } else if (isSpinning && popup.multSequence) {
+        const elapsed = Date.now() - popup.spinStartTime;
+        const idx = Math.min(Math.floor(elapsed / 100), popup.multSequence.length - 1);
+        const displayMult = popup.multSequence[idx];
+        ctx.fillStyle = '#5a4a2a';
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.fillText('×' + displayMult, centerX, wheelCenterY);
+      } else if (isPausedOrDone) {
+        // done 阶段触发一次放大缩小脉冲
+        let scale = 1;
+        if (popup.phase === 'done' && game._potionUpgrading) {
+          const pulseState = { startTime: game._potionUpgrading.startTime, duration: 400 };
+          scale = this._calcPulseScale(pulseState, 0.25).scale;
+        }
+        ctx.fillStyle = '#5a4a2a';
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.save();
+        ctx.translate(centerX, wheelCenterY);
+        ctx.scale(scale, scale);
+        ctx.fillText('×' + popup.randomMult, 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+  
+      // done 阶段且倍率 > 3：中心圆内部放烟花（复用单词验证合法烟花）
+      if (popup && popup.phase === 'done' && game._potionUpgrading && game._potionUpgrading.randomMult > 3) {
+        if (!game._potionUpgrading._fireworkSpawned) {
+          game._potionUpgrading._fireworkSpawned = true;
+          this._spawnSparkles(centerX, wheelCenterY, 20);
+        }
+      }
+  
+      // 中心按钮点击区域（圆形）
+      this.randomSpinBtnRect = {
+        x: centerX - btnRadius,
+        y: wheelCenterY - btnRadius,
+        w: btnRadius * 2,
+        h: btnRadius * 2,
+        enabled: spinEnabled,
+        isCircle: true,
+        cx: centerX,
+        cy: wheelCenterY,
+        r: btnRadius
+      };
+  
+      // === 顶部指针（不旋转）===
+      const ptrY = wheelCenterY - wheelRadius - 18 * s;
+      const ptrW = 18 * s;
+      const ptrH = 22 * s;
+      ctx.save();
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.moveTo(centerX, ptrY + ptrH); // 顶点指向转盘
+      ctx.lineTo(centerX - ptrW / 2, ptrY);
+      ctx.lineTo(centerX + ptrW / 2, ptrY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#c0392b';
+      ctx.lineWidth = 1.5 * s;
+      ctx.stroke();
+  
+      // 指针底部小圆点
+      ctx.beginPath();
+      ctx.arc(centerX, ptrY, 3 * s, 0, Math.PI * 2);
+      ctx.fillStyle = '#e74c3c';
+      ctx.fill();
+      ctx.restore();
+  
+      // === 当前高亮字母提示 ===
+      if ((isSpinning || isPaused) && highlightIdx >= 0) {
+        const hintY = wheelCenterY + wheelRadius + 28 * s;
+        const hlLetter = letters[highlightIdx];
+        ctx.save();
+        ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+        ctx.fillStyle = isPaused ? '#c0392b' : '#8b6914';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`当前：${hlLetter}`, centerX, hintY);
+        ctx.restore();
+      }
+  
+      // 关闭按钮已移除（随机强化页面无需手动关闭）
+      this.randomUpgradeCloseRect = null;
+    }
+
+    Renderer.prototype._drawLifeExtensionPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const anim = game._lifeExtensionAnim;
+      if (!anim) return;
+  
+      const elapsed = Date.now() - anim.startTime;
+      // 前1秒只显示闪烁动画（由 drawHUD 绘制），不显示弹窗
+      if (elapsed < 1000) return;
+  
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: false,
+        width: 300, height: 260, enterOffset: 25, closeOffset: 40,
+        elapsed: elapsed - 1000,
+        onCloseComplete: () => {}
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+  
+      // 标题
+      const titleAnim = Easing.fadeIn(elapsed - 1000, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('游戏顺延', W / 2, py + 40 * s + titleAnim.yShift);
+      ctx.restore();
+  
+      // 分隔线
+      const line1Anim = Easing.fadeIn(elapsed - 1000, 140, 250, 6 * s);
+      ctx.save();
+      ctx.globalAlpha = line1Anim.alpha;
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const line1Y = py + 62 * s + line1Anim.yShift;
+      ctx.moveTo(px + 30 * s, line1Y);
+      ctx.lineTo(px + pw - 30 * s, line1Y);
+      ctx.stroke();
+      ctx.restore();
+  
+      // 提示文案
+      const hintAnim = Easing.fadeIn(elapsed - 1000, 200, 250, 8 * s);
+      const hintY = py + 100 * s + hintAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = hintAnim.alpha;
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('女巫续命', W / 2, hintY);
+      ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = '#555';
+      ctx.fillText(`下一关目标分 + ${anim.diff} × 2`, W / 2, hintY + 28 * s);
+      ctx.restore();
+  
+      // 确定按钮
+      const btnAnim = Easing.fadeIn(elapsed - 1000, 350, 250, 10 * s);
+      const btnW = 160 * s;
+      const btnH = 46 * s;
+      const btnX = (W - btnW) / 2;
+      const btnY = py + ph - btnH - 28 * s + btnAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = btnAnim.alpha;
+      this._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, game._lifeExtensionBtnPressed, { color: '#c4a35a', radius: 8 });
+      ctx.restore();
+  
+      // 存储点击区域
+      const finalBtnY = py + ph - btnH - 28 * s;
+      this.lifeExtensionBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
+    }
+
+    // ===== 设置弹窗 =====
+    Renderer.prototype.drawSettingsPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._settingsPopup;
+      if (!popup) return;
+
+      const isClosing = game._closingSettings;
+      const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
+
+      const panelW = 280;
+      const panelH = 340;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing,
+        closeStartTime: game._closeSettingsStartTime,
+        width: panelW,
+        height: panelH,
+        borderRadius: 16,
+        borderWidth: 1.5,
+        bgColor: '#f5f0e6',
+        borderColor: '#c4a35a',
+        overlayAlpha: 0.55,
+        overlayFadeInDuration: 200,
+        enterOffset: 20,
+        closeOffset: 30,
+        elapsed,
+        onCloseComplete: () => {
+          game._settingsPopup = null;
+          game._closingSettings = false;
+          game._closeSettingsStartTime = null;
+          game._feedbackPage = 'main';
+          game._feedbackTransition = null;
+        }
+      });
+
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+
+      // 重置点击区域
+      this.settingsSoundRect = null;
+      this.settingsRankRect = null;
+      this.settingsFeedbackRect = null;
+      this.feedbackBackRect = null;
+      this.feedbackInputRect = null;
+      this.feedbackSubmitRect = null;
+      this.settingsPanelRect = { x: px, y: py, w: pw, h: ph };
+      this.settingsCloseRect = { x: 0, y: 0, w: W, h: H };
+
+      const contentAlpha = closeAlpha;
+
+      // === 内层细边框（参考购买成功弹窗） ===
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      const inset = 4 * s;
+      const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
+      ctx.moveTo(ix + ir, iy);
+      ctx.lineTo(ix + iw - ir, iy);
+      ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+      ctx.lineTo(ix + iw, iy + ih - ir);
+      ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+      ctx.lineTo(ix + ir, iy + ih);
+      ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+      ctx.lineTo(ix, iy + ir);
+      ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // === 右上角关闭按钮（在所有边框之后绘制，确保在最上层） ===
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 10;
+      const closeY = py + 10 * s - 10;
+      const pressOffset = game._settingsCloseBtnPressed ? 2 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + pressOffset, closeSize, closeSize);
+      } else {
+        // 兜底：绘制 X
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + pressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + pressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + pressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + pressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + pressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
+      ctx.restore();
+      this.settingsCloseBtnRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+
+      function easeInOutQuad(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      }
+
+      // 计算页面切换状态
+      let fromPage = game._feedbackPage || 'main';
+      let toPage = null;
+      let fromX = 0;
+      let toX = pw;
+
+      if (game._feedbackTransition) {
+        const trans = game._feedbackTransition;
+        let t = (Date.now() - trans.startTime) / trans.duration;
+        t = Math.max(0, Math.min(1, t));
+        const ease = easeInOutQuad(t);
+
+        if (t >= 1) {
+          game._feedbackPage = trans.to;
+          game._feedbackTransition = null;
+          fromPage = game._feedbackPage || 'main';
+          fromX = 0;
+        } else {
+          fromPage = trans.from;
+          toPage = trans.to;
+          fromX = -pw * ease;
+          toX = pw * (1 - ease);
+        }
+      }
+
+      // 使用 clip 限制绘制在弹窗内部
+      ctx.save();
+      const clipR = 16 * s;
+      ctx.beginPath();
+      ctx.moveTo(px + clipR, py);
+      ctx.lineTo(px + pw - clipR, py);
+      ctx.arcTo(px + pw, py, px + pw, py + ph, clipR);
+      ctx.lineTo(px + pw, py + ph - clipR);
+      ctx.arcTo(px + pw, py + ph, px, py + ph, clipR);
+      ctx.lineTo(px + clipR, py + ph);
+      ctx.arcTo(px, py + ph, px, py, clipR);
+      ctx.lineTo(px, py + clipR);
+      ctx.arcTo(px, py, px + pw, py, clipR);
+      ctx.closePath();
+      ctx.clip();
+
+      // 绘制各页面
+      if (fromPage === 'main') {
+        drawMainPage.call(this, fromX);
+      } else if (fromPage === 'feedback') {
+        drawFeedbackPage.call(this, fromX);
+      }
+
+      if (toPage) {
+        if (toPage === 'main') {
+          drawMainPage.call(this, toX);
+        } else if (toPage === 'feedback') {
+          drawFeedbackPage.call(this, toX);
+        }
+      }
+
+      ctx.restore();
+
+      // Toast 提示
+      if (game._feedbackSubmitToast) {
+        if (Date.now() > game._feedbackSubmitToast.expireAt) {
+          game._feedbackSubmitToast = null;
+        } else {
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
+          const toastText = game._feedbackSubmitToast.text;
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        const toastTextW = ctx.measureText(toastText).width;
+        const toastW = Math.min(pw - 40 * s, toastTextW + 24 * s);
+        const toastH = 34 * s;
+        const toastX = W / 2 - toastW / 2;
+        const toastY = py + ph - 50 * s;
+        this.roundRect(toastX, toastY, toastW, toastH, 17 * s, 'rgba(0,0,0,0.75)');
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(toastText, W / 2, toastY + toastH / 2);
+        ctx.restore();
+      }
+    }
+
+    // === 内部函数：绘制设置主页 ===
+    function drawMainPage(offsetX) {
+        ctx.save();
+        ctx.translate(offsetX, 0);
+
+        // === 标题：设置 ===
+        const titleY = py + 32 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(26 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('设置', W / 2, titleY);
+        ctx.restore();
+
+        // === 标题下装饰线（参考购买成功弹窗） ===
+        const decoLineY = py + 52 * s;
+        const decoLineW = pw * 0.5;
+        const decoLineX = px + (pw - decoLineW) / 2;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+        ctx.restore();
+
+        // === 设置项列表 ===
+        const items = [
+          {
+            key: 'sound',
+            iconKey: 'sound',
+            title: '音效',
+            subtitle: '开启或关闭游戏音效',
+            type: 'switch',
+            value: game.settings && game.settings.soundEnabled !== false
+          },
+          {
+            key: 'rank',
+            iconKey: 'rank',
+            title: '排行榜',
+            subtitle: '查看好友排行',
+            type: 'arrow'
+          },
+          {
+            key: 'feedback',
+            iconKey: 'feedback',
+            title: '问题反馈',
+            subtitle: '告诉我们你的建议与问题',
+            type: 'arrow'
+          }
+        ];
+
+        const itemH = 72 * s;
+        const itemStartY = titleY + 35 * s;
+        const iconSize = 50 * s;
+
+        items.forEach((item, i) => {
+          const itemY = itemStartY + i * itemH;
+          const centerY = itemY + itemH / 2;
+
+          // 图标图片
+          const iconX = px + 22 * s;
+          const iconY = centerY;
+          const iconData = item.iconKey && this.settingIcons && this.settingIcons[item.iconKey];
+          if (iconData && iconData.loaded && iconData.img) {
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            const drawSize = iconSize * 0.8;
+            const aspect = iconData.width / iconData.height;
+            let dw = drawSize, dh = drawSize;
+            if (aspect > 1) {
+              dh = drawSize / aspect;
+            } else if (aspect < 1) {
+              dw = drawSize * aspect;
+            }
+            const dx = iconX + iconSize / 2 - dw / 2;
+            const dy = iconY - dh / 2;
+            ctx.drawImage(iconData.img, dx, dy, dw, dh);
+            ctx.restore();
+          }
+
+          // 标题
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.fillStyle = '#3a2e1e';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.title, iconX + iconSize + 11 * s, centerY - 7 * s);
+          ctx.restore();
+
+          // 副标题
+          ctx.save();
+          ctx.globalAlpha = contentAlpha * 0.7;
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#8a7a6a';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(item.subtitle, iconX + iconSize + 11 * s, centerY + 11 * s);
+          ctx.restore();
+
+          // 右侧控件
+          const ctrlRightX = px + pw - 22 * s;
+          if (item.type === 'switch') {
+            const swW = 50 * s;
+            const swH = 26 * s;
+            const swX = ctrlRightX - swW;
+            const swY = centerY - swH / 2;
+            const isOn = item.value;
+            const isPressed = game._settingsSoundPressed;
+            const pressOffset = isPressed ? 1 * s : 0;
+
+            // 开关背景
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
+            ctx.restore();
+
+            // "开"/"关" 文字
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const labelText = isOn ? '开' : '关';
+            ctx.fillText(labelText, swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
+            ctx.restore();
+
+            // 圆点
+            const dotR = 10 * s;
+            const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
+            const dotY = swY + pressOffset + swH / 2;
+            ctx.save();
+            ctx.globalAlpha = contentAlpha;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.fill();
+            ctx.restore();
+
+            // 记录点击区域
+            this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
+          } else if (item.type === 'arrow') {
+            ctx.save();
+            ctx.globalAlpha = contentAlpha * 0.6;
+            ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+            ctx.fillStyle = '#8a7a6a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('›', ctrlRightX - 4 * s, centerY);
+            ctx.restore();
+
+            // 记录整行点击区域
+            const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
+            if (item.key === 'rank') this.settingsRankRect = rect;
+            if (item.key === 'feedback') this.settingsFeedbackRect = rect;
+          }
+
+          // 分隔线（非最后一项）
+          if (i < items.length - 1) {
+            const lineY = itemY + itemH;
+            const linePad = 18 * s;
+            ctx.save();
+            ctx.globalAlpha = contentAlpha * 0.35;
+            ctx.strokeStyle = '#c4a35a';
+            ctx.lineWidth = 0.8 * s;
+            ctx.beginPath();
+            ctx.moveTo(px + linePad, lineY);
+            ctx.lineTo(px + pw - linePad, lineY);
+            ctx.stroke();
+
+            // 小菱形装饰
+            ctx.fillStyle = '#c4a35a';
+            ctx.globalAlpha = contentAlpha * 0.5;
+            ctx.beginPath();
+            ctx.moveTo(W / 2, lineY - 3 * s);
+            ctx.lineTo(W / 2 + 3 * s, lineY);
+            ctx.lineTo(W / 2, lineY + 3 * s);
+            ctx.lineTo(W / 2 - 3 * s, lineY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+
+        ctx.restore();
+      }
+
+      // === 内部函数：绘制问题反馈页 ===
+      function drawFeedbackPage(offsetX) {
+        ctx.save();
+        ctx.translate(offsetX, 0);
+
+        // 返回按钮
+        const backY = py + 26 * s;
+        const backLabel = '‹';
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const backW = ctx.measureText(backLabel).width;
+        ctx.fillText(backLabel, px + 14 * s, backY);
+        ctx.restore();
+
+        // 记录返回点击区域（加大）
+        this.feedbackBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
+
+        // 标题：问题反馈
+        const titleY = py + 32 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('问题反馈', W / 2, titleY);
+        ctx.restore();
+
+        // 输入框区域
+        const inputX = px + 20 * s;
+        const inputW = pw - 40 * s;
+        const inputH = 120 * s;
+        const inputY = titleY + 40 * s;
+
+        // 输入框背景
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this.roundRect(inputX, inputY, inputW, inputH, 8 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+        ctx.restore();
+
+        // 输入框文字
+        const feedbackText = game._feedbackText || '';
+        const placeholder = '请描述你遇到的问题（最多100字）';
+        const textX = inputX + 12 * s;
+        const textY = inputY + 14 * s;
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        if (feedbackText) {
+          ctx.fillStyle = '#3a2e1e';
+          const maxTextW = inputW - 24 * s;
+          const lines = this._wrapText(ctx, feedbackText, maxTextW, 14 * s);
+          const lineHeight = 20 * s;
+          lines.forEach((line, i) => {
+            if (i * lineHeight < inputH - 35 * s) {
+              ctx.fillText(line, textX, textY + i * lineHeight);
+            }
+          });
+        } else {
+          ctx.fillStyle = '#b0a898';
+          ctx.fillText(placeholder, textX, textY);
+        }
+
+        // 字数统计
+        const countText = `${feedbackText.length} / 100`;
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#b0a898';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(countText, inputX + inputW - 10 * s, inputY + inputH - 8 * s);
+        ctx.restore();
+
+        // 记录输入框点击区域
+        this.feedbackInputRect = { x: inputX, y: inputY, w: inputW, h: inputH };
+
+        // 提交按钮
+        const btnW = 140 * s;
+        const btnH = 42 * s;
+        const btnX = W / 2 - btnW / 2;
+        const btnY = py + ph - btnH - 28 * s;
+        const isSubmitting = game._feedbackSubmitting;
+        const isPressed = game._feedbackSubmitPressed;
+        const pressOffset = isPressed ? 2 * s : 0;
+
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        const btnBg = isSubmitting ? 'rgba(196,163,90,0.5)' : '#c4a35a';
+        this.roundRect(btnX, btnY + pressOffset, btnW, btnH, 8 * s, btnBg);
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const btnLabel = isSubmitting ? '提交中...' : '提交';
+        ctx.fillText(btnLabel, W / 2, btnY + pressOffset + btnH / 2);
+        ctx.restore();
+
+        // 记录提交按钮点击区域
+        this.feedbackSubmitRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+        ctx.restore();
+      }
+    }
+
+};

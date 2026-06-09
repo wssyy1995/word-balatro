@@ -1,2 +1,300 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,k=Math.LN2,l=Math.LOG10E,m=Math.PI,n=Math.SQRT1_2,o=Math.SQRT2;var p=20,q=38,r=8,s=27,t=18,u=27,v=59,w=22,x=16,y=36,z=47,A=79,B=4,C=17,D=70,E=55,F=89,G=9,H=17,I=39,J=82,K=31,L=83,M=66,N=98,O=58,P=54,Q=56,R=70,S=84,T=54,U=84,V=6,W=19,X=96,Y=31,Z=85,_0=70,_1=24,_2=21,_3=97,_4=72,_5=1,_6=83,_7=59,_8=16,_9=79,ba=14,bb=16,bc=3,bd=38,be=3,bf=26,bg=33,bh=25,bi=25,bj=43,bk=97,bl=83,bm=57,bn=90,bo=35,bp=66,bq=36,br=66,bs=11,bt=16,bu=83,bv=86,bw=95,bx=96,by=71,bz=28,bA=53,bB=28,bC=7,bD=76,bE=45,bF=81,bG=89;var bH=c((W+T+83)/3)<c(e((a(54)+a(W)+a(_6))/3)),bI=g(2*a(f(43*A+w*56)))<=g(a(22*w+bj*43)+a(56*56+79*A)),bJ=70*_0+27*27+w*w+I*39<s*_0+_0*22+I*s+w*I,bK=83*83+96*96+54*P+95*95>=83*bw+P*bx+bw*P+bx*bu,bL=bo*35+B*B+V*V+y*36>=B*V+V*bo+35*y+36*4,bM=c((72+95+79)/3)>=c(e((a(95)+a(_9)+a(_4))/3)),bN=3*3+bA*53+27*27+w*22>=bc*53+22*bc+s*22+bA*27,bO=g(2*a(f(V*16+G*54)))<=g(a(6*6+G*9)+a(16*16+T*54)),bP=c((66+89+89)/3)>=c(e((a(89)+a(66)+a(89))/3)),bQ=c((C+97+Q+z)/4)>=c(e((a(C)+a(47)+a(_3)+a(Q))/4)),bR=g(2*a(f(84*S+98*T)))>g(a(S*S+N*N)+a(54*54+S*S)),bS=58*O+X*96+T*54<T*X+X*58+58*54,bT=g(2*a(f(24*25+A*A)))<=g(a(_1*24+79*79)+a(bh*25+79*A)),bU=c((4+bF+bw+_8)/4)<c(e((a(bw)+a(_8)+a(81)+a(4))/4)),bV=_4*_4+bh*bh+36*y<72*bh+bh*36+36*72,bW=c((66+ba+4+J)/4)<c(e((a(14)+a(66)+a(4)+a(J))/4)),bX=c((85+36+25)/3)<c(e((a(85)+a(bq)+a(25))/3)),bY=D*70+4*4+39*I+F*89<70*89+4*I+I*D+89*B,bZ=_2*_2+C*C+39*39>=C*I+_2*17+I*21,b0=bd*bd+_1*24+w*w+bG*89<bd*bG+24*22+w*38+bG*_1,b1=g(2*a(f(bj*bf+bG*bG)))>g(a(89*bG+bj*43)+a(bf*bf+bG*89)),b2=be*3+83*bl+45*bE+19*19>=bE*19+83*45+3*bl+19*3,b3=c((_6+38+y+V)/4)<c(e((a(y)+a(V)+a(83)+a(bd))/4)),b4=6*V+66*66+39*39+31*Y<Y*39+6*Y+39*br+66*V,b5=83*bl+36*bq+90*90<83*36+bq*bn+90*bl,b6=17*17+bu*bu+bh*bh>=25*C+C*83+83*25,b7=bF*bF+Y*31+83*83>=Y*L+83*bF+81*31,b8=g(2*a(f(br*86+bE*45)))<=g(a(45*45+66*br)+a(bv*86+45*45)),b9=c((66+6+31)/3)<c(e((a(V)+a(br)+a(Y))/3)),ca=bg*bg+N*98+t*18+Y*31>=31*bg+18*31+bg*98+N*18,cb=U*84+58*O+F*89>=U*58+58*F+F*U,cc=c((83+_3+97+ba)/4)>=c(e((a(97)+a(14)+a(97)+a(83))/4)),cd=bu*83+bt*bt+bB*bB<83*28+28*16+16*83,ce=q*q+3*3+bv*bv<be*86+86*38+q*be,cf=28*28+q*38+54*P+59*59>=38*v+P*38+28*P+59*28,cg=c((bp+Q+bk+79)/4)>=c(e((a(bp)+a(bk)+a(56)+a(79))/4)),ch=g(2*a(f(66*_2+R*4)))>g(a(M*66+R*70)+a(4*B+_2*21)),ci=g(2*a(f(8*bo+47*97)))>g(a(8*8+z*z)+a(97*_3+bo*bo)),cj=V*6+bm*bm+38*38+bg*bg>=bm*38+V*33+bg*bm+38*V,ck=c((A+24+59+35)/4)<c(e((a(A)+a(24)+a(v)+a(bo))/4));var j,cl;var cm,dT;var cn=+b8;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var co={f:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cp="";var cq=new Array(25);cp=co.f("wongoltesteg",3);cq[0]=cp.s(3);cp=co.f("pohsdesuetadkceddnahdlogemag",4);cq[1]=cp.s(4);cp=co.f("ecilsraelcrorrestatserocsesrapetatsdnuor",5);cq[2]=cp.s(5);cp=co.f("rebmunevomernoitopatad/.tegratsrekojxiferp",6);cq[3]=cp.s(6);cp=co.f("stropxenoisrevseirtneyarrAsisnoitop",7);cq[4]=cp.s(7);cp=co.f("statSteg:snoitopsgnittesdetcelesssergorp",8);cq[5]=cp.s(8);cp=co.f("denifednupmatsemittfeLsdnahsmetIpohsyfignirts",9);cq[6]=cp.s(9);cp=co.f("sdroWlatotdeyortsed_semaGlatoterocs_hgihesahPediugsdnaHartxeremiTevas_erocSlatot",10);cq[7]=cp.s(10);cp=co.f("gnirtSOSIotesahp_ediugneLxaMdees_neLniMdees_ytefaSartxeserocSdnuor",11);cq[8]=cp.s(11);cp=co.f("delbanEcisumdelbanEdnuoserocShgiHtegeviver_yliadeziSdnaHxam_sretteLartxeeziSdnaHesabtfeLsdracsiddnuoRtsehgih",12);cq[9]=cp.s(12);cp=co.f("sdracsiDlatot_ortalab_drowsdracsiDartxestolSrekoJxam",13);cq[10]=cp.s(13);cp=co.f("reganaMegarotScnySegarotStesesahPediuGpohsataDtnemelttessunoBwolfrevo_stceffElatsyrccnySegarotStegsedargpUrettel",14);cq[11]=cp.s(14);cp=co.f("eviveRyliaDdaoletatSnoitoPerp_sllikSdelffuhs_ssergorPevaSod_",15);cq[12]=cp.s(15);cp=co.f("delbanEnoitarbivesahp_ediug_pohsdessaPllikShctiw",16);cq[13]=cp.s(16);cp=co.f("etaRtnuocsiDpohs_cnySegarotSevomer",17);cq[14]=cp.s(17);cp=co.f(":rorre tes egarotSdekcolnu_koob_dracesahPediuGkooBdracretteLlaitinItsal_",18);cq[15]=cp.s(18);cp=co.f(":srekoj 档存取读 ]daoL[drac_hctiw_deppiuqeemiTtratSediuGpohs_evitcAtnuocsiDpohs_sunoBnoisnetxEefil_",19);cq[16]=cp.s(19);cp=co.f("esahp_ediug_koobdrac",20);cq[17]=cp.s(20);cp=co.f("sdrac_hctiw_detcelloc",21);cq[18]=cp.s(21);cp=co.f("emiTtratSyalrevOediug_desUtcetorPllikShctiw_",22);cq[19]=cp.s(22);cp=co.f("emiTtratSediuGkooBdrac_emiTtratStxeTediuGpohs_",23);cq[20]=cp.s(23);cp=co.f("emiTtratStixEediuGkooBdrac_emiTtratStxeTediuGkooBdrac_",27);cq[21]=cp.s(27);cp=co.f("emiTtratS2txeTediuGkooBdrac_",28);cq[22]=cp.s(28);cp=co.f(":sdraChctiWdetcelloCdaol ]kooBdraC[:sdraChctiWdetcelloCevas ]kooBdraC[",35);cq[23]=cp.s(35);cp=co.f(":证验 sdraChctiWdetcelloCevas ]kooBdraC[",38);cq[24]=cp.s(38);var cs="undefined,";function ct(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cu=ct(cs);if(cn){j=cq[11][0];cl=cq[3][3];cm=cq[4][4];dT=cq[11][7]}cn=0;cp=null;cs=null;const{[j]:letterUpgrades}=require(cl);class StorageManager{constructor(){var a=cq;this[a[3][0]]=a[10][2]}set(a,b){var c=cq;try{wx[c[11][6]](this[c[3][0]]+a,b);return true}catch(a){console[c[2][5]](c[15][3],a);return false}}get(a,b=null){var c=cq;try{return wx[c[11][1]](this[c[3][0]]+a)||b}catch(a){return b}}remove(a){var b=cq;try{wx[b[14][0]](this[b[3][0]]+a);return true}catch(a){return false}}clear(){var a=cq;try{wx[a[14][0]](this[a[3][0]]+a[5][0]);return true}catch(a){return false}}saveProgress(){this[cq[12][0]]()}saveProgressImmediate(){var a=cq,b=a[7][1];if(this[b])clearTimeout(this[b]);this[a[12][0]]()}_doSaveProgress(){var a=cq,b=a[1],c=a[3],d=a[4],e=a[11],f=a[0],g=a[2],h=a[6],i=a[7],j=a[8],k=a[10],l=a[9],m=a[5],n=a[19],o=a[16],p=a[15],q=a[20],r=a[21],s=g[2],t=h[0],em=c[1],en=a[4][0],eo=g[0],ep=b[1],eq=g[3],er=i[0],es=j[0],et=k[0],eu=e[2],ev=h[1],ew=g[1],ex=a[12][1],ey=l[1],ez=h[2],eA=b[2],eB=b[3],eC=m[1],eD=l[2],eE=i[2],eF=k[1],eG=j[1],eH=l[3],eI=a[13][0],eJ=n[0],eK=o[0],eL=c[2],eM=l[4],eN=j[2],eO=j[3],eP=p[0];var eQ=o[1],eR=a[14][1],eS=e[3],eT=e[4],eU=i[3],eV=n[1],eW=e[5],eX=o[2],eY=q[0],eZ=p[1],e0=q[1],e1=r[0],e2=a[22][0],e3=r[1],u=m[0];const v=wx[b[0]];if(!v)return;if(v[a[7][6]])return;const w=JSON[s](JSON[t](v[em]||[]));const x=JSON[s](JSON[t](v[en]||[]));const y={[eo]:v[eo],[ep]:v[ep],[eq]:v[eq],[er]:v[er],[es]:v[es],[em]:w,[et]:v[et],[en]:x,[eu]:v[eu]||[],[ev]:v[ev],[ew]:v[ew]===c[4]?v[a[12][2]]||b[6]:v[ew],[ex]:v[ex],[ey]:v[ey],[ez]:v[ez],[eA]:v[eA],[eB]:v[eB],[eC]:v[eC],[eD]:v[eD],[eE]:v[eE]||0,[eF]:v[eF]||0,[eG]:v[eG]||0,[eH]:v[eH]||0,[eI]:v[eI],[eJ]:v[eJ]||false,[eK]:v[eK]||0,[eL]:v[eL],[eM]:v[eM],[eN]:v[eN],[eO]:v[eO],[eP]:v[eP]||null,[eQ]:v[eQ]||false,[eR]:v[eR]||.6,[eS]:v[eS]||0,[eT]:v[eT]||null,[eU]:v[eU],[eV]:v[eV],[eW]:v[eW],[eX]:v[eX],[eY]:v[eY],[eZ]:v[eZ],[e0]:v[e0],[e1]:v[e1],[e2]:v[e2],[e3]:v[e3],[e[0]]:[...letterUpgrades[d[2]]()],[a[6][3]]:Date[f[3]](),[d[3]]:1};this[f[1]](u,y);const z=wx[e[1]](this[c[0]]+u);return true}_getGame(){var a=cq;return typeof wx!==a[6][4]?wx[a[1][0]]:null}loadProgress(){var a=cq,b=a[0],c=a[5],d=a[6][0],e=a[10][0],f=a[11][0];const g=this[b[0]](c[0],null);if(!g)return null;console[b[2]](a[16][4],JSON[d](g[a[3][1]]),c[3],JSON[d](g[a[4][0]]));if(g[e]===undefined){g[e]=4}letterUpgrades[a[2][6]]();if(g[f]){for(const[a,c]of g[f]){letterUpgrades[b[1]](a,c)}}return g}hasProgress(){var a=cq;return!!this[a[0][0]](a[5][0])}clearProgress(){var a=cq;return this[a[3][5]](a[5][0])}saveGuidePhase(a){var b=cq;return this[b[0][1]](b[8][4],a)}loadGuidePhase(){var a=cq;return this[a[0][0]](a[8][4],null)}saveShopGuidePhase(a){var b=cq;return this[b[0][1]](b[13][1],a)}loadShopGuidePhase(){var a=cq;return this[a[0][0]](a[13][1],null)}saveCardBookGuidePhase(a){var b=cq;return this[b[0][1]](b[17][0],a)}loadCardBookGuidePhase(){var a=cq;return this[a[0][0]](a[17][0],null)}getHighScore(){var a=cq;return this[a[0][0]](a[7][4],0)}setHighScore(a){var b=cq;const c=this[b[9][6]]();if(a>c){this[b[0][1]](b[7][4],a);return true}return false}saveDailyRevive(a,b=true){var c=cq,d=c[1];return this[c[0][1]](c[9][5],{[d[4]]:a,[d[5]]:b})}loadDailyRevive(){var a=cq;return this[a[0][0]](a[9][5],null)}isDailyReviveUsed(){var a=cq,b=a[1];const c=this[a[12][3]]();if(!c)return false;const d=(new Date)[a[8][5]]()[a[2][7]](0,10);return c[b[4]]===d&&c[b[5]]===true}getStats(){var a=cq,b=a[7];return this[a[0][0]](a[2][4],{[b[5]]:0,[b[0]]:0,[a[9][0]]:0,[b[7]]:0,[a[10][3]]:0})}updateStats(a){var b=cq,c=b[7][0],d=b[2][0],e=b[9][0];const f=this[b[5][4]]();f[b[7][5]]++;f[c]+=a[c];if(a[d]>f[e]){f[e]=a[d]}return this[b[0][1]](b[2][4],f)}saveCardBookUnlocked(a){var b=cq;return this[b[0][1]](b[15][2],a)}loadCardBookUnlocked(){var a=cq;return this[a[0][0]](a[15][2],false)}saveCollectedWitchCards(a){var b=cq,c=b[0],d=b[0][2],e=b[6][0],f=b[18][0];const g=Array[b[4][1]](a)?[...a]:[];console[d](b[23][0],JSON[e](g));this[c[1]](f,g);const h=this[c[0]](f,[]);console[d](b[24][0],JSON[e](h));return JSON[e](g)===JSON[e](h)}loadCollectedWitchCards(){var a=cq,b=a[0];const c=this[b[0]](a[18][0],[]);const d=Array[a[4][1]](c)?c:[];console[b[2]](a[23][1],JSON[a[6][0]](d));return d}saveEquippedWitchCard(a){var b=cq;return this[b[0][1]](b[16][3],a)}loadEquippedWitchCard(){var a=cq;const b=this[a[0][0]](a[16][3],null);if(b===null)return[];if(typeof b===a[3][6])return[b];return Array[a[4][1]](b)?b:[]}getSettings(){var a=cq,b=a[9];return this[a[0][0]](a[5][2],{[b[7]]:true,[b[8]]:true,[a[13][2]]:true})}saveSettings(a){var b=cq;return this[b[0][1]](b[5][2],a)}}module[cm]={[dT]:StorageManager};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowNyJ9)
-//# sourceMappingURL=storage.js.map
+// ===== 本地存储管理器 =====
+const { letterUpgrades } = require('./data');
+
+class StorageManager {
+  constructor() {
+    this.prefix = 'word_balatro_';
+  }
+
+  // 设置存储项
+  set(key, value) {
+    try {
+      wx.setStorageSync(this.prefix + key, value);
+      return true;
+    } catch (e) {
+      console.error('Storage set error:', e);
+      return false;
+    }
+  }
+
+  // 获取存储项
+  get(key, defaultValue = null) {
+    try {
+      return wx.getStorageSync(this.prefix + key) || defaultValue;
+    } catch (e) {
+      return defaultValue;
+    }
+  }
+
+  // 删除存储项
+  remove(key) {
+    try {
+      wx.removeStorageSync(this.prefix + key);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 清空所有游戏数据（只清除 progress，不碰 card_book 等跨局持久化数据）
+  clear() {
+    try {
+      wx.removeStorageSync(this.prefix + 'progress');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ===== 游戏进度存档 =====
+  
+  saveProgress() {
+    // 直接保存，不再防抖。微信小程序本地存储无需防抖，
+    // 500ms 防抖反而引入致命竞态：旧实例/其他路径残留的定时器会覆盖正确存档。
+    this._doSaveProgress();
+  }
+
+  saveProgressImmediate() {
+    if (this._saveTimer) clearTimeout(this._saveTimer);
+    this._doSaveProgress();
+  }
+
+  _doSaveProgress() {
+    const game = wx.game;
+    if (!game) return;
+    // 实例已销毁则跳过保存
+    if (game._destroyed) return;
+    // 深拷贝 jokers/potions，彻底切断引用，避免保存后数组被意外修改
+    const jokersSnapshot = JSON.parse(JSON.stringify(game.jokers || []));
+    const potionsSnapshot = JSON.parse(JSON.stringify(game.potions || []));
+    const progress = {
+      round: game.round,
+      gold: game.gold,
+      score: game.score,
+      totalScore: game.totalScore,
+      roundScores: game.roundScores,
+      jokers: jokersSnapshot,
+      maxJokerSlots: game.maxJokerSlots,
+      potions: potionsSnapshot,
+      crystalEffects: game.crystalEffects || [],
+      shopItems: game.shopItems,
+      state: game.state === 'potion' ? (game._prePotionState || 'shop') : game.state,
+      _shuffledSkills: game._shuffledSkills,
+      discardsLeft: game.discardsLeft,
+      handsLeft: game.handsLeft,
+      hand: game.hand,
+      deck: game.deck,
+      selected: game.selected,
+      baseHandSize: game.baseHandSize,
+      extraHands: game.extraHands || 0,
+      extraDiscards: game.extraDiscards || 0,
+      extraSafety: game.extraSafety || 0,
+      extraLetters: game.extraLetters || 0,
+      witchSkillPassed: game.witchSkillPassed,
+      _witchSkillProtectUsed: game._witchSkillProtectUsed || false,
+      _lifeExtensionBonus: game._lifeExtensionBonus || 0,
+      target: game.target,
+      _maxHandSize: game._maxHandSize,
+      _seedMinLen: game._seedMinLen,
+      _seedMaxLen: game._seedMaxLen,
+      _lastInitialLetter: game._lastInitialLetter || null,
+      _shopDiscountActive: game._shopDiscountActive || false,
+      _shopDiscountRate: game._shopDiscountRate || 0.6,
+      _overflowBonus: game._overflowBonus || 0,
+      settlementData: game.settlementData || null,
+      guidePhase: game.guidePhase,
+      _guideOverlayStartTime: game._guideOverlayStartTime,
+      shopGuidePhase: game.shopGuidePhase,
+      _shopGuideStartTime: game._shopGuideStartTime,
+      _shopGuideTextStartTime: game._shopGuideTextStartTime,
+      cardBookGuidePhase: game.cardBookGuidePhase,
+      _cardBookGuideStartTime: game._cardBookGuideStartTime,
+      _cardBookGuideTextStartTime: game._cardBookGuideTextStartTime,
+      _cardBookGuideText2StartTime: game._cardBookGuideText2StartTime,
+      _cardBookGuideExitStartTime: game._cardBookGuideExitStartTime,
+      letterUpgrades: [...letterUpgrades.entries()],
+      timestamp: Date.now(),
+      version: 1
+    };
+    this.set('progress', progress);
+    // 回读验证，确认写入成功
+    const verify = wx.getStorageSync(this.prefix + 'progress');
+    // 回读验证成功（静默）
+    return true;
+  }
+
+  _getGame() {
+    return typeof wx !== 'undefined' ? wx.game : null;
+  }
+
+  loadProgress() {
+    const progress = this.get('progress', null);
+    if (!progress) return null;
+
+    console.log('[Load] 读取存档 jokers:', JSON.stringify(progress.jokers), 'potions:', JSON.stringify(progress.potions));
+
+    // 兼容旧存档
+    if (progress.maxJokerSlots === undefined) {
+      progress.maxJokerSlots = 4;
+    }
+
+    // 恢复模块级的 letterUpgrades
+    letterUpgrades.clear();
+    if (progress.letterUpgrades) {
+      for (const [k, v] of progress.letterUpgrades) {
+        letterUpgrades.set(k, v);
+      }
+    }
+
+    return progress;
+  }
+
+  hasProgress() {
+    return !!this.get('progress');
+  }
+
+  clearProgress() {
+    return this.remove('progress');
+  }
+
+  // ===== 新手引导状态（独立于游戏进度，永久保留）=====
+  saveGuidePhase(phase) {
+    return this.set('guide_phase', phase);
+  }
+
+  loadGuidePhase() {
+    return this.get('guide_phase', null);
+  }
+
+  // ===== 商店女巫技能引导（独立于游戏进度，永久保留）=====
+  saveShopGuidePhase(phase) {
+    return this.set('shop_guide_phase', phase);
+  }
+
+  loadShopGuidePhase() {
+    return this.get('shop_guide_phase', null);
+  }
+
+  // ===== 卡牌图鉴引导（独立于游戏进度，永久保留）=====
+  saveCardBookGuidePhase(phase) {
+    return this.set('cardbook_guide_phase', phase);
+  }
+
+  loadCardBookGuidePhase() {
+    return this.get('cardbook_guide_phase', null);
+  }
+
+  // ===== 最高分 =====
+  
+  getHighScore() {
+    return this.get('high_score', 0);
+  }
+
+  setHighScore(score) {
+    const current = this.getHighScore();
+    if (score > current) {
+      this.set('high_score', score);
+      return true;
+    }
+    return false;
+  }
+
+  // ===== 每日复活次数 =====
+
+  saveDailyRevive(dateStr, used = true) {
+    return this.set('daily_revive', { date: dateStr, used });
+  }
+
+  loadDailyRevive() {
+    return this.get('daily_revive', null);
+  }
+
+  isDailyReviveUsed() {
+    const data = this.loadDailyRevive();
+    if (!data) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return data.date === today && data.used === true;
+  }
+
+  // ===== 统计数据 =====
+  
+  getStats() {
+    return this.get('stats', {
+      totalGames: 0,
+      totalScore: 0,
+      highestRound: 0,
+      totalWords: 0,
+      totalDiscards: 0
+    });
+  }
+
+  updateStats(game) {
+    const stats = this.getStats();
+    stats.totalGames++;
+    stats.totalScore += game.totalScore;
+    if (game.round > stats.highestRound) {
+      stats.highestRound = game.round;
+    }
+    return this.set('stats', stats);
+  }
+
+  // ===== 卡牌图鉴解锁状态（跨局永久保留）=====
+
+  saveCardBookUnlocked(unlocked) {
+    return this.set('card_book_unlocked', unlocked);
+  }
+
+  loadCardBookUnlocked() {
+    return this.get('card_book_unlocked', false);
+  }
+
+  // ===== 已收集女巫卡牌（跨局永久保留）=====
+
+  saveCollectedWitchCards(cards) {
+    // 深拷贝后存储，避免引用问题
+    const toSave = Array.isArray(cards) ? [...cards] : [];
+    console.log('[CardBook] saveCollectedWitchCards:', JSON.stringify(toSave));
+    this.set('collected_witch_cards', toSave);
+    // 写入后立即验证
+    const verify = this.get('collected_witch_cards', []);
+    console.log('[CardBook] saveCollectedWitchCards 验证:', JSON.stringify(verify));
+    return JSON.stringify(toSave) === JSON.stringify(verify);
+  }
+
+  loadCollectedWitchCards() {
+    const result = this.get('collected_witch_cards', []);
+    // 防御性检查：确保返回的是数组
+    const safe = Array.isArray(result) ? result : [];
+    console.log('[CardBook] loadCollectedWitchCards:', JSON.stringify(safe));
+    return safe;
+  }
+
+  // ===== 已装备女巫卡牌（跨局永久保留）=====
+
+  saveEquippedWitchCard(levels) {
+    return this.set('equipped_witch_card', levels);
+  }
+
+  loadEquippedWitchCard() {
+    const loaded = this.get('equipped_witch_card', null);
+    if (loaded === null) return [];
+    if (typeof loaded === 'number') return [loaded];
+    return Array.isArray(loaded) ? loaded : [];
+  }
+
+  // ===== 设置 =====
+
+  getSettings() {
+    return this.get('settings', {
+      soundEnabled: true,
+      musicEnabled: true,
+      vibrationEnabled: true
+    });
+  }
+
+  saveSettings(settings) {
+    return this.set('settings', settings);
+  }
+}
+
+module.exports = { StorageManager };

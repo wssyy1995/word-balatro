@@ -1,2 +1,664 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,k=Math.LN2,l=Math.LOG10E,m=Math.PI,n=Math.SQRT1_2,o=Math.SQRT2;var p=90,q=2,r=72,s=45,t=29,u=42,v=63,w=87,x=72,y=67,z=41,A=26,B=88,C=82,D=54,E=46,F=56,G=92,H=65,I=23,J=85,K=97,L=64,M=44,N=98,O=69,P=74,Q=49,R=59,S=3,T=81,U=5,V=13,W=28,X=64,Y=20,Z=86,_0=19,_1=29,_2=31,_3=27,_4=92,_5=25,_6=80,_7=78,_8=60,_9=67,ba=26,bb=25,bc=51,bd=33,be=31,bf=72,bg=29,bh=41,bi=9,bj=25,bk=74,bl=98,bm=37,br=55,bs=68,bt=56,bu=68,bv=83,bw=78,bx=38,by=66,bz=31,bA=21,bB=85,bC=52,bD=31,bE=56,bF=79,bG=85,bH=45,bI=13,bJ=11,bK=46;var bL=c((88+bd+I)/3)<c(e((a(bd)+a(B)+a(23))/3)),bM=c((T+F+31)/3)>=c(e((a(81)+a(F)+a(bD))/3)),bN=c((R+_9+I+T)/4)>=c(e((a(I)+a(59)+a(T)+a(_9))/4)),bO=c((bI+I+bl)/3)>=c(e((a(98)+a(I)+a(13))/3)),bP=c((E+bH+bA+81)/4)>=c(e((a(81)+a(bA)+a(45)+a(46))/4)),bQ=13*bI+Q*Q+F*56+br*55<bI*br+Q*13+55*F+56*Q,bR=41*bh+T*81+bE*56>=56*bh+bh*T+T*bE,bS=c((20+87+_5)/3)<c(e((a(Y)+a(87)+a(_5))/3)),bT=c((E+65+23)/3)>=c(e((a(46)+a(23)+a(65))/3)),bU=54*54+_0*_0+_4*_4+85*85<D*85+92*_0+J*92+19*D,bV=g(2*a(f(bE*67+bt*bt)))<=g(a(bt*56+bE*bE)+a(bt*bt+67*67)),bW=c((25+90+68+92)/4)<c(e((a(92)+a(90)+a(bu)+a(bb))/4)),bX=g(2*a(f(_7*_7+9*bv)))<=g(a(78*_7+9*9)+a(bv*bv+78*_7)),bY=g(2*a(f(72*bF+3*3)))<=g(a(72*72+S*S)+a(bF*bF+S*3)),bZ=bB*bB+bw*bw+74*74<bB*bw+78*74+74*bB,b0=O*O+31*_2+5*U+z*41<31*5+69*41+5*69+z*_2,b1=g(2*a(f(bD*bv+Y*67)))>g(a(bD*bD+Y*20)+a(_9*_9+bv*83)),b2=c((D+bx+31+V)/4)>=c(e((a(bx)+a(54)+a(V)+a(31))/4)),b3=85*85+bD*bD+C*82<bD*C+J*bD+C*J,b4=g(2*a(f(br*z+u*u)))>g(a(br*br+u*u)+a(u*42+z*z)),b5=g(2*a(f(bg*bg+27*bH)))>g(a(bg*bg+27*27)+a(29*bg+45*45)),b6=g(2*a(f(85*bk+W*44)))>g(a(28*28+85*J)+a(74*74+44*44)),b7=bB*85+_7*_7+90*p>=bB*_7+_7*p+90*85,b8=M*44+81*81+68*68+H*65>=H*bu+81*M+68*T+M*65,b9=g(2*a(f(be*51+H*H)))>g(a(be*31+H*H)+a(65*H+51*bc)),ca=c((31+_8+bf+37)/4)>=c(e((a(be)+a(_8)+a(bm)+a(72))/4)),cb=c((J+bj+19+31)/4)>=c(e((a(31)+a(19)+a(25)+a(J))/4)),cc=bm*37+A*A+q*2+49*49>=q*49+49*A+bm*2+26*37,cd=g(2*a(f(51*66+98*bl)))<=g(a(bl*bl+bc*bc)+a(by*66+bl*98)),ce=g(2*a(f(bs*A+2*45)))<=g(a(q*2+68*68)+a(26*26+s*s)),cf=g(2*a(f(82*72+U*5)))>g(a(82*82+U*5)+a(bf*72+U*U)),cg=g(2*a(f(br*br+be*13)))<=g(a(31*31+55*br)+a(br*55+13*13)),ch=c((85+bx+t)/3)<c(e((a(J)+a(bx)+a(t))/3)),ci=c((s+ba+69)/3)>=c(e((a(45)+a(69)+a(26))/3)),cj=g(2*a(f(_2*31+E*87)))<=g(a(31*_2+E*E)+a(87*w+31*_2)),ck=82*82+37*37+60*60<C*_8+37*82+60*bm,cl=c((82+59+bv)/3)<c(e((a(R)+a(82)+a(bv))/3)),cm=25*_5+_2*31+u*u<_2*25+u*_2+_5*u,cn=c((D+80+23)/3)<c(e((a(D)+a(23)+a(_6))/3)),co=V*V+bk*bk+74*P+37*bm<bm*V+74*74+P*bm+13*74;var j,cp,cq,cs,ct,cu,cv,bn;var bo,bp,bq;var cw;var cx=+!cm;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cy={e:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cz="";var cA=new Array(28);cz=cy.e("potxtcnisxamgminimwon",3);cA[0]=cz.s(3);cz=cy.e("tcertfeltnofllifevas",4);cA[1]=cz.s(4);cz=cy.e("htdiwecilselacsroolf",5);cA[2]=cz.s(5);cz=cy.e("gnisaEdedaoloTevomhtgneloTenil",6);cA[3]=cz.s(6);cz=cy.e("4_hctiw3_hctiw2_hctiw1_hctiwstropxeddonevea4f2a1#6e0f5f#a53a4c#erotser",7);cA[4]=cz.s(7);cz=cy.e("tceRlliftxeTllif",8);cA[5]=cz.s(8);cz=cy.e("lewov_sahhtdiWenilngilAtxetepytotorpegamIwardhtaPesolchtaPnigebtceRdnuorelytSllif",9);cA[6]=cz.s(9);cz=cy.e("esahPediugtnuoCemarfyaleDemarf",10);cA[7]=cz.s(10);cz=cy.e("txeTerusaemsdrooCemarfsegamIediughsaDeniLteselytSekortsahplAlabolg",11);cA[8]=cz.s(11);cz=cy.e("ssergorPevas！吧巫女找寻发出快，了好noitamina/..reredneRpohsenilesaBtxet",12);cA[9]=cz.s(12);cz=cy.e("wolGdraCward_",13);cA[10]=cz.s(13);cz=cy.e("segamIdraCpohsesahPediuGpohsreganaMegarots",14);cA[11]=cz.s(14);cz=cy.e("tceRgolaiDediug",15);cA[12]=cz.s(15);cz=cy.e("tceRnocIkooBdracgnipyTpikSediug_tceRntBtxeNediugoTevruCcitardauq",16);cA[13]=cz.s(16);cz=cy.e("yalrevOediuGward_tceRtopSediuGpohsgnortSkcaBtuOesae",17);cA[14]=cz.s(17);cz=cy.e("esahPediuGkooBdrac",18);cA[15]=cz.s(18);cz=cy.e("tceRgolaiDediuGpohsemiTtratSediuGpohs_emiTtratStixEediug_)57.0 ,0 ,0 ,0(abgremiTtratStxeTediug_",19);cA[16]=cz.s(19);cz=cy.e("gnipyTpikSediuGpohs_tceRntBtxeNediuGpohs",20);cA[17]=cz.s(20);cz=cy.e("yalrevOediuGpohSward_",21);cA[18]=cz.s(21);cz=cy.e("esahPediuGkooBdraCevasemiTtratSyalrevOediug_",22);cA[19]=cz.s(22);cz=cy.e("tceRgolaiDediuGkooBdracemiTtratSediuGkooBdrac_emiTtratStixEediuGpohs_emiTtratStfiGdraCediug_emiTtratStxeTediuGpohs_",23);cA[20]=cz.s(23);cz=cy.e("gnipyTpikSediuGkooBdrac_tceRntBtxeNediuGkooBdrac",24);cA[21]=cz.s(24);cz=cy.e("yalrevOediuGkooBdraCward_",25);cA[22]=cz.s(25);cz=cy.e("！牌词的巫女张一第了得获，炼试的巫女了过通你！了棒太",26);cA[23]=cz.s(26);cz=cy.e("emiTtratStxeTediuGkooBdrac_emiTtratStixEediuGkooBdrac_",27);cA[24]=cz.s(27);cz=cy.e("emiTtratS2txeTediuGkooBdrac_",28);cA[25]=cz.s(28);cz=cy.e("。束约则规的她心小要定一但，吧炼试的她受接备准！了巫女到找",29);cA[26]=cz.s(29);cz=cy.e("。高越量能，长越词单！去出打，词单个一成拼个几挑？吗了牌母字些这到看——单简很？验考过通么怎",46);cA[27]=cz.s(46);var cB="12,K~,Fm,Gw,1,I,B?,Cc,Bc,A,F,G,M,E,DS,6,?,D,S,BS,C,~";function cC(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cD=cC(cB);if(cx){j=cA[3][4];cp=cA[9][2];cq=cA[4][5];cs="W";ct="H";cu="传说中具有强大能量的26张词牌，由26位女巫保管着，她们都设下了独一无二的试炼。唯有通过考验之人，才能唤醒词牌的真正力量。";cv="对了，这个送你——我珍藏很久的女巫牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店有更多强大的卡牌可以买到哦）";bn="x";bo="y";bp="w";bq="h";cw="每张女巫词牌都具有特殊的能力，记得[装备]上，它们会在后面的冒险中一直陪着你，即使试炼失败重来。最多只能装备[3]张词牌。"}cx=0;cz=null;cB=null;const{[j]:Easing}=require(cp);module[cq]=function a(a){var b=cA,c=b[6][5];a[c][b[14][2]]=function(a){var b=cA,c=cD,d=b[0],e=b[2],f=b[7],g=b[9],h=b[1],i=b[6],j=b[4],k=b[16],l=b[8],m=b[5],n=b[3],o=c[1],p=c[2],q=c[8],r=c[12],s=d[0],t=b[13][1],u=d[1],v=h[0],w=i[0],x=m[1],y=j[0],z=n[1],A=b[2][0],B=b[14][0],C=n[3],D=d[2],E=i[4],F=j[1],G=m[0],H=n[0],I=h[1],J=b[8][0],K=b[20][1];const L=this[d[5]];const M=this[cs];const N=this[ct];const O=this[e[1]];const P=a[f[2]];const Q=["",cu,b[27][0],cv,g[3]];const R=a[b[19][0]]||Date[s]();const S=Date[s]()-R;const T=c[0];const U=o;const V=T+U;if(P===1&&S<V){this[t]=null;if(S>=T){const a=Math[u]((S-T)/U,1);L[v]();L[w]=`rgba(0, 0, 0, ${a*.75})`;L[x](0,0,M,N);L[y]()}return}const W=Q[P]||"";const X=p;const Y=o;const Z=P===1?R+V+X+Y:a[k[0]]||Date[s]();const _0=c[3];const _1=Date[s]()-Z;const _2=a[b[13][2]]?W[z]:Math[d[3]](0,Math[u](W[z],Math[A](_1/_0)));const _3=W[e[2]](0,_2);const _4=_2>=W[z];L[v]();L[w]=k[1];L[x](0,0,M,N);L[y]();const _5=c[4]*O;const _6=_5;const _7=P===1?j[6]:j[7];const _8=this[l[3]][_7];const _9=c[5]*O;const ba=c[6]*O;const bb=_6;const bc=N*.6-ba;const bd=M-_5*2;const be=c[7]*O;const bf=q*O;const bg=N*.6;let bh,bi,bj,bk;if(P===1){const a=S-V;if(a>0){const b=Math[u](a/X,1);const c=Easing[B](b);bh=-_9+(bb+_9)*c;bj=M+(_6-M)*c;bi=bc;bk=bg}else{bh=-_9;bj=M;bi=bc;bk=bg}}else if(P===5){const b=Date[s]()-(a[k[2]]||Date[s]());const c=Math[u](b/p,1);const d=Easing[B](c);bh=bb-(bb+_9)*d;bj=_6+(M-_6)*d;bi=bc;bk=bg}else{bh=bb;bj=_6;bi=bc;bk=bg}if(_8&&_8[C]&&_8[D]){const a=Math[A](Date[s]()/_8[f[0]])%_8[f[1]];const b=_8[l[4]][a];if(b){L[E](_8[D],b[bn],b[bo],b[bp],b[bq],bh,bi,_9,ba)}}this[i[1]](bj,bk,bd,be,bf,j[2],F,2*O);L[v]();L[h[2]]=`${Math[A](c[9]*O)}px sans-serif`;L[w]=j[3];L[i[6]]=h[3];L[g[0]]=d[6];const bl=c[10]*O;const bm=bj+bl;const br=bk+bl;const bs=bd-bl*2;const bt=c[11]*O;let bu="";let bv=br;for(let a=0;a<_3[z];a++){const b=_3[a];const c=bu+b;const d=L[l[5]](c);if(d[e[3]]>bs&&bu!==""){L[G](bu,bm,bv);bu=b;bv+=bt}else{bu=c}}if(bu)L[G](bu,bm,bv);L[y]();this[b[12][0]]={[bn]:bj,[bo]:bk,[bp]:bd,[bq]:be};this[t]=null;if(_4&&P!==5){const a=r*O;const e=bj+bd-a-r*O;const f=bk+be-a-q*O;L[v]();L[i[2]]();L[b[3][2]](e+a/2,f+a);L[H](e,f);L[H](e+a,f);L[i[3]]();L[w]=F;L[I]();const g=Math[d[4]](Date[s]()/c[13])*.3+.7;L[J]=g;L[I]();L[y]();this[t]={[bn]:bj,[bo]:bk,[bp]:bd,[bq]:be}}if(P===3&&_4){const d=a[K]||(a[K]=Date[s]());const e=Date[s]()-d;const f=c[14]*O;const g=c[15]*O;const h=bh+_9+10*O;const j=bi+ba/2;const k=Math[u](e/p,1);const l=k===0?0:Easing[B](k);const m=f*l;const n=g*l;const o=h;const q=j-n/2;const r=this[b[11][2]][i[8]];if(r&&r[C]&&r[D]){L[v]();L[J]=k===0?0:Math[u](l,1);this[b[10][0]](L,o,q,m,n,O);L[E](r[D],o,q,m,n);L[y]()}}};a[c][b[18][0]]=function(a){var b=cA,c=cD,d=b[0],e=b[2],f=b[16],g=b[1],h=b[6],i=b[4],j=b[8],k=b[7],l=b[14],m=b[3],n=c[1],o=c[2],p=c[8],q=c[12],r=b[11][1],s=b[9][1],t=l[1],u=d[0],v=b[20][0],w=d[1],x=g[0],y=h[2],z=m[2],A=m[0],B=b[13][0],C=h[3],D=h[0],E=g[1],F=i[0],G=d[4],H=j[1],I=j[2],J=h[1],K=m[1],L=b[2][0],M=l[0],N=d[2],O=i[1],P=b[5][0],Q=b[17][0];const R=this[d[5]];const S=this[cs];const T=this[ct];const U=this[e[1]];const V=a[r];const W=b[26][0];const X=this[s]&&this[s][t]?this[s][t]:{[bn]:c[16]*U,[bo]:T*.65,[bp]:S-c[17]*U,[bq]:c[18]*U};const Y=10*U;const Z=X[bn]-Y;const _0=X[bo]-Y;const _1=X[bp]+Y*2;const _2=X[bq]+Y*2;const _3=c[19]*U;const _4=a[f[3]]||Date[u]();const _5=Date[u]()-_4;const _6=n;const _7=c[0];if(V===1&&_5>=_6+_7){a[r]=2;a[v]=Date[u]()}let _8;if(V===1){_8=.75*Math[w](_5/_6,1)}else{_8=.75}R[x]();R[y]();R[g[4]](0,0,S,T);const _9=_3;R[z](Z+_9,_0);R[A](Z+_1-_9,_0);R[B](Z+_1,_0,Z+_1,_0+_9);R[A](Z+_1,_0+_2-_9);R[B](Z+_1,_0+_2,Z+_1-_9,_0+_2);R[A](Z+_9,_0+_2);R[B](Z,_0+_2,Z,_0+_2-_9);R[A](Z,_0+_9);R[B](Z,_0,Z+_9,_0);R[C]();R[D]=`rgba(0, 0, 0, ${_8})`;R[E](i[4]);R[F]();if(V===1){const a=(Math[G](Date[u]()/n)+1)/2;R[x]();R[H]=`rgba(196, 163, 90, ${.5+a*.5})`;R[h[7]]=2.5*U;R[I]([6*U,4*U]);this[J](Z,_0,_1,_2,_3,null,R[H],2.5*U);R[I]([]);R[F]();return}const ba=W;const bb=o;const bc=n;const bd=(a[v]||Date[u]())+bb+bc;const be=c[3];const bf=Date[u]()-bd;const bg=a[b[17][1]]?ba[K]:Math[d[3]](0,Math[w](ba[K],Math[L](bf/be)));const bh=ba[e[2]](0,bg);const bi=bg>=ba[K];const bj=c[4]*U;const bk=bj;const bl=c[5]*U;const bm=c[6]*U;const br=bk;const bs=T*.6-bm;const bt=S-bj*2;const bu=c[7]*U;const bv=p*U;const bw=T*.6;let bx,by,bz,bA;if(V===2){const b=a[v]||Date[u]();const d=Date[u]()-b;const e=c[20];if(d>e){const a=Math[w]((d-e)/bb,1);const b=Easing[M](a);bx=-bl+(br+bl)*b;bz=S+(bk-S)*b;by=bs;bA=bw}else{bx=-bl;bz=S;by=bs;bA=bw}}else if(V===3){const c=Date[u]()-(a[b[20][2]]||Date[u]());const d=Math[w](c/o,1);const e=Easing[M](d);bx=br-(br+bl)*e;bz=bk+(S-bk)*e;by=bs;bA=bw}else{bx=br;bz=bk;by=bs;bA=bw}const bB=this[j[3]][i[8]];if(bB&&bB[b[3][3]]&&bB[N]){const a=Math[L](Date[u]()/bB[k[0]])%bB[k[1]];const b=bB[j[4]][a];if(b){R[h[4]](bB[N],b[bn],b[bo],b[bp],b[bq],bx,by,bl,bm)}}this[J](bz,bA,bt,bu,bv,i[2],O,2*U);R[x]();R[g[2]]=`${Math[L](c[9]*U)}px sans-serif`;R[D]=i[3];R[h[6]]=g[3];R[b[9][0]]=d[6];const bC=c[10]*U;const bD=bz+bC;const bE=bA+bC;const bF=bt-bC*2;const bG=c[11]*U;let bH="";let bI=bE;for(let a=0;a<bh[K];a++){const b=bh[a];const c=bH+b;const d=R[j[5]](c);if(d[e[3]]>bF&&bH!==""){R[P](bH,bD,bI);bH=b;bI+=bG}else{bH=c}}if(bH)R[P](bH,bD,bI);R[F]();this[f[4]]={[bn]:bz,[bo]:bA,[bp]:bt,[bq]:bu};this[Q]=null;if(bi&&V!==3){const a=q*U;const b=bz+bt-a-q*U;const d=bA+bu-a-p*U;R[x]();R[y]();R[z](b+a/2,d+a);R[A](b,d);R[A](b+a,d);R[C]();R[D]=O;R[E]();const e=Math[G](Date[u]()/c[13])*.3+.7;R[j[0]]=e;R[E]();R[F]();this[Q]={[bn]:bz,[bo]:bA,[bp]:bt,[bq]:bu}}};a[c][b[22][0]]=function(a){var b=cA,c=cD,d=b[0],e=b[2],f=b[20],g=b[9],h=b[1],i=b[6],j=b[4],k=b[8],l=b[7],m=b[3],n=c[1],o=c[2],p=c[8],q=c[12],r=b[15][0],s=d[0],t=b[24][0],u=b[11][0],v=d[1],w=d[3],x=h[0],y=i[2],z=m[2],A=m[0],B=b[13][0],C=i[3],D=i[0],E=h[1],F=j[0],G=d[4],H=k[1],I=k[2],J=i[1],K=m[1],L=b[2][0],M=b[14][0],N=d[2],O=j[1],P=b[5][0],Q=b[21][0];const R=this[d[5]];const S=this[cs];const T=this[ct];const U=this[e[1]];let V=a[r];const W=["",b[23][0],cw];const X=n;const Y=n;const Z=c[0];const _0=a[f[3]]||Date[s]();const _1=Date[s]()-_0;if(V===1&&_1<Y){return}const _2=V!==1||_1>=Y+Z;if(V===3){const c=Date[s]()-(a[t]||Date[s]());if(c>=o){a[r]=4;a[t]=null;if(a[u]){a[u][g[4]]();a[u][b[19][1]](4)}return}}if(a[r]!==V){V=a[r]}let _3;if(V===1){_3=.75*Math[v](Math[w](0,_1-Y)/X,1)}else if(V===3){const b=Date[s]()-(a[t]||Date[s]());_3=.75*Math[w](0,1-b/n)}else{_3=.75}const _4=this[b[13][3]];if((V===1||V===2)&&_4){const a=10*U;const b=_4[bn]-a;const d=_4[bo]-a;const e=_4[bp]+a*2;const f=_4[bq]+a*2;const g=c[19]*U;R[x]();R[y]();R[h[4]](0,0,S,T);const k=g;R[z](b+k,d);R[A](b+e-k,d);R[B](b+e,d,b+e,d+k);R[A](b+e,d+f-k);R[B](b+e,d+f,b+e-k,d+f);R[A](b+k,d+f);R[B](b,d+f,b,d+f-k);R[A](b,d+k);R[B](b,d,b+k,d);R[C]();R[D]=`rgba(0, 0, 0, ${_3})`;R[E](j[4]);R[F]();const l=(Math[G](Date[s]()/n)+1)/2;R[x]();R[H]=`rgba(196, 163, 90, ${.5+l*.5})`;R[i[7]]=2.5*U;R[I]([6*U,4*U]);this[J](b,d,e,f,g,null,R[H],2.5*U);R[I]([]);R[F]()}else if(V>=3){R[x]();R[D]=`rgba(0, 0, 0, ${_3})`;R[b[5][1]](0,0,S,T);R[F]()}if(V===1&&!_2){return}const _5=V===1;const _6=V===2;const _7=W[V]||"";const _8=o;const _9=n;const ba=_5?(a[b[24][1]]||Date[s]())+_8+_9:a[b[25][0]]||Date[s]();const bb=c[3];const bc=Date[s]()-ba;const bd=a[b[21][1]]?_7[K]:Math[w](0,Math[v](_7[K],Math[L](bc/bb)));const be=_7[e[2]](0,bd);const bf=bd>=_7[K];const bg=c[4]*U;const bh=bg;const bi=c[5]*U;const bj=c[6]*U;const bk=bh;const bl=T*.6-bj;const bm=S-bg*2;const br=c[7]*U;const bs=p*U;const bt=T*.6;let bu,bv,bw,bx;if(V===1){const a=_1-Y-Z;const b=c[20];if(a>b){const c=Math[v]((a-b)/_8,1);const d=Easing[M](c);bu=-bi+(bk+bi)*d;bw=S+(bh-S)*d;bv=bl;bx=bt}else{bu=-bi;bw=S;bv=bl;bx=bt}}else if(V===2){bu=bk;bw=bh;bv=bl;bx=bt}else if(V===3){const b=Date[s]()-(a[t]||Date[s]());const c=Math[v](b/o,1);const d=Easing[M](c);bu=bk-(bk+bi)*d;bw=bh+(S-bh)*d;bv=bl;bx=bt}const by=this[k[3]][j[9]];if(by&&by[b[3][3]]&&by[N]){const a=Math[L](Date[s]()/by[l[0]])%by[l[1]];const b=by[k[4]][a];if(b){R[i[4]](by[N],b[bn],b[bo],b[bp],b[bq],bu,bv,bi,bj)}}this[J](bw,bx,bm,br,bs,j[2],O,2*U);R[x]();R[h[2]]=`${Math[L](c[9]*U)}px sans-serif`;R[D]=j[3];R[i[6]]=h[3];R[g[0]]=d[6];const bz=c[10]*U;const bA=bw+bz;const bB=bx+bz;const bC=bm-bz*2;const bD=c[11]*U;let bE="";let bF=bB;for(let a=0;a<be[K];a++){const b=be[a];const c=bE+b;const d=R[k[5]](c);if(d[e[3]]>bC&&bE!==""){R[P](bE,bA,bF);bE=b;bF+=bD}else{bE=c}}if(bE)R[P](bE,bA,bF);R[F]();this[f[4]]={[bn]:bw,[bo]:bx,[bp]:bm,[bq]:br};this[Q]=null;if(bf&&V!==3){const a=q*U;const b=bw+bm-a-q*U;const d=bx+br-a-p*U;R[x]();R[y]();R[z](b+a/2,d+a);R[A](b,d);R[A](b+a,d);R[C]();R[D]=O;R[E]();const e=Math[G](Date[s]()/c[13])*.3+.7;R[k[0]]=e;R[E]();R[F]();this[Q]={[bn]:bw,[bo]:bx,[bp]:bm,[bq]:br}}}};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDoyNCJ9)
-//# sourceMappingURL=guide.js.map
+const { Easing } = require('../animation');
+
+module.exports = function extendGuide(Renderer) {
+    Renderer.prototype._drawGuideOverlay = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const phase = game.guidePhase;
+  
+      const PHASE_TEXTS = [
+        '',
+        '传说中具有强大能量的26张词牌，由26位女巫保管着，她们都设下了独一无二的试炼。唯有通过考验之人，才能唤醒词牌的真正力量。',
+        '怎么通过考验？很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越长，能量越高。',
+        '对了，这个送你——我珍藏很久的女巫牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店有更多强大的卡牌可以买到哦）',
+        '好了，快出发寻找女巫吧！',
+      ];
+  
+      // Phase 1 入场时序：0~1000ms 全亮无UI → 1000~1500ms 渐变变暗 → 1500ms+ 显示完整UI
+      const overlayStartTime = game._guideOverlayStartTime || Date.now();
+      const overlayElapsed = Date.now() - overlayStartTime;
+      const FADE_START = 1000;
+      const FADE_DURATION = 500;
+      const UI_SHOW_DELAY = FADE_START + FADE_DURATION; // 1500ms
+  
+      if (phase === 1 && overlayElapsed < UI_SHOW_DELAY) {
+        this.guideNextBtnRect = null; // 渐变阶段禁止点击
+        if (overlayElapsed >= FADE_START) {
+          // 渐变变暗阶段：只画遮罩
+          const fadeProgress = Math.min((overlayElapsed - FADE_START) / FADE_DURATION, 1);
+          ctx.save();
+          ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.75})`;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+        return; // 不画女巫、对话框等
+      }
+  
+      const fullText = PHASE_TEXTS[phase] || '';
+  
+      // Phase 1 弹出动画参数
+      const POPUP_DURATION = 600;
+      const POST_POPUP_DELAY = 500;
+  
+      // 计算文字开始时间：Phase 1 在女巫+对话框弹出并贴合后延迟 500ms 才开始；Phase 2~4 保持原有逻辑
+      const textStartTime = (phase === 1)
+        ? (overlayStartTime + UI_SHOW_DELAY + POPUP_DURATION + POST_POPUP_DELAY)
+        : (game._guideTextStartTime || Date.now());
+      const charInterval = 65; // 每 65ms 显示一个字
+      const elapsed = Date.now() - textStartTime;
+      const visibleChars = game._guideSkipTyping
+        ? fullText.length
+        : Math.max(0, Math.min(fullText.length, Math.floor(elapsed / charInterval)));
+      const displayText = fullText.slice(0, visibleChars);
+      const isTextComplete = visibleChars >= fullText.length;
+  
+      // === 1. 黑色半透明蒙层 ===
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+  
+      // === 2. 女巫引导图片 + 对话框（Phase 1 果冻感弹出，Phase 2~4 直接显示） ===
+      const dialogPadX = 20 * s;
+      const dialogTargetX = dialogPadX;
+      const imgName = phase === 1 ? 'witch_1' : 'witch_2';
+      const imgData = this.guideImages[imgName];
+      const imgW = 180 * s;
+      const imgH = 220 * s;
+      const imgTargetX = dialogTargetX;
+      const imgTargetY = H * 0.6 - imgH;
+  
+      const dialogW = W - dialogPadX * 2;
+      const dialogH = 130 * s;
+      const dialogR = 12 * s;
+      const dialogTargetY = H * 0.6;
+  
+      let imgX, imgY, dialogDrawX, dialogDrawY;
+      if (phase === 1) {
+        const popupElapsed = overlayElapsed - UI_SHOW_DELAY;
+        if (popupElapsed > 0) {
+          const popupProgress = Math.min(popupElapsed / POPUP_DURATION, 1);
+          const eased = Easing.easeOutBackStrong(popupProgress);
+          // 女巫从左侧弹出：起始在屏幕外左侧，目标位置对齐
+          imgX = -imgW + (imgTargetX + imgW) * eased;
+          // 对话框从右侧弹出：起始在屏幕外右侧，目标位置对齐
+          dialogDrawX = W + (dialogTargetX - W) * eased;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        } else {
+          imgX = -imgW;
+          dialogDrawX = W;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        }
+      } else if (phase === 5) {
+        // Phase 5 退场动画：女巫向左、对话框向右弹出去
+        const exitElapsed = Date.now() - (game._guideExitStartTime || Date.now());
+        const exitProgress = Math.min(exitElapsed / 600, 1);
+        const eased = Easing.easeOutBackStrong(exitProgress);
+        imgX = imgTargetX - (imgTargetX + imgW) * eased;
+        dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else {
+        imgX = imgTargetX;
+        dialogDrawX = dialogTargetX;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+  
+      // 女巫引导图片（精灵图）
+      if (imgData && imgData.loaded && imgData.img) {
+        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+        const coord = imgData.frameCoords[frameIdx];
+        if (coord) {
+          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
+        }
+      }
+  
+      // 对话框背景（奶油色）
+      this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+  
+      // === 3. 逐字显示的文字 ===
+      ctx.save();
+      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+  
+      const textPad = 18 * s;
+      const textX = dialogDrawX + textPad;
+      const textY = dialogDrawY + textPad;
+      const textMaxW = dialogW - textPad * 2;
+      const lineHeight = 24 * s;
+  
+      // 自动换行绘制
+      let line = '';
+      let currentY = textY;
+      for (let i = 0; i < displayText.length; i++) {
+        const ch = displayText[i];
+        const testLine = line + ch;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > textMaxW && line !== '') {
+          ctx.fillText(line, textX, currentY);
+          line = ch;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) ctx.fillText(line, textX, currentY);
+      ctx.restore();
+  
+      // === 4. 倒三角按钮（文字显示完全后才显示，Phase 5 退场时不显示）===
+      // 对话框区域始终可点击（用于双击跳过打字）
+      this.guideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      this.guideNextBtnRect = null;
+      if (isTextComplete && phase !== 5) {
+        const btnSize = 16 * s;
+        const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+        const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
+  
+        ctx.save();
+        ctx.beginPath();
+        // 倒三角
+        ctx.moveTo(btnX + btnSize / 2, btnY + btnSize);
+        ctx.lineTo(btnX, btnY);
+        ctx.lineTo(btnX + btnSize, btnY);
+        ctx.closePath();
+        ctx.fillStyle = '#c4a35a';
+        ctx.fill();
+        // 呼吸动画（透明度变化）
+        const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+        ctx.globalAlpha = pulse;
+        ctx.fill();
+        ctx.restore();
+  
+        // 点击区域扩大为整个对话框
+        this.guideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      }
+  
+      // === 6. 阶段3：has_vowel 卡牌弹入动画（果冻感缩放） ===
+      // 弹入完成后持续显示在女巫旁边，点击下一步进入 Phase 4 时自然消失
+      if (phase === 3 && isTextComplete) {
+        const giftStart = game._guideCardGiftStartTime || (game._guideCardGiftStartTime = Date.now());
+        const giftElapsed = Date.now() - giftStart;
+  
+        const cardW = 70 * s;
+        const cardH = 90 * s;
+        // 卡牌目标位置：witch 图片右侧，与 witch 图片中心垂直对齐
+        const targetX = imgX + imgW + 10 * s;
+        const targetY = imgY + imgH / 2;
+        // 弹入动画：600ms 从小变大，easeOutBackStrong 强力果冻回弹；之后保持
+        const progress = Math.min(giftElapsed / 600, 1);
+        const scale = progress === 0 ? 0 : Easing.easeOutBackStrong(progress);
+        const curW = cardW * scale;
+        const curH = cardH * scale;
+        const cardX = targetX;
+        const cardY = targetY - curH / 2; // 中心对齐
+  
+        const hasVowelData = this.shopCardImages['has_vowel'];
+        if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {
+          ctx.save();
+          ctx.globalAlpha = progress === 0 ? 0 : Math.min(scale, 1);
+          // 卡牌背后金色星星+光晕（复用购买成功弹窗效果）
+          this._drawCardGlow(ctx, cardX, cardY, curW, curH, s);
+          ctx.drawImage(hasVowelData.img, cardX, cardY, curW, curH);
+          ctx.restore();
+        }
+      }
+    }
+
+    Renderer.prototype._drawShopGuideOverlay = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const phase = game.shopGuidePhase;
+      const GUIDE_TEXT = '找到女巫了！准备接受她的试炼吧，但一定要小心她的规则约束。';
+  
+      // 获取聚光灯目标区域（从 shopRenderer 获取，回退到底部中间区域）
+      const spotRect = (this.shopRenderer && this.shopRenderer.shopGuideSpotRect)
+        ? this.shopRenderer.shopGuideSpotRect
+        : { x: 15 * s, y: H * 0.65, w: W - 30 * s, h: 120 * s };
+      const spotPad = 10 * s;
+      const spotX = spotRect.x - spotPad;
+      const spotY = spotRect.y - spotPad;
+      const spotW = spotRect.w + spotPad * 2;
+      const spotH = spotRect.h + spotPad * 2;
+      const spotR = 14 * s;
+  
+      const startTime = game._shopGuideStartTime || Date.now();
+      const elapsed = Date.now() - startTime;
+      const FADE_DURATION = 500;
+      const WAIT_DURATION = 1000;
+  
+      // Phase 1: 聚光灯淡入 + 等待，超时自动进入 Phase 2
+      if (phase === 1 && elapsed >= FADE_DURATION + WAIT_DURATION) {
+        game.shopGuidePhase = 2;
+        game._shopGuideTextStartTime = Date.now();
+        // 本帧继续绘制 Phase 1 的蒙层，下一帧自然进入 Phase 2，避免闪白
+      }
+  
+      // === 1. 聚光灯蒙层（evenodd 挖空）===
+      let overlayAlpha;
+      if (phase === 1) {
+        overlayAlpha = 0.75 * Math.min(elapsed / FADE_DURATION, 1);
+      } else {
+        // Phase 2 和 Phase 3（退场前 600ms 内）蒙层保持 0.75，淡出由 render() 统一处理
+        overlayAlpha = 0.75;
+      }
+  
+      ctx.save();
+      ctx.beginPath();
+      // 外矩形（顺时针）
+      ctx.rect(0, 0, W, H);
+      // 内矩形（逆时针挖空）—— 圆角矩形
+      const r = spotR;
+      ctx.moveTo(spotX + r, spotY);
+      ctx.lineTo(spotX + spotW - r, spotY);
+      ctx.quadraticCurveTo(spotX + spotW, spotY, spotX + spotW, spotY + r);
+      ctx.lineTo(spotX + spotW, spotY + spotH - r);
+      ctx.quadraticCurveTo(spotX + spotW, spotY + spotH, spotX + spotW - r, spotY + spotH);
+      ctx.lineTo(spotX + r, spotY + spotH);
+      ctx.quadraticCurveTo(spotX, spotY + spotH, spotX, spotY + spotH - r);
+      ctx.lineTo(spotX, spotY + r);
+      ctx.quadraticCurveTo(spotX, spotY, spotX + r, spotY);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+      ctx.fill('evenodd');
+      ctx.restore();
+  
+      // Phase 1 只画蒙层（和聚光灯边框），不画女巫
+      if (phase === 1) {
+        // 聚光灯区域金色边框（呼吸效果）
+        const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
+        ctx.save();
+        ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+        ctx.lineWidth = 2.5 * s;
+        ctx.setLineDash([6 * s, 4 * s]);
+        this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
+        ctx.setLineDash([]);
+        ctx.restore();
+        return;
+      }
+  
+      // === Phase 2 & 3: 女巫帧动画 + 对话框 ===
+      const fullText = GUIDE_TEXT;
+  
+      // 弹出动画与文字延迟参数
+      const POPUP_DURATION = 600;
+      const POST_POPUP_DELAY = 500;
+  
+      // 计算文字开始时间：对话框弹出完成后延迟 500ms 再开始（参考 witch_guide_1）
+      const textStartTime = (game._shopGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
+      const charInterval = 65;
+      const textElapsed = Date.now() - textStartTime;
+      const visibleChars = game._shopGuideSkipTyping
+        ? fullText.length
+        : Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+      const displayText = fullText.slice(0, visibleChars);
+      const isTextComplete = visibleChars >= fullText.length;
+  
+      // 女巫和对话框布局（与 witch_guide_1/2 保持一致）
+      const dialogPadX = 20 * s;
+      const dialogTargetX = dialogPadX;
+      const imgW = 180 * s;
+      const imgH = 220 * s;
+      const imgTargetX = dialogTargetX;
+      const imgTargetY = H * 0.6 - imgH;
+  
+      const dialogW = W - dialogPadX * 2;
+      const dialogH = 130 * s;
+      const dialogR = 12 * s;
+      const dialogTargetY = H * 0.6;
+  
+      let imgX, imgY, dialogDrawX, dialogDrawY;
+      if (phase === 2) {
+        const phase2Start = game._shopGuideTextStartTime || Date.now();
+        const popupElapsed = Date.now() - phase2Start;
+        // 前 100ms 延迟后开始弹出
+        const popupStart = 100;
+        if (popupElapsed > popupStart) {
+          const popupProgress = Math.min((popupElapsed - popupStart) / POPUP_DURATION, 1);
+          const eased = Easing.easeOutBackStrong(popupProgress);
+          imgX = -imgW + (imgTargetX + imgW) * eased;
+          dialogDrawX = W + (dialogTargetX - W) * eased;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        } else {
+          imgX = -imgW;
+          dialogDrawX = W;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        }
+      } else if (phase === 3) {
+        // 退场：女巫向左、对话框向右弹出去
+        const exitElapsed = Date.now() - (game._shopGuideExitStartTime || Date.now());
+        const exitProgress = Math.min(exitElapsed / 600, 1);
+        const eased = Easing.easeOutBackStrong(exitProgress);
+        imgX = imgTargetX - (imgTargetX + imgW) * eased;
+        dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else {
+        imgX = imgTargetX;
+        dialogDrawX = dialogTargetX;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+  
+      // 女巫引导图片（witch_3 使用精灵图渲染）
+      const imgData = this.guideImages.witch_3;
+      if (imgData && imgData.loaded && imgData.img) {
+        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+        const coord = imgData.frameCoords[frameIdx];
+        if (coord) {
+          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
+        }
+      }
+  
+      // 对话框背景
+      this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+  
+      // 逐字显示文字
+      ctx.save();
+      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+  
+      const textPad = 18 * s;
+      const textX = dialogDrawX + textPad;
+      const textY = dialogDrawY + textPad;
+      const textMaxW = dialogW - textPad * 2;
+      const lineHeight = 24 * s;
+  
+      let line = '';
+      let currentY = textY;
+      for (let i = 0; i < displayText.length; i++) {
+        const ch = displayText[i];
+        const testLine = line + ch;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > textMaxW && line !== '') {
+          ctx.fillText(line, textX, currentY);
+          line = ch;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) ctx.fillText(line, textX, currentY);
+      ctx.restore();
+  
+      // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+      // 对话框区域始终可点击（用于双击跳过打字）
+      this.shopGuideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      this.shopGuideNextBtnRect = null;
+      if (isTextComplete && phase !== 3) {
+        const btnSize = 16 * s;
+        const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+        const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
+  
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(btnX + btnSize / 2, btnY + btnSize);
+        ctx.lineTo(btnX, btnY);
+        ctx.lineTo(btnX + btnSize, btnY);
+        ctx.closePath();
+        ctx.fillStyle = '#c4a35a';
+        ctx.fill();
+        const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+        ctx.globalAlpha = pulse;
+        ctx.fill();
+        ctx.restore();
+  
+        // 点击区域扩大为整个对话框
+        this.shopGuideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      }
+    }
+
+    Renderer.prototype._drawCardBookGuideOverlay = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      let phase = game.cardBookGuidePhase;
+  
+      const GUIDE_TEXTS = [
+        '',
+        '太棒了！你通过了女巫的试炼，获得了第一张女巫的词牌！',
+        '每张女巫词牌都具有特殊的能力，记得[装备]上，它们会在后面的冒险中一直陪着你，即使试炼失败重来。最多只能装备[3]张词牌。',
+      ];
+  
+      const FADE_DURATION = 500;
+      const DELAY_BEFORE_FADE = 500;
+      const WITCH_DELAY = 1000; // 聚光灯显示后，延迟 1 秒再弹出女巫
+      const startTime = game._cardBookGuideStartTime || Date.now();
+      const elapsed = Date.now() - startTime;
+  
+      // Phase 1: 前 500ms 保持正常商店画面
+      if (phase === 1 && elapsed < DELAY_BEFORE_FADE) {
+        return;
+      }
+  
+      // Phase 1: 500ms~1500ms 只画 evenodd 蒙层+金色边框（聚光灯），不弹出女巫
+      const showWitch = phase !== 1 || elapsed >= DELAY_BEFORE_FADE + WITCH_DELAY;
+  
+      // Phase 3 退场检查：600ms 后结束
+      if (phase === 3) {
+        const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+        if (exitElapsed >= 600) {
+          game.cardBookGuidePhase = 4;
+          game._cardBookGuideExitStartTime = null;
+          if (game.storageManager) {
+            game.storageManager.saveProgress();
+            game.storageManager.saveCardBookGuidePhase(4);
+          }
+          return;
+        }
+      }
+  
+      // 自动推进后同步本地 phase 变量
+      if (game.cardBookGuidePhase !== phase) {
+        phase = game.cardBookGuidePhase;
+      }
+  
+      // === 蒙层 alpha ===
+      let overlayAlpha;
+      if (phase === 1) {
+        overlayAlpha = 0.75 * Math.min(Math.max(0, elapsed - DELAY_BEFORE_FADE) / FADE_DURATION, 1);
+      } else if (phase === 3) {
+        const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+        overlayAlpha = 0.75 * Math.max(0, 1 - exitElapsed / 500);
+      } else {
+        overlayAlpha = 0.75;
+      }
+  
+      // === Phase 1/2: evenodd 挖空图标 + 金色边框 ===
+      const spotRect = this.cardBookIconRect;
+      if ((phase === 1 || phase === 2) && spotRect) {
+        const spotPad = 10 * s;
+        const spotX = spotRect.x - spotPad;
+        const spotY = spotRect.y - spotPad;
+        const spotW = spotRect.w + spotPad * 2;
+        const spotH = spotRect.h + spotPad * 2;
+        const spotR = 14 * s;
+  
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, W, H);
+        const r = spotR;
+        ctx.moveTo(spotX + r, spotY);
+        ctx.lineTo(spotX + spotW - r, spotY);
+        ctx.quadraticCurveTo(spotX + spotW, spotY, spotX + spotW, spotY + r);
+        ctx.lineTo(spotX + spotW, spotY + spotH - r);
+        ctx.quadraticCurveTo(spotX + spotW, spotY + spotH, spotX + spotW - r, spotY + spotH);
+        ctx.lineTo(spotX + r, spotY + spotH);
+        ctx.quadraticCurveTo(spotX, spotY + spotH, spotX, spotY + spotH - r);
+        ctx.lineTo(spotX, spotY + r);
+        ctx.quadraticCurveTo(spotX, spotY, spotX + r, spotY);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+        ctx.fill('evenodd');
+        ctx.restore();
+  
+        // 金色呼吸边框
+        const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
+        ctx.save();
+        ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+        ctx.lineWidth = 2.5 * s;
+        ctx.setLineDash([6 * s, 4 * s]);
+        this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
+        ctx.setLineDash([]);
+        ctx.restore();
+      } else if (phase >= 3) {
+        // Phase 3: 全屏蒙层
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+  
+      // Phase 1 聚光灯显示期间（500ms~1500ms），只画聚光灯，不弹出女巫；Phase 2 正常显示女巫
+      if (phase === 1 && !showWitch) {
+        return;
+      }
+  
+      // === Phase 1/2: 女巫帧动画 + 对话框 ===
+      const isPhase1 = phase === 1;
+      const isPhase2 = phase === 2;
+      const fullText = GUIDE_TEXTS[phase] || '';
+  
+      const POPUP_DURATION = 600;
+      const POST_POPUP_DELAY = 500;
+      // Phase 1: 文本等弹出动画完成后开始显示；Phase 2: 女巫和对话框保持不动，文本立即开始显示
+      const textStartTime = isPhase1
+        ? (game._cardBookGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY
+        : (game._cardBookGuideText2StartTime || Date.now());
+      const charInterval = 65;
+      const textElapsed = Date.now() - textStartTime;
+      const visibleChars = game._cardBookGuideSkipTyping
+        ? fullText.length
+        : Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
+      const displayText = fullText.slice(0, visibleChars);
+      const isTextComplete = visibleChars >= fullText.length;
+  
+      const dialogPadX = 20 * s;
+      const dialogTargetX = dialogPadX;
+      const imgW = 180 * s;
+      const imgH = 220 * s;
+      const imgTargetX = dialogTargetX;
+      const imgTargetY = H * 0.6 - imgH;
+  
+      const dialogW = W - dialogPadX * 2;
+      const dialogH = 130 * s;
+      const dialogR = 12 * s;
+      const dialogTargetY = H * 0.6;
+  
+      let imgX, imgY, dialogDrawX, dialogDrawY;
+      if (phase === 1) {
+        // Phase 1：女巫和对话框从屏幕外弹出（计时起点对齐到聚光灯显示后）
+        const popupElapsed = elapsed - DELAY_BEFORE_FADE - WITCH_DELAY;
+        const popupDelay = 100;
+        if (popupElapsed > popupDelay) {
+          const popupProgress = Math.min((popupElapsed - popupDelay) / POPUP_DURATION, 1);
+          const eased = Easing.easeOutBackStrong(popupProgress);
+          imgX = -imgW + (imgTargetX + imgW) * eased;
+          dialogDrawX = W + (dialogTargetX - W) * eased;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        } else {
+          imgX = -imgW;
+          dialogDrawX = W;
+          imgY = imgTargetY;
+          dialogDrawY = dialogTargetY;
+        }
+      } else if (phase === 2) {
+        // Phase 2：女巫和对话框保持显示，不需要重新弹出
+        imgX = imgTargetX;
+        dialogDrawX = dialogTargetX;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      } else if (phase === 3) {
+        const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
+        const exitProgress = Math.min(exitElapsed / 600, 1);
+        const eased = Easing.easeOutBackStrong(exitProgress);
+        imgX = imgTargetX - (imgTargetX + imgW) * eased;
+        dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
+        imgY = imgTargetY;
+        dialogDrawY = dialogTargetY;
+      }
+  
+      // 女巫引导图片（witch_4 使用精灵图渲染）
+      const imgData = this.guideImages.witch_4;
+      if (imgData && imgData.loaded && imgData.img) {
+        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
+        const coord = imgData.frameCoords[frameIdx];
+        if (coord) {
+          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
+        }
+      }
+  
+      // 对话框背景
+      this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+  
+      // 逐字显示文字
+      ctx.save();
+      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+  
+      const textPad = 18 * s;
+      const textX = dialogDrawX + textPad;
+      const textY = dialogDrawY + textPad;
+      const textMaxW = dialogW - textPad * 2;
+      const lineHeight = 24 * s;
+  
+      let line = '';
+      let currentY = textY;
+      for (let i = 0; i < displayText.length; i++) {
+        const ch = displayText[i];
+        const testLine = line + ch;
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > textMaxW && line !== '') {
+          ctx.fillText(line, textX, currentY);
+          line = ch;
+          currentY += lineHeight;
+        } else {
+          line = testLine;
+        }
+      }
+      if (line) ctx.fillText(line, textX, currentY);
+      ctx.restore();
+  
+      // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+      // 对话框区域始终可点击（用于双击跳过打字）
+      this.cardBookGuideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      this.cardBookGuideNextBtnRect = null;
+      if (isTextComplete && phase !== 3) {
+        const btnSize = 16 * s;
+        const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
+        const btnY = dialogDrawY + dialogH - btnSize - 12 * s;
+  
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(btnX + btnSize / 2, btnY + btnSize);
+        ctx.lineTo(btnX, btnY);
+        ctx.lineTo(btnX + btnSize, btnY);
+        ctx.closePath();
+        ctx.fillStyle = '#c4a35a';
+        ctx.fill();
+        const pulse = Math.sin(Date.now() / 300) * 0.3 + 0.7;
+        ctx.globalAlpha = pulse;
+        ctx.fill();
+        ctx.restore();
+  
+        this.cardBookGuideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
+      }
+    }
+
+};

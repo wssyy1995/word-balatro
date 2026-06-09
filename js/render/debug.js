@@ -1,2 +1,122 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,m=Math.SQRT1_2,n=Math.SQRT2;var o=60,p=59,q=48,r=85,s=65,t=66,u=79,v=64,w=56,x=40,y=47,z=96,A=8,B=89,C=89,D=26,E=78,F=95,G=82,H=69,I=65,J=7,K=6,L=77,M=73,N=77,O=51,P=9,Q=73,R=82,S=13,T=39,U=49,V=83,W=55,X=25,Y=54,Z=94,_0=71,_1=12,_2=46,_3=89,_4=22,_5=55,_6=24,_7=67,bc=57,bd=24,be=69,bf=77,bg=38,bh=33,bi=27,bj=4,bk=73,bl=54,bm=77,bn=4,bo=94,bp=15,bq=47,br=79,bs=12,bt=72,bu=26,bv=1,bw=48,bx=12,by=1,bz=48,bA=9,bB=76,bC=87,bD=93,bE=50,bF=60,bG=74,bH=46,bI=90,bJ=84;var bK=g(2*a(f(Y*54+bI*8)))>g(a(Y*Y+90*bI)+a(A*8+Y*Y)),bL=g(2*a(f(A*8+bC*bk)))<=g(a(bC*87+8*8)+a(73*73+8*8)),bM=g(2*a(f(_4*48+46*_2)))>g(a(_2*46+22*22)+a(bw*48+46*_2)),bN=g(2*a(f(48*7+87*bC)))<=g(a(bC*87+48*48)+a(7*7+bC*87)),bO=g(2*a(f(Z*_0+w*G)))<=g(a(Z*94+56*56)+a(_0*71+82*82)),bP=c((bI+74+78+4)/4)>=c(e((a(bj)+a(74)+a(78)+a(bI))/4)),bQ=c((33+26+54)/3)<c(e((a(26)+a(33)+a(54))/3)),bR=g(2*a(f(G*r+94*73)))>g(a(94*94+G*82)+a(85*85+73*73)),bS=R*82+q*48+bG*74<q*bG+82*q+74*82,bT=g(2*a(f(7*67+85*79)))<=g(a(J*7+r*r)+a(79*79+67*67)),bU=g(2*a(f(46*_2+r*L)))<=g(a(46*_2+85*85)+a(46*_2+77*L)),bV=c((Z+85+_2)/3)>=c(e((a(46)+a(Z)+a(r))/3)),bW=g(2*a(f(38*49+H*bj)))<=g(a(H*69+bg*bg)+a(49*49+bj*bj)),bX=c((_0+_5+J+77)/4)<c(e((a(55)+a(_0)+a(J)+a(77))/4)),bY=c((x+bz+N)/3)<c(e((a(40)+a(bz)+a(77))/3)),bZ=94*Z+bm*77+o*o+F*95<94*95+60*94+F*77+77*o,b0=g(2*a(f(40*26+S*bA)))>g(a(40*40+13*S)+a(26*bu+bA*bA)),b1=w*56+bl*bl+39*39>=T*56+56*bl+54*39,b2=g(2*a(f(w*w+7*67)))>g(a(56*w+J*7)+a(w*56+67*_7)),b3=g(2*a(f(P*9+X*8)))<=g(a(P*P+25*X)+a(A*8+P*P)),b4=_6*24+27*bi+R*R<bi*R+R*_6+24*bi,b5=r*85+y*47+s*65+bn*bn<65*85+bn*y+85*bn+47*65,b6=g(2*a(f(59*12+8*U)))>g(a(p*p+8*A)+a(12*12+U*U)),b7=c((U+79+94+bf)/4)>=c(e((a(79)+a(bo)+a(77)+a(U))/4)),b8=c((bh+bv+48+51)/4)<c(e((a(O)+a(bh)+a(bv)+a(bz))/4)),b9=c((P+Y+bv)/3)<c(e((a(bv)+a(Y)+a(P))/3)),ca=T*T+46*_2+_3*89<89*_2+39*_3+_2*39,cb=bz*48+s*s+q*48>=48*65+65*q+48*bz,cc=bq*bq+38*38+_7*67>=bg*_7+67*47+bq*38,cd=c((49+M+12+y)/4)<c(e((a(U)+a(y)+a(73)+a(bs))/4)),ce=77*bf+46*bH+bB*bB+73*73<M*76+bB*77+46*M+bf*bH,cf=g(2*a(f(1*A+94*40)))<=g(a(94*bo+by*by)+a(40*40+A*8)),cg=27*bi+71*71+I*65+_1*12>=27*65+_0*27+I*12+12*71,ch=g(2*a(f(bj*T+47*_5)))<=g(a(bj*4+bq*47)+a(T*T+55*55)),ci=12*bs+90*90+bl*54+L*L>=L*12+bl*77+12*90+bI*54,cj=g(2*a(f(89*40+95*82)))<=g(a(95*F+C*89)+a(R*R+x*x)),ck=73*M+_0*71+X*25+57*57<X*M+57*_0+M*bc+71*X,cl=c((_3+J+bf)/3)>=c(e((a(89)+a(77)+a(7))/3)),cm=bd*bd+t*t+89*C>=66*89+C*24+24*t,cn=c((bl+bj+77+P)/4)<c(e((a(9)+a(4)+a(54)+a(L))/4));var co,cp,cq,cs,ct,cu,cv,_8,_9,ba,bb;var cw,cx,cy,cz;var cA=+bV;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cB={e:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cC="";var cD=new Array(21);cC=cB.e("potnimxam",3);cD[0]=cC.s(3);cC=cB.e("hsup烁闪鉴图店商新刷tfelfff#pilctcertnofevas",4);cD[1]=cC.s(4);cC=cB.e("牌巫女张5roolflebal",5);cD[2]=cC.s(5);cC=cB.e("elddimretnecekorts导引鉴图发触导引店商发触导引人新发触关通接直 ✅合回X至转跳数次牌出置重htgnelnoitca",6);cD[3]=cC.s(6);cC=cB.e("0e0e0e#a3d2d2#hcaErofa53a4c#cisum传上hctiw传上stropxeerotser",7);cD[4]=cC.s(7);cC=cB.e("0001+分前当txeTlliftceRllif",8);cD[5]=cC.s(8);cC=cB.e("noci_gb传上htaPnigebsgoLgubedngilAtxethtdiWenilepytotorptceRdnuorelytSllif",9);cD[6]=cC.s(9);cC=cB.e("tceRekorts",10);cD[7]=cC.s(10);cC=cB.e("drac_pohs传上elytSekorts",11);cD[8]=cC.s(11);cC=cB.e("tceRgoLduolcenilesaBtxetegarotSduolc",12);cD[9]=cC.s(12);cC=cB.e("emaGdne_gubeddloGdda_gubed",13);cD[10]=cC.s(13);cC=cB.e("dnuoRniw_gubederocSdda_gubeduneMgubeDward_stceRuneMgubed",14);cD[11]=cC.s(14);cC=cB.e("YllorcSgoLduolc",15);cD[12]=cC.s(15);cC=cB.e("sdnaHteser_gubedgniggarDgoLduolc)56.0,0,0,0(abgr",16);cD[13]=cC.s(16);cC=cB.e("pohShserfer_gubeddnuoRoTpmuj_gubed",17);cD[14]=cC.s(17);cC=cB.e("ediuGreggirt_gubedcisum_daolpu_gubedhctiw_daolpu_gubedtolShctiWdda_gubedsgoLgubeDduolCwohs",18);cD[15]=cC.s(18);cC=cB.e("kooBdraChsalf_gubedsgoLgubeDduolCward_)29.0,04,03,03(abgr",19);cD[16]=cC.s(19);cC=cB.e("noci_gb_daolpu_gubed",20);cD[17]=cC.s(20);cC=cB.e(")6.0,552,552,552(abgr)2.0,552,552,552(abgrtceRraBllorcSgoLduolc",21);cD[18]=cC.s(21);cC=cB.e("ediuGpohSreggirt_gubeddrac_pohs_daolpu_gubed)53.0,552,552,552(abgr)21.0,552,552,552(abgr",22);cD[19]=cC.s(22);cC=cB.e("ediuGkooBdraCreggirt_gubed",26);cD[20]=cC.s(26);var cE='11,C,C",F,Bd,X,A';function cF(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cG=cF(cE);if(cA){co=cD[4][1];cp="W";cq="H";cs=cv="";ct=cD[2][1];cu=cD[6][3];_8="x";_9="y";ba="w";bb="h";cw="💰 增加100金币";cx=cD[14][0];cy=cD[15][3];cz="👻 结束游戏"}if(cA&&cm){cs="cloudLogScrollY"}if(cA&&bP){cv="beginPath"}if(cA&&bZ){cs+=cu}if(cA&&ca){cs+=cy;cv+=cx}if(cA&&bR){cv+=ct}cA=0;cC=null;cE=null;module[co]=function a(a){var b=cD,c=b[6][2];a[c][b[16][1]]=function(a,b,c){var d=cD,e=cG,f=d[9],g=d[6],h=d[0],i=d[1],j=d[13],k=d[18],l=d[19],m=d[9][0],n=d[3][1],o=d[0][0],p=d[2][1],q=d[1][0],r=d[6][0],s=d[5][0],t=d[4][0],u=d[18][0];if(!this[d[15][0]])return;const v=b[m]&&b[m][g[5]];if(!v||v[n]===0)return;const w=e[0]*c;const x=10;const y=6*c;const z=e[1]*c;const A=x*w+y*2;const B=v[n]*w+y*2;const C=this[cp]-z-8*c;const D=this[cq]-A-8*c;const E=Math[o](0,B-A);this[cs]=Math[o](0,Math[h[1]](this[cs],E));const F=Math[p](this[cs]/w);a[q]();a[r]=j[0];a[s](C,D,z,A);a[d[8][0]]=k[1];a[g[3]]=1;a[d[7][0]](C,D,z,A);a[cv]();a[i[2]](C+1,D+1,z-2,A-2);a[i[3]]();a[i[1]]=`${Math[p](10*c)}px monospace`;a[r]=i[4];a[g[4]]=i[5];a[f[1]]=h[2];const G=this[cs]%w;for(let b=0;b<x+1;b++){const c=F+b;if(c>=v[n])break;a[d[5][1]](v[c],C+y,D+y+b*w-G)}a[t]();if(B>A){const b=6*c;const d=C+z-b-2*c;const f=D+2*c;const h=A-4*c;const i=Math[o](h*A/B,e[2]*c);const m=f+this[cs]/E*(h-i);a[q]();a[r]=l[0];a[s](d,f,b,h);a[t]();const n=this[j[1]]?k[2]:l[1];this[g[1]](d,m,b,i,b/2,n,null);this[u]={[_8]:d,[_9]:m,[ba]:b,[bb]:i}}else{this[u]=null}this[f[2]]={[_8]:C,[_9]:D,[ba]:z,[bb]:A}};a[c][b[11][1]]=function(a,b,c,d,e){var f=cD,g=cG,h=f[2],i=f[3],j=f[5],k=f[11],l=f[10],m=f[14],n=f[1],o=f[15],p=f[8],q=f[19],r=f[4],s=f[6],cZ=f[2][0],c0=f[3][0],t=s[0],u=f[16][0],v=s[1],w=f[11][0];const x=[{[cZ]:i[2],[c0]:f[13][2]},{[cZ]:j[2],[c0]:k[2]},{[cZ]:cw,[c0]:l[0]},{[cZ]:i[3],[c0]:m[0]},{[cZ]:i[4],[c0]:k[3]},{[cZ]:n[6],[c0]:m[1]},{[cZ]:h[2],[c0]:o[1]},{[cZ]:p[1],[c0]:q[2]},{[cZ]:r[2],[c0]:o[2]},{[cZ]:s[7],[c0]:f[17][0]},{[cZ]:r[3],[c0]:o[3]},{[cZ]:i[5],[c0]:o[4]},{[cZ]:i[6],[c0]:q[3]},{[cZ]:i[7],[c0]:f[20][0]},{[cZ]:cz,[c0]:l[1]},{[cZ]:n[7],[c0]:f[16][2]}];const y=g[3]*e;const z=g[4]*e;const A=y+8*e;const B=x[i[1]]*z+8*e;const C=c;const D=d;a[n[0]]();a[t]=u;this[v](C,D,A,B,6*e,u);a[p[0]]=r[4];a[s[3]]=1*e;a[i[8]]();a[r[0]]();this[w]=[];x[r[5]]((b,c)=>{const d=D+4*e+c*z;const k=C+4*e;this[v](k,d,y,z-4*e,4*e,r[6]);a[n[1]]=`${Math[h[1]](g[5]*e)}px sans-serif`;a[t]=r[7];a[s[4]]=i[9];a[f[9][1]]=i[10];a[j[1]](b[cZ],k+y/2,d+(z-4*e)/2);this[w][n[8]]({[_8]:k,[_9]:d,[ba]:y,[bb]:z-4*e,[c0]:b[c0]})})}};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDoxOSJ9)
-//# sourceMappingURL=debug.js.map
+module.exports = function extendDebug(Renderer) {
+    Renderer.prototype._drawCloudDebugLogs = function(ctx, game, s) {
+      if (!this.showCloudDebugLogs) return;
+      const logs = game.cloudStorage && game.cloudStorage.debugLogs;
+      if (!logs || logs.length === 0) return;
+  
+      const lineH = 13 * s;
+      const visibleLines = 10;
+      const pad = 6 * s;
+      const boxW = 280 * s;
+      const viewportH = visibleLines * lineH + pad * 2;
+      const contentH = logs.length * lineH + pad * 2;
+      const boxX = this.W - boxW - 8 * s;
+      const boxY = this.H - viewportH - 8 * s;
+  
+      const maxScrollY = Math.max(0, contentH - viewportH);
+      this.cloudLogScrollY = Math.max(0, Math.min(this.cloudLogScrollY, maxScrollY));
+      const startLine = Math.floor(this.cloudLogScrollY / lineH);
+  
+      ctx.save();
+      // 日志框背景（限制在视口内）
+      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillRect(boxX, boxY, boxW, viewportH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(boxX, boxY, boxW, viewportH);
+  
+      // 裁剪到内容区域
+      ctx.beginPath();
+      ctx.rect(boxX + 1, boxY + 1, boxW - 2, viewportH - 2);
+      ctx.clip();
+  
+      ctx.font = `${Math.floor(10 * s)}px monospace`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const offsetY = this.cloudLogScrollY % lineH;
+      for (let i = 0; i < visibleLines + 1; i++) {
+        const lineIdx = startLine + i;
+        if (lineIdx >= logs.length) break;
+        ctx.fillText(logs[lineIdx], boxX + pad, boxY + pad + i * lineH - offsetY);
+      }
+      ctx.restore();
+  
+      // 滚动条
+      if (contentH > viewportH) {
+        const scrollBarW = 6 * s;
+        const scrollBarX = boxX + boxW - scrollBarW - 2 * s;
+        const trackY = boxY + 2 * s;
+        const trackH = viewportH - 4 * s;
+        const thumbH = Math.max(trackH * viewportH / contentH, 16 * s);
+        const thumbY = trackY + (this.cloudLogScrollY / maxScrollY) * (trackH - thumbH);
+  
+        ctx.save();
+        // 轨道
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        ctx.fillRect(scrollBarX, trackY, scrollBarW, trackH);
+        ctx.restore();
+        // thumb（使用项目内的 roundRect，只填充不描边）
+        const thumbColor = this.cloudLogDragging ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.35)';
+        this.roundRect(scrollBarX, thumbY, scrollBarW, thumbH, scrollBarW / 2, thumbColor, null);
+  
+        this.cloudLogScrollBarRect = { x: scrollBarX, y: thumbY, w: scrollBarW, h: thumbH };
+      } else {
+        this.cloudLogScrollBarRect = null;
+      }
+  
+      this.cloudLogRect = { x: boxX, y: boxY, w: boxW, h: viewportH };
+    }
+
+    Renderer.prototype._drawDebugMenu = function(ctx, game, x, y, s) {
+      const items = [
+        { label: '重置出牌次数', action: 'debug_resetHands' },
+        { label: '当前分+1000', action: 'debug_addScore' },
+        { label: '💰 增加100金币', action: 'debug_addGold' },
+        { label: '跳转至X回合', action: 'debug_jumpToRound' },
+        { label: '✅ 直接通关', action: 'debug_winRound' },
+        { label: '刷新商店', action: 'debug_refreshShop' },
+        { label: '5张女巫牌', action: 'debug_addWitchSlot' },
+        { label: '上传shop_card', action: 'debug_upload_shop_card' },
+        { label: '上传witch', action: 'debug_upload_witch' },
+        { label: '上传bg_icon', action: 'debug_upload_bg_icon' },
+        { label: '上传music', action: 'debug_upload_music' },
+        { label: '触发新人引导', action: 'debug_triggerGuide' },
+        { label: '触发商店引导', action: 'debug_triggerShopGuide' },
+        { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
+        { label: '👻 结束游戏', action: 'debug_endGame' },
+        { label: '图鉴闪烁', action: 'debug_flashCardBook' },
+      ];
+      const itemW = 130 * s;
+      const itemH = 34 * s;
+      const menuW = itemW + 8 * s;
+      const menuH = items.length * itemH + 8 * s;
+      const menuX = x;
+      const menuY = y;
+      
+      // 背景
+      ctx.save();
+      ctx.fillStyle = 'rgba(30,30,40,0.92)';
+      this.roundRect(menuX, menuY, menuW, menuH, 6 * s, 'rgba(30,30,40,0.92)');
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1 * s;
+      ctx.stroke();
+      ctx.restore();
+      
+      this.debugMenuRects = [];
+      items.forEach((item, i) => {
+        const iy = menuY + 4 * s + i * itemH;
+        const ix = menuX + 4 * s;
+        // 按钮背景
+        this.roundRect(ix, iy, itemW, itemH - 4 * s, 4 * s, '#2d2d3a');
+        // 文字
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#e0e0e0';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.label, ix + itemW / 2, iy + (itemH - 4 * s) / 2);
+        this.debugMenuRects.push({ x: ix, y: iy, w: itemW, h: itemH - 4 * s, action: item.action });
+      });
+    }
+
+};

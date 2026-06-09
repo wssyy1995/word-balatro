@@ -1,2 +1,187 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,m=Math.SQRT1_2,n=Math.SQRT2;var o=74,p=13,q=17,r=9,s=81,t=8,u=1,v=74,w=22,x=43,y=53,z=67,A=20,B=74,C=17,D=16,E=37,F=43,G=19,H=63,I=86,J=49,K=74,L=80,M=19,N=39,O=97,P=9,Q=24,R=23,S=78,T=81,U=25,V=76,W=37,X=86,Y=67,Z=91,_0=66,_1=65,_2=92,_3=61,_4=39,_5=66,_6=34,_7=1,_8=26,_9=61,ba=35,bb=14,bc=81,bd=87,be=4,bf=28,bg=54,bh=26,bi=11,bj=41,bk=24,bl=65,bm=88,bn=42,bo=19,bp=39,bq=11,br=83,bs=85,bt=61,bu=87,bv=48,bw=68,bx=6,by=53,bz=3,bA=42,bB=57,bC=95,bD=9,bE=73,bF=31;var bG=c((4+9+R)/3)>=c(e((a(23)+a(9)+a(be))/3)),bH=c((43+67+35)/3)<c(e((a(z)+a(ba)+a(F))/3)),bI=g(2*a(f(bc*42+bq*74)))>g(a(bc*bc+bq*11)+a(42*bA+v*v)),bJ=c((z+q+I+49)/4)>=c(e((a(q)+a(67)+a(J)+a(86))/4)),bK=g(2*a(f(41*u+25*25)))<=g(a(25*25+41*41)+a(25*U+u*u)),bL=c((80+73+97+u)/4)>=c(e((a(u)+a(O)+a(bE)+a(L))/4)),bM=28*bf+1*1+F*43<28*u+1*43+F*28,bN=c((16+v+bA)/3)>=c(e((a(16)+a(42)+a(74))/3)),bO=3*3+u*1+13*p<1*3+13*1+3*13,bP=g(2*a(f(13*66+26*41)))<=g(a(p*p+26*bh)+a(41*41+66*66)),bQ=c((bF+1+49+39)/4)<c(e((a(_4)+a(bF)+a(u)+a(49))/4)),bR=g(2*a(f(O*bx+br*u)))>g(a(O*97+br*83)+a(u*1+6*bx)),bS=bq*11+Y*Y+bn*bn<bq*Y+Y*bn+bn*11,bT=g(2*a(f(Y*74+92*86)))>g(a(Y*Y+92*92)+a(X*86+B*B)),bU=g(2*a(f(28*23+by*_9)))<=g(a(53*53+bf*bf)+a(_9*_9+23*R)),bV=68*68+6*6+4*be+bc*81>=6*4+bw*81+bc*bx+be*bw,bW=c((81+42+bp+87)/4)<c(e((a(87)+a(39)+a(42)+a(81))/4)),bX=c((63+L+3)/3)>=c(e((a(63)+a(80)+a(bz))/3)),bY=8*8+X*X+bm*bm<8*X+X*88+bm*t,bZ=x*43+39*39+t*t+86*86>=86*_4+_4*43+8*X+43*t,b0=_4*_4+bs*85+9*9<_4*9+9*85+bs*_4,b1=g(2*a(f(bc*74+19*19)))>g(a(19*bo+81*81)+a(74*74+bo*bo)),b2=bB*bB+bg*54+v*74+bo*bo<v*19+bg*74+bB*54+19*bB,b3=g(2*a(f(y*26+3*bq)))>g(a(53*y+bz*bz)+a(bq*bq+bh*bh)),b4=bl*bl+24*24+1*1>=1*bk+bk*bl+bl*_7,b5=c((88+76+24+x)/4)>=c(e((a(43)+a(bm)+a(V)+a(bk))/4)),b6=g(2*a(f(81*F+X*S)))<=g(a(86*X+81*T)+a(S*78+43*F)),b7=_4*_4+80*80+49*J<J*L+L*39+39*49,b8=c((H+_7+39+bs)/4)<c(e((a(85)+a(1)+a(_4)+a(H))/4)),b9=c((3+_2+C+1)/4)<c(e((a(C)+a(92)+a(1)+a(3))/4)),ca=c((s+74+35+by)/4)>=c(e((a(74)+a(by)+a(s)+a(35))/4)),cb=74*74+H*63+73*bE+T*T>=74*81+63*K+73*63+81*bE,cc=g(2*a(f(_9*61+bE*z)))>g(a(bE*bE+61*_9)+a(z*67+_9*_9)),cd=43*x+w*w+39*39>=bp*43+w*bp+x*22,cf=g(2*a(f(U*U+T*53)))>g(a(T*81+25*25)+a(25*U+y*y)),cg=11*11+G*19+35*35>=11*G+19*ba+35*11,ch=c((bF+54+74+67)/4)<c(e((a(74)+a(Y)+a(54)+a(bF))/4)),ci=g(2*a(f(20*C+87*87)))<=g(a(87*87+20*20)+a(17*17+87*bu)),cj=I*I+bE*73+68*bw>=I*73+bE*68+bw*86,ck=c((M+20+53+bz)/4)>=c(e((a(bz)+a(19)+a(y)+a(A))/4));var cl;var cm,ce;var cn=+b6;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var co={f:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cp="";var cq=new Array(21);cp=co.f("patmgbcrs",3);cq[0]=cp.s(3);cp=co.f("dnifpoolyalpdaolpotseman",4);cq[1]=cp.s(4);cp=co.f("seulavemulovsdnuos",6);cq[2]=cp.s(6);cp=co.f("stropxepulevelseirtneMGByalpMGBpotshcaErofyortseddelbane",7);cq[3]=cp.s(7);cp=co.f("pmuj_draclles_dracniw_dnuorrevo_emagegnellahc",9);cq[4]=cp.s(9);cp=co.f("leehw_nipserocs_drowdilav_dracehcaCcisumcnySsseccatsiLdnuos_detratSmgb",10);cq[5]=cp.s(10);cp=co.f("enot_rewsnasseccus_yubdezilaitini",11);cq[6]=cp.s(11);cp=co.f("reganaMoiduAelffuhs_draclagelli_dracdelbanEdnuosdelbanEcisum",12);cq[7]=cp.s(12);cp=co.f("duolCmorFdaol",13);cq[8]=cp.s(13);cp=co.f("egap_koob_dractnemecalp_dracemaNyBcrSdnif_hctiwSetuMyebo",14);cq[9]=cp.s(14);cp=co.f("noitcaretnItsrif_",17);cq[10]=cp.s(17);cp=co.f("reganaMmetsySeliFteg",20);cq[11]=cp.s(20);cp=co.f("3pm.cisum_gb/gb/cisum",21);cq[12]=cp.s(21);cp=co.f("txetnoCoiduArennIetaerc",23);cq[13]=cp.s(23);cp=co.f("3pm.pat/tceffe_dnuos/cisum",26);cq[14]=cp.s(26);cp=co.f("3pm.pulevel/tceffe_dnuos/cisum",30);cq[15]=cp.s(30);cp=co.f("3pm.pmuj_drac/tceffe_dnuos/cisum3pm.lles_drac/tceffe_dnuos/cisum3pm.niw_dnuor/tceffe_dnuos/cisum3pm.revo_emag/tceffe_dnuos/cisum3pm.egnellahc/tceffe_dnuos/cisum",32);cq[16]=cp.s(32);cp=co.f("3pm.leehw_nips/tceffe_dnuos/cisum3pm.erocs_drow/tceffe_dnuos/cisum3pm.dilav_drac/tceffe_dnuos/cisum",33);cq[17]=cp.s(33);cp=co.f("3pm.enot_rewsna/tceffe_dnuos/cisum3pm.sseccus_yub/tceffe_dnuos/cisum",34);cq[18]=cp.s(34);cp=co.f("3pm.elffuhs_drac/tceffe_dnuos/cisum3pm.lagelli_drac/tceffe_dnuos/cisum",35);cq[19]=cp.s(35);cp=co.f("3pm.egap_koob_drac/tceffe_dnuos/cisum3pm.tnemecalp_drac/tceffe_dnuos/cisum",37);cq[20]=cp.s(37);var cs="undefined,";function ct(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cu=ct(cs);if(cn){cl=cq[12][0];cm=cq[3][7];ce=cq[7][4]}cn=0;cp=null;cs=null;class AudioManager{constructor(){var a=cq,b=a[7];this[a[2][0]]={};this[a[0][1]]=null;this[a[3][0]]=true;this[b[1]]=true;this[b[0]]=true;this[a[6][0]]=false;this[a[5][0]]=false;this[a[10][0]]=false}load(a,b){var c=cq,d=c[2];const e=wx[c[11][0]]();try{e[c[5][2]](b)}catch(a){return}const f=wx[c[13][0]]();f[c[0][0]]=b;f[d[1]]=.6;f[c[9][0]]=false;this[d[0]][a]=f}play(a){var b=cq,c=b[1],d=b[2][0];if(!this[b[3][0]]||!this[b[7][1]])return;this[b[10][0]]=true;let e=this[d][a];if(!e){const f=this[b[9][1]](a);if(f){this[c[2]](a,f);e=this[d][a]}}if(!e)return;e[c[1]]();e[c[3]]()}playBGM(a){var b=cq,c=b[3],d=b[1],e=b[0][1];if(!this[c[0]]||!this[b[7][0]])return;if(this[e]){this[e][d[1]]();this[e][c[1]]()}this[e]=wx[b[13][0]]();this[e][b[0][0]]=a;this[e][d[4]]=true;this[e][b[2][1]]=.3;this[e][b[9][0]]=false;this[e][d[3]]();this[b[5][0]]=true}tryStartBGM(a=cl){var b=cq,c=b[5];if(this[c[0]]||!this[b[10][0]]||!this[b[7][0]])return;const d=wx[b[11][0]]();try{d[c[2]](a)}catch(a){return}this[b[3][4]](a)}stopBGM(){var a=cq,b=a[0][1];if(this[b]){this[b][a[1][1]]()}}setEnabled(a){var b=cq,c=b[3],d=b[7];this[c[0]]=a;this[d[1]]=a;this[d[0]]=a;if(!a){this[c[3]]()}}setSoundEnabled(a){this[cq[7][1]]=a}setMusicEnabled(a){var b=cq;this[b[7][0]]=a;if(!a&&this[b[0][1]]){this[b[3][3]]()}}destroy(){var a=cq,b=a[2][0],c=a[1][1],d=a[3][1],e=a[0][1];Object[a[2][2]](this[b])[a[3][2]](a=>{try{a[c]();a[d]()}catch(a){}});this[b]={};if(this[e]){try{this[e][c]();this[e][d]()}catch(a){}this[e]=null}this[a[5][0]]=false;this[a[10][0]]=false}loadFromCloud(a){var b=cq,c=b[3],d=b[5][3];if(!a||!a[d])return;Object[c[5]](a[d])[c[2]](([a,c])=>{if(!this[b[2][0]][a]){this[b[1][2]](a,c)}})}preloadAll(a=null){var b=cq,c=b[6],d=b[18],e=b[7],f=b[19],g=b[9],h=b[20],i=b[5],j=b[17],k=b[4],l=b[16],m=b[3],cU=b[1][0],cV=b[0][0];const n=[{[cU]:c[1],[cV]:d[0]},{[cU]:e[2],[cV]:f[0]},{[cU]:g[2],[cV]:h[0]},{[cU]:e[3],[cV]:f[1]},{[cU]:i[4],[cV]:j[0]},{[cU]:k[0],[cV]:l[0]},{[cU]:k[1],[cV]:l[1]},{[cU]:k[2],[cV]:l[2]},{[cU]:b[0][2],[cV]:b[14][0]},{[cU]:k[3],[cV]:l[3]},{[cU]:g[3],[cV]:h[1]},{[cU]:k[4],[cV]:l[4]},{[cU]:c[2],[cV]:d[1]},{[cU]:i[5],[cV]:j[1]},{[cU]:i[6],[cV]:j[2]},{[cU]:m[6],[cV]:b[15][0]}];this[i[1]]=n;n[m[2]](a=>this[b[1][2]](a[cU],a[cV]));this[b[8][0]](a);this[c[0]]=true}_findSrcByName(a){var b=cq,c=b[1],d=b[5][1];if(!this[d])return null;const e=this[d][c[5]](b=>b[c[0]]===a);return e?e[b[0][0]]:null}}module[cm]={[ce]:AudioManager};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowNyJ9)
-//# sourceMappingURL=audio.js.map
+// ===== 音效管理器 =====
+class AudioManager {
+  constructor() {
+    this.sounds = {};
+    this.bgm = null;
+    this.enabled = true;
+    this.soundEnabled = true;  // 音效开关
+    this.musicEnabled = true;  // 音乐/BGM 开关
+    this.initialized = false;
+    this.bgmStarted = false; // BGM 是否已启动（真机首次播放需用户交互）
+    this._firstInteraction = false; // 是否有过用户交互
+  }
+
+  // 加载音效
+  load(name, src) {
+    const fs = wx.getFileSystemManager();
+    try {
+      fs.accessSync(src);
+    } catch (e) {
+      // 音效文件不存在，跳过加载
+      return;
+    }
+    const audio = wx.createInnerAudioContext();
+    audio.src = src;
+    audio.volume = 0.6;
+    audio.obeyMuteSwitch = false; // ← 关键：真机静音模式下也能播放
+    this.sounds[name] = audio;
+  }
+
+  // 播放音效（支持懒加载：真机上预加载失败时，播放时重新尝试加载）
+  play(name) {
+    if (!this.enabled || !this.soundEnabled) return;
+
+    // 真机兼容：首次用户交互标记（用于后续启动 BGM）
+    this._firstInteraction = true;
+
+    let audio = this.sounds[name];
+    if (!audio) {
+      // 预加载时没找到，尝试懒加载（可能是路径问题或实例超限）
+      const lazySrc = this._findSrcByName(name);
+      if (lazySrc) {
+        this.load(name, lazySrc);
+        audio = this.sounds[name];
+      }
+    }
+    if (!audio) return;
+
+    audio.stop();
+    audio.play();
+  }
+
+  // 播放背景音乐（需在用户交互后调用）
+  playBGM(src) {
+    if (!this.enabled || !this.musicEnabled) return;
+    if (this.bgm) {
+      this.bgm.stop();
+      this.bgm.destroy();
+    }
+    this.bgm = wx.createInnerAudioContext();
+    this.bgm.src = src;
+    this.bgm.loop = true;
+    this.bgm.volume = 0.3;
+    this.bgm.obeyMuteSwitch = false; // ← 关键：真机静音模式下也能播放
+    this.bgm.play();
+    this.bgmStarted = true;
+  }
+
+  // 尝试启动 BGM（在用户交互后调用）
+  tryStartBGM(src = 'music/bg/bg_music.mp3') {
+    if (this.bgmStarted || !this._firstInteraction || !this.musicEnabled) return;
+
+    // 先检查 BGM 文件是否存在，避免文件缺失时抛 readFile 报错
+    const fs = wx.getFileSystemManager();
+    try {
+      fs.accessSync(src);
+    } catch (e) {
+      // BGM 文件不存在，静默跳过
+      return;
+    }
+
+    this.playBGM(src);
+  }
+
+  // 停止背景音乐
+  stopBGM() {
+    if (this.bgm) {
+      this.bgm.stop();
+    }
+  }
+
+  // 设置音效开关
+  setEnabled(enabled) {
+    this.enabled = enabled;
+    this.soundEnabled = enabled;
+    this.musicEnabled = enabled;
+    if (!enabled) {
+      this.stopBGM();
+    }
+  }
+
+  // 设置音效开关（独立于 BGM）
+  setSoundEnabled(enabled) {
+    this.soundEnabled = enabled;
+  }
+
+  // 设置音乐/BGM 开关
+  setMusicEnabled(enabled) {
+    this.musicEnabled = enabled;
+    if (!enabled && this.bgm) {
+      this.stopBGM();
+    }
+  }
+
+  // 销毁所有音频资源，防止 restart 时泄漏
+  destroy() {
+    Object.values(this.sounds).forEach(audio => {
+      try {
+        audio.stop();
+        audio.destroy();
+      } catch (e) {}
+    });
+    this.sounds = {};
+    if (this.bgm) {
+      try {
+        this.bgm.stop();
+        this.bgm.destroy();
+      } catch (e) {}
+      this.bgm = null;
+    }
+    this.bgmStarted = false;
+    this._firstInteraction = false;
+  }
+
+  // 从 cloudStorage 的 musicCache 加载缓存的音频
+  loadFromCloud(cloudStorage) {
+    if (!cloudStorage || !cloudStorage.musicCache) return;
+    Object.entries(cloudStorage.musicCache).forEach(([name, path]) => {
+      if (!this.sounds[name]) {
+        this.load(name, path);
+      }
+    });
+  }
+
+  // 预加载所有音效（需要在游戏启动时调用）
+  preloadAll(cloudStorage = null) {
+    // 注意：实际项目中需要将这些音效文件放入项目目录
+    // 例如：audio/ 文件夹下放置以下文件
+    const soundList = [
+      // 有云存储映射，预加载页自动下载到缓存
+      { name: 'buy_success', src: 'music/sound_effect/buy_success.mp3' },   // 购买成功弹窗
+      { name: 'card_illegal', src: 'music/sound_effect/card_illegal.mp3' }, // 非法单词提示
+      { name: 'card_placement', src: 'music/sound_effect/card_placement.mp3' }, // 点击字母卡牌
+      { name: 'card_shuffle', src: 'music/sound_effect/card_shuffle.mp3' }, // 点击弃牌
+      { name: 'card_valid', src: 'music/sound_effect/card_valid.mp3' },     // 单词校验合法
+      { name: 'challenge', src: 'music/sound_effect/challenge.mp3' },       // 点击挑战按钮
+      { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },       // 游戏结束弹窗
+      { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },       // 回合结算弹窗
+      { name: 'tap', src: 'music/sound_effect/tap.mp3' },                   // 弹窗/按钮点击
+      { name: 'card_sell', src: 'music/sound_effect/card_sell.mp3' },       // 售出道具
+      { name: 'card_book_page', src: 'music/sound_effect/card_book_page.mp3' }, // 图鉴翻页
+      { name: 'card_jump', src: 'music/sound_effect/card_jump.mp3' },       // 字母牌跳跃
+      { name: 'answer_tone', src: 'music/sound_effect/answer_tone.mp3' },   // 字母跳跃触发女巫牌
+      { name: 'word_score', src: 'music/sound_effect/word_score.mp3' },     // 计分总数弹出
+      { name: 'spin_wheel', src: 'music/sound_effect/spin_wheel.mp3' },     // 转盘旋转
+      { name: 'levelup', src: 'music/sound_effect/levelup.mp3' },             // 进入下一关
+    ];
+
+    // 保存映射用于懒加载
+    this._soundList = soundList;
+
+    soundList.forEach(s => this.load(s.name, s.src));
+
+    // 从 cloudStorage 的本地缓存加载
+    this.loadFromCloud(cloudStorage);
+
+    this.initialized = true;
+  }
+
+  // 根据名称查找音效路径（懒加载用）
+  _findSrcByName(name) {
+    if (!this._soundList) return null;
+    const found = this._soundList.find(s => s.name === name);
+    return found ? found.src : null;
+  }
+}
+
+module.exports = { AudioManager };

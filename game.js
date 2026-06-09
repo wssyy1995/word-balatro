@@ -1,2 +1,2128 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,m=Math.SQRT1_2,n=Math.SQRT2;var o=93,p=80,q=2,r=31,s=46,t=74,u=74,v=65,x=53,y=79,A=35,C=19,E=34,J=3,M=21,O=25,Q=9,S=84,T=5,U=18,V=69,W=48,X=71,Y=2,Z=23,_0=70,_1=10,_2=99,_3=3,_4=52,_5=80,_6=93,_7=88,_8=4,_9=24,ba=98,bb=76,bc=18,bd=85,be=28,bf=29,bg=6,bh=21,bi=96,bj=37,bk=8,bl=34,bm=37,bn=11,bo=88,bp=24,bq=10,br=9,bs=41,bt=59,bu=41,bv=22,bw=58,bx=24,by=59,bz=69,bA=10,bB=64,bC=3,bD=70,bE=77,bF=55,bG=84,bH=13,bI=98,bJ=40,bK=90,bL=44,bM=33,bN=70,bO=38,bP=20,bQ=68,bR=38,bS=67;var bT=g(2*a(f(93*_6+X*37)))>g(a(X*X+_6*_6)+a(37*bm+93*93)),bU=g(2*a(f(10*bg+80*p)))>g(a(p*80+10*10)+a(6*6+p*p)),bV=bC*bC+_3*_3+bN*70+J*J<3*bN+J*_3+bN*bC+3*J,bW=g(2*a(f(S*T+_7*_9)))<=g(a(_7*88+S*84)+a(24*24+5*5)),bX=69*V+bz*bz+bc*bc+_6*_6>=18*69+69*93+69*69+_6*bc,bY=bi*bi+67*bS+88*88+v*v<67*_7+bi*67+_7*65+v*bi,bZ=10*10+O*O+_4*52>=52*bq+bq*25+O*52,b0=c((21+77+bn+_5)/4)>=c(e((a(77)+a(11)+a(80)+a(21))/4)),b1=g(2*a(f(bf*29+E*20)))>g(a(34*34+29*29)+a(bf*29+bP*20)),b2=bc*bc+34*E+41*bs+46*46<bc*41+46*bc+bs*E+34*s,b3=55*55+bD*bD+41*41>=bD*bF+bs*bD+55*41,b4=g(2*a(f(bQ*bQ+_4*bz)))>g(a(bQ*bQ+52*_4)+a(69*bz+bQ*bQ)),b5=g(2*a(f(77*bs+v*bt)))<=g(a(v*v+77*77)+a(bs*41+59*59)),b6=_8*_8+5*5+bF*55+be*28>=be*5+4*55+bF*28+5*4,b7=g(2*a(f(4*67+93*93)))<=g(a(_8*_8+93*93)+a(67*bS+93*93)),b9=by*by+33*33+bp*bp<59*24+24*33+33*by,ca=c((79+77+21)/3)>=c(e((a(y)+a(bE)+a(bh))/3)),cb=bl*34+bL*44+69*bz+41*41<bL*41+bl*bL+bu*bz+69*34,cc=g(2*a(f(bh*88+bg*bC)))<=g(a(6*bg+bh*21)+a(88*88+3*bC)),cd=c((bk+80+bE)/3)<c(e((a(8)+a(77)+a(80))/3)),ce=c((bk+38+bO)/3)<c(e((a(bk)+a(38)+a(bO))/3)),cf=c((98+bG+41+bJ)/4)>=c(e((a(40)+a(bu)+a(bG)+a(98))/4)),cg=53*53+24*bx+99*_2+bl*34<34*53+x*99+_2*bx+bx*34,ch=g(2*a(f(bQ*68+br*by)))>g(a(bQ*68+9*9)+a(68*bQ+59*59)),ci=c((11+p+6+93)/4)<c(e((a(6)+a(93)+a(p)+a(bn))/4)),cj=_7*88+v*65+24*24<v*_7+24*v+_7*24,ck=21*bh+bP*bP+41*bs>=21*bs+bP*bh+bs*bP,cl=29*29+bM*33+11*bn+bS*67>=bS*11+bM*67+11*bf+29*33,cm=g(2*a(f(77*br+22*10)))<=g(a(bE*bE+22*bv)+a(9*br+10*bA)),cn=24*24+bP*20+_0*_0+bq*bq>=_0*20+bx*10+20*bx+10*70,co=2*2+bg*bg+bc*18<bc*2+6*bc+q*6,cp=g(2*a(f(8*8+v*41)))<=g(a(bk*bk+v*65)+a(bu*41+bk*8)),cq=18*U+65*v+21*M+bE*bE>=77*M+21*18+v*bE+18*65,cs=c((9+o+65)/3)>=c(e((a(9)+a(93)+a(v))/3)),ct=g(2*a(f(33*bM+24*38)))<=g(a(bp*24+bM*bM)+a(bR*38+bM*33)),cu=bv*bv+3*J+25*25+v*65<3*O+O*v+65*22+bv*3,cv=c((S+_5+bL+bD)/4)>=c(e((a(44)+a(70)+a(S)+a(80))/4)),cw=c((bI+T+M+11)/4)<c(e((a(bn)+a(21)+a(T)+a(98))/4)),cx=c((bH+41+by+53)/4)<c(e((a(41)+a(53)+a(13)+a(59))/4)),cy=Y*2+bG*84+X*X<2*bG+84*71+71*2;var cz,cA,cB,cC,w,z,cD,B,cE,D,cF,F,G,H,I,cG,K,L,cH,N,cI,P,cJ,R,cK,cL,cM,cN,cO,cP,cQ,cR,cS,cT,cU,cV;var cW,cX,cY,cZ,c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,da,db,dc,dd,de,df,dg,b8,dh;var di,dj,dk,dl,dm,dn,dp,dq,dr,ds,dt,du,dv;var dw,dx,fb,fc;var fr,dy,dz,dA,dB,dC,fK,fM,dD,dE,dF,dG,dH,dI,dJ,dK,dL,dM,dN,dO,dP,dQ,dR,dS,dT,dU,dV,dW,dX,dY,dZ,d0,d1;var d2,d3,d4,d5,d6,d7,d8,d9,ea,eb,ec,ed,ee,ef,gZ,eg,eh,ei,ej,ek,el,em,en,eo,ep,eq,er,es,et,eu,ev,ew,ex,ey,ez;var eA,eB,eC,eD,eE,eF,eG,eH,eI;var eJ,eK,eL;var eM=+cf;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var eN={h:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var eO="";var eP=new Array(32);eO=eN.h("ycxcd2smkodi",2);eP[0]=eO.s(2);eO=eN.h("sah:前当batsbagnprpdtegllaesupamnimddagolpatwon",3);eP[1]=eO.s(3);eO=eN.h("llunemosffubtfig败失传上合回转跳enodedoctiniedihwohsemaGmetitsocdniftrqsniamemagkcedemanatadmirtdnahsyeknrawtlumpohshsupdlognehtepyttxetyalp",4);eP[2]=eO.s(4);eO=eN.h("raelctesererocsgubed:败失传上lairtcisumesrapweNsinigol0.9.1ecilsthgil！功成活复hctiwtimilesahpledomdnarbduolchsatsyreuqelacseltiteulavyarrahtdiwlevelhctacrorreroolfdnuorxednietats",5);eP[3]=eO.s(5);eO=eN.h("etadpumodnarecaFsiretlifdinepo建创已户用新savnacediHnoeviverwohSnorednerdedaolrebmuntegratmetsystArahcxdIdomdIdracgnirtsrettelecilpsthgiehnoitoptlusertceffesrekojhtgnelnoitca",6);eP[4]=eO.s(6);eO=eN.h("yortsedlatsyrcdilavni4_hctiw3_hctiwreggirttnetnoc数合回标目入输容内馈反入输请polevedesaelerytilauq新更录登户用老]nigoL[:败失交提馈反egassemmetIyubdracsiddesserpfOxednigniyalpnoisrevdelbanesseccusyarrAsisnoitopYtneilcsehcuotXtneilctseTtih",7);eP[5]=eO.s(7);eO=eN.h("noitaruderocSwenerocSdloyub_dracdnaHyalpdedargpusedulcnidnuoRniwelbatideerocSddaelpitlumlrUegamiepyTelifesabatadrpDelacsslootvedreredneRtfeLsesugninepo_YtnerrucXtnerrucegaugnalrerednerkcabdeefmroftalpsgnittesrevoemagtAeripxe",8);eP[6]=eO.s(8);eO=eN.h("完用已数次活复日今tfeLsdnahdnuoRtxenerocStsalegnellahceman_dracepyt_draclles_dracdelbasid_stceRdracrevo_emaglewov_sahxednIdnif戏游到载加已片图云ladoMwohshtgneLxamhtdiWtsedpohs/sj/.emag/sj/.xednImetistceRtfigdenifednugnivloseremiTsserperocSesabyfignirtsxednImorfatad/sj/.tceRntBkopmatsemitsmetIpohstsaoTtnihemiTtrats",9);eP[7]=eO.s(9);eO=eN.h("etatSteserddAedargpuLOOP_LLIKShctiWpiuqetnemelttesSDRAC_ECAF换切法无,中行进合回dekcolnUsi败失传上 cisum败失传上 hctiwsdnaHteserdetratSmgbdnEhcuoTnonoisreVvnethgieHtsed戏游新 ]emaG[试重后稍请，败失交提！谢感，功成交提馈反etaDrevresemiTetaercnoitcelloctxetnoCteg~哦活复以可才后享分tupni/sj/.tceRlecnactceRntBesumetIdrawernoisreVKDStolStresnioitaRlexipntBdesserperocSlatotxednIrekojesahPediugedoMnoitop",10);eP[8]=eO.s(10);eO=eN.h("sseccus_yubnoitoPhsatsstatSetadpu:败失传上 cisum:败失传上 hctiwdnuoRoTpmujMGBtratSyrtepyTmrifnocdloHmrifnocevoMhcuoTnomargorPinimhtdiWwodniw台前回切 ]emaG[erocSdaolputceRntBknartnevEtropertceRmrifnoctluMedargpusegamIediughtdiWneercshtdiWsavnacsserPnottubtceRntByalptceRnocIpotegasseMtsopreganaMminaxednInoitop",11);eP[9]=eO.s(11);eO=eN.h("tfeLsdracsidporPgnilles_lliks_llorerlatsyrCylppawoNnoitoPesudrawer_hctiwtceleSelggotdeliaf_hctiwbaTkooBdrac_erocShgiHtegerocShgiHtes败失传上 noci_gbediuGecnavdaeulaVtluafeddraobyeKwohssgnitteSevastratShcuoTnossergorPdaolpaMeliFcisumpaMeliFduolcnoitcnuFllacthgieHwodniwthgieHsavnacsavnaCetaercegarots/sj/.reldnaHtupnItceRntBhsatstceRntBmialctceRgoLduolcthgieHneercstrohSetarbivSLLIKS_HCTIWEROCS_RETTELtceRntBteserdelbanEdnuoskcehCgnidnepnepOkooBdracegarotSduolcdraobyeKedihdesserPntBkoretteLtegrategaPkooBdracssergorPevasreredneRpohsreganaMoidua",12);eP[10]=eO.s(12);eO=eN.h("sdroWgnikcehcdednetxe_efilsllikSelffuhsrettel_egnahcemaGdne_gubed:败失传上 noci_gbdloGdda_gubeduneMerahSwohsriDcisuMnacs_paMeliFnocIgbeludoMhserferretteLedargpureredner/sj/.tceRntBeviversserPntBesolcduolCmorFdaolssergorPraelcdesserPntBesuemiTpaTediug_emiTtratSminastolSrekoJxamegaPkcabdeef_nepOuneMgubedtxeTkcabdeef_",13);eP[11]=eO.s(13);eO=eN.h("retteLlanigironoitceleSraelctnemecalp_dracnosaeRrevOemagdnuoRniw_gubederocSdda_gubed:回返数函云 ]nigoL[reganaMegarotStceRntBtratseredargpu_modnarrettel_edargputceRntBesUpohstceRntBsseccusstceRporPhctiwstceRuneMgubedcnySegarotStegsedargpUrettelmetIyuBmrifnoctceRntBdracsidesahPediuGpohsegap_koob_dracpupoPsgnittes_reganaMegarots",14);eP[12]=eO.s(14);eO=eN.h("daoLweiverPwardegasseMppAerahsnipSmodnaRtratstnemeltteSmialctsruBratShctiw_:rorre dnaHyalptsaoTlluFpiuqe_戏游到载加已片图云 hctiwsdraCpohSdaolputxeTredlohecalpdelbanEdnuoStestekciTerahShtiw:常异报上录登 ]nigoL[tupnIdraobyeKno档存即立，台后切 ]emaG[tceRntBlleSpohstceR2ntBsseccusdesserPntBmialcstceRporPnoitoptceRgolaiDediugYllorcSgoLduolcemiTtratSesolc_desserPntBhsatsdesserPntBecirpetatSnoitoPerp_sllikSdelffuhs_ataDdraweRhctiwetatStroSrekoj_",15);eP[13]=eO.s(15);eO=eN.h("desserPntBllorerediuGpohSecnavdatsaoTkcolBpiuqe_seliFcisuMdaolpusdnaHteser_gubedtceRntBtxeNediuggnipyTpikSediug_:合回，复恢档存从 ]emaG[:败失用调数函云 ]nigoL[:败失务业数函云 ]nigoL[tceRntBdnuoRtxenstceRhserfeRpohssdraCdetceleStegstceRbaTkooBdractceRknaRsgnittesreredneRoTtcejnitsiLknaRgniwohs_gnidargpUnoitop_dekcolnUkooBdracgniggarDgoLduolcrevOemaGgnisolc_draweRhctiWesolctceRkcaBkcabdeefpupoPmrifnoCyub_kooBdraCgnisolc_tceRnocIkooBdracsgnitteSgnisolc_reredneRrevOemag",16);eP[14]=eO.s(16);eO=eN.h("desUeviveRyliaDsidesserPntBhserferemiTtratSgninepo_戏游到载加已片图云 noci_gbsegamIhctiWdaolpupohShserfer_gubeddnuoRoTpmuj_gubedegasseMppAerahSnoseliFcisuMdaolerpmrifnoCdraobyeKnocnySofnImetsyStegsmetIpohSetarenegstceRretteLnoitopstceRntBecirPpohsstceRretteLegnahctceRtupnIkcabdeeftceResolCsgnittestceRntBnipSmodnaremiTpaTediuGpohs_tniHretteLegnahc_egdaBweNkooBdrac_stceRlleCkooBdracdesserPntBeviver_slliks_hctiw/sj/.tceRdnuoSsgnittespuorGediuGdaolerppupoPliateDhctiw_tceRlenaPkooBdracdenwOdetceleSpohs",17);eP[15]=eO.s(17);eO=eN.h("yuBmrifnoCgnisolc_ediuGreggirt_gubedcisum_daolpu_gubedsegamInocIgBdaolpusegamIediuGdaolerpsegamIhctiWdaolerphctiw_daolpu_gubedtolShctiWdda_gubedcnyShtaPeliFpmeTotegarots_duolc/sj/.minAnoisnetxEefil_stceRporPdenwOpohsntBdesserPsseccus_sseccuSyuBmrifnoc_xednItfiGdetceles_cnySofnItnuoccAtegYtratSgarDgoLduolctxetnoCataDnepOtegnosaeRrevOemaGtsaldesserPntBtratser_tceRntBhsatSnoitopdesserPntBsseccus_tceRratavAhctiWduhtceRtimbuSkcabdeefreredneRtnemelttessdraChctiWdeppiuqeesahPediuGkooBdracreredneRyuBmrifnocpupoPretteLegnahc_",18);eP[16]=eO.s(18);eO=eN.h("pupoPedargpUmodnar_emiTsserPntBeviver_sunoBnoisnetxEefil_desserPntBegnellahcemiTtratSraeppasid_reredneRdraweRhctiwhsalFkooBdraCecrof_kooBdraChsalf_gubed:败失载下导引鉴图发触 ]gubeD[:败失载下导引店商发触 ]gubeD[emiTtratSediuGpohs_emiTtratStxeTediug_reganaMegarotSduolCtceRgolaiDediuGpohssegamInocIgBdaolerpsdraChctiWdetcellocgnittimbuSkcabdeef_tceRntBtxeNkooBdractceRntBverPkooBdractceleSrekoJgnidnep_ataDmetIyuBmrifnoc_",19);eP[17]=eO.s(19);eO=eN.h("emiTsserPntBtratser_emiTsserPntBsseccus_ediuGkooBdraCecnavdatceRntBtxeNediuGpohsgnipyTpikSediuGpohs_牌词他其下卸先请，）张3（数备装大最达已noci_gb_daolpu_gubed:败失图截 savnaC ]erahS[戏游入进，成完载加预片图云 ]emaG[载加预过跳，射映储存云有没 ]emaG[reganaMmetsySeliFtegtceRntBnoisnetxEefildesserPntBegnellahc_tceRtniHretteLegnahctceRkcabdeeFsgnittessratavAhctiWdaolerp_tceRntBedargpUnoitopdesserPntBesolCknar_desserPknaRsgnittes_tsaoTtimbuSkcabdeef_retteLegnahCgnisolc_tceRntBesolCkooBdractceRntBpiuqEkooBdracdesserPnocIkooBdrac_tceRntBesolCsgnittesdesserPkcaBkcabdeef_desserPlleCkooBdrac_leveLliateDkooBdrac_",20);eP[18]=eO.s(20);eO=eN.h("noitisnarTemaGoTpohs_emiTsserPntBegnellahcdraChctiWdeppiuqEevasreredneRoThctiWtcejnissergorp_ortalab_drowetaidemmIssergorPevasdesserPntBmrifnoCyub_tceResolCretteLegnahcsegamIdraCpohSdaolerpemiTpaTediuGkooBdrac_desucoFtupnIkcabdeef_reredneRoTediuGtcejnidesserPdnuoSsgnittes_retteLdetceleSnoitop_pohSsihTdraChctiWwen_",21);eP[19]=eO.s(21);eO=eN.h("emiTsseccuSyuBmrifnoc_ediuGpohSreggirt_gubeddrac_pohs_daolpu_gubedemiTtratSminAkooBdrac_reredneRoTnocIgBtcejnidesserPtimbuSkcabdeef_liateDkooBdraCgnisolc_",22);eP[20]=eO.s(22);eO=eN.h("emiTsserPntBmrifnoCyub_tratShsalFnocIkooBdrac_emiTtratSediuGkooBdrac_emiTtratStfiGdraCediug_deliaf tes savnaCderahs:间时留停面界享分 ]eviveRerahS[tceRntBlloreRlabolGpohstceRgolaiDediuGkooBdractceRntBpawSretteLegnahcemiTtratSkooBdraCesolc_emiTtratSsgnitteSesolc_tceRlenaPliateDkooBdrac",23);eP[21]=eO.s(23);eO=eN.h("minAtegraTnoisnetxEefil_tceRntBtxeNediuGkooBdracgnipyTpikSediuGkooBdrac_emiTtratSliateDkooBdrac_leveLroFdraChctiWdaolerped5304e01utbceg3d-1duolcYllorcStratSgarDgoLduolcdesserPkcabdeeFsgnittes_desserPntBnoisnetxEefil_desserPntBpiuqEkooBdrac_desserPntBesolCkooBdrac_desserPntBesolCsgnittes_remiTtceleSrekoJgnidnep_",24);eP[22]=eO.s(24);eO=eN.h("emiTtratSyuBmrifnoCesolc__drac_hctiw 备装 ]deppiuqE[_drac_hctiw 下卸 ]deppiuqE[足不间时留停或消取享分 ]eviveRerahS[活复行执，功成享分定判 ]eviveRerahS[",25);eP[23]=eO.s(25);eO=eN.h("ediuGkooBdraCreggirt_gubed",26);eP[24]=eO.s(26);eO=eN.h("emiTtratStxeTediuGkooBdrac_emiTtratSretteLegnahCesolc_",27);eP[25]=eO.s(27);eO=eN.h("戏游新始开，理清已，期过已/整完不段字档存旧 ]emaG[",29);eP[26]=eO.s(29);eO=eN.h("成完载加预 drac_hctiw 锁解已 ]daolerP[",30);eP[27]=eO.s(30);eO=eN.h(":drac_hctiw 锁解已载加预，复恢档存 ]daolerP[",33);eP[28]=eO.s(33);eO=eN.h("载下过跳，在存已存缓地本 4_ediug_hctiw ]gubeD[载下过跳，在存已存缓地本 3_ediug_hctiw ]gubeD[sdrac_hctiw_detcelloc_ortalab_drow",34);eP[29]=eO.s(34);eO=eN.h(":sdraChctiWdetcelloc 前 emaGdne_gubed ]kooBdraC[",47);eP[30]=eO.s(47);eO=eN.h(":sdraChctiWdetcelloc 例实新 ,后 emaGtratser ]kooBdraC[:sdraChctiWdetcelloc 例实旧 ,前 emaGtratser ]kooBdraC[",50);eP[31]=eO.s(50);var eQ="14,B,BU,b4,WG,CG,|,OG,ca,Gu,K,u,K|,Fk,Ea,D4,F4,O,A,G,EB,Q,DQ,Bu";function eR(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var eS=eR(eQ);if(eM){cz=eP[4][12];cA=eS[0];cB="4";cC=eS[1];w=eP[2][21];z=eP[9][13];cD=eP[7][14];B=eP[6][11];cE=eP[11][11];D=eP[10][19];cF=eP[8][11];F=eP[5][13];G=eP[11][12];H=eP[11][13];I=eP[15][17];cG=eP[7][15];K=eP[10][12];L=eP[12][6];cH=eP[7][5];N=eP[10][13];cI=eP[15][5];P=eP[12][15];cJ=eP[10][20];R=eP[17][8];cK=eP[16][19];cL=eP[4][18];cM=eP[1][2];cN=eP[9][14];cO=eP[7][10];cP=eP[3][0];cQ=eP[6][1];cR=eP[1][0];cS=eP[7][0];cT=eP[21][6];cU=eP[0][2];cV=eS[2];cW=eP[4][20];cX=eP[13][13];cY=eP[12][0];cZ=eP[19][9];c0=eP[15][18];c1=eP[10][21];c2=eP[8][13];c3=eP[0][3];c4=eP[6][3];c5=eP[6][12];c6=eP[2][2];c7=eP[13][14];c8=eP[3][9];c9=eP[11][0];da=eP[3][22];db=eS[5];dc=eP[15][19];dd=eP[10][6];de=eP[3][7];df=eP[4][6];dg=eP[9][2];b8=eP[4][0];dh=eP[9][6];di=eP[9][15];dj=eP[10][23];dk=eP[8][5];dl=eS[6];dm=eS[7];dn=eP[1][4];dp=eP[3][3];dq=eP[3][11];dr=eP[1][9];ds=eP[22][7];dt=eP[2][24];du=fr="";dv=eS[8];dw=eP[6][5];dx=eP[10][0];fb="x";fc="y";dy=eP[10][28];dz=eP[5][2];dA=eP[5][1];dB=eP[5][3];dC=eP[10][16];fK="w";fM="h";dD=eP[14][8];dE=eP[16][12];dF=eP[22][6];dG=eP[13][7];dH=eP[9][3];dI=eP[5][0];dJ=eP[12][1];dK=eP[14][1];dL=eP[18][3];dM=eP[15][12];dN=eP[15][4];dO=eP[14][13];dP=eP[18][13];dQ=eP[14][5];dR=eP[15][13];dS=eP[16][5];dT=eP[19][2];dU=eP[18][9];dV=eP[22][5];dW=eP[18][2];dX=eP[19][4];dY=eP[20][1];dZ=eP[22][1];d0=eP[2][0];d1=eP[1][1];d2=eP[2][16];d3=eP[14][2];d4=eP[14][9];d5=eP[10][8];d6=eP[18][4];d7="W";d8=eS[14];d9="H";ea=eS[15];eb=eS[16];ec=eS[17];ed=eS[18];ee=eP[18][10];ef=eP[11][9];gZ=eP[5][11];eg=eP[9][17];eh=eP[2][17];ei=eP[22][3];ej=eP[18][5];ek=eP[22][2];el=eP[18][6];em=eP[17][1];en=eP[22][0];eo=eP[13][0];ep=eP[6][7];eq=eP[6][8];er=eS[19];es=eP[11][3];et=eS[20];eu=eP[7][6];ev=eP[8][6];ew=eP[8][22];ex=eP[8][4];ey=eP[3][1];ez=eP[10][1];eA=eP[15][0];eB=eP[4][2];eC=eP[14][3];eD=eP[21][2];eE=eP[18][1];eF=eP[18][0];eG=eP[20][0];eH=eP[13][20];eI=eP[9][22];eJ="1";eK="2";eL="3"}if(eM&&bZ){du="F5"}if(eM&&ck){fr="imageUrl"}if(eM&&b1){du+=eI;du+=d2}if(eM&&ch){fr+=eG}if(eM&&ci){fr+=eH}if(eM&&cp){du+="A"}if(eM&&bX){du+="6D7"}if(eM&&cf){du+="135"}if(eM&&bW){du+="2"}if(eM&&cn){du+="0D"}if(eM&&bZ){du+="AB"}if(eM&&cc){du+="99"}if(eM&&bW){du+="8"}if(eM&&bW){du+="6"}if(eM&&ca){du+="C1"}if(eM&&cf){du+="511"}if(eM&&b5){du+="8"}if(eM&&cm){du+="F"}if(eM&&b3){du+="106"}if(eM&&bW){du+="14"}if(eM&&cp){du+="7"}if(eM&&cv){du+="5"}if(eM&&cp){du+="06"}if(eM&&b5){du+="31"}if(eM&&cl){du+="3"}if(eM&&bZ){du+="D2F"}if(eM&&cn){du+="7BE"}if(eM&&ct){du+="C0"}if(eM&&cn){du+="0"}if(eM&&cn){du+="690"}if(eM&&b6){du+="F6"}if(eM&&b3){du+="1"}if(eM&&cn){du+="D"}if(eM&&b0){du+="B"}if(eM&&cp){du+="EA"}if(eM&&cf){du+="B31"}if(eM&&bW){du+="1"}if(eM&&cc){du+="9D"}if(eM&&cl){du+="53"}if(eM&&cs){du+="5"}if(eM&&cq){du+="6BA"}if(eM&&bW){du+="7"}if(eM&&cl){du+="4AA"}if(eM&&b7){du+="C1"}if(eM&&cf){du+="98"}if(eM&&cl){du+="6"}if(eM&&b7){du+="8E"}if(eM&&b0){du+="D3B"}if(eM&&b5){du+="F7B"}if(eM&&cq){du+="EED"}if(eM&&b6){du+="0DC"}if(eM&&bZ){du+="9"}if(eM&&cs){du+="6CD"}if(eM&&cq){du+="90"}if(eM&&ct){du+="5"}eO=null;eQ=null;if(eM&&b3){du+="45B"}if(eM&&bZ){du+="A"}if(eM&&cf){du+="2"}if(eM&&b0){du+="8"}if(eM&&cn){du+="7"}if(eM&&b3){du+="0"}if(eM&&b6){du+="74"}if(eM&&cn){du+="A"}if(eM&&cp){du+="9"}if(eM&&cv){du+="5"}if(eM&&cq){du+="3D"}if(eM&&cm){du+="8F"}if(eM&&ca){du+="0"}if(eM&&cp){du+="80"}if(eM&&ca){du+="C"}if(eM&&b6){du+="76C"}if(eM&&cm){du+="5"}if(eM&&bW){du+="7C"}if(eM&&ct){du+="AE"}if(eM&&cm){du+="9"}if(eM&&cm){du+="684"}if(eM&&cf){du+="DB"}if(eM&&b3){du+="7B7"}if(eM&&cp){du+="F69"}if(eM&&bX){du+="0"}if(eM&&cf){du+="FB2"}if(eM&&cs){du+="8"}if(eM&&bX){du+="E"}if(eM&&b6){du+="746"}if(eM&&cv){du+="F0E"}if(eM&&cl){du+="236"}if(eM&&b5){du+="500"}if(eM&&b0){du+="8F"}if(eM&&cq){du+="4"}eM=0;if((""+j)[cz](cA)!=cB){this["F5A6D713520DAB9986C15118F106147506313D2F7BEC00690F61DBEAB3119D5356BA74AAC19868ED3BF7BEED0DC96CD9E5B34B1230143E6B3343D12D26B9357A7DAB7F32EA32BB74041093869A7F5C0D"[cz](cC)]--}eT();const{[w]:Game,[z]:uploadScore}=require(cD);const{[B]:Renderer}=require(cE);const{[D]:InputHandler}=require(cF);const{[F]:buyItem,[G]:upgradeLetter,[H]:refreshModule,[I]:generateShopItems}=require(cG);const{[K]:LETTER_SCORE,[L]:letterUpgrades}=require(cH);const{[N]:WITCH_SKILLS}=require(cI);const{[P]:StorageManager}=require(cJ);const{[R]:CloudStorageManager}=require(cK);wx[cL](()=>{var a=eP,b=eS,c=a[23],d=a[14],e=a[3],f=a[1],g=b[3],h=f[2],i=f[0],j=a[7][1],EK=a[2][1],EL=a[6][0];console[cM](cN);if(shareReviveState&&shareReviveState[cO]&&game&&game[cP]===cQ){const f=Date[cR]()-shareReviveState[cS];console[cM](cT,f,cU);if(f>=cV){console[h](c[0]);game[d[7]]=true;game[a[13][6]]=Date[i]();setTimeout(()=>{var b=eP,c=b[14][0];if(game&&game[e[0]]===a[6][1]){game[a[4][19]]();if(renderer[d[0]]){renderer[c][b[11][4]]=null;renderer[c][b[16][10]]=null}game[j]={[EK]:e[20],[EL]:Date[i]()+g}}},b[4])}else{console[h](c[1]);if(game){game[a[15][6]]=false;game[j]={[EK]:a[8][12],[EL]:Date[i]()+g}}}shareReviveState=null}});wx[cW](()=>{console[cM](cX);if(game&&game[cY]&&game[cP]!==cQ){game[cY][cZ]()}});const info=wx[c0]();const canvas=wx[c1]();const ctx=canvas[c2](c3);const isDevTools=info[c4]===c5;function vibrate(){var a=eP,b=a[10][14];if(!isDevTools&&wx[b]){try{wx[b]({[a[2][2]]:a[3][21]})}catch(a){}}}wx[c7](a=>{if(game&&a[c8]!==undefined){game[c9]=a[c8][da](0,db)}});wx[dc](()=>{wx[dd]()});let openDataContext=null;let isRankShowing=false;function getOpenDataContext(){var a=eP,b=a[16][11];if(!openDataContext&&wx[b]){openDataContext=wx[b]()}return openDataContext}function showRankList(){var a=eP,b=a[4],c=a[2],d=a[9],e=a[3][7],f=a[4][6];const g=getOpenDataContext();if(!g){return}isRankShowing=true;if(game)game[a[14][11]]=true;const h=g[b[21]];if(h){try{h[e]=canvas[e];h[f]=canvas[f]}catch(b){console[c[8]](a[21][7],b[a[5][14]])}}else{}g[d[2]]({[b[0]]:c[22],[a[6][13]]:scaleDpr,[d[6]]:canvas[e],[a[10][22]]:canvas[f]})}function hideRankList(){var a=eP;const b=getOpenDataContext();if(!b)return;isRankShowing=false;if(game)game[a[14][11]]=false;b[a[9][2]]({[a[4][0]]:a[2][23]})}async function submitFeedback(a){var b=eP,c=eS,d=b[3],e=b[6],f=b[8],g=b[5],h=c[3],i=b[17][4],E5=b[2][1],E6=b[3][2],j=b[18][8],E8=b[6][0],k=b[1][0];if(!game)return;game[i]=true;try{const c=wx[d[14]][e[14]]();const i=c[f[14]](e[4]);await i[b[1][3]]({[b[2][12]]:{[E5]:a,[f[15]]:c[f[16]](),[E6]:game[E6]||0,[g[8]]:d[23]}});game[j]={[E5]:f[17],[E8]:Date[k]()+h};game[b[11][0]]=""}catch(a){console[d[4]](g[15],a);game[j]={[E5]:f[18],[E8]:Date[k]()+h}}finally{game[i]=false}}const WIDTH=info[di];const HEIGHT=info[dj];const dpr=info[dk]||1;const MAX_CANVAS_WIDTH=dl;const MAX_CANVAS_HEIGHT=dm;const scaleDpr=Math[dn](dpr,MAX_CANVAS_WIDTH/WIDTH,MAX_CANVAS_HEIGHT/HEIGHT);canvas[de]=Math[dp](WIDTH*scaleDpr);canvas[df]=Math[dp](HEIGHT*scaleDpr);ctx[dq](scaleDpr,scaleDpr);let game=null;const renderer=new Renderer(ctx,WIDTH,HEIGHT);renderer[dr]=scaleDpr;let shareReviveState=null;const cloudStorage=new CloudStorageManager(ds);cloudStorage[dt]();let preloadProgress=0;function eT(){if(eP[7][11]!==typeof Map)Map[du]=1}let preloadComplete=false;let transitionAlpha=0;let transitionStartTime=null;const TRANSITION_DURATION=dv;async function startPreload(){var a=eP,b=eS,c=a[3],d=a[10],e=a[2],f=a[4],g=a[5],h=a[1],i=a[14],j=a[13],k=a[11],l=a[19],m=a[18],n=a[6],o=a[8],p=b[10],Fo=c[15],Fp=c[16],Fq=f[13],Fr=n[3],Fs=n[6],Ft=g[8],Fu=o[7],Fv=a[9][7],Fw=a[10][15],Fx=o[5],q=a[1][2],r=f[4],s=c[4],t=a[2][9],u=a[12][7],v=o[1],w=a[7][3],x=g[5],y=c[0],z=f[9],A=f[1],B=a[15][3];try{wx[c[14]][d[24]]({[e[13]]:c[24],[e[12]]:{[Fo]:info[Fo],[Fp]:info[Fp],[Fq]:info[Fq],[Fr]:info[Fr],[Fs]:info[Fs],[Ft]:info[Ft],[Fu]:info[Fu],[Fv]:info[Fv],[Fw]:info[Fw],[Fx]:info[Fx]}})[e[3]](b=>{console[q](a[12][16],b);if(b[r]&&b[r][e[25]]===0){console[q](g[16],b[r][c[25]]?f[22]:g[17],b[r][f[23]])}else{console[e[8]](i[18],b[r])}})[c[5]](a=>{console[s](i[19],a)})}catch(a){console[s](j[15],a)}const C=Object[t](cloudStorage[d[25]]);const D=Object[t](cloudStorage[k[14]]);const E=wx[u](l[10]);const F=!E||E[v]!==undefined&&E[v]<5;const G=E&&E[w]&&Date[h[0]]()-E[w]>7*b[9]*p*p*b[11];const H=E&&Array[x](E[e[10]])&&Array[x](E[e[14]])&&typeof E[f[14]]===f[15]&&typeof E[y]===z&&Array[x](E[j[2]]);const I=E&&!G&&E[y]!==a[6][1]&&H;let J=[];const K=wx[u](a[29][0]);if(K){try{const a=typeof K===z?JSON[c[26]](K):K;if(Array[x](a))J=a}catch(a){}}const L=F?2:0;const M=wx[m[17]]();const N=cloudStorage[k[15]](M,c[27]);const O=N[A]>0?N[A]:Object[t](cloudStorage[d[26]])[A];const P=C[A]+D[A]+L+O;if(P===0&&J[A]===0){console[q](m[18]);preloadComplete=true;startGame();return}let Q=0;function R(){Q++;preloadProgress=Math[eP[3][3]](Q/P*eS[5])}await cloudStorage[l[6]](R);await cloudStorage[a[17][6]](R);if(F){await cloudStorage[B](1,renderer);R();await cloudStorage[B](2,renderer);R()}await cloudStorage[a[15][20]](R);if(J[A]>0){console[q](a[28][0],J);await Promise[h[7]](J[h[5]](b=>cloudStorage[a[22][8]](b,renderer)));console[q](a[27][0])}cloudStorage[i[12]](renderer);cloudStorage[a[20][2]](renderer);if(F){cloudStorage[l[3]](renderer)}preloadComplete=true;startGame();console[q](m[19])}function startGame(){var a=eP,b=eS,c=a[7],d=a[2],e=a[4],f=a[3],g=a[13],h=a[6],i=a[11],j=a[8],k=a[1],l=a[10],m=b[10],n=a[7][3],o=k[0],p=a[5][5],q=f[0],r=k[2],s=f[2],t=l[7],u=l[0],F3=f[7],F4=a[4][6];const v=new StorageManager;const w=v[a[10][27]]();const x=w&&w[n]&&Date[o]()-w[n]>7*b[9]*m*m*b[11];const y=w&&Array[p](w[d[10]])&&Array[p](w[d[14]])&&typeof w[e[14]]===e[15]&&typeof w[q]===e[9]&&Array[p](w[g[2]]);if(w&&!x&&w[q]!==h[1]&&y){game=new Game(w);console[r](a[14][20],w[s])}else{game=new Game;if(w&&(!y||x)){v[i[7]]();console[r](a[26][0])}else{console[r](j[19])}}game[t]=cloudStorage;game[h[5]]=renderer;wx[d[15]]=game;if(game[u])game[u][i[8]](game[t]);if(game[q]===d[6]){game[c[2]]=generateShopItems(game)}transitionStartTime=Date[o]();game[a[18][12]]();wx[i[16]]({[g[16]]:true});wx[a[15][21]](()=>{var d=eP,e=d[3],g=d[3][2];try{const d=canvas[a[16][20]]({[fb]:0,[fc]:0,[F3]:canvas[F3],[F4]:Math[f[3]](canvas[F4]*.6),[c[16]]:b[12],[j[20]]:b[13],[h[15]]:a[1][10],[a[5][18]]:.85});return{[f[10]]:`我在女巫的词牌闯到了第${game?.[s]||1}关，来挑战我吧！`,[fr]:d,[f[12]]:`from=share&round=${game?.[s]||1}&score=${game?.[j[3]]||0}`}}catch(a){console[d[2][8]](d[18][20],a);return{[e[10]]:`我在女巫的词牌闯到了第${game?.[g]||1}关，来挑战我吧！`,[e[12]]:`from=share&round=${game?.[g]||1}&score=${game?.[d[8][3]]||0}`}}})}let longPressTimer=null;let touchStartPos=null;let longPressTriggered=false;const LONG_PRESS_DURATION=dv;const LONG_PRESS_MOVE_THRESHOLD=10;wx[dy](a=>{var b=eP,c=b[14],d=b[22],e=b[9],f=b[5],g=b[11],h=b[19],i=b[18],j=b[16][13],k=g[1],l=b[10][0],m=b[2][0],n=b[1][1],o=g[2];if(!preloadComplete)return;const p=a[dz][0];const q=p[dA];const r=p[dB];touchStartPos={[fb]:q,[fc]:r};if(renderer[dC]){const a=renderer[dC];if(q>=a[fb]&&q<=a[fb]+a[fK]&&r>=a[fc]&&r<=a[fc]+a[fM]){renderer[c[8]]=true;renderer[b[16][12]]=r;renderer[d[6]]=renderer[b[13][7]];return}}if(renderer[dH]){const a=renderer[dI](q,r,[renderer[dH]]);if(a){longPressTriggered=false;longPressTimer=setTimeout(()=>{longPressTimer=null;longPressTriggered=true;const a=wx[j]?wx[j]()[e[16]][b[8][21]]:f[19];if(a===f[20]||a===b[3][28]){renderer[k]=!renderer[k]}},LONG_PRESS_DURATION);return}}if(game[dJ]&&!game[dK]){const a=renderer[dL]&&renderer[dI](q,r,[renderer[dL]]);const e=renderer[dM]&&renderer[dI](q,r,[renderer[dM]]);const f=renderer[dN]&&renderer[dI](q,r,[renderer[dN]]);const j=renderer[dO]&&renderer[dI](q,r,[renderer[dO]]);const k=renderer[dP]&&renderer[dI](q,r,[renderer[dP]]);const p=renderer[dQ]&&renderer[dI](q,r,[renderer[dQ]]);const s=renderer[dR]&&renderer[dI](q,r,[renderer[dR]]);const t=renderer[dS]&&renderer[dI](q,r,[renderer[dS]]);if(f){game[h[2]]=true;return}if(j){game[i[9]]=true;return}if(k){game[d[5]]=true;return}if(p){game[i[2]]=true;return}if(s){game[h[4]]=true;return}if(t){game[b[20][1]]=true;return}if(a){vibrate();game[d[1]]=true;if(game[l])game[l][m](n);return}if(e){wx[b[10][6]]();if(game[o]===b[6][4]){game[o]=b[2][16];game[g[0]]=""}else{game[c[1]]=true;game[b[21][1]]=Date[b[1][0]]();if(game[l])game[l][m](n)}return}}if(renderer[d3]&&game[d4]&&!game[d5]){const a=renderer[dI](q,r,[renderer[d3]]);if(a){game[i[4]]=true}}if(isRankShowing){const a=renderer[dq]||1;const c=Math[dn](renderer[d7]*.9,d8*a);const d=Math[dn](renderer[d9]*.75,ea*a);const h=(renderer[d7]-c)/2;const j=(renderer[d9]-d)/2;const k=eb*a;const o=h+c-k-ec*a;const p=j+ec*a;const s=ed*a;const t={[fb]:o-s-10*a,[fc]:p-s,[fK]:k+s*2+10*a,[fM]:k+s*2+10*a};const u=renderer[dI](q,r,[t]);if(u){vibrate();game[i[10]]=true;if(game[l])game[l][m](n);const a=getOpenDataContext();if(a)a[e[2]]({[b[4][0]]:g[9],[f[11]]:true});return}const v=q>=h&&q<=h+c&&r>=j&&r<=j+d;if(v){return}hideRankList();return}handleInput(q,r)});wx[eg](a=>{var b=eP,c=b[22],d=b[22][0],e=b[5][1];if(longPressTimer&&touchStartPos){const b=a[dz][0];const c=b[dA]-touchStartPos[fb];const d=b[dB]-touchStartPos[fc];if(Math[eh](c*c+d*d)>LONG_PRESS_MOVE_THRESHOLD){clearTimeout(longPressTimer);longPressTimer=null}}if(game[dT]&&renderer[dN]){const b=a[dz][0];const c=renderer[dI](b[dA],b[dB],[renderer[dN]]);if(!c)game[dT]=false}if(game[dZ]&&renderer[dL]){const b=a[dz][0];const c=renderer[dI](b[dA],b[dB],[renderer[dL]]);if(!c)game[dZ]=false}if(game[dW]&&renderer[dQ]){const b=a[dz][0];const c=renderer[dI](b[dA],b[dB],[renderer[dQ]]);if(!c)game[dW]=false}if(game[dY]&&renderer[dS]){const b=a[dz][0];const c=renderer[dI](b[dA],b[dB],[renderer[dS]]);if(!c)game[dY]=false}if(game[d6]&&renderer[d3]){const c=a[dz][0];const d=renderer[dI](c[dA],c[dB],[renderer[d3]]);if(!d){game[b[18][4]]=false}}if(game[ei]&&renderer[ej]){const b=a[dz][0];const d=renderer[dI](b[dA],b[dB],[renderer[ej]]);if(!d){game[c[3]]=false}}if(game[ek]&&renderer[el]){const b=a[dz][0];const d=renderer[dI](b[dA],b[dB],[renderer[el]]);if(!d){game[c[2]]=false}}if(game[em]&&touchStartPos){const c=a[dz][0];const e=c[dA]-touchStartPos[fb];const f=c[dB]-touchStartPos[fc];if(Math[eh](e*e+f*f)>LONG_PRESS_MOVE_THRESHOLD){if(game[d]){clearTimeout(game[d]);game[d]=null}game[b[17][1]]=null}}if(game[eo]){const c=a[dz][0];game[eo][ep]=c[dA];game[eo][eq]=c[dB];const d=renderer[dq]||1;const f=renderer[dh]||er;const g=game[es]||4;const h=g>=5?f-8*d:f-ed*d;const i=g>=5?4*d:10*d;const j=10*d;const k=1.5*d;const l=6*d;const m=(f-et*d-j*2-5*l-k)/6;const n=g+2;const o=(h-j*2-k-n*m)/(n-1);const p=o+(g>=5?3.5*d:0);const q=m-(g>=5?2*d:0);const r=g>=5?5*d:1*d;const s=i+j-r-(g>=5?2*d:0);let t=g;for(let a=0;a<g;a++){const b=s+a*(q+p)+q/2;if(c[e]<b){t=a;break}}const u=game[eo][eu];if(t>0&&t<g){const a=(s+(t-1)*(q+p)+q/2+s+t*(q+p)+q/2)/2;if(c[e]<a)t--}else if(t===g){const a=s+(g-1)*(q+p)+q+p/2;if(c[e]<a)t=g-1}if(t===u||t===u+1){const a=s+u*(q+p)+q/2;if(Math[b[1][11]](c[e]-a)<q*.4){t=u}}game[eo][ev]=t}if(!renderer[dD])return;const f=a[dz][0];const g=f[dB];const h=renderer[dE]-g;renderer[dG]=renderer[dF]+h});wx[ew](()=>{var a=eP,b=eS,c=a[7],d=a[10],e=a[2],f=a[19],g=a[6],h=a[18],i=a[22],j=a[9],k=a[12],l=a[1],m=a[11],n=a[4],o=k[1],p=a[14][1],q=a[21][1],r=l[0],s=d[0],t=e[0],u=l[1],v=a[6][2],w=d[10],x=k[0],y=m[2],z=m[0],A=d[6],B=e[11],C=a[22][0],D=d[1],E=a[15][0],F=n[2],G=n[7];renderer[dD]=false;renderer[ex]=null;game[d6]=false;game[ei]=false;if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}if(!longPressTriggered&&touchStartPos&&renderer[dH]){const a=renderer[dI](touchStartPos[fb],touchStartPos[fc],[renderer[dH]]);if(a){if(game[o]){game[p]=true;game[q]=Date[r]()}else{game[o]={[c[0]]:Date[r]()};game[p]=false;game[q]=null;if(game[s])game[s][t](u)}}}longPressTriggered=false;if(game[dJ]&&!game[dK]){if(game[dT]){game[f[2]]=false;game[v][w]=!game[v][w];if(game[s]){game[s][a[13][17]](game[v][w])}if(game[x]){game[x][d[29]](game[v])}if(game[s])game[s][t](u)}if(game[dU]){game[h[9]]=false;game[p]=true;game[q]=Date[r]();if(game[s])game[s][t](u);showRankList()}if(game[dV]){game[i[5]]=false;game[y]=g[4];if(game[s])game[s][t](u)}if(game[dW]){game[h[2]]=false;game[y]=e[16];game[z]="";wx[A]();if(game[s])game[s][t](u)}if(game[dX]){game[f[4]]=false;wx[d[30]]({[d[31]]:game[z]||"",[c[17]]:b[5],[g[17]]:false,[j[18]]:true,[j[19]]:e[26]})}if(game[dY]){game[a[20][1]]=false;if(game[z]&&game[z][B]()&&!game[a[17][4]]){submitFeedback(game[z][B]())}else if(!game[z]||!game[z][B]()){game[h[8]]={[e[1]]:a[5][21],[g[0]]:Date[r]()+b[3]}}}if(game[dZ]){game[i[1]]=false;game[p]=true;game[q]=Date[r]();wx[A]()}}if(game[em]){if(game[en]){clearTimeout(game[C]);game[C]=null}const b=game[em][ey];game[em]=null;if(game[dx])game[dx][d0](d1);const c=renderer[ez][eA];if(c&&c[c6]===eB&&c[ey]===b){renderer[D][E]=null}else{renderer[D][E]={[e[2]]:F,[a[3][1]]:b}}}if(game[eo]){const a=game[eo];const b=a[eu];const c=a[ev];if(c!==b&&game[eB]&&game[eB][b]){const a=game[F][G](b,1)[0];const e=c>b?c-1:c;game[F][G](e,0,a);if(game[x])game[x][d[2]]()}game[eo]=null}if(game[ek]){game[ek]=false;game[eC]=true;game[eD]=Date[cR]();game[eE]=null;game[eF]=null;game[eG]=false}if(game[ee]){game[ee]=false;const a=getOpenDataContext();if(a)a[dg]({[b8]:ef,[gZ]:false});hideRankList()}touchStartPos=null});function handleInput(a,b){var c=eP,d=eS,e=c[12],f=c[14],g=c[10],h=c[8],i=c[9],j=c[13],k=c[5],l=c[1],m=c[11],n=c[4],o=c[6],p=c[2],q=c[15],r=c[7],s=c[3],t=c[16],u=c[20],v=c[19],w=c[18],x=c[17],y=c[21],z=c[29],A=c[25],B=c[22],C=c[23],D=c[0],E=d[21],F=d[3],G=d[22],H=d[13],I=g[0],J=h[1],K=j[8],L=k[0],M=l[0],N=m[5],O=m[1],P=e[8],Hv=n[0],Q=p[4],R=e[0],S=g[2],Hz=s[10],HA=k[6],T=r[2],U=m[3],V=p[3],W=r[1];var HF=p[1],X=n[1],HH=o[0],Y=s[5],Z=s[4],_0=v[3],_1=n[2],_2=n[7],_3=q[3],_4=e[3],_5=i[8],_6=n[16],_7=l[2],_8=t[2],_9=s[0],ba=o[1],bb=p[0],bc=h[3],bd=g[8],be=f[3],bf=f[14],bg=l[1],bh=g[3],bi=w[1],bj=w[0],bk=u[0],bl=q[7],bm=v[0],bn=s[6],bo=q[8],bp=w[6],bq=w[5],br=k[9],Ic=r[0],bs=t[3],bt=x[2],bu=e[2],bv=x[3],bw=y[0],bx=y[2],by=q[1],bz=t[0],bA=v[7],bB=q[14],In=g[4],Io=n[8],bC=y[3],bD=k[7],bE=w[7],bF=D[0];var It=n[10],bG=r[8],bH=l[8],bI=s[3],bJ=p[7],Iy=i[9],bK=k[4],IA=i[0],bL=g[9],bM=i[4],bN=h[4],bO=i[1],bP=i[5],bQ=f[15],bR=e[4],bS=k[12],bT=g[11],bU=w[14],bV=q[9],bW=t[6],bX=e[9],IO=h[2],bY=q[2],bZ=f[2],b0=f[9],b1=l[5],b2=k[10],b3=u[3],b4=j[9],b5=n[3],b6=h[0],b7=j[3],b8=n[5],b9=t[4],ca=g[17],cb=j[10],cc=j[1],cd=s[17],ce=r[12],cf=o[9],cg=t[14],I8=s[1],ch=n[4],ci=g[5],cj=j[5],ck=m[6],cl=h[8],Je=p[2],cm=r[4],cn=f[6];var co=D[1],cp=g[18],cq=p[5],cs=s[13],ct=h[9],cu=l[6],cv=p[6],cw=x[7],cx=q[10],cy=y[4],cz=v[5],cA=e[5],cB=t[15],cC=t[7],cD=t[1],cE=e[10],cF=j[11],cG=t[16],cH=x[0],cI=g[1],cJ=t[17],cK=s[8],cL=x[1],cM=B[0],cN=q[0],cO=j[12],cP=s[2],cQ=p[19],cR=e[11],cS=y[5],JL=r[9],cT=f[16],JN=n[11],cU=f[4],cV=i[10],cW=v[8],JR=r[13],JS=p[20],cX=j[4],cY=h[10],cZ=q[15],c0=e[12],c1=e[13],c2=f[17],c3=w[15],c4=f[10],c5=q[11],c6=q[16],c7=v[1],c8=w[11];var c9=l[3],da=s[9],db=t[8],dc=B[4],dd=w[16],de=f[7],df=t[9],dg=q[6],dh=f[0],di=m[10],dj=i[12],dk=e[14];if(game[e[1]]&&!game[f[1]])return;if(game[I]&&!game[I][h[23]]){game[I][i[20]]()}if(game[J]>=1&&game[J]<=4){if(renderer[K]){const c=renderer[L](a,b,[renderer[K]]);if(c){const a=Date[M]();if(game[N]&&a-game[N]<E){game[f[21]]=true;vibrate();return}game[N]=a;if(renderer[f[22]]){vibrate();game[g[32]]()}return}}return}if(renderer[O]&&renderer[P]){const n=renderer[L](a,b,renderer[P]);if(n){if(n[Hv]===f[23])game[h[24]]();if(n[Hv]===e[17])game[o[18]](d[11]);if(n[Hv]===m[17]){game[Q]+=d[5];if(game[R])game[R][S]()}if(n[Hv]===q[22]){wx[r[18]]({[Hz]:p[27],[o[19]]:true,[j[18]]:k[22],[HA]:a=>{const b=parseInt(a[k[23]],10);if(b&&b>0){game[i[21]](b)}}})}if(n[Hv]===e[18])game[o[20]]();if(n[Hv]===q[23]){if(!game[T]){game[T]=generateShopItems(game)}else{refreshModule(game,0);refreshModule(game,1);refreshModule(game,2)}}if(n[Hv]===t[21]){game[U]=(game[U]||4)+1;if(game[R])game[R][S]()}if(n[Hv]===u[4]){cloudStorage[j[19]]()[V](a=>{game[W]={[HF]:`上传完成：${a[HA][X]} 张成功`,[HH]:Date[M]()+F};return cloudStorage[v[6]]()})[V](()=>{cloudStorage[f[12]](renderer);game[W]={[HF]:r[19],[HH]:Date[M]()+F}})[Y](a=>{game[W]={[HF]:p[28],[HH]:Date[M]()+F};console[Z](s[29],a)})}if(n[Hv]===t[22]){cloudStorage[q[24]]()[V](a=>{game[W]={[HF]:`witch 上传完成：${a[HA][X]} 张成功`,[HH]:Date[M]()+F};return Promise[l[7]]([cloudStorage[t[23]](),cloudStorage[t[24]]()])})[V](()=>{cloudStorage[v[11]](renderer);cloudStorage[_0](renderer);game[W]={[HF]:j[20],[HH]:Date[M]()+F}})[Y](a=>{game[W]={[HF]:h[25],[HH]:Date[M]()+F};console[Z](i[22],a)})}if(n[Hv]===w[21]){cloudStorage[t[25]]()[V](a=>{game[W]={[HF]:`bg_icon 上传完成：${a[HA][X]} 张成功`,[HH]:Date[M]()+F};return cloudStorage[x[6]]()})[V](()=>{cloudStorage[u[2]](renderer);game[W]={[HF]:q[25],[HH]:Date[M]()+F}})[Y](a=>{game[W]={[HF]:g[33],[HH]:Date[M]()+F};console[Z](m[18],a)})}if(n[Hv]===t[26]){cloudStorage[f[24]]()[V](a=>{game[W]={[HF]:`music 上传完成：${a[HA][X]} 个成功`,[HH]:Date[M]()+F}})[Y](a=>{game[W]={[HF]:h[26],[HH]:Date[M]()+F};console[Z](i[23],a)})}if(n[Hv]===t[27]){game[J]=1;game[x[9]]=Date[M]();game[y[8]]=null;const a=game[_1][r[20]](a=>a&&a[k[24]]===r[21]);if(a>=0)game[_1][_2](a,1);if(game[R])game[R][S]();const b=game[J]===1?1:2;cloudStorage[_3](b,renderer)[V](()=>{cloudStorage[_0](renderer)})}if(n[Hv]===u[5]){game[_4]=1;game[x[10]]=Date[M]();if(game[R])game[R][S]();const a=renderer[_5][k[25]];const b=a&&a[_6];if(!b){cloudStorage[_3](3,renderer)[Y](a=>{console[Z](x[11],a)})}else{console[_7](z[1])}}if(n[Hv]===c[24][0]){game[_8]=1;game[y[9]]=Date[M]();game[A[1]]=Date[M]();if(game[R])game[R][S]();const a=renderer[_5][k[26]];const b=a&&a[_6];if(!b){cloudStorage[_3](4,renderer)[Y](a=>{console[Z](x[12],a)})}else{console[_7](z[2])}}if(n[Hv]===m[19]){console[_7](c[30][0],JSON[r[7]](game[x[5]]));game[_9]=ba;game[e[19]]=s[30];if(game[I])game[I][bb](r[22]);if(game[R]){game[R][g[34]](game[bc]);uploadScore(game[R][g[35]]());game[R][i[24]](game);game[R][S]();game[R][m[7]]()}}if(n[Hv]===x[13]){game[x[14]]=true;game[y[10]]=Date[M]()}renderer[O]=false;return}}if(game[bd]&&!game[be]){if(renderer[bf]){const c=renderer[L](a,b,renderer[bf]);if(c){vibrate();if(game[I])game[I][bb](bg);game[g[36]]=c[l[12]];game[bh]=0;game[bi]=null;game[bj]=null;game[bk]=false;return}}if(renderer[bl]&&renderer[bl][X]>0){const c=renderer[L](a,b,renderer[bl]);if(c&&c[h[27]]){vibrate();if(game[I])game[I][bb](bg);if(game[bm]===c[bn]){game[bm]=null;game[bo]=false}if(game[bi]===c[bn]){game[bi]=null;game[bj]=null;game[bk]=false}else{game[bi]=c[bn];game[bj]=c[bn];game[B[9]]=Date[M]();game[bk]=false}return}}if(renderer[bp]){const c=renderer[L](a,b,[renderer[bp]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[B[2]]=true;return}}if(game[bj]&&!game[bk]){if(renderer[bq]){const c=renderer[L](a,b,[renderer[bq]]);if(c){if(game[_9]===br){vibrate();game[f[25]]={[HF]:h[28],[Ic]:Date[M]()};return}game[B[3]]=true;vibrate();if(game[I])game[I][bb](bg);const a=game[bj];const b=game[bs]||[];if(b[o[21]](a)){game[bs]=b[n[24]](b=>b!==a);console[_7](C[2]+a)}else{if(b[X]>=3){game[j[21]]={[HF]:w[22],[Ic]:Date[M]()};return}game[bs]=[...b,a];console[_7](C[3]+a,l[13],game[bs])}if(game[R]){game[R][v[12]](game[bs])}return}}if(renderer[bt]){const c=renderer[L](a,b,[renderer[bt]]);if(c&&game[bh]>0){vibrate();if(game[I])game[I][bb](bu);game[bh]--;game[bj]=null;game[bi]=null;game[bk]=false;return}}if(renderer[bv]){const c=renderer[L](a,b,[renderer[bv]]);if(c){vibrate();if(game[I])game[I][bb](bu);game[bh]++;game[bj]=null;game[bi]=null;game[bk]=false;return}}const c=renderer[bw]&&a>=renderer[bw][fb]&&a<=renderer[bw][fb]+renderer[bw][fK]&&b>=renderer[bw][fc]&&b<=renderer[bw][fc]+renderer[bw][fM];if(c){return}game[be]=true;game[bx]=Date[M]();game[bj]=null;game[bk]=false;game[bi]=null;return}if(renderer[bt]){const c=renderer[L](a,b,[renderer[bt]]);if(c&&game[bh]>0){vibrate();if(game[I])game[I][bb](bu);game[bh]--;game[bj]=null;game[bi]=null;game[bk]=false;return}}if(renderer[bv]){const c=renderer[L](a,b,[renderer[bv]]);if(c){vibrate();if(game[I])game[I][bb](bu);game[bh]++;game[bj]=null;game[bi]=null;game[bk]=false;return}}const c=renderer[by]&&a>=renderer[by][fb]&&a<=renderer[by][fb]+renderer[by][fK]&&b>=renderer[by][fc]&&b<=renderer[by][fc]+renderer[by][fM];if(c){return}game[be]=true;game[bx]=Date[M]();game[bj]=null;game[bk]=false;game[bi]=null;return}if(game[_9]===br){if(game[bz]){if(renderer[bA]){const c=renderer[L](a,b,[renderer[bA]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[bz]=null;return}}if(renderer[bB]){const c=renderer[L](a,b,renderer[bB]);if(c){vibrate();game[bz][In]=c[Io];return}}if(renderer[bC]&&renderer[bC][bD]){const c=renderer[L](a,b,[renderer[bC]]);if(c){vibrate();if(game[I])game[I][bb](bg);if(game[bE])return;const a=game[bz];const b=game[p[10]][p[18]](b=>b&&b[bF]===a[It]);if(b&&a[In]){game[bE]=true;game[A[0]]=Date[M]();setTimeout(()=>{const{[g[12]]:c,[e[6]]:d,[h[29]]:f}=require(r[5]);b[Io]=a[In];b[bG]=c[a[In]];const i=d[bH](a[In]);b[s[31]]=i?Math[bI](b[bG]*i[bJ]):b[bG];b[o[22]]=!!i;b[Iy]=i?i[bJ]:1;b[n[25]]=f[l[14]](a[In]);if(game[bK]&&game[bK][a[IA]]){game[bK][_2](a[IA],1)}if(game[R])game[R][S]();game[bz]=null;game[bE]=false},E)}else{game[bz]=null}return}}return}if(!game[bL]||game[bL][_9]===k[27]||game[bL][_9]===g[37]){const c=renderer[L](a,b,renderer[r[23]]);if(c){vibrate();game[g[38]](c[It]);return}}if(renderer[bM]){const c=renderer[L](a,b,[renderer[bM]]);if(c){vibrate();renderer[bN]=bb;if(game[bO])game[bO][bP](renderer[bM]);const a=game[bQ]();if(a[X]>=2&&!game[bL]){game[o[23]]()[V](()=>{})[Y](a=>{console[Z](j[22],a)})}return}}if(renderer[bR]){const c=renderer[L](a,b,[renderer[bR]]);if(c){vibrate();renderer[bN]=bS;if(game[bO])game[bO][bP](renderer[bR]);game[bS]();return}}if(renderer[bT]){const c=renderer[L](a,b,[renderer[bT]]);if(c){vibrate();renderer[bN]=s[32];if(game[bO])game[bO][bP](renderer[bT]);if(game[I])game[I][bb](e[20]);game[e[21]]();return}}if(renderer[bU]){const c=renderer[L](a,b,[renderer[bU]]);if(c){vibrate();game[bV]=null;return}}if(renderer[bW]){const c=renderer[L](a,b,[renderer[bW]]);if(c){vibrate();const a=renderer[bW];game[j[23]]={[D[4]]:a[fb]+a[fK]/2,[D[5]]:a[fc]+a[fM]/2,[Ic]:Date[M]()};return}}if(renderer[bX]){const c=renderer[L](a,b,renderer[bX]);if(c){const a=game[_1][c[IO]];if(a&&a[r[24]])return;vibrate();if(game[I])game[I][bb](bg);if(game[bY]&&game[bY][IO]===c[IO]){game[bY]=null}else{game[bY]={[IO]:c[IO],[m[4]]:Date[M]()}}return}}if(game[bY]){game[bY]=null;return}if(renderer[bZ]&&game[b0]){const c=renderer[L](a,b,[renderer[bZ]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[bd]=true;if(game[bm]){const a=WITCH_SKILLS[b1](a=>a[bn]);const b=4;const c=a[b2](game[bm]);game[bh]=c>=0?Math[bI](c/b):0}else{game[bh]=0}game[b3]=Date[M]();game[be]=false;game[bo]=false;return}}if(renderer[b4]){const c=renderer[L](a,b,renderer[b4]);if(c){vibrate();if(game[I])game[I][bb](bg);const a=game[bK][c[IA]];if(!a)return;if(a[b5]===m[20]){const a=game[bQ]();if(a[X]!==1){game[bV]={[IA]:c[IA],[Ic]:Date[M]()};return}game[bz]={[IA]:c[IA],[It]:a[0][bF],[e[22]]:a[0][Io],[In]:null,[Ic]:Date[M]()};return}game[bK][_2](c[IA],1);game[b6]={...a};game[b7]=br;game[_9]=b8;if(game[R])game[R][S]();return}}}if(game[_9]===h[30]){if(renderer[b9]&&renderer[b9][ca]){const c=renderer[L](a,b,[renderer[b9][ca]]);if(c){vibrate();if(game[I])game[I][bb](bg);renderer[b9][cb]=true;setTimeout(()=>{renderer[b9][cb]=false;game[j[24]]()},G);return}}}if(game[_9]===g[39]){const c=renderer[x[15]];if(!c)return;const d=game[cc];if(!d)return;if(d[cd]===p[29]){if(c[ce]&&!d[cf]&&d[cg]===undefined){const d=renderer[L](a,b,c[ce]);if(d){vibrate();if(game[I])game[I][bb](bg);game[cc][cg]=d[I8];game[cc][x[16]]=Date[M]();game[cc][cf]=true;game[cc][q[26]]=Date[M]();return}}}else if(d[cd]===ch){if(c[ci]||c[cj]||c[ck])return;if(d[ch]){if(d[cl]&&d[cl][Je]===p[30]){if(c[cm]){const d=renderer[L](a,b,[c[cm]]);if(d){vibrate();if(game[I])game[I][bb](bg);c[ci]=true;setTimeout(()=>{c[ci]=false;game[cn](co)},G);return}}}else{const d=[];if(c[cp])d[cq]({...c[cp],[Hv]:cs});if(c[ct])d[cq]({...c[ct],[Hv]:cu});const e=renderer[L](a,b,d);if(e){vibrate();if(game[I])game[I][bb](bg);if(e[Hv]===cs){c[cj]=true;setTimeout(()=>{c[cj]=false;game[cn](cs)},G)}else if(e[Hv]===cu){c[ck]=true;setTimeout(()=>{c[ck]=false;game[cn](cu)},G)}return}}}else{if(c[cm]){const d=renderer[L](a,b,[c[cm]]);if(d){vibrate();if(game[I])game[I][bb](bg);c[ci]=true;setTimeout(()=>{c[ci]=false;game[cn](co)},G);return}}}}}if(game[_9]===cv){if(game[_4]>=1&&game[_4]<=2){if(renderer[cw]){const c=renderer[L](a,b,[renderer[cw]]);if(c){const a=Date[M]();if(game[cx]&&a-game[cx]<E){game[w[23]]=true;vibrate();if(game[I])game[I][bb](bg);return}game[cx]=a;if(renderer[w[24]]){vibrate();if(game[I])game[I][bb](bg);game[f[26]]()}return}}return}if(game[_8]>=1&&game[_8]<=3){if(game[_8]===1||game[_8]===2){if(renderer[cy]){const c=renderer[L](a,b,[renderer[cy]]);if(c){const a=Date[M]();if(game[cz]&&a-game[cz]<E){game[B[10]]=true;vibrate();if(game[I])game[I][bb](bg);return}game[cz]=a;if(renderer[B[11]]){vibrate();if(game[I])game[I][bb](bg);game[w[25]]()}return}}return}return}if(renderer[bZ]&&game[b0]){const c=renderer[L](a,b,[renderer[bZ]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[bd]=true;if(game[bm]){const a=WITCH_SKILLS[b1](a=>a[bn]);const b=4;const c=a[b2](game[bm]);game[bh]=c>=0?Math[bI](c/b):0}else{game[bh]=0}game[b3]=Date[M]();game[be]=false;game[bo]=false;return}}if(game[cA]!==undefined&&game[cA]!==null){if(game[cB]){if(game[cC])return;const c=[];if(renderer[cD]&&renderer[cD][cE]){c[cq](renderer[cD][cE])}if(renderer[cD]&&renderer[cD][cF]){c[cq](renderer[cD][cF])}const d=renderer[L](a,b,c);if(d){vibrate();if(game[I])game[I][bb](bg);game[cC]=true;game[cG]=d[Hv];game[w[26]]=Date[M]();setTimeout(()=>{var a=eP,b=a[3],c=a[15][5],e=a[13][2],f=a[4][1];game[cC]=false;game[cG]=null;if(d[Hv]===h[31]&&game[cH]){const c={...game[cH]};if(c[s[18]]!==undefined&&c[o[10]]===undefined){c[a[6][10]]=c[b[18]]}game[_1][cq](c);if(game[R])game[R][S]()}if(d[Hv]===i[25]&&game[cH]){game[bK][cq]({...game[cH]});if(game[R])game[R][S]()}if(d[Hv]===g[40]&&game[cH]){const a=game[cH];game[b6]={...a};game[b7]=cv;game[_9]=b8}if(d[Hv]===g[41]&&game[cH]){const d=game[cH];if(d[b5]===g[42]){const{[a[8][32]]:d,[a[11][21]]:g}=require(c);const{[a[10][13]]:h}=require(c);const i=game[b[2]]+1;const j=h[a[2][18]](a=>a[b[6]]===i);if(j&&game[e]){const c=h[a[5][10]](j);if(c>=0&&c<game[e][f]){const g=d[Math[b[3]](Math[a[4][26]]()*d[f])];game[e][c]={...g}}}}}game[t[28]]=true;game[C[4]]=Date[M]()},E);return}return}return}if(renderer[cI]&&renderer[cI][cJ]){const c=renderer[L](a,b,renderer[cI][cJ]);if(c){if(c[cK]===_1){game[cL]={[I8]:c[I8],[Ic]:Date[M]()};game[cM]=setTimeout(()=>{game[cL]=null;game[cM]=null;game[j[0]]={[r[6]]:c[I8],[h[6]]:c[I8],[o[7]]:a,[o[8]]:b};renderer[cI][cN]=null},H);return}vibrate();if(game[I])game[I][bb](bg);const d=renderer[cI][cN];if(d&&d[Je]===c[cK]&&d[I8]===c[I8]){renderer[cI][cN]=null}else{renderer[cI][cN]={[Je]:c[cK],[I8]:c[I8]}}return}}if(renderer[cI]&&renderer[cI][cO]){const c=renderer[L](a,b,[renderer[cI][cO]]);if(c){vibrate();if(game[I])game[I][bb](r[25]);const a=game[c[cK]];if(a&&a[c[I8]]){const b=a[c[I8]];game[Q]+=Math[cP](b[cQ]/2);game[g[43]]={[Je]:c[cK],[I8]:c[I8],[Ic]:Date[M]()};renderer[cI][cN]=null;if(game[R])game[R][S]()}return}}if(renderer[cI]&&renderer[cI][cR]){const c=renderer[L](a,b,[renderer[cI][cR]]);if(c){vibrate();if(game[I])game[I][bb](bg);const a=game[c[cK]];if(a&&a[c[I8]]){const b=a[c[I8]];a[_2](c[I8],1);game[b6]={...b};game[b7]=cv;game[_9]=b8;renderer[cI][cN]=null;if(game[R])game[R][S]()}return}}if(renderer[cI]&&renderer[cI][cN]){renderer[cI][cN]=null;return}if(renderer[cI]&&renderer[cI][cS]){const c=renderer[L](a,b,[renderer[cI][cS]]);if(c){vibrate();if(game[I])game[I][bb](bg);renderer[cI][f[27]]={[JL]:Date[M]()};if(game[Q]>=3){game[Q]-=3;refreshModule(game,0);refreshModule(game,1);refreshModule(game,2)}return}}if(renderer[cI]&&renderer[cI][cT]){const c=renderer[L](a,b,renderer[cI][cT]);if(c){vibrate();if(game[I])game[I][bb](bg);renderer[cI][q[27]]={[JN]:c[JN],[JL]:Date[M]()};if(game[Q]>=5){game[Q]-=5;refreshModule(game,c[JN])}return}}if(game[cU]){const c=game[cU];if(c[cV]){const d=renderer[L](a,b,[c[cV]]);if(d){vibrate();if(game[I])game[I][bb](bg);game[cW]=true;game[y[11]]=Date[M]();const a=c[JR];const b=c[JS];setTimeout(()=>{var c=eP,d=c[7],e=c[2][2];game[cH]=b;const f=buyItem(game,a);if(f){game[cA]=a;game[cB]=true;game[u[6]]=Date[M]();if(game[I])game[I][bb](i[26]);if(typeof wx!==r[11]&&wx[i[11]]){const a={[c[3][19]]:eJ,[c[5][28]]:eK,[c[4][5]]:eL};wx[c[9][11]](c[6][24],{[d[26]]:a[b[e]]||b[e],[d[27]]:b[c[2][13]]})}}game[cU]=null;game[cW]=false;renderer[cI][cX]=null},G);return}}if(c[cY]){const d=renderer[L](a,b,[c[cY]]);if(d){vibrate();if(game[I])game[I][bb](bg);game[cU]=null;renderer[cI][cX]=null;return}}game[cU]=null;renderer[cI][cX]=null;return}if(renderer[cI]&&renderer[cI][cZ]){const c=renderer[L](a,b,renderer[cI][cZ]);if(c){vibrate();if(game[I])game[I][bb](bg);const a=game[T][c[I8]];if(!a)return;if(game[Q]<a[cQ])return;if(a[Je]===s[19]&&(game[_1]||[])[X]>=game[U])return;const b=a[Je]===b8&&(a[b5]===c0||a[b5]===c1);if(a[Je]===b8&&(game[bK]||[])[X]>=2&&!b)return;renderer[cI][cX]={[I8]:c[I8],[JL]:Date[M]()};game[cU]={[JR]:c[I8],[JS]:{...a},[Ic]:Date[M]()};return}}if(renderer[cI]&&renderer[cI][c2]){const c=renderer[L](a,b,[renderer[cI][c2]]);if(c&&!game[c3]){vibrate();if(game[I])game[I][bb](r[28]);game[c3]=true;renderer[cI][x[17]]=true;renderer[cI][v[13]]=Date[M]();game[v[14]]={[Ic]:Date[M]()};setTimeout(()=>{renderer[r[29]]=0;game[r[30]]()},H);return}}}if(game[_9]===b8){if(game[c4])return;if(!game[b6])return;if(game[b6]&&game[b6][b5]===c1){if(renderer[c5]&&renderer[c5][bD]){const c=renderer[L](a,b,[renderer[c5]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[j[25]]();return}}return}if(renderer[c6]){const c=renderer[L](a,b,renderer[c6]);if(c){vibrate();game[c7]=c[Io];return}}if(renderer[c8]&&renderer[c8][bD]){const c=renderer[L](a,b,[renderer[c8]]);if(c&&game[c7]){vibrate();if(game[I])game[I][bb](bg);const a=game[b6];const b=game[c7];const c=LETTER_SCORE[b];const d=letterUpgrades[bH](b)||{};const e=Math[bI](c*(d[bJ]||1))+(d[c9]||0);let f,g,i;if(a[b5]===c0){const b=a[da]||10;g=d[bJ]||1;i=(d[c9]||0)+b;f=Math[bI](c*g)+i}else{const b=a[da]||2;g=(d[bJ]||1)*b;i=d[c9]||0;f=Math[bI](c*g)+i}const j=game[b6];upgradeLetter(game,b);game[b6]=j;game[c4]={[Ic]:Date[M](),[Io]:b,[o[25]]:e,[o[26]]:f,[Iy]:g,[h[33]]:i};game[c7]=null;return}}if(renderer[db]&&renderer[db][bD]){const c=renderer[L](a,b,[renderer[db]]);if(c){vibrate();if(game[I])game[I][bb](bg);if(game[b6]){const a=game[bK]&&game[bK][p[31]](a=>a[b5]===game[b6][b5]);if(!a){game[bK]=game[bK]||[];game[bK][cq]({...game[b6]})}game[b6]=null}game[_9]=game[b7]||cv;game[b7]=null;game[c7]=null;if(game[R])game[R][S]();return}}}if(game[_9]===m[22]){if(game[dc])return;if(renderer[dd]){const c=renderer[L](a,b,[renderer[dd]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[dc]=true;setTimeout(()=>{game[dc]=false;game[t[18]]=null;const a=3+Math[cP](game[cP]/3);const b=game[r[31]]*2;const c=game[g[44]]*1;game[Q]+=a+b+c;const e=game[x[18]]||0;if(e>0){game[B[12]]={[Ic]:Date[M](),[o[27]]:d[8]}}game[_9]=cv;if(!game[T])game[T]=generateShopItems(game);if(game[R])game[R][S]()},G);return}}}if(game[_9]===ba){if(game[de])return;if(game[df])return;if(game[dg])return;if(isRankShowing){hideRankList();return}if(renderer[dh]&&renderer[dh][di]){const c=renderer[L](a,b,[renderer[dh][di]]);if(c){const a=game[R]&&game[R][q[28]]();if(a){game[W]={[HF]:r[32],[HH]:Date[M]()+F};return}vibrate();if(game[I])game[I][bb](bg);game[dg]=true;game[x[19]]=Date[M]();shareReviveState={[Ic]:Date[M](),[r[10]]:true};wx[j[26]]({[Hz]:`我正在收集女巫词牌，快来帮我过这关！`,[s[12]]:`from=revive&round=${game[cP]}&score=${game[bc]}`});return}}if(renderer[dh]&&renderer[dh][dj]){const c=renderer[L](a,b,[renderer[dh][dj]]);if(c){vibrate();if(game[I])game[I][bb](bg);showRankList();return}}if(renderer[dh]&&renderer[dh][dk]){const c=renderer[L](a,b,[renderer[dh][dk]]);if(c){vibrate();if(game[I])game[I][bb](bg);game[df]=true;game[w[27]]=Date[M]();setTimeout(()=>{game[df]=false;game[de]=true;game[j[6]]=Date[M]();setTimeout(()=>{restartGame()},d[4])},G);return}}}}function restartGame(){var a=eP,b=a[31],c=a[2],d=a[11],e=a[16],f=a[18],g=a[10],h=a[1][2],i=a[7][7],j=a[17][5],k=a[14][0],l=g[7],m=g[0];console[h](b[0],game?JSON[i](game[j]):c[32]);if(game){game[a[5][29]]()}if(renderer){renderer[a[8][34]]()}const{[d[23]]:n}=require(a[7][5]);n[a[3][33]]();if(renderer&&renderer[k]){renderer[k][e[10]]=null;renderer[k][d[4]]=null}game=new Game;game[l]=cloudStorage;game[a[6][5]]=renderer;wx[c[15]]=game;if(game[m])game[m][d[8]](game[l]);console[h](b[1],JSON[i](game[j]));game[f[12]]();game[a[19][1]]=null;game[a[14][10]]=null;game[a[17][20]]=null;game[e[0]]=null;game[f[7]]=false;game[a[25][0]]=null;game[a[15][9]]=null;game[a[13][1]]=null;game[e[18]]=null;game[a[22][4]]=false}let lastTime=0;function gameLoop(a){var b=eP,c=b[4][17];const d=a-lastTime;lastTime=a;if(!preloadComplete){renderer[b[13][27]](preloadProgress)}else if(transitionStartTime!==null){renderer[c](game);transitionStartTime=null}else{game[b[4][27]](d);renderer[c](game)}requestAnimationFrame(gameLoop)}startPreload();requestAnimationFrame(gameLoop);wx[dw]=renderer;//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjoxLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowOSJ9)
-//# sourceMappingURL=game.js.map
+// require('./js/render/test');
+// 微信小游戏入口
+const { Game, uploadScore } = require('./js/game');
+const { Renderer } = require('./js/renderer');
+const { InputHandler } = require('./js/input');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
+const { LETTER_SCORE, letterUpgrades } = require('./js/data');
+const { WITCH_SKILLS } = require('./js/witch_skills');
+const { StorageManager } = require('./js/storage');
+const { CloudStorageManager } = require('./js/cloud_storage');
+
+// 获取 Canvas 上下文
+wx.onShow(() => {
+  console.log('[Game] 切回前台');
+
+  // === 分享复活检测 ===
+  if (shareReviveState && shareReviveState.resolving && game && game.state === 'gameover') {
+    const stayed = Date.now() - shareReviveState.startTime;
+    console.log('[ShareRevive] 分享界面停留时间:', stayed, 'ms');
+    if (stayed >= 2500) {
+      console.log('[ShareRevive] 判定分享成功，执行复活');
+      game._closingGameOver = true;
+      game._closeStartTime = Date.now();
+      setTimeout(() => {
+        if (game && game.state === 'gameover') {
+          game.revive();
+          if (renderer.gameOverRenderer) {
+            renderer.gameOverRenderer.animStartTime = null;
+            renderer.gameOverRenderer.lastGameOverReason = null;
+          }
+          game.hintToast = { text: '复活成功！', expireAt: Date.now() + 2000 };
+        }
+      }, 200);
+    } else {
+      console.log('[ShareRevive] 分享取消或停留时间不足');
+      if (game) {
+        game._reviveBtnPressed = false;
+        game.hintToast = { text: '分享后才可以复活哦~', expireAt: Date.now() + 2000 };
+      }
+    }
+    shareReviveState = null;
+  }
+});
+
+wx.onHide(() => {
+  console.log('[Game] 切后台，立即存档');
+  if (game && game.storageManager && game.state !== 'gameover') {
+    game.storageManager.saveProgressImmediate();
+  }
+});
+
+const info = wx.getSystemInfoSync();
+const canvas = wx.createCanvas();
+const ctx = canvas.getContext('2d');
+
+// 平台判断：开发者工具不震动
+const isDevTools = info.platform === 'devtools';
+function vibrate() {
+  if (!isDevTools && wx.vibrateShort) {
+    try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
+  }
+}
+
+// ===== 键盘输入监听（反馈文本框用）=====
+wx.onKeyboardInput((res) => {
+  if (game && res.value !== undefined) {
+    game._feedbackText = res.value.slice(0, 100);
+  }
+});
+wx.onKeyboardConfirm(() => {
+  wx.hideKeyboard();
+});
+
+// ===== 排行榜相关 =====
+let openDataContext = null;
+let isRankShowing = false;
+
+function getOpenDataContext() {
+  if (!openDataContext && wx.getOpenDataContext) {
+    openDataContext = wx.getOpenDataContext();
+  }
+  return openDataContext;
+}
+
+function showRankList() {
+    const odc = getOpenDataContext();
+  if (!odc) {
+      return;
+  }
+  isRankShowing = true;
+  if (game) game._showingRankList = true;
+
+  // OffScreenCanvas 模式：主域设置 sharedCanvas 的宽高（开放域不能设）
+  const sharedCanvas = odc.canvas;
+  if (sharedCanvas) {
+    try {
+      sharedCanvas.width = canvas.width;
+      sharedCanvas.height = canvas.height;
+      } catch (e) {
+      console.warn('sharedCanvas set failed', e.message);    }
+  } else {
+    }
+
+  odc.postMessage({
+    action: 'show',
+    scaleDpr,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height,
+  });
+}
+
+function hideRankList() {
+  const odc = getOpenDataContext();
+  if (!odc) return;
+  isRankShowing = false;
+  if (game) game._showingRankList = false;
+  odc.postMessage({ action: 'hide' });
+}
+
+// 提交问题反馈到云数据库
+async function submitFeedback(text) {
+  if (!game) return;
+  game._feedbackSubmitting = true;
+  try {
+    const db = wx.cloud.database();
+    const collection = db.collection('feedback');
+    await collection.add({
+      data: {
+        text,
+        createTime: db.serverDate(),
+        round: game.round || 0,
+        version: '1.9.0'
+      }
+    });
+    game._feedbackSubmitToast = { text: '反馈提交成功，感谢！', expireAt: Date.now() + 2000 };
+    game._feedbackText = '';
+  } catch (e) {
+    console.error('反馈提交失败:', e);
+    game._feedbackSubmitToast = { text: '提交失败，请稍后重试', expireAt: Date.now() + 2000 };
+  } finally {
+    game._feedbackSubmitting = false;
+  }
+}
+
+// 设置画布尺寸（适配 Retina 高分屏）
+const WIDTH = info.windowWidth;
+const HEIGHT = info.windowHeight;
+const dpr = info.pixelRatio || 1;
+
+// 限制 Canvas 物理像素上限，防止高分屏内存爆炸
+const MAX_CANVAS_WIDTH = 1280;
+const MAX_CANVAS_HEIGHT = 2560;
+const scaleDpr = Math.min(dpr, MAX_CANVAS_WIDTH / WIDTH, MAX_CANVAS_HEIGHT / HEIGHT);
+
+canvas.width = Math.floor(WIDTH * scaleDpr);
+canvas.height = Math.floor(HEIGHT * scaleDpr);
+ctx.scale(scaleDpr, scaleDpr);
+
+// 游戏全局状态
+let game = null;
+const renderer = new Renderer(ctx, WIDTH, HEIGHT);
+renderer.dpr = scaleDpr;
+
+// 分享复活状态
+let shareReviveState = null; // { startTime: number, resolving: boolean }
+
+// 云存储管理器
+const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
+cloudStorage.init();
+
+// 预加载状态
+let preloadProgress = 0;
+let preloadComplete = false;
+
+// 过渡状态（预加载页 → 游戏页）
+let transitionAlpha = 0;
+let transitionStartTime = null;
+const TRANSITION_DURATION = 600;
+
+// 启动预加载：下载云图片并显示进度条
+async function startPreload() {
+  // 上报用户登录信息（fire-and-forget，不阻塞预加载）
+  try {
+    wx.cloud.callFunction({
+      name: 'login',
+      data: {
+        brand: info.brand,
+        model: info.model,
+        system: info.system,
+        platform: info.platform,
+        language: info.language,
+        version: info.version,
+        SDKVersion: info.SDKVersion,
+        screenWidth: info.screenWidth,
+        screenHeight: info.screenHeight,
+        pixelRatio: info.pixelRatio
+      }
+    }).then(res => {
+      console.log('[Login] 云函数返回:', res);
+      if (res.result && res.result.code === 0) {
+        console.log('[Login]', res.result.isNew ? '新用户已创建' : '老用户登录更新', res.result.openid);
+      } else {
+        console.warn('[Login] 云函数业务失败:', res.result);
+      }
+    }).catch(err => {
+      console.error('[Login] 云函数调用失败:', err);
+    });
+  } catch (e) {
+    console.error('[Login] 登录上报异常:', e);
+  }
+
+  const shopNames = Object.keys(cloudStorage.cloudFileMap);
+  const bgIconNames = Object.keys(cloudStorage.bgIconFileMap);
+
+  // 只有新用户或引导未完成的用户才需要下载 guide 精灵图
+  const savedProgress = wx.getStorageSync('word_balatro_progress');
+  const needGuide = !savedProgress || (
+    savedProgress.guidePhase !== undefined && savedProgress.guidePhase < 5
+  );
+
+  // 判断是否有存档恢复（同 startGame 中的逻辑）
+  const isExpired = savedProgress && savedProgress.timestamp &&
+    (Date.now() - savedProgress.timestamp > 7 * 24 * 60 * 60 * 1000);
+  const hasRequiredFields = savedProgress &&
+    Array.isArray(savedProgress.hand) &&
+    Array.isArray(savedProgress.deck) &&
+    typeof savedProgress.target === 'number' &&
+    typeof savedProgress.state === 'string' &&
+    Array.isArray(savedProgress._shuffledSkills);
+  const isResuming = savedProgress && !isExpired && savedProgress.state !== 'gameover' && hasRequiredFields;
+
+  // 读取已解锁的 witch_card（独立于存档恢复，新游戏也保留已收集卡牌）
+  let collectedWitchCards = [];
+  const raw = wx.getStorageSync('word_balatro_collected_witch_cards');
+  if (raw) {
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (Array.isArray(parsed)) collectedWitchCards = parsed;
+    } catch (e) {}
+  }
+
+  // 注：witch 头像仍改为回合级按需下载，但 witch_card 在存档恢复时预加载
+  const guideStepCount = needGuide ? 2 : 0; // witch_guide_1 + witch_guide_2
+
+  // 扫描 music 文件，决定预加载数量
+  const fs = wx.getFileSystemManager();
+  const musicFiles = cloudStorage._scanMusicDir(fs, 'music');
+  const musicCount = musicFiles.length > 0 ? musicFiles.length : Object.keys(cloudStorage.musicFileMap).length;
+
+  const total = shopNames.length + bgIconNames.length + guideStepCount + musicCount;
+
+  if (total === 0 && collectedWitchCards.length === 0) {
+    console.log('[Game] 没有云存储映射，跳过预加载');
+    preloadComplete = true;
+    startGame();
+    return;
+  }
+
+  let loaded = 0;
+  function onProgress() {
+    loaded++;
+    preloadProgress = Math.floor((loaded / total) * 100);
+  }
+
+  await cloudStorage.preloadShopCardImages(onProgress);
+  await cloudStorage.preloadBgIconImages(onProgress);
+  if (needGuide) {
+    await cloudStorage.preloadGuideGroup(1, renderer);
+    onProgress();
+    await cloudStorage.preloadGuideGroup(2, renderer);
+    onProgress();
+  }
+
+  // 预加载 music 文件到本地缓存
+  await cloudStorage.preloadMusicFiles(onProgress);
+
+  // 存档恢复时：并行预加载所有已解锁的 witch_card
+  if (collectedWitchCards.length > 0) {
+    console.log('[Preload] 存档恢复，预加载已解锁 witch_card:', collectedWitchCards);
+    await Promise.all(collectedWitchCards.map(level =>
+      cloudStorage.preloadWitchCardForLevel(level, renderer)
+    ));
+    console.log('[Preload] 已解锁 witch_card 预加载完成');
+  }
+
+  cloudStorage.injectToRenderer(renderer);
+  cloudStorage.injectBgIconToRenderer(renderer);
+  if (needGuide) {
+    cloudStorage.injectGuideToRenderer(renderer);
+  }
+  preloadComplete = true;
+  startGame();
+  console.log('[Game] 云图片预加载完成，进入游戏');
+}
+
+function startGame() {
+  const storage = new StorageManager();
+  const saved = storage.loadProgress();
+
+  // 存档超过 7 天视为过期
+  const isExpired = saved && saved.timestamp && (Date.now() - saved.timestamp > 7 * 24 * 60 * 60 * 1000);
+
+  // 检查存档字段完整性（旧版本存档缺少 hand/deck/target 等字段，不能恢复）
+  const hasRequiredFields = saved &&
+    Array.isArray(saved.hand) &&
+    Array.isArray(saved.deck) &&
+    typeof saved.target === 'number' &&
+    typeof saved.state === 'string' &&
+    Array.isArray(saved._shuffledSkills);
+
+  if (saved && !isExpired && saved.state !== 'gameover' && hasRequiredFields) {
+    game = new Game(saved);
+    console.log('[Game] 从存档恢复，回合:', saved.round);
+  } else {
+    game = new Game();
+    // 无效或过期存档统一清理，避免反复加载旧存档导致异常
+    if (saved && (!hasRequiredFields || isExpired)) {
+      storage.clearProgress();
+      console.log('[Game] 旧存档字段不完整/已过期，已清理，开始新游戏');
+    } else {
+      console.log('[Game] 新游戏');
+    }
+  }
+
+  game.cloudStorage = cloudStorage;
+  game.renderer = renderer;
+  wx.game = game;
+
+  // 加载 cloudStorage 缓存的音频
+  if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
+
+  // 从预加载页进入商店页时，强制刷新商店
+  if (game.state === 'shop') {
+    game.shopItems = generateShopItems(game);
+  }
+
+  transitionStartTime = Date.now();
+
+  // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）
+  game._preloadWitchAvatars();
+
+  // ===== 分享转发初始化 =====
+  wx.showShareMenu({ withShareTicket: true });
+
+  // 被动转发：用户点击右上角转发时，返回 Canvas 截图
+  wx.onShareAppMessage(() => {
+    try {
+      const tempFilePath = canvas.toTempFilePathSync({
+        x: 0,
+        y: 0,
+        width: canvas.width,
+        height: Math.floor(canvas.height * 0.6),
+        destWidth: 500,
+        destHeight: 400,
+        fileType: 'png',
+        quality: 0.85
+      });
+      return {
+        title: `我在女巫的词牌闯到了第${game?.round || 1}关，来挑战我吧！`,
+        imageUrl: tempFilePath,
+        query: `from=share&round=${game?.round || 1}&score=${game?.totalScore || 0}`
+      };
+    } catch (e) {
+      console.warn('[Share] Canvas 截图失败:', e);
+      return {
+        title: `我在女巫的词牌闯到了第${game?.round || 1}关，来挑战我吧！`,
+        query: `from=share&round=${game?.round || 1}&score=${game?.totalScore || 0}`
+      };
+    }
+  });
+}
+
+// 长按检测状态
+let longPressTimer = null;
+let touchStartPos = null;
+let longPressTriggered = false;
+const LONG_PRESS_DURATION = 600; // 600ms 长按
+const LONG_PRESS_MOVE_THRESHOLD = 10; // 移动超过 10px 取消长按
+
+// 触摸事件处理
+wx.onTouchStart((e) => {
+  // 预加载阶段不响应触摸
+  if (!preloadComplete) return;
+
+  const touch = e.touches[0];
+  const x = touch.clientX;
+  const y = touch.clientY;
+  touchStartPos = { x, y };
+
+  // 日志区域触摸（优先处理滚动）
+  if (renderer.cloudLogRect) {
+    const r = renderer.cloudLogRect;
+    if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) {
+      renderer.cloudLogDragging = true;
+      renderer.cloudLogDragStartY = y;
+      renderer.cloudLogDragStartScrollY = renderer.cloudLogScrollY;
+      return;
+    }
+  }
+
+  // 检测 top_icon：单击打开设置，长按打开调试菜单
+  if (renderer.topIconRect) {
+    const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
+    if (iconHit) {
+      longPressTriggered = false;
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        longPressTriggered = true;
+        // 仅在开发版或体验版开放调试菜单
+        const env = wx.getAccountInfoSync ? wx.getAccountInfoSync().miniProgram.envVersion : 'release';
+        if (env === 'develop' || env === 'trial') {
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        }
+      }, LONG_PRESS_DURATION);
+      return; // 长按期间不触发其他交互
+    }
+  }
+
+  // 设置弹窗交互（优先处理）
+  if (game._settingsPopup && !game._closingSettings) {
+    // 精确检测关闭按钮（延迟关闭）
+    const settingsCloseBtnHit = renderer.settingsCloseBtnRect && renderer.hitTest(x, y, [renderer.settingsCloseBtnRect]);
+    const settingsCloseHit = renderer.settingsCloseRect && renderer.hitTest(x, y, [renderer.settingsCloseRect]);
+
+    // 主页按钮
+    const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
+    const rankHit = renderer.settingsRankRect && renderer.hitTest(x, y, [renderer.settingsRankRect]);
+    const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
+
+    // 反馈页按钮
+    const feedbackBackHit = renderer.feedbackBackRect && renderer.hitTest(x, y, [renderer.feedbackBackRect]);
+    const feedbackInputHit = renderer.feedbackInputRect && renderer.hitTest(x, y, [renderer.feedbackInputRect]);
+    const feedbackSubmitHit = renderer.feedbackSubmitRect && renderer.hitTest(x, y, [renderer.feedbackSubmitRect]);
+
+    if (soundHit) {
+      game._settingsSoundPressed = true;
+      return;
+    }
+    if (rankHit) {
+      game._settingsRankPressed = true;
+      return;
+    }
+    if (feedbackHit) {
+      game._settingsFeedbackPressed = true;
+      return;
+    }
+    if (feedbackBackHit) {
+      game._feedbackBackPressed = true;
+      return;
+    }
+    if (feedbackInputHit) {
+      game._feedbackInputFocused = true;
+      return;
+    }
+    if (feedbackSubmitHit) {
+      game._feedbackSubmitPressed = true;
+      return;
+    }
+
+    // 点击关闭按钮：延迟关闭（带按下反馈）
+    if (settingsCloseBtnHit) {
+      vibrate();
+      game._settingsCloseBtnPressed = true;
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+
+    // 点击弹窗外区域：直接关闭
+    if (settingsCloseHit) {
+      wx.hideKeyboard();
+      if (game._feedbackPage === 'feedback') {
+        game._feedbackPage = 'main';
+        game._feedbackText = '';
+      } else {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+      }
+      return;
+    }
+  }
+
+  // 检测卡牌图鉴图标按下
+  if (renderer.cardBookIconRect && game.cardBookUnlocked && !game.cardBookOpen) {
+    const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+    if (cbHit) {
+      game._cardBookIconPressed = true;
+    }
+  }
+
+  // 排行榜显示时，优先检测关闭按钮（延迟关闭），点击面板外部才关闭
+  if (isRankShowing) {
+    // 估算排行榜关闭按钮区域（与开放域 drawRankList 中关闭按钮位置一致）
+    const s = renderer.scale || 1;
+    const panelW = Math.min(renderer.W * 0.9, 340 * s);
+    const panelH = Math.min(renderer.H * 0.75, 520 * s);
+    const panelX = (renderer.W - panelW) / 2;
+    const panelY = (renderer.H - panelH) / 2;
+    const closeSize = 28 * s;
+    const closeX = panelX + panelW - closeSize - 14 * s;
+    const closeY = panelY + 14 * s;
+    const hitPad = 20 * s;
+    const rankCloseBtnRect = {
+      x: closeX - hitPad - 10 * s,
+      y: closeY - hitPad,
+      w: closeSize + hitPad * 2 + 10 * s,
+      h: closeSize + hitPad * 2 + 10 * s
+    };
+    const rankCloseBtnHit = renderer.hitTest(x, y, [rankCloseBtnRect]);
+    if (rankCloseBtnHit) {
+      vibrate();
+      game._rankCloseBtnPressed = true;
+      if (game.audioManager) game.audioManager.play('tap');
+      const odc = getOpenDataContext();
+      if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: true });
+      return;
+    }
+    // 点击面板内部（非关闭按钮）不关闭
+    const insidePanel = x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH;
+    if (insidePanel) {
+      return;
+    }
+    hideRankList();
+    return;
+  }
+
+  handleInput(x, y);
+});
+
+wx.onTouchMove((e) => {
+  // 移动超过阈值时取消长按
+  if (longPressTimer && touchStartPos) {
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.x;
+    const dy = touch.clientY - touchStartPos.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+  }
+
+  // 移出设置弹窗按钮区域时取消按下状态
+  if (game._settingsSoundPressed && renderer.settingsSoundRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
+    if (!hit) game._settingsSoundPressed = false;
+  }
+  if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
+    if (!hit) game._settingsCloseBtnPressed = false;
+  }
+  if (game._feedbackBackPressed && renderer.feedbackBackRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
+    if (!hit) game._feedbackBackPressed = false;
+  }
+  if (game._feedbackSubmitPressed && renderer.feedbackSubmitRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
+    if (!hit) game._feedbackSubmitPressed = false;
+  }
+  // 移出卡牌图鉴图标区域时取消按下状态
+  if (game._cardBookIconPressed && renderer.cardBookIconRect) {
+    const touch = e.touches[0];
+    const iconHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookIconRect]);
+    if (!iconHit) {
+      game._cardBookIconPressed = false;
+    }
+  }
+
+  // 移出装备按钮区域时取消按下状态
+  if (game._cardBookEquipBtnPressed && renderer.cardBookEquipBtnRect) {
+    const touch = e.touches[0];
+    const btnHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookEquipBtnRect]);
+    if (!btnHit) {
+      game._cardBookEquipBtnPressed = false;
+    }
+  }
+
+  // 移出卡牌图鉴关闭按钮区域时取消按下状态
+  if (game._cardBookCloseBtnPressed && renderer.cardBookCloseBtnRect) {
+    const touch = e.touches[0];
+    const closeHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookCloseBtnRect]);
+    if (!closeHit) {
+      game._cardBookCloseBtnPressed = false;
+    }
+  }
+
+  // 取消女巫牌长按候选（移动超过阈值）
+  if (game._pendingJokerSelect && touchStartPos) {
+    const touch = e.touches[0];
+    const dx = touch.clientX - touchStartPos.x;
+    const dy = touch.clientY - touchStartPos.y;
+    if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
+      if (game._pendingJokerSelectTimer) {
+        clearTimeout(game._pendingJokerSelectTimer);
+        game._pendingJokerSelectTimer = null;
+      }
+      game._pendingJokerSelect = null;
+    }
+  }
+
+  // 更新女巫牌排序拖动位置与插入槽位
+  if (game._jokerSortState) {
+    const touch = e.touches[0];
+    game._jokerSortState.currentX = touch.clientX;
+    game._jokerSortState.currentY = touch.clientY;
+
+    // 计算 insertSlot（手指最接近哪个槽位中心）
+    const s = renderer.scale || 1;
+    const W = renderer.canvasWidth || 375;
+    const actualWitchSlots = game.maxJokerSlots || 4;
+    const ownedW = actualWitchSlots >= 5 ? W - 8 * s : W - 20 * s;
+    const ownedX = actualWitchSlots >= 5 ? 4 * s : 10 * s;
+    const oPadX = 10 * s;
+    const oDividerW = 1.5 * s;
+    const BASE_GAP = 6 * s;
+    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
+    const actualTotalSlots = actualWitchSlots + 2;
+    const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
+    const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
+    const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const oWitchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
+    const oLeftStartX = ownedX + oPadX - oWitchShift - (actualWitchSlots >= 5 ? 2 * s : 0);
+
+    let insertSlot = actualWitchSlots;
+    for (let i = 0; i < actualWitchSlots; i++) {
+      const slotCenterX = oLeftStartX + i * (slotW + actualGap) + slotW / 2;
+      if (touch.clientX < slotCenterX) {
+        insertSlot = i;
+        break;
+      }
+    }
+    // 如果在槽位边缘附近，保持原位（与 demo 一致）
+    const fromIndex = game._jokerSortState.fromIndex;
+    if (insertSlot > 0 && insertSlot < actualWitchSlots) {
+      const mid = (oLeftStartX + (insertSlot - 1) * (slotW + actualGap) + slotW / 2 + oLeftStartX + insertSlot * (slotW + actualGap) + slotW / 2) / 2;
+      if (touch.clientX < mid) insertSlot--;
+    } else if (insertSlot === actualWitchSlots) {
+      const edge = oLeftStartX + (actualWitchSlots - 1) * (slotW + actualGap) + slotW + actualGap / 2;
+      if (touch.clientX < edge) insertSlot = actualWitchSlots - 1;
+    }
+    // 在目标槽位附近范围内保持原位（仅在原位或紧邻右侧时生效）
+    if (insertSlot === fromIndex || insertSlot === fromIndex + 1) {
+      const fromCenterX = oLeftStartX + fromIndex * (slotW + actualGap) + slotW / 2;
+      if (Math.abs(touch.clientX - fromCenterX) < slotW * 0.4) {
+        insertSlot = fromIndex;
+      }
+    }
+    game._jokerSortState.insertSlot = insertSlot;
+  }
+
+  if (!renderer.cloudLogDragging) return;
+  const touch = e.touches[0];
+  const y = touch.clientY;
+  const deltaY = renderer.cloudLogDragStartY - y;
+  renderer.cloudLogScrollY = renderer.cloudLogDragStartScrollY + deltaY;
+});
+
+wx.onTouchEnd(() => {
+  renderer.cloudLogDragging = false;
+  renderer.pressedBtn = null;
+  game._cardBookIconPressed = false;
+  game._cardBookEquipBtnPressed = false;
+
+  // 取消未触发的长按定时器
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
+  }
+
+  // top_icon 短按：打开设置弹窗（长按未触发时）
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
+    const iconHit = renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.topIconRect]);
+    if (iconHit) {
+      if (game._settingsPopup) {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+      } else {
+        game._settingsPopup = { startTime: Date.now() };
+        game._closingSettings = false;
+        game._closeSettingsStartTime = null;
+        if (game.audioManager) game.audioManager.play('tap');
+      }
+    }
+  }
+  longPressTriggered = false;
+
+  // 设置弹窗交互处理（松开时）
+  if (game._settingsPopup && !game._closingSettings) {
+    if (game._settingsSoundPressed) {
+      game._settingsSoundPressed = false;
+      game.settings.soundEnabled = !game.settings.soundEnabled;
+      if (game.audioManager) {
+        game.audioManager.setSoundEnabled(game.settings.soundEnabled);
+      }
+      if (game.storageManager) {
+        game.storageManager.saveSettings(game.settings);
+      }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._settingsRankPressed) {
+      game._settingsRankPressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      showRankList();
+    }
+    if (game._settingsFeedbackPressed) {
+      game._settingsFeedbackPressed = false;
+      game._feedbackPage = 'feedback';
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    // 反馈页交互
+    if (game._feedbackBackPressed) {
+      game._feedbackBackPressed = false;
+      game._feedbackPage = 'main';
+      game._feedbackText = '';
+      wx.hideKeyboard();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._feedbackInputFocused) {
+      game._feedbackInputFocused = false;
+      // 直接弹出系统键盘
+      wx.showKeyboard({
+        defaultValue: game._feedbackText || '',
+        maxLength: 100,
+        multiple: false,
+        confirmHold: true,
+        confirmType: 'done'
+      });
+    }
+    if (game._feedbackSubmitPressed) {
+      game._feedbackSubmitPressed = false;
+      if (game._feedbackText && game._feedbackText.trim() && !game._feedbackSubmitting) {
+        submitFeedback(game._feedbackText.trim());
+      } else if (!game._feedbackText || !game._feedbackText.trim()) {
+        game._feedbackSubmitToast = { text: '请输入反馈内容', expireAt: Date.now() + 2000 };
+      }
+    }
+
+    // 设置弹窗关闭按钮松开时直接关闭整个弹窗
+    if (game._settingsCloseBtnPressed) {
+      game._settingsCloseBtnPressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      wx.hideKeyboard();
+    }
+  }
+
+  // 女巫牌短按：执行选中（手指松开时显示售出按钮）
+  if (game._pendingJokerSelect) {
+    if (game._pendingJokerSelectTimer) {
+      clearTimeout(game._pendingJokerSelectTimer);
+      game._pendingJokerSelectTimer = null;
+    }
+    const index = game._pendingJokerSelect.index;
+    game._pendingJokerSelect = null;
+    if (game.audioManager) game.audioManager.play('tap');
+    const prev = renderer.shopRenderer.shopSelectedOwned;
+    if (prev && prev.type === 'jokers' && prev.index === index) {
+      renderer.shopRenderer.shopSelectedOwned = null;
+    } else {
+      renderer.shopRenderer.shopSelectedOwned = { type: 'jokers', index };
+    }
+  }
+
+  // 女巫牌排序完成：从原位置取出，插入到目标位置
+  if (game._jokerSortState) {
+    const state = game._jokerSortState;
+    const fromIndex = state.fromIndex;
+    const insertSlot = state.insertSlot;
+
+    if (insertSlot !== fromIndex && game.jokers && game.jokers[fromIndex]) {
+      // 取出被拖动的牌
+      const item = game.jokers.splice(fromIndex, 1)[0];
+      // 插入到目标位置（已移除自身，若目标在原位置之后需减 1）
+      const adjustedInsertSlot = insertSlot > fromIndex ? insertSlot - 1 : insertSlot;
+      game.jokers.splice(adjustedInsertSlot, 0, item);
+      if (game.storageManager) game.storageManager.saveProgress();
+    }
+
+    game._jokerSortState = null;
+  }
+
+  // 卡牌图鉴关闭按钮松开时关闭
+  if (game._cardBookCloseBtnPressed) {
+    game._cardBookCloseBtnPressed = false;
+    game._closingCardBook = true;
+    game._closeCardBookStartTime = Date.now();
+    game._cardBookCellPressed = null;
+    game._cardBookDetailLevel = null;
+    game._closingCardBookDetail = false;
+  }
+
+  // 排行榜关闭按钮松开时关闭
+  if (game._rankCloseBtnPressed) {
+    game._rankCloseBtnPressed = false;
+    const odc = getOpenDataContext();
+    if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: false });
+    hideRankList();
+  }
+
+  touchStartPos = null;
+});
+
+function handleInput(x, y) {
+  // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
+  if (game._settingsPopup && !game._closingSettings) return;
+
+  // 首次用户交互时尝试启动 BGM（真机音频必须在用户触摸事件回调内首次播放）
+  if (game.audioManager && !game.audioManager.bgmStarted) {
+    game.audioManager.tryStartBGM();
+  }
+
+  // 新手引导阶段：优先处理引导点击，禁用其他交互
+  if (game.guidePhase >= 1 && game.guidePhase <= 4) {
+    if (renderer.guideDialogRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.guideDialogRect]);
+      if (btnHit) {
+        const now = Date.now();
+        if (game._guideTapTime && now - game._guideTapTime < 300) {
+          game._guideSkipTyping = true;
+          vibrate();
+          return;
+        }
+        game._guideTapTime = now;
+        if (renderer.guideNextBtnRect) {
+          vibrate();
+          game.advanceGuide();
+        }
+        return;
+      }
+    }
+    // 引导阶段点击其他区域不响应
+    return;
+  }
+
+  // 检测调试菜单按钮（优先）
+  if (renderer.debugMenuOpen && renderer.debugMenuRects) {
+    const debugHit = renderer.hitTest(x, y, renderer.debugMenuRects);
+    if (debugHit) {
+      if (debugHit.action === 'debug_resetHands') game.resetHands();
+      if (debugHit.action === 'debug_addScore') game.addScore(1000);
+      if (debugHit.action === 'debug_addGold') {
+        game.gold += 100;
+        if (game.storageManager) game.storageManager.saveProgress();
+      }
+      if (debugHit.action === 'debug_jumpToRound') {
+        wx.showModal({
+          title: '跳转回合',
+          editable: true,
+          placeholderText: '输入目标回合数',
+          success: (res) => {
+            const round = parseInt(res.content, 10);
+            if (round && round > 0) {
+              game.jumpToRound(round);
+            }
+          }
+        });
+      }
+      if (debugHit.action === 'debug_winRound') game.winRound();
+      if (debugHit.action === 'debug_refreshShop') {
+        if (!game.shopItems) {
+          game.shopItems = generateShopItems(game);
+        } else {
+          refreshModule(game, 0);
+          refreshModule(game, 1);
+          refreshModule(game, 2);
+        }
+      }
+      if (debugHit.action === 'debug_addWitchSlot') {
+        game.maxJokerSlots = (game.maxJokerSlots || 4) + 1;
+        if (game.storageManager) game.storageManager.saveProgress();
+      }
+      if (debugHit.action === 'debug_upload_shop_card') {
+        cloudStorage.uploadShopCards().then(res => {
+          game.hintToast = { text: `上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadShopCardImages();
+        }).then(() => {
+          cloudStorage.injectToRenderer(renderer);
+          game.hintToast = { text: '云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: '上传失败', expireAt: Date.now() + 2000 };
+          console.error('上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_upload_witch') {
+        cloudStorage.uploadWitchImages().then(res => {
+          game.hintToast = { text: `witch 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return Promise.all([
+            cloudStorage.preloadWitchImages(),
+            cloudStorage.preloadGuideImages(),
+          ]);
+        }).then(() => {
+          cloudStorage.injectWitchToRenderer(renderer);
+          cloudStorage.injectGuideToRenderer(renderer);
+          game.hintToast = { text: 'witch 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'witch 上传失败', expireAt: Date.now() + 2000 };
+          console.error('witch 上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_upload_bg_icon') {
+        cloudStorage.uploadBgIconImages().then(res => {
+          game.hintToast = { text: `bg_icon 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadBgIconImages();
+        }).then(() => {
+          cloudStorage.injectBgIconToRenderer(renderer);
+          game.hintToast = { text: 'bg_icon 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'bg_icon 上传失败', expireAt: Date.now() + 2000 };
+          console.error('bg_icon 上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_upload_music') {
+        cloudStorage.uploadMusicFiles().then(res => {
+          game.hintToast = { text: `music 上传完成：${res.success.length} 个成功`, expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'music 上传失败', expireAt: Date.now() + 2000 };
+          console.error('music 上传失败:', err);
+        });
+      }
+      if (debugHit.action === 'debug_triggerGuide') {
+        game.guidePhase = 1;
+        game._guideTextStartTime = Date.now();
+        game._guideCardGiftStartTime = null;
+        // 如果已有 has_vowel 女巫牌，先移除以避免重复
+        const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
+        if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
+        if (game.storageManager) game.storageManager.saveProgress();
+        // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入
+        const guideGroupNum = game.guidePhase === 1 ? 1 : 2;
+        cloudStorage.preloadGuideGroup(guideGroupNum, renderer).then(() => {
+          cloudStorage.injectGuideToRenderer(renderer);
+        });
+      }
+      if (debugHit.action === 'debug_triggerShopGuide') {
+        game.shopGuidePhase = 1;
+        game._shopGuideStartTime = Date.now();
+        if (game.storageManager) game.storageManager.saveProgress();
+        // 先检查本地是否已有缓存，避免重复下载
+        const witch3 = renderer.guideImages.witch_3;
+        const hasCache = witch3 && witch3.loaded;
+        if (!hasCache) {
+          cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
+            console.error('[Debug] 触发商店引导下载失败:', err);
+          });
+        } else {
+          console.log('[Debug] witch_guide_3 本地缓存已存在，跳过下载');
+        }
+      }
+      if (debugHit.action === 'debug_triggerCardBookGuide') {
+        game.cardBookGuidePhase = 1;
+        game._cardBookGuideStartTime = Date.now();
+        game._cardBookGuideTextStartTime = Date.now();
+        if (game.storageManager) game.storageManager.saveProgress();
+        // 先检查本地是否已有缓存，避免重复下载
+        const witch4 = renderer.guideImages.witch_4;
+        const hasCache = witch4 && witch4.loaded;
+        if (!hasCache) {
+          cloudStorage.preloadGuideGroup(4, renderer).catch(err => {
+            console.error('[Debug] 触发图鉴引导下载失败:', err);
+          });
+        } else {
+          console.log('[Debug] witch_guide_4 本地缓存已存在，跳过下载');
+        }
+      }
+      if (debugHit.action === 'debug_endGame') {
+        console.log('[CardBook] debug_endGame 前 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
+        game.state = 'gameover';
+        game.gameOverReason = 'debug';
+        if (game.audioManager) game.audioManager.play('game_over');
+        if (game.storageManager) {
+          game.storageManager.setHighScore(game.totalScore);
+          uploadScore(game.storageManager.getHighScore());
+          game.storageManager.updateStats(game);
+          // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
+          game.storageManager.saveProgress();
+          game.storageManager.clearProgress();
+        }
+      }
+      if (debugHit.action === 'debug_flashCardBook') {
+        game._forceCardBookFlash = true;
+        game._cardBookIconFlashStart = Date.now();
+      }
+      renderer.debugMenuOpen = false;
+      return;
+    }
+  }
+  
+  // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
+  if (game.cardBookOpen && !game._closingCardBook) {
+    // 0. 检测 tab 切换按钮
+    if (renderer.cardBookTabRects) {
+      const tabHit = renderer.hitTest(x, y, renderer.cardBookTabRects);
+      if (tabHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._cardBookTab = tabHit.tab;
+        game.cardBookPage = 0;
+        game._cardBookCellPressed = null;
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
+        return;
+      }
+    }
+
+    // 1. 先检测是否点击了已解锁卡牌（最高优先级）
+    if (renderer.cardBookCellRects && renderer.cardBookCellRects.length > 0) {
+      const cellHit = renderer.hitTest(x, y, renderer.cardBookCellRects);
+      if (cellHit && cellHit.isUnlocked) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        // 点击新增卡牌后，NEW 标签消失
+        if (game._newWitchCardThisShop === cellHit.level) {
+          game._newWitchCardThisShop = null;
+          game._cardBookNewBadge = false;
+        }
+        if (game._cardBookCellPressed === cellHit.level) {
+          // 再次点击同一张卡：复位 + 关闭详情
+          game._cardBookCellPressed = null;
+          game._cardBookDetailLevel = null;
+          game._closingCardBookDetail = false;
+        } else {
+          // 点击新卡：切换选中 + 打开/切换详情
+          game._cardBookCellPressed = cellHit.level;
+          game._cardBookDetailLevel = cellHit.level;
+          game._cardBookDetailStartTime = Date.now();
+          game._closingCardBookDetail = false;
+        }
+        return;
+      }
+    }
+
+    // 先检测关闭按钮（X）——延迟关闭，带按下反馈
+    if (renderer.cardBookCloseBtnRect) {
+      const closeHit = renderer.hitTest(x, y, [renderer.cardBookCloseBtnRect]);
+      if (closeHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._cardBookCloseBtnPressed = true;
+        return;
+      }
+    }
+
+    // 2. 如果详情弹窗打开，处理详情弹窗交互
+    if (game._cardBookDetailLevel && !game._closingCardBookDetail) {
+      // 检测装备/卸下按钮
+      if (renderer.cardBookEquipBtnRect) {
+        const equipHit = renderer.hitTest(x, y, [renderer.cardBookEquipBtnRect]);
+        if (equipHit) {
+          if (game.state === 'playing') {
+            vibrate();
+            game._equipBlockToast = {
+              text: '回合进行中,无法切换',
+              startTime: Date.now(),
+            };
+            return;
+          }
+          game._cardBookEquipBtnPressed = true;
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          const level = game._cardBookDetailLevel;
+          const equippedArr = game.equippedWitchCards || [];
+          if (equippedArr.includes(level)) {
+            // 卸下
+            game.equippedWitchCards = equippedArr.filter(l => l !== level);
+            console.log('[Equipped] 卸下 witch_card_' + level);
+          } else {
+            // 装备（最多3张）
+            if (equippedArr.length >= 3) {
+              game._equipFullToast = { text: '已达最大装备数（3张），请先卸下其他词牌', startTime: Date.now() };
+              return;
+            }
+            game.equippedWitchCards = [...equippedArr, level];
+            console.log('[Equipped] 装备 witch_card_' + level, '当前:', game.equippedWitchCards);
+          }
+          if (game.storageManager) {
+            game.storageManager.saveEquippedWitchCard(game.equippedWitchCards);
+          }
+          return;
+        }
+      }
+
+      // 检测翻页按钮（点击区域可能超出详情面板，优先处理）
+      if (renderer.cardBookPrevBtnRect) {
+        const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+        if (prevHit && game.cardBookPage > 0) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('card_book_page');
+          game.cardBookPage--;
+          game._cardBookDetailLevel = null;
+          game._cardBookCellPressed = null;
+          game._closingCardBookDetail = false;
+          return;
+        }
+      }
+      if (renderer.cardBookNextBtnRect) {
+        const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+        if (nextHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('card_book_page');
+          game.cardBookPage++;
+          game._cardBookDetailLevel = null;
+          game._cardBookCellPressed = null;
+          game._closingCardBookDetail = false;
+          return;
+        }
+      }
+
+      const insideDetail = renderer.cardBookDetailPanelRect &&
+        x >= renderer.cardBookDetailPanelRect.x && x <= renderer.cardBookDetailPanelRect.x + renderer.cardBookDetailPanelRect.w &&
+        y >= renderer.cardBookDetailPanelRect.y && y <= renderer.cardBookDetailPanelRect.y + renderer.cardBookDetailPanelRect.h;
+      if (insideDetail) {
+        // 点击详情面板内部（非按钮），不关闭
+        return;
+      }
+      // 点击详情面板外部 → 同时关闭图鉴和详情弹窗
+      game._closingCardBook = true;
+      game._closeCardBookStartTime = Date.now();
+      game._cardBookDetailLevel = null;
+      game._closingCardBookDetail = false;
+      game._cardBookCellPressed = null;
+      return;
+    }
+
+    // 先检测翻页按钮（点击区域可能超出面板，优先处理）
+    if (renderer.cardBookPrevBtnRect) {
+      const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+      if (prevHit && game.cardBookPage > 0) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('card_book_page');
+        game.cardBookPage--;
+        game._cardBookDetailLevel = null;
+        game._cardBookCellPressed = null;
+        game._closingCardBookDetail = false;
+        return;
+      }
+    }
+    if (renderer.cardBookNextBtnRect) {
+      const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+      if (nextHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('card_book_page');
+        game.cardBookPage++;
+        game._cardBookDetailLevel = null;
+        game._cardBookCellPressed = null;
+        game._closingCardBookDetail = false;
+        return;
+      }
+    }
+
+    const insidePanel = renderer.cardBookPanelRect &&
+      x >= renderer.cardBookPanelRect.x && x <= renderer.cardBookPanelRect.x + renderer.cardBookPanelRect.w &&
+      y >= renderer.cardBookPanelRect.y && y <= renderer.cardBookPanelRect.y + renderer.cardBookPanelRect.h;
+    if (insidePanel) {
+      // 点击面板内部非按钮区域 → 不关闭
+      return;
+    }
+    // 面板外部 → 关闭弹窗
+    game._closingCardBook = true;
+    game._closeCardBookStartTime = Date.now();
+    game._cardBookDetailLevel = null;
+    game._closingCardBookDetail = false;
+    game._cardBookCellPressed = null;
+    return;
+  }
+
+  if (game.state === 'playing') {
+    // 字母置换弹窗打开时，优先处理弹窗点击
+    if (game._changeLetterPopup) {
+      // 检测关闭按钮
+      if (renderer.changeLetterCloseRect) {
+        const closeHit = renderer.hitTest(x, y, [renderer.changeLetterCloseRect]);
+        if (closeHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game._changeLetterPopup = null;
+          return;
+        }
+      }
+      // 检测字母块点击
+      if (renderer.changeLetterRects) {
+        const letterHit = renderer.hitTest(x, y, renderer.changeLetterRects);
+        if (letterHit) {
+          vibrate();
+          game._changeLetterPopup.targetLetter = letterHit.letter;
+          return;
+        }
+      }
+      // 检测置换按钮
+      if (renderer.changeLetterSwapBtnRect && renderer.changeLetterSwapBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          if (game._closingChangeLetter) return;
+          const popup = game._changeLetterPopup;
+          const card = game.hand.find(c => c && c.id === popup.cardId);
+          if (card && popup.targetLetter) {
+            // 启动关闭动画，动画结束后执行置换
+            game._closingChangeLetter = true;
+            game._closeChangeLetterStartTime = Date.now();
+            setTimeout(() => {
+              // 执行字母置换
+              const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./js/data');
+              card.letter = popup.targetLetter;
+              card.baseScore = LETTER_SCORE[popup.targetLetter];
+              const upgrade = letterUpgrades.get(popup.targetLetter);
+              card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
+              card.upgraded = !!upgrade;
+              card.upgradeMult = upgrade ? upgrade.mult : 1;
+              card.isFace = FACE_CARDS.has(popup.targetLetter);
+              // 保持卡牌选中状态，不移除 game.selected
+              // 消耗药水
+              if (game.potions && game.potions[popup.potionIndex]) {
+                game.potions.splice(popup.potionIndex, 1);
+              }
+              if (game.storageManager) game.storageManager.saveProgress();
+              game._changeLetterPopup = null;
+              game._closingChangeLetter = false;
+            }, 300);
+          } else {
+            // 条件不满足，直接关闭（无动画）
+            game._changeLetterPopup = null;
+          }
+          return;
+        }
+      }
+      // 弹窗空白区域点击不关闭，仅允许点击右上角 X
+      return;
+    }
+
+    // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
+    if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
+      const cardHit = renderer.hitTest(x, y, renderer.cardRects);
+      if (cardHit) {
+        vibrate();
+        game.toggleSelect(cardHit.cardId);
+        return;
+      }
+    }
+
+    // 检测出牌按钮
+    if (renderer.playBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'play';
+        if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
+        const selected = game.getSelectedCards();
+        if (selected.length >= 2 && !game.pendingCheck) {
+          game.playHand().then(() => {
+            // result 消费完毕，不保存到全局变量
+          }).catch(err => {
+            console.error('playHand error:', err);
+          });
+        }
+        return;
+      }
+    }
+
+    // 检测弃牌按钮
+    if (renderer.discardBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.discardBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'discard';
+        if (game.animManager) game.animManager.buttonPress(renderer.discardBtnRect);
+        game.discard();
+        return;
+      }
+    }
+
+    // 检测清空选择按钮
+    if (renderer.resetBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.resetBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'reset';
+        if (game.animManager) game.animManager.buttonPress(renderer.resetBtnRect);
+        if (game.audioManager) game.audioManager.play('card_placement');
+        game.clearSelection();
+        return;
+      }
+    }
+
+    // 检测字母置换提示按钮点击
+    if (renderer.changeLetterHintRect) {
+      const hintHit = renderer.hitTest(x, y, [renderer.changeLetterHintRect]);
+      if (hintHit) {
+        vibrate();
+        game._changeLetterHint = null;
+        return;
+      }
+    }
+
+    // 检测 HUD 女巫头像点击（温柔旋转星星）
+    if (renderer.hudWitchAvatarRect) {
+      const avatarHit = renderer.hitTest(x, y, [renderer.hudWitchAvatarRect]);
+      if (avatarHit) {
+        vibrate();
+        const rect = renderer.hudWitchAvatarRect;
+        game._witchStarBurst = {
+          cx: rect.x + rect.w / 2,
+          cy: rect.y + rect.h / 2,
+          startTime: Date.now(),
+        };
+        return;
+      }
+    }
+
+    // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
+    if (renderer.witchPropRects) {
+      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
+      if (witchHit) {
+        const joker = game.jokers[witchHit.jokerIndex];
+        if (joker && joker._disabled) return;
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
+          game._witchDetailPopup = null;
+        } else {
+          game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex, animStartTime: Date.now() };
+        }
+        return;
+      }
+    }
+
+    // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗
+    if (game._witchDetailPopup) {
+      game._witchDetailPopup = null;
+      return;
+    }
+
+    // 检测卡牌图鉴图标点击
+    if (renderer.cardBookIconRect && game.cardBookUnlocked) {
+      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      if (cbHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game.cardBookOpen = true;
+        // 如果有新收集的卡牌，自动翻到对应页码
+        if (game._newWitchCardThisShop) {
+          const allLevels = WITCH_SKILLS.map(s => s.level);
+          const itemsPerPage = 4;
+          const levelIndex = allLevels.indexOf(game._newWitchCardThisShop);
+          game.cardBookPage = levelIndex >= 0 ? Math.floor(levelIndex / itemsPerPage) : 0;
+        } else {
+          game.cardBookPage = 0;
+        }
+        game._cardBookAnimStartTime = Date.now();
+        game._closingCardBook = false;
+        game._cardBookNewBadge = false;
+        return;
+      }
+    }
+
+    // 检测已购买道具栏中的药水牌点击
+    if (renderer.potionPropRects) {
+      const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
+      if (potionHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const potion = game.potions[potionHit.potionIndex];
+        if (!potion) return;
+        // 字母置换药水：游戏中直接使用，弹出选择弹窗
+        if (potion.effect === 'change_letter') {
+          const selectedCards = game.getSelectedCards();
+          if (selectedCards.length !== 1) {
+            game._changeLetterHint = { potionIndex: potionHit.potionIndex, startTime: Date.now() };
+            return;
+          }
+          game._changeLetterPopup = {
+            potionIndex: potionHit.potionIndex,
+            cardId: selectedCards[0].id,
+            originalLetter: selectedCards[0].letter,
+            targetLetter: null,
+            startTime: Date.now(),
+          };
+          return;
+        }
+        // 其他药水：从道具栏移除后进入 potion 状态
+        game.potions.splice(potionHit.potionIndex, 1);
+        game.potionMode = {...potion};
+        game._prePotionState = 'playing';
+        game.state = 'potion';
+        if (game.storageManager) game.storageManager.saveProgress();
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'settlement') {
+    if (renderer.settlementRenderer && renderer.settlementRenderer.claimBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
+      if (btnHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        renderer.settlementRenderer.claimBtnPressed = true;
+        setTimeout(() => {
+          renderer.settlementRenderer.claimBtnPressed = false;
+          game.claimSettlement();
+        }, 150);
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'witch_reward') {
+    const wr = renderer.witchRewardRenderer;
+    if (!wr) return;
+    const data = game.witchRewardData;
+    if (!data) return;
+
+    if (data.phase === 'gift') {
+      // 点击3个礼盒之一
+      if (wr.giftRects && !data._opening && data._selectedGiftIndex === undefined) {
+        const hit = renderer.hitTest(x, y, wr.giftRects);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game.witchRewardData._selectedGiftIndex = hit.index;
+          game.witchRewardData._disappearStartTime = Date.now();
+          game.witchRewardData._opening = true;
+          game.witchRewardData._openingStartTime = Date.now();
+          return;
+        }
+      }
+    } else if (data.phase === 'result') {
+      // 防止重复触发
+      if (wr.okBtnPressed || wr.stashBtnPressed || wr.useBtnPressed) return;
+
+      if (data.result) {
+        if (data.rewardItem && data.rewardItem.type === 'buff') {
+          // buff 类奖励：领取按钮
+          if (wr.okBtnRect) {
+            const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+            if (hit) {
+              vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
+              wr.okBtnPressed = true;
+              setTimeout(() => {
+                wr.okBtnPressed = false;
+                game.closeWitchReward('ok');
+              }, 150);
+              return;
+            }
+          }
+        } else {
+          // 药水类奖励：暂存 / 立即使用
+          const rects = [];
+          if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
+          if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
+          const btnHit = renderer.hitTest(x, y, rects);
+          if (btnHit) {
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            if (btnHit.action === 'stash') {
+              wr.stashBtnPressed = true;
+              setTimeout(() => {
+                wr.stashBtnPressed = false;
+                game.closeWitchReward('stash');
+              }, 150);
+            } else if (btnHit.action === 'use') {
+              wr.useBtnPressed = true;
+              setTimeout(() => {
+                wr.useBtnPressed = false;
+                game.closeWitchReward('use');
+              }, 150);
+            }
+            return;
+          }
+        }
+      } else {
+        // 没中：确定按钮
+        if (wr.okBtnRect) {
+          const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+          if (hit) {
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            wr.okBtnPressed = true;
+            setTimeout(() => {
+              wr.okBtnPressed = false;
+              game.closeWitchReward('ok');
+            }, 150);
+            return;
+          }
+        }
+      }
+    }
+  }
+
+  if (game.state === 'shop') {
+    // 商店女巫技能引导：优先处理引导点击，禁用其他交互
+    if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
+      if (renderer.shopGuideDialogRect) {
+        const btnHit = renderer.hitTest(x, y, [renderer.shopGuideDialogRect]);
+        if (btnHit) {
+          const now = Date.now();
+          if (game._shopGuideTapTime && now - game._shopGuideTapTime < 300) {
+            game._shopGuideSkipTyping = true;
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            return;
+          }
+          game._shopGuideTapTime = now;
+          if (renderer.shopGuideNextBtnRect) {
+            vibrate();
+            if (game.audioManager) game.audioManager.play('tap');
+            game.advanceShopGuide();
+          }
+          return;
+        }
+      }
+      // 引导阶段点击其他区域不响应
+      return;
+    }
+
+    // 卡牌图鉴引导交互处理（简化版：Phase 1 高亮图标 → 弹出女巫+对话框 → 点击推进）
+    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+      if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2) {
+        // Phase 1/2: 女巫+对话框阶段，点击对话框推进
+        if (renderer.cardBookGuideDialogRect) {
+          const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideDialogRect]);
+          if (btnHit) {
+            const now = Date.now();
+            if (game._cardBookGuideTapTime && now - game._cardBookGuideTapTime < 300) {
+              game._cardBookGuideSkipTyping = true;
+              vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
+              return;
+            }
+            game._cardBookGuideTapTime = now;
+            if (renderer.cardBookGuideNextBtnRect) {
+              vibrate();
+              if (game.audioManager) game.audioManager.play('tap');
+              game.advanceCardBookGuide();
+            }
+            return;
+          }
+        }
+        return;
+      }
+      // Phase 3: 退场动画中，阻塞输入
+      return;
+    }
+
+    // 检测卡牌图鉴图标点击
+    if (renderer.cardBookIconRect && game.cardBookUnlocked) {
+      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      if (cbHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game.cardBookOpen = true;
+        // 如果有新收集的卡牌，自动翻到对应页码
+        if (game._newWitchCardThisShop) {
+          const allLevels = WITCH_SKILLS.map(s => s.level);
+          const itemsPerPage = 4;
+          const levelIndex = allLevels.indexOf(game._newWitchCardThisShop);
+          game.cardBookPage = levelIndex >= 0 ? Math.floor(levelIndex / itemsPerPage) : 0;
+        } else {
+          game.cardBookPage = 0;
+        }
+        game._cardBookAnimStartTime = Date.now();
+        game._closingCardBook = false;
+        game._cardBookNewBadge = false;
+        return;
+      }
+    }
+
+    // 确认购买弹窗打开时
+    if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+      // 购买成功弹窗
+      if (game._confirmBuySuccess) {
+        if (game._successBtnPressed) return;
+
+        const rects = [];
+        if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtnRect) {
+          rects.push(renderer.confirmBuyRenderer.successBtnRect);
+        }
+        if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtn2Rect) {
+          rects.push(renderer.confirmBuyRenderer.successBtn2Rect);
+        }
+        const btnHit = renderer.hitTest(x, y, rects);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game._successBtnPressed = true;
+          game._successPressedBtn = btnHit.action;
+          game._successBtnPressTime = Date.now();
+          setTimeout(() => {
+            game._successBtnPressed = false;
+            game._successPressedBtn = null;
+            // 女巫牌且点击"装备"
+            if (btnHit.action === 'equipWitch' && game._confirmBuyItemData) {
+              const item = {...game._confirmBuyItemData};
+              if (item.limit !== undefined && item.usesLeft === undefined) {
+                item.usesLeft = item.limit;
+              }
+              game.jokers.push(item);
+              if (game.storageManager) game.storageManager.saveProgress();
+            }
+            // 药水牌且点击"暂存"
+            if (btnHit.action === 'stashPotion' && game._confirmBuyItemData) {
+              game.potions.push({...game._confirmBuyItemData});
+              if (game.storageManager) game.storageManager.saveProgress();
+            }
+            // 药水牌且点击"立即使用"
+            if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
+              const item = game._confirmBuyItemData;
+              game.potionMode = {...item};
+              game._prePotionState = 'shop';
+              game.state = 'potion';
+            }
+            // 水晶球点击"生效"
+            if (btnHit.action === 'applyCrystal' && game._confirmBuyItemData) {
+              const item = game._confirmBuyItemData;
+              if (item.effect === 'reroll_skill') {
+                // 技能重掷：从 SKILL_POOL 随机选一个新技能替换下一回合的
+                const { SKILL_POOL, shuffleSkills } = require('./js/witch_skills');
+                const { WITCH_SKILLS } = require('./js/witch_skills');
+                const nextRound = game.round + 1;
+                const targetConfig = WITCH_SKILLS.find(s => s.level === nextRound);
+                if (targetConfig && game._shuffledSkills) {
+                  const idx = WITCH_SKILLS.indexOf(targetConfig);
+                  if (idx >= 0 && idx < game._shuffledSkills.length) {
+                    const newSkill = SKILL_POOL[Math.floor(Math.random() * SKILL_POOL.length)];
+                    game._shuffledSkills[idx] = {...newSkill};
+                  }
+                }
+              }
+            }
+            game._closingConfirmBuy = true;
+            game._closeConfirmBuyStartTime = Date.now();
+          }, 300);
+          return;
+        }
+        return; // 点击外部不关闭
+      }
+
+      return;
+    }
+
+    // 检测已购买道具栏点击（选中/取消选中）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopOwnedPropRects) {
+      const propHit = renderer.hitTest(x, y, renderer.shopRenderer.shopOwnedPropRects);
+      if (propHit) {
+        // 女巫牌支持长按排序（400ms），药水牌保持原有短按逻辑
+        if (propHit.array === 'jokers') {
+          game._pendingJokerSelect = { index: propHit.index, startTime: Date.now() };
+          game._pendingJokerSelectTimer = setTimeout(() => {
+            game._pendingJokerSelect = null;
+            game._pendingJokerSelectTimer = null;
+            // 进入排序状态
+            game._jokerSortState = {
+              fromIndex: propHit.index,
+              insertSlot: propHit.index,
+              currentX: x,
+              currentY: y,
+            };
+            // 取消当前选中状态，避免排序时显示售出按钮
+            renderer.shopRenderer.shopSelectedOwned = null;
+          }, 400);
+          return;
+        }
+        // 药水牌：保持短按逻辑
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const prev = renderer.shopRenderer.shopSelectedOwned;
+        if (prev && prev.type === propHit.array && prev.index === propHit.index) {
+          renderer.shopRenderer.shopSelectedOwned = null;
+        } else {
+          renderer.shopRenderer.shopSelectedOwned = { type: propHit.array, index: propHit.index };
+        }
+        return;
+      }
+    }
+
+    // 检测售出按钮点击
+    if (renderer.shopRenderer && renderer.shopRenderer.shopSellBtnRect) {
+      const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
+      if (sellHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('card_sell');
+        const arr = game[sellHit.array];
+        if (arr && arr[sellHit.index]) {
+          const item = arr[sellHit.index];
+          game.gold += Math.round(item.cost / 2);
+          // 启动售出消失动画（400ms 后实际移除）
+          game._sellingProp = {
+            type: sellHit.array,
+            index: sellHit.index,
+            startTime: Date.now(),
+          };
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress();
+        }
+        return;
+      }
+    }
+
+    // 检测使用按钮点击（随机强化 / 字母升级药水）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopUseBtnRect) {
+      const useHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopUseBtnRect]);
+      if (useHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const arr = game[useHit.array];
+        if (arr && arr[useHit.index]) {
+          const potion = arr[useHit.index];
+          // 从道具栏移除并进入使用页面
+          arr.splice(useHit.index, 1);
+          game.potionMode = {...potion};
+          game._prePotionState = 'shop';
+          game.state = 'potion';
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress();
+        }
+        return;
+      }
+    }
+
+    // 点击商店页面其他地方，关闭售出按钮
+    if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
+      renderer.shopRenderer.shopSelectedOwned = null;
+      return;
+    }
+
+    // 检测全局重掷按钮点击（扣除 3 金币，刷新所有模块）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopGlobalRerollBtnRect) {
+      const rerollHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
+      if (rerollHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        renderer.shopRenderer.rerollBtnPressed = { pressTime: Date.now() };
+        if (game.gold >= 3) {
+          game.gold -= 3;
+          refreshModule(game, 0);
+          refreshModule(game, 1);
+          refreshModule(game, 2);
+        }
+        return;
+      }
+    }
+
+    // 检测刷新按钮点击（扣除 5 金币）
+    if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
+      const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
+      if (refreshHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        renderer.shopRenderer.refreshBtnPressed = { modIdx: refreshHit.modIdx, pressTime: Date.now() };
+        if (game.gold >= 5) {
+          game.gold -= 5;
+          refreshModule(game, refreshHit.modIdx);
+        }
+        return;
+      }
+    }
+
+    // 二次确认框点击处理（优先于其他交互）
+    if (game._buyConfirmPopup) {
+      const popup = game._buyConfirmPopup;
+      // 确认按钮
+      if (popup.confirmRect) {
+        const confirmHit = renderer.hitTest(x, y, [popup.confirmRect]);
+        if (confirmHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          // 确认按钮按下动画
+          game._buyConfirmBtnPressed = true;
+          game._buyConfirmBtnPressTime = Date.now();
+          const itemIndex = popup.itemIndex;
+          const itemData = popup.item;
+          // 延迟 150ms 执行购买
+          setTimeout(() => {
+            game._confirmBuyItemData = itemData;
+            const success = buyItem(game, itemIndex);
+            if (success) {
+              game.confirmBuyItem = itemIndex;
+              game._confirmBuySuccess = true;
+              game._confirmBuySuccessTime = Date.now();
+              if (game.audioManager) game.audioManager.play('buy_success');
+              // 上报：卡牌购买
+              if (typeof wx !== 'undefined' && wx.reportEvent) {
+                const typeMap = { witch: '1', crystal: '2', potion: '3' };
+                wx.reportEvent("card_buy", {
+                  "card_type": typeMap[itemData.type] || itemData.type,
+                  "card_name": itemData.name
+                });
+              }
+            }
+            game._buyConfirmPopup = null;
+            game._buyConfirmBtnPressed = false;
+            renderer.shopRenderer.priceBtnPressed = null;
+          }, 150);
+          return;
+        }
+      }
+      // 取消按钮
+      if (popup.cancelRect) {
+        const cancelHit = renderer.hitTest(x, y, [popup.cancelRect]);
+        if (cancelHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game._buyConfirmPopup = null;
+          renderer.shopRenderer.priceBtnPressed = null;
+          return;
+        }
+      }
+      // 点击确认框外部：关闭
+      game._buyConfirmPopup = null;
+      renderer.shopRenderer.priceBtnPressed = null;
+      return;
+    }
+
+    // 点击价格按钮：显示二次确认框
+    if (renderer.shopRenderer && renderer.shopRenderer.shopPriceBtnRects) {
+      const priceHit = renderer.hitTest(x, y, renderer.shopRenderer.shopPriceBtnRects);
+      if (priceHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const item = game.shopItems[priceHit.index];
+        if (!item) return;
+        // 金币不足或已达上限，直接忽略
+        if (game.gold < item.cost) return;
+        if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return;
+        const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+        if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return;
+
+        // 按下动效
+        renderer.shopRenderer.priceBtnPressed = { index: priceHit.index, pressTime: Date.now() };
+
+        // 显示二次确认气泡框
+        game._buyConfirmPopup = {
+          itemIndex: priceHit.index,
+          item: {...item},
+          startTime: Date.now(),
+        };
+        return;
+      }
+    }
+
+    if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
+      if (btnHit && !game._challengeBtnPressed) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('challenge');
+        game._challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressed = true;
+        renderer.shopRenderer.challengeBtnPressTime = Date.now();
+        // 启动页面过渡动画
+        game._shopToGameTransition = { startTime: Date.now() };
+        setTimeout(() => {
+          renderer.lastScore = 0;
+          game.nextRound();
+        }, 400);
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'potion') {
+    // 动画进行中，忽略所有点击
+    if (game._potionUpgrading) return;
+
+    // 防御：potionMode 异常为空时直接忽略
+    if (!game.potionMode) return;
+
+    // === 随机强化药水（老虎机）===
+    if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
+      // 检测抽选按钮（只在 idle 阶段可点）
+      if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
+        const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
+        if (spinHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game.startRandomSpin();
+          return;
+        }
+      }
+      return;
+    }
+
+    // 检测字母点击
+    if (renderer.potionLetterRects) {
+      const letterHit = renderer.hitTest(x, y, renderer.potionLetterRects);
+      if (letterHit) {
+        vibrate();
+        game._potionSelectedLetter = letterHit.letter;
+        return;
+      }
+    }
+
+    // 检测升级按钮
+    if (renderer.potionUpgradeBtnRect && renderer.potionUpgradeBtnRect.enabled) {
+      const btnHit = renderer.hitTest(x, y, [renderer.potionUpgradeBtnRect]);
+      if (btnHit && game._potionSelectedLetter) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        // 先计算升级后的分数
+        const potion = game.potionMode;
+        const letter = game._potionSelectedLetter;
+        const baseScore = LETTER_SCORE[letter];
+        const existing = letterUpgrades.get(letter) || {};
+        const oldScore = Math.floor(baseScore * (existing.mult || 1)) + (existing.add || 0);
+        let newScore, totalMult, totalAdd;
+        if (potion.effect === 'upgrade_letter') {
+          // 字母强化：加法叠加
+          const add = potion.value || 10;
+          totalMult = existing.mult || 1;
+          totalAdd = (existing.add || 0) + add;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        } else {
+          // 其他（如随机强化/王牌强化）：乘法叠加
+          const mult = potion.value || 2;
+          totalMult = (existing.mult || 1) * mult;
+          totalAdd = existing.add || 0;
+          newScore = Math.floor(baseScore * totalMult) + totalAdd;
+        }
+        // 执行升级（保留 potionMode 让字母选择页面继续显示）
+        const savedPotionMode = game.potionMode;
+        upgradeLetter(game, letter);
+        game.potionMode = savedPotionMode;
+        // 启动弹出动画
+        game._potionUpgrading = {
+          startTime: Date.now(),
+          letter: letter,
+          oldScore: oldScore,
+          newScore: newScore,
+          upgradeMult: totalMult,
+          upgradeAdd: totalAdd
+        };
+        game._potionSelectedLetter = null;
+        return;
+      }
+    }
+
+    // 检测暂存按钮
+    if (renderer.potionStashBtnRect && renderer.potionStashBtnRect.enabled) {
+      const btnHit = renderer.hitTest(x, y, [renderer.potionStashBtnRect]);
+      if (btnHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        // 将药水放入道具栏（如果不在的话）
+        if (game.potionMode) {
+          const alreadyStashed = game.potions && game.potions.some(p => p.effect === game.potionMode.effect);
+          if (!alreadyStashed) {
+            game.potions = game.potions || [];
+            game.potions.push({...game.potionMode});
+          }
+          game.potionMode = null;
+        }
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+        game._potionSelectedLetter = null;
+        if (game.storageManager) game.storageManager.saveProgress();
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'life_extended') {
+    if (game._lifeExtensionBtnPressed) return;
+    if (renderer.lifeExtensionBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.lifeExtensionBtnRect]);
+      if (btnHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._lifeExtensionBtnPressed = true;
+        setTimeout(() => {
+          game._lifeExtensionBtnPressed = false;
+          game._lifeExtensionAnim = null;
+          // 发放结算金币（与 _showSettlement 逻辑一致）
+          const baseGold = 3 + Math.round(game.round / 3);
+          const extraHands = game.handsLeft * 2;
+          const extraDiscards = game.discardsLeft * 1;
+          game.gold += baseGold + extraHands + extraDiscards;
+          // 目标分脉冲动画（放大缩小，参考目标减免/金币胶囊）
+          const bonus = game._lifeExtensionBonus || 0;
+          if (bonus > 0) {
+            game._lifeExtensionTargetAnim = { startTime: Date.now(), duration: 600 };
+          }
+          game.state = 'shop';
+          if (!game.shopItems) game.shopItems = generateShopItems(game);
+          if (game.storageManager) game.storageManager.saveProgress();
+        }, 150);
+        return;
+      }
+    }
+  }
+
+  if (game.state === 'gameover') {
+    if (game._closingGameOver) return;
+    if (game._restartBtnPressed) return;
+    if (game._reviveBtnPressed) return;
+
+    // 排行榜显示时，点击任意位置关闭
+    if (isRankShowing) {
+      hideRankList();
+      return;
+    }
+
+    // 复活按钮
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {
+      const reviveHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.reviveBtnRect]);
+      if (reviveHit) {
+        const dailyReviveUsed = game.storageManager && game.storageManager.isDailyReviveUsed();
+        if (dailyReviveUsed) {
+          game.hintToast = { text: '今日复活次数已用完', expireAt: Date.now() + 2000 };
+          return;
+        }
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._reviveBtnPressed = true;
+        game._reviveBtnPressTime = Date.now();
+
+        // 拉起分享复活
+        shareReviveState = { startTime: Date.now(), resolving: true };
+        wx.shareAppMessage({
+          title: `我正在收集女巫词牌，快来帮我过这关！`,
+          query: `from=revive&round=${game.round}&score=${game.totalScore}`
+        });
+        return;
+      }
+    }
+
+    // 排行榜按钮
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.rankBtnRect) {
+      const rankHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.rankBtnRect]);
+      if (rankHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        showRankList();
+        return;
+      }
+    }
+
+    if (renderer.gameOverRenderer && renderer.gameOverRenderer.restartBtnRect) {
+      const btnHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.restartBtnRect]);
+      if (btnHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._restartBtnPressed = true;
+        game._restartBtnPressTime = Date.now();
+        setTimeout(() => {
+          game._restartBtnPressed = false;
+          game._closingGameOver = true;
+          game._closeStartTime = Date.now();
+          setTimeout(() => {
+            restartGame();
+          }, 200);
+        }, 150);
+        return;
+      }
+    }
+  }
+}
+
+function restartGame() {
+  console.log('[CardBook] restartGame 前, 旧实例 collectedWitchCards:', game ? JSON.stringify(game.collectedWitchCards) : 'null');
+  // 先销毁旧实例，释放音频、清除 timeout 闭包，防止内存泄漏
+  if (game) {
+    game.destroy();
+  }
+  if (renderer) {
+    renderer.resetState();
+  }
+  // 清理可能残留的网络请求标记
+  const { checkingWords } = require('./js/data');
+  checkingWords.clear();
+
+  if (renderer && renderer.gameOverRenderer) {
+    renderer.gameOverRenderer.lastGameOverReason = null;
+    renderer.gameOverRenderer.animStartTime = null;
+  }
+  game = new Game();
+  game.cloudStorage = cloudStorage;
+  game.renderer = renderer;
+  wx.game = game;
+
+  // 加载 cloudStorage 缓存的音频
+  if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
+  console.log('[CardBook] restartGame 后, 新实例 collectedWitchCards:', JSON.stringify(game.collectedWitchCards));
+  game._preloadWitchAvatars();
+  game._potionSelectedLetter = null;
+  game._potionUpgrading = null;
+  game._randomUpgradePopup = null;
+  game._changeLetterPopup = null;
+  game._closingChangeLetter = false;
+  game._closeChangeLetterStartTime = null;
+  game._changeLetterHint = null;
+  game.witchRewardData = null;
+  game._lifeExtensionAnim = null;
+  game._lifeExtensionBtnPressed = false;
+}
+
+// 游戏主循环
+let lastTime = 0;
+function gameLoop(timestamp) {
+  const deltaTime = timestamp - lastTime;
+  lastTime = timestamp;
+
+  if (!preloadComplete) {
+    // 预加载阶段：绘制预加载页
+    renderer.drawPreviewLoad(preloadProgress);
+  } else if (transitionStartTime !== null) {
+    // 过渡阶段：直接渲染游戏页面（去掉淡入淡出）
+    renderer.render(game);
+    transitionStartTime = null;
+  } else {
+    game.update(deltaTime);
+    renderer.render(game);
+  }
+
+  requestAnimationFrame(gameLoop);
+}
+
+// 启动预加载并开始渲染循环
+startPreload();
+requestAnimationFrame(gameLoop);
+
+// 暴露到全局（调试用）
+wx.renderer = renderer;

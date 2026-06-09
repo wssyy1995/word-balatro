@@ -1,2 +1,2489 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,k=Math.LOG10E,l=Math.PI,m=Math.SQRT1_2,n=Math.SQRT2;var o=50,p=72,q=24,r=40,s=58,t=93,u=88,v=50,w=86,x=50,y=44,K=27,M=63,O=13,Q=31,V=9,_5=84,_6=59,_7=19,_8=45,_9=20,ba=29,bb=13,bc=72,bd=85,be=47,bf=21,bg=10,bh=19,bi=10,bj=82,bk=96,bl=85,bm=36,bn=48,bo=77,bp=84,bq=67,br=85,bs=92,bt=45,bu=36,bv=81,bw=98,bx=53,by=56,bz=53,bA=34,bB=83,bC=72,bD=31,bE=96,bF=48,bG=38,bH=82,bI=9,bJ=98,bK=58,bL=6,bM=21,bN=54,bO=85,bP=94,bQ=22,bS=90,bT=48,bU=50,bV=23,bW=76,bX=71,bY=93,bZ=38,b0=39,b1=21,b2=17,b3=66,b4=3,b5=18,b6=14,b7=73;var b8=c((19+b7+t)/3)<c(e((a(73)+a(t)+a(19))/3)),b9=g(2*a(f(_6*9+20*96)))<=g(a(_6*_6+_9*_9)+a(9*9+96*bk)),ca=g(2*a(f(bT*50+bq*bq)))>g(a(48*48+67*67)+a(67*bq+50*50)),cb=o*o+72*bc+bf*bf+bC*72>=50*bC+72*50+bC*bf+bf*bc,cc=g(2*a(f(27*bf+bN*bN)))<=g(a(bN*54+K*27)+a(54*bN+bf*21)),cd=bL*bL+10*bi+85*85+90*bS<br*bL+bi*90+bL*10+90*85,ce=90*bS+93*93+bp*bp>=93*84+bS*t+84*bS,cf=g(2*a(f(63*36+bW*13)))<=g(a(63*63+bW*76)+a(13*bb+36*bu)),cg=g(2*a(f(bP*bL+bj*85)))>g(a(82*82+bP*94)+a(bl*85+bL*bL)),ch=g(2*a(f(19*50+b5*b5)))>g(a(b5*18+19*19)+a(v*v+b5*b5)),ci=bG*bG+17*17+50*x+72*72<x*72+72*38+17*x+38*b2,cj=g(2*a(f(23*72+72*31)))<=g(a(72*bc+bV*bV)+a(p*72+31*31)),ck=c((13+bv+o+_5)/4)<c(e((a(O)+a(_5)+a(81)+a(50))/4)),cl=g(2*a(f(24*24+ba*50)))>g(a(q*q+29*ba)+a(q*q+50*bU)),cm=c((92+bp+83)/3)>=c(e((a(92)+a(bB)+a(bp))/3)),cn=g(2*a(f(63*63+bO*bM)))>g(a(M*M+85*bO)+a(21*21+M*M)),co=50*50+bQ*bQ+b0*39+54*54>=22*v+v*bN+bN*b0+b0*bQ,cp=g(2*a(f(r*bO+21*bh)))<=g(a(21*21+r*40)+a(bO*bO+bh*19)),cq=c((10+85+be+66)/4)<c(e((a(bi)+a(66)+a(be)+a(85))/4)),cs=c((_5+ba+b3)/3)>=c(e((a(29)+a(_5)+a(b3))/3)),ct=g(2*a(f(bH*bK+bg*23)))>g(a(bH*bH+10*bg)+a(23*bV+bK*58)),cu=23*23+72*72+39*b0<39*72+bc*bV+bV*39,cv=g(2*a(f(bp*bp+bj*o)))<=g(a(82*bj+84*bp)+a(o*o+bp*bp)),cw=c((72+b7+V)/3)<c(e((a(9)+a(73)+a(bc))/3)),cx=x*50+21*21+63*M+90*bS<M*90+50*63+bf*50+bS*21,cy=48*48+_8*_8+38*bZ+21*b1<38*21+45*bT+b1*_8+bT*bZ,cz=c((72+94+34)/3)>=c(e((a(72)+a(bA)+a(bP))/3)),cA=bm*36+82*bj+bV*23>=82*bm+36*23+23*82,cB=bc*bc+bP*94+s*s+19*_7<94*_7+bc*bP+58*72+_7*58,cC=c((48+bp+88)/3)>=c(e((a(88)+a(bp)+a(48))/3)),cD=w*86+36*bm+b4*3>=w*bm+b4*86+bm*3,cE=g(2*a(f(bK*36+bW*b5)))>g(a(58*58+76*76)+a(bu*36+b5*b5)),cF=g(2*a(f(50*bO+38*bZ)))<=g(a(50*50+38*bZ)+a(bO*bO+38*38)),cG=bE*bE+bx*53+50*50+53*53<53*bU+96*bz+bU*96+bz*53,cH=c((36+bF+b5)/3)<c(e((a(b5)+a(bF)+a(36))/3)),cI=c((94+98+bB)/3)>=c(e((a(bJ)+a(94)+a(bB))/3)),cJ=c((10+bf+bB+_7)/4)>=c(e((a(bi)+a(83)+a(bf)+a(_7))/4)),cK=bh*19+bo*bo+36*36+o*50<77*o+o*36+36*bh+19*77,cL=bu*bu+ba*ba+s*58+bU*50>=36*58+29*bu+50*ba+58*bU,cM=10*bi+48*bT+67*bq+bg*bg>=67*10+48*bg+bg*bq+bi*48;var cN,cO,cP,z,A,B,C,D,E,F,G,H,I,J,cQ,L,cR,N,cS,P,cT,R,S,T,U,cU,W,X,Y,Z,_0,_1,_2,_3,_4,cV,cW;var cX,bR,cY;var cZ,c0,c1,c2,c3,c4,c5;var c6;var c7;var c8,c9;var da;var db,dc;var dd,de,df;var Af,Ah;var dg,dh;var di,Is,It,Iu,Iv,Iw,Ix,Iy,Iz,IA;var dj=+cz;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var dk={n:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var dl="";var dm=new Array(34);dl=dk.n("koosewemogodpunotihznedeotdi",2);dm[0]=dl.s(2);dl=dk.n("yekesulla...:态状popnimlruA/Nxdiehtxamfedtestegsopsahddapamgolwon",3);dm[1]=dl.s(3);dl=dk.n("emaGeldienod:分础基etarnehtffid:分标目niamtinimAhpnEhptrapezistrosTSOPedoctfigmorfemanliafesabpohstfeltxettcidliecsyekdlogemosdrowatadepytniojyalpdniftlumkcedhsupdnah",4);dm[2]=dl.s(4);dl=dk.n(":母字标目hsats:前当 ,:etarsnaemma_hpne_hpstrapneergesrapnIylfelacsrekojhctamUOIEAduolchctacraelcs_dnetilpsnekotlevelrorresdracecilstimilesahphctiwdilavepocsroolfeulavlliksetatsdnuorerocs",5);dm[3]=dl.s(5);dl=dk.n("etadpudrawer:tnuoc:erocsgnirtsredaehdohtempohs/.atad/.desuaptuOylf:latotnoitopeteledtArahcde_dnertsbusecaFsitceffeyaled_tegratecilpsmodnartluserretlifrettelsrekojhtgnel",6);dm[4]=dl.s(6);dl=dk.n("stropxepulevel:有已前当 ,:tegratyortsedslobmysdexiFotecaFsahtfihsnutuoemittseuqeroidua/.yticapoytlanepxdIdracdraCwenegassemdi_dracevlosersseccusdilavnifOxednigniyalpsnoitopseirtnegninaemreggirthcaErof",7);dm[5]=dl.s(7);dl=dk.n("erocSwenerocSdlodloGesabelbuoDsignikcehc词单的成组可有没:snoitoplanigiropiTyrgna6_htgnel5_htgnel4_htgnel3_htgnelecaf_sahe_rettela_rettelgninnipsnoitatordrac_repxdIrekojsgnittesgnirtSotrevoemagdedargputAeripxererednertfeLsesusedulcnidetceles",8);dm[6]=dl.s(8);dl=dk.n("wolGtros_:wolfrevoniw_dnuoresahPminadIdraCxameman_trapdereggirttciDudiabLOOP_POHSegarots/.ATAD_DROWdloGlatotpit_yrgnadilaVSdnelewov_sahdenifednuxednIylf_revo_emagnoitarepoxednIdnifemiTtratstsaoTtnihyfignirtserocSesabsmetIpohsdelbasid_tfeLsdnah",9);dm[7]=dl.s(9);dl=dk.n("tsiLataDVKleehw_nipselacStros_dnah_artxetnemelttesssap_dnuordilav_dractceleSdractfiGediug_llAdaolerpsnaem_drowtluMdevlahLOOP_LLIKSdraweRevigllikSkcehcSDRAC_ECAFllikShctiwsunob_talfedoc_rorreedoCsutatsremiTevas_tesffOminadnuoRteserdilaVdEdnedrow_elohwxednIrekojdereggirt_dog_retteltluMmodnardeyortsed_sdnaHartxeedoMnoitopddAedargpuerocSlatotmetIdraweresahPediug",10);dm[8]=dl.s(10);dl=dk.n("erocSdaolpudroWdilaVsignirtSOSIotnioc_elbuodsseccus_yuberocSylppa_trats_dnuorsgnitteStegnoitamrofedtluser_drowemas_elbuodrettel_hgihSDRAC_HCTIWnoitamina/.ecnahc_tsalenoDpmuJww_erocSdevlahgniyortsed_statSetadpuemiTevlosertnevEtropera_rettel_onserocSdnuorytefaSartxesdItuoemit_sdraCgniylfesaCreppUotYtesffOpmujneLxaMdees_neLniMdees_tluMedargpuesaCrewoLotreganaMmina",11);dm[9]=dl.s(11);dl=dk.n("ecneuqeStlum:tluMedargpuyticapOtros_YtesffOtros_XtesffOtros_rettel_artxedrawer_hctiwspetSdraCrepdelbanEcisumdelbanEdnuosporPgnilles_snaem_elpmistluMlanigiroetacilpud_onepyT-tnetnoCSLLIKS_HCTIWreganaMoiduAEROCS_RETTELretteLtegratelffuhs_draclagelli_dracredrOnIsdractceleseDdractratSpmuJww_YtesffOpmuj_egaPkooBdracnepOkooBdractluser_snartnoitcnuFllacsdnah_fo_tuonekot_sseccaerocShgiHtegerocShgiHtesdeliaf_hctiwsretteLartxetesffOtcelessdnuoRytefaseziSdnaHesabeziSdnaHxam_tfeLsdracsidegarotSduolcssergorPevasreganaMoiduakcehCgnidnep",12);dm[10]=dl.s(12);dl=dk.n("gninaeMtamroferocSdroWclac败失传上数分 ]knaR[功成传上数分 ]knaR[:tfeLsdracsidemiTtratStfigtnuocsid_pohsdednetxe_efilsreggirTrekojsdIdraCdeyalptxeTliaFhctiwemiTpaTediug_txeTkcabdeef_egaPkcabdeef_erocSlanigiroemas_dnetsriflewov_laitinisllikSelffuhsretteLedargpusdroWgnikcehcemiTtratSnipstratSyortsed_ssergorPraelctsoob_lagellistolSrekoJxamsdracsiDartxe",13);dm[11]=dl.s(13);dl=dk.n("gninaeMdroWtegwolfrevo_erocsxednIdoGretteldrow_neddibroftnemecalp_dracesahPediuGevas4_rettel_ecrof3_rettel_ecrofesahPediuGdaolpupoPsgnittes_cnySegarotStescnySegarotStegslliks_hctiw/.reganaMegarotStegraTesaBclacsedargpUretteletatSkcehCdrowemiTtratSesuapnoisnetxe_efiltluseRflaHtlumlagelli_dleihsminAdoGrettel_piTyrgnAhctiw_pupoPhctiWduh_stceffElatsyrcerocSlanigiro_nosaeRrevOemagsunoBwolfrevo_ataDtnemelttesesahPediuGpohsreganaMegarots",14);dm[12]=dl.s(14);dl=dk.n("etatStroSrekoj_eviveRyliaDevas5_tnuocsid_pohsdloGnoitalosnocdnuoRtseBetadpusrekoJdroWelohwdereggirTlabolg！发触咒诅巫女 + 在存不词单delbanEcisuMtesdelbanEdnuoSteswohSlebaLgubed_tsruBratShctiw_[=EMAN_LLIKS化始初ehcaCdroWenilnotnemeltteSwohs_eman_lliks_dracetatSnoitoPerp_emiTtratSesolc_ataDdraweRhctiwsllikSdelffuhs_",15);dm[13]=dl.s(15);dl=dk.n("tsiLknaRgniwohs_tols_hctiw_artxednaHyalPetucexe_tluseRreyarPtsalsdraCdetceleSteggnipyTpikSediug_:合回，复恢档存从 ]emaG[sgnitteSgnisolc_eulav_sdda_itlumnosj/noitacilppametIdraweRetaerctxeTliaFllikStegleveLroFllikStegreganaMnoitaminAehcaCgninaeMdrowATAD_DROW_DNAPXEtratSminAdleihs_revOemaGgnisolc_kooBdraCgnisolc_gnidargpUnoitop_retteLdetciderp_rettel_detciderpdekcolnUkooBdracdessaPllikShctiwevitcAyalPetsah_",16);dm[14]=dl.s(16);dl=dk.n("enilnOdroWdilaVsiemiTpaTediuGpohs_hsalFrekaerBelur_minAtegraTecuder_stuoemiTllAraelc_:srekoj 复恢 ]emaG[elbuoDretteLtsal_cnySegarotSevomersmetIpohSetarenegeno_sdrow_lagellipuorGediuGdaolerpdesserPntBeviver_pupoPliateDhctiw_egdaBweNkooBdrac_minAhctiWelbasid_tniHretteLegnahc_etaRtnuocsiDpohs_",17);dm[15]=dl.s(17);dl=dk.n("noisseccus_laitinidereggirTdoGrettelesahPediuGpohSevasesahPediuGpohSdaolsseccuSyuBmrifnoc_yuBmrifnoCgnisolc_ntBdesserPsseccus_desserPntBsseccus_pupoPretteLegnahc_desserPntBtratser_minAnoisnetxEefil_elbuod_rettel_tsaltnemeltteSgnisolc_noitalumucca_itlumretteLlaitinItsal_sretteLdeyalPtsal_sdraChctiWdeppiuqeesahPediuGkooBdrac",18);dm[16]=dl.s(18);dl=dk.n("dnaHnIdroWdilaVdniftratSminAliaFhctiw_tcetorp_lliks_hctiwemiTtratStixEediug_gnittimbuSkcabdeef_noitisnarTkcabdeef_ataDmetIyuBmrifnoc_hsalFkooBdraCecrof_1v_nekot_tcid_udiabstceffElatsyrCylppaNOITUBIRTSID_RETTELegarotSduolCresUtesserocSdraCdnaHcnys_otuAtsruBratShctiw_emiTsserPntBeviver_noisnetxEefiLkcehc_tratSminAdoGrettel_draweRhctiWgnisolc_emiTtratStxeTediug_emiTtratSyalPetsah_gnitelpmoCdnaHyalp_sunoBnoisnetxEefil_pupoPedargpUmodnar_evitcAtnuocsiDpohs_emiTtratSediuGpohs_sdraChctiWdetcelloc",19);dm[17]=dl.s(19);dl=dk.n("sratavAhctiWdaolerp_dekcolnUkooBdraCevassdrow_lagelli_dibrofgnipyTpikSediuGpohs_desserPntBesolCknar_tsaoTtimbuSkcabdeef_desserPkcaBkcabdeef_desserPknaRsgnittes_emiTsserPntBsseccus_desserPntBegnellahc_ssergorPmorFerotser_emiTsserPntBtratser_desserPlleCkooBdrac_leveLliateDkooBdrac_dekcolnUkooBdraCdaolkcolnUkooBdraCkcehc_",20);dm[18]=dl.s(20);dl=dk.n(":率倍奖抽 ]edargpUmodnaR[elbaliavArekaerBelur_emiTpaTediuGkooBdrac_desucoFtupnIkcabdeef_desserPdnuoSsgnittes_noitisnarTemaGoTpohs_1sulp_dnah_dnuor_hcae1sulp_nioc_dnuor_hcaedraChctiWdeppiuqEdaolpohSsihTdraChctiWwen_retteLdetceleSnoitop_",21);dm[19]=dl.s(21);dl=dk.n("试重试尝，败失证验存保 ]kooBdraC[=level 卡新集收 ]kooBdraC[esahPediuGkooBdraCevasdrac_hctiw_eno_elbasidesahPediuGkooBdraCdaoldesserPtimbuSkcabdeef_emiTsseccuSyuBmrifnoc_detelpmoCminAdnaHyalp_liateDkooBdraCgnisolc_emiTtratSminAkooBdrac_desUdleihSdroWlagelli_emiTtratSyalrevOediug_desUtcetorPllikShctiw_",22);dm[20]=dl.s(22);dl=dk.n("dnaHnIsdroWdilaVllAdnifsdnah_artxe_lliks_hctiw:常异报上 ]dnuoRtseBetadpU[emiTtratSsgnitteSesolc_sdraChctiWdetcelloCevasemiTtratStixEediuGpohs_emiTtratStfiGdraCediug_sdraChctiWdetcelloCdaolemiTtratSkooBdraCesolc_sunoBdraCdeppiuqEylppa_tratShsalFnocIkooBdrac_emiTtratSediuGkooBdrac_emiTtratStxeTediuGpohs_",23);dm[21]=dl.s(23);dl=dk.n("=level 查检集收复重 ]kooBdraC[:回返数函云 ]dnuoRtseBetadpU[gnipyTpikSediuGkooBdrac_desserPkcabdeeFsgnittes_desserPntBesolCsgnittes_desserPntBnoisnetxEefil_leveLroFdraChctiWdaolerpdesserPntBesolCkooBdrac_desserPntBpiuqEkooBdrac_emiTtratSliateDkooBdrac_",24);dm[22]=dl.s(24);dl=dk.n(":数分牌母字后级升 ]edargpUmodnaR[emiTtratSyuBmrifnoCesolc_",25);dm[23]=dl.s(25);dl=dk.n(":败失用调数函云 ]dnuoRtseBetadpU[ZYXWVUTSRQPONMLKJIHGFEDCBAleveLroFratavAhctiWdaolerpemiTtratSdraweRhctiWesolc_",26);dm[24]=dl.s(26);dl=dk.n("emiTtratStxeTediuGkooBdrac_emiTtratStixEediuGkooBdrac_",27);dm[25]=dl.s(27);dl=dk.n("emiTtratS2txeTediuGkooBdrac_",28);dm[26]=dl.s(28);dl=dk.n("emiTtratSliateDkooBdraCesolc_",29);dm[27]=dl.s(29);dl=dk.n(":败失 3_ediug_hctiw 载下需按 ]ediuGpohS[:deliaf noitcnuf duolc ]tciDudiaB[",34);dm[28]=dl.s(34);dl=dk.n(":sedargpUrettel 前级升 ]edargpUmodnaR[",35);dm[29]=dl.s(35);dl=dk.n(":sunob wolfrevo_erocs ]llikSdeppiuqE[:sdraChctiWdetcelloc 载加戏游新 ]kooBdraC[",37);dm[30]=dl.s(37);dl=dk.n(":败失 4_ediug_hctiw 载下需按 ]ediuGkooBdraC[:sdraChctiWdetcelloc 载加复恢档存 ]kooBdraC[",38);dm[31]=dl.s(38);dl=dk.n(":rorre denruter noitcnuf duolc ]tciDudiaB[",42);dm[32]=dl.s(42);dl=dk.n(":tnuoc ,detavitca tnuocsid_pohs ]llikSdeppiuqE[",47);dm[33]=dl.s(47);var dn="20,BI,E,o,K[,Hko,3e,EV,BA,BB,CA,Q,WA,Fe,CqA,Qo,sU,J+,A,Go,B,by,hK,OU,J";function dp(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var dq=dp(dn);if(dj){cN=dm[4][13];cO="8";cP=dq[0];z=dm[10][26];A=dm[17][15];B=dm[8][20];C=dm[7][16];D=dm[14][9];E=dm[13][6];F=dm[12][14];G=dm[14][10];H=dm[12][15];I=dm[11][6];J=dm[12][16];cQ=dm[4][19];L=dm[14][11];cR=dm[9][19];N=dm[10][27];cS=dm[5][16];P=dm[12][17];cT=dm[7][17];R=dm[15][8];S=dm[17][16];T=dm[11][7];U=dm[7][18];cU=dm[4][20];W=dm[14][12];X=dm[8][21];Y=dm[14][13];Z=dm[8][22];_0=dm[14][14];_1=dm[8][23];_2=dm[11][8];_3=dm[9][20];_4=dm[10][28];cV=dm[12][18];cW=dm[17][17];cX="[BaiduDict] token refreshed via cloud function, cache 7 days";bR="q";cY="[BaiduDict] token expired, will refresh via cloud function";cZ="";c0="A";c1="E";c2="J";c3="Q";c4="X";c5="Z";c6="Y";c7="；";c8=",";c9="]";da=dm[23][0];db="[EquippedSkill] score_overflow will apply after 500ms, bonus:";dc="\n";dd="s";de="[EquippedSkill] illegal_words_one shielded illegal word, used:";df="[EquippedSkill] witch_skill_protect skipped skill check, used:";Af="x";Ah="y";dg="[EquippedSkill] each_round_hand_plus1 applied, handsLeft:";dh="[EquippedSkill] witch_skill_extra_hands applied, handsLeft:";di=dm[5][27];Is=dm[2][39];It=dm[11][24];Iu=dm[9][31];Iv=dm[15][16];Iw=dm[12][30];Ix=dm[11][25];Iy=dm[17][25];Iz=dm[21][12];IA=dm[9][32]}if(dj&&cM){cZ="F5"}if(dj&&cB){cZ+=z}if(dj&&cK){cZ+=da}if(dj&&cb){cZ+="A6D"}if(dj&&cf){cZ+="7"}if(dj&&cp){cZ+="135"}if(dj&&cs){cZ+="20"}if(dj&&b9){cZ+="DAB"}if(dj&&cA){cZ+="9"}if(dj&&cp){cZ+="986"}if(dj&&cc){cZ+="C15"}if(dj&&cb){cZ+="118"}if(dj&&ce){cZ+="F"}if(dj&&cL){cZ+="106"}if(dj&&cj){cZ+="147"}if(dj&&cA){cZ+="506"}if(dj&&ce){cZ+="313"}if(dj&&cI){cZ+="D2F"}if(dj&&cc){cZ+="7"}if(dj&&ce){cZ+="B"}if(dj&&cA){cZ+="EC0"}if(dj&&cF){cZ+="06"}if(dj&&ce){cZ+="90F"}if(dj&&b9){cZ+="6"}if(dj&&co){cZ+="1DB"}if(dj&&cM){cZ+="EA"}if(dj&&cb){cZ+="B31"}if(dj&&cC){cZ+="19D"}if(dj&&co){cZ+="5"}if(dj&&cD){cZ+="3"}if(dj&&cc){cZ+="56B"}if(dj&&cF){cZ+="A"}if(dj&&cb){cZ+="7"}if(dj&&ce){cZ+="4"}if(dj&&cL){cZ+="A"}if(dj&&cI){cZ+="AC"}if(dj&&cb){cZ+="1"}if(dj&&cM){cZ+="9"}if(dj&&cm){cZ+="868"}if(dj&&cC){cZ+="E"}if(dj&&cM){cZ+="D"}if(dj&&cL){cZ+="3"}if(dj&&cC){cZ+="B"}if(dj&&cz){cZ+="F"}if(dj&&cv){cZ+="7BE"}if(dj&&cs){cZ+="ED0"}if(dj&&cC){cZ+="DC9"}if(dj&&cp){cZ+="6C"}if(dj&&co){cZ+="D9"}if(dj&&cv){cZ+="05"}if(dj&&cF){cZ+="45B"}if(dj&&cp){cZ+="A"}if(dj&&cz){cZ+="287"}dl=null;dn=null;if(dj&&co){cZ+="0"}if(dj&&cD){cZ+="74"}if(dj&&cC){cZ+="A9"}if(dj&&cp){cZ+="5"}if(dj&&cc){cZ+="3D"}if(dj&&cM){cZ+="8F"}if(dj&&co){cZ+="08"}if(dj&&cj){cZ+="0C"}if(dj&&cA){cZ+="7"}if(dj&&cc){cZ+="6"}if(dj&&b9){cZ+="C57"}if(dj&&cz){cZ+="CAE"}if(dj&&co){cZ+="9"}if(dj&&ce){cZ+="684"}if(dj&&cv){cZ+="DB7"}if(dj&&cD){cZ+="B7"}if(dj&&cL){cZ+="F"}if(dj&&cm){cZ+="69"}if(dj&&cf){cZ+="0F"}if(dj&&b9){cZ+="B"}if(dj&&cD){cZ+="28"}if(dj&&cD){cZ+="E"}if(dj&&cz){cZ+="7"}if(dj&&ce){cZ+="46F"}if(dj&&cv){cZ+="0E"}if(dj&&ce){cZ+="23"}if(dj&&cA){cZ+="65"}if(dj&&cf){cZ+="0"}if(dj&&cz){cZ+="0"}if(dj&&cf){cZ+="8F4"}dj=0;if((""+h)[cN](10)!=cO){this["F5A6D713520DAB9986C15118F106147506313D2F7BEC00690F61DBEAB3119D5356BA74AAC19868ED3BF7BEED0DC96CD9E5B34B1230143E6B3343D12D26B9357A7DAB7F32EA32BB74041093869A7F5C0D"[cN](cP)]&=1}dr();const{[z]:LETTER_SCORE,[A]:LETTER_DISTRIBUTION,[B]:FACE_CARDS,[C]:WORD_DATA,[D]:EXPAND_WORD_DATA,[E]:onlineWordCache,[F]:wordCheckState,[G]:wordMeaningCache,[H]:letterUpgrades,[I]:checkingWords,[J]:calcBaseTarget}=require(cQ);const{[L]:AnimationManager}=require(cR);const{[N]:AudioManager}=require(cS);const{[P]:StorageManager}=require(cT);const{[R]:generateShopItems,[S]:applyCrystalEffects,[T]:upgradeLetter,[U]:SHOP_POOL}=require(cU);const{[W]:getSkillForLevel,[X]:checkSkill,[Y]:getSkillFailText,[Z]:giveReward,[_0]:createRewardItem,[_1]:SKILL_POOL,[_2]:shuffleSkills,[_3]:WITCH_CARDS,[_4]:WITCH_SKILLS}=require(cV);function requestPromise(a){var b=dm,c=b[5];return new Promise((d,e)=>{wx[c[17]]({...a,[c[8]]:d,[b[2][19]]:e})})}const BAIDU_TOKEN_CACHE_KEY=cW;const BAIDU_TOKEN_CACHE_DAYS=7;let _baiduAccessToken=null;let _baiduTokenExpireAt=0;function loadBaiduToken(){var a=dm,b=a[3][15],c=a[6][4];try{const d=wx[a[12][19]](BAIDU_TOKEN_CACHE_KEY);if(d&&d[b]&&d[c]>Date[a[1][0]]()){_baiduAccessToken=d[b];_baiduTokenExpireAt=d[c];return true}}catch(a){}_baiduAccessToken=null;_baiduTokenExpireAt=0;return false}function saveBaiduToken(a){var b=dm,c=dq,d=c[2];const e=Date[b[1][0]]()+BAIDU_TOKEN_CACHE_DAYS*c[1]*d*d*c[3];_baiduAccessToken=a;_baiduTokenExpireAt=e;try{wx[b[12][20]](BAIDU_TOKEN_CACHE_KEY,{[b[3][15]]:a,[b[6][4]]:e})}catch(a){}}async function refreshBaiduToken(){var a=dm,b=a[2],c=a[4][4],d=a[10][13],e=a[1][1];try{const f=await wx[a[3][20]][a[10][15]]({[b[20]]:a[7][19],[b[8]]:{}});if(f[c]&&f[c][b[23]]===0&&f[c][d]){saveBaiduToken(f[c][d]);console[e](cX);return f[c][d]}console[e](a[32][0],f[c])}catch(b){console[e](a[28][0],b[a[5][11]]||b)}return null}async function getBaiduAccessToken(){var a=dq,b=a[4];const c=Date[dm[1][0]]();if(_baiduAccessToken&&_baiduTokenExpireAt>c+b){return _baiduAccessToken}if(loadBaiduToken()&&_baiduTokenExpireAt>c+b){return _baiduAccessToken}return refreshBaiduToken()}async function baiduDictRequest(a,b=true){var c=dm,d=dq,e=c[4],f=c[2],g=c[0],h=c[5],i=c[8],Jh=c[2][8],j=i[16],k=i[17],l=c[1][1],m=c[4][4],n=c[10][16];const o=await getBaiduAccessToken();if(!o)return null;try{const i=await requestPromise({[c[1][13]]:`https://aip.baidubce.com/rpc/2.0/mt/texttrans-with-dict/v1?access_token=${o}`,[e[21]]:f[24],[e[22]]:{[c[10][29]]:c[14][15]},[Jh]:{[f[21]]:g[3],[g[1]]:g[4],[bR]:a},[h[18]]:d[5]});if(i[j]===d[6]||i[Jh]?.[k]===d[7]||i[Jh]?.[k]===d[8]){console[l](cY);_baiduAccessToken=null;_baiduTokenExpireAt=0;try{wx[c[15][9]](BAIDU_TOKEN_CACHE_KEY)}catch(a){}if(b){const b=await refreshBaiduToken();if(b){return baiduDictRequest(a,false)}}return null}if(i[j]===d[9]&&i[Jh]?.[m]?.[n]?.[0]){return i[Jh][m][n][0]}}catch(b){console[l](`[BaiduDict] request "${a}" failed:`,b[h[11]]||b)}return null}function shuffle(a){var b=dm,c=b[4];for(let d=a[c[0]]-1;d>0;d--){const e=Math[b[3][5]](Math[c[5]]()*(d+1));[a[d],a[e]]=[a[e],a[d]]}return a}function createDeck(){var a=dm,b=dq,c=a[1],d=a[3],e=a[4],f=a[6],g=a[2][3],h=a[1][3];const i=[];for(const[j,k]of Object[a[5][3]](LETTER_DISTRIBUTION)){for(let l=0;l<k;l++){const k=LETTER_SCORE[j];const l=letterUpgrades[c[6]](j);let m=k;let n=false;let o=1;let p=0;if(l){if(l[g])m=Math[d[5]](m*l[g]);if(l[h])m+=l[h];n=true;o=l[g]||1;p=l[h]||0}i[a[2][1]]({[e[2]]:j,[a[7][3]]:k,[d[0]]:m,[e[10]]:FACE_CARDS[c[4]](j),[a[0][0]]:Math[e[5]]()[f[7]](b[10])[e[11]](2,9),[f[0]]:false,[f[5]]:n,[a[9][2]]:o,[a[8][3]]:p})}}return shuffle(i)}function draw(a,b){var c=dm,d=c[4];const e=a[d[6]](0,Math[c[1][14]](b,a[d[0]]));return e}function getSeedWord(a=3,b=6,c=[]){var d=dm,e=d[2],f=d[4],g=d[0],h=d[9][6],i=d[4][0],j=d[2][10],k=d[6][1],l=d[1][10];const m=[];for(const d of WORD_DATA[e[12]]()){const f=d[h]();if(d[i]>=a&&d[i]<=b){const a=c[j](a=>f[k](a));if(!a){m[e[1]](d)}}}if(m[i]>0)return m[Math[d[3][5]](Math[f[5]]()*m[i])];const n=[l,g[5],g[6],g[7],g[8],g[9],g[10],g[11],g[1],g[12]];const o=n[f[3]](a=>!c[j](b=>a[h]()[k](b)));return o[i]>0?o[0]:l}function dr(){if(dm[7][11]!==typeof Map)Map[cZ]=1}function drawWithSafety(a,b,c,d,e=3,f=6,g=[]){var h=dm,i=dq,j=h[9],k=h[3],l=h[4],m=h[6],n=h[1],o=h[7],p=h[2][3],q=k[5],r=h[1][3],JR=l[2],s=l[5],t=l[6],u=l[0],v=k[11];const w=getSeedWord(e,f,g);const x=w[j[6]]()[k[16]]("")[l[3]](a=>!g[m[1]](a));const y=x[n[2]](a=>{const b=LETTER_SCORE[a];const c=letterUpgrades[n[6]](a);let d=b;let e=false;let f=1;let g=0;if(c){if(c[p])d=Math[q](d*c[p]);if(c[r])d+=c[r];e=true;f=c[p]||1;g=c[r]||0}return{[JR]:a,[o[3]]:b,[k[0]]:d,[l[10]]:FACE_CARDS[n[4]](a),[h[0][0]]:Math[s]()[m[7]](i[10])[l[11]](2,9),[m[0]]:false,[m[5]]:e,[j[2]]:f,[h[8][3]]:g}});for(const b of x){const c=a[o[7]](a=>a[JR]===b);if(c>=0)a[t](c,1)}const z=b-x[u];const A=a[t](0,z);const B=Math[q](Math[s]()*(A[u]+1));const C=[...A[v](0,B),...y,...A[v](B)];return C}function ensureValidWordInHand(a,b,c=3,d=6,e=9,f=[]){var g=dm,h=dq,i=g[9],j=g[3],k=g[4],l=g[6],m=g[7],n=g[1],J3=k[2],o=g[2][3],p=g[1][3],q=k[0];if(hasValidWordInHand(b))return;const r=getSeedWord(c,d,f);const s=r[i[6]]()[j[16]]("")[k[3]](a=>!f[l[1]](a));for(const b of s){const c=a[m[7]](a=>a[J3]===b);if(c>=0)a[k[6]](c,1)}const t=s[n[2]](a=>{const b=LETTER_SCORE[a];const c=letterUpgrades[n[6]](a);let d=b;let e=false;let f=1;let q=0;if(c){if(c[o])d=Math[j[5]](d*c[o]);if(c[p])d+=c[p];e=true;f=c[o]||1;q=c[p]||0}return{[J3]:a,[m[3]]:b,[j[0]]:d,[k[10]]:FACE_CARDS[n[4]](a),[g[0][0]]:Math[k[5]]()[l[7]](h[10])[k[11]](2,9),[l[0]]:false,[l[5]]:e,[i[2]]:f,[g[8][3]]:q}});let u=0;for(let a=0;a<b[q]&&u<t[q];a++){if(b[a]===null){b[a]=t[u++]}}while(u<t[q]){b[g[2][1]](t[u++])}while(b[q]>e&&a[q]>0){const c=b[n[15]]();if(c)a[g[5][19]](c)}}function hasValidWordInHand(a){var b=dm,c=b[2][12],d=b[4][0];const e={};for(const c of a){if(!c)continue;const a=c[b[4][2]][b[9][1]]();e[a]=(e[a]||0)+1}for(const a of WORD_DATA[c]()){if(a[d]<2)continue;if(canFormWord(a,e))return true}for(const a of EXPAND_WORD_DATA[c]()){if(a[d]<2)continue;if(canFormWord(a,e))return true}for(const a of onlineWordCache){if(a[d]<2)continue;if(canFormWord(a,e))return true}return false}function canFormWord(a,b){var c=dm;const d={};for(const b of a){d[b]=(d[b]||0)+1}for(const[a,e]of Object[c[5][3]](d)){if((b[a]||0)<e)return false}return true}function findAllValidWordsInHand(a){var b=dm,c=b[4],d=b[3],e=b[2][12],f=d[12],g=b[4][0],h=d[0];const i=a[c[3]](Boolean);const j={};for(const a of i){const d=a[c[2]][b[9][1]]();j[d]=(j[d]||0)+1}const k=[];const l=new Set;function m(a){var b=dm,c=b[3],d=b[1],e=d[4],f=b[4][0],g=d[3],h=b[2][1],Kp=b[3][0];if(l[e](a))return;if(a[f]<2||a[f]>i[f])return;const m={};for(const b of a){m[b]=(m[b]||0)+1}for(const[a,c]of Object[b[5][3]](m)){if((j[a]||0)<c)return}const n=new Set;const o=[];for(const c of a){for(let a=0;a<i[f];a++){if(!n[e](a)&&i[a][b[4][2]][b[9][1]]()===c){n[g](a);o[h](i[a]);break}}}l[g](a);const p=calcWordScore(o,[],null,[],this[b[16][2]]);if(p[c[7]]){k[h]({[b[2][9]]:a,[c[12]]:o,[Kp]:p[Kp]})}}for(const a of WORD_DATA[e]())m(a);for(const a of EXPAND_WORD_DATA[e]())m(a);for(const a of onlineWordCache)m(a);k[b[2][25]]((a,b)=>b[f][g]-a[f][g]||b[h]-a[h]);return k}function findValidWordInHand(a){const b=findAllValidWordsInHand(a);return b[dm[4][0]]>0?b[0]:null}function _matchCardTrigger(a,b,c=-1,d=null){var e=dm,f=e[6],g=e[14],h=e[4][2],i=e[3][21],j=e[6][1];switch(b){case f[13]:return a[h]===c0;case f[14]:return a[h]===c1;case e[7][12]:return i[j](a[h]);case e[9][21]:return[c2,c3,c4,c5][j](a[h]);case e[11][9]:return c===0&&i[j](a[h]);case g[3]:return d&&a[h]===(d[g[4]]||"");default:return false}}function _matchWordTrigger(a,b){var c=dm,d=c[6],e=c[4],f=e[2],g=e[0],h=c[1][2],i=c[9][1],j=c[2][6];switch(b){case d[15]:return a[c[2][10]](a=>[c2,c3,c4,c6,c5][d[1]](a[f]));case d[16]:return a[g]>=3;case d[17]:return a[g]>=4;case d[18]:return a[g]>=5;case d[19]:return a[g]>=6;case c[9][22]:{const b=a[h](a=>a[f][i]())[j]("");for(let a=1;a<b[g];a++){if(b[a]===b[a-1])return true}return false}case c[11][10]:{const b=a[h](a=>a[f][i]())[j]("");return b[g]>=2&&b[0]===b[b[g]-1]}default:return false}}function calcWordScore(a,b,c=null,d=[],e=null){var f=dm,g=f[4],h=f[7],i=f[1],j=f[9],k=f[2],l=f[5],m=f[8],n=f[3],o=g[0],KO=n[7],KP=n[0],p=g[3],q=f[1][2],r=g[2],s=k[7],t=n[8],u=n[6],v=n[10],w=l[1],x=f[7][8],y=f[11][2],z=f[16][4],A=n[4],B=k[13],C=l[14];if(!a||a[o]===0)return{[KO]:false,[KP]:0};const D=(b||[])[p](a=>a&&!a[h[1]]);let E=a[o];let F=false;for(const b of a){if(b[g[10]])F=true}const G=a[q](a=>a[r][j[1]]())[k[6]]("");const H=D[k[4]](a=>a[s]===t&&a[u]===v&&a[w]===m[8]);let I=0;if(H){I=Math[i[9]](...a[q](a=>a[KP]))}const J=a[q](()=>1);const K=a[q](()=>0);for(const b of D){if(b[s]!==t)continue;if(b[u]===v)continue;switch(b[u]){case f[6][10]:a[l[0]]((a,c)=>{var d=dm,e=d[3][4];if(_matchCardTrigger(a,b[w],c,b)){if(b[x]===i[3]){K[c]+=b[e]}else{J[c]*=b[e]}}});break;case m[11]:{let d;if(b[w]===y||b[x]===z){d=b[A]>0}else if(b[w]===g[12]){d=c?.[m[12]]||false}else if(b[w]===f[3][17]){d=c?.[h[13]]||false}else if(b[w]===f[10][30]){const b=new Set(a[q](a=>a[r][j[6]]()));const c=e;if(!c||c[k[26]]===0){d=true}else{let a=false;for(const d of b){if(c[i[4]](d)){a=true;break}}d=!a}}else{d=_matchWordTrigger(a,b[w])}if(d){if(b[w]===y||b[x]===f[14][16]||b[x]===z){E+=b[A]}else{E=Math[B](E*b[A])}}else if(b[C]!==undefined){E+=b[C]}break}}}let L=0;for(let b=0;b<a[o];b++){const c=H?I:a[b][KP];L+=c*J[b]+K[b]}let M=0;const N=(d||[])[p](a=>a===f[16][6])[o];if(N>0&&a[o]>0){const b=a[o]-1;const c=H?I:a[b][KP];for(let a=0;a<N;a++){const a=c*J[b]+K[b];M+=a;L+=a}}for(const a of D){if(a[s]===t&&a[u]===m[18]){L+=a[A]}}const O=Math[B](L*E);return{[KO]:true,[KP]:O,[k[18]]:L,[k[3]]:E,[k[9]]:G,[l[20]]:F,[f[15][10]]:M}}function extractPosFromMeaning(a){if(!a)return"";const b=a[dm[3][22]](/^([a-z]+(?:&[a-z]+)*\.)/);return b?b[1]:""}function applyLetterMultHalf(a,b,c){var d=dm,e=d[3],f=d[2],g=d[9],h=d[7];if(!a)return null;const i=a[e[3]][e[22]](/letter_([a-z])_mult_half/);if(!i)return null;const j=i[1];const k=b[f[10]](a=>a[d[4][2]][g[1]]()===j);if(!k)return null;const l=c[e[0]];const m=c[f[3]];const n=Math[d[1][9]](1,Number((m/2)[d[5][21]](1)));const o=Math[f[13]](c[f[18]]*n);return{[h[20]]:true,[d[11][11]]:l,[d[10][31]]:m,[d[8][24]]:n,[g[16]]:o,[d[6][20]]:a[h[14]]}}function isValidWord(a){var b=dm,c=b[1],d=c[4],e=c[1];a=a[b[9][1]]();if(WORD_DATA[d](a)){console[e](`[WordCheck] word="${a}" layer=L1(WORD_DATA) hit`);return true}if(EXPAND_WORD_DATA[d](a)){console[e](`[WordCheck] word="${a}" layer=L2(EXPAND_WORD_DATA) hit`);return true}if(onlineWordCache[d](a)){console[e](`[WordCheck] word="${a}" layer=L2.5(onlineCache) hit`);return true}console[e](`[WordCheck] word="${a}" layer=L1+L2 miss`);return false}async function isValidWordOnline(a){var b=dm,c=b[9],d=b[1],e=b[5],f=b[3],g=b[2],h=b[6],i=b[4],j=d[4],k=d[1],l=d[7],Lq=b[5][2],m=d[3],n=f[7],o=g[14],p=f[11],Lv=d[5],Lw=d[8],q=g[6],r=i[0],s=i[14];a=a[c[1]]();if(WORD_DATA[j](a)){console[k](`[WordCheck] word="${a}" layer=L1(WORD_DATA) hit`);return true}if(EXPAND_WORD_DATA[j](a)){console[k](`[WordCheck] word="${a}" layer=L2(EXPAND_WORD_DATA) hit`);if(!wordMeaningCache[j](a)){const b=EXPAND_WORD_DATA[d[6]](a);wordMeaningCache[l](a,{[Lq]:b})}onlineWordCache[m](a);wordCheckState[l](a,n);return true}if(onlineWordCache[j](a)){console[k](`[WordCheck] word="${a}" layer=L2.5(onlineCache) hit`);return true}if(checkingWords[j](a)){console[k](`[WordCheck] word="${a}" layer=L3 checking in progress, skip`);return false}checkingWords[m](a);console[k](`[WordCheck] word="${a}" layer=L3(onlineAPI) requesting...`);try{const i=await baiduDictRequest(a);if(i&&i[o]){const t=typeof i[o]===b[4][23]?JSON[f[26]](i[o]):i[o];const u=t?.[c[23]]?.[b[10][32]];const v=u?.[g[21]]||"";const w=[h[21],c[24],f[27]];const x=w[h[1]](v);if(x){console[k](`[WordCheck] word="${a}" layer=L3(onlineAPI) VALID (from=${v})`);onlineWordCache[m](a);wordCheckState[l](a,n);if(!wordMeaningCache[j](a)&&u){const c=u[b[8][25]]||[];const h=u[e[22]]?.[0];const i=h?.[f[28]]||[];const j=h?.[f[29]]||"";const k=h?.[f[30]]||"";const m=i[p](0,2)[d[2]](a=>({[Lv]:a[g[27]]||a[b[7][21]]||"",[Lw]:(a[f[31]]||[])[p](0,3)[q](c7)}));const n=c[r]>0?c[q](c7):m[0]?.[Lw]||"";wordMeaningCache[l](a,{[e[3]]:m[r]>0?m:[{[Lv]:"",[Lw]:n}],[Lv]:m[0]?.[Lv]||"",[Lq]:n,[g[28]]:j,[g[29]]:k})}checkingWords[s](a);return true}else{console[k](`[WordCheck] word="${a}" layer=L3(onlineAPI) INVALID (from=netdata)`)}}else{console[k](`[WordCheck] word="${a}" layer=L3(onlineAPI) INVALID (no dict)`)}}catch(b){console[k](`[WordCheck] word="${a}" layer=L3(onlineAPI) ERROR:`,b[e[11]]||b)}wordCheckState[l](a,e[7]);checkingWords[s](a);return false}function getWordMeaning(a){var b=dm,c=b[1],d=b[5],e=c[4],f=c[6],LF=d[3],LG=d[2],LH=c[5],LI=c[8],g=c[7];a=a[b[9][1]]();if(wordMeaningCache[e](a)){const b=wordMeaningCache[f](a);if(b[LF])return b;if(b[LG])return{[LF]:[{[LH]:b[LH]||"",[LI]:b[LG]}],[LH]:b[LH]||"",[LG]:b[LG]}}if(WORD_DATA[e](a)){const b=WORD_DATA[f](a);const c={[LF]:[{[LH]:b[LH]||"",[LI]:b[LG]}],[LH]:b[LH]||"",[LG]:b[LG]};wordMeaningCache[g](a,c);return c}if(EXPAND_WORD_DATA[e](a)){const b=EXPAND_WORD_DATA[f](a);const c={[LG]:b};wordMeaningCache[g](a,c);return c}return null}function formatMeaning(a){var b=dm,c=b[1],d=b[5][3];if(!a)return"";if(a[d]&&a[d][b[4][0]]>0){return a[d][c[2]](a=>`${a[c[5]]} ${a[c[8]]}`)[b[2][6]](c7)}return a[b[5][2]]||""}class Game{constructor(a=null){var b=dm,c=dq,d=b[12],e=b[10],f=b[8],g=b[18],h=b[3],i=b[2],j=b[21],k=b[11],l=b[5],m=b[19],n=b[14],o=b[17],p=b[7],q=b[20],r=b[22],s=b[16],t=b[15],u=b[9],v=b[13],w=b[1],x=b[25],y=c[11],z=d[0],A=b[10][1],B=o[0],C=w[1],D=v[0],E=v[2],F=b[6][8],G=b[8][0],H=b[20][1],I=w[0],J=o[7],K=d[1],L=o[1],M=j[0],N=b[16][0],O=j[1],P=x[1],Q=b[26][0],R=x[0];this[z]=new StorageManager;this[A]=new AudioManager;this[A][f[26]]();if(a){this[g[5]](a)}else{letterUpgrades[h[18]]();this[h[1]]=1;this[i[11]]=4;this[j[3]](i[30]);this[b[4][1]]=[];this[k[1]]=4;this[d[6]]=[];this[l[4]]=[];this[f[4]]=null;this[m[0]]=null;this[n[5]]=null;this[o[3]]=null;this[h[2]]=l[5];this[p[2]]=null;this[e[7]]=3;this[k[0]]=0;this[n[2]]=this[z][g[1]]()||false;this[e[17]]=false;this[e[18]]=0;this[q[3]]=null;this[n[6]]=false;this[j[4]]=null;this[g[2]]=null;this[q[4]]=false;this[r[0]]=null;this[b[27][0]]=null;this[r[1]]=false;this[r[2]]=false;this[g[3]]=null;this[B]=this[z][j[5]]()||[];this[s[1]]=this[z][m[2]]();console[C](b[30][0],JSON[p[4]](this[B]));this[m[1]]=null;this[j[2]]=null;this[o[18]]=false;this[t[3]]=false;this[u[9]]=0;this[f[5]]=0;this[e[6]]=9;this[f[2]]=0;this[d[4]]=null;this[u[10]]=[];this[D]=shuffleSkills([...SKILL_POOL]);console[C](v[7]+this[D][b[1][2]](a=>a[h[3]])[i[6]](c8)+c9);this[f[13]]()}this[u[0]]=new AnimationManager;this[u[7]]=[];this[p[5]]=null;this[s[9]]=null;this[t[1]]=null;this[t[4]]=null;this[d[7]]=null;this[d[8]]=null;this[e[0]]=null;this[d[2]]=null;this[v[1]]=null;this[s[7]]=null;this[q[5]]=false;this[o[5]]=false;this[s[5]]=false;this[E]=null;this[o[8]]=false;this[b[24][0]]=null;this[m[5]]=null;this[g[6]]=false;this[e[33]]=null;this[s[10]]=false;this[s[11]]=null;this[g[7]]=null;this[s[12]]=false;this[b[23][0]]=null;this[o[19]]=null;this[s[13]]=false;this[q[6]]=null;this[r[4]]=false;this[s[8]]=false;this[g[4]]=null;this[t[5]]=false;this[o[11]]=null;this[n[7]]=false;this[E]=null;this[v[8]]=null;this[o[12]]=false;this[t[2]]=null;this[n[0]]=false;this[o[6]]=null;this[d[9]]=null;this[v[9]]=null;this[q[0]]=false;this[o[2]]=false;this[t[0]]=.6;this[d[3]]=0;this[d[21]]=null;this[n[17]]=false;this[j[9]]=null;this[r[5]]=false;this[m[6]]=false;this[g[8]]=false;this[r[6]]=false;this[k[12]]=i[31];this[o[20]]=null;this[k[13]]="";this[m[7]]=false;this[g[9]]=false;this[q[7]]=false;this[o[21]]=false;this[g[10]]=null;this[F]=this[z][u[25]]();if(this[A]){this[A][v[10]](this[F][e[34]]!==false);this[A][v[11]](this[F][e[35]]!==false)}const S=this[z][d[22]]();if(S!==null){this[G]=S}else if(a&&a[G]!==undefined){this[G]=a[G]}else if(this[G]===undefined){this[G]=0}if(a&&a[H]!==undefined){this[H]=a[H]}if(this[G]===1&&!this[H]){this[H]=Date[I]()-y}if(this[J]===undefined&&this[G]>=2&&this[G]<=4){this[J]=Date[I]()}this[j[6]]=null;const T=this[z][s[14]]();if(T!==null){this[K]=T}else if(a&&a[K]!==undefined){this[K]=a[K]}else if(this[K]===undefined){this[K]=0}if(a&&a[L]!==undefined){this[L]=a[L]}if(a&&a[M]!==undefined){this[M]=a[M]}if(this[K]===1&&!this[L]){this[L]=Date[I]()-y}if(this[K]===2&&!this[M]){this[M]=Date[I]()}this[j[7]]=null;const U=this[z][q[8]]();if(U!==null){this[N]=U}else if(a&&a[N]!==undefined){this[N]=a[N]}else if(this[N]===undefined){this[N]=0}if(a&&a[O]!==undefined){this[O]=a[O]}if(a&&a[P]!==undefined){this[P]=a[P]}if(a&&a[Q]!==undefined){this[Q]=a[Q]}if(this[N]===1&&!this[O]){this[O]=Date[I]()-y}if(this[N]===3&&!this[R]){this[R]=Date[I]()-y}this[R]=this[R]||null;this[u[8]]=[];this[f[6]]=false}_restoreFromProgress(a){var b=dm,c=b[9],d=b[19],e=b[10],f=b[6],g=b[14],h=b[20],i=b[18],j=b[21],k=b[22],l=b[1],m=b[15],n=b[3],o=b[2],p=b[8],q=b[4],r=b[11],s=b[5],t=b[13],u=b[12],v=b[7],w=b[17],x=b[16],y=b[25],z=n[1],A=o[11],B=n[0],C=p[2],D=c[10],E=q[1],F=r[1],G=s[4],H=p[4],I=t[3],J=b[19][0],K=u[6],L=v[2],M=u[2],N=n[2],O=s[5],P=t[0],Q=e[4],R=v[0],S=o[0],T=o[2],U=b[6][0],V=e[6],W=p[5],X=r[0],Y=c[9];var Z=e[9],_0=b[14][1],_1=b[20][0],_2=w[4],_3=e[7],_4=u[0],_5=w[0],_6=b[1][1],_7=v[4],_8=u[4],_9=q[7],ba=e[5],bb=c[3],bc=c[4],bd=x[3],be=x[2],bf=s[0],bg=v[1],bh=q[3],bi=b[0][0],bj=w[13],bk=p[0],bl=u[1],bm=w[1],bn=j[0],bo=x[0],bp=j[1],bq=y[1],br=b[26][0],bs=y[0],bt=w[2],bu=b[15][0],bv=u[3],bw=q[0];this[z]=a[z];this[A]=a[A];this[B]=a[B];this[C]=a[C];this[D]=a[D]||[];this[E]=a[E]||[];this[F]=a[F]||4;this[G]=a[G]||[];this[H]=a[H]||null;this[I]=a[I]||null;this[J]=a[J]||null;this[K]=a[K]||[];this[L]=a[L]||null;this[M]=a[M]||null;this[N]=a[N]||O;if(this[N]===b[4][15]&&!this[H]){this[N]=O;this[I]=null;this[J]=null}this[P]=a[P]||shuffleSkills([...SKILL_POOL]);this[Q]=a[Q];this[R]=a[R];this[S]=a[S]||[];this[T]=a[T]||[];this[U]=a[U]||[];this[V]=a[V]||9;this[W]=a[W]||0;this[X]=a[X]||0;this[Y]=a[Y]||0;this[Z]=a[Z]||0;this[_0]=a[_0]!==undefined?a[_0]:true;this[_1]=a[_1]!==undefined?a[_1]:false;this[_2]=a[_2]||0;this[_3]=a[_3]!==undefined?a[_3]:3;this[g[2]]=this[_4]?this[_4][i[1]]():false;this[e[17]]=false;this[e[18]]=0;this[h[3]]=null;this[g[6]]=false;this[j[4]]=null;this[i[2]]=null;this[h[4]]=false;this[k[0]]=null;this[b[27][0]]=null;this[k[1]]=false;this[k[2]]=false;this[i[11]]=false;this[i[3]]=null;this[_5]=this[_4]?this[_4][j[5]]():[];this[b[16][1]]=this[_4]?this[_4][d[2]]():[];console[_6](b[31][0],JSON[_7](this[_5]));this[d[1]]=null;this[j[2]]=null;this[m[3]]=false;this[_8]=a[_8]||null;this[_9]=a[_9];this[ba]=a[ba];this[bb]=a[bb];this[bc]=a[bc];this[bd]=a[bd]||null;this[be]=a[be]||null;const bx=a=>{if(!a)return;delete a.animOffset;delete a.selectOffset;delete a.jumpOffsetY;delete a.newCard;delete a._flyIndex;delete a._originalScore;delete a._scorePulseAnim;delete a._scoreScale};this[S][bf](bx);this[T][bf](bx);(this[E]||[])[bf](a=>{if(!a)return;delete a._triggered;delete a._jumpOffsetY;delete a._shieldAnimStart;delete a._letterGodAnimStart;delete a._destroying;delete a._destroyStart;delete a._wwJumpStart;delete a._wwJumpDone;delete a._ruleBreakerFlash;if(a[bg]===undefined)a[bg]=false});const by=new Set(this[S][bh](Boolean)[l[2]](a=>a[bi]));this[U]=this[U][bh](a=>by[l[4]](a));this[S][bf](a=>{if(!a)return;a[U]=this[U][f[1]](a[bi])});this[bj]();this[bk]=a[bk]!==undefined?a[bk]:0;this[bl]=a[bl]!==undefined?a[bl]:0;if(a[bm]!==undefined)this[bm]=a[bm];if(a[bn]!==undefined)this[bn]=a[bn];this[bo]=a[bo]!==undefined?a[bo]:0;if(a[bp]!==undefined)this[bp]=a[bp];if(a[bq]!==undefined)this[bq]=a[bq];if(a[br]!==undefined)this[br]=a[br];if(a[bs]!==undefined)this[bs]=a[bs];if(a[bt]!==undefined)this[bt]=a[bt];if(a[bu]!==undefined)this[bu]=a[bu];if(a[bv]!==undefined)this[bv]=a[bv];if(this[N]===O){const a=this[S][bh](Boolean);const d=(this[ba]||this[V]||9)-a[bw];if(d>0){if(!this[T]||this[T][bw]<d){const a=createDeck();this[T]=this[T]?[...this[T],...a]:a}const f=draw(this[T],d);f[bf](a=>{a[U]=false;a[b[8][14]]=null;a[e[8]]=0;a[c[5]]=0;a[b[5][12]]=false});this[S]=[...a,...f];this[bj]();const g=getSkillForLevel(this[z],this[P]);const h=g&&g[b[3][3]]===c[11]?[c0]:[];ensureValidWordInHand(this[T],this[S],this[bb],this[bc],this[ba],h)}else{this[S]=a}}console[_6](g[18],this[z],l[16],this[N],b[2][32],this[_9]);console[_6](m[11],JSON[_7](this[E]),f[22],JSON[_7](this[G]))}_syncHandCardScores(){var a=dm,b=a[2],c=a[1],d=a[3],e=a[5][0],f=a[4][2],g=c[6],h=a[2][3],i=d[5],j=c[3],k=a[7][3],l=d[0],m=a[6][5],n=a[9][2],o=a[8][3];this[b[0]][e](a=>{if(!a)return;const b=LETTER_SCORE[a[f]];const c=letterUpgrades[g](a[f]);if(c){let d=b;if(c[h])d=Math[i](d*c[h]);if(c[j])d+=c[j];a[k]=b;a[l]=d;a[m]=true;a[n]=c[h]||1;a[o]=c[j]||0}else{a[k]=b;a[l]=b;a[m]=false;a[n]=1;a[o]=0}});this[b[2]][e](a=>{if(!a)return;const b=LETTER_SCORE[a[f]];const c=letterUpgrades[g](a[f]);if(c){let d=b;if(c[h])d=Math[i](d*c[h]);if(c[j])d+=c[j];a[k]=b;a[l]=d;a[m]=true;a[n]=c[h]||1;a[o]=c[j]||0}else{a[k]=b;a[l]=b;a[m]=false;a[n]=1;a[o]=0}})}_delay(a,b){var c=dm,d=c[8][6],e=c[9][8];if(this[d])return null;const f=setTimeout(()=>{const b=this[e][c[5][6]](f);if(b>=0)this[e][c[4][6]](b,1);if(!this[d])a()},b);this[e][c[2][1]](f);return f}_clearAllTimeouts(){var a=dm,b=a[9][8];this[b][a[5][0]](a=>clearTimeout(a));this[b]=[]}destroy(){var a=dm,b=a[12][0],c=a[8][15],d=a[10][1],e=a[9][0];this[a[8][6]]=true;this[a[15][12]]();if(this[b]&&this[b][c]){clearTimeout(this[b][c]);this[b][c]=null}if(this[d]){this[d][a[5][23]]();this[d]=null}if(this[e]){this[e][a[3][18]]()}}resetRound(){var a=dm,b=dq,c=a[7],d=a[9],e=a[3],f=a[10],g=a[12],h=a[4],i=a[6],j=a[17],k=a[15],l=a[8],m=a[14],n=a[20],o=a[16],p=a[5],q=d[12],Ot=e[1],r=a[13][0],s=e[3],t=d[3],u=d[4],v=a[2][2],w=h[0],x=h[3],y=h[7],z=a[17][4],A=f[9],B=d[9],C=e[0],D=g[3],E=g[0],F=l[5],G=a[11][0],H=h[1],I=a[5][0],J=a[7][1],K=k[2],L=a[1][0],M=l[0],N=f[3],O=a[6][3],P=k[6],Q=e[19],R=e[13];if(typeof wx!==c[11]&&wx[q]){wx[q](d[26],{[Ot]:this[Ot]})}wordCheckState[e[18]]();this[f[0]]=null;const S=getSkillForLevel(this[Ot],this[r]);if(S&&S[s]===g[23]){this[t]=3;this[u]=3}else if(S&&S[s]===g[24]){this[t]=4;this[u]=4}else{this[t]=3;this[u]=6}this[v]=createDeck();const T=S&&S[s]===d[11]?[c0]:[];if(T[w]>0){this[v]=this[v][x](a=>!T[i[1]](a[h[2]]))}this[y]=calcBaseTarget(this[Ot]);if(this[z]){this[y]+=this[z];this[z]=0}this[k[13]]=null;applyCrystalEffects(this);const U=this[f[6]]+(this[A]||0);this[f[5]]=U;this[a[2][0]]=drawWithSafety(this[v],U,this[Ot],this[f[7]]+this[B],this[t],this[u],T);this[i[0]]=[];this[C]=0;if(this[D]>0){const c=this[D];this[D]=0;setTimeout(()=>{this[C]=c;if(this[E])this[E][f[2]]()},b[12]);console[a[1][1]](db,c)}this[c[0]]=4+this[F];this[f[4]]=3+this[G];this[a[21][3]](Ot);this[F]=0;this[G]=0;this[B]=0;this[A]=0;this[m[1]]=true;this[n[2]]=0;this[n[0]]=0;this[k[4]]=null;this[g[7]]=null;this[o[2]]=null;(this[H]||[])[I](b=>{var c=dm,e=c[3],g=c[4];if(b){b[l[9]]=false;b[f[19]]=0;b[m[8]]=null;b[j[9]]=null;b[d[15]]=false;b[a[11][4]]=null;b[f[20]]=null;b[d[17]]=false;b[k[14]]=false;if(b[p[1]]===m[3]){const a=c[24][2][e[16]]("");b[c[14][4]]=a[Math[e[5]](Math[g[5]]()*a[g[0]])]}}});const V=getSkillForLevel(this[Ot],this[r]);if(V&&V[s]===n[9]&&this[H]&&this[H][w]>0){const a=this[H][x](a=>a);if(a[w]>0){this[H][I](a=>{if(a)a[J]=false});const d=a[Math[e[5]](Math[h[5]]()*a[w])];d[J]=true;this[K]={[c[6]]:Date[L]()+b[3],[l[10]]:this[H][p[6]](d)}}}else{(this[H]||[])[I](a=>{if(a)a[J]=false});this[K]=null}this[m[0]]=false;this[j[6]]=null;if(this[Ot]===1&&(this[M]===0||this[M]===undefined)){this[M]=1;this[n[1]]=Date[L]()}if(this[Ot]===2&&this[g[1]]===0){if(this[N]&&this[O]){this[N][P](3,this[O])[Q](b=>{console[R](a[28][1],b)})}}if(this[Ot]===3&&this[o[0]]===0){if(this[N]&&this[O]){this[N][P](4,this[O])[Q](b=>{console[R](a[31][1],b)})}}this[e[2]]=p[5]}_preloadWitchAvatars(){var a=dm,b=a[3],c=a[10][3],d=a[6][3],e=b[1],f=a[13][0],g=b[3],h=a[24][1],i=b[14],j=a[22][3];if(!this[c]||!this[d])return;const k=getSkillForLevel(this[e],this[f]);if(k&&k[g]){this[c][h](k[i],this[d]);this[c][j](k[i],this[d])}const l=getSkillForLevel(this[e]+1,this[f]);if(l&&l[g]){this[c][h](l[i],this[d]);this[c][j](l[i],this[d])}}advanceGuide(){var a=dm,b=a[8][0],c=a[4][1],d=a[2][4],e=a[5][1],f=a[7][12],g=a[12][0],h=a[10][2],i=a[17][7],j=a[1][0];if(this[b]<1||this[b]>4)return;if(this[b]===3){const b=this[c][d](a=>a&&a[e]===f);if(!b){const b=SHOP_POOL[a[3][8]][d](a=>a[e]===f);if(b){this[c][a[2][1]]({...b,[a[8][27]]:true});if(this[g])this[g][h]()}}}this[b]++;this[i]=Date[j]();this[a[14][19]]=false;this[a[11][14]]=null;if(this[b]>=5){this[b]=5;this[a[17][22]]=Date[j]();this[i]=null;this[a[21][6]]=null}if(this[g]){this[g][h]();if(this[b]>=5){this[g][a[12][25]](this[b])}}}advanceShopGuide(){var a=dm,b=a[12],c=b[1],d=a[21][0],e=a[1][0],f=b[0];if(this[c]<1||this[c]>2)return;this[c]++;this[a[18][12]]=false;this[a[15][15]]=null;if(this[c]===2){this[d]=Date[e]()}if(this[c]>=3){this[c]=3;this[a[21][7]]=Date[e]();this[d]=null}if(this[f]){this[f][a[10][2]]();if(this[c]>=4){this[f][a[16][15]](this[c])}}}advanceCardBookGuide(){var a=dm,b=a[16][0],c=a[1][0],d=a[12][0];if(this[b]<1||this[b]>2)return;this[b]++;this[a[22][7]]=false;this[a[19][8]]=null;if(this[b]===2){this[a[26][0]]=Date[c]()}if(this[b]>=3){this[b]=3;this[a[25][0]]=Date[c]()}if(this[d]){this[d][a[10][2]]();if(this[b]>=4){this[d][a[20][10]](this[b])}}}toggleSelect(a){var b=dm,c=b[10],d=b[5],e=b[2],f=b[4],g=c[0],h=b[3][2],i=b[15][1],j=b[2][0],k=b[6][0],l=c[1],m=b[9][0];if(this[g]&&(this[g][h]===d[7]||this[g][h]===c[10])){this[g]=null}if(this[i]){this[i]=null}this[j][d[0]](a=>{if(a)a[b[9][5]]=0});const n=this[k][d[6]](a);const o=this[j][e[4]](c=>c&&c[b[0][0]]===a);if(!o)return;if(this[l])this[l][e[5]](b[12][26]);if(n>=0){this[k][f[6]](n,1);o[k]=false;if(this[m])this[m][c[21]](o)}else{if(this[k][f[0]]>=9)return;this[k][e[1]](a);o[k]=true;if(this[m])this[m][b[8][28]](o)}}showHint(){var a=dm,b=dq,c=a[2],d=a[3],e=b[11],f=a[4][0],g=a[7][5],PJ=c[15],PK=a[6][4],h=a[1][0],i=c[1];const j=findAllValidWordsInHand(this[c[0]]);if(j[f]===0){this[g]={[PJ]:a[6][23],[PK]:Date[h]()+e};return}const k=j[d[11]](0,10);const l=[`提示：${j[f]} 个合法单词`];k[a[5][0]]((b,e)=>{l[i](`${e+1}. ${b[c[9]][a[9][6]]()} (${b[d[12]][f]}牌 ${b[d[0]]}分)`)});if(j[f]>10)l[i](a[1][17]);this[g]={[PJ]:l[c[6]](dc),[PK]:Date[h]()+e}}async playHand(){var a=dm,b=dq,c=a[6],d=a[10],e=a[3],f=a[14],g=a[17],h=a[1],i=a[2],j=a[7],k=a[8],l=a[12],m=a[11],n=a[13],o=a[16],p=a[4],q=a[9],r=a[5],s=a[0],t=a[20],u=b[3],v=b[14],w=c[0],x=p[0],y=d[0],P9=e[7],z=a[14][0],A=g[6],B=h[0],C=p[3],D=h[2],E=p[2],F=q[1],G=i[6],Qi=i[9],Qj=e[2],Qk=j[6],Ql=p[4],Qm=r[2],Qn=q[13],H=p[1],I=i[4],Qq=r[1],J=p[12],K=j[1],L=e[17],M=s[2],N=r[9],O=d[1],P=i[5];var Q=d[23],R=l[10],S=r[0],T=m[2],QC=e[4],U=e[1],V=n[0],W=e[3],QG=i[15],QH=c[4],X=p[8],Y=c[6],Z=l[4],_0=j[9],_1=l[0],_2=d[11],_3=k[2],_4=d[12],_5=q[14],_6=m[3],_7=d[2],_8=k[9],_9=o[1],ba=r[10],bb=n[4],bc=t[2],bd=h[1],be=p[16],bf=j[0],bg=g[10],bh=d[14],bi=i[1],bj=t[0],bk=j[14],bl=i[7],bm=e[8],bn=e[6],bo=e[10],bp=c[2],bq=e[0],br=l[5],bs=s[0],bt=o[2],bu=k[11],bv=q[18],bw=i[3],Ri=r[8],Rj=k[10],bx=r[6],by=o[3];var Rm=r[13],Rn=c[9];if(this[w][x]<2||this[y])return{[P9]:false};if(this[z]&&this[A]&&Date[B]()-this[A]>b[13]){this[z]=false}const bz=this[i[0]][C](a=>a&&a[w]);const bA=this[f[20]]();const bB=bA[D](a=>a[E][F]())[G]("");this[a[20][5]]=false;this[g[5]]=false;this[y]={[Qi]:bB,[e[12]]:bz,[d[22]]:bA,[Qj]:c[24],[Qk]:Date[B](),[Ql]:null,[Qm]:null,[Qn]:null};let bC=isValidWord(bB);if(!bC)bC=await isValidWordOnline(bB);if(this[k[6]])return{[P9]:false};const bD=(this[H]||[])[I](a=>a&&a[Qq]===J&&!a[K]);const bE=(this[H]||[])[I](a=>a&&a[Qq]===L&&!a[K]);if(bD||bE){const a=bB[F]();const b=bD?isValidWord(a+M)?Promise[N](true):isValidWordOnline(a+M):Promise[N](false);const c=bE?isValidWord(a+dd)?Promise[N](true):isValidWordOnline(a+dd):Promise[N](false);const[d,e]=await Promise[h[18]]([b,c]);this[y][k[12]]=d;this[y][j[13]]=e}if(!bC){this[y][Qj]=a[5][7];this[y][Qn]=Date[B]();if(this[O])this[O][P](Q);const c=(this[H]||[])[i[10]](a=>a[Qq]===R);(this[H]||[])[S](a=>{if(a[Qq]===T&&!c){a[QC]=(a[QC]||0)+1}});const d=getSkillForLevel(this[U],this[V]);if(d&&d[W]===a[18][13]&&!this[a[19][9]]){this[j[5]]={[QG]:n[12],[QH]:Date[B]()+b[11]};this[X](()=>{this[Qj]=Y;this[Z]=l[27];if(this[O])this[O][P](_0);if(this[_1]){this[_1][_2](this[_3]);uploadScore(this[_1][_4]());this[_1][_5](this);this[_1][_6]()}},u);if(this[_1])this[_1][_7]();return{[P9]:false,[Qi]:bA[D](a=>a[E])[G]("")}}const e=(this[H]||[])[I](a=>a[Qq]===R);if(e){e[_8]=true;e[f[8]]=Date[B]()}else{let b=0;for(const c of this[_9]||[]){const d=WITCH_CARDS[I](a=>a[ba]===`witch_card_${c}`);if(d&&d[bb]===a[15][7])b++}if(b>this[bc]){this[bc]++;console[bd](de,this[bc],be,b)}else if(!this[z]){this[bf]--}}if(this[bf]<=0){const a=this[bg]();if(!a){this[X](()=>{this[Qj]=Y;this[Z]=bh;if(this[O])this[O][P](_0);if(this[_1]){this[_1][_2](this[_3]);uploadScore(this[_1][_4]());this[_1][_5](this);this[_1][_6]()}},v)}}if(this[_1])this[_1][_7]();return{[P9]:false,[Qi]:bA[D](a=>a[E])[G]("")}}const bF=[];for(const a of this[_9]||[]){const b=WITCH_CARDS[I](b=>b[ba]===`witch_card_${a}`);if(b)bF[bi](b[bb])}const bG=getSkillForLevel(this[U],this[V]);if(bG){const a=bF[C](a=>a===g[23])[x];if(a>this[bj]){this[bj]++;console[bd](df,this[bj],be,a)}else if(!checkSkill(bG[W],this,bA)){this[f[1]]=false;this[y][Qj]=d[10];this[y][Qn]=Date[B]();this[y][m[15]]=getSkillFailText(bG[W]);this[y][g[24]]=Date[B]();this[g[12]]=true;if(this[O])this[O][P](Q);if(bG[bk]){this[l[8]]={[QG]:bG[bk],[QH]:Date[B]()+b[15]}}if(!this[z]){this[bf]--}if(this[bf]<=0){const a=this[bg]();if(!a){this[X](()=>{this[Qj]=Y;this[Z]=bh;if(this[O])this[O][P](_0);if(this[_1]){this[_1][_2](this[_3]);uploadScore(this[_1][_4]());this[_1][_5](this);this[_1][_6]()}},v)}}if(this[_1])this[_1][_7]();return{[P9]:false,[Qi]:bA[D](a=>a[E])[G]("")}}}const bH=(this[H]||[])[I](a=>a[bl]===bm&&a[bn]===bo&&a[Qq]===k[8]&&!a[K]);let bI=false;if(bH&&(bH[bp]===undefined||bH[bp]>0)){bI=true;bH[bp]=(bH[bp]===undefined?bH[bo]:bH[bp])-1;bH[_8]=true;bH[g[9]]=Date[B]();const a=Math[h[9]](...bz[D](a=>a[bq]));const b=bz[I](b=>b[bq]===a)||bz[0];bz[S](b=>{if(b[br]===undefined)b[br]=b[bq];b[bq]=a});this[l[9]]={[Qk]:Date[B]()+u,[j[22]]:b[bs],[m[16]]:bz[D](a=>a[bs])};if(this[_1])this[_1][_7]()}const bJ=calcWordScore(bA,this[H],this[y],bF,this[bt]);const bK=(this[H]||[])[I](a=>a&&a[bl]===bm&&a[bn]===bu&&a[Qq]===bv&&!a[K]);let bL=null;if(bK&&this[bf]===1&&bA[x]<4){const b=Math[a[4][5]]()<.2;const c=8;if(b){bJ[bw]+=c;bJ[bq]=Math[i[13]](bJ[i[18]]*bJ[bw])}bL={[Ri]:b,[Rj]:this[H][bx](bK),[QC]:c}}const bM=getSkillForLevel(this[U],this[V]);this[y][l[11]]=applyLetterMultHalf(bM,bA,bJ);this[y][o[16]]=bI;this[y][l[28]]=bI?this[H][bx](bH):-1;this[y][f[21]]=bL;this[y][Qj]=P9;this[y][Ql]=bJ;this[y][Qm]=getWordMeaning(bB);this[y][Qn]=Date[B]();this[y][j[23]]=0;const bN=bA[0]?.[E];if(bN){(this[H]||[])[S](a=>{var b=dm,c=b[3][4];if(a&&a[Qq]===o[17]){if(this[by]===bN){a[c]=(a[c]||0)+3}else{a[c]=0}}});this[by]=bN;this[bt]=new Set(bA[D](b=>b[E][a[9][6]]()))}const bO=this[H]||[];const bP=[];for(let a=0;a<bA[x];a++){const b=bA[a];const d=[];for(let e=0;e<bO[x];e++){const f=bO[e];if(!f||f[K])continue;if(f[bl]!==bm||f[bn]!==c[10])continue;if(_matchCardTrigger(b,f[Qq],a,f))d[bi](e)}bP[bi](d)}const bQ=[];for(let a=0;a<bO[x];a++){const b=bO[a];if(!b||b[K])continue;if(b[bl]!==bm)continue;if(b[bn]===k[18]){bQ[bi](a)}}const bR=[];for(let a=0;a<bA[x];a++){const b=bP[a]||[];if(b[x]===0){bR[bi]({[Rm]:a,[Rn]:null})}else{b[S](b=>{bR[bi]({[Rm]:a,[Rn]:b})})}}const bS=bF[C](a=>a===o[6])[x];if(bS>0&&bA[x]>0){const a=bA[x]-1;const b=bP[a]||[];const d=b[x]>0?b[b[x]-1]:null;for(let b=0;b<bS;b++){bR[bi]({[Rm]:a,[Rn]:d,[c[25]]:true})}}this[y][d[36]]=bR;this[y][m[17]]=bP;this[y][n[13]]=bQ;const bT=[];bO[S]((a,b)=>{var c=dm,d=c[3],e=c[10][0];if(!a||a[K])return;if(a[bl]===bm&&a[bn]===bu){let f;if(a[Qq]===T||a[j[8]]===o[4]){f=a[d[4]]>0}else if(a[Qq]===J){f=this[e][c[8][12]]||false}else if(a[Qq]===L){f=this[e][c[7][13]]||false}else{f=_matchWordTrigger(bA,a[c[5][1]])}if(f){bT[c[2][1]]({[c[1][11]]:b,[d[23]]:a})}}});if(bL&&bL[Ri]){bT[bi]({[h[11]]:bL[Rj],[e[23]]:{[Qq]:bv,[QC]:bL[QC]}})}this[y][n[14]]=bT;if(this[O]){this[O][P](k[29])}return bJ}_checkLifeExtension(){var a=dm,b=a[4],c=a[3],d=a[11],e=a[12],f=a[4][1],g=a[7][7],h=c[6],i=c[10],j=a[5][1],k=e[12],l=a[6][2],m=a[1][0],n=e[0],o=a[10][2];const p=(this[f]||[])[g](a=>a&&a[h]===i&&a[j]===k);if(p<0)return false;const q=this[f][p];if(q[l]!==undefined&&q[l]<=0)return false;const r=this[b[7]]-this[c[0]];this[a[17][4]]=r*2;if(q[l]!==undefined)q[l]--;if(q[l]!==undefined&&q[l]<=0){q[a[9][15]]=true;q[d[4]]=Date[m]();this[b[8]](()=>{const a=(this[f]||[])[g](a=>a&&a[h]===i&&a[j]===k);if(a>=0)this[f][b[6]](a,1);if(this[n])this[n][o]()},dq[16])}this[a[16][7]]={[a[7][6]]:Date[m](),[a[8][10]]:p,[a[2][33]]:r};this[c[2]]=d[18];if(this[n])this[n][o]();return true}completePlayHand(){var a=dm,b=a[10],c=a[3],d=a[4],e=a[9],f=a[7],g=a[17][5],h=b[0],i=a[3][2],j=b[1],k=a[12][0];if(this[g])return;if(!this[h]||this[h][i]!==c[7])return;this[g]=true;const l=this[h][d[4]];const m=this[h][c[12]];const n=this[h][b[22]];this[e[27]](l);this[a[14][22]](m,n,l);this[h]=null;if(this[c[0]]>=this[d[7]]){this[a[13][5]]()}else if(this[f[0]]<=0){const c=this[a[17][10]]();if(!c){this[i]=a[6][6];this[a[12][4]]=b[14];if(this[j])this[j][a[2][5]](f[9]);if(this[k]){this[k][b[11]](this[a[8][2]]);uploadScore(this[k][b[12]]());this[k][e[14]](this);this[k][a[11][3]]()}}}this[g]=false}_applyScore(a){var b=dm,c=b[10],d=b[3][0];const e=this[c[0]]?.[b[12][11]]?.[b[9][16]]??a[d];this[d]+=e;this[b[8][2]]+=e;if(this[c[1]]){this[b[4][8]](()=>{},dq[9])}}_executePlayHand(a,b,c){var d=dm,e=dq,f=d[5],g=d[9],h=d[8],i=d[10],j=d[3],k=d[2],l=d[4],m=d[12],n=d[7],o=d[6],p=e[17],q=k[0],r=f[0],s=g[5],t=l[1],u=m[5],v=n[7],w=j[6],x=j[10],y=f[1],z=d[8][8],A=o[2],B=l[8],C=l[6],D=m[0],E=i[2],F=l[3],G=o[1],H=k[1],I=i[1],J=n[10],K=o[0],L=g[0],M=k[16],N=g[7],O=d[1][2],P=k[2],Q=l[0],R=i[8];this[q][r](a=>{if(a)a[s]=0});(this[t]||[])[r](a=>{if(a){a[h[9]]=false;a[i[19]]=0;a[d[17][9]]=null;a[i[20]]=null;a[g[17]]=false}});a[r](a=>{if(a&&a[u]!==undefined){a[j[0]]=a[u];delete a._originalScore}delete a._scorePulseAnim});const S=(this[t]||[])[v](a=>a&&a[w]===x&&a[y]===z);if(S>=0){const a=this[t][S];if(a[A]!==undefined&&a[A]<=0){a[g[15]]=true;a[d[11][4]]=Date[d[1][0]]();this[B](()=>{const a=(this[t]||[])[v](a=>a&&a[w]===x&&a[y]===z);if(a>=0)this[t][C](a,1);if(this[D])this[D][E]()},e[16])}}const T=a[F](a=>a);const U=[];this[q][r]((a,b)=>{if(a&&T[G](a)){U[H](b)}});if(this[I])this[I][d[2][5]](i[24]);T[r]((a,b)=>{a[J]=U[b];a[K]=false;this[L][d[4][17]](a,M,()=>{const b=this[N][f[6]](a);if(b>=0)this[N][C](b,1);a[J]=undefined})});this[N][H](...T);this[K]=[];this[q]=this[q][O](a=>T[G](a)?null:a);this[B](()=>{var a=dm,b=a[2];for(const a of T){if(a)this[b[2]][b[1]](a)}this[P]=shuffle([...this[P]]);const c=T[Q];const k=this[P][C](0,c);let l=0;this[q]=this[q][O](a=>{if(a===null&&l<k[Q]){const a=k[l++];a[f[12]]=true;a[R]=0;a[s]=0;a[h[14]]={[Af]:-e[9],[Ah]:-p,[d[6][11]]:-p,[f[15]]:.4,[j[24]]:.6};this[L][j[25]](a,M,null,0);return a}if(a){a[R]=0;a[s]=0}return a});this[q]=this[q][F](a=>a!==null);const m=getSkillForLevel(this[j[1]],this[d[13][0]]);const n=m&&m[j[3]]===g[11]?[c0]:[];ensureValidWordInHand(this[P],this[q],this[g[3]],this[g[4]],this[i[5]],n);this[q][r](a=>{if(a)a[K]=false});if(this[D])this[D][E]()},e[18]);if(!this[d[14][0]]){this[d[7][0]]--}if(this[D])this[D][E]()}_showSettlement(){var a=dm,b=a[7],c=a[8],d=a[3],e=a[10],f=a[2],g=a[5],h=a[13],i=a[19],j=a[11],k=a[12],l=a[4],m=a[9][12],SO=d[1],n=a[10][1],o=d[0],p=a[4][7],q=a[15][0],r=a[1][1],s=k[3],t=d[13],u=k[0];if(typeof wx!==b[11]&&wx[m]){wx[m](c[30],{[SO]:this[SO]})}if(this[n])this[n][f[5]](b[24]);let v=4;let w=0;let x=0;let y=0;let z=0;for(const b of this[a[16][1]]||[]){const a=WITCH_CARDS[f[4]](a=>a[g[10]]===`witch_card_${b}`);if(!a)continue;switch(a[h[4]]){case i[3]:w+=1;break;case i[4]:x+=2;break;case j[19]:y++;break;case k[29]:z++;break}}v+=w-x;if(y>0&&this[o]>=this[p]*1.3){this[a[17][2]]=true;this[q]=Math[a[1][9]](.2,1-.4*y);console[r](a[33][0],y,d[32],this[q],l[24],this[o],g[24],this[p])}if(z>0){const c=this[o]-this[p];if(c>0){this[s]=Math[SO](c*.1*z);console[r](a[30][1],this[s],b[25],c,l[25],z)}}const A=this[b[0]]*2;const B=this[e[4]]*1;const C=v+A+B;const D=getSkillForLevel(this[SO],this[h[0]]);const E=D&&this[a[14][1]];this[k[2]]={[a[6][26]]:v,[c[5]]:A,[j[0]]:B,[b[15]]:C,[SO]:this[SO],[c[19]]:E?D:null};this[d[2]]=c[31];try{wx[d[20]][e[15]]({[f[20]]:h[15],[f[8]]:{[SO]:this[SO]}})[f[34]](b=>{console[r](a[22][8],b[l[4]])})[d[19]](b=>{console[t](a[24][3],b)})}catch(b){console[t](a[21][10],b)}if(this[u])this[u][e[2]]()}_checkCardBookUnlock(){var a=dm,b=a[3],c=a[20],d=b[1],e=a[14][2],f=a[12][0],g=b[14],h=a[17][0],i=a[1][1],j=a[7][4],k=a[15][3],l=a[21][8];if(this[d]>=3&&!this[e]){this[e]=true;if(this[f])this[f][a[18][14]](true)}const m=getSkillForLevel(this[d],this[a[13][0]]);if(m&&m[g]){const d=m[g];if(!this[h][a[6][1]](d)){this[h][a[2][1]](d);console[i](c[11]+d+b[33],JSON[j](this[h]));this[a[19][1]]=d;this[a[21][2]]=Date[a[1][0]]();this[k]=false;setTimeout(()=>{this[k]=true},dq[11]);if(this[f]){const a=this[f][l](this[h]);if(!a){console[b[13]](c[12]);this[f][l](this[h])}}}else{console[i](a[22][9]+d+a[5][25],JSON[j](this[h]))}}}claimSettlement(){var a=dm,b=a[2],c=a[7],d=a[13],e=a[4],f=a[8],g=a[3],h=a[10],i=a[12],j=i[2],k=a[16][5],l=a[1][0],m=a[3][2],n=i[0];if(!this[j])return;this[b[11]]+=this[j][c[15]];this[k]=true;this[d[2]]=Date[l]();this[e[8]](()=>{const i=this[j]?this[j][f[19]]:null;this[j]=null;this[k]=false;if(i){this[d[1]]={[g[3]]:i,[g[9]]:b[22],[a[11][20]]:Date[l](),[c[6]]:Date[l](),[e[4]]:null,[f[1]]:null};this[m]=h[37]}else{(this[e[1]]||[])[a[5][0]](a=>{if(a)a[dm[7][1]]=false});this[a[15][2]]=null;this[m]=b[17];this[a[18][0]]();this[c[2]]=generateShopItems(this);if(this[n])this[n][h[2]]()}},dq[9])}resolveWitchReward(){var a=dm,b=a[3],c=a[2],d=a[4],e=a[13][1],f=a[3][9],g=d[5],h=d[4],i=a[10][1];if(!this[e]||this[e][f]!==c[22])return;const j=this[e][b[3]];const k=j[c[35]]||1;const l=Math[g]()<k;this[e][h]=l;if(l){this[e][a[8][1]]=createRewardItem(j[a[4][26]])}else if(k<1){const d=Math[b[5]](Math[g]()*5)+1;this[e][a[13][16]]=d;this[c[11]]+=d}if(this[i])this[i][c[5]](a[9][28]);this[e][f]=h}closeWitchReward(a){var b=dm,c=b[1],d=b[17][8],e=b[13][1],f=b[8][1],g=b[4][1],h=b[5][0],i=b[15][2],j=b[3][2],k=b[2][17],l=b[18][0],m=b[7][2],n=b[12][0],o=b[10][2];this[d]=true;this[b[24][0]]=Date[c[0]]();this[b[4][8]](()=>{var p=dm,q=p[8],r=p[4],s=p[10],t=p[2],u=p[13],v=p[8][1],w=p[4][9],x=p[11][1],y=p[7][1],z=p[5][4],A=p[12][0];const B=this[e];this[e]=null;this[d]=false;switch(a){case b[0][13]:if(B&&B[f]){if(B[v][w]===q[32]){this[q[5]]+=1}else if(B[v][w]===s[38]){this[s[6]]+=1}else if(B[v][w]===p[14][23]){this[x]=(this[x]||4)+1}else if(B[v][w]===p[9][29]){this[t[11]]*=2}else if(B[v][w]===u[17]){this[p[17][2]]=true;this[p[15][0]]=.5}}(this[g]||[])[h](a=>{if(a)a[y]=false});this[i]=null;this[j]=k;this[l]();this[m]=generateShopItems(this);if(this[n])this[n][o]();break;case b[3][34]:if(B&&B[f]){if(!this[z])this[z]=[];if(this[z][r[0]]<2){this[z][t[1]]({...B[v]})}}(this[g]||[])[h](a=>{if(a)a[y]=false});this[i]=null;this[j]=k;this[l]();this[m]=generateShopItems(this);if(this[n])this[n][o]();break;case c[19]:if(B&&B[f]){this[q[4]]={...B[v]};this[u[3]]=t[17];this[p[3][2]]=r[15];if(this[A])this[A][s[2]]()}break}},dq[9])}discard(){var a=dm,b=dq,c=a[10],d=a[6],e=a[4],f=a[2],g=a[5],h=a[9],i=a[3],j=b[17],k=c[4],l=a[6][0],m=e[0],n=c[1],o=f[0],p=a[5][0],q=f[1],r=a[7][10],s=h[0],t=f[16],u=h[7],v=e[6],w=a[1][2],x=f[2],y=e[3],z=c[8],A=h[5];if(this[k]<=0||this[l][m]===0)return false;if(this[n])this[n][f[5]](c[24]);const B=[];const C=[];this[o][p]((a,b)=>{if(a&&a[l]){B[q](b);C[q](a)}});C[p]((a,b)=>{a[r]=B[b];a[l]=false;this[s][e[17]](a,t,()=>{const b=this[u][g[6]](a);if(b>=0)this[u][v](b,1);a[r]=undefined})});this[u][q](...C);this[l]=[];this[o]=this[o][w](a=>C[d[1]](a)?null:a);this[e[8]](()=>{var k=dm,n=k[2][2],q=k[6][1],r=k[4][2];for(const a of C){if(a)this[n][k[2][1]](a)}this[x]=shuffle([...this[x]]);const u=C[w](a=>a[e[2]]);const B=(this[a[16][1]]||[])[f[10]](a=>a===b[19]);if(B){this[x]=this[x][y](a=>!u[q](a[r]));const a=C[m];if(this[x][m]<a){const a=createDeck();const b=a[k[4][3]](a=>!u[q](a[r]));this[n]=[...this[n],...b]}}const D=C[m];const E=this[x][v](0,D);let F=0;this[o]=this[o][w](c=>{if(c===null&&F<E[m]){const c=E[F++];c[g[12]]=true;c[z]=0;c[A]=0;c[a[8][14]]={[Af]:-b[9],[Ah]:-j,[d[11]]:-j,[g[15]]:.4,[i[24]]:.6};this[s][i[25]](c,t,null,0);return c}if(c){c[z]=0;c[A]=0}return c});this[o]=this[o][y](a=>a!==null);const G=getSkillForLevel(this[i[1]],this[a[13][0]]);const H=G&&G[i[3]]===h[11]?[c0]:[];ensureValidWordInHand(this[x],this[o],this[h[3]],this[h[4]],this[c[5]],H);this[o][p](a=>{if(a)a[l]=false})},b[18]);this[k]--;return true}resetHands(){this[dm[7][0]]=4}addScore(a){var b=dm;this[b[3][0]]+=a;this[b[8][2]]+=a}_applyEquippedCardBonus(a){var b=dm,c=b[13],d=b[19],e=b[16][1],f=b[3][1],g=b[7][0],h=b[1][1],i=b[10][4];if(!this[e]||this[e][b[4][0]]===0)return;for(const j of this[e]){const e=WITCH_CARDS[b[2][4]](a=>a[b[5][10]]===`witch_card_${j}`);if(!e)continue;switch(e[c[4]]){case d[3]:break;case d[4]:if(a===f){this[g]+=1;console[h](dg,this[g])}break;case b[15][7]:break;case b[21][11]:if(a===f){const a=getSkillForLevel(this[f],this[c[0]]);if(a&&a[b[3][3]]){this[g]+=1;this[i]+=1;console[h](dh,this[g],b[11][21],this[i])}}break}}}winRound(){var a=dm,b=a[4][7];this[a[3][0]]=this[b];this[a[8][2]]+=this[b];this[a[13][5]]()}revive(){var a=dm,b=a[3],c=a[14],d=a[13],e=a[12][0];this[a[7][0]]=1;this[b[2]]=a[5][5];this[a[12][4]]=null;this[c[7]]=false;this[d[2]]=null;this[a[16][8]]=false;this[a[18][4]]=null;this[a[15][5]]=false;this[a[17][11]]=null;this[c[24]]=false;if(this[e]){const c=(new Date)[a[9][30]]()[b[11]](0,10);this[e][d[18]](c,true);this[e][a[10][2]]()}}nextRound(){var a=dm,b=a[2],c=a[3],d=a[10][1],UJ=c[1],UK=c[0],e=a[12][0];if(this[d])this[d][b[5]](a[5][26]);this[a[9][10]][b[1]]({[UJ]:this[UJ],[UK]:this[UK]});this[UJ]++;this[a[7][2]]=null;this[a[17][2]]=false;this[a[15][0]]=.6;this[a[8][13]]();this[a[18][15]]();if(this[e])this[e][a[10][2]]()}jumpToRound(a){var b=dm,c=b[3],UO=c[1],UP=c[0],d=b[12][0];if(a<1)a=1;this[b[9][10]][b[2][1]]({[UO]:this[UO],[UP]:this[UP]});this[UO]=a;this[UP]=0;this[b[7][2]]=null;this[b[8][13]]();this[b[3][2]]=b[5][5];if(this[d])this[d][b[10][2]]()}getSelectedCards(){var a=dm,b=a[2];return this[a[6][0]][a[1][2]](c=>this[b[0]][b[4]](b=>b&&b[a[0][0]]===c))[a[4][3]](Boolean)}clearSelection(){var a=dm,b=a[10],c=a[5],d=a[6][0],e=b[0],f=a[3][2],g=c[7],h=b[10],i=a[2][0],j=c[0],k=a[9][0];if(this[d][a[4][0]]===0&&!(this[e]&&(this[e][f]===g||this[e][f]===h)))return;if(this[e]&&(this[e][f]===g||this[e][f]===h)){this[e]=null}this[i][j](b=>{if(b)b[a[9][5]]=0});this[d][j](b=>{const c=this[i][a[2][4]](c=>c&&c[a[0][0]]===b);if(c){c[d]=false;if(this[k])this[k][a[10][21]](c)}});this[d]=[]}update(a){var b=dm,c=dq,d=b[10],e=b[8],f=b[7],g=b[6],h=b[3],i=b[2],j=b[9],k=b[1],l=b[4],m=j[0],n=k[0],o=l[1],p=f[5],q=b[15][1],Vj=f[6],r=b[17][3],s=h[9],t=l[18],u=b[12][13],Vo=e[7],v=k[6],w=b[2][3],x=h[5],y=k[1],z=e[4],Vu=l[2],A=k[12],Vw=j[2];if(this[m]){this[m][b[4][27]](Date[n]())}if(!this[b[13][19]]&&this[o]){this[o][b[5][0]](a=>{if(!a)return;a[d[39]]=0;a[d[40]]=0;a[e[33]]=1;a[d[41]]=1;a[f[26]]=0})}if(this[p]&&Date[n]()>this[p][g[4]]){this[p]=null}if(this[q]&&Date[n]()-this[q][Vj]>c[20]){this[q]=null}if(this[r]){const a=this[r];if(a[s]===g[12]){const d=Date[n]()-a[b[11][5]];if(d>=c[21]){a[s]=t;a[u]=Date[n]()}}else if(a[s]===t){const j=Date[n]()-a[u];if(j>=c[22]){const c=a[d[25]];const j=a[Vo]||2;const k=letterUpgrades[v](c)||{};const l=(k[w]||1)*j;const m=k[b[1][3]]||0;const o=Math[x](m*j);const p=LETTER_SCORE[c];const q=Math[x](p*l)+o;const r=Math[x](p*(k[w]||1))+m;console[y](b[19][10],a[Vo],h[35],c,i[36],LETTER_SCORE[c]);console[y](b[29][0],JSON[f[4]](letterUpgrades[v](c)));const t=this[z];upgradeLetter(this,c);this[z]=t;const u=this[i[0]][i[4]](a=>a&&a[Vu]===c);console[y](b[23][1],u?u[h[0]]:A,d[42],u?u[Vw]:A);this[b[14][5]]={[Vj]:Date[n](),[Vu]:c,[g[27]]:r,[g[28]]:q,[Vw]:l,[e[3]]:o,[Vo]:a[Vo]};a[s]=i[37]}}}}startRandomSpin(){var a=dm,b=dq,c=a[2],d=a[10],e=a[8],f=a[4],g=a[1],h=a[17][3],VE=a[3][9],i=a[10][1],j=a[4][0],k=a[2][1];if(this[h]&&this[h][VE]!==c[38])return;if(this[i])this[i][c[5]](e[34]);const l=[...new Set(this[c[0]][f[3]](a=>a)[g[2]](a=>a[f[2]]))];const m=l[j]>0?l[Math[a[3][5]](Math[f[5]]()*l[j])]:c0;function n(){var a=dm,b=a[4][5];const c=Math[b]();let d,e;if(c<.1){d=3;e=4}else if(c<.6){d=1.5;e=2}else{d=2;e=3}return Math[a[3][1]]((Math[b]()*(e-d)+d)*10)/10}const o=n();const p=[];for(let a=0;a<b[23];a++){p[k](n())}p[k](o);this[h]={[VE]:a[6][12],[d[25]]:m,[e[7]]:o,[d[43]]:p,[a[11][5]]:Date[g[0]]()}}}function uploadScore(a){var b=dm,c=b[1],d=b[3],e=b[11],f=b[17][14];if(!wx[f])return;wx[f]({[b[8][35]]:[{[c[20]]:d[0],[d[4]]:String(a)}],[b[5][8]]:()=>console[c[1]](e[22],a),[b[2][19]]:a=>console[d[13]](e[23],a)})}module[di]={[Is]:Game,[It]:calcWordScore,[Iu]:isValidWord,[Iv]:isValidWordOnline,[Iw]:getWordMeaning,[Ix]:formatMeaning,[Iy]:findValidWordInHand,[Iz]:findAllValidWordsInHand,[IA]:uploadScore};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjoxLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDowOCJ9)
-//# sourceMappingURL=game.js.map
+// ===== 游戏核心逻辑 =====
+const {
+  LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
+  WORD_DATA, EXPAND_WORD_DATA,
+  onlineWordCache, wordCheckState,
+  wordMeaningCache, letterUpgrades, checkingWords,
+  calcBaseTarget
+} = require('./data');
+const { AnimationManager } = require('./animation');
+const { AudioManager } = require('./audio');
+const { StorageManager } = require('./storage');
+const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS } = require('./witch_skills');
+
+// 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
+function requestPromise(options) {
+  return new Promise((resolve, reject) => {
+    wx.request({
+      ...options,
+      success: resolve,
+      fail: reject
+    });
+  });
+}
+
+// ===== 百度翻译词典版 API（前端不存密钥，token 从云函数获取，本地缓存7天）=====
+const BAIDU_TOKEN_CACHE_KEY = 'baidu_dict_token_v1';
+const BAIDU_TOKEN_CACHE_DAYS = 7;
+
+let _baiduAccessToken = null;
+let _baiduTokenExpireAt = 0;
+
+// 从本地缓存加载 token
+function loadBaiduToken() {
+  try {
+    const cached = wx.getStorageSync(BAIDU_TOKEN_CACHE_KEY);
+    if (cached && cached.token && cached.expireAt > Date.now()) {
+      _baiduAccessToken = cached.token;
+      _baiduTokenExpireAt = cached.expireAt;
+      return true;
+    }
+  } catch (e) {}
+  _baiduAccessToken = null;
+  _baiduTokenExpireAt = 0;
+  return false;
+}
+
+// 保存 token 到本地缓存（有效期7天）
+function saveBaiduToken(token) {
+  const expireAt = Date.now() + BAIDU_TOKEN_CACHE_DAYS * 24 * 60 * 60 * 1000;
+  _baiduAccessToken = token;
+  _baiduTokenExpireAt = expireAt;
+  try {
+    wx.setStorageSync(BAIDU_TOKEN_CACHE_KEY, { token, expireAt });
+  } catch (e) {}
+}
+
+// 调用云函数刷新 token
+async function refreshBaiduToken() {
+  try {
+    const res = await wx.cloud.callFunction({ name: 'baiduDict', data: {} });
+    if (res.result && res.result.code === 0 && res.result.access_token) {
+      saveBaiduToken(res.result.access_token);
+      console.log('[BaiduDict] token refreshed via cloud function, cache 7 days');
+      return res.result.access_token;
+    }
+    console.log('[BaiduDict] cloud function returned error:', res.result);
+  } catch (e) {
+    console.log('[BaiduDict] cloud function failed:', e.message || e);
+  }
+  return null;
+}
+
+// 获取可用 token（优先缓存，过期则调云函数刷新）
+async function getBaiduAccessToken() {
+  const now = Date.now();
+  // 内存或本地缓存有效（留60秒缓冲）
+  if (_baiduAccessToken && _baiduTokenExpireAt > now + 60000) {
+    return _baiduAccessToken;
+  }
+  // 尝试从本地 storage 加载
+  if (loadBaiduToken() && _baiduTokenExpireAt > now + 60000) {
+    return _baiduAccessToken;
+  }
+  // 调云函数刷新
+  return refreshBaiduToken();
+}
+
+// 调用百度词典版接口（带 token 失效自动重试）
+async function baiduDictRequest(word, retry = true) {
+  const accessToken = await getBaiduAccessToken();
+  if (!accessToken) return null;
+
+  try {
+    const resp = await requestPromise({
+      url: `https://aip.baidubce.com/rpc/2.0/mt/texttrans-with-dict/v1?access_token=${accessToken}`,
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { from: 'en', to: 'zh', q: word },
+      timeout: 5000
+    });
+
+    // token 失效，清除缓存并重试一次
+    if (resp.statusCode === 401 || resp.data?.error_code === 110 || resp.data?.error_code === 111) {
+      console.log('[BaiduDict] token expired, will refresh via cloud function');
+      _baiduAccessToken = null;
+      _baiduTokenExpireAt = 0;
+      try { wx.removeStorageSync(BAIDU_TOKEN_CACHE_KEY); } catch (e) {}
+      if (retry) {
+        const newToken = await refreshBaiduToken();
+        if (newToken) {
+          return baiduDictRequest(word, false);
+        }
+      }
+      return null;
+    }
+
+    if (resp.statusCode === 200 && resp.data?.result?.trans_result?.[0]) {
+      return resp.data.result.trans_result[0];
+    }
+  } catch (e) {
+    console.log(`[BaiduDict] request "${word}" failed:`, e.message || e);
+  }
+  return null;
+}
+
+// 工具函数
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function createDeck() {
+  const cards = [];
+  for (const [letter, count] of Object.entries(LETTER_DISTRIBUTION)) {
+    for (let i = 0; i < count; i++) {
+      const baseScore = LETTER_SCORE[letter];
+      const upgrade = letterUpgrades.get(letter);
+      let score = baseScore;
+      let upgraded = false;
+      let upgradeMult = 1;
+      let upgradeAdd = 0;
+      if (upgrade) {
+        if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+        if (upgrade.add) score += upgrade.add;
+        upgraded = true;
+        upgradeMult = upgrade.mult || 1;
+        upgradeAdd = upgrade.add || 0;
+      }
+      cards.push({
+        letter, baseScore, score,
+        isFace: FACE_CARDS.has(letter),
+        id: Math.random().toString(36).substr(2, 9),
+        selected: false,
+        upgraded, upgradeMult, upgradeAdd
+      });
+    }
+  }
+  return shuffle(cards);
+}
+
+function draw(deck, count) {
+  const drawn = deck.splice(0, Math.min(count, deck.length));
+  return drawn;
+}
+
+function getSeedWord(minLen = 3, maxLen = 6, excludeLetters = []) {
+  // 从本地词库中按长度过滤后随机选取保底词
+  const candidates = [];
+  for (const word of WORD_DATA.keys()) {
+    const upper = word.toUpperCase();
+    if (word.length >= minLen && word.length <= maxLen) {
+      const hasExcluded = excludeLetters.some(l => upper.includes(l));
+      if (!hasExcluded) {
+        candidates.push(word);
+      }
+    }
+  }
+  if (candidates.length > 0) return candidates[Math.floor(Math.random() * candidates.length)];
+  // 兜底：返回不含排除字母的词
+  const fallbacks = ['the', 'it', 'on', 'up', 'do', 'go', 'me', 'we', 'to', 'so'];
+  const validFallbacks = fallbacks.filter(w => !excludeLetters.some(l => w.toUpperCase().includes(l)));
+  return validFallbacks.length > 0 ? validFallbacks[0] : 'the';
+}
+
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = []) {
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
+  const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+
+  const seedCards = seedLetters.map(letter => {
+    const baseScore = LETTER_SCORE[letter];
+    const upgrade = letterUpgrades.get(letter);
+    let score = baseScore;
+    let upgraded = false;
+    let upgradeMult = 1;
+    let upgradeAdd = 0;
+    if (upgrade) {
+      if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+      if (upgrade.add) score += upgrade.add;
+      upgraded = true;
+      upgradeMult = upgrade.mult || 1;
+      upgradeAdd = upgrade.add || 0;
+    }
+    return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd };
+  });
+
+  for (const letter of seedLetters) {
+    const idx = deck.findIndex(c => c.letter === letter);
+    if (idx >= 0) deck.splice(idx, 1);
+  }
+
+  const remaining = count - seedLetters.length;
+  const randomCards = deck.splice(0, remaining);
+  const insertPos = Math.floor(Math.random() * (randomCards.length + 1));
+  const hand = [...randomCards.slice(0, insertPos), ...seedCards, ...randomCards.slice(insertPos)];
+  return hand;
+}
+
+function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHandSize = 9, excludeLetters = []) {
+  if (hasValidWordInHand(hand)) return;
+
+  const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
+  const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+
+  for (const letter of seedLetters) {
+    const idx = deck.findIndex(c => c.letter === letter);
+    if (idx >= 0) deck.splice(idx, 1);
+  }
+
+  const seedCards = seedLetters.map(letter => {
+    const baseScore = LETTER_SCORE[letter];
+    const upgrade = letterUpgrades.get(letter);
+    let score = baseScore;
+    let upgraded = false;
+    let upgradeMult = 1;
+    let upgradeAdd = 0;
+    if (upgrade) {
+      if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+      if (upgrade.add) score += upgrade.add;
+      upgraded = true;
+      upgradeMult = upgrade.mult || 1;
+      upgradeAdd = upgrade.add || 0;
+    }
+    return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd };
+  });
+
+  // 用 seedCards 替换 hand 中的 null 占位符
+  let seedIdx = 0;
+  for (let i = 0; i < hand.length && seedIdx < seedCards.length; i++) {
+    if (hand[i] === null) {
+      hand[i] = seedCards[seedIdx++];
+    }
+  }
+  // 如果还有剩余的 seedCards，push 到末尾
+  while (seedIdx < seedCards.length) {
+    hand.push(seedCards[seedIdx++]);
+  }
+
+  // 如果 hand 超过最大限制，把多余的牌塞回 deck
+  while (hand.length > maxHandSize && deck.length > 0) {
+    const extra = hand.pop();
+    if (extra) deck.unshift(extra);
+  }
+}
+
+// 频率表算法：O(|WORD_DATA|) 远快于全排列 O(n!)
+function hasValidWordInHand(hand) {
+  const letterCounts = {};
+  for (const card of hand) {
+    if (!card) continue;
+    const l = card.letter.toLowerCase();
+    letterCounts[l] = (letterCounts[l] || 0) + 1;
+  }
+
+  for (const word of WORD_DATA.keys()) {
+    if (word.length < 2) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
+  for (const word of EXPAND_WORD_DATA.keys()) {
+    if (word.length < 2) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
+  for (const word of onlineWordCache) {
+    if (word.length < 2) continue;
+    if (canFormWord(word, letterCounts)) return true;
+  }
+  return false;
+}
+
+function canFormWord(word, letterCounts) {
+  const needed = {};
+  for (const ch of word) {
+    needed[ch] = (needed[ch] || 0) + 1;
+  }
+  for (const [ch, count] of Object.entries(needed)) {
+    if ((letterCounts[ch] || 0) < count) return false;
+  }
+  return true;
+}
+
+function findAllValidWordsInHand(hand) {
+  const cards = hand.filter(Boolean);
+  const letterCounts = {};
+  for (const card of cards) {
+    const l = card.letter.toLowerCase();
+    letterCounts[l] = (letterCounts[l] || 0) + 1;
+  }
+
+  const results = [];
+  const seenWords = new Set();
+
+  function tryWord(word) {
+    if (seenWords.has(word)) return;
+    if (word.length < 2 || word.length > cards.length) return;
+
+    const needed = {};
+    for (const ch of word) {
+      needed[ch] = (needed[ch] || 0) + 1;
+    }
+    for (const [ch, count] of Object.entries(needed)) {
+      if ((letterCounts[ch] || 0) < count) return;
+    }
+
+    // 找到组成该单词的 cards
+    const used = new Set();
+    const wordCards = [];
+    for (const ch of word) {
+      for (let i = 0; i < cards.length; i++) {
+        if (!used.has(i) && cards[i].letter.toLowerCase() === ch) {
+          used.add(i);
+          wordCards.push(cards[i]);
+          break;
+        }
+      }
+    }
+
+    seenWords.add(word);
+    const preview = calcWordScore(wordCards, [], null, [], this._lastPlayedLetters);
+    if (preview.valid) {
+      results.push({ word, cards: wordCards, score: preview.score });
+    }
+  }
+
+  for (const word of WORD_DATA.keys()) tryWord(word);
+  for (const word of EXPAND_WORD_DATA.keys()) tryWord(word);
+  for (const word of onlineWordCache) tryWord(word);
+
+  results.sort((a, b) => b.cards.length - a.cards.length || b.score - a.score);
+  return results;
+}
+
+function findValidWordInHand(hand) {
+  const all = findAllValidWordsInHand(hand);
+  return all.length > 0 ? all[0] : null;
+}
+
+// 判断单张卡是否匹配女巫牌的 trigger 条件
+// index: 卡牌在单词中的位置（从0开始），用于 initial_vowel 等需要位置信息的 trigger
+function _matchCardTrigger(card, trigger, index = -1, joker = null) {
+  switch (trigger) {
+    case 'letter_a': return card.letter === 'A';
+    case 'letter_e': return card.letter === 'E';
+    case 'has_vowel': return 'AEIOU'.includes(card.letter);
+    case 'high_letter': return ['J','Q','X','Z'].includes(card.letter);
+    case 'initial_vowel': return index === 0 && 'AEIOU'.includes(card.letter);
+    case 'predicted_letter': return joker && card.letter === (joker._predictedLetter || '');
+    default: return false;
+  }
+}
+
+// 判断整手牌是否匹配女巫牌的 trigger 条件
+function _matchWordTrigger(cards, trigger) {
+  switch (trigger) {
+    case 'has_face': return cards.some(c => ['J','Q','X','Y','Z'].includes(c.letter));
+    case 'length_3': return cards.length >= 3;
+    case 'length_4': return cards.length >= 4;
+    case 'length_5': return cards.length >= 5;
+    case 'length_6': return cards.length >= 6;
+    case 'double_same': {
+      const word = cards.map(c => c.letter.toLowerCase()).join('');
+      for (let k = 1; k < word.length; k++) {
+        if (word[k] === word[k - 1]) return true;
+      }
+      return false;
+    }
+    case 'firstend_same': {
+      const word = cards.map(c => c.letter.toLowerCase()).join('');
+      return word.length >= 2 && word[0] === word[word.length - 1];
+    }
+
+    default: return false;
+  }
+}
+
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null) {
+  if (!cards || cards.length === 0) return { valid: false, score: 0 };
+
+  const activeJokers = (jokers || []).filter(j => j && !j._disabled);
+
+  let mult = cards.length; // 基础倍率 = 单词长度
+  let hasFace = false;
+  for (const c of cards) {
+    if (c.isFace) hasFace = true;
+  }
+
+  const word = cards.map(c => c.letter.toLowerCase()).join('');
+
+  // === 先处理 limit 型女巫牌（字母之神）：所有字母基础分变为最高分 ===
+  const letterGod = activeJokers.find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god');
+  let maxBaseScore = 0;
+  if (letterGod) {
+    maxBaseScore = Math.max(...cards.map(c => c.score));
+  }
+
+  // 计算每个字母的倍率（女巫牌对单个字母的加成）
+  const cardMults = cards.map(() => 1);
+  const cardAddScores = cards.map(() => 0);
+
+  for (const j of activeJokers) {
+    if (j.type !== 'witch') continue;
+    // limit 型女巫牌不参与常规倍率计算
+    if (j.scope === 'limit') continue;
+    switch (j.scope) {
+      case 'per_card':
+        cards.forEach((c, i) => {
+          if (_matchCardTrigger(c, j.trigger, i, j)) {
+            if (j.operation === 'add') {
+              cardAddScores[i] += j.value;
+            } else {
+              cardMults[i] *= j.value;
+            }
+          }
+        });
+        break;
+      case 'whole_word': {
+        let wwMatched;
+        if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
+          wwMatched = j.value > 0;
+        } else if (j.trigger === 'end_ed') {
+          wwMatched = pendingCheck?.endEdValid || false;
+        } else if (j.trigger === 'end_s') {
+          wwMatched = pendingCheck?.endSValid || false;
+        } else if (j.trigger === 'no_duplicate') {
+          // 消元术：与上一手无重复字母时触发
+          const currentLetters = new Set(cards.map(c => c.letter.toUpperCase()));
+          const lastLetters = lastPlayedLetters;
+          if (!lastLetters || lastLetters.size === 0) {
+            wwMatched = true; // 第一手默认触发
+          } else {
+            // 检查是否有交集
+            let hasOverlap = false;
+            for (const letter of currentLetters) {
+              if (lastLetters.has(letter)) {
+                hasOverlap = true;
+                break;
+              }
+            }
+            wwMatched = !hasOverlap;
+          }
+        } else {
+          wwMatched = _matchWordTrigger(cards, j.trigger);
+        }
+        if (wwMatched) {
+          if (j.trigger === 'illegal_boost' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
+            mult += j.value;
+          } else {
+            mult = Math.ceil(mult * j.value);
+          }
+        } else if (j.penalty !== undefined) {
+          // 双刃剑：未触发时执行惩罚
+          mult += j.penalty;
+        }
+        break;
+      }
+      // flat_bonus 在 baseScore 累加后单独处理
+    }
+  }
+
+  let baseScore = 0;
+  for (let i = 0; i < cards.length; i++) {
+    const cardScore = letterGod ? maxBaseScore : cards[i].score;
+    baseScore += cardScore * cardMults[i] + cardAddScores[i];
+  }
+
+  // === 装备卡牌：德莱薇尔 - 最后一个字母分数算多次（含 per_card 女巫牌加成，多张叠加） ===
+  let lastLetterDoubleExtra = 0;
+  const doubleCount = (equippedCardSkills || []).filter(s => s === 'last_letter_double').length;
+  if (doubleCount > 0 && cards.length > 0) {
+    const lastIdx = cards.length - 1;
+    const lastCardScore = letterGod ? maxBaseScore : cards[lastIdx].score;
+    for (let i = 0; i < doubleCount; i++) {
+      const extra = lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
+      lastLetterDoubleExtra += extra;
+      baseScore += extra;
+    }
+  }
+
+  for (const j of activeJokers) {
+    if (j.type === 'witch' && j.scope === 'flat_bonus') {
+      baseScore += j.value;
+    }
+  }
+
+  const totalScore = Math.ceil(baseScore * mult);
+  return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace, _lastLetterDouble: lastLetterDoubleExtra };
+}
+
+// 从释义字符串开头提取词性标记，如 n./v./adj./n&v./adj&adv.
+function extractPosFromMeaning(meaning) {
+  if (!meaning) return '';
+  // 匹配单个词性（如 n. adj.）或 & 连接的多个词性（如 n&v. adj&adv.）
+  const m = meaning.match(/^([a-z]+(?:&[a-z]+)*\.)/);
+  return m ? m[1] : '';
+}
+
+// 通用：letter_X_mult_half 惩罚检测（支持 letter_a_mult_half / letter_e_mult_half 等）
+function applyLetterMultHalf(witchSkill, playedInOrder, result) {
+  if (!witchSkill) return null;
+  const match = witchSkill.skill.match(/letter_([a-z])_mult_half/);
+  if (!match) return null;
+  const letter = match[1];
+  const hasLetter = playedInOrder.some(c => c.letter.toLowerCase() === letter);
+  if (!hasLetter) return null;
+  const originalScore = result.score;
+  const originalMult = result.mult;
+  const halvedMult = Math.max(1, Number((originalMult / 2).toFixed(1)));
+  const halvedScore = Math.ceil(result.base * halvedMult);
+  return {
+    triggered: true,
+    originalScore,
+    originalMult,
+    halvedMult,
+    halvedScore,
+    angryTip: witchSkill.angry_tip
+  };
+}
+
+function isValidWord(word) {
+  word = word.toLowerCase();
+  if (WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L1(WORD_DATA) hit`);
+    return true;
+  }
+  if (EXPAND_WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2(EXPAND_WORD_DATA) hit`);
+    return true;
+  }
+  if (onlineWordCache.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2.5(onlineCache) hit`);
+    return true;
+  }
+  console.log(`[WordCheck] word="${word}" layer=L1+L2 miss`);
+  return false;
+}
+
+async function isValidWordOnline(word) {
+  word = word.toLowerCase();
+  // 防御性检查（该函数也可能被单独调用）
+  if (WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L1(WORD_DATA) hit`);
+    return true;
+  }
+  if (EXPAND_WORD_DATA.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2(EXPAND_WORD_DATA) hit`);
+    if (!wordMeaningCache.has(word)) {
+      const meaning = EXPAND_WORD_DATA.get(word);
+      wordMeaningCache.set(word, { meaning });
+    }
+    onlineWordCache.add(word);
+    wordCheckState.set(word, 'valid');
+    return true;
+  }
+  if (onlineWordCache.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L2.5(onlineCache) hit`);
+    return true;
+  }
+  if (checkingWords.has(word)) {
+    console.log(`[WordCheck] word="${word}" layer=L3 checking in progress, skip`);
+    return false;
+  }
+
+  checkingWords.add(word);
+  console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) requesting...`);
+
+  try {
+    const result = await baiduDictRequest(word);
+
+    if (result && result.dict) {
+      const dict = typeof result.dict === 'string' ? JSON.parse(result.dict) : result.dict;
+      const simple = dict?.word_result?.simple_means;
+      const from = simple?.from || '';
+
+      // 白名单：只有 original(标准词)、deformation(变形词)、green(专有名词) 算有效
+      // net/netdata 等未知类型视为无效（网络拼凑词）
+      const VALID_FROM_TYPES = ['original', 'deformation', 'green'];
+      const isValid = VALID_FROM_TYPES.includes(from);
+
+      if (isValid) {
+        console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) VALID (from=${from})`);
+        onlineWordCache.add(word);
+        wordCheckState.set(word, 'valid');
+
+        // 缓存中文释义
+        if (!wordMeaningCache.has(word) && simple) {
+          const wordMeans = simple.word_means || [];
+          const symbols = simple.symbols?.[0];
+          const parts = symbols?.parts || [];
+          const phEn = symbols?.ph_en || '';
+          const phAm = symbols?.ph_am || '';
+
+          // 构建 entries（取前2个词性）
+          const entries = parts.slice(0, 2).map(p => ({
+            pos: p.part || p.part_name || '',
+            def: (p.means || []).slice(0, 3).join('；')
+          }));
+
+          // 汇总释义
+          const meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
+
+          wordMeaningCache.set(word, {
+            entries: entries.length > 0 ? entries : [{ pos: '', def: meaning }],
+            pos: entries[0]?.pos || '',
+            meaning,
+            phEn,
+            phAm
+          });
+        }
+        checkingWords.delete(word);
+        return true;
+      } else {
+        console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (from=netdata)`);
+      }
+    } else {
+      console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) INVALID (no dict)`);
+    }
+  } catch (e) {
+    console.log(`[WordCheck] word="${word}" layer=L3(onlineAPI) ERROR:`, e.message || e);
+  }
+
+  wordCheckState.set(word, 'invalid');
+  checkingWords.delete(word);
+  return false;
+}
+
+function getWordMeaning(word) {
+  word = word.toLowerCase();
+
+  // 1. 本地缓存
+  if (wordMeaningCache.has(word)) {
+    const cached = wordMeaningCache.get(word);
+    if (cached.entries) return cached;
+    if (cached.meaning) return { entries: [{ pos: cached.pos || '', def: cached.meaning }], pos: cached.pos || '', meaning: cached.meaning };
+  }
+
+  // 2. 核心离线词库
+  if (WORD_DATA.has(word)) {
+    const info = WORD_DATA.get(word);
+    const result = { entries: [{ pos: info.pos || '', def: info.meaning }], pos: info.pos || '', meaning: info.meaning };
+    wordMeaningCache.set(word, result);
+    return result;
+  }
+
+  // 3. 扩展离线词库
+  if (EXPAND_WORD_DATA.has(word)) {
+    const meaning = EXPAND_WORD_DATA.get(word);
+    const result = { meaning };
+    wordMeaningCache.set(word, result);
+    return result;
+  }
+
+  return null;
+}
+
+function formatMeaning(meaningObj) {
+  if (!meaningObj) return '';
+  if (meaningObj.entries && meaningObj.entries.length > 0) {
+    return meaningObj.entries.map(e => `${e.pos} ${e.def}`).join('；');
+  }
+  return meaningObj.meaning || '';
+}
+
+// ===== 游戏主类 =====
+class Game {
+  constructor(savedProgress = null) {
+    this.storageManager = new StorageManager();
+    this.audioManager = new AudioManager();
+    this.audioManager.preloadAll();
+
+    if (savedProgress) {
+      this._restoreFromProgress(savedProgress);
+    } else {
+      // ===== 全新游戏 =====
+      letterUpgrades.clear();
+      this.round = 1;
+      this.gold = 4;
+      // 应用装备的女巫卡牌初始技能
+      this._applyEquippedCardBonus('init');
+      this.jokers = [];
+      this.maxJokerSlots = 4;
+      this.crystalEffects = [];
+      this.potions = [];
+      this.potionMode = null;
+      this._potionSelectedLetter = null;
+      this._potionUpgrading = null;
+      this._randomUpgradePopup = null;
+      this.state = 'playing';
+      this.shopItems = null;
+      this.safetyRounds = 3;
+      this.extraDiscards = 0;
+      this.cardBookUnlocked = this.storageManager.loadCardBookUnlocked() || false;
+      this.cardBookOpen = false;
+      this.cardBookPage = 0;
+      this._cardBookAnimStartTime = null;
+      this._closingCardBook = false;
+      this._closeCardBookStartTime = null;
+      this._cardBookDetailLevel = null;
+      this._closingCardBookDetail = false;
+      this._cardBookDetailStartTime = null;
+      this._closeCardBookDetailStartTime = null;
+      this._cardBookEquipBtnPressed = false;
+      this._cardBookCloseBtnPressed = false;
+      this._cardBookCellPressed = null;
+      this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
+      this.equippedWitchCards = this.storageManager.loadEquippedWitchCard();
+      console.log('[CardBook] 新游戏加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
+      this._newWitchCardThisShop = null;
+      this._cardBookIconFlashStart = null;
+      this._forceCardBookFlash = false;
+      this._cardBookNewBadge = false;
+      this.extraSafety = 0;
+      this.extraHands = 0;
+      this.baseHandSize = 9;
+      this.totalScore = 0;
+      this.gameOverReason = null;
+      this.roundScores = [];
+      this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
+      console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
+      this.resetRound();
+    }
+
+    // 公共初始化（新游戏和恢复都需要）
+    this.animManager = new AnimationManager();
+    this.flyingCards = [];
+    this.hintToast = null;
+    this._changeLetterPopup = null;
+    this._changeLetterHint = null;
+    this._witchDetailPopup = null;
+    this._hudWitchPopup = null;
+    this._witchAngryTip = null;
+    this.pendingCheck = null;
+    this.settlementData = null;
+    this.witchRewardData = null;
+    this._lifeExtensionAnim = null;
+    this._playHandAnimCompleted = false;
+    this._playHandCompleting = false;
+    this._closingSettlement = false;
+    this._closeStartTime = null;
+    this._closingWitchReward = false;
+    this._closeWitchRewardStartTime = null;
+    this._shopToGameTransition = null;
+    this._challengeBtnPressed = false;
+    this._sellingProp = null;
+    this._successBtnPressed = false;
+    this._successPressedBtn = null;
+    this._successBtnPressTime = null;
+    this._closingConfirmBuy = false;
+    this._closeConfirmBuyStartTime = null;
+    this._confirmBuyItemData = null;
+    this._confirmBuySuccess = false;
+    this._confirmBuySuccessTime = null;
+    this._lifeExtensionBtnPressed = false;
+    this._restartBtnPressed = false;
+    this._restartBtnPressTime = null;
+    this._reviveBtnPressed = false;
+    this._reviveBtnPressTime = null;
+    this._closingGameOver = false;
+    this._closeStartTime = null;
+    this._witchStarBurst = null;
+    this._witchStarBurstAuto = false;
+    this._disableWitchAnim = null;
+    this._hastePlayActive = false;
+    this._hastePlayStartTime = null;
+    this._letterGodAnim = null;
+    this._debugLabelShow = null;
+    this._witchSkillProtectUsed = false;
+
+    // 装备女巫卡牌跨回合状态
+    this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
+    this._shopDiscountRate = 0.6;       // 默认折扣率
+    this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
+
+    // 设置弹窗
+    this._settingsPopup = null;
+    this._closingSettings = false;
+    this._closeSettingsStartTime = null;
+    this._settingsCloseBtnPressed = false;
+    this._settingsSoundPressed = false;
+    this._settingsRankPressed = false;
+    this._settingsFeedbackPressed = false;
+
+    // 问题反馈
+    this._feedbackPage = 'main';           // 'main' | 'feedback'
+    this._feedbackTransition = null;       // { from, to, startTime, duration }
+    this._feedbackText = '';
+    this._feedbackInputFocused = false;
+    this._feedbackBackPressed = false;
+    this._feedbackSubmitPressed = false;
+    this._feedbackSubmitting = false;
+    this._feedbackSubmitToast = null;
+
+    // 加载用户设置
+    this.settings = this.storageManager.getSettings();
+    if (this.audioManager) {
+      this.audioManager.setSoundEnabled(this.settings.soundEnabled !== false);
+      this.audioManager.setMusicEnabled(this.settings.musicEnabled !== false);
+    }
+
+    // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
+    const savedGuidePhase = this.storageManager.loadGuidePhase();
+    if (savedGuidePhase !== null) {
+      this.guidePhase = savedGuidePhase;
+    } else if (savedProgress && savedProgress.guidePhase !== undefined) {
+      this.guidePhase = savedProgress.guidePhase;
+    } else if (this.guidePhase === undefined) {
+      this.guidePhase = 0;
+    }
+    // 恢复引导时间戳
+    if (savedProgress && savedProgress._guideOverlayStartTime !== undefined) {
+      this._guideOverlayStartTime = savedProgress._guideOverlayStartTime;
+    }
+    // Phase 1 恢复时若缺少 overlay 时间，设为过去值让延迟立即结束（避免恢复后卡住）
+    if (this.guidePhase === 1 && !this._guideOverlayStartTime) {
+      this._guideOverlayStartTime = Date.now() - 2000;
+    }
+    // Phase 2~4 恢复时若正在引导则重新开始文字动画
+    if (this._guideTextStartTime === undefined && this.guidePhase >= 2 && this.guidePhase <= 4) {
+      this._guideTextStartTime = Date.now();
+    }
+    this._guideCardGiftStartTime = null;
+
+    // 商店女巫技能引导（独立于游戏进度，永久保留）
+    const savedShopGuidePhase = this.storageManager.loadShopGuidePhase();
+    if (savedShopGuidePhase !== null) {
+      this.shopGuidePhase = savedShopGuidePhase;
+    } else if (savedProgress && savedProgress.shopGuidePhase !== undefined) {
+      this.shopGuidePhase = savedProgress.shopGuidePhase;
+    } else if (this.shopGuidePhase === undefined) {
+      this.shopGuidePhase = 0;
+    }
+    // 恢复商店引导时间戳
+    if (savedProgress && savedProgress._shopGuideStartTime !== undefined) {
+      this._shopGuideStartTime = savedProgress._shopGuideStartTime;
+    }
+    if (savedProgress && savedProgress._shopGuideTextStartTime !== undefined) {
+      this._shopGuideTextStartTime = savedProgress._shopGuideTextStartTime;
+    }
+    // Phase 1 恢复时若缺少 startTime，设为过去值让延迟立即结束
+    if (this.shopGuidePhase === 1 && !this._shopGuideStartTime) {
+      this._shopGuideStartTime = Date.now() - 2000;
+    }
+    // Phase 2 恢复时若缺少 textStartTime，重新开始文字动画
+    if (this.shopGuidePhase === 2 && !this._shopGuideTextStartTime) {
+      this._shopGuideTextStartTime = Date.now();
+    }
+    this._shopGuideExitStartTime = null;
+
+    // 卡牌图鉴引导（独立于游戏进度，永久保留）
+    const savedCardBookGuidePhase = this.storageManager.loadCardBookGuidePhase();
+    if (savedCardBookGuidePhase !== null) {
+      this.cardBookGuidePhase = savedCardBookGuidePhase;
+    } else if (savedProgress && savedProgress.cardBookGuidePhase !== undefined) {
+      this.cardBookGuidePhase = savedProgress.cardBookGuidePhase;
+    } else if (this.cardBookGuidePhase === undefined) {
+      this.cardBookGuidePhase = 0;
+    }
+    if (savedProgress && savedProgress._cardBookGuideStartTime !== undefined) {
+      this._cardBookGuideStartTime = savedProgress._cardBookGuideStartTime;
+    }
+    if (savedProgress && savedProgress._cardBookGuideTextStartTime !== undefined) {
+      this._cardBookGuideTextStartTime = savedProgress._cardBookGuideTextStartTime;
+    }
+    if (savedProgress && savedProgress._cardBookGuideText2StartTime !== undefined) {
+      this._cardBookGuideText2StartTime = savedProgress._cardBookGuideText2StartTime;
+    }
+    if (this.cardBookGuidePhase === 1 && !this._cardBookGuideStartTime) {
+      this._cardBookGuideStartTime = Date.now() - 2000;
+    }
+    if (this.cardBookGuidePhase === 3 && !this._cardBookGuideExitStartTime) {
+      this._cardBookGuideExitStartTime = Date.now() - 2000;
+    }
+    this._cardBookGuideExitStartTime = this._cardBookGuideExitStartTime || null;
+
+    // 追踪本实例的所有 setTimeout，restart 时统一清除防止闭包泄漏
+    this._timeoutIds = [];
+    this._destroyed = false;
+  }
+
+  _restoreFromProgress(p) {
+    this.round = p.round;
+    this.gold = p.gold;
+    this.score = p.score;
+    this.totalScore = p.totalScore;
+    this.roundScores = p.roundScores || [];
+    this.jokers = p.jokers || [];
+    this.maxJokerSlots = p.maxJokerSlots || 4;
+    this.potions = p.potions || [];
+    this.potionMode = p.potionMode || null;
+    this._prePotionState = p._prePotionState || null;
+    this._potionSelectedLetter = p._potionSelectedLetter || null;
+    this.crystalEffects = p.crystalEffects || [];
+    this.shopItems = p.shopItems || null;
+    this.settlementData = p.settlementData || null;
+    this.state = p.state || 'playing';
+
+    // 兼容：旧存档 state 为 potion 但没有 potionMode，重置为 playing
+    if (this.state === 'potion' && !this.potionMode) {
+      this.state = 'playing';
+      this._prePotionState = null;
+      this._potionSelectedLetter = null;
+    }
+    this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
+    this.discardsLeft = p.discardsLeft;
+    this.handsLeft = p.handsLeft;
+    this.hand = p.hand || [];
+    this.deck = p.deck || [];
+    this.selected = p.selected || [];
+    this.baseHandSize = p.baseHandSize || 9;
+    this.extraHands = p.extraHands || 0;
+    this.extraDiscards = p.extraDiscards || 0;
+    this.extraSafety = p.extraSafety || 0;
+    this.extraLetters = p.extraLetters || 0;
+    this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
+    this._witchSkillProtectUsed = p._witchSkillProtectUsed !== undefined ? p._witchSkillProtectUsed : false;
+    this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
+    this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
+    this.cardBookUnlocked = this.storageManager ? this.storageManager.loadCardBookUnlocked() : false;
+    this.cardBookOpen = false;
+    this.cardBookPage = 0;
+    this._cardBookAnimStartTime = null;
+    this._closingCardBook = false;
+    this._closeCardBookStartTime = null;
+    this._cardBookDetailLevel = null;
+    this._closingCardBookDetail = false;
+    this._cardBookDetailStartTime = null;
+    this._closeCardBookDetailStartTime = null;
+    this._cardBookEquipBtnPressed = false;
+    this._cardBookCloseBtnPressed = false;
+    this._rankCloseBtnPressed = false;
+    this._cardBookCellPressed = null;
+    this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
+    this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
+    console.log('[CardBook] 存档恢复加载 collectedWitchCards:', JSON.stringify(this.collectedWitchCards));
+    this._newWitchCardThisShop = null;
+    this._cardBookIconFlashStart = null;
+    this._cardBookNewBadge = false;
+    this.gameOverReason = p.gameOverReason || null;
+    this.target = p.target;
+    this._maxHandSize = p._maxHandSize;
+    this._seedMinLen = p._seedMinLen;
+    this._seedMaxLen = p._seedMaxLen;
+    this._lastInitialLetter = p._lastInitialLetter || null;
+    this._lastPlayedLetters = p._lastPlayedLetters || null;
+
+    // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
+    const sanitizeCard = (card) => {
+      if (!card) return;
+      delete card.animOffset;
+      delete card.selectOffset;
+      delete card.jumpOffsetY;
+      delete card.newCard;
+      delete card._flyIndex;
+      delete card._originalScore;
+      delete card._scorePulseAnim;
+      delete card._scoreScale;
+    };
+    this.hand.forEach(sanitizeCard);
+    this.deck.forEach(sanitizeCard);
+
+    // 清理女巫牌上的动画残留状态
+    (this.jokers || []).forEach(j => {
+      if (!j) return;
+      delete j._triggered;
+      delete j._jumpOffsetY;
+      delete j._shieldAnimStart;
+      delete j._letterGodAnimStart;
+      delete j._destroying;
+      delete j._destroyStart;
+      delete j._wwJumpStart;
+      delete j._wwJumpDone;
+      delete j._ruleBreakerFlash;
+      // 恢复禁用状态由 resetRound 逻辑处理，但恢复时也统一清理
+      if (j._disabled === undefined) j._disabled = false;
+    });
+
+    // 同步 selected 数组：移除 hand 中不存在的 id，同步卡牌的 selected 字段
+    const handIds = new Set(this.hand.filter(Boolean).map(c => c.id));
+    this.selected = this.selected.filter(id => handIds.has(id));
+    this.hand.forEach(card => {
+      if (!card) return;
+      card.selected = this.selected.includes(card.id);
+    });
+
+    // 同步手牌中卡牌的升级分数（letterUpgrades 已由 storage.loadProgress 恢复）
+    this._syncHandCardScores();
+
+    // 恢复引导状态
+    this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
+    // 恢复商店引导状态
+    this.shopGuidePhase = (p.shopGuidePhase !== undefined) ? p.shopGuidePhase : 0;
+    if (p._shopGuideStartTime !== undefined) this._shopGuideStartTime = p._shopGuideStartTime;
+    if (p._shopGuideTextStartTime !== undefined) this._shopGuideTextStartTime = p._shopGuideTextStartTime;
+    // 恢复卡牌图鉴引导状态
+    this.cardBookGuidePhase = (p.cardBookGuidePhase !== undefined) ? p.cardBookGuidePhase : 0;
+    if (p._cardBookGuideStartTime !== undefined) this._cardBookGuideStartTime = p._cardBookGuideStartTime;
+    if (p._cardBookGuideTextStartTime !== undefined) this._cardBookGuideTextStartTime = p._cardBookGuideTextStartTime;
+    if (p._cardBookGuideText2StartTime !== undefined) this._cardBookGuideText2StartTime = p._cardBookGuideText2StartTime;
+    if (p._cardBookGuideExitStartTime !== undefined) this._cardBookGuideExitStartTime = p._cardBookGuideExitStartTime;
+
+    // 恢复装备女巫卡牌跨回合状态
+    if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
+    if (p._shopDiscountRate !== undefined) this._shopDiscountRate = p._shopDiscountRate;
+    if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
+
+    // 修复：恢复后清理手牌中的 null 占位符并重新补牌
+    if (this.state === 'playing') {
+      const validHand = this.hand.filter(Boolean);
+      const need = (this._maxHandSize || this.baseHandSize || 9) - validHand.length;
+      if (need > 0) {
+        // 如果 deck 不够，补充新牌
+        if (!this.deck || this.deck.length < need) {
+          const extraDeck = createDeck();
+          this.deck = this.deck ? [...this.deck, ...extraDeck] : extraDeck;
+        }
+        const newCards = draw(this.deck, need);
+        newCards.forEach(c => {
+          c.selected = false;
+          c.animOffset = null;
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
+          c.newCard = false;
+        });
+        this.hand = [...validHand, ...newCards];
+        this._syncHandCardScores();
+        // 确保手牌中有合法单词
+        const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+        const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+        ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
+      } else {
+        this.hand = validHand;
+      }
+    }
+
+    console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
+    console.log('[Game] 恢复 jokers:', JSON.stringify(this.jokers), 'potions:', JSON.stringify(this.potions));
+  }
+
+  _syncHandCardScores() {
+    this.hand.forEach(card => {
+      if (!card) return;
+      const baseScore = LETTER_SCORE[card.letter];
+      const upgrade = letterUpgrades.get(card.letter);
+      if (upgrade) {
+        let newScore = baseScore;
+        if (upgrade.mult) newScore = Math.floor(newScore * upgrade.mult);
+        if (upgrade.add) newScore += upgrade.add;
+        card.baseScore = baseScore;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = upgrade.mult || 1;
+        card.upgradeAdd = upgrade.add || 0;
+      } else {
+        card.baseScore = baseScore;
+        card.score = baseScore;
+        card.upgraded = false;
+        card.upgradeMult = 1;
+        card.upgradeAdd = 0;
+      }
+    });
+
+    // 同步牌堆中卡牌的升级分数
+    this.deck.forEach(card => {
+      if (!card) return;
+      const baseScore = LETTER_SCORE[card.letter];
+      const upgrade = letterUpgrades.get(card.letter);
+      if (upgrade) {
+        let newScore = baseScore;
+        if (upgrade.mult) newScore = Math.floor(newScore * upgrade.mult);
+        if (upgrade.add) newScore += upgrade.add;
+        card.baseScore = baseScore;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = upgrade.mult || 1;
+        card.upgradeAdd = upgrade.add || 0;
+      } else {
+        card.baseScore = baseScore;
+        card.score = baseScore;
+        card.upgraded = false;
+        card.upgradeMult = 1;
+        card.upgradeAdd = 0;
+      }
+    });
+  }
+
+  // 封装 setTimeout，自动追踪 ID，destroy 时统一清除
+  _delay(callback, ms) {
+    if (this._destroyed) return null;
+    const id = setTimeout(() => {
+      const idx = this._timeoutIds.indexOf(id);
+      if (idx >= 0) this._timeoutIds.splice(idx, 1);
+      if (!this._destroyed) callback();
+    }, ms);
+    this._timeoutIds.push(id);
+    return id;
+  }
+
+  _clearAllTimeouts() {
+    this._timeoutIds.forEach(id => clearTimeout(id));
+    this._timeoutIds = [];
+  }
+
+  destroy() {
+    this._destroyed = true;
+    this._clearAllTimeouts();
+    // 清理 storageManager 的防抖定时器，防止实例销毁后仍触发保存
+    if (this.storageManager && this.storageManager._saveTimer) {
+      clearTimeout(this.storageManager._saveTimer);
+      this.storageManager._saveTimer = null;
+    }
+    if (this.audioManager) {
+      this.audioManager.destroy();
+      this.audioManager = null;
+    }
+    if (this.animManager) {
+      this.animManager.clear();
+    }
+  }
+
+  resetRound() {
+    // 上报：回合开始
+    if (typeof wx !== 'undefined' && wx.reportEvent) {
+      wx.reportEvent("round_start", {
+        "round": this.round
+      });
+    }
+
+    wordCheckState.clear();
+    this.pendingCheck = null;
+
+    // 根据女巫技能设置保底词长度
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (witchSkill && witchSkill.skill === 'force_letter_3') {
+      this._seedMinLen = 3;
+      this._seedMaxLen = 3;
+    } else if (witchSkill && witchSkill.skill === 'force_letter_4') {
+      this._seedMinLen = 4;
+      this._seedMaxLen = 4;
+    } else {
+      this._seedMinLen = 3;
+      this._seedMaxLen = 6;
+    }
+
+    this.deck = createDeck();
+    // no_letter_a：牌堆中排除指定字母
+    const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+    if (excludeLetters.length > 0) {
+      this.deck = this.deck.filter(c => !excludeLetters.includes(c.letter));
+    }
+    this.target = calcBaseTarget(this.round);
+    if (this._lifeExtensionBonus) {
+      this.target += this._lifeExtensionBonus;
+      this._lifeExtensionBonus = 0;
+    }
+    this._reduceTargetAnim = null;
+    applyCrystalEffects(this);
+    const handSize = this.baseHandSize + (this.extraLetters || 0);
+    this._maxHandSize = handSize;
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters);
+    this.selected = [];
+    this.score = 0;
+    // 格莱薇妮娅：下回合初始分加上溢出加成（延迟500ms后更新，让HUD先显示0再做缩放动画）
+    if (this._overflowBonus > 0) {
+      const bonus = this._overflowBonus;
+      this._overflowBonus = 0;
+      setTimeout(() => {
+        this.score = bonus;
+        if (this.storageManager) this.storageManager.saveProgress();
+      }, 500);
+      console.log('[EquippedSkill] score_overflow will apply after 500ms, bonus:', bonus);
+    }
+    this.handsLeft = 4 + this.extraHands;
+    this.discardsLeft = 3 + this.extraDiscards;
+    // 应用装备的女巫卡牌回合技能
+    this._applyEquippedCardBonus('round');
+    this.extraHands = 0;
+    this.extraDiscards = 0;
+    this.extraSafety = 0;
+    this.extraLetters = 0;
+    this.witchSkillPassed = true;
+    this._illegalWordShieldUsed = 0;
+    this._witchSkillProtectUsed = 0;
+    this._witchDetailPopup = null;
+    this._hudWitchPopup = null;
+    this._lastPlayedLetters = null; // 新回合开始，清除上一手字母记录
+    // 清除所有女巫牌的动画状态，防止上一回合的动画残留
+    (this.jokers || []).forEach(j => {
+      if (j) {
+        j._triggered = false;
+        j._jumpOffsetY = 0;
+        j._shieldAnimStart = null;
+        j._letterGodAnimStart = null;
+        j._destroying = false;
+        j._destroyStart = null;
+        j._wwJumpStart = null;
+        j._wwJumpDone = false;
+        j._ruleBreakerFlash = false;
+        // 预言家：回合开始时随机预言一个字母
+        if (j.trigger === 'predicted_letter') {
+          const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+          j._predictedLetter = letters[Math.floor(Math.random() * letters.length)];
+        }
+      }
+    });
+
+    // disable_one_witch_card：回合开始时随机禁用1张女巫牌（延迟1秒播放边框动画）
+    const disableSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (disableSkill && disableSkill.skill === 'disable_one_witch_card' && this.jokers && this.jokers.length > 0) {
+      const validJokers = this.jokers.filter(j => j);
+      if (validJokers.length > 0) {
+        this.jokers.forEach(j => { if (j) j._disabled = false; });
+        const target = validJokers[Math.floor(Math.random() * validJokers.length)];
+        target._disabled = true;
+        this._disableWitchAnim = { startTime: Date.now() + 1000, jokerIndex: this.jokers.indexOf(target) };
+      }
+    } else {
+      (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+      this._disableWitchAnim = null;
+    }
+
+    // === 争分夺秒：每回合开始时重置，由 applyCrystalEffects 重新激活 ===
+    this._hastePlayActive = false;
+    this._hastePlayStartTime = null;
+
+    // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
+    if (this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
+      this.guidePhase = 1;
+      this._guideOverlayStartTime = Date.now();
+    }
+
+    // 第2回合后台按需下载商店引导帧序列（witch_guide_3），避免进入商店时等待
+    if (this.round === 2 && this.shopGuidePhase === 0) {
+      if (this.cloudStorage && this.renderer) {
+        this.cloudStorage.preloadGuideGroup(3, this.renderer).catch(err => {
+          console.error('[ShopGuide] 按需下载 witch_guide_3 失败:', err);
+        });
+      }
+    }
+
+    // 第3回合后台按需下载卡牌图鉴引导帧序列（witch_guide_4）
+    if (this.round === 3 && this.cardBookGuidePhase === 0) {
+      if (this.cloudStorage && this.renderer) {
+        this.cloudStorage.preloadGuideGroup(4, this.renderer).catch(err => {
+          console.error('[CardBookGuide] 按需下载 witch_guide_4 失败:', err);
+        });
+      }
+    }
+
+    this.state = 'playing';
+  }
+
+  // 按需预加载当前回合和下一回合的女巫头像与卡牌
+  _preloadWitchAvatars() {
+    if (!this.cloudStorage || !this.renderer) return;
+
+    // 当前回合（存档恢复时可能需要兜底下载）
+    const currentSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (currentSkill && currentSkill.skill) {
+      this.cloudStorage.preloadWitchAvatarForLevel(currentSkill.level, this.renderer);
+      this.cloudStorage.preloadWitchCardForLevel(currentSkill.level, this.renderer);
+    }
+
+    // 下一回合（后台提前下载）
+    const nextSkill = getSkillForLevel(this.round + 1, this._shuffledSkills);
+    if (nextSkill && nextSkill.skill) {
+      this.cloudStorage.preloadWitchAvatarForLevel(nextSkill.level, this.renderer);
+      this.cloudStorage.preloadWitchCardForLevel(nextSkill.level, this.renderer);
+    }
+  }
+
+  advanceGuide() {
+    if (this.guidePhase < 1 || this.guidePhase > 4) return;
+
+    // 阶段3特殊处理：给 has_vowel 卡牌
+    if (this.guidePhase === 3) {
+      // 如果还没给过，插入 has_vowel 女巫牌
+      const hasVowel = this.jokers.find(j => j && j.trigger === 'has_vowel');
+      if (!hasVowel) {
+        const gift = SHOP_POOL.witch.find(w => w.trigger === 'has_vowel');
+        if (gift) {
+          this.jokers.push({ ...gift, _guideGift: true });
+          if (this.storageManager) this.storageManager.saveProgress();
+        }
+      }
+    }
+
+    this.guidePhase++;
+    this._guideTextStartTime = Date.now();
+    this._guideSkipTyping = false;
+    this._guideTapTime = null;
+
+    // 阶段5（完成）：先触发退场动画，再清理引导状态
+    if (this.guidePhase >= 5) {
+      this.guidePhase = 5;
+      this._guideExitStartTime = Date.now();
+      this._guideTextStartTime = null;
+      this._guideCardGiftStartTime = null;
+    }
+
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      // 引导完成时单独持久化，防止游戏结束后 clearProgress 丢失
+      if (this.guidePhase >= 5) {
+        this.storageManager.saveGuidePhase(this.guidePhase);
+      }
+    }
+  }
+
+  advanceShopGuide() {
+    if (this.shopGuidePhase < 1 || this.shopGuidePhase > 2) return;
+
+    this.shopGuidePhase++;
+    this._shopGuideSkipTyping = false;
+    this._shopGuideTapTime = null;
+
+    if (this.shopGuidePhase === 2) {
+      this._shopGuideTextStartTime = Date.now();
+    }
+
+    // 阶段3（退场）：触发退场动画
+    if (this.shopGuidePhase >= 3) {
+      this.shopGuidePhase = 3;
+      this._shopGuideExitStartTime = Date.now();
+      this._shopGuideTextStartTime = null;
+    }
+
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      if (this.shopGuidePhase >= 4) {
+        this.storageManager.saveShopGuidePhase(this.shopGuidePhase);
+      }
+    }
+  }
+
+  advanceCardBookGuide() {
+    if (this.cardBookGuidePhase < 1 || this.cardBookGuidePhase > 2) return;
+
+    this.cardBookGuidePhase++;
+    this._cardBookGuideSkipTyping = false;
+    this._cardBookGuideTapTime = null;
+
+    if (this.cardBookGuidePhase === 2) {
+      this._cardBookGuideText2StartTime = Date.now();
+    }
+
+    // Phase 3（退场）：触发退场动画
+    if (this.cardBookGuidePhase >= 3) {
+      this.cardBookGuidePhase = 3;
+      this._cardBookGuideExitStartTime = Date.now();
+    }
+
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      if (this.cardBookGuidePhase >= 4) {
+        this.storageManager.saveCardBookGuidePhase(this.cardBookGuidePhase);
+      }
+    }
+  }
+
+  toggleSelect(cardId) {
+    // 如果有非法提示或女巫约束失败提示，先清除
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
+      this.pendingCheck = null;
+    }
+    // 清除字母置换提示
+    if (this._changeLetterHint) {
+      this._changeLetterHint = null;
+    }
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
+    const idx = this.selected.indexOf(cardId);
+    const card = this.hand.find(c => c && c.id === cardId);
+    if (!card) return;
+    // 点击字母卡牌音效
+    if (this.audioManager) this.audioManager.play('card_placement');
+    if (idx >= 0) {
+      this.selected.splice(idx, 1);
+      card.selected = false;
+      if (this.animManager) this.animManager.cardDeselect(card);
+    } else {
+      if (this.selected.length >= 9) return;
+      this.selected.push(cardId);
+      card.selected = true;
+      if (this.animManager) this.animManager.cardSelect(card);
+    }
+  }
+
+  showHint() {
+    const words = findAllValidWordsInHand(this.hand);
+    if (words.length === 0) {
+      this.hintToast = { text: '没有可组成的单词', expireAt: Date.now() + 2000 };
+      return;
+    }
+    const topWords = words.slice(0, 10);
+    const lines = [`提示：${words.length} 个合法单词`];
+    topWords.forEach((w, i) => {
+      lines.push(`${i + 1}. ${w.word.toUpperCase()} (${w.cards.length}牌 ${w.score}分)`);
+    });
+    if (words.length > 10) lines.push('...');
+    this.hintToast = { text: lines.join('\n'), expireAt: Date.now() + 2000 };
+  }
+
+  async playHand() {
+    if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
+
+    // 争分夺秒 20 秒过期检查
+    if (this._hastePlayActive && this._hastePlayStartTime && Date.now() - this._hastePlayStartTime > 20000) {
+      this._hastePlayActive = false;
+    }
+
+    const played = this.hand.filter(c => c && c.selected);
+    const playedInOrder = this.getSelectedCards();
+    const word = playedInOrder.map(c => c.letter.toLowerCase()).join('');
+
+    // 重置动画完成标志
+    this._playHandAnimCompleted = false;
+    this._playHandCompleting = false;
+
+    // 设置检测中状态
+    this.pendingCheck = {
+      word,
+      cards: played,
+      cardsInOrder: playedInOrder,
+      state: 'checking',
+      startTime: Date.now(),
+      result: null,
+      meaning: null,
+      resolveTime: null,
+    };
+
+    let valid = isValidWord(word);
+    if (!valid) valid = await isValidWordOnline(word);
+
+    // 实例已销毁（如 restart），立即停止后续逻辑
+    if (this._destroyed) return { valid: false };
+
+    // === end_ed / end_s 变形单词校验（主单词合法后才校验） ===
+    const endEdJoker = (this.jokers || []).find(j => j && j.trigger === 'end_ed' && !j._disabled);
+    const endSJoker = (this.jokers || []).find(j => j && j.trigger === 'end_s' && !j._disabled);
+    if (endEdJoker || endSJoker) {
+      const lowerWord = word.toLowerCase();
+      const edPromise = endEdJoker
+        ? (isValidWord(lowerWord + 'ed') ? Promise.resolve(true) : isValidWordOnline(lowerWord + 'ed'))
+        : Promise.resolve(false);
+      const sPromise = endSJoker
+        ? (isValidWord(lowerWord + 's') ? Promise.resolve(true) : isValidWordOnline(lowerWord + 's'))
+        : Promise.resolve(false);
+      const [edValid, sValid] = await Promise.all([edPromise, sPromise]);
+      this.pendingCheck.endEdValid = edValid;
+      this.pendingCheck.endSValid = sValid;
+    }
+
+    if (!valid) {
+      this.pendingCheck.state = 'invalid';
+      this.pendingCheck.resolveTime = Date.now();
+      if (this.audioManager) this.audioManager.play('card_illegal');
+
+      // 勇敢试错：每次非法单词倍率 +1；若同时触发容错咒文，不生效
+      const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
+      (this.jokers || []).forEach(j => {
+        if (j.trigger === 'illegal_boost' && !hasShield) {
+          j.value = (j.value || 0) + 1;
+        }
+      });
+
+      // 检查是否有"出现非法单词，游戏结束"的女巫技能
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+      if (witchSkill && witchSkill.skill === 'forbid_illegal_words' && !this._ruleBreakerAvailable) {
+        this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
+        this._delay(() => {
+          this.state = 'gameover';
+          this.gameOverReason = 'forbidden_word';
+          if (this.audioManager) this.audioManager.play('game_over');
+          if (this.storageManager) {
+            this.storageManager.setHighScore(this.totalScore);
+            uploadScore(this.storageManager.getHighScore());
+            this.storageManager.updateStats(this);
+            this.storageManager.clearProgress();
+          }
+        }, 1000);
+        if (this.storageManager) this.storageManager.saveProgress();
+        return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
+      }
+
+      // 检查是否有"容错咒文"女巫牌（非法单词不扣出牌次数）
+      const shieldJoker = (this.jokers || []).find(j => j.trigger === 'shield_illegal');
+      if (shieldJoker) {
+        // 触发容错咒文动画：跳跃 + 紫色光晕
+        shieldJoker._triggered = true;
+        shieldJoker._shieldAnimStart = Date.now();
+      } else {
+        // 检查装备卡牌：喀薇娅 - 非法单词保护（每张提供1次，可叠加）
+        let shieldCount = 0;
+        for (const level of this.equippedWitchCards || []) {
+          const eqCard = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+          if (eqCard && eqCard.card_skill_name === 'illegal_words_one') shieldCount++;
+        }
+        if (shieldCount > this._illegalWordShieldUsed) {
+          this._illegalWordShieldUsed++;
+          console.log('[EquippedSkill] illegal_words_one shielded illegal word, used:', this._illegalWordShieldUsed, 'total:', shieldCount);
+        } else if (!this._hastePlayActive) {
+          this.handsLeft--;
+        }
+      }
+      if (this.handsLeft <= 0) {
+        const triggered = this._checkLifeExtension();
+        if (!triggered) {
+          // 延迟 1.5 秒进入 gameover，让玩家先看到"单词不存在"提示
+          this._delay(() => {
+            this.state = 'gameover';
+            this.gameOverReason = 'out_of_hands';
+            if (this.audioManager) this.audioManager.play('game_over');
+            if (this.storageManager) {
+              this.storageManager.setHighScore(this.totalScore);
+              uploadScore(this.storageManager.getHighScore());
+              this.storageManager.updateStats(this);
+              this.storageManager.clearProgress();
+            }
+          }, 1500);
+        }
+      }
+      if (this.storageManager) this.storageManager.saveProgress();
+      return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
+    }
+
+    // 获取所有装备卡牌技能名
+    const equippedCardSkills = [];
+    for (const level of this.equippedWitchCards || []) {
+      const card = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (card) equippedCardSkills.push(card.card_skill_name);
+    }
+
+    // === 女巫技能约束检查 ===
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (witchSkill) {
+      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过约束检查（多张叠加次数）
+      const protectCount = equippedCardSkills.filter(s => s === 'witch_skill_protect').length;
+      if (protectCount > this._witchSkillProtectUsed) {
+        this._witchSkillProtectUsed++;
+        console.log('[EquippedSkill] witch_skill_protect skipped skill check, used:', this._witchSkillProtectUsed, 'total:', protectCount);
+        // 跳过约束检查，witchSkillPassed 保持 true
+      } else if (!checkSkill(witchSkill.skill, this, playedInOrder)) {
+        this.witchSkillPassed = false;
+        this.pendingCheck.state = 'witch_failed';
+        this.pendingCheck.resolveTime = Date.now();
+        this.pendingCheck.witchFailText = getSkillFailText(witchSkill.skill);
+        this.pendingCheck._witchFailAnimStart = Date.now();
+        this._witchStarBurstAuto = true; // 触发 HUD 女巫头像星星动画
+        if (this.audioManager) this.audioManager.play('card_illegal');
+        if (witchSkill.angry_tip) {
+          this._witchAngryTip = { text: witchSkill.angry_tip, expireAt: Date.now() + 4000 };
+        }
+        if (!this._hastePlayActive) {
+          this.handsLeft--;
+        }
+        if (this.handsLeft <= 0) {
+          const triggered = this._checkLifeExtension();
+          if (!triggered) {
+            this._delay(() => {
+              this.state = 'gameover';
+              this.gameOverReason = 'out_of_hands';
+              if (this.audioManager) this.audioManager.play('game_over');
+              if (this.storageManager) {
+                this.storageManager.setHighScore(this.totalScore);
+                uploadScore(this.storageManager.getHighScore());
+                this.storageManager.updateStats(this);
+                this.storageManager.clearProgress();
+              }
+            }, 1500);
+          }
+        }
+        if (this.storageManager) this.storageManager.saveProgress();
+        return { valid: false, word: playedInOrder.map(c => c.letter).join('') };
+      }
+    }
+
+    // === 字母之神触发（limit 型女巫牌，优先处理）===
+    const letterGod = (this.jokers || []).find(j => j.type === 'witch' && j.scope === 'limit' && j.trigger === 'letter_god' && !j._disabled);
+    let letterGodTriggered = false;
+    if (letterGod && (letterGod.usesLeft === undefined || letterGod.usesLeft > 0)) {
+      letterGodTriggered = true;
+      // 递减剩余次数
+      letterGod.usesLeft = (letterGod.usesLeft === undefined ? letterGod.limit : letterGod.usesLeft) - 1;
+      letterGod._triggered = true;
+      letterGod._letterGodAnimStart = Date.now();
+      // 保存原始分数，实际分数立即更新为最高分（供 calcWordScore 使用）
+      const maxScore = Math.max(...played.map(c => c.score));
+      const maxCard = played.find(c => c.score === maxScore) || played[0];
+      played.forEach(c => {
+        if (c._originalScore === undefined) c._originalScore = c.score;
+        c.score = maxScore;
+      });
+      // 设置字母之神动画状态，由 renderer 播放星星飞行动画
+      this._letterGodAnim = {
+        startTime: Date.now() + 1000, // 延迟1秒，等烟花放完后再开始
+        maxCardId: maxCard.id,
+        playedCardIds: played.map(c => c.id),
+      };
+      if (this.storageManager) this.storageManager.saveProgress();
+    }
+
+    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
+
+    // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
+    const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
+    let lastPrayerResult = null;
+    if (lastPrayer && this.handsLeft === 1 && playedInOrder.length < 4) {
+      const success = Math.random() < 0.2;
+      const boostValue = 8;
+      if (success) {
+        result.mult += boostValue;
+        result.score = Math.ceil(result.base * result.mult);
+      }
+      lastPrayerResult = {
+        success,
+        jokerIndex: this.jokers.indexOf(lastPrayer),
+        value: boostValue,
+      };
+    }
+
+    // === letter_X_mult_half 惩罚检测（通用） ===
+    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
+
+    this.pendingCheck.letterGodTriggered = letterGodTriggered;
+    this.pendingCheck.letterGodIndex = letterGodTriggered ? this.jokers.indexOf(letterGod) : -1;
+    this.pendingCheck.lastPrayerResult = lastPrayerResult;
+    this.pendingCheck.state = 'valid';
+    this.pendingCheck.result = result;
+    this.pendingCheck.meaning = getWordMeaning(word);
+    // 始终设置 resolveTime 和 animPhase = 0（烟花立即开始）
+    this.pendingCheck.resolveTime = Date.now();
+    this.pendingCheck.animPhase = 0;
+
+    // === 首领连击：连续打出首字母相同的单词，本牌倍率累加+3；中断后重置 ===
+    const currentInitial = playedInOrder[0]?.letter;
+    if (currentInitial) {
+      (this.jokers || []).forEach(j => {
+        if (j && j.trigger === 'initial_succession') {
+          if (this._lastInitialLetter === currentInitial) {
+            j.value = (j.value || 0) + 3;
+          } else {
+            j.value = 0;
+          }
+        }
+      });
+      this._lastInitialLetter = currentInitial;
+    // 记录本手打出的字母集合（供消元术下一手对比）
+    this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
+    }
+
+    // 计算每个字母跳跃时触发的女巫牌索引（scope === 'per_card'）
+    const jokers = this.jokers || [];
+    const jokerTriggers = [];
+    for (let i = 0; i < playedInOrder.length; i++) {
+      const card = playedInOrder[i];
+      const triggered = [];
+      for (let j = 0; j < jokers.length; j++) {
+        const joker = jokers[j];
+        if (!joker || joker._disabled) continue;
+        if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
+        if (_matchCardTrigger(card, joker.trigger, i, joker)) triggered.push(j);
+      }
+      jokerTriggers.push(triggered);
+    }
+    // 始终生效的女巫牌（flat_bonus），在字母跳跃阶段就显示紫色边框
+    const globalTriggered = [];
+    for (let j = 0; j < jokers.length; j++) {
+      const joker = jokers[j];
+      if (!joker || joker._disabled) continue;
+      if (joker.type !== 'witch') continue;
+      if (joker.scope === 'flat_bonus') {
+        globalTriggered.push(j);
+      }
+    }
+    // 构建 perCardSteps：每张 per_card 对应一次独立的字母跳跃步骤
+    const perCardSteps = [];
+    for (let i = 0; i < playedInOrder.length; i++) {
+      const triggered = jokerTriggers[i] || [];
+      if (triggered.length === 0) {
+        perCardSteps.push({ cardIdx: i, jokerIdx: null });
+      } else {
+        triggered.forEach(jIdx => {
+          perCardSteps.push({ cardIdx: i, jokerIdx: jIdx });
+        });
+      }
+    }
+    // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃（每张叠加一次动画）
+    const doubleCount = equippedCardSkills.filter(s => s === 'last_letter_double').length;
+    if (doubleCount > 0 && playedInOrder.length > 0) {
+      const lastIdx = playedInOrder.length - 1;
+      const lastTriggered = jokerTriggers[lastIdx] || [];
+      const lastJokerIdx = lastTriggered.length > 0 ? lastTriggered[lastTriggered.length - 1] : null;
+      for (let i = 0; i < doubleCount; i++) {
+        perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
+      }
+    }
+    this.pendingCheck.perCardSteps = perCardSteps;
+    this.pendingCheck.jokerTriggers = jokerTriggers;
+    this.pendingCheck.globalTriggered = globalTriggered;
+
+    // 预处理 whole_word 女巫牌（用于 phase 1.5 波浪动画 + phase 2 倍率弹出）
+    const wholeWordJokers = [];
+    jokers.forEach((joker, idx) => {
+      if (!joker || joker._disabled) return;
+      if (joker.type === 'witch' && joker.scope === 'whole_word') {
+        let matched;
+        if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
+          matched = joker.value > 0;
+        } else if (joker.trigger === 'end_ed') {
+          matched = this.pendingCheck.endEdValid || false;
+        } else if (joker.trigger === 'end_s') {
+          matched = this.pendingCheck.endSValid || false;
+        } else {
+          matched = _matchWordTrigger(playedInOrder, joker.trigger);
+        }
+        if (matched) {
+          wholeWordJokers.push({ idx, joker });
+        }
+      }
+    });
+    // 临死祈祷成功时，追加到 whole_word 列表（动画复用）
+    if (lastPrayerResult && lastPrayerResult.success) {
+      wholeWordJokers.push({
+        idx: lastPrayerResult.jokerIndex,
+        joker: { trigger: 'last_chance', value: lastPrayerResult.value }
+      });
+    }
+    this.pendingCheck.wholeWordJokers = wholeWordJokers;
+
+    if (this.audioManager) {
+      this.audioManager.play('card_valid');
+    }
+
+    // 计分动画由 renderer.js 事件驱动推进，不再使用固定时间轴
+    return result;
+  }
+
+  _checkLifeExtension() {
+    const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+    if (lifeExtIdx < 0) return false;
+    const joker = this.jokers[lifeExtIdx];
+    if (joker.usesLeft !== undefined && joker.usesLeft <= 0) return false;
+
+    const diff = this.target - this.score;
+    this._lifeExtensionBonus = diff * 2;
+    if (joker.usesLeft !== undefined) joker.usesLeft--;
+    if (joker.usesLeft !== undefined && joker.usesLeft <= 0) {
+      joker._destroying = true;
+      joker._destroyStart = Date.now();
+      this._delay(() => {
+        const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+        if (idx >= 0) this.jokers.splice(idx, 1);
+        if (this.storageManager) this.storageManager.saveProgress();
+      }, 900);
+    }
+    this._lifeExtensionAnim = { startTime: Date.now(), jokerIndex: lifeExtIdx, diff };
+    this.state = 'life_extended';
+    if (this.storageManager) this.storageManager.saveProgress();
+    return true;
+  }
+
+  completePlayHand() {
+    if (this._playHandCompleting) return;
+    if (!this.pendingCheck || this.pendingCheck.state !== 'valid') return;
+    this._playHandCompleting = true;
+
+    const result = this.pendingCheck.result;
+    const played = this.pendingCheck.cards;
+    const playedInOrder = this.pendingCheck.cardsInOrder;
+    this._applyScore(result);
+    this._executePlayHand(played, playedInOrder, result);
+
+    // 清除 pendingCheck，重置单词预览区
+    this.pendingCheck = null;
+
+    // 结算判断
+    if (this.score >= this.target) {
+      this._showSettlement();
+    } else if (this.handsLeft <= 0) {
+      const triggered = this._checkLifeExtension();
+      if (!triggered) {
+        this.state = 'gameover';
+        this.gameOverReason = 'out_of_hands';
+        if (this.audioManager) this.audioManager.play('game_over');
+        if (this.storageManager) {
+          this.storageManager.setHighScore(this.totalScore);
+          uploadScore(this.storageManager.getHighScore());
+          this.storageManager.updateStats(this);
+          this.storageManager.clearProgress();
+        }
+      }
+    }
+
+    this._playHandCompleting = false;
+  }
+
+  _applyScore(result) {
+    const score = this.pendingCheck?.multHalfResult?.halvedScore ?? result.score;
+    this.score += score;
+    this.totalScore += score;
+    if (this.audioManager) {
+      this._delay(() => {}, 200);
+    }
+  }
+
+  _executePlayHand(playedCards, playedInOrder, result) {
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
+    // 清除女巫牌触发状态
+    (this.jokers || []).forEach(j => {
+      if (j) {
+        j._triggered = false;
+        j._jumpOffsetY = 0;
+        j._letterGodAnimStart = null;
+        j._wwJumpStart = null;
+        j._wwJumpDone = false;
+      }
+    });
+
+    // 恢复字母之神修改过的卡牌分数，清除视觉过渡状态
+    playedCards.forEach(c => {
+      if (c && c._originalScore !== undefined) {
+        c.score = c._originalScore;
+        delete c._originalScore;
+      }
+      delete c._scorePulseAnim;
+    });
+
+    // 检查字母之神是否次数耗尽，触发撕裂自毁动画
+    const letterGodIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
+    if (letterGodIdx >= 0) {
+      const letterGod = this.jokers[letterGodIdx];
+      if (letterGod.usesLeft !== undefined && letterGod.usesLeft <= 0) {
+        letterGod._destroying = true;
+        letterGod._destroyStart = Date.now();
+        // 延迟从数组中移除（给动画留出 900ms）
+        this._delay(() => {
+          const idx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'letter_god');
+          if (idx >= 0) this.jokers.splice(idx, 1);
+          if (this.storageManager) this.storageManager.saveProgress();
+        }, 900);
+      }
+    }
+
+    // 检查争分夺秒是否次数耗尽，触发撕裂自毁动画
+    // 争分夺秒已改为水晶球牌，无需自毁逻辑
+
+    // 使用传入的 playedCards 而不是依赖 this.hand 的 selected 状态
+    //（防止动画期间 selected 被意外清除导致 finalPlayedCards 为空）
+    const finalPlayedCards = playedCards.filter(c => c);
+    const removedIndices = [];
+    this.hand.forEach((c, i) => {
+      if (c && finalPlayedCards.includes(c)) {
+        removedIndices.push(i);
+      }
+    });
+
+    // 旧牌飞出（同时播放洗牌音效）
+    if (this.audioManager) this.audioManager.play('card_shuffle');
+    finalPlayedCards.forEach((card, i) => {
+      card._flyIndex = removedIndices[i];
+      card.selected = false;
+      this.animManager.flyOut(card, 'left', () => {
+        const fi = this.flyingCards.indexOf(card);
+        if (fi >= 0) this.flyingCards.splice(fi, 1);
+        card._flyIndex = undefined;
+      });
+    });
+    this.flyingCards.push(...finalPlayedCards);
+    this.selected = [];
+
+    // 用 null 占位符替换旧牌位置
+    this.hand = this.hand.map(c => finalPlayedCards.includes(c) ? null : c);
+
+    // 0.6秒后：把打出的牌放回牌堆底部，然后重新洗牌，再补牌
+    this._delay(() => {
+      // 1. 打出的牌回到牌堆底部
+      for (const card of finalPlayedCards) {
+        if (card) this.deck.push(card);
+      }
+      // 2. 洗牌（防止连续抽到同样的牌）
+      this.deck = shuffle([...this.deck]);
+      // 3. 从牌堆顶部补牌
+      const need = finalPlayedCards.length;
+      const newCards = this.deck.splice(0, need);
+
+      let newIdx = 0;
+      this.hand = this.hand.map(c => {
+        if (c === null && newIdx < newCards.length) {
+          const nc = newCards[newIdx++];
+          nc.newCard = true;
+          nc.selectOffset = 0;
+          nc.jumpOffsetY = 0;
+          nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
+          this.animManager.flyIn(nc, 'left', null, 0);
+          return nc;
+        }
+        // 清除保留旧卡牌的各种偏移，避免与新牌位置不对齐
+        if (c) {
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
+        }
+        return c;
+      });
+
+      this.hand = this.hand.filter(c => c !== null);
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
+      this.hand.forEach(c => { if (c) c.selected = false; });
+      if (this.storageManager) this.storageManager.saveProgress();
+    }, 600);
+
+    if (!this._hastePlayActive) {
+      this.handsLeft--
+    }
+    if (this.storageManager) this.storageManager.saveProgress();
+  }
+
+  _showSettlement() {
+    // 上报：回合通关
+    if (typeof wx !== 'undefined' && wx.reportEvent) {
+      wx.reportEvent("round_pass", {
+        "round": this.round
+      });
+    }
+
+    if (this.audioManager) this.audioManager.play('round_win');
+    let baseGold = 4;
+    // 装备卡结算加成（多张叠加）
+    let coinBonus = 0;
+    let handPenalty = 0;
+    let discountCount = 0;
+    let overflowCount = 0;
+    for (const level of this.equippedWitchCards || []) {
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (!cardConfig) continue;
+      switch (cardConfig.card_skill_name) {
+        case 'each_round_coin_plus1':
+          coinBonus += 1;
+          break;
+        case 'each_round_hand_plus1':
+          handPenalty += 2;
+          break;
+        case 'shop_discount':
+          discountCount++;
+          break;
+        case 'score_overflow':
+          overflowCount++;
+          break;
+      }
+    }
+    baseGold += coinBonus - handPenalty;
+    if (discountCount > 0 && this.score >= this.target * 1.3) {
+      // 每张额外折扣40%，最低2折
+      this._shopDiscountActive = true;
+      this._shopDiscountRate = Math.max(0.2, 1 - 0.4 * discountCount);
+      console.log('[EquippedSkill] shop_discount activated, count:', discountCount, 'rate:', this._shopDiscountRate, 'score:', this.score, 'target:', this.target);
+    }
+    if (overflowCount > 0) {
+      const overflow = this.score - this.target;
+      if (overflow > 0) {
+        this._overflowBonus = Math.round(overflow * 0.1 * overflowCount);
+        console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow, 'count:', overflowCount);
+      }
+    }
+    const extraHands = this.handsLeft * 2;
+    const extraDiscards = this.discardsLeft * 1;
+    const totalGold = baseGold + extraHands + extraDiscards;
+
+    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放）
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    const hasWitchReward = witchSkill && this.witchSkillPassed;
+
+    this.settlementData = {
+      baseGold,
+      extraHands,
+      extraDiscards,
+      totalGold,
+      round: this.round,
+      witchSkill: hasWitchReward ? witchSkill : null,
+    };
+    this.state = 'settlement';
+
+    // 上报最高通关回合数（fire-and-forget）
+    try {
+      wx.cloud.callFunction({
+        name: 'updateBestRound',
+        data: { round: this.round }
+      }).then(res => {
+        console.log('[UpdateBestRound] 云函数返回:', res.result);
+      }).catch(err => {
+        console.error('[UpdateBestRound] 云函数调用失败:', err);
+      });
+    } catch (e) {
+      console.error('[UpdateBestRound] 上报异常:', e);
+    }
+
+    if (this.storageManager) this.storageManager.saveProgress();
+  }
+
+  _checkCardBookUnlock() {
+    if (this.round >= 3 && !this.cardBookUnlocked) {
+      this.cardBookUnlocked = true;
+      if (this.storageManager) this.storageManager.saveCardBookUnlocked(true);
+    }
+
+    // 收集本回合的女巫卡牌
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (witchSkill && witchSkill.level) {
+      const level = witchSkill.level;
+      if (!this.collectedWitchCards.includes(level)) {
+        this.collectedWitchCards.push(level);
+        console.log('[CardBook] 收集新卡 level=' + level + ', 当前:', JSON.stringify(this.collectedWitchCards));
+        this._newWitchCardThisShop = level;
+        this._cardBookIconFlashStart = Date.now();
+        this._cardBookNewBadge = false;
+        setTimeout(() => {
+          this._cardBookNewBadge = true;
+        }, 2000);
+        if (this.storageManager) {
+          const ok = this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+          if (!ok) {
+            console.error('[CardBook] 保存验证失败，尝试重试');
+            this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
+          }
+        }
+      } else {
+        console.log('[CardBook] 重复收集检查 level=' + level + ', 当前已有:', JSON.stringify(this.collectedWitchCards));
+      }
+    }
+  }
+
+  claimSettlement() {
+    if (!this.settlementData) return;
+    this.gold += this.settlementData.totalGold;
+    // settlementData 暂时保留用于 closing 动画，200ms 后再处理
+    this._closingSettlement = true;
+    this._closeStartTime = Date.now();
+    this._delay(() => {
+      const witchSkill = this.settlementData ? this.settlementData.witchSkill : null;
+      this.settlementData = null;
+      this._closingSettlement = false;
+      if (witchSkill) {
+        // 进入女巫奖励阶段
+        this.witchRewardData = {
+          skill: witchSkill,
+          phase: 'gift',
+          giftStartTime: Date.now(),
+          startTime: Date.now(),
+          result: null,
+          rewardItem: null,
+        };
+        this.state = 'witch_reward';
+      } else {
+        // 进入商店前取消所有女巫牌禁用状态
+        (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+        this._disableWitchAnim = null;
+        this.state = 'shop';
+        this._checkCardBookUnlock();
+        this.shopItems = generateShopItems(this);
+        if (this.storageManager) this.storageManager.saveProgress();
+      }
+    }, 200);
+  }
+
+  resolveWitchReward() {
+    if (!this.witchRewardData || this.witchRewardData.phase !== 'gift') return;
+    const skill = this.witchRewardData.skill;
+    const rate = skill.rate || 1;
+    const hit = Math.random() < rate;
+    this.witchRewardData.result = hit;
+    if (hit) {
+      this.witchRewardData.rewardItem = createRewardItem(skill.reward);
+    } else if (rate < 1) {
+      // 鼓励奖：随机 1~5 金币
+      const bonusGold = Math.floor(Math.random() * 5) + 1;
+      this.witchRewardData.consolationGold = bonusGold;
+      this.gold += bonusGold;
+    }
+    if (this.audioManager) this.audioManager.play('buy_success');
+    this.witchRewardData.phase = 'result';
+  }
+
+  closeWitchReward(action) {
+    this._closingWitchReward = true;
+    this._closeWitchRewardStartTime = Date.now();
+    this._delay(() => {
+      const data = this.witchRewardData;
+      this.witchRewardData = null;
+      this._closingWitchReward = false;
+
+      switch (action) {
+        case 'ok':
+          if (data && data.rewardItem) {
+            if (data.rewardItem.effect === 'extra_hand') {
+              this.extraHands += 1;
+            } else if (data.rewardItem.effect === 'extra_letter') {
+              this.baseHandSize += 1;
+            } else if (data.rewardItem.effect === 'extra_witch_slot') {
+              this.maxJokerSlots = (this.maxJokerSlots || 4) + 1;
+            } else if (data.rewardItem.effect === 'double_coin') {
+              this.gold *= 2;
+            } else if (data.rewardItem.effect === 'shop_discount_5') {
+              this._shopDiscountActive = true;
+              this._shopDiscountRate = 0.5;
+            }
+          }
+          // 进入商店前取消所有女巫牌禁用状态
+          (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+          this._disableWitchAnim = null;
+          this.state = 'shop';
+          this._checkCardBookUnlock();
+          this.shopItems = generateShopItems(this);
+          if (this.storageManager) this.storageManager.saveProgress();
+          break;
+        case 'stash':
+          if (data && data.rewardItem) {
+            if (!this.potions) this.potions = [];
+            if (this.potions.length < 2) {
+              this.potions.push({ ...data.rewardItem });
+            }
+          }
+          // 进入商店前取消所有女巫牌禁用状态
+          (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+          this._disableWitchAnim = null;
+          this.state = 'shop';
+          this._checkCardBookUnlock();
+          this.shopItems = generateShopItems(this);
+          if (this.storageManager) this.storageManager.saveProgress();
+          break;
+        case 'use':
+          if (data && data.rewardItem) {
+            this.potionMode = { ...data.rewardItem };
+            this._prePotionState = 'shop';
+            this.state = 'potion';
+            if (this.storageManager) this.storageManager.saveProgress();
+          }
+          break;
+      }
+    }, 200);
+  }
+
+  discard() {
+    if (this.discardsLeft <= 0 || this.selected.length === 0) return false;
+    
+    if (this.audioManager) this.audioManager.play('card_shuffle');
+    
+    const removedIndices = [];
+    const discardedCards = [];
+    this.hand.forEach((c, i) => { 
+      if (c && c.selected) {
+        removedIndices.push(i);
+        discardedCards.push(c);
+      }
+    });
+
+    // 旧牌飞出
+    discardedCards.forEach((card, i) => {
+      card._flyIndex = removedIndices[i];
+      card.selected = false;
+      this.animManager.flyOut(card, 'left', () => {
+        const fi = this.flyingCards.indexOf(card);
+        if (fi >= 0) this.flyingCards.splice(fi, 1);
+        card._flyIndex = undefined;
+      });
+    });
+    this.flyingCards.push(...discardedCards);
+    this.selected = [];
+
+    // 用 null 占位符替换旧牌位置（其他牌索引完全不动）
+    this.hand = this.hand.map(c => discardedCards.includes(c) ? null : c);
+
+    // 1秒后：把弃掉的牌放回牌堆底部，然后重新洗牌，再补牌
+    this._delay(() => {
+      // 1. 弃掉的牌回到牌堆底部
+      for (const card of discardedCards) {
+        if (card) this.deck.push(card);
+      }
+      // 2. 洗牌
+      this.deck = shuffle([...this.deck]);
+
+      // 赫丝佩瑞丝：弃牌后补入的字母排除原弃牌字母
+      const discardedLetters = discardedCards.map(c => c.letter);
+      const hasOutCardDifferent = (this.equippedWitchCards || []).some(l => l === 21);
+      if (hasOutCardDifferent) {
+        this.deck = this.deck.filter(c => !discardedLetters.includes(c.letter));
+        const need = discardedCards.length;
+        if (this.deck.length < need) {
+          const extraDeck = createDeck();
+          const filteredExtra = extraDeck.filter(c => !discardedLetters.includes(c.letter));
+          this.deck = [...this.deck, ...filteredExtra];
+        }
+      }
+
+      // 3. 从牌堆顶部补牌
+      const need = discardedCards.length;
+      const newCards = this.deck.splice(0, need);
+
+      let newIdx = 0;
+      this.hand = this.hand.map(c => {
+        if (c === null && newIdx < newCards.length) {
+          const nc = newCards[newIdx++];
+          nc.newCard = true;
+          nc.selectOffset = 0;
+          nc.jumpOffsetY = 0;
+          nc.animOffset = { x: -200, y: -20, rotation: -20, opacity: 0.4, scale: 0.6 };
+          this.animManager.flyIn(nc, 'left', null, 0);
+          return nc;
+        }
+        // 清除保留旧卡牌的各种偏移，避免与新牌位置不对齐
+        if (c) {
+          c.selectOffset = 0;
+          c.jumpOffsetY = 0;
+        }
+        return c;
+      });
+
+      // 移除未被替换的占位符
+      this.hand = this.hand.filter(c => c !== null);
+
+      const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+      const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+      ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
+      this.hand.forEach(c => { if (c) c.selected = false; });
+    }, 600);
+
+    this.discardsLeft--
+    return true;
+  }
+
+
+
+  // ===== 调试功能 =====
+  resetHands() {
+    this.handsLeft = 4;
+  }
+
+  addScore(delta) {
+    this.score += delta;
+    this.totalScore += delta;
+  }
+
+  // 应用装备的女巫卡牌技能 bonus（多张叠加）
+  _applyEquippedCardBonus(timing) {
+    if (!this.equippedWitchCards || this.equippedWitchCards.length === 0) return;
+    for (const level of this.equippedWitchCards) {
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (!cardConfig) continue;
+      switch (cardConfig.card_skill_name) {
+        case 'each_round_coin_plus1':
+          // 结算加成在 _showSettlement 中处理
+          break;
+        case 'each_round_hand_plus1':
+          if (timing === 'round') {
+            this.handsLeft += 1;
+            console.log('[EquippedSkill] each_round_hand_plus1 applied, handsLeft:', this.handsLeft);
+          }
+          break;
+        case 'illegal_words_one':
+          // 回合级标记在 resetRound 中重置，实际生效在 playHand 非法单词逻辑中
+          break;
+        case 'witch_skill_extra_hands':
+          if (timing === 'round') {
+            const ws = getSkillForLevel(this.round, this._shuffledSkills);
+            if (ws && ws.skill) {
+              this.handsLeft += 1;
+              this.discardsLeft += 1;
+              console.log('[EquippedSkill] witch_skill_extra_hands applied, handsLeft:', this.handsLeft, 'discardsLeft:', this.discardsLeft);
+            }
+          }
+          break;
+      }
+    }
+  }
+
+  winRound() {
+    this.score = this.target;
+    this.totalScore += this.target;
+    this._showSettlement();
+  }
+
+  // 原地复活：gameover 时恢复 1 次出牌机会
+  revive() {
+    this.handsLeft = 1;
+    this.state = 'playing';
+    this.gameOverReason = null;
+    this._closingGameOver = false;
+    this._closeStartTime = null;
+    this._restartBtnPressed = false;
+    this._restartBtnPressTime = null;
+    this._reviveBtnPressed = false;
+    this._reviveBtnPressTime = null;
+    this._showingRankList = false;
+    if (this.storageManager) {
+      const today = new Date().toISOString().slice(0, 10);
+      this.storageManager.saveDailyRevive(today, true);
+      this.storageManager.saveProgress();
+    }
+  }
+
+  nextRound() {
+    if (this.audioManager) this.audioManager.play('levelup');
+    
+    this.roundScores.push({ round: this.round, score: this.score });
+    this.round++;
+    this.shopItems = null;
+    this._shopDiscountActive = false; // 折扣只持续一回合商店
+    this._shopDiscountRate = 0.6;
+    this.resetRound();
+    this._preloadWitchAvatars();
+    if (this.storageManager) this.storageManager.saveProgress();
+  }
+
+  jumpToRound(targetRound) {
+    if (targetRound < 1) targetRound = 1;
+    this.roundScores.push({ round: this.round, score: this.score });
+    this.round = targetRound;
+    this.score = 0;
+    this.shopItems = null;
+    this.resetRound();
+    this.state = 'playing';
+    if (this.storageManager) this.storageManager.saveProgress();
+  }
+
+  getSelectedCards() {
+    return this.selected.map(id => this.hand.find(c => c && c.id === id)).filter(Boolean);
+  }
+
+  clearSelection() {
+    if (this.selected.length === 0 && !(this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed'))) return;
+    // 如果有非法提示或女巫约束失败提示，先清除
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
+      this.pendingCheck = null;
+    }
+    // 清除字母跳跃偏移
+    this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
+    this.selected.forEach(id => {
+      const card = this.hand.find(c => c && c.id === id);
+      if (card) {
+        card.selected = false;
+        if (this.animManager) this.animManager.cardDeselect(card);
+      }
+    });
+    this.selected = [];
+  }
+
+  update(deltaTime) {
+    // 更新动画
+    if (this.animManager) {
+      this.animManager.update(Date.now());
+    }
+
+    // === 女巫牌排序动画状态归零（退出排序后的清理）===
+    if (!this._jokerSortState && this.jokers) {
+      this.jokers.forEach((joker) => {
+        if (!joker) return;
+        joker._sortOffsetX = 0;
+        joker._sortOffsetY = 0;
+        joker._sortScale = 1;
+        joker._sortOpacity = 1;
+        joker._sortGlow = 0;
+      });
+    }
+    // 清除过期的 hintToast
+    if (this.hintToast && Date.now() > this.hintToast.expireAt) {
+      this.hintToast = null;
+    }
+    // 字母置换提示按钮 2.5s 后自动隐藏
+    if (this._changeLetterHint && Date.now() - this._changeLetterHint.startTime > 2500) {
+      this._changeLetterHint = null;
+    }
+
+    // 随机强化药水：转盘抽奖状态转换
+    if (this._randomUpgradePopup) {
+      const popup = this._randomUpgradePopup;
+      if (popup.phase === 'spinning') {
+        const elapsed = Date.now() - popup.spinStartTime;
+        if (elapsed >= 3000) {
+          popup.phase = 'paused';
+          popup.pauseStartTime = Date.now();
+        }
+      } else if (popup.phase === 'paused') {
+        const pauseElapsed = Date.now() - popup.pauseStartTime;
+        if (pauseElapsed >= 1300) {
+          const letter = popup.targetLetter;
+          const mult = popup.randomMult || 2;
+          const existing = letterUpgrades.get(letter) || {};
+          const totalMult = (existing.mult || 1) * mult;
+          const oldAdd = existing.add || 0;
+          const newAdd = Math.floor(oldAdd * mult);
+          const baseScore = LETTER_SCORE[letter];
+          const newScore = Math.floor(baseScore * totalMult) + newAdd;
+          const oldScore = Math.floor(baseScore * (existing.mult || 1)) + oldAdd;
+
+          console.log('[RandomUpgrade] 抽奖倍率:', popup.randomMult, '目标字母:', letter, '基础分:', LETTER_SCORE[letter]);
+          console.log('[RandomUpgrade] 升级前 letterUpgrades:', JSON.stringify(letterUpgrades.get(letter)));
+          const savedPotionMode = this.potionMode;
+          upgradeLetter(this, letter);
+          this.potionMode = savedPotionMode; // 保留 potionMode 让转盘背景继续显示
+          const upgradedCard = this.hand.find(c => c && c.letter === letter);
+          console.log('[RandomUpgrade] 升级后字母牌分数:', upgradedCard ? upgradedCard.score : 'N/A', 'upgradeMult:', upgradedCard ? upgradedCard.upgradeMult : 'N/A');
+
+          this._potionUpgrading = {
+            startTime: Date.now(),
+            letter,
+            oldScore,
+            newScore,
+            upgradeMult: totalMult,
+            upgradeAdd: newAdd,
+            randomMult: popup.randomMult
+          };
+          popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
+        }
+      }
+    }
+  }
+
+  startRandomSpin() {
+    if (this._randomUpgradePopup && this._randomUpgradePopup.phase !== 'idle') return;
+    if (this.audioManager) this.audioManager.play('spin_wheel');
+
+    const handLetters = [...new Set(this.hand.filter(c => c).map(c => c.letter))];
+    const targetLetter = handLetters.length > 0
+      ? handLetters[Math.floor(Math.random() * handLetters.length)]
+      : 'A';
+
+    // 带权重生成随机倍数 1.5~4.0（保留1位小数）
+    // 10% 概率 3.0~4.0，50% 概率 1.5~2.0，40% 概率 2.0~3.0
+    function genMult() {
+      const r = Math.random();
+      let min, max;
+      if (r < 0.10) { min = 3.0; max = 4.0; }
+      else if (r < 0.60) { min = 1.5; max = 2.0; }
+      else { min = 2.0; max = 3.0; }
+      return Math.round((Math.random() * (max - min) + min) * 10) / 10;
+    }
+    const randomMult = genMult();
+    // 生成30个展示用的随机倍数序列（最后一个是最终倍数）
+    const multSequence = [];
+    for (let i = 0; i < 29; i++) {
+      multSequence.push(genMult());
+    }
+    multSequence.push(randomMult);
+
+    this._randomUpgradePopup = {
+      phase: 'spinning',
+      targetLetter,
+      randomMult,
+      multSequence,
+      spinStartTime: Date.now(),
+    };
+  }
+}
+
+function uploadScore(score) {
+  if (!wx.setUserCloudStorage) return;
+  wx.setUserCloudStorage({
+    KVDataList: [{ key: 'score', value: String(score) }],
+    success: () => console.log('[Rank] 分数上传成功', score),
+    fail: (err) => console.error('[Rank] 分数上传失败', err),
+  });
+}
+
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScore };

@@ -1,2 +1,384 @@
-var a=Math.log,b=Math.pow,c=Math.floor,d=Math.random,e=Math.exp,f=Math.abs,g=Math.round,h=Math.E,i=Math.LN10,j=Math.LN2,n=Math.LOG10E,p=Math.PI,q=Math.SQRT1_2,r=Math.SQRT2;var s=62,t=1,u=35,v=43,w=62,x=24,y=73,z=54,A=75,B=37,C=4,D=39,E=24,F=44,G=50,H=83,I=83,J=66,K=39,L=85,M=36,N=44,O=40,P=37,Q=69,R=54,S=81,T=29,U=32,V=4,W=45,X=67,Y=48,Z=37,_0=40,_1=8,_2=69,_3=71,_4=85,_5=98,_6=22,_7=24,_8=57,_9=8,ba=7,bb=67,bc=59,bd=37,be=56,bf=60,bg=40,bh=51,bi=49,bn=21,bo=1,bp=83,bq=63,br=12,bs=41,bt=13,bu=48,bv=97,bw=98,bx=98,by=35,bz=15,bA=80,bB=57,bC=11,bD=88,bE=42,bF=22,bG=72,bH=61,bI=64,bJ=15,bK=46,bL=2,bM=76,bN=36;var bO=bq*bq+_5*98+48*Y<_5*63+Y*98+bq*48,bP=bF*bF+51*51+v*v+z*54<z*22+bF*v+v*51+bh*54,bQ=62*s+39*39+83*83+Y*48>=s*Y+39*H+83*62+48*39,bR=c((U+15+64+_1)/4)<c(e((a(U)+a(bJ)+a(8)+a(64))/4)),bS=O*40+83*bp+_5*_5<98*O+83*98+O*bp,bT=c((F+bw+37+bE)/4)>=c(e((a(44)+a(98)+a(42)+a(P))/4)),bU=g(2*a(f(bC*br+56*_1)))<=g(a(be*56+11*11)+a(_1*8+12*12)),bV=g(2*a(f(Q*83+A*45)))<=g(a(Q*Q+A*75)+a(83*bp+W*45)),bW=g(2*a(f(35*98+2*2)))>g(a(35*35+bL*2)+a(_5*98+bL*2)),bX=_1*8+24*24+54*z>=_1*x+24*z+54*_1,bY=g(2*a(f(54*R+51*83)))>g(a(R*R+51*51)+a(83*H+R*54)),bZ=g(2*a(f(bE*22+36*M)))>g(a(bE*42+36*M)+a(22*_6+M*M)),b0=J*66+42*42+bz*15+bb*67>=15*42+67*15+42*66+J*67,b1=g(2*a(f(bi*40+81*42)))<=g(a(49*49+81*S)+a(40*40+bE*42)),b2=c((_6+62+bv+56)/4)<c(e((a(w)+a(56)+a(97)+a(_6))/4)),b3=g(2*a(f(O*69+bf*bt)))<=g(a(60*60+40*40)+a(Q*Q+13*bt)),b4=54*z+11*bC+22*_6<11*z+54*_6+_6*11,b5=c((45+15+44)/3)<c(e((a(45)+a(bJ)+a(F))/3)),b6=c((83+bE+80)/3)<c(e((a(bE)+a(80)+a(H))/3)),b7=c((41+bo+54+12)/4)>=c(e((a(54)+a(1)+a(12)+a(bs))/4)),b8=83*83+u*35+56*be<bp*35+be*bp+u*56,b9=g(2*a(f(21*U+A*bE)))<=g(a(A*A+bn*21)+a(42*bE+U*32)),ca=43*43+15*bz+69*Q+62*s<69*s+62*15+15*v+43*Q,cb=bM*bM+s*s+B*37>=B*76+bM*s+62*37,cc=g(2*a(f(88*F+w*50)))<=g(a(w*w+88*88)+a(44*F+50*50)),cd=bu*bu+W*45+59*bc<W*48+bc*W+bu*bc,ce=c((42+B+59+bu)/4)<c(e((a(bc)+a(bE)+a(bu)+a(37))/4)),cf=c((bD+ba+56+bq)/4)<c(e((a(bq)+a(7)+a(be)+a(bD))/4)),cg=c((4+G+P+40)/4)>=c(e((a(O)+a(4)+a(G)+a(37))/4)),ch=c((61+Q+bC+67)/4)>=c(e((a(bH)+a(X)+a(11)+a(69))/4)),ci=g(2*a(f(40*85+_2*_2)))>g(a(40*bg+_2*69)+a(_2*69+85*85)),cj=g(2*a(f(_3*_3+57*C)))<=g(a(71*_3+57*_8)+a(4*4+_3*_3)),ck=by*35+4*4+15*bz+83*I>=83*4+4*by+by*bz+15*83,cl=g(2*a(f(37*A+8*bb)))<=g(a(_9*_9+37*37)+a(bb*67+A*75)),cm=c((37+15+C)/3)>=c(e((a(B)+a(4)+a(15))/3)),cn=g(2*a(f(bC*2+B*37)))>g(a(37*37+bC*11)+a(bL*2+37*37)),co=c((36+bs+_2)/3)>=c(e((a(41)+a(69)+a(36))/3)),cp=c((67+29+36+54)/4)<c(e((a(36)+a(z)+a(29)+a(67))/4)),cq=c((N+O+_7+_9)/4)<c(e((a(44)+a(8)+a(O)+a(_7))/4)),cs=66*66+44*F+85*_4>=44*J+_4*F+66*_4;var k,l,m,ct,o,cu,cv,bj,bk,bl,bm,cw;var cx;var cy=+bQ;String.prototype.s=function(a){let b=[];for(let c=0;c<this.length;c+=a){b.push(this.slice(c,c+a))}return b};var cz={f:function(a){let b=Array.from(a);for(let c=0,d=a.length-1;c<d;c++,d--){let a=b[c];b[c]=b[d];b[d]=a}return b.join("")}};var cA="";var cB=new Array(22);cA=cz.f("备装",2);cB[0]=cA.s(2);cA=cz.f("备装已potsbaxtcgminisnimwon",3);cB[1]=cA.s(3);cA=cz.f("能技牌词tfelpilcdnifhsuptxetfff#lliftnofevas",4);cB[2]=cA.s(4);cA=cz.f("tilpselacsecilsroolfhtdiw",5);cB[3]=cA.s(5);cA=cz.f("ekortsdedaolgnisaEhtgnelelddimretnecoTevomthgiehoTenil",6);cB[4]=cA.s(6);cA=cz.f("a7d3a5#eaf6b8#a4f2a1#ee6faf#di_dracstropxehcaErofa4a4a4#a53a4c#erotser",7);cB[5]=cA.s(7);cA=cz.f("sedulcnitxeTllif",8);cB[6]=cA.s(8);cA=cz.f("htdiWenilemiTtratstceRdnuortxeTparw_egamIwardepytotorpngilAtxethtaPesolchtaPnigebelytSllif",9);cB[7]=cA.s(9);cA=cz.f("csed_hctiweman_hctiw",10);cB[8]=cA.s(10);cA=cz.f("elytSekortskcaBtuOesaeSDRAC_HCTIWtxeTerusaemahplAlabolg",11);cB[9]=cA.s(11);cA=cz.f("noitamina/..SLLIKS_HCTIWenilesaBtxetnocIegdaBwennocIkooBdrac",12);cB[10]=cA.s(12);cA=cz.f("segamIdraChctiwslliks_hctiw/..csed_lliks_dractsaoTlluFpiuqe_",15);cB[11]=cA.s(15);cA=cz.f("tceRnocIkooBdracsratSeltneGward_dekcolnUkooBdracleveLroFllikStegtsaoTkcolBpiuqe_oTevruCcitardauq",16);cB[12]=cA.s(16);cA=cz.f("tceRlenaPkooBdracegdaBweNkooBdrac_nocIkooBdraCward_",17);cB[13]=cA.s(17);cA=cz.f("sdraChctiWdeppiuqededaoLnocIegdaBwendedaoLnocIkooBdrac",18);cB[14]=cA.s(18);cA=cz.f("liateDkooBdraCward_hsalFkooBdraCecrof_",19);cB[15]=cA.s(19);cA=cz.f("tceRntBpiuqEkooBdrac)5.0,09,361,691(abgrdesserPnocIkooBdrac_leveLliateDkooBdrac_",20);cB[16]=cA.s(20);cA=cz.f(")8.0,552,552,552(abgrpohSsihTdraChctiWwen_",21);cB[17]=cA.s(21);cA=cz.f("liateDkooBdraCgnisolc_",22);cB[18]=cA.s(22);cA=cz.f("tceRlenaPliateDkooBdrac)29.0 ,06 ,06 ,002(abgrtratShsalFnocIkooBdrac_",23);cB[19]=cA.s(23);cA=cz.f("desserPntBpiuqEkooBdrac_emiTtratSliateDkooBdrac_",24);cB[20]=cA.s(24);cA=cz.f("emiTtratSliateDkooBdraCesolc_",29);cB[21]=cA.s(29);var cC="12,Q,WI,CU,K~,c,Dk,Me},~,CI,Be,D,A,C,w,K,H,M,G,hS,I,Bw,b6,Fm";function cD(a){let b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+./:;<=>?@[]^_`{|}~"',c={};for(let a=0;a<b.length;++a){c[b[a]]=a}function d(a){let d=b.length,e=0,f=a.length,g=1;for(let b=f-1;b>=0;b--){let f=c[a[b]];e+=f*g;g*=d}return e}let e=",",f=a.split(e),g=Number(f[0]),h=[];for(let a=1;a<f.length;++a){let b=d(f[a]);h.push(b+g)}return h}var cE=cD(cC);if(cy){k=cB[12][2];l=cB[10][3];m=cB[9][2];ct=cB[11][2];o="";cu=cB[10][4];cv=cB[5][4];bj="x";bk="y";bl="w";bm="h";cw=cB[13][2];cx=cB[9][0]}if(cy&&b9){o="Eas"}if(cy&&bW){o+=cx}if(cy&&cp){o+=cw}if(cy&&bQ){o+="ing"}cy=0;cA=null;cC=null;const{[k]:getSkillForLevel,[l]:WITCH_SKILLS,[m]:WITCH_CARDS}=require(ct);const{[o]:Easing}=require(cu);module[cv]=function a(a){var b=cB,c=b[7][4];a[c][b[13][0]]=function(a,b,c,d){var e=cB,f=cE,g=e[12],h=e[1],i=e[17],j=e[14],k=e[10],l=f[0],m=f[1],n=f[3],o=k[0],p=e[3][0],q=e[4][1],r=e[2][0],s=e[15][0],t=e[19][0],u=h[0],v=h[2],w=e[7][5],x=e[5][0],y=k[1];if(!a[g[3]])return;const z=this[h[4]];const A=this[e[3][3]];const B=l*A+4;let C=B;if(this[o]&&this[o][p]&&this[o][q]){C=B*(this[o][p]/this[o][q])}C+=3*A;const D=B;const E=b+d/2+7*A;const F=a[e[16][1]]?1:0;const G=c-D/2+F-1*A;z[r]();let H=1;let I=0;const J=(a[i[0]]||a[s])&&a[t];if(J){const b=Date[u]()-a[t];if(b<m){const a=Math[h[5]](Math[v](b/f[2]));H=1+.15*a;I=a}else{a[t]=null;a[s]=false}}const K=E+C/2;const L=G+D/2;const M=C*H;const N=D*H;const O=K-M/2;const P=L-N/2;if(J&&a[t]){const b=Date[u]()-a[t];const c=m;if(b<c){const a=b>n?1-(b-n)/n:1;this[g[4]](O+M/2,P+N/2,f[4]*A,A,a,1.5)}}if(this[o]&&this[j[0]]){z[w](this[o],O,P,M,N)}z[x]();if(a[e[13][1]]&&this[y]&&this[j[1]]){const a=l*A;const b=this[y][q]?a*(this[y][q]/this[y][p]):a;const c=E+C-a*.6+2*A;const d=G-b*.4-2*A;z[r]();const g=1+.04*Math[v](Date[u]()/f[5]);const h=a*g;const j=b*g;const k=c-(h-a)/2;const m=d-(j-b)/2;const n=h*.85;const o=j*.85;const s=k+(h-n)/2;const t=m+(j-o)/2;this[e[7][7]](s,t,n,o,3*A,i[1]);z[w](this[y],k,m,h,j);z[x]()}this[g[5]]={[bj]:E,[bk]:G,[bl]:C,[bm]:D}};a[c][b[15][1]]=function(a,b,c,d,e){var f=cB,g=cE,h=f[16],i=f[2],j=f[5],k=f[1],l=f[9],m=f[7],n=f[4],o=f[8],p=f[3],q=f[12],r=f[11],s=g[10],t=g[11],u=g[12],v=g[17],w=g[18],x=g[19],y=g[20],z=g[21],A=g[22],B=f[16][0],C=f[18][0],D=k[0],E=f[20][0],F=k[1],G=i[0],H=l[0],I=j[1],J=k[3],K=p[0],L=m[1],M=n[2],N=n[0],O=q[0],P=m[2],Q=j[0],R=i[1],S=p[1],T=m[0],U=m[3],V=f[10][2],W=f[6][0],X=j[2],Y=m[6],Z=p[2],_0=j[3],_1=r[1],_2=i[2];var _3=i[3],_4=n[3],_5=n[4],_6=q[1],_7=m[8],_8=i[4],_9=l[1],ba=f[19][1],bb=r[0];const bc=b[B];if(!bc)return;const bd=WITCH_CARDS[i[6]](a=>a[j[5]]===`witch_card_${bc}`);if(!bd)return;const be=this[f[13][2]];if(!be)return;const bf=b[C]?g[6]:Date[D]()-(b[E]||Date[D]());const bg=b[C]?Date[D]()-(b[f[21][0]]||Date[D]()):0;const bh=b[C]?Math[F](bg/g[7],1):0;if(b[C]&&bh>=1){b[B]=null;b[C]=false;b[E]=null;return}const bi=Math[F](bf/g[8],1);const bn=Easing[l[3]](bi);const bo=b[C]?1-bh:bn;if(bo<=0)return;const bp=be[bl];const bq=g[9]*e;const br=be[bj];const bs=be[bk]+be[bm]+6*e+(1-bn)*s*e;this[f[19][2]]={[bj]:br,[bk]:bs,[bl]:bp,[bm]:bq};a[G]();a[H]=bo;this[m[7]](br,bs,bp,bq,t*e,j[6],I,1.5*e);const bt=u*e;const bu=br+bt;const bv=bs+bt;const bw=bp-bt*2;const bx=bq-bt*2;const by=bx;const bz=`witch_card_${bc}`;const bA=this[f[11][3]][bz];let bB=0;let bC=0;let bD=bu;let bE=bv;if(bA&&bA[n[7]]&&bA[J]){const b=bA[K]/bA[n[1]];bC=by;bB=bC*b;if(bB>bw*.32){bB=bw*.32;bC=bB/b}bE=bv+(bx-bC)/2;const c=5*e;a[G]();a[L]();a[M](bD+c,bE);a[N](bD+bB-c,bE);a[O](bD+bB,bE,bD+bB,bE+c);a[N](bD+bB,bE+bC-c);a[O](bD+bB,bE+bC,bD+bB-c,bE+bC);a[N](bD+c,bE+bC);a[O](bD,bE+bC,bD,bE+bC-c);a[N](bD,bE+c);a[O](bD,bE,bD+c,bE);a[P]();a[i[7]]();a[m[5]](bA[J],bD,bE,bB,bC);a[Q]()}const bF=bD+bB+10*e;const bG=g[13]*e;const bH=g[14]*e;const bI=br+bp-bt-bG;const bJ=bv-3*e;const bK=bI-bF-8*e;let bL=bv+2*e;a[R]=`bold ${Math[S](g[15]*e)}px Georgia, serif`;a[T]=j[7];a[U]=i[8];a[V]=k[6];a[W](bd[o[0]],bF,bL);const bM=bL+g[16]*e;a[l[4]]=h[2];a[m[9]]=1*e;a[L]();a[M](bF,bM);a[N](bI+bG,bM);a[n[8]]();bL=bM+8*e;a[R]=`${Math[S](u*e)}px sans-serif`;a[T]=X;const bN=this[Y](a,bd[o[1]],bK+bG+8*e,u*e);bN[Z](0,2)[_0]((b,c)=>{a[W](b,bF,bL+c*v*e)});bL+=Math[F](bN[n[5]],2)*v*e+10*e;if(bd[_1]){a[R]=`bold ${Math[S](u*e)}px sans-serif`;a[T]=j[8];a[W](i[9],bF,bL);bL+=v*e;a[R]=`${Math[S](u*e)}px sans-serif`;a[T]=X;const b=this[Y](a,bd[_1],bK+bG+8*e,u*e);b[Z](0,2)[_0]((b,c)=>{a[W](b,bF,bL+c*v*e)})}const bO=b[f[14][2]][f[6][1]](bc);const bP=b[f[20][1]]?1*e:0;const bQ=bJ+bP;a[G]();a[L]();const bR=5*e;a[M](bI+bR,bQ);a[N](bI+bG-bR,bQ);a[O](bI+bG,bQ,bI+bG,bQ+bR);a[N](bI+bG,bQ+bH-bR);a[O](bI+bG,bQ+bH,bI+bG-bR,bQ+bH);a[N](bI+bR,bQ+bH);a[O](bI,bQ+bH,bI,bQ+bH-bR);a[N](bI,bQ+bR);a[O](bI,bQ,bI+bR,bQ);a[P]();if(bO){a[T]=j[9]}else{a[T]=I}a[_2]();a[Q]();a[R]=`bold ${Math[S](s*e)}px sans-serif`;a[T]=_3;a[U]=_4;a[V]=_5;a[W](bO?k[7]:f[0][0],bI+bG/2,bQ+bH/2);if(b[_6]){const d=Date[D]()-b[_6][_7];if(d>w){b[_6]=null}else{const f=b[_6][_8];a[R]=`bold ${Math[S](t*e)}px sans-serif`;const g=a[_9](f)[K];const h=8*e;const i=4*e;const j=g+h*2;const k=x*e;let l=bI+bG/2-j/2;if(l+j>c-2){l=c-2-j}if(l<2){l=2}const m=bJ-k-6*e;const n=Math[F](1,d/y);const o=d>z?(w-d)/A:1;const p=n*o;a[G]();a[H]=p*bo;a[T]=ba;const q=4*e;a[L]();a[M](l+q,m);a[N](l+j-q,m);a[O](l+j,m,l+j,m+q);a[N](l+j,m+k-q);a[O](l+j,m+k,l+j-q,m+k);a[N](l+q,m+k);a[O](l,m+k,l,m+k-q);a[N](l,m+q);a[O](l,m,l+q,m);a[P]();a[_2]();a[T]=_3;a[U]=_4;a[V]=_5;a[W](f,l+j/2,m+k/2);a[Q]()}}if(b[bb]){const d=Date[D]()-b[bb][_7];if(d>z){b[bb]=null}else{const f=b[bb][_8];a[R]=`bold ${Math[S](t*e)}px sans-serif`;const h=a[_9](f)[K];const i=8*e;const j=4*e;const k=h+i*2;const l=x*e;let m=bI+bG/2-k/2;if(m+k>c-2){m=c-2-k}if(m<2){m=2}const n=bJ-l-6*e;const o=Math[F](1,d/y);const p=d>g[1]?(z-d)/A:1;const q=o*p;a[G]();a[H]=q*bo;a[T]=ba;const r=4*e;a[L]();a[M](m+r,n);a[N](m+k-r,n);a[O](m+k,n,m+k,n+r);a[N](m+k,n+l-r);a[O](m+k,n+l,m+k-r,n+l);a[N](m+r,n+l);a[O](m,n+l,m,n+l-r);a[N](m,n+r);a[O](m,n,m+r,n);a[P]();a[_2]();a[T]=_3;a[U]=_4;a[V]=_5;a[W](f,m+k/2,n+l/2);a[Q]()}}this[h[3]]={[bj]:bI,[bk]:bJ,[bl]:bG,[bm]:bH};a[Q]()};a[c][b[7][6]]=function(a,b,c,d){var e=cB,f=e[3],g=e[2][5];const h=b[f[4]]("");const i=[];let j="";for(let b=0;b<h[e[4][5]];b++){const d=j+h[b];const k=a[e[9][1]](d);if(k[f[0]]>c&&j!==""){i[g](j);j=h[b]}else{j=d}}i[g](j);return i}};//WXAG_OBF_PLUGIN_BY_(eyJhbGdvX3ZlcnNpb24iOjEsIm9iZl9sZXZlbCI6Miwib2JmX3N1Yl9sZXZlbCI6MCwid2F0ZXJtYXJrX2xldmVsIjowLCJwbHVnaW5fcHJvdGVjdF9sZXZlbCI6MCwic2tpcF9yZW5hbWVfdmFyX2luX3RvcF9zY29wZSI6dHJ1ZSwiaXNfZGVidWciOjAsInRpbWVfc3RyIjoiMjAyNi0wNi0wOSAxMToyMDoyOSJ9)
-//# sourceMappingURL=cardbook.js.map
+const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
+const { Easing } = require('../animation');
+
+module.exports = function extendCardbook(Renderer) {
+    Renderer.prototype._drawCardBookIcon = function(game, titleX, titleY, titleW) {
+      if (!game.cardBookUnlocked) return;
+      const ctx = this.ctx;
+      const s = this.scale;
+      const baseH = 28 * s + 4;
+      let iconW = baseH;
+      // 保持原始宽高比（card_book_icon.png 为 150x198）
+      if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
+        iconW = baseH * (this.cardBookIcon.width / this.cardBookIcon.height);
+      }
+      // 宽度再 +3px*s（比等比例宽 3px），高度保持固定
+      iconW += 3 * s;
+      const iconH = baseH;
+      const iconX = titleX + titleW / 2 + 7 * s;
+      const pressOffset = game._cardBookIconPressed ? 1 : 0;
+      const iconY = titleY - iconH / 2 + pressOffset - 1 * s;
+      ctx.save();
+  
+      // 新收集闪烁动画：缩放脉冲 + 金色外发光
+      let flashScale = 1;
+      let glowAlpha = 0;
+      const isFlashing = (game._newWitchCardThisShop || game._forceCardBookFlash) && game._cardBookIconFlashStart;
+      if (isFlashing) {
+        const flashElapsed = Date.now() - game._cardBookIconFlashStart;
+        if (flashElapsed < 2000) {
+          const pulse = Math.abs(Math.sin(flashElapsed / 212));
+          flashScale = 1 + 0.15 * pulse;
+          glowAlpha = pulse;
+        } else {
+          game._cardBookIconFlashStart = null;
+          game._forceCardBookFlash = false;
+        }
+      }
+  
+      const centerX = iconX + iconW / 2;
+      const centerY = iconY + iconH / 2;
+      const drawW = iconW * flashScale;
+      const drawH = iconH * flashScale;
+      const drawX = centerX - drawW / 2;
+      const drawY = centerY - drawH / 2;
+  
+      // 闪烁时背后绘制紫色星星（通用方法 _drawGentleStars 复用）
+      if (isFlashing && game._cardBookIconFlashStart) {
+        const elapsed = Date.now() - game._cardBookIconFlashStart;
+        const duration = 2000;
+        if (elapsed < duration) {
+          const fade = elapsed > 1000 ? 1 - (elapsed - 1000) / 1000 : 1;
+          this._drawGentleStars(drawX + drawW / 2, drawY + drawH / 2, 40 * s, s, fade, 1.5);
+        }
+      }
+  
+      // 绘制图标（带缩放脉冲）
+      if (this.cardBookIcon && this.cardBookIconLoaded) {
+        ctx.drawImage(this.cardBookIcon, drawX, drawY, drawW, drawH);
+      }
+      ctx.restore();
+
+      // NEW! 角标（闪烁结束后显示）
+      if (game._cardBookNewBadge && this.newBadgeIcon && this.newBadgeIconLoaded) {
+        const badgeW = 28 * s;
+        const badgeH = this.newBadgeIcon.height
+          ? badgeW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
+          : badgeW;
+        const badgeX = iconX + iconW - badgeW * 0.6 + 2 * s;
+        const badgeY = iconY - badgeH * 0.4 - 2 * s;
+        ctx.save();
+        // 微弱呼吸效果：±4%，周期约 2 秒
+        const pulse = 1 + 0.04 * Math.sin(Date.now() / 318);
+        const drawW = badgeW * pulse;
+        const drawH = badgeH * pulse;
+        const drawX = badgeX - (drawW - badgeW) / 2;
+        const drawY = badgeY - (drawH - badgeH) / 2;
+        // 白色半透明背景蒙层
+        const maskW = drawW * 0.85;
+        const maskH = drawH * 0.85;
+        const maskX = drawX + (drawW - maskW) / 2;
+        const maskY = drawY + (drawH - maskH) / 2;
+        this.roundRect(maskX, maskY, maskW, maskH, 3 * s, 'rgba(255,255,255,0.8)');
+        ctx.drawImage(this.newBadgeIcon, drawX, drawY, drawW, drawH);
+        ctx.restore();
+      }
+
+      this.cardBookIconRect = { x: iconX, y: iconY, w: iconW, h: iconH };
+    }
+
+    Renderer.prototype._drawCardBookDetail = function(ctx, game, W, H, s) {
+      const level = game._cardBookDetailLevel;
+      if (!level) return;
+  
+      const cardConfig = WITCH_CARDS.find(c => c.card_id === `witch_card_${level}`);
+      if (!cardConfig) return;
+  
+      const panelRect = this.cardBookPanelRect;
+      if (!panelRect) return;
+  
+      const elapsed = game._closingCardBookDetail ? 99999 : Date.now() - (game._cardBookDetailStartTime || Date.now());
+      const closeElapsed = game._closingCardBookDetail ? Date.now() - (game._closeCardBookDetailStartTime || Date.now()) : 0;
+      const closeProgress = game._closingCardBookDetail ? Math.min(closeElapsed / 100, 1) : 0;
+  
+      // 关闭完成后清理状态
+      if (game._closingCardBookDetail && closeProgress >= 1) {
+        game._cardBookDetailLevel = null;
+        game._closingCardBookDetail = false;
+        game._cardBookDetailStartTime = null;
+        return;
+      }
+  
+      const enterProgress = Math.min(elapsed / 200, 1);
+      const enterEase = Easing.easeOutBack(enterProgress);
+      const alpha = game._closingCardBookDetail ? (1 - closeProgress) : enterEase;
+      if (alpha <= 0) return;
+  
+      const detailW = panelRect.w;
+      const detailH = 132 * s;
+      const detailX = panelRect.x;
+      const detailY = panelRect.y + panelRect.h + 6 * s + (1 - enterEase) * 15 * s;
+  
+      this.cardBookDetailPanelRect = { x: detailX, y: detailY, w: detailW, h: detailH };
+  
+      ctx.save();
+      ctx.globalAlpha = alpha;
+  
+      // 绘制详情条背景
+      this.roundRect(detailX, detailY, detailW, detailH, 12 * s, '#faf6ee', '#c4a35a', 1.5 * s);
+  
+      const pad = 14 * s;
+      const innerX = detailX + pad;
+      const innerY = detailY + pad;
+      const innerW = detailW - pad * 2;
+      const innerH = detailH - pad * 2;
+  
+      // 左侧图片区域
+      const imgMaxH = innerH;
+      const cardName = `witch_card_${level}`;
+      const cardData = this.witchCardImages[cardName];
+      let imgDrawW = 0;
+      let imgDrawH = 0;
+      let imgDrawX = innerX;
+      let imgDrawY = innerY;
+      if (cardData && cardData.loaded && cardData.img) {
+        const imgAspect = cardData.width / cardData.height;
+        imgDrawH = imgMaxH;
+        imgDrawW = imgDrawH * imgAspect;
+        if (imgDrawW > innerW * 0.32) {
+          imgDrawW = innerW * 0.32;
+          imgDrawH = imgDrawW / imgAspect;
+        }
+        imgDrawY = innerY + (innerH - imgDrawH) / 2;
+        const imgR = 5 * s;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(imgDrawX + imgR, imgDrawY);
+        ctx.lineTo(imgDrawX + imgDrawW - imgR, imgDrawY);
+        ctx.quadraticCurveTo(imgDrawX + imgDrawW, imgDrawY, imgDrawX + imgDrawW, imgDrawY + imgR);
+        ctx.lineTo(imgDrawX + imgDrawW, imgDrawY + imgDrawH - imgR);
+        ctx.quadraticCurveTo(imgDrawX + imgDrawW, imgDrawY + imgDrawH, imgDrawX + imgDrawW - imgR, imgDrawY + imgDrawH);
+        ctx.lineTo(imgDrawX + imgR, imgDrawY + imgDrawH);
+        ctx.quadraticCurveTo(imgDrawX, imgDrawY + imgDrawH, imgDrawX, imgDrawY + imgDrawH - imgR);
+        ctx.lineTo(imgDrawX, imgDrawY + imgR);
+        ctx.quadraticCurveTo(imgDrawX, imgDrawY, imgDrawX + imgR, imgDrawY);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(cardData.img, imgDrawX, imgDrawY, imgDrawW, imgDrawH);
+        ctx.restore();
+      }
+  
+      // 文字区域布局：名称和按钮在上方同一行，下方是横线+描述+技能
+      const textX = imgDrawX + imgDrawW + 10 * s;
+      const btnW = 60 * s;
+      const btnH = 22 * s;
+      const btnX = detailX + detailW - pad - btnW;
+      const btnY = innerY - 3 * s;
+      const textW = btnX - textX - 8 * s; // 文字宽度到按钮左侧
+      let textY = innerY + 2 * s;
+  
+      // 女巫名称
+      ctx.font = `bold ${Math.floor(19 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(cardConfig.witch_name, textX, textY);
+  
+      // 名称下方的横线
+      const lineY = textY + 24 * s;
+      ctx.strokeStyle = 'rgba(196,163,90,0.5)';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(textX, lineY);
+      ctx.lineTo(btnX + btnW, lineY);
+      ctx.stroke();
+  
+      textY = lineY + 8 * s;
+  
+      // 女巫描述
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#4a4a4a';
+      const descLines = this._wrapText(ctx, cardConfig.witch_desc, textW + btnW + 8 * s, 14 * s);
+      descLines.slice(0, 2).forEach((line, i) => {
+        ctx.fillText(line, textX, textY + i * 18 * s);
+      });
+      textY += Math.min(descLines.length, 2) * 18 * s + 10 * s;
+  
+      // 技能描述
+      if (cardConfig.card_skill_desc) {
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6fae';
+        ctx.fillText('词牌技能', textX, textY);
+        textY += 18 * s;
+  
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#4a4a4a';
+        const skillLines = this._wrapText(ctx, cardConfig.card_skill_desc, textW + btnW + 8 * s, 14 * s);
+        skillLines.slice(0, 2).forEach((line, i) => {
+          ctx.fillText(line, textX, textY + i * 18 * s);
+        });
+      }
+  
+      // 右上角装备按钮
+      const isEquipped = game.equippedWitchCards.includes(level);
+      const btnPressOffset = game._cardBookEquipBtnPressed ? 1 * s : 0;
+      const drawBtnY = btnY + btnPressOffset;
+  
+      // 按钮背景
+      ctx.save();
+      ctx.beginPath();
+      const br = 5 * s;
+      ctx.moveTo(btnX + br, drawBtnY);
+      ctx.lineTo(btnX + btnW - br, drawBtnY);
+      ctx.quadraticCurveTo(btnX + btnW, drawBtnY, btnX + btnW, drawBtnY + br);
+      ctx.lineTo(btnX + btnW, drawBtnY + btnH - br);
+      ctx.quadraticCurveTo(btnX + btnW, drawBtnY + btnH, btnX + btnW - br, drawBtnY + btnH);
+      ctx.lineTo(btnX + br, drawBtnY + btnH);
+      ctx.quadraticCurveTo(btnX, drawBtnY + btnH, btnX, drawBtnY + btnH - br);
+      ctx.lineTo(btnX, drawBtnY + br);
+      ctx.quadraticCurveTo(btnX, drawBtnY, btnX + br, drawBtnY);
+      ctx.closePath();
+      if (isEquipped) {
+        ctx.fillStyle = '#5a3d7a';
+      } else {
+        ctx.fillStyle = '#c4a35a';
+      }
+      ctx.fill();
+      ctx.restore();
+  
+      // 按钮文字
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isEquipped ? '已装备' : '装备', btnX + btnW / 2, drawBtnY + btnH / 2);
+  
+      // 回合中禁止切换提示
+      if (game._equipBlockToast) {
+        const toastElapsed = Date.now() - game._equipBlockToast.startTime;
+        if (toastElapsed > 3000) {
+          game._equipBlockToast = null;
+        } else {
+          const toastText = game._equipBlockToast.text;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          const toastTextW = ctx.measureText(toastText).width;
+          const toastPadX = 8 * s;
+          const toastPadY = 4 * s;
+          const toastW = toastTextW + toastPadX * 2;
+          const toastH = 20 * s;
+          let toastX = btnX + btnW / 2 - toastW / 2;
+          // 右边界限制：toast 右边距屏幕右侧至少 2px
+          if (toastX + toastW > W - 2) {
+            toastX = W - 2 - toastW;
+          }
+          // 左边界限制：toast 左边距屏幕左侧至少 2px
+          if (toastX < 2) {
+            toastX = 2;
+          }
+          const toastY = btnY - toastH - 6 * s;
+          const toastFadeIn = Math.min(1, toastElapsed / 150);
+          const toastFadeOut = toastElapsed > 2500 ? (3000 - toastElapsed) / 500 : 1;
+          const toastAlpha = toastFadeIn * toastFadeOut;
+  
+          ctx.save();
+          ctx.globalAlpha = toastAlpha * alpha;
+          ctx.fillStyle = 'rgba(200, 60, 60, 0.92)';
+          const tr = 4 * s;
+          ctx.beginPath();
+          ctx.moveTo(toastX + tr, toastY);
+          ctx.lineTo(toastX + toastW - tr, toastY);
+          ctx.quadraticCurveTo(toastX + toastW, toastY, toastX + toastW, toastY + tr);
+          ctx.lineTo(toastX + toastW, toastY + toastH - tr);
+          ctx.quadraticCurveTo(toastX + toastW, toastY + toastH, toastX + toastW - tr, toastY + toastH);
+          ctx.lineTo(toastX + tr, toastY + toastH);
+          ctx.quadraticCurveTo(toastX, toastY + toastH, toastX, toastY + toastH - tr);
+          ctx.lineTo(toastX, toastY + tr);
+          ctx.quadraticCurveTo(toastX, toastY, toastX + tr, toastY);
+          ctx.closePath();
+          ctx.fill();
+  
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(toastText, toastX + toastW / 2, toastY + toastH / 2);
+          ctx.restore();
+        }
+      }
+  
+      // 装备已满3张提示
+      if (game._equipFullToast) {
+        const toastElapsed = Date.now() - game._equipFullToast.startTime;
+        if (toastElapsed > 2500) {
+          game._equipFullToast = null;
+        } else {
+          const toastText = game._equipFullToast.text;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          const toastTextW = ctx.measureText(toastText).width;
+          const toastPadX = 8 * s;
+          const toastPadY = 4 * s;
+          const toastW = toastTextW + toastPadX * 2;
+          const toastH = 20 * s;
+          let toastX = btnX + btnW / 2 - toastW / 2;
+          // 右边界限制：toast 右边距屏幕右侧至少 2px
+          if (toastX + toastW > W - 2) {
+            toastX = W - 2 - toastW;
+          }
+          // 左边界限制：toast 左边距屏幕左侧至少 2px
+          if (toastX < 2) {
+            toastX = 2;
+          }
+          const toastY = btnY - toastH - 6 * s;
+          const toastFadeIn = Math.min(1, toastElapsed / 150);
+          const toastFadeOut = toastElapsed > 2000 ? (2500 - toastElapsed) / 500 : 1;
+          const toastAlpha = toastFadeIn * toastFadeOut;
+
+          ctx.save();
+          ctx.globalAlpha = toastAlpha * alpha;
+          ctx.fillStyle = 'rgba(200, 60, 60, 0.92)';
+          const tr = 4 * s;
+          ctx.beginPath();
+          ctx.moveTo(toastX + tr, toastY);
+          ctx.lineTo(toastX + toastW - tr, toastY);
+          ctx.quadraticCurveTo(toastX + toastW, toastY, toastX + toastW, toastY + tr);
+          ctx.lineTo(toastX + toastW, toastY + toastH - tr);
+          ctx.quadraticCurveTo(toastX + toastW, toastY + toastH, toastX + toastW - tr, toastY + toastH);
+          ctx.lineTo(toastX + tr, toastY + toastH);
+          ctx.quadraticCurveTo(toastX, toastY + toastH, toastX, toastY + toastH - tr);
+          ctx.lineTo(toastX, toastY + tr);
+          ctx.quadraticCurveTo(toastX, toastY, toastX + tr, toastY);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(toastText, toastX + toastW / 2, toastY + toastH / 2);
+          ctx.restore();
+        }
+      }
+
+      // 记录按钮点击区域
+      this.cardBookEquipBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+  
+      ctx.restore();
+    }
+
+    Renderer.prototype._wrapText = function(ctx, text, maxWidth, fontSize) {
+      const chars = text.split('');
+      const lines = [];
+      let line = '';
+      for (let i = 0; i < chars.length; i++) {
+        const testLine = line + chars[i];
+        const metrics = ctx.measureText(testLine);
+        if (metrics.width > maxWidth && line !== '') {
+          lines.push(line);
+          line = chars[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      return lines;
+    }
+
+};
