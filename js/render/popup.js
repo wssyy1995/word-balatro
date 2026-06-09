@@ -12,7 +12,8 @@ module.exports = function extendPopup(Renderer) {
       const joker = jokers[popup.jokerIndex];
       if (!joker) return;
   
-      const rect = this.witchPropRects[popup.jokerIndex];
+      // 支持传入 rect（商店模式），否则回退到 witchPropRects
+      const rect = popup.rect || this.witchPropRects[popup.jokerIndex];
       if (!rect) return;
   
       const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
@@ -33,7 +34,7 @@ module.exports = function extendPopup(Renderer) {
       // 根据效果描述文字长度动态计算弹窗宽度
       ctx.font = `${Math.floor(12 * s)}px sans-serif`;
       const descW = ctx.measureText(joker.desc).width;
-      const minPopupW = cardW + 20 * s;
+      const minPopupW = Math.max(cardW + 20 * s, this.W * 0.6);
       let popupW = Math.max(minPopupW, descW + pad * 2);
       if (hasLetters) {
         popupW = Math.max(popupW, lettersTotalW + pad * 2);
@@ -50,7 +51,7 @@ module.exports = function extendPopup(Renderer) {
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
       if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
-      if (hasPredicted) contentH += lineH + 2 * s; // 预言字母
+      if (hasPredicted && !popup.isShop) contentH += lineH + 2 * s; // 预言字母（仅限游戏页）
       if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
       const popupH = contentH;
       const popupY = cardY + cardH + 6 * s + 2 * s;
@@ -87,7 +88,39 @@ module.exports = function extendPopup(Renderer) {
       // 弹窗面板
       const r = 8 * s;
       this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
-  
+
+      // ===== 商店模式：右上角售出按钮 =====
+      this._shopWitchDetailSellBtnRect = null;
+      if (popup.isShop) {
+        const btnPadX = 14 * s;
+        const btnH = 20 * s;
+        const sellText = String(Math.round(joker.cost / 2));
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        const textW = ctx.measureText(sellText).width;
+        const coinSize = 10 * s;
+        const contentW = coinSize + 2 * s + textW;
+        const btnW = contentW + btnPadX * 2;
+
+        const btnX = popupX + popupW - pad - btnW;
+        const btnY = popupY + pad;
+
+        ctx.save();
+        this.roundRect(btnX, btnY, btnW, btnH, 5 * s, '#c0392b');
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const midY = btnY + btnH / 2;
+        const startX = btnX + (btnW - contentW) / 2;
+        if (this.coinIcon && this.coinIconLoaded) {
+          ctx.drawImage(this.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
+        }
+        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
+        ctx.restore();
+
+        this._shopWitchDetailSellBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, index: popup.jokerIndex };
+      }
+      // ===== 售出按钮结束 =====
+
       let cy = popupY + pad + lineH / 2;
       const cx = popupX + popupW / 2;
   
@@ -146,8 +179,8 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
   
-      // 预言字母（预言家牌）
-      if (hasPredicted) {
+      // 预言字母（预言家牌）—— 游戏页显示，商店页隐藏
+      if (hasPredicted && !popup.isShop) {
         cy += lineH + 2 * s;
         ctx.save();
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;

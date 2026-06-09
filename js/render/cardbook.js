@@ -6,7 +6,7 @@ module.exports = function extendCardbook(Renderer) {
       if (!game.cardBookUnlocked) return;
       const ctx = this.ctx;
       const s = this.scale;
-      const baseH = 28 * s + 4;
+      const baseH = 34 * s + 4;
       let iconW = baseH;
       // 保持原始宽高比（card_book_icon.png 为 150x198）
       if (this.cardBookIcon && this.cardBookIcon.width && this.cardBookIcon.height) {
@@ -17,56 +17,37 @@ module.exports = function extendCardbook(Renderer) {
       const iconH = baseH;
       const iconX = titleX + titleW / 2 + 7 * s;
       const pressOffset = game._cardBookIconPressed ? 1 : 0;
-      const iconY = titleY - iconH / 2 + pressOffset - 1 * s;
+      const iconY = titleY - iconH / 2 + pressOffset - 3 * s;
+      // 商店页面常驻上下轻微浮动
+      let floatOffsetY = 0;
+      const isInShop = game.state === 'shop';
+      if (isInShop) {
+        floatOffsetY = Math.sin(Date.now() / 500) * 1 * s;
+      }
+
       ctx.save();
-  
-      // 新收集闪烁动画：缩放脉冲 + 金色外发光
-      let flashScale = 1;
-      let glowAlpha = 0;
-      const isFlashing = (game._newWitchCardThisShop || game._forceCardBookFlash) && game._cardBookIconFlashStart;
-      if (isFlashing) {
-        const flashElapsed = Date.now() - game._cardBookIconFlashStart;
-        if (flashElapsed < 2000) {
-          const pulse = Math.abs(Math.sin(flashElapsed / 212));
-          flashScale = 1 + 0.15 * pulse;
-          glowAlpha = pulse;
-        } else {
-          game._cardBookIconFlashStart = null;
-          game._forceCardBookFlash = false;
-        }
+      const drawX = iconX;
+      const drawY = iconY + floatOffsetY;
+
+      // 常驻绘制紫色星星光晕
+      if (isInShop) {
+        this._drawGentleStars(drawX + iconW / 2, drawY + iconH / 2, 28 * s, s, 1, 1.5);
       }
-  
-      const centerX = iconX + iconW / 2;
-      const centerY = iconY + iconH / 2;
-      const drawW = iconW * flashScale;
-      const drawH = iconH * flashScale;
-      const drawX = centerX - drawW / 2;
-      const drawY = centerY - drawH / 2;
-  
-      // 闪烁时背后绘制紫色星星（通用方法 _drawGentleStars 复用）
-      if (isFlashing && game._cardBookIconFlashStart) {
-        const elapsed = Date.now() - game._cardBookIconFlashStart;
-        const duration = 2000;
-        if (elapsed < duration) {
-          const fade = elapsed > 1000 ? 1 - (elapsed - 1000) / 1000 : 1;
-          this._drawGentleStars(drawX + drawW / 2, drawY + drawH / 2, 40 * s, s, fade, 1.5);
-        }
-      }
-  
-      // 绘制图标（带缩放脉冲）
+
+      // 绘制图标（上下浮动）
       if (this.cardBookIcon && this.cardBookIconLoaded) {
-        ctx.drawImage(this.cardBookIcon, drawX, drawY, drawW, drawH);
+        ctx.drawImage(this.cardBookIcon, drawX, drawY, iconW, iconH);
       }
       ctx.restore();
 
-      // NEW! 角标（闪烁结束后显示）
+      // NEW! 角标（有新收集时显示）
       if (game._cardBookNewBadge && this.newBadgeIcon && this.newBadgeIconLoaded) {
         const badgeW = 28 * s;
         const badgeH = this.newBadgeIcon.height
           ? badgeW * (this.newBadgeIcon.height / this.newBadgeIcon.width)
           : badgeW;
         const badgeX = iconX + iconW - badgeW * 0.6 + 2 * s;
-        const badgeY = iconY - badgeH * 0.4 - 2 * s;
+        const badgeY = iconY - badgeH * 0.4 - 2 * s + floatOffsetY;
         ctx.save();
         // 微弱呼吸效果：±4%，周期约 2 秒
         const pulse = 1 + 0.04 * Math.sin(Date.now() / 318);

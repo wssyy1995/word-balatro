@@ -85,11 +85,11 @@ function getLetterScore(letter) {
 function calcBaseTarget(round) {
   function getCoefficient(r) {
     if (r <= 5) return 100;
-    if (r <= 10) return 40;
-    if (r <= 20) return 50;
-    if (r <= 30) return 60;
-    if (r <= 40) return 70;
-    if (r <= 50) return 80;
+    if (r <= 10) return 30;
+    if (r <= 20) return 40;
+    if (r <= 30) return 50;
+    if (r <= 40) return 60;
+    if (r <= 50) return 70;
     return 90;
   }
   let target = 150;

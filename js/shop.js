@@ -261,7 +261,7 @@ class ShopRenderer {
 
     // === 已购买道具卡牌栏（6格：左4女巫 + 右2药水，样式复用游戏页）===
     const actualWitchSlots = game.maxJokerSlots || 4;
-    const ownedY = top + 16 * s;
+    const ownedY = top + 16 * s + 2 * s;
     const ownedH = 92 * s;
     const ownedW = actualWitchSlots >= 5 ? W - 18 * s : W - 30 * s;
     const ownedX = actualWitchSlots >= 5 ? 9 * s : 15 * s;
@@ -272,7 +272,7 @@ class ShopRenderer {
     const oPadX = 10 * s;
     const oDividerW = 1.5 * s;
     const BASE_GAP = 6 * s;
-    const oSlotTop = 10 * s;
+    const oSlotTop = 9 * s;
 
     // 基准单卡宽度（固定按 4 张时的 ownedW 计算，避免宽度变化被卡牌尺寸吸收）
     const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
@@ -284,8 +284,8 @@ class ShopRenderer {
     const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
     const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
     const oSlotH = actualWitchSlots >= 5
-      ? (ownedH - oSlotTop - 10 * s) * (slotW / rawSlotW)
-      : ownedH - oSlotTop - 10 * s;
+      ? (ownedH - oSlotTop - 9 * s) * (slotW / rawSlotW)
+      : ownedH - oSlotTop - 9 * s;
 
     const oSlotY = ownedY + oSlotTop;
     const oBaseLeftStartX = ownedX + oPadX - (actualWitchSlots >= 5 ? 2 * s : 0);
@@ -452,47 +452,7 @@ class ShopRenderer {
           }
         }
 
-        // 售出按钮（排序状态下不显示）
-        if (!game._jokerSortState && isSelected && !isSelling) {
-          const sellBtnH = 20 * s;
-          const sellBtnY = oSlotY + oSlotH + 2 * s + selectedOffsetY;
-
-          // 出现动画（easeOutBack：从卡牌底部向下弹出）
-          let appearScale = 1;
-          let appearOffsetY = 0;
-          if (this.sellBtnAnimStart) {
-            const ae = Date.now() - this.sellBtnAnimStart;
-            const ap = Math.min(ae / 200, 1);
-            const ease = Easing.easeOutBack(ap);
-            appearScale = ease;
-            appearOffsetY = -(1 - ease) * 8 * s;
-          }
-
-          const finalW = slotW * appearScale;
-          const finalH = sellBtnH * appearScale;
-          const finalX = sx + slideOffsetX + sortX + (slotW - finalW) / 2;
-          const finalY = sellBtnY + appearOffsetY + (sellBtnH - finalH) / 2;
-
-          ctx.save();
-          this.parent.roundRect(finalX, finalY, finalW, finalH, 5 * s * appearScale, '#c0392b');
-          ctx.font = `bold ${Math.floor(11 * s * Math.max(appearScale, 0.5))}px sans-serif`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          const coinSize = 10 * s * appearScale;
-          const sellText = String(Math.round(joker.cost / 2));
-          const textW = ctx.measureText(sellText).width;
-          const contentW = coinSize + 2 * s + textW;
-          const startX = finalX + (finalW - contentW) / 2;
-          const midY = finalY + finalH / 2;
-          if (this.parent.coinIcon && this.parent.coinIconLoaded) {
-            ctx.drawImage(this.parent.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
-          }
-          ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
-          ctx.restore();
-
-          this.shopSellBtnRect = { x: sx + slideOffsetX + sortX, y: sellBtnY, w: slotW, h: sellBtnH, index: i, array: 'jokers' };
-        }
+        // 售出按钮已移至女巫详情弹窗右上角
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
         let emptyScale = 1;
@@ -883,6 +843,8 @@ class ShopRenderer {
       // 行背景（淡色 + 加深同色边框）
       const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
       this.parent.roundRect(modX + innerPad, rowY, modW - innerPad * 2, rowH, 6 * s, mod.rowBg, rowBorderColors[mod.type], 1 * s);
+
+
 
       // 顶部装饰标题（半遮在行背景上方）
       const capsuleH = 24 * s;

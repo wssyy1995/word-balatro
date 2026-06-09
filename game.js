@@ -750,7 +750,7 @@ wx.onTouchEnd(() => {
     }
   }
 
-  // 女巫牌短按：执行选中（手指松开时显示售出按钮）
+  // 女巫牌短按：弹出详情弹窗
   if (game._pendingJokerSelect) {
     if (game._pendingJokerSelectTimer) {
       clearTimeout(game._pendingJokerSelectTimer);
@@ -759,10 +759,15 @@ wx.onTouchEnd(() => {
     const index = game._pendingJokerSelect.index;
     game._pendingJokerSelect = null;
     if (game.audioManager) game.audioManager.play('tap');
-    const prev = renderer.shopRenderer.shopSelectedOwned;
-    if (prev && prev.type === 'jokers' && prev.index === index) {
+    if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === index && game._witchDetailPopup.isShop) {
+      // 再次点击同一张：关闭弹窗 + 取消选中上移
+      game._witchDetailPopup = null;
       renderer.shopRenderer.shopSelectedOwned = null;
     } else {
+      // 打开弹窗 + 保持选中上移效果
+      const propRects = renderer.shopRenderer.shopOwnedPropRects || [];
+      const rect = propRects.find(r => r.array === 'jokers' && r.index === index);
+      game._witchDetailPopup = { jokerIndex: index, animStartTime: Date.now(), isShop: true, rect };
       renderer.shopRenderer.shopSelectedOwned = { type: 'jokers', index };
     }
   }
@@ -1680,6 +1685,30 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测女巫详情弹窗售出按钮点击（商店页）
+    if (game._witchDetailPopup && game._witchDetailPopup.isShop && renderer._shopWitchDetailSellBtnRect) {
+      const sellHit = renderer.hitTest(x, y, [renderer._shopWitchDetailSellBtnRect]);
+      if (sellHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('card_sell');
+        const arr = game.jokers;
+        const idx = sellHit.index;
+        if (arr && arr[idx]) {
+          const item = arr[idx];
+          game.gold += Math.round(item.cost / 2);
+          game._sellingProp = {
+            type: 'jokers',
+            index: idx,
+            startTime: Date.now(),
+          };
+          game._witchDetailPopup = null;
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress();
+        }
+        return;
+      }
+    }
+
     // 检测售出按钮点击
     if (renderer.shopRenderer && renderer.shopRenderer.shopSellBtnRect) {
       const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
@@ -1724,11 +1753,17 @@ function handleInput(x, y) {
       }
     }
 
-    // 点击商店页面其他地方，关闭售出按钮
+    // 点击商店页面其他地方，关闭售出按钮 / 女巫详情弹窗
+    let handled = false;
+    if (game._witchDetailPopup && game._witchDetailPopup.isShop) {
+      game._witchDetailPopup = null;
+      handled = true;
+    }
     if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
       renderer.shopRenderer.shopSelectedOwned = null;
-      return;
+      handled = true;
     }
+    if (handled) return;
 
     // 检测全局重掷按钮点击（扣除 3 金币，刷新所有模块）
     if (renderer.shopRenderer && renderer.shopRenderer.shopGlobalRerollBtnRect) {

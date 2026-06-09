@@ -78,6 +78,8 @@ Renderer.prototype.render = function(game) {
       this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
 
       this.shopRenderer.draw(ctx, game, W, H, s);
+      // 商店页女巫牌详情弹窗（含右上角售出按钮）
+      this._drawWitchDetailPopup(ctx, game, s);
       // 确认购买弹窗（覆盖在商店上方）
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);

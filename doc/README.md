@@ -10,7 +10,7 @@
 | 适配基准 | iPhone 6/7/8（375×667），自动缩放 |
 | 缩放范围 | `scale` 限制在 0.8 ~ 1.4，防止过大/过小 |
 | 最低基础库 | 3.0.0 |
-| 词库 | 本地高频词 + 在线 dictionaryapi.dev 校验 |
+| 词库 | 本地高频词 + 在线百度翻译词典版 API 校验 |
 
 ---
 
@@ -144,7 +144,7 @@ word-balatro/
 1. 检查选中卡牌 ≥2 张，且不在 pendingCheck 中
 2. 拼接字母成单词
 3. 本地校验（WORD_DATA / EXPAND_WORD_DATA / onlineWordCache）
-4. 本地不存在 → 在线 API 校验（dictionaryapi.dev）
+4. 本地不存在 → 在线 API 校验（百度翻译词典版）
 5. 非法 → pendingCheck.state = 'invalid'，handsLeft--（或被 shield_illegal / haste_play 抵消），可能触发 gameover
 6. 勇敢试错：非法单词且未触发容错咒文时，illegal_boost 倍率 +1
 7. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
@@ -294,7 +294,7 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 |------|------|------|
 | L1 | `WORD_DATA`（核心离线词库） | 毫秒级 |
 | L1.5 | `EXPAND_WORD_DATA`（扩展离线词库） | 毫秒级 |
-| L2 | `onlineWordCache` / `dictionaryapi.dev` API | 1-3 秒 |
+| L2 | `onlineWordCache` / 百度翻译词典版 API | 1-3 秒 |
 | L3 | `MyMemory` 翻译（后台） | 异步 |
 
 **校验状态机（`pendingCheck`）**
@@ -919,17 +919,43 @@ letterUpgrades = Map {
 
 ## 7. 外部 API 依赖
 
-### 7.1 dictionaryapi.dev
+### 7.1 百度翻译词典版 API
 
-- **用途**：在线单词合法性校验 + 获取英文定义/词性
-- **Endpoint**：`https://api.dictionaryapi.dev/api/v2/entries/en/{word}`
+- **用途**：在线单词合法性校验 + 获取中文释义/词性/音标
+- **Endpoint**：`https://aip.baidubce.com/rpc/2.0/mt/texttrans-with-dict/v1`
+- **认证方式**：OAuth2（`access_token`）
 - **缓存**：成功结果存入 `onlineWordCache` 和 `wordMeaningCache`
 
-### 7.2 MyMemory 翻译
+**调用链路**
+```
+前端 → 云函数 baiduDict → 换取 access_token
+前端 → 直连百度接口（带 token）→ 返回翻译/词典结果
+```
 
-- **用途**：将英文定义翻译为中文
-- **Endpoint**：`https://api.mymemory.translated.net/get?q=...&langpair=en|zh-CN`
-- **特点**：后台异步调用，不影响主流程
+**Token 管理**
+- 密钥（API Key / Secret Key）存放在云函数 `cloudfunctions/baiduDict/` 中，前端不可见
+- `access_token` 通过云函数获取后本地缓存 7 天（`wx.setStorageSync`）
+- token 失效时（HTTP 401 / error_code 110/111）自动清除缓存并重试一次
+
+**请求参数**
+```json
+{ "from": "en", "to": "zh", "q": "hello" }
+```
+
+**响应内容**
+```json
+{
+  "result": {
+    "trans_result": [{
+      "src": "hello",
+      "dst": "你好",
+      "dict": "英 [həˈləʊ]  int. 喂；你好..."
+    }]
+  }
+}
+```
+
+> 注：该接口同时覆盖原 dictionaryapi.dev + MyMemory 的功能，既校验单词合法性，又返回中文释义，无需再维护两套外部 API。
 
 ### 7.3 微信小游戏 API
 
@@ -1013,7 +1039,8 @@ letterUpgrades = Map {
 ### 8.3 配置合法域名
 
 在微信公众平台 → 开发 → 开发设置 → 服务器域名：
-- **request 合法域名**：添加 `https://api.dictionaryapi.dev` 和 `https://api.mymemory.translated.net`
+- **request 合法域名**：添加 `https://aip.baidubce.com`
+- **云函数**：确保已创建并部署 `cloudfunctions/baiduDict/`
 
 > 若不配置，在线单词检测和翻译会失效，仅本地词库可用。
 
