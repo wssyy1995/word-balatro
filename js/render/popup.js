@@ -1081,6 +1081,377 @@ module.exports = function extendPopup(Renderer) {
       this.lifeExtensionBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
     }
 
+    // ===== 今日新词弹窗 =====
+    Renderer.prototype._drawDailyWordsPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._dailyWordsPopup;
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: popup.closing || false,
+        closeStartTime: popup.closeStartTime,
+        width: 340, height: 580, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        onCloseComplete: () => { game._dailyWordsPopup = null; }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
+      const ca = closeAlpha;
+
+      // 标题：学习模式
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleY = py + 30 * s + titleAnim.yShift;
+      ctx.fillText('学习模式', W / 2, titleY);
+      // 标题左右小菱形装饰
+      const titleWidth = ctx.measureText('学习模式').width;
+      const diamondFontSize = Math.floor(10 * s);
+      ctx.font = `${diamondFontSize}px sans-serif`;
+      ctx.fillStyle = '#a09070';
+      const dw = ctx.measureText('✦').width;
+      const diamondGap = 15 * s;
+      const leftBase = W / 2 - titleWidth / 2;
+      const rightBase = W / 2 + titleWidth / 2;
+      ctx.fillText('✦', leftBase - diamondGap - dw / 2, titleY);
+      ctx.fillText('✦', rightBase + diamondGap + dw / 2, titleY);
+      ctx.restore();
+
+      // 副标题条形色块 + switch 开关
+      const barY = py + 50 * s;
+      const barH = 44 * s;
+      const barPad = 14 * s;
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      this.roundRect(px + 14 * s, barY, pw - 28 * s, barH, 10 * s, '#f5f0e6', '#e8e0d0', 1 * s);
+      // 左侧文字
+      ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('每日10个新词，随机添加到每回合游戏中', px + 14 * s + barPad, barY + barH / 2);
+      // 右侧 switch
+      const swW = 50 * s;
+      const swH = 26 * s;
+      const swX = px + pw - 14 * s - barPad - swW + 2;
+      const swY = barY + (barH - swH) / 2;
+      const isOn = game.settings && game.settings.dailyWordChallengeEnabled === true;
+      const pressOffset = game._dailyWordsSwitchPressed ? 1 * s : 0;
+      // switch 背景
+      this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
+      // 圆点
+      const dotR = 10 * s;
+      const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
+      const dotY = swY + pressOffset + swH / 2;
+      ctx.beginPath();
+      ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      ctx.restore();
+      // 记录 switch 点击区域
+      this.dailyWordsSwitchRect = { x: swX - 4 * s, y: swY - 4 * s, w: swW + 8 * s, h: swH + 8 * s };
+
+      // 关闭按钮（棕色圆圈）
+      const closeSize = 26 * s;
+      const closeX = px + pw - closeSize - 12 * s;
+      const closeY = py + 12 * s;
+      const closePressOffset = game._dailyWordsClosePressed ? 1 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.fillStyle = '#8b6914';
+      ctx.beginPath();
+      ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2 + closePressOffset, closeSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(closeSize * 0.55)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s + closePressOffset);
+      ctx.restore();
+      this.dailyWordsCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+
+      // 内容区域参数
+      const contentTop = py + 102 * s;
+      const contentBottom = py + ph - 44 * s;
+      const contentH = contentBottom - contentTop;
+      const scrollY = game._dailyWordsScrollY || 0;
+
+      const words = (game.dailyChallenge && game.dailyChallenge.words) || [];
+      const collected = (game.dailyChallenge && game.dailyChallenge.collected) || [];
+      const cardGap = 8 * s;
+      const cardPad = 10 * s;
+      const cardH = 100 * s;
+      const totalContentH = words.length * (cardH + cardGap) + cardGap;
+      const maxScroll = Math.max(0, totalContentH - contentH);
+      this.dailyWordsMaxScroll = maxScroll;
+      this.dailyWordsContentH = contentH;
+      game._dailyWordsMaxScroll = maxScroll;
+      game._dailyWordsContentH = contentH;
+      // 仅在非拖动/动画状态下限制滚动范围（rubber band 效果需要允许临时超出）
+      const scrollState = game._dailyWordsScrollState;
+      if (scrollState !== 'dragging' && scrollState !== 'inertia' && scrollState !== 'bounce') {
+        if (game._dailyWordsScrollY > maxScroll) game._dailyWordsScrollY = maxScroll;
+        if (game._dailyWordsScrollY < 0) game._dailyWordsScrollY = 0;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.beginPath();
+      ctx.rect(px + 10 * s, contentTop, pw - 20 * s, contentH);
+      ctx.clip();
+
+      for (let i = 0; i < words.length; i++) {
+        const item = words[i];
+        const wObj = typeof item === 'string' ? { word: item, meaning: '', phonetic: '', example: '', example_meaning: '' } : item;
+        const cy = contentTop + cardGap + i * (cardH + cardGap) - scrollY;
+        if (cy + cardH < contentTop || cy > contentBottom) continue;
+
+        const isCollected = collected.includes(wObj.word.toLowerCase());
+        const itemAnim = Easing.fadeIn(elapsed, 200 + i * 35, 250, 6 * s);
+        ctx.save();
+        ctx.globalAlpha = itemAnim.alpha * ca;
+
+        // 卡片背景
+        this.roundRect(px + 14 * s, cy, pw - 28 * s, cardH, 8 * s, '#fff', 'rgba(196,163,90,0.25)', 0.8 * s);
+
+        // 序号圆圈
+        const numR = 10 * s;
+        const numX = px + 28 * s;
+        const numY = cy + 18 * s;
+        ctx.fillStyle = '#8b6914';
+        ctx.beginPath();
+        ctx.arc(numX, numY, numR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(i + 1), numX, numY);
+
+        // 状态标签（右侧）
+        const statusX = px + pw - 28 * s;
+        const statusY = cy + 18 * s;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        if (isCollected) {
+          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+          ctx.fillStyle = '#5a8f3c';
+          ctx.fillText('✓ 已学习', statusX, statusY);
+        } else {
+          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+          ctx.fillStyle = '#b0a898';
+          ctx.fillText('○ 未学习', statusX, statusY);
+        }
+
+        // 单词（序号右侧）
+        const wordX = numX + numR + 8 * s;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillText(wObj.word, wordX, cy + 18 * s);
+
+        // 音标（单词右侧）
+        if (wObj.phonetic) {
+          const wordW = ctx.measureText(wObj.word).width;
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#999';
+          ctx.fillText(wObj.phonetic, wordX + wordW + 6 * s, cy + 18 * s);
+        }
+
+        // 中文释义
+        if (wObj.meaning) {
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#666';
+          ctx.fillText(wObj.meaning, wordX, cy + 36 * s);
+        }
+
+        // 例句标签
+        const tagY = cy + 56 * s;
+        const tagW = 28 * s;
+        const tagH = 14 * s;
+        this.roundRect(wordX, tagY - tagH / 2, tagW, tagH, 3 * s, 'rgba(196,163,90,0.15)');
+        ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('例句', wordX + tagW / 2, tagY);
+
+        // 英文例句（目标词加粗）
+        if (wObj.example) {
+          const exX = wordX + tagW + 6 * s;
+          const exY = tagY;
+          this._drawExampleWithHighlight(ctx, wObj.example, wObj.word, exX, exY, 11 * s, '#555', '#8b6914');
+        }
+
+        // 例句中文
+        if (wObj.example_meaning) {
+          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+          ctx.fillStyle = '#888';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(wObj.example_meaning, wordX, cy + 78 * s);
+        }
+
+        ctx.restore();
+      }
+
+      ctx.restore(); // 恢复裁剪
+
+      // 底部标语
+      const sloganAnim = Easing.fadeIn(elapsed, 500, 250, 6 * s);
+      const sloganY = py + ph - 24 * s + sloganAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = sloganAnim.alpha * ca;
+      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#a09070';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✦  每日10个新词，积累从现在开始！  ✦', W / 2, sloganY);
+      ctx.restore();
+
+      // 滚动条
+      if (totalContentH > contentH) {
+        const scrollbarH = Math.max(30 * s, (contentH / totalContentH) * contentH);
+        const scrollbarY = contentTop + (scrollY / maxScroll) * (contentH - scrollbarH);
+        const scrollbarX = px + pw - 12 * s;
+        ctx.save();
+        ctx.globalAlpha = ca * 0.25;
+        ctx.fillStyle = '#8b6914';
+        this.roundRect(scrollbarX, scrollbarY, 3 * s, scrollbarH, 1.5 * s, '#8b6914');
+        ctx.restore();
+      }
+
+      // 记录内容区域（用于滚动检测）
+      this.dailyWordsContentRect = { x: px + 10 * s, y: contentTop, w: pw - 20 * s, h: contentH };
+      // 记录面板区域（用于点击外部关闭检测）
+      this.dailyWordsPanelRect = { x: px, y: py, w: pw, h: ph };
+    }
+
+    // 辅助：绘制例句，目标词加粗高亮
+    Renderer.prototype._drawExampleWithHighlight = function(ctx, sentence, word, x, y, fontSize, normalColor, highlightColor) {
+      const lowerWord = word.toLowerCase();
+      const lowerSentence = sentence.toLowerCase();
+      const idx = lowerSentence.indexOf(lowerWord);
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+
+      if (idx < 0) {
+        ctx.font = `${Math.floor(fontSize)}px sans-serif`;
+        ctx.fillStyle = normalColor;
+        ctx.fillText(sentence, x, y);
+        return;
+      }
+
+      const before = sentence.substring(0, idx);
+      const match = sentence.substring(idx, idx + word.length);
+      const after = sentence.substring(idx + word.length);
+
+      let cx = x;
+      if (before) {
+        ctx.font = `${Math.floor(fontSize)}px sans-serif`;
+        ctx.fillStyle = normalColor;
+        ctx.fillText(before, cx, y);
+        cx += ctx.measureText(before).width;
+      }
+      ctx.font = `bold ${Math.floor(fontSize)}px sans-serif`;
+      ctx.fillStyle = highlightColor;
+      ctx.fillText(match, cx, y);
+      cx += ctx.measureText(match).width;
+      if (after) {
+        ctx.font = `${Math.floor(fontSize)}px sans-serif`;
+        ctx.fillStyle = normalColor;
+        ctx.fillText(after, cx, y);
+      }
+    };
+
+    // ===== 每日挑战奖励弹窗 =====
+    Renderer.prototype._drawDailyChallengeRewardPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._dailyChallengeRewardPopup;
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: false,
+        width: 300, height: 280, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        onCloseComplete: () => {}
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, elapsed: panelElapsed } = panel;
+
+      // 标题
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🎯 每日挑战完成！', W / 2, py + 40 * s + titleAnim.yShift);
+      ctx.restore();
+
+      // 分隔线
+      const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
+      ctx.save();
+      ctx.globalAlpha = line1Anim.alpha;
+      this._drawTitleDivider(ctx, px + 30 * s, py + 62 * s + line1Anim.yShift, pw - 60 * s, s);
+      ctx.restore();
+
+      // 提示文案
+      const hintAnim = Easing.fadeIn(elapsed, 200, 250, 8 * s);
+      const hintY = py + 92 * s + hintAnim.yShift;
+      ctx.save();
+      ctx.globalAlpha = hintAnim.alpha;
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#555';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('集齐10个目标词', W / 2, hintY);
+      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillText(`+${popup.gold} 金币`, W / 2, hintY + 30 * s);
+      ctx.restore();
+
+      // 按钮
+      const btnAnim = Easing.fadeIn(elapsed, 350, 250, 10 * s);
+      const btnGap = 10 * s;
+      const btnW = (pw - 60 * s - btnGap) / 2;
+      const btnH = 46 * s;
+      const btnBaseY = py + ph - btnH - 28 * s + btnAnim.yShift;
+
+      // 分享按钮（左）
+      const shareBtnX = px + 30 * s;
+      ctx.save();
+      ctx.globalAlpha = btnAnim.alpha;
+      this._drawScaledButton(ctx, '分享', shareBtnX, btnBaseY, btnW, btnH, s, game._dailyChallengeSharePressed, { color: '#6a9fd4', radius: 8 });
+      ctx.restore();
+
+      // 确定按钮（右）
+      const okBtnX = shareBtnX + btnW + btnGap;
+      ctx.save();
+      ctx.globalAlpha = btnAnim.alpha;
+      this._drawScaledButton(ctx, '确定', okBtnX, btnBaseY, btnW, btnH, s, game._dailyChallengeOkPressed, { color: '#c4a35a', radius: 8 });
+      ctx.restore();
+
+      // 存储点击区域
+      this.dailyChallengeShareRect = { x: shareBtnX, y: btnBaseY, w: btnW, h: btnH };
+      this.dailyChallengeOkRect = { x: okBtnX, y: btnBaseY, w: btnW, h: btnH };
+    }
+
     // ===== 设置弹窗 =====
     Renderer.prototype.drawSettingsPopup = function(game) {
       const ctx = this.ctx;
@@ -1123,6 +1494,7 @@ module.exports = function extendPopup(Renderer) {
 
       // 重置点击区域
       this.settingsSoundRect = null;
+      this.settingsDailyChallengeRect = null;
       this.settingsRankRect = null;
       this.settingsFeedbackRect = null;
       this.feedbackBackRect = null;
@@ -1304,6 +1676,13 @@ module.exports = function extendPopup(Renderer) {
             value: game.settings && game.settings.soundEnabled !== false
           },
           {
+            key: 'dailyChallenge',
+            iconKey: 'study',
+            title: '学习模式',
+            subtitle: '每天10个新词挑战',
+            type: 'arrow'
+          },
+          {
             key: 'rank',
             iconKey: 'rank',
             title: '排行榜',
@@ -1319,8 +1698,8 @@ module.exports = function extendPopup(Renderer) {
           }
         ];
 
-        const itemH = 72 * s;
-        const itemStartY = titleY + 35 * s;
+        const itemH = 58 * s;
+        const itemStartY = titleY + 28 * s;
         const iconSize = 50 * s;
 
         items.forEach((item, i) => {
@@ -1411,6 +1790,20 @@ module.exports = function extendPopup(Renderer) {
             // 记录点击区域
             this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
           } else if (item.type === 'arrow') {
+            // 学习模式：在箭头左侧显示开关状态标签
+            if (item.key === 'dailyChallenge') {
+              const isOn = game.settings && game.settings.dailyWordChallengeEnabled === true;
+              ctx.save();
+              ctx.globalAlpha = contentAlpha;
+              ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+              ctx.textAlign = 'right';
+              ctx.textBaseline = 'middle';
+              const statusText = isOn ? '已开启' : '已关闭';
+              ctx.fillStyle = isOn ? '#8b6914' : '#b0a898';
+              ctx.fillText(statusText, ctrlRightX - 18 * s, centerY);
+              ctx.restore();
+            }
+
             ctx.save();
             ctx.globalAlpha = contentAlpha * 0.6;
             ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
@@ -1424,6 +1817,7 @@ module.exports = function extendPopup(Renderer) {
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
             if (item.key === 'rank') this.settingsRankRect = rect;
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
+            if (item.key === 'dailyChallenge') this.settingsDailyChallengeRect = rect;
           }
 
           // 分隔线（非最后一项）
@@ -1502,7 +1896,7 @@ module.exports = function extendPopup(Renderer) {
 
         // 输入框文字
         const feedbackText = game._feedbackText || '';
-        const placeholder = '请描述你遇到的问题或建议（你的每个建议对我都很宝贵！）';
+        const placeholder = '请描述你遇到的问题或建议\n（你的每个建议对我都很宝贵！）';
         const textX = inputX + 12 * s;
         const textY = inputY + 14 * s;
 
@@ -1523,7 +1917,12 @@ module.exports = function extendPopup(Renderer) {
           });
         } else {
           ctx.fillStyle = '#b0a898';
-          ctx.fillText(placeholder, textX, textY);
+          // 按 \n 分割逐行绘制 placeholder
+          const placeholderLines = placeholder.split('\n');
+          const phLineHeight = 20 * s;
+          placeholderLines.forEach((line, i) => {
+            ctx.fillText(line, textX, textY + i * phLineHeight);
+          });
         }
 
         // 字数统计

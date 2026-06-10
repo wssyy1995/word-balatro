@@ -6,7 +6,7 @@ const {
   wordMeaningCache, letterUpgrades, checkingWords,
   calcBaseTarget
 } = require('./data');
-const { AnimationManager } = require('./animation');
+const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
@@ -218,91 +218,105 @@ function countVowelFreq(word) {
   return freq;
 }
 
-function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = []) {
-  // 固定生成一个长度3和一个长度4的种子词（不从牌堆抽取，直接创建）
-  // 要求：两个种子词的所有字母加起来，不同元音不能超过2个
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = [], dailyWord = null) {
+  // 固定生成一个长度3的种子词（不从牌堆抽取，直接创建）
   const candidates3 = getCandidatesByLen(3, 3, excludeLetters);
-  const candidates4 = getCandidatesByLen(4, 4, excludeLetters);
   shuffle(candidates3);
-  shuffle(candidates4);
 
-  // 将长度4候选词按元音集合分组（key 为排序后的元音字符串），实现 O(1) 查表
-  const groups4 = new Map();
-  for (const w of candidates4) {
-    const key = Array.from(getVowelSet(w)).sort().join('');
-    if (!groups4.has(key)) groups4.set(key, []);
-    groups4.get(key).push(w);
-  }
+  let seedWord3 = candidates3[0] || getSeedWord(3, 3, excludeLetters);
+  let seedLetters3 = seedWord3.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
 
-  let seedWord3 = null;
+  let seedLetters4 = [];
   let seedWord4 = null;
-  for (const w3 of candidates3) {
-    const v3 = getVowelSet(w3);
-    if (v3.size > 2) continue; // w3 自身元音种类已超2，直接跳过
 
-    const v3Freq = countVowelFreq(w3);
-    if (Object.values(v3Freq).some(c => c > 2)) continue; // w3 自身某个元音已超2
+  if (dailyWord) {
+    // 学习模式：用每日新词替代第二个种子词
+    let dailyLetters = [...new Set(dailyWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l)))];
+    // 限制每日新词字母数，确保不超过手牌容量
+    const maxDailyLen = Math.max(0, count - seedLetters3.length);
+    if (dailyLetters.length > maxDailyLen) {
+      shuffle(dailyLetters);
+      dailyLetters = dailyLetters.slice(0, maxDailyLen);
+    }
+    seedLetters4 = dailyLetters;
+    console.log('种子词：', seedWord3 + '(正常) + ' + dailyWord + '(每日)');
+  } else {
+    // 普通模式：再生成一个长度4的种子词
+    // 要求：两个种子词的所有字母加起来，不同元音不能超过2个
+    const candidates4 = getCandidatesByLen(4, 4, excludeLetters);
+    shuffle(candidates4);
 
-    const v3Arr = Array.from(v3).sort();
-    const possibleKeys = new Set(['']);
-
-    // w4 元音全部来自 v3 的子集
-    for (let mask = 1; mask < (1 << v3Arr.length); mask++) {
-      const subset = [];
-      for (let i = 0; i < v3Arr.length; i++) {
-        if (mask & (1 << i)) subset.push(v3Arr[i]);
-      }
-      possibleKeys.add(subset.join(''));
+    // 将长度4候选词按元音集合分组（key 为排序后的元音字符串），实现 O(1) 查表
+    const groups4 = new Map();
+    for (const w of candidates4) {
+      const key = Array.from(getVowelSet(w)).sort().join('');
+      if (!groups4.has(key)) groups4.set(key, []);
+      groups4.get(key).push(w);
     }
 
-    // v3 只有1个元音时，w4 可再引入1个新元音（总共2个）
-    if (v3.size === 1) {
-      for (const v of VOWELS) {
-        if (!v3.has(v)) possibleKeys.add([v3Arr[0], v].sort().join(''));
-      }
-    }
+    for (const w3 of candidates3) {
+      const v3 = getVowelSet(w3);
+      if (v3.size > 2) continue;
 
-    // v3 没有元音时，w4 最多可有2个元音
-    if (v3.size === 0) {
-      for (const v of VOWELS) possibleKeys.add(v);
-      for (let i = 0; i < VOWELS.length; i++) {
-        for (let j = i + 1; j < VOWELS.length; j++) {
-          possibleKeys.add([VOWELS[i], VOWELS[j]].sort().join(''));
+      const v3Freq = countVowelFreq(w3);
+      if (Object.values(v3Freq).some(c => c > 2)) continue;
+
+      const v3Arr = Array.from(v3).sort();
+      const possibleKeys = new Set(['']);
+
+      for (let mask = 1; mask < (1 << v3Arr.length); mask++) {
+        const subset = [];
+        for (let i = 0; i < v3Arr.length; i++) {
+          if (mask & (1 << i)) subset.push(v3Arr[i]);
+        }
+        possibleKeys.add(subset.join(''));
+      }
+
+      if (v3.size === 1) {
+        for (const v of VOWELS) {
+          if (!v3.has(v)) possibleKeys.add([v3Arr[0], v].sort().join(''));
         }
       }
-    }
 
-    // 收集满足条件的 w4：合并后每个元音字母累计出现次数不能超过2
-    const allValid4 = [];
-    for (const key of possibleKeys) {
-      const group = groups4.get(key);
-      if (!group) continue;
-      for (const w4 of group) {
-        const v4Freq = countVowelFreq(w4);
-        let valid = true;
-        for (const v of VOWELS) {
-          const total = (v3Freq[v] || 0) + (v4Freq[v] || 0);
-          if (total > 2) {
-            valid = false;
-            break;
+      if (v3.size === 0) {
+        for (const v of VOWELS) possibleKeys.add(v);
+        for (let i = 0; i < VOWELS.length; i++) {
+          for (let j = i + 1; j < VOWELS.length; j++) {
+            possibleKeys.add([VOWELS[i], VOWELS[j]].sort().join(''));
           }
         }
-        if (valid) allValid4.push(w4);
+      }
+
+      const allValid4 = [];
+      for (const key of possibleKeys) {
+        const group = groups4.get(key);
+        if (!group) continue;
+        for (const w4 of group) {
+          const v4Freq = countVowelFreq(w4);
+          let valid = true;
+          for (const v of VOWELS) {
+            const total = (v3Freq[v] || 0) + (v4Freq[v] || 0);
+            if (total > 2) {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) allValid4.push(w4);
+        }
+      }
+      if (allValid4.length > 0) {
+        seedWord3 = w3;
+        seedWord4 = allValid4[Math.floor(Math.random() * allValid4.length)];
+        break;
       }
     }
-    if (allValid4.length > 0) {
-      seedWord3 = w3;
-      seedWord4 = allValid4[Math.floor(Math.random() * allValid4.length)];
-      break;
-    }
+
+    if (!seedWord4) seedWord4 = candidates4[0] || getSeedWord(4, 4, excludeLetters);
+    seedLetters3 = seedWord3.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    seedLetters4 = seedWord4.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    console.log('种子词：', seedWord3 + ',' + seedWord4);
   }
 
-  // 兜底：若查表后未找到（理论上极少），降级为随机取
-  if (!seedWord3) seedWord3 = candidates3[0] || getSeedWord(3, 3, excludeLetters);
-  if (!seedWord4) seedWord4 = candidates4[0] || getSeedWord(4, 4, excludeLetters);
-
-  const seedLetters3 = seedWord3.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
-  const seedLetters4 = seedWord4.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
   const allSeedLetters = [...seedLetters3, ...seedLetters4];
   const seedLetterSet = new Set(allSeedLetters);
 
@@ -325,9 +339,27 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   });
 
   const seedCards3 = makeSeedCards(seedLetters3);
-  const seedCards4 = makeSeedCards(seedLetters4);
+  // 学习模式下，每日新词的牌额外标记
+  const seedCards4 = dailyWord
+    ? seedLetters4.map(letter => {
+        const baseScore = LETTER_SCORE[letter];
+        const upgrade = letterUpgrades.get(letter);
+        let score = baseScore;
+        let upgraded = false;
+        let upgradeMult = 1;
+        let upgradeAdd = 0;
+        if (upgrade) {
+          if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+          if (upgrade.add) score += upgrade.add;
+          upgraded = true;
+          upgradeMult = upgrade.mult || 1;
+          upgradeAdd = upgrade.add || 0;
+        }
+        return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
+          id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _isDailyChallengeCard: true };
+      })
+    : makeSeedCards(seedLetters4);
   const allSeedCards = [...seedCards3, ...seedCards4];
-  console.log('种子词：', seedWord3 + ',' + seedWord4);
 
   // 过滤牌堆：随机补牌的字母不能跟种子单词字母重复
   // 种子词字母的牌保留在 deck 中，仅抽出不含种子词字母的随机牌
@@ -944,6 +976,8 @@ class Game {
       this.roundScores = [];
       this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
       console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
+      // 每日单词挑战：新游戏时加载今日词
+      this._initDailyChallenge();
       this.resetRound();
     }
 
@@ -992,6 +1026,24 @@ class Game {
     this._letterGodAnim = null;
     this._debugLabelShow = null;
     this._witchSkillProtectUsed = false;
+    this._dailyChallengeRewardPopup = null;
+    this._dailyChallengeSharePressed = false;
+    this._dailyChallengeOkPressed = false;
+    this._dailyWordsPopup = null;
+    this._dailyWordsClosePressed = false;
+    this._dailyWordsSwitchPressed = false;
+    this._dailyWordsScrollY = 0;
+    this._dailyWordsScrollStartY = 0;
+    this._dailyWordsScrollStartTouchY = 0;
+    this._dailyWordsScrollVelocity = 0;
+    this._dailyWordsScrollState = 'idle';
+    this._dailyWordsScrollLastTouchY = 0;
+    this._dailyWordsScrollLastTime = 0;
+    this._dailyWordsScrollDragStartY = 0;
+    this._dailyWordsScrollTouchStartY = 0;
+    this._dailyWordsScrollBounceTarget = 0;
+    this._dailyWordsScrollBounceStartY = 0;
+    this._dailyWordsScrollBounceStartTime = 0;
 
     // 装备女巫卡牌跨回合状态
     this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
@@ -1261,6 +1313,9 @@ class Game {
 
     console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
     console.log('[Game] 恢复 jokers:', JSON.stringify(this.jokers), 'potions:', JSON.stringify(this.potions));
+
+    // 每日单词挑战：恢复时也初始化
+    this._initDailyChallenge();
   }
 
   _syncHandCardScores() {
@@ -1383,7 +1438,23 @@ class Game {
     applyCrystalEffects(this);
     const handSize = this.baseHandSize + (this.extraLetters || 0);
     this._maxHandSize = handSize;
-    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters);
+
+    // 学习模式：从10个新词中随机选1个未学习的，作为种子词传入 drawWithSafety
+    let dailyWord = null;
+    if (this.settings && this.settings.dailyWordChallengeEnabled && this.dailyChallenge && this.dailyChallenge.words && this.dailyChallenge.words.length > 0) {
+      const collected = this.dailyChallenge.collected || [];
+      const words = this.dailyChallenge.words.filter(item => {
+        const w = typeof item === 'string' ? item : item.word;
+        return !collected.includes(w.toLowerCase());
+      });
+      if (words.length > 0) {
+        const randomItem = words[Math.floor(Math.random() * words.length)];
+        dailyWord = typeof randomItem === 'string' ? randomItem : randomItem.word;
+      }
+    }
+
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord);
+
     this.selected = [];
     this.score = 0;
     // 格莱薇妮娅：下回合初始分加上溢出加成（延迟500ms后更新，让HUD先显示0再做缩放动画）
@@ -2014,8 +2085,14 @@ class Game {
     const result = this.pendingCheck.result;
     const played = this.pendingCheck.cards;
     const playedInOrder = this.pendingCheck.cardsInOrder;
+    const playedWord = this.pendingCheck.word;
     this._applyScore(result);
     this._executePlayHand(played, playedInOrder, result);
+
+    // 每日单词挑战：检查是否收集到目标词
+    if (playedWord) {
+      this._checkDailyWordCollect(playedWord);
+    }
 
     // 计分动画结束，更新上一手单词记录
     if (playedInOrder && playedInOrder.length > 0) {
@@ -2521,6 +2598,158 @@ class Game {
     }
   }
 
+  // ===== 每日单词挑战 =====
+
+  _initDailyChallenge() {
+    this.dailyChallenge = null;
+
+    const saved = this.storageManager ? this.storageManager.getDailyChallenge() : null;
+    const today = new Date().toISOString().slice(0, 10);
+
+    if (saved && saved.date === today && saved.words && saved.words.length === 10) {
+      this.dailyChallenge = saved;
+      console.log('[DailyChallenge] 恢复今日挑战:', saved.words, '已收集:', saved.collected);
+    } else {
+      // 日期不对或没有数据，异步加载
+      this._loadDailyWords();
+    }
+  }
+
+  _loadDailyWords() {
+    try {
+      wx.cloud.callFunction({
+        name: 'getDailyWords',
+        data: {}
+      }).then(res => {
+        if (res.result && res.result.code === 0 && res.result.words) {
+          const today = res.result.date;
+          const words = res.result.words;
+
+          // 尝试保留本地已有的收集进度
+          const saved = this.storageManager ? this.storageManager.getDailyChallenge() : null;
+          let collected = [];
+          let rewarded = false;
+          if (saved && saved.date === today) {
+            collected = saved.collected || [];
+            // 过滤掉可能不在新词列表中的旧收集
+            const wordList = words.map(w => (typeof w === 'string' ? w : w.word).toLowerCase());
+            collected = collected.filter(w => wordList.includes(w));
+            rewarded = saved.rewarded || false;
+          }
+
+          this.dailyChallenge = { date: today, words, collected, rewarded };
+          if (this.storageManager) {
+            this.storageManager.saveDailyChallenge(this.dailyChallenge);
+          }
+          console.log('[DailyChallenge] 加载今日词:', words, '已收集:', collected);
+        }
+      }).catch(err => {
+        console.error('[DailyChallenge] 加载失败:', err);
+      });
+    } catch (e) {
+      console.error('[DailyChallenge] 调用异常:', e);
+    }
+  }
+
+  _getDailyChallengeSeedLetters() {
+    if (!this.dailyChallenge || !this.dailyChallenge.words) return [];
+    const allLetters = [];
+    for (const item of this.dailyChallenge.words) {
+      const word = typeof item === 'string' ? item : item.word;
+      for (const ch of word.toUpperCase()) {
+        allLetters.push(ch);
+      }
+    }
+    // 去重并打乱
+    const unique = [...new Set(allLetters)];
+    shuffle(unique);
+    // 最多取 8 个字母注入手牌，避免手牌全是目标词字母
+    return unique.slice(0, Math.min(unique.length, 8));
+  }
+
+  _checkDailyWordCollect(word) {
+    if (!this.settings || !this.settings.dailyWordChallengeEnabled) return;
+    if (!this.dailyChallenge || !this.dailyChallenge.words) return;
+    const w = word.toLowerCase();
+    const wordList = this.dailyChallenge.words.map(item => typeof item === 'string' ? item.toLowerCase() : item.word.toLowerCase());
+    if (!wordList.includes(w)) return;
+    if (this.dailyChallenge.collected.includes(w)) return;
+
+    this.dailyChallenge.collected.push(w);
+    if (this.storageManager) {
+      this.storageManager.saveDailyChallenge(this.dailyChallenge);
+    }
+
+    // 显示收集提示
+    const remaining = this.dailyChallenge.words.length - this.dailyChallenge.collected.length;
+    this.hintToast = {
+      text: `🎯 目标词「${w}」收集成功！(${remaining}个待收集)`,
+      expireAt: Date.now() + 2500
+    };
+
+    // 检查是否集齐
+    if (remaining === 0 && !this.dailyChallenge.rewarded) {
+      this._showDailyChallengeReward();
+    }
+  }
+
+  _showDailyChallengeReward() {
+    this.dailyChallenge.rewarded = true;
+    if (this.storageManager) {
+      this.storageManager.saveDailyChallenge(this.dailyChallenge);
+    }
+    // 奖励金币
+    const rewardGold = 50;
+    this.gold += rewardGold;
+    this._dailyChallengeRewardPopup = {
+      startTime: Date.now(),
+      gold: rewardGold
+    };
+    if (this.audioManager) this.audioManager.play('buy_success');
+  }
+
+  // 今日新词弹窗滚动物理更新（惯性滚动 + 边界回弹）
+  _updateDailyWordsScroll(deltaTime) {
+    if (!this._dailyWordsPopup) return;
+    if (this._dailyWordsScrollState === 'dragging') return;
+
+    const maxScroll = this._dailyWordsMaxScroll || 0;
+    const state = this._dailyWordsScrollState;
+
+    // 惯性滚动
+    if (state === 'inertia') {
+      const dt = Math.min(deltaTime, 32); // 限制最大时间步长，防止卡顿后跳变
+      this._dailyWordsScrollY += this._dailyWordsScrollVelocity * dt;
+      this._dailyWordsScrollVelocity *= Math.pow(0.92, dt / 16);
+
+      // 到达边界或速度足够小，切换状态
+      if (this._dailyWordsScrollY < 0 || this._dailyWordsScrollY > maxScroll) {
+        this._dailyWordsScrollState = 'bounce';
+        this._dailyWordsScrollBounceTarget = this._dailyWordsScrollY < 0 ? 0 : maxScroll;
+      } else if (Math.abs(this._dailyWordsScrollVelocity) < 0.05) {
+        this._dailyWordsScrollState = 'idle';
+        this._dailyWordsScrollVelocity = 0;
+      }
+    }
+
+    // 边界回弹（easeOutBack，轻微过冲后回落）
+    if (state === 'bounce') {
+      const target = this._dailyWordsScrollBounceTarget || 0;
+      const startY = this._dailyWordsScrollBounceStartY || target;
+      const elapsed = Date.now() - (this._dailyWordsScrollBounceStartTime || Date.now());
+      const duration = 450;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = Easing.easeOutBack(progress);
+      this._dailyWordsScrollY = startY + (target - startY) * eased;
+
+      if (progress >= 1) {
+        this._dailyWordsScrollY = target;
+        this._dailyWordsScrollState = 'idle';
+        this._dailyWordsScrollVelocity = 0;
+      }
+    }
+  }
+
   winRound() {
     this.score = this.target;
     this.totalScore += this.target;
@@ -2609,6 +2838,9 @@ class Game {
         joker._sortGlow = 0;
       });
     }
+    // 今日新词弹窗滚动物理更新
+    this._updateDailyWordsScroll(deltaTime);
+
     // 清除过期的 hintToast
     if (this.hintToast && Date.now() > this.hintToast.expireAt) {
       this.hintToast = null;

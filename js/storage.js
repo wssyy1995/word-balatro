@@ -304,12 +304,27 @@ class StorageManager {
     return this.get('settings', {
       soundEnabled: true,
       musicEnabled: true,
-      vibrationEnabled: true
+      vibrationEnabled: true,
+      dailyWordChallengeEnabled: false
     });
   }
 
   saveSettings(settings) {
     return this.set('settings', settings);
+  }
+
+  // ===== 每日单词挑战 =====
+
+  getDailyChallenge() {
+    return this.get('daily_challenge', null);
+  }
+
+  saveDailyChallenge(data) {
+    return this.set('daily_challenge', data);
+  }
+
+  clearDailyChallenge() {
+    return this.remove('daily_challenge');
   }
 }
 

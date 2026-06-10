@@ -1,0 +1,75 @@
+{
+  "date": "2026-06-10",
+  "words": [
+    {
+      "word": "apple",
+      "meaning": "n. 苹果",
+      "phonetic": "/ˈæpl/",
+      "example": "I eat an apple every day.",
+      "example_meaning": "我每天吃一个苹果。"
+    },
+    {
+      "word": "brave",
+      "meaning": "adj. 勇敢的",
+      "phonetic": "/breɪv/",
+      "example": "He is a brave soldier.",
+      "example_meaning": "他是一名勇敢的士兵。"
+    },
+    {
+      "word": "cloud",
+      "meaning": "n. 云",
+      "phonetic": "/klaʊd/",
+      "example": "The sky is full of dark clouds.",
+      "example_meaning": "天空布满了乌云。"
+    },
+    {
+      "word": "dream",
+      "meaning": "n. 梦想；v. 做梦",
+      "phonetic": "/driːm/",
+      "example": "She has a dream to become a doctor.",
+      "example_meaning": "她有一个成为医生的梦想。"
+    },
+    {
+      "word": "eagle",
+      "meaning": "n. 鹰",
+      "phonetic": "/ˈiːɡl/",
+      "example": "The eagle soared high in the sky.",
+      "example_meaning": "那只鹰在高空翱翔。"
+    },
+    {
+      "word": "flame",
+      "meaning": "n. 火焰",
+      "phonetic": "/fleɪm/",
+      "example": "The candle flame flickered in the wind.",
+      "example_meaning": "烛火在风中摇曳。"
+    },
+    {
+      "word": "grace",
+      "meaning": "n. 优雅；恩典",
+      "phonetic": "/ɡreɪs/",
+      "example": "She danced with grace and beauty.",
+      "example_meaning": "她舞姿优雅而美丽。"
+    },
+    {
+      "word": "heart",
+      "meaning": "n. 心脏；内心",
+      "phonetic": "/hɑːrt/",
+      "example": "My heart beats faster when I run.",
+      "example_meaning": "我跑步时心跳得更快。"
+    },
+    {
+      "word": "ideal",
+      "meaning": "adj. 理想的；n. 理想",
+      "phonetic": "/aɪˈdiːəl/",
+      "example": "This is the ideal solution.",
+      "example_meaning": "这是理想的解决方案。"
+    },
+    {
+      "word": "jolly",
+      "meaning": "adj. 愉快的",
+      "phonetic": "/ˈdʒɑːli/",
+      "example": "We had a jolly time at the party.",
+      "example_meaning": "我们在聚会上玩得很愉快。"
+    }
+  ]
+}

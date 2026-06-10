@@ -1,0 +1,9 @@
+{
+  "name": "getDailyWords",
+  "version": "1.0.0",
+  "description": "获取每日10个目标词",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

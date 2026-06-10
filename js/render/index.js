@@ -784,6 +784,16 @@ Renderer.prototype.render = function(game) {
       this.drawSettingsPopup(game);
     }
 
+    // 今日新词弹窗
+    if (game._dailyWordsPopup) {
+      this._drawDailyWordsPopup(game);
+    }
+
+    // 每日挑战奖励弹窗
+    if (game._dailyChallengeRewardPopup) {
+      this._drawDailyChallengeRewardPopup(game);
+    }
+
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
