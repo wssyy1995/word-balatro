@@ -678,7 +678,23 @@ module.exports = function extendPlaying(Renderer) {
         ctx.fillText(word, W / 2, wordAreaY);
         ctx.restore();
       } else {
-        // 未选择任何字母牌：显示提示文字
+        // 未选择任何字母牌：显示提示文字 + 流光边框
+        // 流光边框
+        const t = (Date.now() % 3000) / 3000; // 0~1，3秒一周期
+        const grad = ctx.createLinearGradient(
+          maskX - maskW * 0.2 + maskW * t * 1.4, maskY,
+          maskX + maskW * 0.2 + maskW * t * 1.4, maskY + maskH
+        );
+        grad.addColorStop(0, 'rgba(240,195,20,0)');
+        grad.addColorStop(0.5, 'rgba(240,195,20,0.8)');
+        grad.addColorStop(1, 'rgba(240,195,20,0)');
+        ctx.save();
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5 * s;
+        this._roundedRectPath(ctx, maskX, maskY, maskW, maskH, 10 * s);
+        ctx.stroke();
+        ctx.restore();
+
         ctx.save();
         ctx.font = `${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = 'rgba(90,74,42,0.55)';

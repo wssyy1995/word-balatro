@@ -125,8 +125,8 @@ module.exports = function extendEffects(Renderer) {
       if (prop.limit !== undefined && prop.usesLeft !== undefined) {
         ctx.save();
         const badgeSize = 14 * s;
-        const badgeX = x + w - badgeSize - 2 * s;
-        const badgeY = finalY + 2 * s;
+        const badgeX = x + w - badgeSize - 2 * s + 1;
+        const badgeY = finalY + 2 * s - 1;
         const badgeColor = prop.usesLeft > 0 ? '#e74c3c' : '#7f8c8d';
         ctx.beginPath();
         ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
@@ -146,21 +146,22 @@ module.exports = function extendEffects(Renderer) {
       // 预言字母标记（预言家牌，右上角）
       if (showPredicted && prop.trigger === 'predicted_letter' && prop._predictedLetter) {
         ctx.save();
-        const badgeSize = 16 * s;
-        const badgeX = x + w - badgeSize - 2 * s;
-        const badgeY = finalY + 2 * s;
+        const badgeSize = 18 * s;
+        const centerX = x + w - badgeSize / 2 - 2 * s;
+        const centerY = finalY + badgeSize / 2 + 2 * s;
+        const floatY = Math.sin(Date.now() / 500) * 1; // 微弱上下飘动 ±1px
         ctx.beginPath();
-        ctx.arc(badgeX + badgeSize / 2, badgeY + badgeSize / 2, badgeSize / 2, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY + floatY, badgeSize / 2, 0, Math.PI * 2);
         ctx.fillStyle = '#9b59b6';
         ctx.fill();
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1 * s;
         ctx.stroke();
-        ctx.font = `bold ${Math.max(9, Math.floor(10 * s))}px sans-serif`;
+        ctx.font = `bold ${Math.max(10, Math.floor(11 * s))}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(prop._predictedLetter, badgeX + badgeSize / 2, badgeY + badgeSize / 2 + 0.5 * s);
+        ctx.fillText(prop._predictedLetter, centerX, centerY + floatY + 0.5 * s);
         ctx.restore();
       }
   
