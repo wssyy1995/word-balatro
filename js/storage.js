@@ -307,6 +307,7 @@ class StorageManager {
       musicEnabled: true,
       vibrationEnabled: true,
       dailyWordChallengeEnabled: false,
+      dailyWordHintShown: false,
       ...saved
     };
   }

@@ -1026,12 +1026,11 @@ class Game {
     this._letterGodAnim = null;
     this._debugLabelShow = null;
     this._witchSkillProtectUsed = false;
-    this._dailyChallengeRewardPopup = null;
-    this._dailyChallengeSharePressed = false;
-    this._dailyChallengeOkPressed = false;
     this._dailyWordsPopup = null;
     this._dailyWordsClosePressed = false;
+    this._dailyWordsBackPressed = false;
     this._dailyWordsSwitchPressed = false;
+    this._dailyWordsSwitchHint = null;
     this._dailyWordsScrollY = 0;
     this._dailyWordsScrollStartY = 0;
     this._dailyWordsScrollStartTouchY = 0;
@@ -1044,6 +1043,7 @@ class Game {
     this._dailyWordsScrollBounceTarget = 0;
     this._dailyWordsScrollBounceStartY = 0;
     this._dailyWordsScrollBounceStartTime = 0;
+    this._shouldToastFly = false;
 
     // 装备女巫卡牌跨回合状态
     this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
@@ -1686,7 +1686,7 @@ class Game {
   showHint() {
     const words = findAllValidWordsInHand(this.hand);
     if (words.length === 0) {
-      this.hintToast = { text: '没有可组成的单词', expireAt: Date.now() + 2000 };
+      this.hintToast = { text: '没有可组成的单词', expireAt: Date.now() + 2000, startTime: Date.now() };
       return;
     }
     const topWords = words.slice(0, 10);
@@ -1695,7 +1695,7 @@ class Game {
       lines.push(`${i + 1}. ${w.word.toUpperCase()} (${w.cards.length}牌 ${w.score}分)`);
     });
     if (words.length > 10) lines.push('...');
-    this.hintToast = { text: lines.join('\n'), expireAt: Date.now() + 2000 };
+    this.hintToast = { text: lines.join('\n'), expireAt: Date.now() + 2000, startTime: Date.now() };
   }
 
   async playHand() {
@@ -1764,7 +1764,7 @@ class Game {
       // 检查是否有"出现非法单词，游戏结束"的女巫技能
       const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       if (witchSkill && witchSkill.skill === 'forbid_illegal_words' && !this._ruleBreakerAvailable) {
-        this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000 };
+        this.hintToast = { text: '单词不存在 + 女巫诅咒触发！', expireAt: Date.now() + 2000, startTime: Date.now() };
         this._delay(() => {
           this.state = 'gameover';
           this.gameOverReason = 'forbidden_word';
@@ -2684,7 +2684,9 @@ class Game {
     const remaining = this.dailyChallenge.words.length - this.dailyChallenge.collected.length;
     this.hintToast = {
       text: `今日新词「${w}」收集成功！(${remaining}个待收集)`,
-      expireAt: Date.now() + 3500
+      expireAt: Date.now() + 3500,
+      startTime: Date.now(),
+      starFlyAt: Date.now() + 2000
     };
 
     // 检查是否集齐
@@ -2701,9 +2703,12 @@ class Game {
     // 奖励金币
     const rewardGold = 50;
     this.gold += rewardGold;
-    this._dailyChallengeRewardPopup = {
+    // 用 toast 提示代替弹窗
+    this.hintToast = {
+      text: '恭喜！今日10个新词全部收集完成！',
+      expireAt: Date.now() + 4000,
       startTime: Date.now(),
-      gold: rewardGold
+      starFlyAt: Date.now() + 2000
     };
     if (this.audioManager) this.audioManager.play('buy_success');
   }
@@ -2841,10 +2846,21 @@ class Game {
     // 今日新词弹窗滚动物理更新
     this._updateDailyWordsScroll(deltaTime);
 
+    // toast 弹出 2s 后触发星星飞行动画
+    if (this.hintToast && this.hintToast.starFlyAt && Date.now() > this.hintToast.starFlyAt && !this.hintToast._starFlown) {
+      this.hintToast._starFlown = true;
+      if (this.renderer) this.renderer._startToastFlyStar(this);
+    }
+
     // 清除过期的 hintToast
     if (this.hintToast && Date.now() > this.hintToast.expireAt) {
       this.hintToast = null;
     }
+    // switch 打开提示 2s 后自动隐藏
+    if (this._dailyWordsSwitchHint && Date.now() > this._dailyWordsSwitchHint.expireAt) {
+      this._dailyWordsSwitchHint = null;
+    }
+
     // 字母置换提示按钮 2.5s 后自动隐藏
     if (this._changeLetterHint && Date.now() - this._changeLetterHint.startTime > 2500) {
       this._changeLetterHint = null;

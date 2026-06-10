@@ -493,6 +493,17 @@ class Renderer {
       }
     });
 
+    // 学习模式 toast 飞行星星图标
+    this.toastStarIcon = { img: null, loaded: false, width: 0, height: 0 };
+    try {
+      const img = wx.createImage();
+      img.src = 'images/study_toast_star.png';
+      img.onload = () => { this.toastStarIcon = { img, loaded: true, width: img.width, height: img.height }; };
+      img.onerror = () => { this.toastStarIcon = { img: null, loaded: false, width: 0, height: 0 }; };
+    } catch (e) {
+      this.toastStarIcon = { img: null, loaded: false, width: 0, height: 0 };
+    }
+
     // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）
     this.shopCardImages = {};
     const shopCardNames = new Set();

@@ -1159,6 +1159,74 @@ module.exports = function extendPopup(Renderer) {
       // 记录 switch 点击区域
       this.dailyWordsSwitchRect = { x: swX - 4 * s, y: swY - 4 * s, w: swW + 8 * s, h: swH + 8 * s };
 
+      // switch 打开提示 toast
+      if (game._dailyWordsSwitchHint && Date.now() < game._dailyWordsSwitchHint.expireAt) {
+        const hint = game._dailyWordsSwitchHint;
+        const hintElapsed = Date.now() - hint.startTime;
+        const hintH = 24 * s;
+        const hintPad = 10 * s;
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        const hintTextW = ctx.measureText(hint.text).width;
+        const hintW = hintTextW + hintPad * 2;
+        const hintX = swX + swW / 2 - hintW / 2 - 10 * s;
+        const hintBaseY = swY - hintH - 6 * s;
+        // 入场动画（从下往上弹 150ms）
+        let hintOffsetY = 0;
+        let hintAlpha = 1;
+        if (hintElapsed < 150) {
+          const t = hintElapsed / 150;
+          const eased = Easing.easeOutBack(t);
+          hintOffsetY = (1 - eased) * 10 * s;
+          hintAlpha = t;
+        } else if (hintElapsed > 1600) {
+          const fadeT = (hintElapsed - 1600) / 400;
+          hintAlpha = Math.max(0, 1 - fadeT);
+        }
+        const hintDrawY = hintBaseY + hintOffsetY;
+        ctx.save();
+        ctx.globalAlpha = hintAlpha * ca;
+        ctx.shadowColor = 'rgba(0,0,0,0.12)';
+        ctx.shadowBlur = 6 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.roundRect(hintX, hintDrawY, hintW, hintH, hintH / 2, '#fff', 'rgba(196,163,90,0.3)', 1 * s);
+        ctx.shadowColor = 'transparent';
+        // 小箭头指向 switch
+        const arrowSize = 4 * s;
+        const arrowX = hintX + hintW / 2;
+        const arrowTopY = hintDrawY + hintH - 1 * s;
+        ctx.beginPath();
+        ctx.moveTo(arrowX - arrowSize, arrowTopY);
+        ctx.lineTo(arrowX + arrowSize, arrowTopY);
+        ctx.lineTo(arrowX, arrowTopY + arrowSize + 2 * s);
+        ctx.closePath();
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(196,163,90,0.3)';
+        ctx.lineWidth = 1 * s;
+        ctx.stroke();
+        // 文字
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(hint.text, hintX + hintW / 2, hintDrawY + hintH / 2);
+        ctx.restore();
+      }
+
+      // 返回按钮（参考问题反馈弹窗样式）
+      const backY = py + 26 * s;
+      const backLabel = '‹';
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const backW = ctx.measureText(backLabel).width;
+      ctx.fillText(backLabel, px + 14 * s, backY);
+      ctx.restore();
+      // 记录返回点击区域（加大）
+      this.dailyWordsBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
+
       // 关闭按钮（棕色圆圈）
       const closeSize = 26 * s;
       const closeX = px + pw - closeSize - 12 * s;
@@ -1373,84 +1441,6 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText(after, cx, y);
       }
     };
-
-    // ===== 每日挑战奖励弹窗 =====
-    Renderer.prototype._drawDailyChallengeRewardPopup = function(game) {
-      const ctx = this.ctx;
-      const W = this.W;
-      const H = this.H;
-      const s = this.scale;
-      const popup = game._dailyChallengeRewardPopup;
-      if (!popup) return;
-
-      const elapsed = Date.now() - popup.startTime;
-      const panel = this._drawModalPanel(ctx, W, H, s, {
-        isClosing: false,
-        width: 300, height: 280, enterOffset: 25, closeOffset: 40,
-        elapsed,
-        onCloseComplete: () => {}
-      });
-      if (!panel) return;
-      const { px, py, pw, ph, elapsed: panelElapsed } = panel;
-
-      // 标题
-      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
-      ctx.save();
-      ctx.globalAlpha = titleAnim.alpha;
-      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#1a2f4a';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('🎯 每日挑战完成！', W / 2, py + 40 * s + titleAnim.yShift);
-      ctx.restore();
-
-      // 分隔线
-      const line1Anim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
-      ctx.save();
-      ctx.globalAlpha = line1Anim.alpha;
-      this._drawTitleDivider(ctx, px + 30 * s, py + 62 * s + line1Anim.yShift, pw - 60 * s, s);
-      ctx.restore();
-
-      // 提示文案
-      const hintAnim = Easing.fadeIn(elapsed, 200, 250, 8 * s);
-      const hintY = py + 92 * s + hintAnim.yShift;
-      ctx.save();
-      ctx.globalAlpha = hintAnim.alpha;
-      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = '#555';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('集齐10个目标词', W / 2, hintY);
-      ctx.font = `bold ${Math.floor(18 * s)}px sans-serif`;
-      ctx.fillStyle = '#c4a35a';
-      ctx.fillText(`+${popup.gold} 金币`, W / 2, hintY + 30 * s);
-      ctx.restore();
-
-      // 按钮
-      const btnAnim = Easing.fadeIn(elapsed, 350, 250, 10 * s);
-      const btnGap = 10 * s;
-      const btnW = (pw - 60 * s - btnGap) / 2;
-      const btnH = 46 * s;
-      const btnBaseY = py + ph - btnH - 28 * s + btnAnim.yShift;
-
-      // 分享按钮（左）
-      const shareBtnX = px + 30 * s;
-      ctx.save();
-      ctx.globalAlpha = btnAnim.alpha;
-      this._drawScaledButton(ctx, '分享', shareBtnX, btnBaseY, btnW, btnH, s, game._dailyChallengeSharePressed, { color: '#6a9fd4', radius: 8 });
-      ctx.restore();
-
-      // 确定按钮（右）
-      const okBtnX = shareBtnX + btnW + btnGap;
-      ctx.save();
-      ctx.globalAlpha = btnAnim.alpha;
-      this._drawScaledButton(ctx, '确定', okBtnX, btnBaseY, btnW, btnH, s, game._dailyChallengeOkPressed, { color: '#c4a35a', radius: 8 });
-      ctx.restore();
-
-      // 存储点击区域
-      this.dailyChallengeShareRect = { x: shareBtnX, y: btnBaseY, w: btnW, h: btnH };
-      this.dailyChallengeOkRect = { x: okBtnX, y: btnBaseY, w: btnW, h: btnH };
-    }
 
     // ===== 设置弹窗 =====
     Renderer.prototype.drawSettingsPopup = function(game) {

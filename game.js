@@ -430,8 +430,13 @@ wx.onTouchStart((e) => {
 
   // 今日新词弹窗交互（优先处理）
   if (game._dailyWordsPopup) {
+    const dwBackHit = renderer.dailyWordsBackRect && renderer.hitTest(x, y, [renderer.dailyWordsBackRect]);
     const dwCloseHit = renderer.dailyWordsCloseRect && renderer.hitTest(x, y, [renderer.dailyWordsCloseRect]);
     const dwSwitchHit = renderer.dailyWordsSwitchRect && renderer.hitTest(x, y, [renderer.dailyWordsSwitchRect]);
+    if (dwBackHit) {
+      game._dailyWordsBackPressed = true;
+      return;
+    }
     const dwContentHit = renderer.dailyWordsContentRect && renderer.hitTest(x, y, [renderer.dailyWordsContentRect]);
     if (dwCloseHit) {
       game._dailyWordsClosePressed = true;
@@ -458,23 +463,6 @@ wx.onTouchStart((e) => {
       game._dailyWordsPopup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
     }
-    return;
-  }
-
-  // 每日挑战奖励弹窗交互（优先处理）
-  if (game._dailyChallengeRewardPopup) {
-    const shareHit = renderer.dailyChallengeShareRect && renderer.hitTest(x, y, [renderer.dailyChallengeShareRect]);
-    const okHit = renderer.dailyChallengeOkRect && renderer.hitTest(x, y, [renderer.dailyChallengeOkRect]);
-    if (shareHit) {
-      game._dailyChallengeSharePressed = true;
-      return;
-    }
-    if (okHit) {
-      game._dailyChallengeOkPressed = true;
-      return;
-    }
-    // 点击弹窗背景也关闭
-    game._dailyChallengeOkPressed = true;
     return;
   }
 
@@ -626,6 +614,11 @@ wx.onTouchMove((e) => {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
     if (!hit) game._settingsSoundPressed = false;
+  }
+  if (game._dailyWordsBackPressed && renderer.dailyWordsBackRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsBackRect]);
+    if (!hit) game._dailyWordsBackPressed = false;
   }
   if (game._dailyWordsClosePressed && renderer.dailyWordsCloseRect) {
     const touch = e.touches[0];
@@ -831,47 +824,43 @@ wx.onTouchEnd(() => {
       }
     }
 
+    if (game._dailyWordsBackPressed) {
+      game._dailyWordsBackPressed = false;
+      // 关闭学习模式弹窗，回到设置弹窗
+      game._dailyWordsPopup.closing = true;
+      game._dailyWordsPopup.closeStartTime = Date.now();
+      game._settingsPopup = { startTime: Date.now() };
+      game._closingSettings = false;
+      game._closeSettingsStartTime = null;
+      if (game.audioManager) game.audioManager.play('tap');
+    }
     if (game._dailyWordsClosePressed) {
       game._dailyWordsClosePressed = false;
       game._dailyWordsPopup.closing = true;
       game._dailyWordsPopup.closeStartTime = Date.now();
+      // 同时关闭设置弹窗
+      if (game._settingsPopup) {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+      }
       if (game.audioManager) game.audioManager.play('tap');
     }
     if (game._dailyWordsSwitchPressed) {
       game._dailyWordsSwitchPressed = false;
-      const newValue = !(game.settings && game.settings.dailyWordChallengeEnabled === true);
+      const oldValue = game.settings && game.settings.dailyWordChallengeEnabled === true;
+      const newValue = !oldValue;
       game.settings.dailyWordChallengeEnabled = newValue;
       if (game.storageManager) game.storageManager.saveSettings(game.settings);
-      if (game.audioManager) game.audioManager.play('tap');
-    }
-  }
-
-  // 每日挑战奖励弹窗交互处理（松开时）
-  if (game._dailyChallengeRewardPopup) {
-    if (game._dailyChallengeSharePressed) {
-      game._dailyChallengeSharePressed = false;
-      game._dailyChallengeOkPressed = false;
-      // 触发分享
-      try {
-        const shareTitle = `🎯 我完成了今日10词挑战，集齐了所有目标词！`;
-        const tempFilePath = canvas.toTempFilePathSync();
-        wx.shareAppMessage({
-          title: shareTitle,
-          imageUrl: tempFilePath,
-          query: 'from=daily_challenge'
-        });
-      } catch (e) {
-        wx.shareAppMessage({
-          title: `🎯 我完成了今日10词挑战，集齐了所有目标词！`,
-          query: 'from=daily_challenge'
-        });
+      // 打开时弹出提示（仅首次）
+      if (newValue && !oldValue && !game.settings.dailyWordHintShown) {
+        game._dailyWordsSwitchHint = {
+          text: '下回合起生效',
+          startTime: Date.now(),
+          expireAt: Date.now() + 2000
+        };
+        game.settings.dailyWordHintShown = true;
+        if (game.storageManager) game.storageManager.saveSettings(game.settings);
       }
-      game._dailyChallengeRewardPopup = null;
-      if (game.audioManager) game.audioManager.play('tap');
-    } else if (game._dailyChallengeOkPressed) {
-      game._dailyChallengeOkPressed = false;
-      game._dailyChallengeSharePressed = false;
-      game._dailyChallengeRewardPopup = null;
       if (game.audioManager) game.audioManager.play('tap');
     }
   }

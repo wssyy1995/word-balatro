@@ -50,6 +50,8 @@ Renderer.prototype.render = function(game) {
       }
       // hintToast 提示
       this._drawHintToast(game);
+      // toast 飞行星星动画
+      this._drawToastFlyStar();
     } else if (game.state === 'settlement') {
       // 金币结算弹窗（保留 HUD 背景）
       this.drawHUD(game);
@@ -787,11 +789,6 @@ Renderer.prototype.render = function(game) {
     // 今日新词弹窗
     if (game._dailyWordsPopup) {
       this._drawDailyWordsPopup(game);
-    }
-
-    // 每日挑战奖励弹窗
-    if (game._dailyChallengeRewardPopup) {
-      this._drawDailyChallengeRewardPopup(game);
     }
 
     // 调试菜单（最后绘制，确保在最上层）

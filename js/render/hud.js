@@ -462,17 +462,32 @@ module.exports = function extendHud(Renderer) {
       if (!game.hintToast || !game.hintToast.text) return;
       const toastH = 32 * s;
       const padding = 12 * s;
-      const iconSize = 18 * s;
+      const iconSize = 33 * s;
       const iconSpacing = 6 * s;
       ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
       const textW = ctx.measureText(game.hintToast.text).width;
-      const toastW = textW + padding * 2 + iconSize + iconSpacing;
+      const toastW = textW + padding * 2 + iconSize + iconSpacing - 10 * s;
       const toastX = (W - toastW) / 2;
-      // 位置：单词预览区下方，无预览区时回退到屏幕底部
-      const previewBottom = this.wordAreaY ? this.wordAreaY + 19 * s : 0;
-      const toastY = this.wordAreaY ? previewBottom + 10 * s - 3 : this.H - 120 * s;
+      // 位置：单词预览区上方（再往上 11px），无预览区时回退到屏幕底部
+      let toastY = this.wordAreaY ? this.wordAreaY - toastH - 10 * s - 3 * s - 3 * s - 3 * s - 2 * s : this.H - 120 * s;
+
+      // 进入动画：从下往上弹出（350ms easeOutBack）
+      let animOffsetY = 0;
+      let animAlpha = 1;
+      if (game.hintToast.startTime) {
+        const enterElapsed = Date.now() - game.hintToast.startTime;
+        const enterDuration = 350;
+        if (enterElapsed < enterDuration) {
+          const t = enterElapsed / enterDuration;
+          const eased = Easing.easeOutBack(t);
+          animOffsetY = (1 - eased) * 20 * s;
+          animAlpha = t;
+        }
+      }
+      toastY += animOffsetY;
 
       ctx.save();
+      ctx.globalAlpha = animAlpha;
       // 白色背景 + 轻微阴影
       ctx.shadowColor = 'rgba(0,0,0,0.12)';
       ctx.shadowBlur = 8 * s;
@@ -480,17 +495,133 @@ module.exports = function extendHud(Renderer) {
       this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, '#fff', 'rgba(196,163,90,0.25)', 1 * s);
       ctx.shadowColor = 'transparent';
 
-      // 左侧 icon
+      // 头部 icon（与 toast 顶部齐平）
       const iconData = this.settingIcons && this.settingIcons.study;
       if (iconData && iconData.loaded && iconData.img) {
-        ctx.drawImage(iconData.img, toastX + padding, toastY + (toastH - iconSize) / 2, iconSize, iconSize);
+        ctx.drawImage(iconData.img, toastX, toastY, iconSize, iconSize);
       }
 
       // 深色文字
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(game.hintToast.text, toastX + padding + iconSize + iconSpacing, toastY + toastH / 2);
+      const textX = toastX + padding + iconSize + iconSpacing - 3 * s - 2 * s - 2 * s;
+      const textY = toastY + toastH / 2;
+      const dailyMatch = game.hintToast.text.match(/今日新词「(.+?)」收集成功！\((\d+)个待收集\)/);
+      if (dailyMatch) {
+        const [, word, remainingStr] = dailyMatch;
+        const baseFont = `bold ${Math.floor(13 * s)}px sans-serif`;
+        const heavyFont = `900 ${Math.floor(13 * s)}px sans-serif`;
+        const p1 = '今日新词「';
+        const p2 = '」收集成功！(';
+        const p3 = '个待收集)';
+        let cursorX = textX;
+        ctx.font = baseFont;
+        ctx.fillText(p1, cursorX, textY);
+        cursorX += ctx.measureText(p1).width;
+        ctx.font = heavyFont;
+        ctx.fillText(word, cursorX, textY);
+        cursorX += ctx.measureText(word).width;
+        ctx.font = baseFont;
+        ctx.fillText(p2, cursorX, textY);
+        cursorX += ctx.measureText(p2).width;
+        ctx.font = heavyFont;
+        ctx.fillText(remainingStr, cursorX, textY);
+        cursorX += ctx.measureText(remainingStr).width;
+        ctx.font = baseFont;
+        ctx.fillText(p3, cursorX, textY);
+      } else {
+        ctx.fillText(game.hintToast.text, textX, textY);
+      }
+      ctx.restore();
+
+      // 记录 toast 位置信息（供飞行星星使用）
+      this._lastToastRect = { x: toastX, y: toastY, w: toastW, h: toastH };
+    }
+
+    // 启动 toast 飞行星星动画
+    // 三阶段：1) 从 toast 左边弹出 250ms；2) 停留 300ms；3) 飞行 800ms
+    Renderer.prototype._startToastFlyStar = function(game) {
+      const s = this.scale;
+      const rect = this._lastToastRect;
+      const toastCX = rect ? rect.x + rect.w / 2 : this.W / 2;
+      const toastCY = rect ? rect.y + rect.h / 2 : this.H / 2;
+      const toastLeft = rect ? rect.x : toastCX;
+      const targetPos = this.topIconRect
+        ? { x: this.topIconRect.x + this.topIconRect.w / 2, y: this.topIconRect.y + this.topIconRect.h / 2 }
+        : { x: 30 * s, y: 30 * s };
+      // 弹出位置：固定距离 toast 图标左侧 3px
+      const popX = toastLeft - 3 * s;
+      this._toastFlyStar = {
+        popStartX: popX - 18 * s,
+        popStartY: toastCY,
+        popTargetX: popX,
+        popTargetY: toastCY,
+        flyTargetX: targetPos.x,
+        flyTargetY: targetPos.y,
+        startTime: Date.now(),
+        popDuration: 250,
+        holdDuration: 400,
+        flyDuration: 800
+      };
+    }
+
+    // 绘制飞行中的星星（三阶段：弹出 → 停留 → 飞行）
+    Renderer.prototype._drawToastFlyStar = function() {
+      if (!this._toastFlyStar) return;
+      const fs = this._toastFlyStar;
+      const elapsed = Date.now() - fs.startTime;
+      const s = this.scale;
+      const ctx = this.ctx;
+      let x, y, scale;
+
+      // 阶段1：从 toast 左边弹出（0 ~ 250ms，easeOutBack）
+      if (elapsed < fs.popDuration) {
+        const t = elapsed / fs.popDuration;
+        const eased = Easing.easeOutBack(t);
+        x = fs.popStartX + (fs.popTargetX - fs.popStartX) * eased;
+        y = fs.popStartY + (fs.popTargetY - fs.popStartY) * eased;
+        scale = eased;
+      }
+      // 阶段2：停留（250 ~ 550ms，轻微上下浮动）
+      else if (elapsed < fs.popDuration + fs.holdDuration) {
+        const holdElapsed = elapsed - fs.popDuration;
+        x = fs.popTargetX;
+        y = fs.popTargetY + Math.sin(holdElapsed / 120) * 2.5 * s;
+        scale = 1;
+      }
+      // 阶段3：飞行（550 ~ 1350ms，easeOutCubic）
+      else if (elapsed < fs.popDuration + fs.holdDuration + fs.flyDuration) {
+        const flyElapsed = elapsed - fs.popDuration - fs.holdDuration;
+        const t = flyElapsed / fs.flyDuration;
+        const eased = Easing.easeOutCubic(t);
+        x = fs.popTargetX + (fs.flyTargetX - fs.popTargetX) * eased;
+        y = fs.popTargetY + (fs.flyTargetY - fs.popTargetY) * eased;
+        scale = 1 - t * 0.4;
+      }
+      // 结束
+      else {
+        this._toastFlyStar = null;
+        return;
+      }
+
+      const size = scale * 22 * s;
+      ctx.save();
+      const starData = this.toastStarIcon;
+      if (starData && starData.loaded && starData.img) {
+        ctx.shadowColor = '#c4a35a';
+        ctx.shadowBlur = 12 * s;
+        ctx.drawImage(starData.img, x - size / 2, y - size / 2, size, size);
+      } else {
+        // fallback：文字星星
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#c4a35a';
+        ctx.shadowBlur = 12 * s;
+        ctx.font = `bold ${Math.floor(size)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.fillText('★', x, y);
+      }
       ctx.restore();
     }
 
