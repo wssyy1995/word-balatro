@@ -36,6 +36,7 @@ module.exports = function extendPlaying(Renderer) {
       const cardBottom = btnTop - cardGap + 3 * s;              // 卡牌底部
       const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
       const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心
+      this.wordAreaY = wordAreaY;
       const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部
       const propY = hudBottom + 6 * s;                         // 道具栏顶部（固定间距，跟随 HUD 整体下移）
   

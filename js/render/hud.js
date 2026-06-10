@@ -460,22 +460,37 @@ module.exports = function extendHud(Renderer) {
       const W = this.W;
       const s = this.scale;
       if (!game.hintToast || !game.hintToast.text) return;
-      const toastH = 36 * s;
-      const toastY = this.H - 120 * s;
-      const padding = 16 * s;
+      const toastH = 32 * s;
+      const padding = 12 * s;
+      const iconSize = 18 * s;
+      const iconSpacing = 6 * s;
       ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
       const textW = ctx.measureText(game.hintToast.text).width;
-      const toastW = textW + padding * 2;
+      const toastW = textW + padding * 2 + iconSize + iconSpacing;
       const toastX = (W - toastW) / 2;
-  
+      // 位置：单词预览区下方，无预览区时回退到屏幕底部
+      const previewBottom = this.wordAreaY ? this.wordAreaY + 19 * s : 0;
+      const toastY = this.wordAreaY ? previewBottom + 10 * s - 3 : this.H - 120 * s;
+
       ctx.save();
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      this.roundRect(toastX, toastY, toastW, toastH, 18 * s, null, null, 0);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
+      // 白色背景 + 轻微阴影
+      ctx.shadowColor = 'rgba(0,0,0,0.12)';
+      ctx.shadowBlur = 8 * s;
+      ctx.shadowOffsetY = 2 * s;
+      this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, '#fff', 'rgba(196,163,90,0.25)', 1 * s);
+      ctx.shadowColor = 'transparent';
+
+      // 左侧 icon
+      const iconData = this.settingIcons && this.settingIcons.study;
+      if (iconData && iconData.loaded && iconData.img) {
+        ctx.drawImage(iconData.img, toastX + padding, toastY + (toastH - iconSize) / 2, iconSize, iconSize);
+      }
+
+      // 深色文字
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(game.hintToast.text, W / 2, toastY + toastH / 2);
+      ctx.fillText(game.hintToast.text, toastX + padding + iconSize + iconSpacing, toastY + toastH / 2);
       ctx.restore();
     }
 

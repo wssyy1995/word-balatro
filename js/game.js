@@ -230,12 +230,12 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   let seedWord4 = null;
 
   if (dailyWord) {
-    // 学习模式：用每日新词替代第二个种子词
-    let dailyLetters = [...new Set(dailyWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l)))];
+    // 学习模式：用每日新词替代第二个种子词（保留完整字母含重复）
+    let dailyLetters = dailyWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
     // 限制每日新词字母数，确保不超过手牌容量
     const maxDailyLen = Math.max(0, count - seedLetters3.length);
     if (dailyLetters.length > maxDailyLen) {
-      shuffle(dailyLetters);
+      // 优先保留完整单词的前部字母，而不是随机打乱
       dailyLetters = dailyLetters.slice(0, maxDailyLen);
     }
     seedLetters4 = dailyLetters;
@@ -2683,8 +2683,8 @@ class Game {
     // 显示收集提示
     const remaining = this.dailyChallenge.words.length - this.dailyChallenge.collected.length;
     this.hintToast = {
-      text: `🎯 目标词「${w}」收集成功！(${remaining}个待收集)`,
-      expireAt: Date.now() + 2500
+      text: `今日新词「${w}」收集成功！(${remaining}个待收集)`,
+      expireAt: Date.now() + 3500
     };
 
     // 检查是否集齐

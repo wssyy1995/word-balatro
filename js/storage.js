@@ -301,12 +301,14 @@ class StorageManager {
   // ===== 设置 =====
 
   getSettings() {
-    return this.get('settings', {
+    const saved = this.get('settings', {});
+    return {
       soundEnabled: true,
       musicEnabled: true,
       vibrationEnabled: true,
-      dailyWordChallengeEnabled: false
-    });
+      dailyWordChallengeEnabled: false,
+      ...saved
+    };
   }
 
   saveSettings(settings) {
