@@ -91,10 +91,10 @@ async function drawRankList() {
     ctx.font = `bold ${Math.floor(W * 0.035)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(i + 1), contentX + contentW * 0.12, y + rowH / 2);
+    ctx.fillText(String(i + 1), contentX + contentW * 0.10, y + rowH / 2);
 
     // 头像
-    const avatarX = contentX + contentW * 0.32;
+    const avatarX = contentX + contentW * 0.26;
     const avatarY = y + rowH / 2;
     const avatarR = sp(18);
     if (player.avatarImg) {
@@ -117,12 +117,20 @@ async function drawRankList() {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, contentX + contentW * 0.42, y + rowH / 2);
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, contentX + contentW * 0.38, y + rowH / 2);
+
+    // 回合
+    const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bestround, contentX + contentW * 0.70, y + rowH / 2);
 
     // 分数
     const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
     ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(score, contentX + contentW * 0.92, y + rowH / 2);
@@ -176,10 +184,10 @@ function drawFriendList(w, rowH) {
     ctx.font = `bold ${Math.floor(W * 0.035)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(String(i + 1), pw * 0.12, y + rh / 2);
+    ctx.fillText(String(i + 1), pw * 0.10, y + rh / 2);
 
     // 头像
-    const avatarX = pw * 0.32;
+    const avatarX = pw * 0.26;
     const avatarY = y + rh / 2;
     const avatarR = Math.min(rh * 0.35, sp(18));
     if (player.avatarImg) {
@@ -202,12 +210,20 @@ function drawFriendList(w, rowH) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, pw * 0.42, y + rh / 2);
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, pw * 0.38, y + rh / 2);
+
+    // 回合
+    const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bestround, pw * 0.70, y + rh / 2);
 
     // 分数
     const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
     ctx.fillStyle = '#fff';
-    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.fillText(score, pw * 0.92, y + rh / 2);
@@ -271,10 +287,11 @@ function _drawRankPanelFrame() {
   ctx.font = `bold ${Math.floor(W * 0.032)}px sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('排名', contentX + contentW * 0.12, startY + rowH / 2);
-  ctx.fillText('玩家', contentX + contentW * 0.45, startY + rowH / 2);
+  ctx.fillText('排名', contentX + contentW * 0.10, startY + rowH / 2);
+  ctx.fillText('玩家', contentX + contentW * 0.38, startY + rowH / 2);
+  ctx.fillText('回合', contentX + contentW * 0.70, startY + rowH / 2);
   ctx.textAlign = 'right';
-  ctx.fillText('分数', contentX + contentW * 0.92, startY + rowH / 2);
+  ctx.fillText('总分', contentX + contentW * 0.92, startY + rowH / 2);
 
   return { panelX, panelY, panelW, panelH, contentX, contentW, rowH, startY, W, H };
 }
@@ -331,7 +348,7 @@ function fetchRankData() {
 
 function _doFetchFriendRank() {
   wx.getFriendCloudStorage({
-    keyList: ['score'],
+    keyList: ['score', 'bestround'],
     success: (res) => {
       console.log('[OpenData] getFriendCloudStorage success', res.data?.length);
       const data = res.data || [];

@@ -1,11 +1,11 @@
 // ===== 女巫技能配置 =====
 const WITCH_SKILLS = [
-  { level: 3, name: '女巫_A', reward: 'card_change_letter',rate:0.5,reward_desc: '有概率获得一张: 字母置换' },
+  { level: 3, name: '女巫_A', reward: 'card_change_letter',rate:1,reward_desc: '有概率获得一张: 字母置换' },
   { level: 5, name: '女巫_B', reward: 'global_letter_1',rate:1,reward_desc: '本赛局,字母手牌+1' },
   { level: 8, name: '女巫_C',  reward: 'global_witch_card_1',rate:1,reward_desc: '本赛局，增加一张女巫牌槽位'},
-  { level: 11, name: '女巫_D', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
-  { level: 14, name: '女巫_E', reward: 'shop_discount_5',rate:1,reward_desc: '本回合卡牌商店，打5折'},
-  { level: 16, name: '女巫_F', reward: 'card_random_upgrade',rate:0.3,reward_desc: '有概率获得一张: 随机强化'},
+  { level: 11, name: '女巫_D', reward: 'shop_discount_5',rate:1,reward_desc: '本回合卡牌商店，打5折'},
+  { level: 14, name: '女巫_E', reward: 'double_coin',rate:0.5,reward_desc: '有概率，已拥有金币翻倍' },
+  { level: 16, name: '女巫_F', reward: 'card_random_upgrade',rate:1,reward_desc: '有概率获得一张: 随机强化'},
   { level: 18, name: '女巫_G', reward: 'global_hand_1',rate:1,reward_desc: '本赛局,出牌次数 +1'  },
   { level: 21, name: '女巫_H',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
   { level: 24, name: '女巫_I',  reward: 'shop_discount_5',rate:1,reward_desc: '本回合卡牌商店，打5折' },
@@ -194,7 +194,7 @@ function createRewardItem(rewardType) {
         type: 'buff',
         effect: 'shop_discount_5',
         value: 0.5,
-        desc: '本回合卡牌商店所有商品打5折'
+        desc: '本回合卡牌商店,所有商品打5折'
       };
     default:
       return null;

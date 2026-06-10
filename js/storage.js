@@ -200,6 +200,21 @@ class StorageManager {
     return false;
   }
 
+  // ===== 最佳回合 =====
+
+  getBestRound() {
+    return this.get('best_round', 0);
+  }
+
+  setBestRound(round) {
+    const current = this.getBestRound();
+    if (round > current) {
+      this.set('best_round', round);
+      return true;
+    }
+    return false;
+  }
+
   // ===== 每日复活次数 =====
 
   saveDailyRevive(dateStr, used = true) {

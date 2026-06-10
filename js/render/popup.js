@@ -1502,7 +1502,7 @@ module.exports = function extendPopup(Renderer) {
 
         // 输入框文字
         const feedbackText = game._feedbackText || '';
-        const placeholder = '请描述你遇到的问题（最多100字）';
+        const placeholder = '请描述你遇到的问题或建议（你的每个建议对我都很宝贵！）';
         const textX = inputX + 12 * s;
         const textY = inputY + 14 * s;
 

@@ -1700,7 +1700,8 @@ class Game {
           if (this.audioManager) this.audioManager.play('game_over');
           if (this.storageManager) {
             this.storageManager.setHighScore(this.totalScore);
-            uploadScore(this.storageManager.getHighScore());
+            this.storageManager.setBestRound(this.round);
+            uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
             this.storageManager.updateStats(this);
             this.storageManager.clearProgress();
           }
@@ -1739,7 +1740,8 @@ class Game {
             if (this.audioManager) this.audioManager.play('game_over');
             if (this.storageManager) {
               this.storageManager.setHighScore(this.totalScore);
-              uploadScore(this.storageManager.getHighScore());
+              this.storageManager.setBestRound(this.round);
+              uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
               this.storageManager.updateStats(this);
               this.storageManager.clearProgress();
             }
@@ -1789,7 +1791,8 @@ class Game {
               if (this.audioManager) this.audioManager.play('game_over');
               if (this.storageManager) {
                 this.storageManager.setHighScore(this.totalScore);
-                uploadScore(this.storageManager.getHighScore());
+                this.storageManager.setBestRound(this.round);
+                uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
                 this.storageManager.updateStats(this);
                 this.storageManager.clearProgress();
               }
@@ -2033,7 +2036,8 @@ class Game {
         if (this.audioManager) this.audioManager.play('game_over');
         if (this.storageManager) {
           this.storageManager.setHighScore(this.totalScore);
-          uploadScore(this.storageManager.getHighScore());
+          this.storageManager.setBestRound(this.round);
+          uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
           this.storageManager.updateStats(this);
           this.storageManager.clearProgress();
         }
@@ -2696,13 +2700,53 @@ class Game {
   }
 }
 
-function uploadScore(score) {
+function uploadScoreAndRound(currentScore, currentRound) {
   if (!wx.setUserCloudStorage) return;
-  wx.setUserCloudStorage({
-    KVDataList: [{ key: 'score', value: String(score) }],
-    success: () => console.log('[Rank] 分数上传成功', score),
-    fail: (err) => console.error('[Rank] 分数上传失败', err),
-  });
+
+  const doUpload = (updates) => {
+    if (updates.length === 0) {
+      console.log('[Rank] 云端数据已更高，无需上传');
+      return;
+    }
+    wx.setUserCloudStorage({
+      KVDataList: updates,
+      success: () => console.log('[Rank] 上传成功', updates),
+      fail: (err) => console.error('[Rank] 上传失败', err),
+    });
+  };
+
+  if (wx.getUserCloudStorage) {
+    wx.getUserCloudStorage({
+      keyList: ['score', 'bestround'],
+      success: (res) => {
+        const kvList = res.KVDataList || [];
+        const cloudScore = parseInt(kvList.find(kv => kv.key === 'score')?.value || '0', 10);
+        const cloudRound = parseInt(kvList.find(kv => kv.key === 'bestround')?.value || '0', 10);
+
+        const updates = [];
+        if (currentRound > cloudRound) {
+          // 规则1：round 创新高，同时更新 round 和 score
+          updates.push({ key: 'score', value: String(currentScore) });
+          updates.push({ key: 'bestround', value: String(currentRound) });
+        } else if (currentScore > cloudScore) {
+          // 规则2：round 没创新高，但 score 创新高，只更新 score
+          updates.push({ key: 'score', value: String(currentScore) });
+        }
+        // 规则3：都不高，不更新
+        doUpload(updates);
+      },
+      fail: (err) => {
+        console.error('[Rank] 读取云端数据失败', err);
+        // 读取失败时保守处理：不上传，避免覆盖更高的云端记录
+      }
+    });
+  } else {
+    // 不支持读取时直接上传两个字段
+    doUpload([
+      { key: 'score', value: String(currentScore) },
+      { key: 'bestround', value: String(currentRound) }
+    ]);
+  }
 }
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScore };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound };
