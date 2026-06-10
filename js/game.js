@@ -186,11 +186,127 @@ function getSeedWord(minLen = 3, maxLen = 6, excludeLetters = []) {
   return validFallbacks.length > 0 ? validFallbacks[0] : 'the';
 }
 
-function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = []) {
-  const seedWord = getSeedWord(seedMinLen, seedMaxLen, excludeLetters);
-  const seedLetters = seedWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+const VOWELS = ['A', 'E', 'I', 'O', 'U'];
 
-  const seedCards = seedLetters.map(letter => {
+function getCandidatesByLen(minLen, maxLen, excludeLetters) {
+  const candidates = [];
+  for (const word of WORD_DATA.keys()) {
+    const upper = word.toUpperCase();
+    if (word.length >= minLen && word.length <= maxLen) {
+      const hasExcluded = excludeLetters.some(l => upper.includes(l));
+      if (!hasExcluded) candidates.push(word);
+    }
+  }
+  return candidates;
+}
+
+function getVowelSet(word) {
+  const s = new Set();
+  for (const ch of word.toUpperCase()) {
+    if (VOWELS.includes(ch)) s.add(ch);
+  }
+  return s;
+}
+
+function countVowelFreq(word) {
+  const freq = {};
+  for (const ch of word.toUpperCase()) {
+    if (VOWELS.includes(ch)) {
+      freq[ch] = (freq[ch] || 0) + 1;
+    }
+  }
+  return freq;
+}
+
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = []) {
+  // 固定生成一个长度3和一个长度4的种子词（不从牌堆抽取，直接创建）
+  // 要求：两个种子词的所有字母加起来，不同元音不能超过2个
+  const candidates3 = getCandidatesByLen(3, 3, excludeLetters);
+  const candidates4 = getCandidatesByLen(4, 4, excludeLetters);
+  shuffle(candidates3);
+  shuffle(candidates4);
+
+  // 将长度4候选词按元音集合分组（key 为排序后的元音字符串），实现 O(1) 查表
+  const groups4 = new Map();
+  for (const w of candidates4) {
+    const key = Array.from(getVowelSet(w)).sort().join('');
+    if (!groups4.has(key)) groups4.set(key, []);
+    groups4.get(key).push(w);
+  }
+
+  let seedWord3 = null;
+  let seedWord4 = null;
+  for (const w3 of candidates3) {
+    const v3 = getVowelSet(w3);
+    if (v3.size > 2) continue; // w3 自身元音种类已超2，直接跳过
+
+    const v3Freq = countVowelFreq(w3);
+    if (Object.values(v3Freq).some(c => c > 2)) continue; // w3 自身某个元音已超2
+
+    const v3Arr = Array.from(v3).sort();
+    const possibleKeys = new Set(['']);
+
+    // w4 元音全部来自 v3 的子集
+    for (let mask = 1; mask < (1 << v3Arr.length); mask++) {
+      const subset = [];
+      for (let i = 0; i < v3Arr.length; i++) {
+        if (mask & (1 << i)) subset.push(v3Arr[i]);
+      }
+      possibleKeys.add(subset.join(''));
+    }
+
+    // v3 只有1个元音时，w4 可再引入1个新元音（总共2个）
+    if (v3.size === 1) {
+      for (const v of VOWELS) {
+        if (!v3.has(v)) possibleKeys.add([v3Arr[0], v].sort().join(''));
+      }
+    }
+
+    // v3 没有元音时，w4 最多可有2个元音
+    if (v3.size === 0) {
+      for (const v of VOWELS) possibleKeys.add(v);
+      for (let i = 0; i < VOWELS.length; i++) {
+        for (let j = i + 1; j < VOWELS.length; j++) {
+          possibleKeys.add([VOWELS[i], VOWELS[j]].sort().join(''));
+        }
+      }
+    }
+
+    // 收集满足条件的 w4：合并后每个元音字母累计出现次数不能超过2
+    const allValid4 = [];
+    for (const key of possibleKeys) {
+      const group = groups4.get(key);
+      if (!group) continue;
+      for (const w4 of group) {
+        const v4Freq = countVowelFreq(w4);
+        let valid = true;
+        for (const v of VOWELS) {
+          const total = (v3Freq[v] || 0) + (v4Freq[v] || 0);
+          if (total > 2) {
+            valid = false;
+            break;
+          }
+        }
+        if (valid) allValid4.push(w4);
+      }
+    }
+    if (allValid4.length > 0) {
+      seedWord3 = w3;
+      seedWord4 = allValid4[Math.floor(Math.random() * allValid4.length)];
+      break;
+    }
+  }
+
+  // 兜底：若查表后未找到（理论上极少），降级为随机取
+  if (!seedWord3) seedWord3 = candidates3[0] || getSeedWord(3, 3, excludeLetters);
+  if (!seedWord4) seedWord4 = candidates4[0] || getSeedWord(4, 4, excludeLetters);
+
+  const seedLetters3 = seedWord3.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+  const seedLetters4 = seedWord4.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+  const allSeedLetters = [...seedLetters3, ...seedLetters4];
+  const seedLetterSet = new Set(allSeedLetters);
+
+  const makeSeedCards = (letters) => letters.map(letter => {
     const baseScore = LETTER_SCORE[letter];
     const upgrade = letterUpgrades.get(letter);
     let score = baseScore;
@@ -208,15 +324,53 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
       id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true };
   });
 
-  for (const letter of seedLetters) {
-    const idx = deck.findIndex(c => c.letter === letter);
-    if (idx >= 0) deck.splice(idx, 1);
+  const seedCards3 = makeSeedCards(seedLetters3);
+  const seedCards4 = makeSeedCards(seedLetters4);
+  const allSeedCards = [...seedCards3, ...seedCards4];
+  console.log('种子词：', seedWord3 + ',' + seedWord4);
+
+  // 过滤牌堆：随机补牌的字母不能跟种子单词字母重复
+  // 种子词字母的牌保留在 deck 中，仅抽出不含种子词字母的随机牌
+  const remaining = count - allSeedLetters.length;
+  const randomCards = [];
+  const toKeep = [];
+
+  shuffle(deck);
+  for (const card of deck) {
+    // 随机补牌不能包含种子词字母，也不能包含任何元音
+    const isValid = !seedLetterSet.has(card.letter) && !VOWELS.includes(card.letter);
+    if (randomCards.length < remaining && isValid) {
+      randomCards.push(card);
+    } else {
+      toKeep.push(card);
+    }
   }
 
-  const remaining = count - seedLetters.length;
-  const randomCards = deck.splice(0, remaining);
-  const insertPos = Math.floor(Math.random() * (randomCards.length + 1));
-  const hand = [...randomCards.slice(0, insertPos), ...seedCards, ...randomCards.slice(insertPos)];
+  // 若过滤后牌堆不足，补充新牌堆并再次过滤
+  if (randomCards.length < remaining) {
+    const extraDeck = createDeck();
+    shuffle(extraDeck);
+    for (const card of extraDeck) {
+      const isValid = !seedLetterSet.has(card.letter) && !VOWELS.includes(card.letter);
+      if (randomCards.length < remaining && isValid) {
+        randomCards.push(card);
+      } else {
+        toKeep.push(card);
+      }
+    }
+  }
+
+  // 重建 deck（保留未被抽走的牌，含种子词字母的牌仍留在牌堆供后续补牌）
+  deck.length = 0;
+  deck.push(...toKeep);
+
+  // 将种子卡牌打乱后逐个随机穿插到 randomCards 中，避免按单词顺序连续出现
+  shuffle(allSeedCards);
+  const hand = [...randomCards];
+  for (const card of allSeedCards) {
+    const pos = Math.floor(Math.random() * (hand.length + 1));
+    hand.splice(pos, 0, card);
+  }
   return hand;
 }
 
@@ -656,11 +810,17 @@ async function isValidWordOnline(word) {
             def: (p.means || []).slice(0, 3).join('；')
           }));
 
-          // 汇总释义
-          const meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
+          // 汇总释义（限制单条最长20字符，超出截断）
+          const MAX_MEANING_LEN = 20;
+          let meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
+          if (meaning.length > MAX_MEANING_LEN) meaning = meaning.substring(0, MAX_MEANING_LEN) + '...';
+          const trimmedEntries = entries.length > 0 ? entries : [{ pos: '', def: meaning }];
+          trimmedEntries.forEach(e => {
+            if (e.def && e.def.length > MAX_MEANING_LEN) e.def = e.def.substring(0, MAX_MEANING_LEN) + '...';
+          });
 
           wordMeaningCache.set(word, {
-            entries: entries.length > 0 ? entries : [{ pos: '', def: meaning }],
+            entries: trimmedEntries,
             pos: entries[0]?.pos || '',
             meaning,
             phEn,
@@ -713,12 +873,19 @@ function getWordMeaning(word) {
   return null;
 }
 
+function truncateMeaning(str, maxLen = 20) {
+  if (!str || str.length <= maxLen) return str;
+  return str.substring(0, maxLen) + '...';
+}
+
 function formatMeaning(meaningObj) {
   if (!meaningObj) return '';
+  const MAX_LEN = 20;
   if (meaningObj.entries && meaningObj.entries.length > 0) {
-    return meaningObj.entries.map(e => `${e.pos} ${e.def}`).join('；');
+    const text = meaningObj.entries.map(e => `${e.pos} ${e.def}`).join('；');
+    return truncateMeaning(text, MAX_LEN);
   }
-  return meaningObj.meaning || '';
+  return truncateMeaning(meaningObj.meaning || '', MAX_LEN);
 }
 
 // ===== 游戏主类 =====

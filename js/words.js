@@ -2,7 +2,6 @@
 // 格式: Map<word, {meaning: string, pos: string}>
 // 数据来源: ECDICT 开源英汉词典 + 牛津3000核心词/中高考词库
 const WORD_DATA = new Map([
-  // ===== 2 字母单词 =====
   ['aa', {meaning:'熔岩',pos:'n.'}], ['ab', {meaning:'腹肌',pos:'n.'}], ['ad', {meaning:'广告',pos:'n.'}],
   ['ae', {meaning:'一',pos:'adj.'}], ['ag', {meaning:'农业',pos:'n.'}], ['ah', {meaning:'啊',pos:'int.'}],
   ['ai', {meaning:'树懒',pos:'n.'}], ['al', {meaning:'铝',pos:'n.'}], ['am', {meaning:'是',pos:'v.'}],
@@ -38,7 +37,6 @@ const WORD_DATA = new Map([
   ['we', {meaning:'我们',pos:'pron.'}], ['wo', {meaning:'唉',pos:'int.'}], ['xi', {meaning:'希腊字母',pos:'n.'}],
   ['xu', {meaning:'越南币',pos:'n.'}], ['ya', {meaning:'你',pos:'pron.'}], ['ye', {meaning:'你们',pos:'pron.'}],
   ['yo', {meaning:'哟',pos:'int.'}], ['za', {meaning:'披萨',pos:'n.'}],
-  // ===== 3+ 字母单词 =====
   ['about', {meaning:'在...周围',pos:'adj.'}],
   ['above', {meaning:'在上方',pos:'n.'}],
   ['across', {meaning:'越过',pos:'n.'}],

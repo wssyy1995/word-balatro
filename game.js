@@ -326,6 +326,18 @@ function startGame() {
   game.renderer = renderer;
   wx.game = game;
 
+  // 存档恢复时：补充按需下载可能遗漏的引导精灵图（witch_guide_3/4）
+  if (game.round === 2 && game.shopGuidePhase === 0) {
+    cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
+      console.error('[Restore] 补充下载 witch_guide_3 失败:', err);
+    });
+  }
+  if (game.round === 3 && game.cardBookGuidePhase === 0) {
+    cloudStorage.preloadGuideGroup(4, renderer).catch(err => {
+      console.error('[Restore] 补充下载 witch_guide_4 失败:', err);
+    });
+  }
+
   // 加载 cloudStorage 缓存的音频
   if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
 

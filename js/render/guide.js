@@ -369,13 +369,13 @@ module.exports = function extendGuide(Renderer) {
       ctx.fillStyle = '#1a2f4a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-  
+
       const textPad = 18 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
       const textMaxW = dialogW - textPad * 2;
       const lineHeight = 24 * s;
-  
+
       let line = '';
       let currentY = textY;
       for (let i = 0; i < displayText.length; i++) {
@@ -430,7 +430,7 @@ module.exports = function extendGuide(Renderer) {
       const GUIDE_TEXTS = [
         '',
         '太棒了！你通过了女巫的试炼，获得了第一张女巫的词牌！',
-        '每张女巫词牌都具有特殊的能力，记得[装备]上，它们会在后面的冒险中一直陪着你，即使试炼失败重来。最多只能装备[3]张词牌。',
+        '每张女巫词牌都具有特殊的能力，记得 [装备]上，它们会在后面的冒险中一直陪着你，即使试炼失败重来。最多只能装备 [3] 张词牌。',
       ];
   
       const FADE_DURATION = 500;
@@ -540,11 +540,32 @@ module.exports = function extendGuide(Renderer) {
         : (game._cardBookGuideText2StartTime || Date.now());
       const charInterval = 65;
       const textElapsed = Date.now() - textStartTime;
+      // 预处理 fullText：移除 [] 标记并记录高亮字符
+      const pureChars = [];
+      const highlightFlags = [];
+      let pIdx = 0;
+      while (pIdx < fullText.length) {
+        if (fullText[pIdx] === '[') {
+          const end = fullText.indexOf(']', pIdx);
+          if (end !== -1) {
+            for (let k = pIdx + 1; k < end; k++) {
+              pureChars.push(fullText[k]);
+              highlightFlags.push(true);
+            }
+            pIdx = end + 1;
+            continue;
+          }
+        }
+        pureChars.push(fullText[pIdx]);
+        highlightFlags.push(false);
+        pIdx++;
+      }
+
+      const totalPureChars = pureChars.length;
       const visibleChars = game._cardBookGuideSkipTyping
-        ? fullText.length
-        : Math.max(0, Math.min(fullText.length, Math.floor(textElapsed / charInterval)));
-      const displayText = fullText.slice(0, visibleChars);
-      const isTextComplete = visibleChars >= fullText.length;
+        ? totalPureChars
+        : Math.max(0, Math.min(totalPureChars, Math.floor(textElapsed / charInterval)));
+      const isTextComplete = visibleChars >= totalPureChars;
   
       const dialogPadX = 20 * s;
       const dialogTargetX = dialogPadX;
@@ -605,34 +626,35 @@ module.exports = function extendGuide(Renderer) {
       // 对话框背景
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
   
-      // 逐字显示文字
+      // 逐字显示文字（支持 [xxx] 高亮：加粗 + 深紫色）
       ctx.save();
-      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
-      ctx.fillStyle = '#1a2f4a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-  
+
       const textPad = 18 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
       const textMaxW = dialogW - textPad * 2;
       const lineHeight = 24 * s;
-  
-      let line = '';
+      const baseFont = `${Math.floor(17 * s)}px sans-serif`;
+      const boldFont = `bold ${Math.floor(17 * s)}px sans-serif`;
+
+      let currentX = textX;
       let currentY = textY;
-      for (let i = 0; i < displayText.length; i++) {
-        const ch = displayText[i];
-        const testLine = line + ch;
-        const metrics = ctx.measureText(testLine);
-        if (metrics.width > textMaxW && line !== '') {
-          ctx.fillText(line, textX, currentY);
-          line = ch;
+      for (let i = 0; i < visibleChars; i++) {
+        const ch = pureChars[i];
+        const isH = highlightFlags[i];
+        ctx.font = isH ? boldFont : baseFont;
+        ctx.fillStyle = isH ? '#5a2d8a' : '#1a2f4a';
+
+        const charW = ctx.measureText(ch).width;
+        if (currentX + charW > textX + textMaxW && currentX > textX) {
+          currentX = textX;
           currentY += lineHeight;
-        } else {
-          line = testLine;
         }
+        ctx.fillText(ch, currentX, currentY);
+        currentX += charW;
       }
-      if (line) ctx.fillText(line, textX, currentY);
       ctx.restore();
   
       // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
