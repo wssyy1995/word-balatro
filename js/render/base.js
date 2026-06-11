@@ -961,7 +961,7 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    // 提示高亮：可爱小抖动（持续直到用户点击任意卡牌）
+    // 提示高亮：可爱小抖动 + 边框水波纹（持续直到用户点击任意卡牌）
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
       const t1 = elapsed / 70;
@@ -972,6 +972,23 @@ class Renderer {
       drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
       // 轻微摇头：±1.8 度
       rotation += Math.sin(elapsed / 85) * 1.8;
+
+      // 边框水波纹：2 层从卡牌边框向外扩散的圆角矩形
+      const cx = drawX + w / 2;
+      const cy = drawY + h / 2;
+      const aspect = h / w;
+      const maxExpand = 22 * s;
+      for (let i = 0; i < 2; i++) {
+        const phase = (elapsed / 800 + i * 0.5) % 1;
+        const expand = phase * maxExpand;
+        const rw = w + expand * 2;
+        const rh = h + expand * 2 * aspect;
+        const alpha = 0.28 * (1 - phase);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        this.roundRect(cx - rw / 2, cy - rh / 2, rw, rh, 10 * s, null, 'rgba(196,163,90,0.9)', 1 * s);
+        ctx.restore();
+      }
     }
 
     ctx.save();
