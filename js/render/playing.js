@@ -1333,9 +1333,9 @@ module.exports = function extendPlaying(Renderer) {
     ctx.fillText('需要帮助？请选择以下方式获取提示', W / 2, subY);
     ctx.restore();
 
-    // 按钮图片
-    const buyData = this.tipHelpImages && this.tipHelpImages['buy_tip'];
-    const shareData = this.tipHelpImages && this.tipHelpImages['share_tip'];
+    // 按钮图片（buy_tip/share_tip 从 cloudStorage 预加载缓存获取，pop_close 本地加载）
+    const buyData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['buy_tip'];
+    const shareData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['share_tip'];
     const closeData = this.tipHelpImages && this.tipHelpImages['pop_close'];
 
     const btnW = 200 * s;

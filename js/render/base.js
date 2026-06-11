@@ -177,12 +177,12 @@ class Renderer {
       this.helpIconLoaded = false;
     }
 
-    // 加载求助弹窗资源
+    // 加载求助弹窗资源（pop_close 本地加载，buy_tip/share_tip 由 cloudStorage 统一预加载）
     this.tipHelpImages = {};
-    ['buy_tip', 'share_tip', 'pop_close'].forEach(name => {
+    ['pop_close'].forEach(name => {
       try {
         const img = wx.createImage();
-        img.src = `images/bg_icon/${name}.png`;
+        img.src = `images/${name}.png`;
         img.onload = () => { this.tipHelpImages[name] = { img, loaded: true }; };
         img.onerror = () => { this.tipHelpImages[name] = { img, loaded: false }; };
         this.tipHelpImages[name] = { img, loaded: false };

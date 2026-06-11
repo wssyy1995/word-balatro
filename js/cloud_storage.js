@@ -86,7 +86,9 @@ class CloudStorageManager {
 
     // 默认 bg_icon 图片云文件映射
     this.defaultBgIconFileMap = {
-      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png'
+      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png',
+      'buy_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/buy_tip.png',
+      'share_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
