@@ -961,6 +961,21 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
+    // 提示高亮：轻微晃动 + 背后金色呼吸光晕
+    if (card._hintHighlight) {
+      const elapsed = Date.now() - card._hintHighlight.startTime;
+      const duration = 2500;
+      if (elapsed >= duration) {
+        delete card._hintHighlight;
+      } else {
+        const t = elapsed / 80;
+        drawX += Math.sin(t) * 1.5 * s;
+        drawY += Math.cos(t * 0.7) * 1.0 * s;
+        // 背后金色光晕呼吸
+        this._drawCardGlow(ctx, drawX, drawY, w, h, s);
+      }
+    }
+
     ctx.save();
     ctx.globalAlpha *= opacity;
     ctx.translate(drawX + w / 2, drawY + h / 2);

@@ -1847,19 +1847,14 @@ class Game {
       groups[card._seedWord].push(card);
     }
 
-    // 取第一个种子词（按单词字母顺序更稳定）
+    // 取第一个种子词
     const words = Object.keys(groups);
     const targetWord = words[0];
     const wordCards = groups[targetWord];
 
-    // 清空当前选择
-    this.clearSelection();
-
-    // 选中该种子词的所有卡牌
+    // 给种子词对应卡牌添加高亮动画（不直接选中）
     for (const card of wordCards) {
-      this.selected.push(card.id);
-      card.selected = true;
-      if (this.animManager) this.animManager.cardSelect(card);
+      card._hintHighlight = { startTime: Date.now(), word: targetWord };
     }
 
     // 播放音效与震动
@@ -1868,7 +1863,7 @@ class Game {
       try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
     }
 
-    console.log('[SeedHint] 提示种子词:', targetWord, '选中卡牌:', wordCards.map(c => c.letter).join(''));
+    console.log('[SeedHint] 提示种子词:', targetWord, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
   }
 
   async playHand() {
