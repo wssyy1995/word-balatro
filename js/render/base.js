@@ -961,22 +961,17 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    // 提示高亮：可爱小抖动（幅度小、频率活泼、略带旋转）
+    // 提示高亮：可爱小抖动（持续直到用户点击任意卡牌）
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
-      const duration = 2200;
-      if (elapsed >= duration) {
-        delete card._hintHighlight;
-      } else {
-        const t1 = elapsed / 70;
-        const t2 = elapsed / 95 + 1.2;
-        const t3 = elapsed / 110 + 0.5;
-        // 小幅位移：左右 1.2px，上下 0.9px，不同频叠加更灵动
-        drawX += (Math.sin(t1) * 0.7 + Math.sin(t3) * 0.5) * s;
-        drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
-        // 轻微摇头：±1.8 度
-        rotation += Math.sin(elapsed / 85) * 1.8;
-      }
+      const t1 = elapsed / 70;
+      const t2 = elapsed / 95 + 1.2;
+      const t3 = elapsed / 110 + 0.5;
+      // 小幅位移：左右 1.2px，上下 0.9px，不同频叠加更灵动
+      drawX += (Math.sin(t1) * 0.7 + Math.sin(t3) * 0.5) * s;
+      drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
+      // 轻微摇头：±1.8 度
+      rotation += Math.sin(elapsed / 85) * 1.8;
     }
 
     ctx.save();

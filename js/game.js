@@ -1803,6 +1803,8 @@ class Game {
     }
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
+    // 用户点击卡牌时清除种子词提示高亮
+    this.hand.forEach(c => { if (c) delete c._hintHighlight; });
     const idx = this.selected.indexOf(cardId);
     const card = this.hand.find(c => c && c.id === cardId);
     if (!card) return;
