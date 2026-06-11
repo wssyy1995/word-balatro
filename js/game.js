@@ -558,9 +558,11 @@ function makeSeedCard(letter) {
 
 // 出牌/弃牌后补牌：优先从保留手牌生成种子词保底，剩余按元音规则补牌
 // options.seedWordLength: 种子词长度，出牌默认 4，弃 1 张时建议传 3
-function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts = 10 } = {}) {
+function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts = 10, action = 'unknown' } = {}) {
   const VOWELS = ['A', 'E', 'I', 'O', 'U'];
   const handCards = hand.filter(Boolean);
+
+  console.log(`[SeedSafety] ${action}: ${need} 张`);
 
   // 1. 从保留手牌中挑选 2 张字母牌（优先 1 元音 + 1 辅音，否则 2 辅音）
   let chosenCards = [];
@@ -582,19 +584,26 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   }
 
   if (chosenCards.length < 2) {
+    console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张，fallback 到元音规则补牌`);
     return drawWithVowelRules(deck, hand, need, maxAttempts);
   }
 
-  // 2. 找包含这 2 个字母的种子单词
   const chosenLetters = chosenCards.map(c => c.letter);
+  console.log(`[SeedSafety] 从手牌中挑选字母: ${chosenLetters.join(' 和 ')}`);
+
+  // 2. 找包含这 2 个字母的种子单词
   const seedWord = findSeedWord(chosenLetters, seedWordLength);
   if (!seedWord) {
+    console.log(`[SeedSafety] ${action}: 未找到包含 ${chosenLetters.join('')} 的 ${seedWordLength} 字母单词，fallback 到元音规则补牌`);
     return drawWithVowelRules(deck, hand, need, maxAttempts);
   }
+
+  console.log(`[SeedSafety] 从 word_data 挑选 长度: ${seedWordLength} 的单词: ${seedWord}`);
 
   // 3. 提取剩余字母作为种子字母
   const seedLetters = getSeedLettersFromWord(seedWord, chosenLetters);
   if (seedLetters.length === 0) {
+    console.log(`[SeedSafety] ${action}: 种子单词无剩余字母，fallback 到元音规则补牌`);
     return drawWithVowelRules(deck, hand, need, maxAttempts);
   }
 
@@ -604,11 +613,15 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   // 5. 剩余数量按元音规则从 deck 补牌（种子卡牌作为已有手牌参与元音检查）
   const remainingNeed = need - seedCards.length;
   if (remainingNeed <= 0) {
+    console.log(`[SeedSafety] 从 deck 挑选 字母: (无需 deck 补牌)`);
     return seedCards.slice(0, need);
   }
 
   const augmentedHand = [...hand, ...seedCards];
   const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts);
+  const deckLetters = deckCards.map(c => c.letter).join('');
+  console.log(`[SeedSafety] 从 deck 挑选 字母: ${deckLetters || '(无)'}`);
+
   return [...seedCards, ...deckCards];
 }
 
@@ -2336,7 +2349,7 @@ class Game {
       // 3. 从牌堆顶部补牌
       const need = finalPlayedCards.length;
       const validHand = this.hand.filter(Boolean);
-      const newCards = drawWithSeedSafety(this.deck, validHand, need);
+      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '出牌' });
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -2648,7 +2661,7 @@ class Game {
       const need = discardedCards.length;
       const validHand = this.hand.filter(Boolean);
       const seedWordLength = discardedCards.length === 1 ? 3 : 4;
-      const newCards = drawWithSeedSafety(this.deck, validHand, need, { seedWordLength });
+      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '弃牌', seedWordLength });
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
