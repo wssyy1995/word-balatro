@@ -16,7 +16,8 @@ class GameOverRenderer {
       if (typeof wx !== 'undefined' && wx.reportEvent) {
         wx.reportEvent("gameover", {
           "round": game.round,
-          "current_coin": game.gold
+          "current_coin": game.gold,
+          "userid": game.userid || ''
         });
       }
     }

@@ -2519,7 +2519,8 @@ class Game {
     // 上报：回合通关
     if (typeof wx !== 'undefined' && wx.reportEvent) {
       wx.reportEvent("round_pass", {
-        "round": this.round
+        "round": this.round,
+        "userid": this.userid || ''
       });
     }
 
