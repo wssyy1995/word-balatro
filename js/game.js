@@ -1864,7 +1864,21 @@ class Game {
     // 取第一个种子词
     const words = Object.keys(groups);
     const targetWord = words[0];
-    const wordCards = groups[targetWord];
+
+    // 在手牌中按字母匹配该种子词（不要求 _seedWord 标记）
+    const wordCards = [];
+    const used = new Set();
+    for (const ch of targetWord.toUpperCase()) {
+      for (let i = 0; i < this.hand.length; i++) {
+        const card = this.hand[i];
+        if (!card || used.has(i)) continue;
+        if (card.letter === ch) {
+          used.add(i);
+          wordCards.push(card);
+          break;
+        }
+      }
+    }
 
     // 给种子词对应卡牌添加高亮动画（不直接选中）
     for (const card of wordCards) {
@@ -2116,11 +2130,11 @@ class Game {
 
     const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
-    // === 以小博大（最后一次出牌且不满4字母，20%概率倍率+8） ===
+    // === 以小博大（出牌<=3个字母，30%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
-    if (lastPrayer && this.handsLeft === 1 && playedInOrder.length < 4) {
-      const success = Math.random() < 0.2;
+    if (lastPrayer && playedInOrder.length < 4) {
+      const success = Math.random() < 0.3;
       const boostValue = 8;
       if (success) {
         result.mult += boostValue;

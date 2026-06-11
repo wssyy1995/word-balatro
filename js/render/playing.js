@@ -27,7 +27,7 @@ module.exports = function extendPlaying(Renderer) {
       const hudBottom = top + 9 * s + h;
       const maxRows = 3;
       const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
-      const maskHalfH = 19 * s; // 预览蒙层半高（maskH = 38*s）
+      const maskHalfH = 20 * s; // 预览蒙层半高（maskH = 40*s）
       const propBarH = 84 * s;
   
       const btnTop = H - 90 * s;
@@ -223,7 +223,7 @@ module.exports = function extendPlaying(Renderer) {
   
       // 单词预览区白色蒙层（常驻，固定6个字母宽度）
       const maskW = 180 * s;
-      const maskH = 38 * s;
+      const maskH = 40 * s;
       const maskX = W / 2 - maskW / 2;
       const maskY = wordAreaY - maskH / 2;
       // 单词预览区：渐变背景增强立体感
@@ -235,43 +235,36 @@ module.exports = function extendPlaying(Renderer) {
       // 提示按钮（预览区左侧）
       const hasSeedCards = game.hand.some(c => c && c._seedWord);
       if (hasSeedCards) {
-        // === help 按钮空闲抖动动画（10秒未出牌触发，持续2秒） ===
-        let helpShakeX = 0;
-        let helpShakeY = 0;
-        let helpRotation = 0;
-        if (game._lastPlayTime && Date.now() - game._lastPlayTime > 10000) {
+        // === help 按钮空闲上下跳跃动画（25秒未出牌触发，持续2秒） ===
+        let helpJumpY = 0;
+        if (game._lastPlayTime && Date.now() - game._lastPlayTime > 25000) {
           if (!game._helpIdleAnim) {
             game._helpIdleAnim = { startTime: Date.now() };
           }
-          game._lastPlayTime = Date.now(); // 重置10秒定时器
+          game._lastPlayTime = Date.now(); // 重置25秒定时器
         }
         if (game._helpIdleAnim) {
           const animElapsed = Date.now() - game._helpIdleAnim.startTime;
           const animDuration = 2000;
           if (animElapsed < animDuration) {
-            const ht1 = animElapsed / 130;
-            const ht2 = animElapsed / 170 + 1.2;
-            const ht3 = animElapsed / 200 + 0.5;
-            helpShakeX = (Math.sin(ht1) * 0.65 + Math.sin(ht3) * 0.4) * s;
-            helpShakeY = (Math.sin(ht2) * 0.55 + Math.cos(ht3) * 0.35) * s;
-            helpRotation = Math.sin(animElapsed / 150) * 1.6;
+            const jumpCycle = 400;
+            const jumpProgress = (animElapsed % jumpCycle) / jumpCycle;
+            helpJumpY = Easing.jump(jumpProgress, 3 * s);
           } else {
             game._helpIdleAnim = null;
           }
         }
 
-        const hintBtnSize = 34 * s;
-        const hintBtnX = maskX - hintBtnSize - 8 * s;
+        const hintBtnSize = 30 * s;
+        const hintBtnX = maskX - hintBtnSize - 8 * s - 1;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
         // 底部轻微阴影增强立体感
         ctx.shadowColor = 'rgba(0,0,0,0.12)';
         ctx.shadowBlur = 5 * s;
         ctx.shadowOffsetY = 2 * s;
-        if (helpShakeX !== 0 || helpShakeY !== 0 || helpRotation !== 0) {
-          ctx.translate(hintBtnX + hintBtnSize / 2 + helpShakeX, hintBtnY + hintBtnSize / 2 + helpShakeY);
-          ctx.rotate((helpRotation * Math.PI) / 180);
-          ctx.translate(-(hintBtnX + hintBtnSize / 2), -(hintBtnY + hintBtnSize / 2));
+        if (helpJumpY !== 0) {
+          ctx.translate(0, helpJumpY);
         }
         if (this.helpIconLoaded && this.helpIcon) {
           // 保持 help.png 原始宽高比绘制
