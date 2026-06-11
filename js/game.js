@@ -1197,6 +1197,10 @@ class Game {
     this._dailyShareDate = today;
     this._dailyShareCount = 0;
 
+    // 用户 openid（用于数据上报）
+    this.userid = '';
+    this._initUserid();
+
     // help 按钮空闲波纹动画
     this._lastPlayTime = Date.now();
     this._helpIdleAnim = null; // { startTime: number }
@@ -1559,11 +1563,40 @@ class Game {
     }
   }
 
+  async _initUserid() {
+    if (this.userid) return;
+    try {
+      const sysInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+      const res = await wx.cloud.callFunction({
+        name: 'login',
+        data: {
+          brand: sysInfo.brand || '',
+          model: sysInfo.model || '',
+          system: sysInfo.system || '',
+          platform: sysInfo.platform || '',
+          language: sysInfo.language || '',
+          version: sysInfo.version || '',
+          SDKVersion: sysInfo.SDKVersion || '',
+          screenWidth: sysInfo.screenWidth || 0,
+          screenHeight: sysInfo.screenHeight || 0,
+          pixelRatio: sysInfo.pixelRatio || 1,
+        }
+      });
+      if (res.result && res.result.code === 0 && res.result.openid) {
+        this.userid = res.result.openid;
+        console.log('[Game] userid init:', this.userid);
+      }
+    } catch (e) {
+      console.log('[Game] userid init failed:', e);
+    }
+  }
+
   resetRound() {
     // 上报：回合开始
     if (typeof wx !== 'undefined' && wx.reportEvent) {
       wx.reportEvent("round_start", {
-        "round": this.round
+        "round": this.round,
+        "userid": this.userid || ''
       });
     }
 
