@@ -182,7 +182,7 @@ class Renderer {
     ['buy_tip', 'share_tip', 'pop_close'].forEach(name => {
       try {
         const img = wx.createImage();
-        img.src = `images/${name}.png`;
+        img.src = `images/bg_icon/${name}.png`;
         img.onload = () => { this.tipHelpImages[name] = { img, loaded: true }; };
         img.onerror = () => { this.tipHelpImages[name] = { img, loaded: false }; };
         this.tipHelpImages[name] = { img, loaded: false };

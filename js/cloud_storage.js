@@ -1271,18 +1271,16 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer 的 bgImage
+  // 将云缓存 bg_icon 图片注入到 renderer 的 bgImage（仅注入 bg）
   injectBgIconToRenderer(renderer) {
-    let count = 0;
-    Object.keys(this.bgIconImages).forEach(name => {
-      const data = this.bgIconImages[name];
-      if (data && data.loaded && data.img) {
-        renderer.bgImage = data.img;
-        renderer.bgLoaded = true;
-        count++;
-      }
-    });
-    this.log('已注入 bg_icon renderer: ' + count + '张');
+    const bgData = this.bgIconImages['bg'];
+    if (bgData && bgData.loaded && bgData.img) {
+      renderer.bgImage = bgData.img;
+      renderer.bgLoaded = true;
+      this.log('已注入 bg_icon renderer: bg');
+    } else {
+      this.log('bg_icon bg 未加载，跳过注入');
+    }
   }
 
   // ===== music 文件管理 =====
