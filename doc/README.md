@@ -27,6 +27,11 @@ word-balatro/
 ├── raw_words/           # 原始词库数据（构建脚本输入）
 ├── openDataContext/     # 微信开放数据域 —— 好友排行榜
 │   └── index.js         # 排行榜绘制与好友数据拉取
+├── cloudfunctions/      # 微信云函数
+│   ├── baiduDict/       # 百度翻译词典版 API（换取 access_token）
+│   ├── getDailyWords/   # 每日挑战单词获取
+│   ├── updateBestRound/ # 排行榜 bestround 上传
+│   └── login/           # 用户登录信息上报
 ├── scripts/             # 构建脚本（词库生成、精灵图打包等）
 └── js/
     ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
@@ -690,11 +695,13 @@ gap = 8 * scale
 | `word_balatro_progress` | 游戏进度（回合、金币、女巫牌、药水、字母升级、maxJokerSlots） |
 | `word_balatro_high_score` | 历史最高分 |
 | `word_balatro_stats` | 统计（总局数、总分、最高关卡） |
-| `word_balatro_settings` | 设置（音效、音乐、震动开关） |
+| `word_balatro_settings` | 设置（音效、音乐、震动、学习模式开关、首次提示标志） |
 | `word_balatro_card_book_unlocked` | 卡牌图鉴解锁状态（跨局永久保留） |
 | `word_balatro_collected_witch_cards` | 已收集的女巫卡牌列表（跨局永久保留） |
 | `word_balatro_equipped_witch_card` | 已装备的女巫卡牌（跨局永久保留） |
 | `word_balatro_daily_revive` | 每日复活次数记录（日期 + 是否已使用） |
+| `word_balatro_daily_challenge` | 每日挑战状态（日期 + 10 个目标词 + 已收集列表 + 奖励状态） |
+| `word_balatro_best_round` | 历史最高到达回合 |
 
 ### 3.7 cloud_storage.js — 微信云存储
 
@@ -796,6 +803,52 @@ gap = 8 * scale
 | witch_card_24 | 伊洛薇尔 | witch_skill_extra_hands | 若本回合有女巫，出牌和弃牌次数均+1 |
 
 > 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。
+
+---
+
+## 4.5 每日挑战 / 学习模式（Daily Challenge）
+
+**每日挑战**是一个可选的单词学习目标系统，通过设置弹窗中的「今日新词」入口开关控制。
+
+### 4.5.1 机制
+
+- **每日 10 词**：每天凌晨（北京时间）由云函数 `getDailyWords` 从数据库 `daily_words` 集合中获取当日 10 个目标单词；若无记录则自动生成兜底词库并入库
+- **学习模式开关**：`settings.dailyWordChallengeEnabled`（默认关闭），首次开启时弹出「下回合起生效」提示 toast
+- **种子词替换**：开启后，`drawWithSafety()` 的第二组种子词不再随机生成，而是从当日 10 个未学习的词中随机选取一个，取其字母作为种子牌注入手牌（带 `_isDailyChallengeCard` 标记）
+- **已学习过滤**：每回合发牌时自动排除已收集的单词，确保目标词始终为未学习状态
+- **收集判定**：玩家打出合法单词后，若该单词在当日 10 词列表中且未被收集过，则触发收集成功
+
+### 4.5.2 收集反馈
+
+- **Toast 提示**：白色圆角提示，带 `setting_study.png` 图标，显示「今日新词「xxx」收集成功！(N 个待收集)」，目标词与剩余数量文字加粗显示
+- **入场动画**：从下往上弹出，350ms easeOutBack
+- **飞行星星**：收集成功后 2 秒，从 toast 图标左侧弹出星星，停留 400ms 后沿 easeOutCubic 飞向顶部设置图标，尺寸从 1 缩小至 0.6
+- **全部集齐**：10 词全部收集后，不再弹窗，改为 toast 提示「恭喜完成今日10词挑战！奖励 50 金币」
+
+### 4.5.3 奖励弹窗
+
+10 词全部收集后弹出奖励弹窗：
+- 显示「每日挑战完成！」标题 + 奖励金币数
+- 提供「分享」（截图分享至微信）和「确定」两个按钮
+- 分享文案：`🎯 我完成了今日10词挑战，集齐了所有目标词！`
+
+### 4.5.4 今日新词弹窗
+
+设置弹窗中点击「今日新词」按钮进入：
+- **标题**：「今日新词」+ 副标题「收集今日10个目标词，获得金币奖励」
+- **Switch 开关**：控制学习模式开关（实时保存到 settings）
+- **单词卡片列表**：可惯性滚动，支持边界阻尼回弹（rubber band + easeOutBack）
+- **单词状态**：已收集显示绿色勾选 + 金色星星，未收集显示灰色锁定
+- **返回按钮**：左上角返回按钮回到设置弹窗；关闭按钮同时关闭两层弹窗
+- **首次提示**：首次打开 switch 时，在开关上方弹出带小箭头指向 switch 的 toast
+
+### 4.5.5 持久化
+
+| 键 | 内容 |
+|----|------|
+| `word_balatro_daily_challenge` | `{ date, words, collected, rewarded }` |
+| `word_balatro_settings.dailyWordChallengeEnabled` | 开关状态 |
+| `word_balatro_settings.dailyWordHintShown` | 首次提示是否已展示 |
 
 ---
 
@@ -965,6 +1018,9 @@ letterUpgrades = Map {
 ```
 前端 → 云函数 baiduDict → 换取 access_token
 前端 → 直连百度接口（带 token）→ 返回翻译/词典结果
+前端 → 云函数 getDailyWords → 返回今日 10 个目标单词
+前端 → 云函数 updateBestRound → 更新好友排行榜 bestround
+前端 → 云函数 login → 上报用户设备信息
 ```
 
 **Token 管理**
@@ -1018,11 +1074,14 @@ letterUpgrades = Map {
 **架构设计**
 - **开放数据域** `openDataContext/index.js`：独立 JS 运行环境，通过 `wx.getFriendCloudStorage()` 拉取好友数据，在 `sharedCanvas` 上绘制排行榜 UI
 - **主域** `game.js`：负责设置 `sharedCanvas` 的物理像素宽高（解决 ScreenCanvas 文字模糊问题），每帧通过 `ctx.drawImage(odc.canvas)` 将排行榜渲染到主画布
-- **分数上传**：打破历史最高分时，调用 `wx.setUserCloudStorage({ KVDataList: [{ key: 'score', value: String(score) }] })` 写入微信云端
+- **分数与回合上传**：游戏结束时调用 `uploadScoreAndRound()`，按以下规则写入微信云端：
+  - 若当前到达回合 > 云端 bestround：同时更新 `score` 和 `bestround`
+  - 若回合未创新高但总分 > 云端 score：仅更新 `score`
+  - 都不高时不更新，避免覆盖云端更高记录
 
 **排行榜弹窗 UI**
 - 深色圆角面板（`#2a2a3a` 边框 `#4a4a6a`）
-- 表头：排名、头像、昵称、分数
+- 表头：排名、头像、昵称、**回合**、总分
 - 当前玩家高亮显示（蓝色背景条）
 - 顶部标题「好友排行榜」+ 右上角红色圆形关闭按钮
 - 头像通过 `wx.createImage()` 异步加载并缓存
@@ -1152,7 +1211,8 @@ letterUpgrades = Map {
 | v1.9.3 | 2026-06-08 | 新增女巫奖励"商店5折"（第24关）；新增赫丝佩瑞丝/伊洛薇尔两张图鉴女巫卡牌；菲兰瑟娅技能阈值修正为30%/6折；修复排行榜点击面板内部误关闭问题；女巫技能奖励表格与代码实际对齐；魔法药水种类修正为3种 |
 | v1.9.4 | 2026-06-08 | 图鉴女巫卡牌装备上限从1张提升至3张，同技能效果叠加；装备交互支持多选/卸下；UI增加已装备计数和满3提示 |
 | v1.9.5 | 2026-06-10 | 重做种子词机制：固定双种子词（3字母+4字母），新增元音种类/次数双重限制；种子词不消耗牌堆；随机补牌仅允许辅音且不与种子词字母重复；种子牌在手牌中随机打散 |
+| v1.9.6 | 2026-06-10 | 新增每日挑战学习模式：每日10个目标单词，开启后第二组种子词替换为每日新词字母，打出目标词收集成功；集齐10词奖励50金币；设置弹窗新增今日新词入口与可滚动单词列表；好友排行榜增加「回合」列；游戏结束按规则上传 score/bestround；新增 getDailyWords/updateBestRound 云函数 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-08*
+*文档基于实际代码整理，最后更新：2026-06-10*
