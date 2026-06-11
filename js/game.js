@@ -1857,9 +1857,15 @@ class Game {
       card._hintHighlight = { startTime: Date.now(), word: targetWord };
     }
 
-    // 播放音效与震动
+    // 播放音效与震动（开发者工具跳过震动）
     if (this.audioManager) this.audioManager.play('card_placement');
-    if (typeof wx !== 'undefined' && wx.vibrateShort) {
+    let isDevTools = false;
+    try {
+      if (typeof wx !== 'undefined' && wx.getSystemInfoSync) {
+        isDevTools = wx.getSystemInfoSync().platform === 'devtools';
+      }
+    } catch (e) {}
+    if (!isDevTools && typeof wx !== 'undefined' && wx.vibrateShort) {
       try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
     }
 
