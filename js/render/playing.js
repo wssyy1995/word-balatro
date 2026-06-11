@@ -326,7 +326,7 @@ module.exports = function extendPlaying(Renderer) {
   
       // === 预览区流光边框（有无输入都有动效，线宽不同） ===
       const hasInput = selected.length > 0;
-      const flowLineWidth = hasInput ? 2.3 * s : 2.0 * s;
+      const flowLineWidth = hasInput ? 2.2 * s : 2.0 * s;
       const t = (Date.now() % 3000) / 3000; // 0~1，3秒一周期
       const isValidWord = game.pendingCheck && game.pendingCheck.state === 'valid';
       const flowColor = isValidWord ? '45,125,50' : '240,195,20';

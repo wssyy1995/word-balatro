@@ -1010,14 +1010,25 @@ class Renderer {
       drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
       rotation += Math.sin(elapsed / 150) * 1.6;
 
-      // 装备按钮风格边框水波纹：2 层
+      // 装备按钮风格边框水波纹：连续生成，避免循环重置闪烁
       const RING_INTERVAL = 1500;
       const RING_DURATION = 2400;
       const maxExpand = 16 * s;
       const br = 10 * s;
-      for (let i = 0; i < 2; i++) {
-        const rawPhase = (elapsed + i * RING_INTERVAL) % RING_DURATION;
-        const progress = rawPhase / RING_DURATION;
+      if (!card._hintHighlight.rings) {
+        card._hintHighlight.rings = [];
+      }
+      const rings = card._hintHighlight.rings;
+      const now = Date.now();
+      if (rings.length === 0 || now - rings[rings.length - 1].start > RING_INTERVAL) {
+        rings.push({ start: now });
+      }
+      while (rings.length > 0 && now - rings[0].start > RING_DURATION) {
+        rings.shift();
+      }
+      for (const ring of rings) {
+        const ringElapsed = now - ring.start;
+        const progress = ringElapsed / RING_DURATION;
         const expand = progress * maxExpand;
         const alpha = 0.55 * (1 - progress) * (1 - progress);
         const ex = drawX - expand;
