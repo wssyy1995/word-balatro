@@ -961,18 +961,32 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    // 提示高亮：轻微晃动 + 背后金色呼吸光晕
+    // 提示高亮：缩放脉冲 + 背后纯金色呼吸光晕（无四角星星）
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
       const duration = 2500;
       if (elapsed >= duration) {
         delete card._hintHighlight;
       } else {
-        const t = elapsed / 80;
-        drawX += Math.sin(t) * 1.5 * s;
-        drawY += Math.cos(t * 0.7) * 1.0 * s;
-        // 背后金色光晕呼吸
-        this._drawCardGlow(ctx, drawX, drawY, w, h, s);
+        // 柔和缩放脉冲（1.0 ~ 1.05）
+        const pulseScale = 1 + 0.05 * Math.sin(elapsed / 250);
+        scale *= pulseScale;
+
+        // 纯金色径向光晕呼吸
+        const cx = drawX + w / 2;
+        const cy = drawY + h / 2;
+        const haloR = Math.max(w, h) * 0.9;
+        const breath = 0.5 + 0.5 * Math.sin(elapsed / 300);
+        const grad = ctx.createRadialGradient(cx, cy, haloR * 0.2, cx, cy, haloR);
+        grad.addColorStop(0, `rgba(255, 215, 0, ${0.28 * breath})`);
+        grad.addColorStop(0.5, `rgba(255, 200, 60, ${0.14 * breath})`);
+        grad.addColorStop(1, 'rgba(255, 180, 0, 0)');
+        ctx.save();
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
     }
 
