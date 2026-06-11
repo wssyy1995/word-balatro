@@ -1335,7 +1335,10 @@ module.exports = function extendPlaying(Renderer) {
 
     // 按钮图片（buy_tip/share_tip 从 cloudStorage 预加载缓存获取，pop_close 本地加载）
     const buyData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['buy_tip'];
-    const shareData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['share_tip'];
+    const today = new Date().toISOString().slice(0, 10);
+    const shareCount = game._dailyShareDate === today ? game._dailyShareCount : 0;
+    const shareImgKey = shareCount >= 3 ? 'share_tip_limit' : 'share_tip';
+    const shareData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages[shareImgKey];
     const closeData = this.tipHelpImages && this.tipHelpImages['pop_close'];
 
     const btnW = 200 * s;

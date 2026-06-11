@@ -47,9 +47,18 @@ wx.onShow(() => {
     console.log('[ShareTipHelp] 分享界面停留时间:', stayed, 'ms');
     if (stayed >= 2500) {
       console.log('[ShareTipHelp] 判定分享成功，执行提示');
+      // 每日分享次数限制
+      const today = new Date().toISOString().slice(0, 10);
+      if (game._dailyShareDate !== today) {
+        game._dailyShareDate = today;
+        game._dailyShareCount = 0;
+      }
+      game._dailyShareCount++;
+      if (game.storageManager) game.storageManager.saveProgress();
       game.closeTipHelpPopup();
       game.showSeedWordHint();
-      game.hintToast = { text: '购买提示成功！', expireAt: Date.now() + 2000 };
+      const remain = Math.max(0, 3 - game._dailyShareCount);
+      game.hintToast = { text: `分享成功！今日还可分享${remain}次`, expireAt: Date.now() + 2000 };
     } else {
       console.log('[ShareTipHelp] 分享取消或停留时间不足');
       if (game) {
@@ -928,7 +937,16 @@ wx.onTouchEnd(() => {
     }
     if (game._tipHelpSharePressed) {
       game._tipHelpSharePressed = false;
-      if (!game._tipHelpShareDelaying) {
+      // 每日分享次数限制检查
+      const today = new Date().toISOString().slice(0, 10);
+      if (game._dailyShareDate !== today) {
+        game._dailyShareDate = today;
+        game._dailyShareCount = 0;
+      }
+      if (game._dailyShareCount >= 3) {
+        game.hintToast = { text: '今日分享次数已用完，请明日再来', expireAt: Date.now() + 2000, startTime: Date.now() };
+        if (game.audioManager) game.audioManager.play('card_illegal');
+      } else if (!game._tipHelpShareDelaying) {
         game._tipHelpShareDelaying = true;
         // 延迟 80ms 让按钮恢复后再拉起分享
         game._delay(() => {

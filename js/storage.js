@@ -114,6 +114,8 @@ class StorageManager {
       _cardBookGuideText2StartTime: game._cardBookGuideText2StartTime,
       _cardBookGuideExitStartTime: game._cardBookGuideExitStartTime,
       letterUpgrades: [...letterUpgrades.entries()],
+      _dailyShareDate: game._dailyShareDate || null,
+      _dailyShareCount: game._dailyShareCount || 0,
       timestamp: Date.now(),
       version: 1
     };

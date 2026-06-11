@@ -1192,6 +1192,11 @@ class Game {
     this._tipHelpBuyDelaying = false;
     this._tipHelpShareDelaying = false;
 
+    // 每日分享获得提示次数限制
+    const today = new Date().toISOString().slice(0, 10);
+    this._dailyShareDate = today;
+    this._dailyShareCount = 0;
+
     // help 按钮空闲波纹动画
     this._lastPlayTime = Date.now();
     this._helpIdleAnim = null; // { startTime: number }
@@ -1432,6 +1437,10 @@ class Game {
     if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
     if (p._shopDiscountRate !== undefined) this._shopDiscountRate = p._shopDiscountRate;
     if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
+
+    // 恢复每日分享次数限制
+    if (p._dailyShareDate !== undefined) this._dailyShareDate = p._dailyShareDate;
+    if (p._dailyShareCount !== undefined) this._dailyShareCount = p._dailyShareCount;
 
     // 修复：恢复后清理手牌中的 null 占位符并重新补牌
     if (this.state === 'playing') {
