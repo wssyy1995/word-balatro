@@ -961,32 +961,50 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    // 提示高亮：可爱小抖动 + 边框水波纹（持续直到用户点击任意卡牌）
+    // 提示高亮：缓和可爱抖动 + 装备按钮风格边框水波纹
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
-      const t1 = elapsed / 70;
-      const t2 = elapsed / 95 + 1.2;
-      const t3 = elapsed / 110 + 0.5;
-      // 小幅位移：左右 1.2px，上下 0.9px，不同频叠加更灵动
-      drawX += (Math.sin(t1) * 0.7 + Math.sin(t3) * 0.5) * s;
-      drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
-      // 轻微摇头：±1.8 度
-      rotation += Math.sin(elapsed / 85) * 1.8;
+      // 更缓和的抖动频率
+      const t1 = elapsed / 110;
+      const t2 = elapsed / 145 + 1.2;
+      const t3 = elapsed / 170 + 0.5;
+      drawX += (Math.sin(t1) * 0.6 + Math.sin(t3) * 0.4) * s;
+      drawY += (Math.sin(t2) * 0.45 + Math.cos(t3) * 0.3) * s;
+      rotation += Math.sin(elapsed / 125) * 1.5;
 
-      // 边框水波纹：2 层从卡牌边框向外扩散的圆角矩形
-      const cx = drawX + w / 2;
-      const cy = drawY + h / 2;
-      const aspect = h / w;
-      const maxExpand = 22 * s;
+      // 装备按钮风格边框水波纹：2 层，更缓和的扩散
+      const RING_INTERVAL = 1500;
+      const RING_DURATION = 2400;
+      const maxExpand = 18 * s;
+      const br = 10 * s;
       for (let i = 0; i < 2; i++) {
-        const phase = (elapsed / 800 + i * 0.5) % 1;
-        const expand = phase * maxExpand;
-        const rw = w + expand * 2;
-        const rh = h + expand * 2 * aspect;
-        const alpha = 0.28 * (1 - phase);
+        const rawPhase = (elapsed + i * RING_INTERVAL) % RING_DURATION;
+        const progress = rawPhase / RING_DURATION;
+        const expand = progress * maxExpand;
+        const alpha = 0.55 * (1 - progress) * (1 - progress);
+        const ex = drawX - expand;
+        const ey = drawY - expand;
+        const ew = w + expand * 2;
+        const eh = h + expand * 2;
+        const er = br + expand;
+
         ctx.save();
-        ctx.globalAlpha = alpha;
-        this.roundRect(cx - rw / 2, cy - rh / 2, rw, rh, 10 * s, null, 'rgba(196,163,90,0.9)', 1 * s);
+        ctx.beginPath();
+        ctx.moveTo(ex + er, ey);
+        ctx.lineTo(ex + ew - er, ey);
+        ctx.quadraticCurveTo(ex + ew, ey, ex + ew, ey + er);
+        ctx.lineTo(ex + ew, ey + eh - er);
+        ctx.quadraticCurveTo(ex + ew, ey + eh, ex + ew - er, ey + eh);
+        ctx.lineTo(ex + er, ey + eh);
+        ctx.quadraticCurveTo(ex, ey + eh, ex, ey + eh - er);
+        ctx.lineTo(ex, ey + er);
+        ctx.quadraticCurveTo(ex, ey, ex + er, ey);
+        ctx.closePath();
+        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.35})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(212, 169, 78, ${alpha})`;
+        ctx.lineWidth = 2.2 * s;
+        ctx.stroke();
         ctx.restore();
       }
     }
