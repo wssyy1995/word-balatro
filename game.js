@@ -926,6 +926,12 @@ wx.onTouchEnd(() => {
         if (game.audioManager) game.audioManager.play('card_sell');
         game.hintToast = { text: '购买提示成功！', expireAt: Date.now() + 1200, startTime: Date.now() };
         if (game.storageManager) game.storageManager.saveProgress();
+        if (typeof wx !== 'undefined' && wx.reportEvent) {
+          wx.reportEvent("word_help_buy", {
+            "userid": game.userid || '',
+            "round": game.round
+          });
+        }
         game._delay(() => {
           game.closeTipHelpPopup();
           game.showSeedWordHint();
@@ -948,6 +954,12 @@ wx.onTouchEnd(() => {
         if (game.audioManager) game.audioManager.play('card_illegal');
       } else if (!game._tipHelpShareDelaying) {
         game._tipHelpShareDelaying = true;
+        if (typeof wx !== 'undefined' && wx.reportEvent) {
+          wx.reportEvent("word_help_share", {
+            "userid": game.userid || '',
+            "round": game.round
+          });
+        }
         // 延迟 80ms 让按钮恢复后再拉起分享
         game._delay(() => {
           game._tipHelpShareDelaying = false;
