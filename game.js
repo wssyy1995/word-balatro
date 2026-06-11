@@ -1473,6 +1473,16 @@ function handleInput(x, y) {
       }
     }
 
+    // 检测种子词提示按钮点击（预览区左侧 ? 按钮）
+    if (renderer.hintBtnRect) {
+      const hintHit = renderer.hitTest(x, y, [renderer.hintBtnRect]);
+      if (hintHit) {
+        vibrate();
+        game.showSeedWordHint();
+        return;
+      }
+    }
+
     // 检测字母置换提示按钮点击
     if (renderer.changeLetterHintRect) {
       const hintHit = renderer.hitTest(x, y, [renderer.changeLetterHintRect]);

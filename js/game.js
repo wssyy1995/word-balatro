@@ -320,7 +320,7 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   const allSeedLetters = [...seedLetters3, ...seedLetters4];
   const seedLetterSet = new Set(allSeedLetters);
 
-  const makeSeedCards = (letters) => letters.map(letter => {
+  const makeSeedCards = (letters, seedWord) => letters.map(letter => {
     const baseScore = LETTER_SCORE[letter];
     const upgrade = letterUpgrades.get(letter);
     let score = baseScore;
@@ -335,10 +335,10 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
       upgradeAdd = upgrade.add || 0;
     }
     return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
-      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true };
+      id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _seedWord: seedWord };
   });
 
-  const seedCards3 = makeSeedCards(seedLetters3);
+  const seedCards3 = makeSeedCards(seedLetters3, seedWord3);
   // 学习模式下，每日新词的牌额外标记
   const seedCards4 = dailyWord
     ? seedLetters4.map(letter => {
@@ -356,9 +356,9 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
           upgradeAdd = upgrade.add || 0;
         }
         return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
-          id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _isDailyChallengeCard: true };
+          id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _isDailyChallengeCard: true, _seedWord: dailyWord };
       })
-    : makeSeedCards(seedLetters4);
+    : makeSeedCards(seedLetters4, seedWord4);
   const allSeedCards = [...seedCards3, ...seedCards4];
 
   // 过滤牌堆：随机补牌的字母不能跟种子单词字母重复
@@ -528,7 +528,7 @@ function getSeedLettersFromWord(word, usedLetters) {
 }
 
 // 创建单张种子卡牌（不消耗牌堆）
-function makeSeedCard(letter) {
+function makeSeedCard(letter, seedWord) {
   const baseScore = LETTER_SCORE[letter];
   const upgrade = letterUpgrades.get(letter);
   let score = baseScore;
@@ -552,7 +552,8 @@ function makeSeedCard(letter) {
     upgraded,
     upgradeMult,
     upgradeAdd,
-    _isSeedCard: true
+    _isSeedCard: true,
+    _seedWord: seedWord
   };
 }
 
@@ -608,7 +609,7 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   }
 
   // 4. 创建种子卡牌
-  const seedCards = seedLetters.map(letter => makeSeedCard(letter));
+  const seedCards = seedLetters.map(letter => makeSeedCard(letter, seedWord));
 
   // 5. 剩余数量按元音规则从 deck 补牌（种子卡牌作为已有手牌参与元音检查）
   const remainingNeed = need - seedCards.length;
@@ -1832,6 +1833,42 @@ class Game {
     });
     if (words.length > 10) lines.push('...');
     this.hintToast = { text: lines.join('\n'), expireAt: Date.now() + 2000, startTime: Date.now() };
+  }
+
+  showSeedWordHint() {
+    // 找出当前手牌中所有带 _seedWord 标记的种子卡牌
+    const seedCards = this.hand.filter(c => c && c._seedWord);
+    if (seedCards.length === 0) return;
+
+    // 按 _seedWord 分组
+    const groups = {};
+    for (const card of seedCards) {
+      if (!groups[card._seedWord]) groups[card._seedWord] = [];
+      groups[card._seedWord].push(card);
+    }
+
+    // 取第一个种子词（按单词字母顺序更稳定）
+    const words = Object.keys(groups);
+    const targetWord = words[0];
+    const wordCards = groups[targetWord];
+
+    // 清空当前选择
+    this.clearSelection();
+
+    // 选中该种子词的所有卡牌
+    for (const card of wordCards) {
+      this.selected.push(card.id);
+      card.selected = true;
+      if (this.animManager) this.animManager.cardSelect(card);
+    }
+
+    // 播放音效与震动
+    if (this.audioManager) this.audioManager.play('card_placement');
+    if (typeof wx !== 'undefined' && wx.vibrateShort) {
+      try { wx.vibrateShort({ type: 'light' }); } catch (e) {}
+    }
+
+    console.log('[SeedHint] 提示种子词:', targetWord, '选中卡牌:', wordCards.map(c => c.letter).join(''));
   }
 
   async playHand() {

@@ -227,6 +227,31 @@ module.exports = function extendPlaying(Renderer) {
       const maskX = W / 2 - maskW / 2;
       const maskY = wordAreaY - maskH / 2;
       this.roundRect(maskX, maskY, maskW, maskH, 10 * s, 'rgba(255,255,255,0.35)', 'rgba(196,163,90,0.5)', 1 * s);
+
+      // 提示按钮（预览区左侧）
+      const hasSeedCards = game.hand.some(c => c && c._seedWord);
+      if (hasSeedCards) {
+        const hintBtnSize = 30 * s;
+        const hintBtnX = maskX - hintBtnSize - 10 * s;
+        const hintBtnY = wordAreaY - hintBtnSize / 2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2, hintBtnSize / 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(196,163,90,0.8)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.stroke();
+        ctx.fillStyle = '#c4a35a';
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2);
+        ctx.restore();
+        this.hintBtnRect = { x: hintBtnX, y: hintBtnY, w: hintBtnSize, h: hintBtnSize };
+      } else {
+        this.hintBtnRect = null;
+      }
   
       // 预览区域（在卡牌上方）
       const selected = game.getSelectedCards();
