@@ -762,14 +762,7 @@ class Renderer {
     ctx.save();
     ctx.fillStyle = color;
     ctx.beginPath();
-    for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI / 2) - Math.PI / 4;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
