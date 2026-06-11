@@ -1,10 +1,17 @@
 // ===== 游戏数据 =====
 
 // 字母分数
+
+// const LETTER_SCORE = {
+//   A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
+//   J:10, K:11, L:12, M:13, N:14, O:15, P:16, Q:17, R:18,
+//   S:19, T:20, U:21, V:22, W:23, X:24, Y:25, Z:26
+// };
+//  beta:难度降低
 const LETTER_SCORE = {
-  A:1, B:2, C:3, D:4, E:5, F:6, G:7, H:8, I:9,
-  J:10, K:11, L:12, M:13, N:14, O:15, P:16, Q:17, R:18,
-  S:19, T:20, U:21, V:22, W:23, X:24, Y:25, Z:26
+  A:11, B:12, C:13, D:14, E:15, F:16, G:17, H:18, I:19,
+  J:20, K:21, L:22, M:23, N:24, O:25, P:26, Q:27, R:28,
+  S:29, T:30, U:31, V:32, W:33, X:34, Y:35, Z:36
 };
 
 // 字母分布（98张牌）
@@ -81,16 +88,16 @@ function getLetterScore(letter) {
 }
 
 // 计算基础目标分（分段递增系数）
-// 1关=150；2~5关系数100；6~10关系数40；11~20关系数50；21~30关系数60；31~40关系数70；41~50关系数80；51~80关系数90
+// 1关=150；2~5关系数20；6~10关系数25；11~20关系数30；21~30关系数35；31~40关系数40；41~50关系数45；51+关系数50
 function calcBaseTarget(round) {
   function getCoefficient(r) {
-    if (r <= 5) return 100;
-    if (r <= 10) return 30;
-    if (r <= 20) return 40;
-    if (r <= 30) return 50;
-    if (r <= 40) return 60;
-    if (r <= 50) return 70;
-    return 90;
+    if (r <= 5) return 20;
+    if (r <= 10) return 25;
+    if (r <= 20) return 30;
+    if (r <= 30) return 35;
+    if (r <= 40) return 40;
+    if (r <= 50) return 45;
+    return 50;
   }
   let target = 150;
   for (let r = 2; r <= round; r++) {
