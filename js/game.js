@@ -1192,6 +1192,10 @@ class Game {
     this._tipHelpBuyDelaying = false;
     this._tipHelpShareDelaying = false;
 
+    // help 按钮空闲波纹动画
+    this._lastPlayTime = Date.now();
+    this._helpIdleAnim = null; // { startTime: number }
+
     // 装备女巫卡牌跨回合状态
     this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
     this._shopDiscountRate = 0.6;       // 默认折扣率
@@ -1904,6 +1908,10 @@ class Game {
   async playHand() {
     // 用户点击出牌时清除种子词提示高亮
     this.hand.forEach(c => { if (c) delete c._hintHighlight; });
+
+    // 重置 help 按钮空闲波纹定时器
+    this._lastPlayTime = Date.now();
+    this._helpIdleAnim = null;
 
     if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
 

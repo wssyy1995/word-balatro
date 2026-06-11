@@ -235,6 +235,31 @@ module.exports = function extendPlaying(Renderer) {
       // 提示按钮（预览区左侧）
       const hasSeedCards = game.hand.some(c => c && c._seedWord);
       if (hasSeedCards) {
+        // === help 按钮空闲抖动动画（10秒未出牌触发，持续2秒） ===
+        let helpShakeX = 0;
+        let helpShakeY = 0;
+        let helpRotation = 0;
+        if (game._lastPlayTime && Date.now() - game._lastPlayTime > 10000) {
+          if (!game._helpIdleAnim) {
+            game._helpIdleAnim = { startTime: Date.now() };
+          }
+          game._lastPlayTime = Date.now(); // 重置10秒定时器
+        }
+        if (game._helpIdleAnim) {
+          const animElapsed = Date.now() - game._helpIdleAnim.startTime;
+          const animDuration = 2000;
+          if (animElapsed < animDuration) {
+            const ht1 = animElapsed / 130;
+            const ht2 = animElapsed / 170 + 1.2;
+            const ht3 = animElapsed / 200 + 0.5;
+            helpShakeX = (Math.sin(ht1) * 0.65 + Math.sin(ht3) * 0.4) * s;
+            helpShakeY = (Math.sin(ht2) * 0.55 + Math.cos(ht3) * 0.35) * s;
+            helpRotation = Math.sin(animElapsed / 150) * 1.6;
+          } else {
+            game._helpIdleAnim = null;
+          }
+        }
+
         const hintBtnSize = 34 * s;
         const hintBtnX = maskX - hintBtnSize - 8 * s;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
@@ -243,6 +268,11 @@ module.exports = function extendPlaying(Renderer) {
         ctx.shadowColor = 'rgba(0,0,0,0.12)';
         ctx.shadowBlur = 5 * s;
         ctx.shadowOffsetY = 2 * s;
+        if (helpShakeX !== 0 || helpShakeY !== 0 || helpRotation !== 0) {
+          ctx.translate(hintBtnX + hintBtnSize / 2 + helpShakeX, hintBtnY + hintBtnSize / 2 + helpShakeY);
+          ctx.rotate((helpRotation * Math.PI) / 180);
+          ctx.translate(-(hintBtnX + hintBtnSize / 2), -(hintBtnY + hintBtnSize / 2));
+        }
         if (this.helpIconLoaded && this.helpIcon) {
           // 保持 help.png 原始宽高比绘制
           const img = this.helpIcon;
@@ -301,6 +331,26 @@ module.exports = function extendPlaying(Renderer) {
       // 存储第一个方块点击区域（调试用）
       this.firstBoxRect = { x: leftBoxX, y: boxY, w: boxSize, h: boxSize };
   
+      // === 预览区流光边框（有无输入都有动效，线宽不同） ===
+      const hasInput = selected.length > 0;
+      const flowLineWidth = hasInput ? 2.3 * s : 2.0 * s;
+      const t = (Date.now() % 3000) / 3000; // 0~1，3秒一周期
+      const isValidWord = game.pendingCheck && game.pendingCheck.state === 'valid';
+      const flowColor = isValidWord ? '45,125,50' : '240,195,20';
+      const grad = ctx.createLinearGradient(
+        maskX - maskW * 0.2 + maskW * t * 1.4, maskY,
+        maskX + maskW * 0.2 + maskW * t * 1.4, maskY + maskH
+      );
+      grad.addColorStop(0, `rgba(${flowColor},0)`);
+      grad.addColorStop(0.5, `rgba(${flowColor},0.8)`);
+      grad.addColorStop(1, `rgba(${flowColor},0)`);
+      ctx.save();
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = flowLineWidth;
+      this._roundedRectPath(ctx, maskX, maskY, maskW, maskH, 10 * s);
+      ctx.stroke();
+      ctx.restore();
+
       // === pendingCheck 状态优先 ===
       let pc = null;
       if (game.pendingCheck) {
@@ -732,23 +782,7 @@ module.exports = function extendPlaying(Renderer) {
         ctx.fillText(word, W / 2, wordAreaY);
         ctx.restore();
       } else {
-        // 未选择任何字母牌：显示提示文字 + 流光边框
-        // 流光边框
-        const t = (Date.now() % 3000) / 3000; // 0~1，3秒一周期
-        const grad = ctx.createLinearGradient(
-          maskX - maskW * 0.2 + maskW * t * 1.4, maskY,
-          maskX + maskW * 0.2 + maskW * t * 1.4, maskY + maskH
-        );
-        grad.addColorStop(0, 'rgba(240,195,20,0)');
-        grad.addColorStop(0.5, 'rgba(240,195,20,0.8)');
-        grad.addColorStop(1, 'rgba(240,195,20,0)');
-        ctx.save();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2.2 * s;
-        this._roundedRectPath(ctx, maskX, maskY, maskW, maskH, 10 * s);
-        ctx.stroke();
-        ctx.restore();
-
+        // 未选择任何字母牌：显示提示文字
         ctx.save();
         ctx.font = `${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = 'rgba(90,74,42,0.55)';
