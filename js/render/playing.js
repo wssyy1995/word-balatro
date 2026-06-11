@@ -235,18 +235,23 @@ module.exports = function extendPlaying(Renderer) {
         const hintBtnX = maskX - hintBtnSize - 10 * s;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
-        ctx.beginPath();
-        ctx.arc(hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2, hintBtnSize / 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(196,163,90,0.8)';
-        ctx.lineWidth = 1.5 * s;
-        ctx.stroke();
-        ctx.fillStyle = '#c4a35a';
-        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('?', hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2);
+        if (this.helpIconLoaded && this.helpIcon) {
+          ctx.drawImage(this.helpIcon, hintBtnX, hintBtnY, hintBtnSize, hintBtnSize);
+        } else {
+          // fallback：圆形 ? 按钮
+          ctx.beginPath();
+          ctx.arc(hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2, hintBtnSize / 2, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(196,163,90,0.8)';
+          ctx.lineWidth = 1.5 * s;
+          ctx.stroke();
+          ctx.fillStyle = '#c4a35a';
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('?', hintBtnX + hintBtnSize / 2, hintBtnY + hintBtnSize / 2);
+        }
         ctx.restore();
         this.hintBtnRect = { x: hintBtnX, y: hintBtnY, w: hintBtnSize, h: hintBtnSize };
       } else {

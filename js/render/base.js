@@ -163,6 +163,19 @@ class Renderer {
     } catch (e) {
       this.topIconLoaded = false;
     }
+
+    // 加载提示按钮图标
+    this.helpIcon = null;
+    this.helpIconLoaded = false;
+    try {
+      const helpImg = wx.createImage();
+      helpImg.src = 'images/help.png';
+      helpImg.onload = () => { this.helpIconLoaded = true; };
+      helpImg.onerror = () => { this.helpIconLoaded = false; };
+      this.helpIcon = helpImg;
+    } catch (e) {
+      this.helpIconLoaded = false;
+    }
     
     // 加载按钮图片
     this.pressedBtn = null;
