@@ -231,8 +231,8 @@ module.exports = function extendPlaying(Renderer) {
       // 提示按钮（预览区左侧）
       const hasSeedCards = game.hand.some(c => c && c._seedWord);
       if (hasSeedCards) {
-        const hintBtnSize = 30 * s;
-        const hintBtnX = maskX - hintBtnSize - 10 * s;
+        const hintBtnSize = 34 * s;
+        const hintBtnX = maskX - hintBtnSize - 8 * s;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
         if (this.helpIconLoaded && this.helpIcon) {
