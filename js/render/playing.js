@@ -236,7 +236,22 @@ module.exports = function extendPlaying(Renderer) {
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
         if (this.helpIconLoaded && this.helpIcon) {
-          ctx.drawImage(this.helpIcon, hintBtnX, hintBtnY, hintBtnSize, hintBtnSize);
+          // 保持 help.png 原始宽高比绘制
+          const img = this.helpIcon;
+          const imgW = img.width || hintBtnSize;
+          const imgH = img.height || hintBtnSize;
+          const aspect = imgW / imgH;
+          let drawW, drawH;
+          if (aspect >= 1) {
+            drawW = hintBtnSize;
+            drawH = hintBtnSize / aspect;
+          } else {
+            drawH = hintBtnSize;
+            drawW = hintBtnSize * aspect;
+          }
+          const drawX = hintBtnX + (hintBtnSize - drawW) / 2;
+          const drawY = hintBtnY + (hintBtnSize - drawH) / 2;
+          ctx.drawImage(img, drawX, drawY, drawW, drawH);
         } else {
           // fallback：圆形 ? 按钮
           ctx.beginPath();
