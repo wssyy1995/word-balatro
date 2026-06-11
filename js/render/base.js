@@ -961,32 +961,21 @@ class Renderer {
       drawY += card.jumpOffsetY;
     }
 
-    // 提示高亮：缩放脉冲 + 背后纯金色呼吸光晕（无四角星星）
+    // 提示高亮：可爱小抖动（幅度小、频率活泼、略带旋转）
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
-      const duration = 2500;
+      const duration = 2200;
       if (elapsed >= duration) {
         delete card._hintHighlight;
       } else {
-        // 柔和缩放脉冲（1.0 ~ 1.05）
-        const pulseScale = 1 + 0.05 * Math.sin(elapsed / 250);
-        scale *= pulseScale;
-
-        // 纯金色径向光晕呼吸
-        const cx = drawX + w / 2;
-        const cy = drawY + h / 2;
-        const haloR = Math.max(w, h) * 0.9;
-        const breath = 0.5 + 0.5 * Math.sin(elapsed / 300);
-        const grad = ctx.createRadialGradient(cx, cy, haloR * 0.2, cx, cy, haloR);
-        grad.addColorStop(0, `rgba(255, 215, 0, ${0.28 * breath})`);
-        grad.addColorStop(0.5, `rgba(255, 200, 60, ${0.14 * breath})`);
-        grad.addColorStop(1, 'rgba(255, 180, 0, 0)');
-        ctx.save();
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, haloR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        const t1 = elapsed / 70;
+        const t2 = elapsed / 95 + 1.2;
+        const t3 = elapsed / 110 + 0.5;
+        // 小幅位移：左右 1.2px，上下 0.9px，不同频叠加更灵动
+        drawX += (Math.sin(t1) * 0.7 + Math.sin(t3) * 0.5) * s;
+        drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
+        // 轻微摇头：±1.8 度
+        rotation += Math.sin(elapsed / 85) * 1.8;
       }
     }
 
