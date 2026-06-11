@@ -975,13 +975,13 @@ class Renderer {
       // 装备按钮风格边框水波纹：2 层，更缓和的扩散
       const RING_INTERVAL = 1500;
       const RING_DURATION = 2400;
-      const maxExpand = 18 * s;
+      const maxExpand = 10 * s;
       const br = 10 * s;
       for (let i = 0; i < 2; i++) {
         const rawPhase = (elapsed + i * RING_INTERVAL) % RING_DURATION;
         const progress = rawPhase / RING_DURATION;
         const expand = progress * maxExpand;
-        const alpha = 0.55 * (1 - progress) * (1 - progress);
+        const alpha = 0.32 * (1 - progress) * (1 - progress);
         const ex = drawX - expand;
         const ey = drawY - expand;
         const ew = w + expand * 2;
@@ -1000,10 +1000,10 @@ class Renderer {
         ctx.lineTo(ex, ey + er);
         ctx.quadraticCurveTo(ex, ey, ex + er, ey);
         ctx.closePath();
-        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.35})`;
+        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.25})`;
         ctx.fill();
         ctx.strokeStyle = `rgba(212, 169, 78, ${alpha})`;
-        ctx.lineWidth = 2.2 * s;
+        ctx.lineWidth = 1.6 * s;
         ctx.stroke();
         ctx.restore();
       }
