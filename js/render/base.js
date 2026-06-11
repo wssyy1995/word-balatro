@@ -1002,24 +1002,24 @@ class Renderer {
     // 提示高亮：缓和可爱抖动 + 装备按钮风格边框水波纹
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
-      // 更轻柔的抖动
+      // 可爱抖动（效果略微增强）
       const t1 = elapsed / 130;
       const t2 = elapsed / 170 + 1.2;
       const t3 = elapsed / 200 + 0.5;
-      drawX += (Math.sin(t1) * 0.5 + Math.sin(t3) * 0.3) * s;
-      drawY += (Math.sin(t2) * 0.4 + Math.cos(t3) * 0.25) * s;
-      rotation += Math.sin(elapsed / 150) * 1.2;
+      drawX += (Math.sin(t1) * 0.65 + Math.sin(t3) * 0.4) * s;
+      drawY += (Math.sin(t2) * 0.55 + Math.cos(t3) * 0.35) * s;
+      rotation += Math.sin(elapsed / 150) * 1.6;
 
-      // 装备按钮风格边框水波纹：2 层，更缓和的扩散
+      // 装备按钮风格边框水波纹：2 层
       const RING_INTERVAL = 1500;
       const RING_DURATION = 2400;
-      const maxExpand = 12 * s;
+      const maxExpand = 16 * s;
       const br = 10 * s;
       for (let i = 0; i < 2; i++) {
         const rawPhase = (elapsed + i * RING_INTERVAL) % RING_DURATION;
         const progress = rawPhase / RING_DURATION;
         const expand = progress * maxExpand;
-        const alpha = 0.45 * (1 - progress) * (1 - progress);
+        const alpha = 0.55 * (1 - progress) * (1 - progress);
         const ex = drawX - expand;
         const ey = drawY - expand;
         const ew = w + expand * 2;

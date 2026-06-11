@@ -915,12 +915,12 @@ wx.onTouchEnd(() => {
         game._tipHelpBuyDelaying = true;
         game.gold -= 2;
         if (game.audioManager) game.audioManager.play('card_sell');
-        game.hintToast = { text: '已获得提示！', expireAt: Date.now() + 1500, startTime: Date.now() };
+        game.hintToast = { text: '购买提示成功！', expireAt: Date.now() + 1200, startTime: Date.now() };
         if (game.storageManager) game.storageManager.saveProgress();
         game._delay(() => {
           game.closeTipHelpPopup();
           game.showSeedWordHint();
-        }, 1500);
+        }, 1200);
       } else if (game.gold < 2) {
         game.hintToast = { text: '金币不足，需要2枚金币', expireAt: Date.now() + 1500, startTime: Date.now() };
         if (game.audioManager) game.audioManager.play('card_illegal');

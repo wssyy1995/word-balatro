@@ -529,7 +529,7 @@ module.exports = function extendHud(Renderer) {
       // 头部 icon（与 toast 顶部齐平）
       const iconData = this.toastIcon;
       if (iconData && iconData.loaded && iconData.img) {
-        ctx.drawImage(iconData.img, toastX - 2, toastY - 2, iconSize, iconSize);
+        ctx.drawImage(iconData.img, toastX - 3, toastY - 3, iconSize, iconSize);
       }
 
       // 深色文字

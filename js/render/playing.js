@@ -226,15 +226,23 @@ module.exports = function extendPlaying(Renderer) {
       const maskH = 38 * s;
       const maskX = W / 2 - maskW / 2;
       const maskY = wordAreaY - maskH / 2;
-      this.roundRect(maskX, maskY, maskW, maskH, 10 * s, 'rgba(255,255,255,0.35)', 'rgba(196,163,90,0.5)', 1 * s);
+      // 单词预览区：渐变背景增强立体感
+      const maskGrad = ctx.createLinearGradient(0, maskY, 0, maskY + maskH);
+      maskGrad.addColorStop(0, 'rgba(255,255,255,0.45)');
+      maskGrad.addColorStop(1, 'rgba(240,235,224,0.35)');
+      this.roundRect(maskX, maskY, maskW, maskH, 10 * s, maskGrad, 'rgba(196,163,90,0.5)', 1 * s);
 
       // 提示按钮（预览区左侧）
       const hasSeedCards = game.hand.some(c => c && c._seedWord);
       if (hasSeedCards) {
-        const hintBtnSize = 38 * s;
+        const hintBtnSize = 34 * s;
         const hintBtnX = maskX - hintBtnSize - 8 * s;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
+        // 底部轻微阴影增强立体感
+        ctx.shadowColor = 'rgba(0,0,0,0.12)';
+        ctx.shadowBlur = 5 * s;
+        ctx.shadowOffsetY = 2 * s;
         if (this.helpIconLoaded && this.helpIcon) {
           // 保持 help.png 原始宽高比绘制
           const img = this.helpIcon;
@@ -736,7 +744,7 @@ module.exports = function extendPlaying(Renderer) {
         grad.addColorStop(1, 'rgba(240,195,20,0)');
         ctx.save();
         ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5 * s;
+        ctx.lineWidth = 2.2 * s;
         this._roundedRectPath(ctx, maskX, maskY, maskW, maskH, 10 * s);
         ctx.stroke();
         ctx.restore();
@@ -1336,10 +1344,11 @@ module.exports = function extendPlaying(Renderer) {
     const closeSize = 32 * s;
     const closeX = px + pw - closeSize - 10 * s;
     const closeY = py + 10 * s;
+    const closePressOffset = game._tipHelpClosePressed ? 2 * s : 0;
     if (closeData && closeData.loaded && closeData.img) {
       ctx.save();
       ctx.globalAlpha = closeAlpha;
-      ctx.drawImage(closeData.img, closeX, closeY, closeSize, closeSize);
+      ctx.drawImage(closeData.img, closeX, closeY + closePressOffset, closeSize, closeSize);
       ctx.restore();
     }
     this.tipHelpCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
