@@ -489,6 +489,128 @@ function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
   return deck.splice(0, need);
 }
 
+// 从 WORD_DATA 中找出包含指定手牌字母（支持重复）的长度为 4 的单词
+function findFourLetterSeedWord(handLetters) {
+  const candidates = [];
+  for (const word of WORD_DATA.keys()) {
+    if (word.length !== 4) continue;
+    const upper = word.toUpperCase();
+    const temp = upper.split('');
+    let matched = 0;
+    for (const l of handLetters) {
+      const idx = temp.indexOf(l);
+      if (idx >= 0) {
+        temp.splice(idx, 1);
+        matched++;
+      }
+    }
+    if (matched === handLetters.length) {
+      candidates.push(word);
+    }
+  }
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+// 根据已用手牌字母，从 4 字母单词中提取剩余字母作为种子字母
+function getSeedLettersFromWord(word, usedLetters) {
+  const result = [];
+  const used = [...usedLetters];
+  for (const ch of word.toUpperCase()) {
+    const idx = used.indexOf(ch);
+    if (idx >= 0) {
+      used.splice(idx, 1);
+    } else {
+      result.push(ch);
+    }
+  }
+  return result;
+}
+
+// 创建单张种子卡牌（不消耗牌堆）
+function makeSeedCard(letter) {
+  const baseScore = LETTER_SCORE[letter];
+  const upgrade = letterUpgrades.get(letter);
+  let score = baseScore;
+  let upgraded = false;
+  let upgradeMult = 1;
+  let upgradeAdd = 0;
+  if (upgrade) {
+    if (upgrade.mult) score = Math.floor(score * upgrade.mult);
+    if (upgrade.add) score += upgrade.add;
+    upgraded = true;
+    upgradeMult = upgrade.mult || 1;
+    upgradeAdd = upgrade.add || 0;
+  }
+  return {
+    letter,
+    baseScore,
+    score,
+    isFace: FACE_CARDS.has(letter),
+    id: Math.random().toString(36).substr(2, 9),
+    selected: false,
+    upgraded,
+    upgradeMult,
+    upgradeAdd,
+    _isSeedCard: true
+  };
+}
+
+// 出牌/弃牌后补牌：优先从保留手牌生成 4 字母种子词保底，剩余按元音规则补牌
+function drawWithSeedSafety(deck, hand, need, maxAttempts = 10) {
+  const VOWELS = ['A', 'E', 'I', 'O', 'U'];
+  const handCards = hand.filter(Boolean);
+
+  // 1. 从保留手牌中挑选 2 张字母牌（优先 1 元音 + 1 辅音，否则 2 辅音）
+  let chosenCards = [];
+  if (handCards.length >= 2) {
+    const vowelCards = handCards.filter(c => VOWELS.includes(c.letter));
+    const consonantCards = handCards.filter(c => !VOWELS.includes(c.letter));
+
+    if (vowelCards.length > 0 && consonantCards.length > 0) {
+      const v = vowelCards[Math.floor(Math.random() * vowelCards.length)];
+      const c = consonantCards[Math.floor(Math.random() * consonantCards.length)];
+      chosenCards = [v, c];
+    } else if (consonantCards.length >= 2) {
+      const shuffled = [...consonantCards].sort(() => Math.random() - 0.5);
+      chosenCards = shuffled.slice(0, 2);
+    } else {
+      const shuffled = [...handCards].sort(() => Math.random() - 0.5);
+      chosenCards = shuffled.slice(0, 2);
+    }
+  }
+
+  if (chosenCards.length < 2) {
+    return drawWithVowelRules(deck, hand, need, maxAttempts);
+  }
+
+  // 2. 找包含这 2 个字母的 4 字母单词
+  const chosenLetters = chosenCards.map(c => c.letter);
+  const seedWord = findFourLetterSeedWord(chosenLetters);
+  if (!seedWord) {
+    return drawWithVowelRules(deck, hand, need, maxAttempts);
+  }
+
+  // 3. 提取另外 2 个字母作为种子字母
+  const seedLetters = getSeedLettersFromWord(seedWord, chosenLetters);
+  if (seedLetters.length === 0) {
+    return drawWithVowelRules(deck, hand, need, maxAttempts);
+  }
+
+  // 4. 创建种子卡牌
+  const seedCards = seedLetters.map(letter => makeSeedCard(letter));
+
+  // 5. 剩余数量按元音规则从 deck 补牌（种子卡牌作为已有手牌参与元音检查）
+  const remainingNeed = need - seedCards.length;
+  if (remainingNeed <= 0) {
+    return seedCards.slice(0, need);
+  }
+
+  const augmentedHand = [...hand, ...seedCards];
+  const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts);
+  return [...seedCards, ...deckCards];
+}
+
 // 频率表算法：O(|WORD_DATA|) 远快于全排列 O(n!)
 function hasValidWordInHand(hand) {
   const letterCounts = {};
@@ -2213,7 +2335,7 @@ class Game {
       // 3. 从牌堆顶部补牌
       const need = finalPlayedCards.length;
       const validHand = this.hand.filter(Boolean);
-      const newCards = drawWithVowelRules(this.deck, validHand, need);
+      const newCards = drawWithSeedSafety(this.deck, validHand, need);
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -2524,7 +2646,7 @@ class Game {
       // 3. 从牌堆顶部补牌
       const need = discardedCards.length;
       const validHand = this.hand.filter(Boolean);
-      const newCards = drawWithVowelRules(this.deck, validHand, need);
+      const newCards = drawWithSeedSafety(this.deck, validHand, need);
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
