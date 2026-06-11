@@ -1000,10 +1000,10 @@ class Renderer {
         ctx.lineTo(ex, ey + er);
         ctx.quadraticCurveTo(ex, ey, ex + er, ey);
         ctx.closePath();
-        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.25})`;
+        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.3})`;
         ctx.fill();
         ctx.strokeStyle = `rgba(212, 169, 78, ${alpha})`;
-        ctx.lineWidth = 1.6 * s;
+        ctx.lineWidth = 2.0 * s;
         ctx.stroke();
         ctx.restore();
       }
