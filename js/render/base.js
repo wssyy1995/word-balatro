@@ -977,13 +977,13 @@ class Renderer {
     // 提示高亮：缓和可爱抖动 + 装备按钮风格边框水波纹
     if (card._hintHighlight) {
       const elapsed = Date.now() - card._hintHighlight.startTime;
-      // 更缓和的抖动频率
-      const t1 = elapsed / 110;
-      const t2 = elapsed / 145 + 1.2;
-      const t3 = elapsed / 170 + 0.5;
-      drawX += (Math.sin(t1) * 0.6 + Math.sin(t3) * 0.4) * s;
-      drawY += (Math.sin(t2) * 0.45 + Math.cos(t3) * 0.3) * s;
-      rotation += Math.sin(elapsed / 125) * 1.5;
+      // 更轻柔的抖动
+      const t1 = elapsed / 130;
+      const t2 = elapsed / 170 + 1.2;
+      const t3 = elapsed / 200 + 0.5;
+      drawX += (Math.sin(t1) * 0.5 + Math.sin(t3) * 0.3) * s;
+      drawY += (Math.sin(t2) * 0.4 + Math.cos(t3) * 0.25) * s;
+      rotation += Math.sin(elapsed / 150) * 1.2;
 
       // 装备按钮风格边框水波纹：2 层，更缓和的扩散
       const RING_INTERVAL = 1500;
