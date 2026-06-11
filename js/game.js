@@ -1182,6 +1182,16 @@ class Game {
     this._dailyWordsScrollBounceStartTime = 0;
     this._shouldToastFly = false;
 
+    // 求助提示弹窗
+    this._tipHelpPopup = null;
+    this._closingTipHelp = false;
+    this._closeTipHelpStartTime = null;
+    this._tipHelpBuyPressed = false;
+    this._tipHelpSharePressed = false;
+    this._tipHelpClosePressed = false;
+    this._tipHelpBuyDelaying = false;
+    this._tipHelpShareDelaying = false;
+
     // 装备女巫卡牌跨回合状态
     this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
     this._shopDiscountRate = 0.6;       // 默认折扣率
@@ -1870,6 +1880,25 @@ class Game {
     }
 
     console.log('[SeedHint] 提示种子词:', targetWord, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
+  }
+
+  showTipHelpPopup() {
+    this._tipHelpPopup = { startTime: Date.now() };
+    this._closingTipHelp = false;
+    this._closeTipHelpStartTime = null;
+    this._tipHelpBuyPressed = false;
+    this._tipHelpSharePressed = false;
+    this._tipHelpClosePressed = false;
+    this._tipHelpBuyDelaying = false;
+    this._tipHelpShareDelaying = false;
+    if (this.audioManager) this.audioManager.play('tap');
+  }
+
+  closeTipHelpPopup() {
+    if (!this._tipHelpPopup || this._closingTipHelp) return;
+    this._closingTipHelp = true;
+    this._closeTipHelpStartTime = Date.now();
+    if (this.audioManager) this.audioManager.play('tap');
   }
 
   async playHand() {

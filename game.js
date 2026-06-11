@@ -40,6 +40,25 @@ wx.onShow(() => {
     }
     shareReviveState = null;
   }
+
+  // === 分享求助检测 ===
+  if (shareTipHelpState && shareTipHelpState.resolving && game) {
+    const stayed = Date.now() - shareTipHelpState.startTime;
+    console.log('[ShareTipHelp] 分享界面停留时间:', stayed, 'ms');
+    if (stayed >= 2500) {
+      console.log('[ShareTipHelp] 判定分享成功，执行提示');
+      game.closeTipHelpPopup();
+      game.showSeedWordHint();
+      game.hintToast = { text: '购买提示成功！', expireAt: Date.now() + 2000 };
+    } else {
+      console.log('[ShareTipHelp] 分享取消或停留时间不足');
+      if (game) {
+        game._tipHelpSharePressed = false;
+        game.hintToast = { text: '分享后才可以获得提示哦~', expireAt: Date.now() + 2000 };
+      }
+    }
+    shareTipHelpState = null;
+  }
 });
 
 wx.onHide(() => {
@@ -163,6 +182,9 @@ renderer.dpr = scaleDpr;
 
 // 分享复活状态
 let shareReviveState = null; // { startTime: number, resolving: boolean }
+
+// 分享求助状态
+let shareTipHelpState = null; // { startTime: number, resolving: boolean }
 
 // 云存储管理器
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
@@ -668,6 +690,22 @@ wx.onTouchMove((e) => {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
     if (!hit) game._settingsCloseBtnPressed = false;
   }
+  // 移出求助提示弹窗按钮区域时取消按下状态
+  if (game._tipHelpClosePressed && renderer.tipHelpCloseRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpCloseRect]);
+    if (!hit) game._tipHelpClosePressed = false;
+  }
+  if (game._tipHelpBuyPressed && renderer.tipHelpBuyRect && !game._tipHelpBuyDelaying) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpBuyRect]);
+    if (!hit) game._tipHelpBuyPressed = false;
+  }
+  if (game._tipHelpSharePressed && renderer.tipHelpShareRect && !game._tipHelpShareDelaying) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpShareRect]);
+    if (!hit) game._tipHelpSharePressed = false;
+  }
   if (game._feedbackBackPressed && renderer.feedbackBackRect) {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
@@ -865,6 +903,56 @@ wx.onTouchEnd(() => {
     }
   }
 
+  // 求助提示弹窗交互处理（松开时）
+  if (game._tipHelpPopup && !game._closingTipHelp) {
+    if (game._tipHelpClosePressed) {
+      game._tipHelpClosePressed = false;
+      game.closeTipHelpPopup();
+    }
+    if (game._tipHelpBuyPressed) {
+      game._tipHelpBuyPressed = false;
+      if (game.gold >= 2 && !game._tipHelpBuyDelaying) {
+        game._tipHelpBuyDelaying = true;
+        game.gold -= 2;
+        if (game.audioManager) game.audioManager.play('card_sell');
+        game.hintToast = { text: '已获得提示！', expireAt: Date.now() + 1500, startTime: Date.now() };
+        if (game.storageManager) game.storageManager.saveProgress();
+        game._delay(() => {
+          game.closeTipHelpPopup();
+          game.showSeedWordHint();
+        }, 1500);
+      } else if (game.gold < 2) {
+        game.hintToast = { text: '金币不足，需要2枚金币', expireAt: Date.now() + 1500, startTime: Date.now() };
+        if (game.audioManager) game.audioManager.play('card_illegal');
+      }
+    }
+    if (game._tipHelpSharePressed) {
+      game._tipHelpSharePressed = false;
+      if (!game._tipHelpShareDelaying) {
+        game._tipHelpShareDelaying = true;
+        // 延迟 80ms 让按钮恢复后再拉起分享
+        game._delay(() => {
+          game._tipHelpShareDelaying = false;
+          try {
+            const tempFilePath = canvas.toTempFilePathSync();
+            wx.shareAppMessage({
+              title: `🎯 我在女巫的词牌里遇到困难了，快来帮我想想！`,
+              imageUrl: tempFilePath,
+              query: `from=tip_help&round=${game.round}`
+            });
+            shareTipHelpState = { startTime: Date.now(), resolving: true };
+          } catch (e) {
+            wx.shareAppMessage({
+              title: `🎯 我在女巫的词牌里遇到困难了，快来帮我想想！`,
+              query: `from=tip_help&round=${game.round}`
+            });
+            shareTipHelpState = { startTime: Date.now(), resolving: true };
+          }
+        }, 80);
+      }
+    }
+  }
+
   // 设置弹窗交互处理（松开时）
   if (game._settingsPopup && !game._closingSettings) {
     if (game._settingsSoundPressed) {
@@ -993,6 +1081,45 @@ wx.onTouchEnd(() => {
 function handleInput(x, y) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
   if (game._settingsPopup && !game._closingSettings) return;
+
+  // 求助提示弹窗优先处理
+  if (game._tipHelpPopup && !game._closingTipHelp) {
+    // 关闭按钮
+    if (renderer.tipHelpCloseRect) {
+      const closeHit = renderer.hitTest(x, y, [renderer.tipHelpCloseRect]);
+      if (closeHit) {
+        vibrate();
+        game._tipHelpClosePressed = true;
+        return;
+      }
+    }
+    // 购买提示按钮
+    if (renderer.tipHelpBuyRect && !game._tipHelpBuyDelaying) {
+      const buyHit = renderer.hitTest(x, y, [renderer.tipHelpBuyRect]);
+      if (buyHit) {
+        vibrate();
+        game._tipHelpBuyPressed = true;
+        return;
+      }
+    }
+    // 转发求助按钮
+    if (renderer.tipHelpShareRect && !game._tipHelpShareDelaying) {
+      const shareHit = renderer.hitTest(x, y, [renderer.tipHelpShareRect]);
+      if (shareHit) {
+        vibrate();
+        game._tipHelpSharePressed = true;
+        return;
+      }
+    }
+    // 点击弹窗外部区域关闭弹窗
+    if (renderer.tipHelpPanelRect) {
+      const panelHit = renderer.hitTest(x, y, [renderer.tipHelpPanelRect]);
+      if (!panelHit) {
+        game.closeTipHelpPopup();
+      }
+    }
+    return;
+  }
 
   // 首次用户交互时尝试启动 BGM（真机音频必须在用户触摸事件回调内首次播放）
   if (game.audioManager && !game.audioManager.bgmStarted) {
@@ -1473,12 +1600,12 @@ function handleInput(x, y) {
       }
     }
 
-    // 检测种子词提示按钮点击（预览区左侧 ? 按钮）
+    // 检测种子词提示按钮点击（预览区左侧 help 按钮）
     if (renderer.hintBtnRect) {
       const hintHit = renderer.hitTest(x, y, [renderer.hintBtnRect]);
       if (hintHit) {
         vibrate();
-        game.showSeedWordHint();
+        game.showTipHelpPopup();
         return;
       }
     }

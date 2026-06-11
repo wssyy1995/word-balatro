@@ -462,43 +462,74 @@ module.exports = function extendHud(Renderer) {
       if (!game.hintToast || !game.hintToast.text) return;
       const toastH = 32 * s;
       const padding = 12 * s;
-      const iconSize = 33 * s;
+      const iconSize = 40 * s;
       const iconSpacing = 6 * s;
       ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
       const textW = ctx.measureText(game.hintToast.text).width;
       const toastW = textW + padding * 2 + iconSize + iconSpacing - 10 * s;
       const toastX = (W - toastW) / 2;
       // 位置：单词预览区上方（再往上 11px），无预览区时回退到屏幕底部
-      let toastY = this.wordAreaY ? this.wordAreaY - toastH - 10 * s - 3 * s - 3 * s - 3 * s - 2 * s : this.H - 120 * s;
+      let toastY = this.wordAreaY ? this.wordAreaY - toastH - 10 * s - 3 * s - 3 * s - 3 * s : this.H - 118 * s;
 
-      // 进入动画：从下往上弹出（350ms easeOutBack）
+      // 进入动画：从下往上弹出 + 缩放（350ms easeOutBack）
       let animOffsetY = 0;
       let animAlpha = 1;
+      let animScale = 1;
       if (game.hintToast.startTime) {
         const enterElapsed = Date.now() - game.hintToast.startTime;
         const enterDuration = 350;
         if (enterElapsed < enterDuration) {
-          const t = enterElapsed / enterDuration;
+          const t = Math.min(enterElapsed / enterDuration, 1);
           const eased = Easing.easeOutBack(t);
-          animOffsetY = (1 - eased) * 20 * s;
-          animAlpha = t;
+          const easedAlpha = t * (2 - t); // easeOutQuad
+          animOffsetY = (1 - eased) * 50 * s;
+          animAlpha = easedAlpha;
+          animScale = 0.85 + 0.15 * eased;
         }
       }
       toastY += animOffsetY;
 
       ctx.save();
       ctx.globalAlpha = animAlpha;
-      // 白色背景 + 轻微阴影
+      // 以 toast 中心为原点缩放
+      const toastCX = toastX + toastW / 2;
+      const toastCY = toastY + toastH / 2;
+      ctx.translate(toastCX, toastCY);
+      ctx.scale(animScale, animScale);
+      ctx.translate(-toastCX, -toastCY);
+      // 立体渐变背景 + 轻微阴影
       ctx.shadowColor = 'rgba(0,0,0,0.12)';
       ctx.shadowBlur = 8 * s;
       ctx.shadowOffsetY = 2 * s;
-      this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, '#fff', 'rgba(196,163,90,0.25)', 1 * s);
+      const toastGrad = ctx.createLinearGradient(0, toastY, 0, toastY + toastH);
+      toastGrad.addColorStop(0, '#fff');
+      toastGrad.addColorStop(1, '#f0ebe0');
+      this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, toastGrad, '#c4a35a', 1.5 * s);
       ctx.shadowColor = 'transparent';
 
+      // 顶部微弱高光条（增强立体感）
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      const hlR = toastH / 2;
+      ctx.moveTo(toastX + hlR, toastY + 1);
+      ctx.lineTo(toastX + toastW - hlR, toastY + 1);
+      ctx.arcTo(toastX + toastW, toastY + 1, toastX + toastW, toastY + hlR, hlR);
+      ctx.lineTo(toastX + toastW, toastY + toastH * 0.35);
+      ctx.arcTo(toastX + toastW, toastY + toastH * 0.45, toastX + toastW - hlR, toastY + toastH * 0.45, hlR * 0.3);
+      ctx.lineTo(toastX + hlR, toastY + toastH * 0.45);
+      ctx.arcTo(toastX, toastY + toastH * 0.45, toastX, toastY + toastH * 0.35, hlR * 0.3);
+      ctx.lineTo(toastX, toastY + hlR);
+      ctx.arcTo(toastX, toastY + 1, toastX + hlR, toastY + 1, hlR);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
       // 头部 icon（与 toast 顶部齐平）
-      const iconData = this.settingIcons && this.settingIcons.study;
+      const iconData = this.toastIcon;
       if (iconData && iconData.loaded && iconData.img) {
-        ctx.drawImage(iconData.img, toastX, toastY, iconSize, iconSize);
+        ctx.drawImage(iconData.img, toastX - 2, toastY - 2, iconSize, iconSize);
       }
 
       // 深色文字

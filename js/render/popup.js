@@ -1518,8 +1518,8 @@ module.exports = function extendPopup(Renderer) {
 
       // === 右上角关闭按钮（在所有边框之后绘制，确保在最上层） ===
       const closeSize = 32 * s;
-      const closeX = px + pw - closeSize - 10 * s + 10;
-      const closeY = py + 10 * s - 10;
+      const closeX = px + pw - closeSize - 10 * s + 3;
+      const closeY = py + 10 * s - 3;
       const pressOffset = game._settingsCloseBtnPressed ? 2 * s : 0;
       ctx.save();
       ctx.globalAlpha = contentAlpha;

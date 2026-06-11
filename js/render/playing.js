@@ -1198,4 +1198,152 @@ module.exports = function extendPlaying(Renderer) {
       this._drawWitchDetailPopup(ctx, game, s);
     }
 
+  // ===== 求助提示弹窗 =====
+  Renderer.prototype.drawTipHelpPopup = function(game) {
+    const popup = game._tipHelpPopup;
+    if (!popup) return;
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    const isClosing = game._closingTipHelp;
+    const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
+
+    const panel = this._drawModalPanel(ctx, W, H, s, {
+      isClosing,
+      closeStartTime: game._closeTipHelpStartTime,
+      width: 300,
+      height: 280,
+      bgColor: '#f5f0e1',
+      borderColor: '#c4a35a',
+      borderRadius: 14,
+      borderWidth: 1.5,
+      overlayAlpha: 0.55,
+      overlayFadeInDuration: 200,
+      enterOffset: 20,
+      closeOffset: 30,
+      elapsed,
+      onCloseComplete: () => {
+        game._tipHelpPopup = null;
+        game._closingTipHelp = false;
+        game._closeTipHelpStartTime = null;
+        game._tipHelpBuyPressed = false;
+        game._tipHelpSharePressed = false;
+        game._tipHelpClosePressed = false;
+        game._tipHelpBuyDelaying = false;
+        game._tipHelpShareDelaying = false;
+      }
+    });
+
+    if (!panel) return;
+    const { px, py, pw, ph, closeAlpha } = panel;
+
+    // 重置点击区域
+    this.tipHelpBuyRect = null;
+    this.tipHelpShareRect = null;
+    this.tipHelpCloseRect = null;
+    this.tipHelpPanelRect = { x: px, y: py, w: pw, h: ph };
+
+    // === 内层细边框（参考设置弹窗） ===
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    const inset = 4 * s;
+    const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 14 * s - inset;
+    ctx.moveTo(ix + ir, iy);
+    ctx.lineTo(ix + iw - ir, iy);
+    ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+    ctx.lineTo(ix + iw, iy + ih - ir);
+    ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+    ctx.lineTo(ix + ir, iy + ih);
+    ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+    ctx.lineTo(ix, iy + ir);
+    ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+
+    // 标题
+    const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+    ctx.save();
+    ctx.globalAlpha = titleAnim.alpha * closeAlpha;
+    ctx.fillStyle = '#5a4a2a';
+    ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('单词提示', W / 2, py + 34 * s + titleAnim.yShift);
+    ctx.restore();
+
+    // 标题下装饰线
+    const decoLineY = py + 52 * s;
+    const decoLineW = pw * 0.5;
+    const decoLineX = px + (pw - decoLineW) / 2;
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+    ctx.restore();
+
+    // 副标题
+    const subAnim = Easing.fadeIn(elapsed, 140, 250, 6 * s);
+    ctx.save();
+    ctx.globalAlpha = subAnim.alpha * closeAlpha * 0.85;
+    ctx.fillStyle = '#7a6a4a';
+    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const subY = py + 75 * s + subAnim.yShift;
+    ctx.fillText('需要帮助？请选择以下方式获取提示', W / 2, subY);
+    ctx.restore();
+
+    // 按钮图片
+    const buyData = this.tipHelpImages && this.tipHelpImages['buy_tip'];
+    const shareData = this.tipHelpImages && this.tipHelpImages['share_tip'];
+    const closeData = this.tipHelpImages && this.tipHelpImages['pop_close'];
+
+    const btnW = 200 * s;
+    const buyH = 63 * s;
+    const shareH = 66 * s;
+    const btnGap = 12 * s;
+    const btnX = (W - btnW) / 2;
+    const startY = py + 105 * s;
+
+    // 购买提示按钮
+    const buyY = startY;
+    if (buyData && buyData.loaded && buyData.img) {
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      const buyPressOffset = game._tipHelpBuyPressed ? 2 * s : 0;
+      ctx.drawImage(buyData.img, btnX, buyY + buyPressOffset, btnW, buyH);
+      ctx.restore();
+    }
+    this.tipHelpBuyRect = { x: btnX, y: buyY, w: btnW, h: buyH };
+
+    // 转发求助按钮
+    const shareY = startY + buyH + btnGap;
+    if (shareData && shareData.loaded && shareData.img) {
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      const sharePressOffset = game._tipHelpSharePressed ? 2 * s : 0;
+      ctx.drawImage(shareData.img, btnX, shareY + sharePressOffset, btnW, shareH);
+      ctx.restore();
+    }
+    this.tipHelpShareRect = { x: btnX, y: shareY, w: btnW, h: shareH };
+
+    // 右上角关闭按钮
+    const closeSize = 32 * s;
+    const closeX = px + pw - closeSize - 10 * s;
+    const closeY = py + 10 * s;
+    if (closeData && closeData.loaded && closeData.img) {
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      ctx.drawImage(closeData.img, closeX, closeY, closeSize, closeSize);
+      ctx.restore();
+    }
+    this.tipHelpCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
+
+  }
+
 };

@@ -176,6 +176,20 @@ class Renderer {
     } catch (e) {
       this.helpIconLoaded = false;
     }
+
+    // 加载求助弹窗资源
+    this.tipHelpImages = {};
+    ['buy_tip', 'share_tip', 'pop_close'].forEach(name => {
+      try {
+        const img = wx.createImage();
+        img.src = `images/${name}.png`;
+        img.onload = () => { this.tipHelpImages[name] = { img, loaded: true }; };
+        img.onerror = () => { this.tipHelpImages[name] = { img, loaded: false }; };
+        this.tipHelpImages[name] = { img, loaded: false };
+      } catch (e) {
+        this.tipHelpImages[name] = { img: null, loaded: false };
+      }
+    });
     
     // 加载按钮图片
     this.pressedBtn = null;
@@ -515,6 +529,17 @@ class Renderer {
       img.onerror = () => { this.toastStarIcon = { img: null, loaded: false, width: 0, height: 0 }; };
     } catch (e) {
       this.toastStarIcon = { img: null, loaded: false, width: 0, height: 0 };
+    }
+
+    // Toast 提示图标
+    this.toastIcon = { img: null, loaded: false, width: 0, height: 0 };
+    try {
+      const img = wx.createImage();
+      img.src = 'images/toast_icon.png';
+      img.onload = () => { this.toastIcon = { img, loaded: true, width: img.width, height: img.height }; };
+      img.onerror = () => { this.toastIcon = { img: null, loaded: false, width: 0, height: 0 }; };
+    } catch (e) {
+      this.toastIcon = { img: null, loaded: false, width: 0, height: 0 };
     }
 
     // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）

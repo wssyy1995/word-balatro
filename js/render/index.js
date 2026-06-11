@@ -48,8 +48,6 @@ Renderer.prototype.render = function(game) {
       if (game._changeLetterPopup) {
         this.drawChangeLetterPopup(game);
       }
-      // hintToast 提示
-      this._drawHintToast(game);
       // toast 飞行星星动画
       this._drawToastFlyStar();
     } else if (game.state === 'settlement') {
@@ -785,6 +783,14 @@ Renderer.prototype.render = function(game) {
     if (game._settingsPopup) {
       this.drawSettingsPopup(game);
     }
+
+    // 求助提示弹窗
+    if (game._tipHelpPopup) {
+      this.drawTipHelpPopup(game);
+    }
+
+    // hintToast 提示（绘制在所有弹窗之上，确保弹窗打开时也能看到）
+    this._drawHintToast(game);
 
     // 今日新词弹窗
     if (game._dailyWordsPopup) {
