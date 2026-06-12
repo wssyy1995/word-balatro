@@ -138,7 +138,22 @@ module.exports = function extendPlaying(Renderer) {
             }
           }
           this._drawPropCard(ctx, joker, sx, slotY, slotW, slotH, s, false);
-  
+          // 女巫牌紫色呼吸发光蒙层（圆形，覆盖在卡牌上方）
+          ctx.save();
+          const jCx = sx + slotW / 2;
+          const jCy = slotY + slotH / 2;
+          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 700 + i * 0.7);
+          const jRadius = Math.max(slotW, slotH) * 0.48 * jBreath;
+          const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, jRadius);
+          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.32 * jBreath})`);
+          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.14 * jBreath})`);
+          jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
+          ctx.fillStyle = jGrad;
+          ctx.beginPath();
+          ctx.arc(jCx, jCy, jRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
           // disable_one_witch_card 禁用动画：1000ms 边框光晕 + 锁图标 easeOutBack 弹出
           if (joker._disabled) {
             const elapsed = game._disableWitchAnim ? Date.now() - game._disableWitchAnim.startTime : Infinity;
@@ -207,6 +222,22 @@ module.exports = function extendPlaying(Renderer) {
         const potion = potions[i];
         if (potion) {
           this._drawPropCard(ctx, potion, sx, slotY, slotW, slotH, s);
+          // 药水牌绿色呼吸发光蒙层（圆形，覆盖在卡牌上方）
+          ctx.save();
+          const pCx = sx + slotW / 2;
+          const pCy = slotY + slotH / 2;
+          const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 700 + i * 0.7);
+          const pRadius = Math.max(slotW, slotH) * 0.48 * pBreath;
+          const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, pRadius);
+          pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.32 * pBreath})`);
+          pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.14 * pBreath})`);
+          pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
+          ctx.fillStyle = pGrad;
+          ctx.beginPath();
+          ctx.arc(pCx, pCy, pRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
           this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
         } else {
           this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');
