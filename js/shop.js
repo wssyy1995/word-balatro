@@ -474,7 +474,7 @@ class ShopRenderer {
           const drawH = oSlotH * scale;
           const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
-          // 女巫牌背后紫色发光蒙层
+          // 女巫牌背后紫色发光蒙层（矩形）
           ctx.save();
           const jCx = drawX + drawW / 2;
           const jCy = drawY + drawH / 2;
@@ -482,10 +482,7 @@ class ShopRenderer {
           jGrad.addColorStop(0, 'rgba(162, 89, 255, 0.45)');
           jGrad.addColorStop(0.6, 'rgba(162, 89, 255, 0.18)');
           jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
-          ctx.fillStyle = jGrad;
-          ctx.beginPath();
-          ctx.ellipse(jCx, jCy, drawW * 0.65, drawH * 0.65, 0, 0, Math.PI * 2);
-          ctx.fill();
+          this.parent.roundRect(drawX - 4 * s, drawY - 4 * s, drawW + 8 * s, drawH + 8 * s, 10 * s, jGrad, null);
           ctx.restore();
           if (glow > 0.01) {
             ctx.shadowColor = `rgba(162,155,254,${glow})`;
