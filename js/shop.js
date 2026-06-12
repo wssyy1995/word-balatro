@@ -474,22 +474,22 @@ class ShopRenderer {
           const drawH = oSlotH * scale;
           const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
-          // 女巫牌背后紫色发光蒙层（矩形，带微弱呼吸感）
-          ctx.save();
-          const jCx = drawX + drawW / 2;
-          const jCy = drawY + drawH / 2;
-          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 900 + i * 0.7);
-          const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, Math.max(drawW, drawH) * 0.65 * jBreath);
-          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.45 * jBreath})`);
-          jGrad.addColorStop(0.6, `rgba(162, 89, 255, ${0.18 * jBreath})`);
-          jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
-          this.parent.roundRect(drawX - 4 * s, drawY - 4 * s, drawW + 8 * s, drawH + 8 * s, 10 * s, jGrad, null);
-          ctx.restore();
           if (glow > 0.01) {
             ctx.shadowColor = `rgba(162,155,254,${glow})`;
             ctx.shadowBlur = 22 * s;
           }
           this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s, true, false);
+          // 女巫牌紫色发光蒙层（覆盖在卡牌上方，边缘发光）
+          ctx.save();
+          const jCx = drawX + drawW / 2;
+          const jCy = drawY + drawH / 2;
+          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 900 + i * 0.7);
+          const jGrad = ctx.createRadialGradient(jCx, jCy, Math.min(drawW, drawH) * 0.25, jCx, jCy, Math.max(drawW, drawH) * 0.65 * jBreath);
+          jGrad.addColorStop(0, 'rgba(162, 89, 255, 0)');
+          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.14 * jBreath})`);
+          jGrad.addColorStop(1, `rgba(162, 89, 255, ${0.38 * jBreath})`);
+          this.parent.roundRect(drawX - 4 * s, drawY - 4 * s, drawW + 8 * s, drawH + 8 * s, 10 * s, jGrad, null);
+          ctx.restore();
           ctx.restore();
 
           // 排序状态下不响应点击
@@ -584,18 +584,18 @@ class ShopRenderer {
         const selectedOffsetY = isSelected ? -3 * s : 0;
         const pDrawX = sx + slideOffsetX;
         const pDrawY = oSlotY + selectedOffsetY;
-        // 药水牌背后绿色发光蒙层（矩形，带微弱呼吸感）
+        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
+        // 药水牌绿色发光蒙层（覆盖在卡牌上方，边缘发光）
         ctx.save();
         const pCx = pDrawX + slotW / 2;
         const pCy = pDrawY + oSlotH / 2;
         const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 900 + i * 0.7);
-        const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, Math.max(slotW, oSlotH) * 0.65 * pBreath);
-        pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.45 * pBreath})`);
-        pGrad.addColorStop(0.6, `rgba(80, 220, 120, ${0.18 * pBreath})`);
-        pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
+        const pGrad = ctx.createRadialGradient(pCx, pCy, Math.min(slotW, oSlotH) * 0.25, pCx, pCy, Math.max(slotW, oSlotH) * 0.65 * pBreath);
+        pGrad.addColorStop(0, 'rgba(80, 220, 120, 0)');
+        pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.14 * pBreath})`);
+        pGrad.addColorStop(1, `rgba(80, 220, 120, ${0.38 * pBreath})`);
         this.parent.roundRect(pDrawX - 4 * s, pDrawY - 4 * s, slotW + 8 * s, oSlotH + 8 * s, 10 * s, pGrad, null);
         ctx.restore();
-        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
