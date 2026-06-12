@@ -60,7 +60,7 @@ module.exports = function extendPlaying(Renderer) {
 
       // 动态 gap：4 张时间距充足；5 张时保证最小 1px 间距，内容整体居中，允许左右溢出
       const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-      const minGap = actualWitchSlots >= 5 ? 1 * s : -Infinity;
+      const minGap = actualWitchSlots >= 5 ? 0.6 * s : -Infinity;
       const actualGap = Math.max(rawGap, minGap);
       const slotW = rawSlotW;
       const slotH = propBarH - slotTopPad - 6 * s;
@@ -90,7 +90,7 @@ module.exports = function extendPlaying(Renderer) {
           ? cardBarData.width / cardBarData.height
           : propW / propBarH;
         const targetW = propW ;
-        const imageScale = 1.02;
+        const imageScale = 1.05;
         const drawW = targetW * imageScale;
         const drawH = drawW / barAspect;
         const drawX = propX + (propW - drawW) / 2;

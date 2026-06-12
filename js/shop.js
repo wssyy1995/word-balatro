@@ -331,7 +331,7 @@ class ShopRenderer {
     const actualTotalSlots = actualWitchSlots + 2;
 
     const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-    const minGap = actualWitchSlots >= 5 ? 1 * s : -Infinity;
+    const minGap = actualWitchSlots >= 5 ? 0.6 * s : -Infinity;
     const actualGap = Math.max(rawGap, minGap);
     const slotW = rawSlotW;
     const oSlotH = ownedH - oSlotTop - 9 * s;
