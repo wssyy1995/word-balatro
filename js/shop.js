@@ -479,16 +479,20 @@ class ShopRenderer {
             ctx.shadowBlur = 22 * s;
           }
           this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s, true, false);
-          // 女巫牌紫色发光蒙层（覆盖在卡牌上方，边缘发光）
+          // 女巫牌紫色发光蒙层（圆形，覆盖在卡牌上方，中心透明边缘发光）
           ctx.save();
           const jCx = drawX + drawW / 2;
           const jCy = drawY + drawH / 2;
           const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 900 + i * 0.7);
-          const jGrad = ctx.createRadialGradient(jCx, jCy, Math.min(drawW, drawH) * 0.25, jCx, jCy, Math.max(drawW, drawH) * 0.65 * jBreath);
+          const jRadius = Math.max(drawW, drawH) * 0.68 * jBreath;
+          const jGrad = ctx.createRadialGradient(jCx, jCy, Math.min(drawW, drawH) * 0.22, jCx, jCy, jRadius);
           jGrad.addColorStop(0, 'rgba(162, 89, 255, 0)');
           jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.14 * jBreath})`);
           jGrad.addColorStop(1, `rgba(162, 89, 255, ${0.38 * jBreath})`);
-          this.parent.roundRect(drawX - 4 * s, drawY - 4 * s, drawW + 8 * s, drawH + 8 * s, 10 * s, jGrad, null);
+          ctx.fillStyle = jGrad;
+          ctx.beginPath();
+          ctx.arc(jCx, jCy, jRadius, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
           ctx.restore();
 
@@ -585,16 +589,20 @@ class ShopRenderer {
         const pDrawX = sx + slideOffsetX;
         const pDrawY = oSlotY + selectedOffsetY;
         this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
-        // 药水牌绿色发光蒙层（覆盖在卡牌上方，边缘发光）
+        // 药水牌绿色发光蒙层（圆形，覆盖在卡牌上方，中心透明边缘发光）
         ctx.save();
         const pCx = pDrawX + slotW / 2;
         const pCy = pDrawY + oSlotH / 2;
         const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 900 + i * 0.7);
-        const pGrad = ctx.createRadialGradient(pCx, pCy, Math.min(slotW, oSlotH) * 0.25, pCx, pCy, Math.max(slotW, oSlotH) * 0.65 * pBreath);
+        const pRadius = Math.max(slotW, oSlotH) * 0.68 * pBreath;
+        const pGrad = ctx.createRadialGradient(pCx, pCy, Math.min(slotW, oSlotH) * 0.22, pCx, pCy, pRadius);
         pGrad.addColorStop(0, 'rgba(80, 220, 120, 0)');
         pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.14 * pBreath})`);
         pGrad.addColorStop(1, `rgba(80, 220, 120, ${0.38 * pBreath})`);
-        this.parent.roundRect(pDrawX - 4 * s, pDrawY - 4 * s, slotW + 8 * s, oSlotH + 8 * s, 10 * s, pGrad, null);
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.arc(pCx, pCy, pRadius, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
