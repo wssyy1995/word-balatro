@@ -1236,6 +1236,14 @@ class Game {
       this.audioManager.setMusicEnabled(this.settings.musicEnabled !== false);
     }
 
+    // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
+    let guideEnabled = true;
+    try {
+      const gameJson = (typeof wx !== 'undefined' && wx.getGameJsonConfig) ? wx.getGameJsonConfig() : {};
+      guideEnabled = gameJson.enableGuide !== false;
+    } catch (e) {}
+    this._guideEnabled = guideEnabled;
+
     // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
     const savedGuidePhase = this.storageManager.loadGuidePhase();
     if (savedGuidePhase !== null) {
@@ -1714,7 +1722,7 @@ class Game {
     this._hastePlayStartTime = null;
 
     // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
-    if (this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
+    if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
       this.guidePhase = 1;
       this._guideOverlayStartTime = Date.now();
     }
@@ -1760,6 +1768,7 @@ class Game {
   }
 
   advanceGuide() {
+    if (!this._guideEnabled) return;
     if (this.guidePhase < 1 || this.guidePhase > 4) return;
 
     // 阶段3特殊处理：给 has_vowel 卡牌
