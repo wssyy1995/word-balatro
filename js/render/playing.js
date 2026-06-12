@@ -89,13 +89,29 @@ module.exports = function extendPlaying(Renderer) {
         const barAspect = (cardBarData.width > 0 && cardBarData.height > 0)
           ? cardBarData.width / cardBarData.height
           : propW / propBarH;
-        const targetW = propW - 2 * s;
+        const targetW = propW -8*s;
         const imageScale = 1.05;
         const drawW = targetW * imageScale;
         const drawH = drawW / barAspect;
         const drawX = propX + (propW - drawW) / 2;
         const drawY = propY + (propBarH - drawH) / 2;
+        // card_bar 四角圆角裁切
+        ctx.save();
+        const cbr = 10 * s;
+        ctx.beginPath();
+        ctx.moveTo(drawX + cbr, drawY);
+        ctx.lineTo(drawX + drawW - cbr, drawY);
+        ctx.arcTo(drawX + drawW, drawY, drawX + drawW, drawY + drawH, cbr);
+        ctx.lineTo(drawX + drawW, drawY + drawH - cbr);
+        ctx.arcTo(drawX + drawW, drawY + drawH, drawX, drawY + drawH, cbr);
+        ctx.lineTo(drawX + cbr, drawY + drawH);
+        ctx.arcTo(drawX, drawY + drawH, drawX, drawY, cbr);
+        ctx.lineTo(drawX, drawY + cbr);
+        ctx.arcTo(drawX, drawY, drawX + drawW, drawY, cbr);
+        ctx.closePath();
+        ctx.clip();
         ctx.drawImage(cardBarData.img, drawX, drawY, drawW, drawH);
+        ctx.restore();
       } else {
         this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
       }
