@@ -44,8 +44,9 @@ module.exports = function extendPlaying(Renderer) {
   
       const actualWitchSlots = game.maxJokerSlots || 4;
       // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
-      const propW = actualWitchSlots >= 5 ? W - 8 * s : W - 20 * s;
-      const propX = actualWitchSlots >= 5 ? 4 * s : 10 * s;
+      // 栏目宽度固定为 4 张女巫牌时的宽度，5 张时通过减小卡牌间距来容纳
+      const propW = W - 20 * s;
+      const propX = 10 * s;
       const padX = 10 * s;
       const dividerW = 1.5 * s;
       const BASE_GAP = 6 * s;
@@ -57,23 +58,21 @@ module.exports = function extendPlaying(Renderer) {
       // 实际女巫槽位
       const actualTotalSlots = actualWitchSlots + 2;
   
-      // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
+      // 动态 gap：栏目宽度不变，槽位增加时减小间距（可能重叠）
       const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-      const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
-      const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
-      const slotH = actualWitchSlots >= 5
-        ? (propBarH - slotTopPad - 6 * s) * (slotW / rawSlotW)
-        : propBarH - slotTopPad - 6 * s;
+      const actualGap = rawGap;
+      const slotW = rawSlotW;
+      const slotH = propBarH - slotTopPad - 6 * s;
   
       const slotY = propY + slotTopPad;
-      const baseLeftStartX = propX + padX - (actualWitchSlots >= 5 ? 2 * s : 0);
+      const baseLeftStartX = propX + padX;
       const witchRightEdge = baseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
       const dividerX = witchRightEdge + actualGap / 2 + dividerW / 2;
       const baseRightStartX = dividerX + dividerW / 2 + actualGap / 2;
   
-      // 女巫牌左移、药水牌右移，分割线保持不动（4张时各1px，5张时更多）
-      const witchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
-      const potionShift = actualWitchSlots >= 5 ? 3.5 * s : 1 * s;
+      // 女巫牌左移、药水牌右移，分割线保持不动
+      const witchShift = 1 * s;
+      const potionShift = 1 * s;
       const leftStartX = baseLeftStartX - witchShift;
       const rightStartX = baseRightStartX + potionShift;
   
