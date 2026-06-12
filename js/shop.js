@@ -285,19 +285,8 @@ class ShopRenderer {
     const ownedY = top + 16 * s + 2 * s;
     const ownedH = 92 * s;
 
-    // 道具栏布局常量
-    const oPadX = 10 * s;
-    const oDividerW = 1.5 * s;
-    const BASE_GAP = 6 * s;
-    const oSlotTop = 9 * s;
-    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
-    const actualTotalSlots = actualWitchSlots + 2;
-
-    // 栏目宽度：4 张女巫牌时固定；5 张时若间距小于 1px，则向左右轻微扩散
-    const minGap = 1 * s;
-    const baseOwnedW = W - 30 * s;
-    const requiredW = oPadX * 2 + oDividerW + actualTotalSlots * rawSlotW + (actualTotalSlots - 1) * minGap;
-    const ownedW = actualWitchSlots >= 5 ? Math.max(baseOwnedW, requiredW) : baseOwnedW;
+    // 栏目宽度固定，card_bar.png 宽度不可变
+    const ownedW = W - 30 * s;
     const ownedX = (W - ownedW) / 2;
 
     // 已购买道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大，未加载时 fallback 米白色）
@@ -317,15 +306,27 @@ class ShopRenderer {
       this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#faf6ee', '#c4a35a');
     }
 
-    // 动态 gap：4 张时间距充足；5 张时优先保证至少 1px 间距，必要时轻微扩展栏目宽度
+    // 道具栏布局：4 张时间距充足；5 张时保证最小 1px 间距，内容整体居中，允许左右溢出
+    const oPadX = 10 * s;
+    const oDividerW = 1.5 * s;
+    const BASE_GAP = 6 * s;
+    const oSlotTop = 9 * s;
+    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
+    const actualTotalSlots = actualWitchSlots + 2;
+
     const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-    const actualGap = rawGap;
+    const minGap = actualWitchSlots >= 5 ? 1 * s : -Infinity;
+    const actualGap = Math.max(rawGap, minGap);
     const slotW = rawSlotW;
     const oSlotH = ownedH - oSlotTop - 9 * s;
 
     const oSlotY = ownedY + oSlotTop;
-    const oBaseLeftStartX = ownedX + oPadX;
-    const witchRightEdge = oBaseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
+    const leftGroupW = actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
+    const rightGroupW = 2 * slotW + actualGap;
+    const contentW = leftGroupW + rightGroupW + oDividerW + actualGap;
+    // 内容整体居中：超出栏目时左右自然溢出，但不影响 card_bar 宽度
+    const oBaseLeftStartX = ownedX + (ownedW - contentW) / 2;
+    const witchRightEdge = oBaseLeftStartX + leftGroupW;
     const oDividerX = witchRightEdge + actualGap / 2 + oDividerW / 2;
     const oBaseRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
 

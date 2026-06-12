@@ -44,6 +44,9 @@ module.exports = function extendPlaying(Renderer) {
   
       const actualWitchSlots = game.maxJokerSlots || 4;
       // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
+      // 栏目宽度固定，card_bar.png 宽度不可变
+      const propW = W - 20 * s;
+      const propX = (W - propW) / 2;
       const padX = 10 * s;
       const dividerW = 1.5 * s;
       const BASE_GAP = 6 * s;
@@ -55,25 +58,23 @@ module.exports = function extendPlaying(Renderer) {
       // 实际女巫槽位
       const actualTotalSlots = actualWitchSlots + 2;
 
-      // 栏目宽度：4 张女巫牌时固定；5 张时若间距小于 1px，则向左右轻微扩散
-      const minGap = 1 * s;
-      const basePropW = W - 20 * s;
-      const requiredPropW = padX * 2 + dividerW + actualTotalSlots * rawSlotW + (actualTotalSlots - 1) * minGap;
-      const propW = actualWitchSlots >= 5 ? Math.max(basePropW, requiredPropW) : basePropW;
-      const propX = (W - propW) / 2;
-
-      // 动态 gap：4 张时间距充足；5 张时优先保证至少 1px 间距，必要时轻微扩展栏目宽度
+      // 动态 gap：4 张时间距充足；5 张时保证最小 1px 间距，内容整体居中，允许左右溢出
       const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-      const actualGap = rawGap;
+      const minGap = actualWitchSlots >= 5 ? 1 * s : -Infinity;
+      const actualGap = Math.max(rawGap, minGap);
       const slotW = rawSlotW;
       const slotH = propBarH - slotTopPad - 6 * s;
-  
+
       const slotY = propY + slotTopPad;
-      const baseLeftStartX = propX + padX;
-      const witchRightEdge = baseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
+      const leftGroupW = actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
+      const rightGroupW = 2 * slotW + actualGap;
+      const contentW = leftGroupW + rightGroupW + dividerW + actualGap;
+      // 内容整体居中：超出栏目时左右自然溢出，但不影响 card_bar 宽度
+      const baseLeftStartX = propX + (propW - contentW) / 2;
+      const witchRightEdge = baseLeftStartX + leftGroupW;
       const dividerX = witchRightEdge + actualGap / 2 + dividerW / 2;
       const baseRightStartX = dividerX + dividerW / 2 + actualGap / 2;
-  
+
       // 女巫牌左移、药水牌右移，分割线保持不动
       const witchShift = 1 * s;
       const potionShift = 1 * s;
