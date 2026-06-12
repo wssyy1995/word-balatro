@@ -88,16 +88,16 @@ function getLetterScore(letter) {
 }
 
 // 计算基础目标分（分段递增系数）
-// 1关=150；2~5关系数20；6~10关系数25；11~20关系数30；21~30关系数35；31~40关系数40；41~50关系数45；51+关系数50
+// 1关=150；2~5关系数20；6~10关系数25；11~20关系数33；21~30关系数43；31~40关系数55；41~50关系数60；51+关系数60
 function calcBaseTarget(round) {
   function getCoefficient(r) {
     if (r <= 5) return 20;
     if (r <= 10) return 25;
-    if (r <= 20) return 30;
-    if (r <= 30) return 35;
-    if (r <= 40) return 40;
-    if (r <= 50) return 45;
-    return 50;
+    if (r <= 20) return 33;
+    if (r <= 30) return 43;
+    if (r <= 40) return 55;
+    if (r <= 50) return 60;
+    return 60;
   }
   let target = 150;
   for (let r = 2; r <= round; r++) {
