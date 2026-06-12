@@ -1150,8 +1150,11 @@ module.exports = function extendPlaying(Renderer) {
       const selectedCount = game.getSelectedCards ? game.getSelectedCards().length : 0;
       const isInvalid = game.pendingCheck && (game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed');
       if (isInvalid || selectedCount < 2) {
-        // 非法状态或牌数不足：深灰色文字
-        ctx.fillStyle = '#666';
+        // 非法状态或牌数不足：暖灰色文字 + 深色描边
+        ctx.lineWidth = 2 * s;
+        ctx.strokeStyle = '#3a2e1d';
+        ctx.strokeText(playText, playTx, btnTextY);
+        ctx.fillStyle = '#9a8f7d';
         ctx.fillText(playText, playTx, btnTextY);
       } else {
         // 深色外描边
