@@ -172,7 +172,7 @@ Renderer.prototype.render = function(game) {
     this._drawCloudDebugLogs(ctx, game, s);
 
     // 新手引导（覆盖在最上层）
-    if (game.guidePhase >= 1 && game.guidePhase <= 4) {
+    if (game._guideEnabled && game.guidePhase >= 1 && game.guidePhase <= 4) {
       this._drawGuideOverlay(game);
     } else if (game.guidePhase === 5 && game._guideExitStartTime) {
       // Phase 5 退场动画：女巫和对话框弹出去 → 蒙层淡出

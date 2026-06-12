@@ -1107,6 +1107,11 @@ class Game {
       guidePhase = Number(savedProgress.guidePhase) || 0;
     }
     this.guidePhase = guidePhase;
+    // 全局开关关闭时，强制跳过已保存的引导状态
+    if (!this._guideEnabled && this.guidePhase >= 1 && this.guidePhase <= 4) {
+      this.guidePhase = 5;
+      console.log('[Guide] disabled by game.json, skip saved guidePhase');
+    }
     console.log('[Guide] loaded guidePhase:', this.guidePhase, 'raw:', savedGuidePhase);
 
     if (savedProgress) {
@@ -1462,6 +1467,10 @@ class Game {
 
     // 恢复引导状态
     this.guidePhase = (p.guidePhase !== undefined) ? p.guidePhase : 0;
+    // 全局开关关闭时，强制跳过已保存的引导状态
+    if (!this._guideEnabled && this.guidePhase >= 1 && this.guidePhase <= 4) {
+      this.guidePhase = 5;
+    }
     // 恢复商店引导状态
     this.shopGuidePhase = (p.shopGuidePhase !== undefined) ? p.shopGuidePhase : 0;
     if (p._shopGuideStartTime !== undefined) this._shopGuideStartTime = p._shopGuideStartTime;
