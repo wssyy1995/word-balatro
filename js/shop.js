@@ -296,14 +296,14 @@ class ShopRenderer {
         ? cardBarData.width / cardBarData.height
         : ownedW / ownedH;
       const targetW = ownedW;
-      const imageScale = 1.08;
+      const imageScale = 1.06;
       const drawW = targetW * imageScale;
       const drawH = drawW / barAspect;
       const drawX = ownedX + (ownedW - drawW) / 2;
       const drawY = ownedY + (ownedH - drawH) / 2;
       // card_bar 四角圆角裁切
       ctx.save();
-      const cbr = 16 * s;
+      const cbr = 15 * s;
       ctx.beginPath();
       ctx.moveTo(drawX + cbr, drawY);
       ctx.lineTo(drawX + drawW - cbr, drawY);
