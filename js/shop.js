@@ -465,10 +465,6 @@ class ShopRenderer {
           // 正常牌（排序状态下带轻微抖动）
           ctx.save();
           ctx.globalAlpha = opacity;
-          if (glow > 0.01) {
-            ctx.shadowColor = `rgba(162,155,254,${glow})`;
-            ctx.shadowBlur = 22 * s;
-          }
           let shakeX = 0;
           let shakeY = 0;
           if (game._jokerSortState) {
@@ -480,6 +476,18 @@ class ShopRenderer {
           const drawH = oSlotH * scale;
           const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
+          // 女巫牌背后紫色发光蒙层
+          ctx.save();
+          ctx.shadowColor = 'rgba(162, 89, 255, 0.55)';
+          ctx.shadowBlur = 20 * s;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+          this.parent.roundRect(drawX + 2 * s, drawY + 2 * s, drawW - 4 * s, drawH - 4 * s, 8 * s, 'rgba(162, 89, 255, 0.12)', null);
+          ctx.restore();
+          if (glow > 0.01) {
+            ctx.shadowColor = `rgba(162,155,254,${glow})`;
+            ctx.shadowBlur = 22 * s;
+          }
           this.parent._drawPropCard(ctx, joker, drawX, drawY, drawW, drawH, s, true, false);
           ctx.restore();
 
@@ -573,7 +581,17 @@ class ShopRenderer {
       } else if (potion) {
         const isSelected = this.shopSelectedOwned && this.shopSelectedOwned.type === 'potions' && this.shopSelectedOwned.index === i;
         const selectedOffsetY = isSelected ? -3 * s : 0;
-        this.parent._drawPropCard(ctx, potion, sx + slideOffsetX, oSlotY + selectedOffsetY, slotW, oSlotH, s);
+        const pDrawX = sx + slideOffsetX;
+        const pDrawY = oSlotY + selectedOffsetY;
+        // 药水牌背后绿色发光蒙层
+        ctx.save();
+        ctx.shadowColor = 'rgba(80, 220, 120, 0.55)';
+        ctx.shadowBlur = 20 * s;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        this.parent.roundRect(pDrawX + 2 * s, pDrawY + 2 * s, slotW - 4 * s, oSlotH - 4 * s, 8 * s, 'rgba(80, 220, 120, 0.12)', null);
+        ctx.restore();
+        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
       } else {
         // 空位：售出后显示缩放弹出 + 果冻感动画
