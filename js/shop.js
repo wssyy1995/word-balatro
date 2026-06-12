@@ -284,9 +284,21 @@ class ShopRenderer {
     const actualWitchSlots = game.maxJokerSlots || 4;
     const ownedY = top + 16 * s + 2 * s;
     const ownedH = 92 * s;
-    // 栏目宽度固定为 4 张女巫牌时的宽度，5 张时通过减小卡牌间距来容纳
-    const ownedW = W - 30 * s;
-    const ownedX = 15 * s;
+
+    // 道具栏布局常量
+    const oPadX = 10 * s;
+    const oDividerW = 1.5 * s;
+    const BASE_GAP = 6 * s;
+    const oSlotTop = 9 * s;
+    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
+    const actualTotalSlots = actualWitchSlots + 2;
+
+    // 栏目宽度：4 张女巫牌时固定；5 张时若间距小于 1px，则向左右轻微扩散
+    const minGap = 1 * s;
+    const baseOwnedW = W - 30 * s;
+    const requiredW = oPadX * 2 + oDividerW + actualTotalSlots * rawSlotW + (actualTotalSlots - 1) * minGap;
+    const ownedW = actualWitchSlots >= 5 ? Math.max(baseOwnedW, requiredW) : baseOwnedW;
+    const ownedX = (W - ownedW) / 2;
 
     // 已购买道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大，未加载时 fallback 米白色）
     const cardBarData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['card_bar'];
@@ -305,18 +317,7 @@ class ShopRenderer {
       this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#faf6ee', '#c4a35a');
     }
 
-    // 道具栏布局（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）
-    const oPadX = 10 * s;
-    const oDividerW = 1.5 * s;
-    const BASE_GAP = 6 * s;
-    const oSlotTop = 9 * s;
-
-    // 基准单卡宽度（固定按 4 张时的 ownedW 计算，避免宽度变化被卡牌尺寸吸收）
-    const rawSlotW = (W - 30 * s - oPadX * 2 - 5 * BASE_GAP - oDividerW) / 6;
-
-    const actualTotalSlots = actualWitchSlots + 2;
-
-    // 动态 gap：栏目宽度不变，槽位增加时减小间距（可能重叠）
+    // 动态 gap：4 张时间距充足；5 张时优先保证至少 1px 间距，必要时轻微扩展栏目宽度
     const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
     const actualGap = rawGap;
     const slotW = rawSlotW;

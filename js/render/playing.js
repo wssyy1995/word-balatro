@@ -44,21 +44,25 @@ module.exports = function extendPlaying(Renderer) {
   
       const actualWitchSlots = game.maxJokerSlots || 4;
       // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
-      // 栏目宽度固定为 4 张女巫牌时的宽度，5 张时通过减小卡牌间距来容纳
-      const propW = W - 20 * s;
-      const propX = 10 * s;
       const padX = 10 * s;
       const dividerW = 1.5 * s;
       const BASE_GAP = 6 * s;
       const slotTopPad = 6 * s;
-  
+
       // 基准单卡宽度（固定按 4 张时的 propW 计算，避免宽度变化被卡牌尺寸吸收）
       const rawSlotW = (W - 20 * s - padX * 2 - 5 * BASE_GAP - dividerW) / 6;
-  
+
       // 实际女巫槽位
       const actualTotalSlots = actualWitchSlots + 2;
-  
-      // 动态 gap：栏目宽度不变，槽位增加时减小间距（可能重叠）
+
+      // 栏目宽度：4 张女巫牌时固定；5 张时若间距小于 1px，则向左右轻微扩散
+      const minGap = 1 * s;
+      const basePropW = W - 20 * s;
+      const requiredPropW = padX * 2 + dividerW + actualTotalSlots * rawSlotW + (actualTotalSlots - 1) * minGap;
+      const propW = actualWitchSlots >= 5 ? Math.max(basePropW, requiredPropW) : basePropW;
+      const propX = (W - propW) / 2;
+
+      // 动态 gap：4 张时间距充足；5 张时优先保证至少 1px 间距，必要时轻微扩展栏目宽度
       const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
       const actualGap = rawGap;
       const slotW = rawSlotW;
