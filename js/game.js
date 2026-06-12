@@ -1086,10 +1086,14 @@ class Game {
     let guideEnabled = true;
     let gameJson = {};
     try {
-      gameJson = (typeof wx !== 'undefined' && wx.getGameJsonConfig) ? wx.getGameJsonConfig() : {};
+      if (typeof wx !== 'undefined' && wx.getAppConfigSync) {
+        gameJson = wx.getAppConfigSync() || {};
+      } else if (typeof wx !== 'undefined' && wx.getGameJsonConfig) {
+        gameJson = wx.getGameJsonConfig() || {};
+      }
       guideEnabled = gameJson.enableGuide !== false;
     } catch (e) {
-      console.warn('[Guide] wx.getGameJsonConfig failed:', e);
+      console.warn('[Guide] read game.json failed:', e);
     }
     this._guideEnabled = guideEnabled;
     console.log('[Guide] game.json raw:', JSON.stringify(gameJson), 'enableGuide:', gameJson.enableGuide, '_guideEnabled:', this._guideEnabled);

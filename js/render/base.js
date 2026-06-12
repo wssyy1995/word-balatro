@@ -848,18 +848,18 @@ class Renderer {
       const imgName = type === 'witch' ? 'empty_witch_card' : 'empty_potion_card';
       const data = this.shopCardImages[imgName];
       if (data && data.loaded && data.img) {
-        const r = 4 * s;
+        const r = 9 * s;
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(x + r, y);
         ctx.lineTo(x + w - r, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
         ctx.lineTo(x + w, y + h - r);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
         ctx.lineTo(x + r, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.arcTo(x, y + h, x, y, r);
         ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.arcTo(x, y, x + w, y, r);
         ctx.closePath();
         ctx.clip();
 
@@ -891,7 +891,7 @@ class Renderer {
     ctx.lineWidth = 1.2 * s;
     ctx.setLineDash([3 * s, 3 * s]);
     ctx.beginPath();
-    const r = 4 * s;
+    const r = 9 * s;
     ctx.moveTo(x + r, y);
     ctx.lineTo(x + w - r, y);
     ctx.quadraticCurveTo(x + w, y, x + w, y + r);

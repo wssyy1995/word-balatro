@@ -79,8 +79,22 @@ module.exports = function extendPlaying(Renderer) {
   
       // 道具栏阴影（右下偏移，营造立体感）
       this.roundRect(propX + 2 * s, propY + 2 * s, propW, propBarH, 10 * s, 'rgba(0,0,0,0.10)', null);
-      // 道具栏背景（米白色）
-      this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
+      // 道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大 5%，未加载时 fallback 米白色）
+      const cardBarData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['card_bar'];
+      if (cardBarData && cardBarData.loaded && cardBarData.img) {
+        const barAspect = (cardBarData.width > 0 && cardBarData.height > 0)
+          ? cardBarData.width / cardBarData.height
+          : propW / propBarH;
+        const targetW = propW - 2 * s;
+        const imageScale = 1.05;
+        const drawW = targetW * imageScale;
+        const drawH = drawW / barAspect;
+        const drawX = propX + (propW - drawW) / 2;
+        const drawY = propY + (propBarH - drawH) / 2;
+        ctx.drawImage(cardBarData.img, drawX, drawY, drawW, drawH);
+      } else {
+        this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
+      }
   
       // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
       ctx.beginPath();
