@@ -424,6 +424,7 @@ const LONG_PRESS_MOVE_THRESHOLD = 10; // 移动超过 10px 取消长按
 wx.onTouchStart((e) => {
   // 预加载阶段不响应触摸
   if (!preloadComplete) return;
+  if (!game) return;
 
   const touch = e.touches[0];
   const x = touch.clientX;
@@ -617,6 +618,7 @@ wx.onTouchStart((e) => {
 });
 
 wx.onTouchMove((e) => {
+  if (!game) return;
   // 移动超过阈值时取消长按
   if (longPressTimer && touchStartPos) {
     const touch = e.touches[0];
@@ -824,6 +826,7 @@ wx.onTouchMove((e) => {
 });
 
 wx.onTouchEnd(() => {
+  if (!game) return;
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
   game._cardBookIconPressed = false;
