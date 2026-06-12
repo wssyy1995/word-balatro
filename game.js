@@ -1412,9 +1412,9 @@ function handleInput(x, y) {
             game.equippedWitchCards = equippedArr.filter(l => l !== level);
             console.log('[Equipped] 卸下 witch_card_' + level);
           } else {
-            // 装备（最多3张）
-            if (equippedArr.length >= 3) {
-              game._equipFullToast = { text: '已达最大装备数（3张），请先卸下其他词牌', startTime: Date.now() };
+            // 装备（最多5张）
+            if (equippedArr.length >= 5) {
+              game._equipFullToast = { text: '已达最大装备数（5张），请先卸下其他词牌', startTime: Date.now() };
               return;
             }
             game.equippedWitchCards = [...equippedArr, level];

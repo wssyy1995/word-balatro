@@ -77,8 +77,10 @@ module.exports = function extendPlaying(Renderer) {
       const leftStartX = baseLeftStartX - witchShift;
       const rightStartX = baseRightStartX + potionShift;
   
-      // 背景
-      this.roundRect(propX, propY, propW, propBarH, 10 * s, '#f0e0c8', '#c4a35a');
+      // 道具栏阴影（右下偏移，营造立体感）
+      this.roundRect(propX + 2 * s, propY + 2 * s, propW, propBarH, 10 * s, 'rgba(0,0,0,0.10)', null);
+      // 道具栏背景（米白色）
+      this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
   
       // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
       ctx.beginPath();

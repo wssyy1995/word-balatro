@@ -166,7 +166,12 @@ class StorageManager {
   }
 
   loadGuidePhase() {
-    return this.get('guide_phase', null);
+    try {
+      const value = wx.getStorageSync(this.prefix + 'guide_phase');
+      return value !== undefined && value !== null && value !== '' ? value : null;
+    } catch (e) {
+      return null;
+    }
   }
 
   // ===== 商店女巫技能引导（独立于游戏进度，永久保留）=====

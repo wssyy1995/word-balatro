@@ -29,8 +29,8 @@ const SHOP_POOL = {
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:5, desc:'元音字母分×3'},
     {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:6, desc:'单词首字母为元音时，该首字母分+60'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
-    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, desc:'单词字母>=5时，倍率×1.5'},
-    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, desc:'单词字母>=6时，倍率×2'},
+    // {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, desc:'单词字母>=5时，倍率×1.5'},
+    // {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, desc:'单词字母>=6时，倍率×2'},
     {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:5, cost:8, desc:'单词字母含J/Q/X/Y/Z时，倍率+5'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:7, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
@@ -287,7 +287,24 @@ class ShopRenderer {
     const ownedW = actualWitchSlots >= 5 ? W - 18 * s : W - 30 * s;
     const ownedX = actualWitchSlots >= 5 ? 9 * s : 15 * s;
 
-    this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#f0e0c8', '#c4a35a');
+    // 已购买道具栏阴影（右下偏移，营造立体感）
+    this.parent.roundRect(ownedX + 2 * s, ownedY + 2 * s, ownedW, ownedH, 10 * s, 'rgba(0,0,0,0.10)', null);
+    // 已购买道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大 5%，未加载时 fallback 米白色）
+    const cardBarData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['card_bar'];
+    if (cardBarData && cardBarData.loaded && cardBarData.img) {
+      const barAspect = (cardBarData.width > 0 && cardBarData.height > 0)
+        ? cardBarData.width / cardBarData.height
+        : ownedW / ownedH;
+      const targetW = ownedW ;
+      const imageScale = 1.1; // 等比例放大 5%
+      const drawW = targetW * imageScale;
+      const drawH = drawW / barAspect;
+      const drawX = ownedX + (ownedW - drawW) / 2;
+      const drawY = ownedY + (ownedH - drawH) / 2;
+      ctx.drawImage(cardBarData.img, drawX, drawY, drawW, drawH);
+    } else {
+      this.parent.roundRect(ownedX, ownedY, ownedW, ownedH, 10 * s, '#faf6ee', '#c4a35a');
+    }
 
     // 道具栏布局（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）
     const oPadX = 10 * s;

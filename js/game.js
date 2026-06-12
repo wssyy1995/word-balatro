@@ -10,7 +10,7 @@ const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -860,6 +860,24 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
     }
   }
 
+  // === 装备卡牌：指定字母触发2次计分（letter_trigger_twice_X，多张叠加） ===
+  let letterTriggerTwiceExtra = 0;
+  if (equippedCardSkills && equippedCardSkills.length > 0) {
+    equippedCardSkills.forEach(skillName => {
+      const targetLetter = parseLetterTriggerTwiceSkill(skillName);
+      if (targetLetter) {
+        for (let i = 0; i < cards.length; i++) {
+          if (cards[i].letter.toUpperCase() === targetLetter) {
+            const cardScore = letterGod ? maxBaseScore : cards[i].score;
+            const extra = cardScore * cardMults[i] + cardAddScores[i];
+            letterTriggerTwiceExtra += extra;
+            baseScore += extra;
+          }
+        }
+      }
+    });
+  }
+
   for (const j of activeJokers) {
     if (j.type === 'witch' && j.scope === 'flat_bonus') {
       baseScore += j.value;
@@ -867,7 +885,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
   }
 
   const totalScore = Math.ceil(baseScore * mult);
-  return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace, _lastLetterDouble: lastLetterDoubleExtra };
+  return { valid: true, score: totalScore, base: baseScore, mult, word, hasFace, _lastLetterDouble: lastLetterDoubleExtra, _letterTriggerTwice: letterTriggerTwiceExtra };
 }
 
 // 从释义字符串开头提取词性标记，如 n./v./adj./n&v./adj&adv.
@@ -1064,6 +1082,29 @@ class Game {
     this.audioManager = new AudioManager();
     this.audioManager.preloadAll();
 
+    // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
+    let guideEnabled = true;
+    let gameJson = {};
+    try {
+      gameJson = (typeof wx !== 'undefined' && wx.getGameJsonConfig) ? wx.getGameJsonConfig() : {};
+      guideEnabled = gameJson.enableGuide !== false;
+    } catch (e) {
+      console.warn('[Guide] wx.getGameJsonConfig failed:', e);
+    }
+    this._guideEnabled = guideEnabled;
+    console.log('[Guide] game.json raw:', JSON.stringify(gameJson), 'enableGuide:', gameJson.enableGuide, '_guideEnabled:', this._guideEnabled);
+
+    // 新手引导状态（优先从独立存储读取，游戏进度清除后仍保留）
+    let guidePhase = 0;
+    const savedGuidePhase = this.storageManager.loadGuidePhase();
+    if (savedGuidePhase !== null) {
+      guidePhase = Number(savedGuidePhase) || 0;
+    } else if (savedProgress && savedProgress.guidePhase !== undefined) {
+      guidePhase = Number(savedProgress.guidePhase) || 0;
+    }
+    this.guidePhase = guidePhase;
+    console.log('[Guide] loaded guidePhase:', this.guidePhase, 'raw:', savedGuidePhase);
+
     if (savedProgress) {
       this._restoreFromProgress(savedProgress);
     } else {
@@ -1236,23 +1277,6 @@ class Game {
       this.audioManager.setMusicEnabled(this.settings.musicEnabled !== false);
     }
 
-    // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
-    let guideEnabled = true;
-    try {
-      const gameJson = (typeof wx !== 'undefined' && wx.getGameJsonConfig) ? wx.getGameJsonConfig() : {};
-      guideEnabled = gameJson.enableGuide !== false;
-    } catch (e) {}
-    this._guideEnabled = guideEnabled;
-
-    // 新手引导（优先从独立存储读取，游戏进度清除后仍保留）
-    const savedGuidePhase = this.storageManager.loadGuidePhase();
-    if (savedGuidePhase !== null) {
-      this.guidePhase = savedGuidePhase;
-    } else if (savedProgress && savedProgress.guidePhase !== undefined) {
-      this.guidePhase = savedProgress.guidePhase;
-    } else if (this.guidePhase === undefined) {
-      this.guidePhase = 0;
-    }
     // 恢复引导时间戳
     if (savedProgress && savedProgress._guideOverlayStartTime !== undefined) {
       this._guideOverlayStartTime = savedProgress._guideOverlayStartTime;
@@ -1722,9 +1746,11 @@ class Game {
     this._hastePlayStartTime = null;
 
     // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
+    console.log('[Guide] trigger check round:', this.round, 'guidePhase:', this.guidePhase, '_guideEnabled:', this._guideEnabled);
     if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
       this.guidePhase = 1;
       this._guideOverlayStartTime = Date.now();
+      console.log('[Guide] triggered phase 1');
     }
 
     // 第2回合后台按需下载商店引导帧序列（witch_guide_3），避免进入商店时等待
@@ -2272,6 +2298,22 @@ class Game {
       for (let i = 0; i < doubleCount; i++) {
         perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
       }
+    }
+
+    // 装备卡牌：指定字母触发2次计分 - 额外跳跃动画
+    if (equippedCardSkills && equippedCardSkills.length > 0) {
+      equippedCardSkills.forEach(skillName => {
+        const targetLetter = parseLetterTriggerTwiceSkill(skillName);
+        if (targetLetter) {
+          for (let i = 0; i < playedInOrder.length; i++) {
+            if (playedInOrder[i].letter.toUpperCase() === targetLetter) {
+              const triggered = jokerTriggers[i] || [];
+              const jokerIdx = triggered.length > 0 ? triggered[triggered.length - 1] : null;
+              perCardSteps.push({ cardIdx: i, jokerIdx: jokerIdx, isDouble: true });
+            }
+          }
+        }
+      });
     }
     this.pendingCheck.perCardSteps = perCardSteps;
     this.pendingCheck.jokerTriggers = jokerTriggers;

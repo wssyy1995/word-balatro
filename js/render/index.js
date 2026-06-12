@@ -316,7 +316,7 @@ Renderer.prototype.render = function(game) {
       ctx.save();
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
       const eqMainText = '已装备';
-      const eqCountText = ` (${equippedCount}/3)`;
+      const eqCountText = ` (${equippedCount}/5)`;
       const eqMainW = ctx.measureText(eqMainText).width;
       ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
       const eqCountW = ctx.measureText(eqCountText).width;

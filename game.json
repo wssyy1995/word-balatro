@@ -6,5 +6,5 @@
     "connectSocket": 5000
   },
   "openDataContext": "openDataContext",
-  "enableGuide": true
+  "enableGuide": false
 }

@@ -86,18 +86,17 @@ module.exports = function extendEffects(Renderer) {
         const aspect = (iconData.width > 0 && iconData.height > 0)
           ? iconData.width / iconData.height
           : cardAspect;
+        const imageScale = 1.02; // 等比例放大 2%，避免超出圆角裁剪区
         let drawW, drawH, imgX, imgY;
         if (aspect > cardAspect) {
-          drawW = w;
+          drawW = w * imageScale;
           drawH = drawW / aspect;
-          imgX = x;
-          imgY = finalY + (h - drawH) / 2;
         } else {
-          drawH = h;
+          drawH = h * imageScale;
           drawW = drawH * aspect;
-          imgX = x + (w - drawW) / 2;
-          imgY = finalY;
         }
+        imgX = x + (w - drawW) / 2;
+        imgY = finalY + (h - drawH) / 2;
         ctx.drawImage(iconData.img, imgX, imgY, drawW, drawH);
       } else {
         this.roundRect(x, finalY, w, h, 4 * s, '#2d2d3a');
@@ -106,7 +105,7 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
   
       // 底部蒙层（跟随偏移）
-      const maskH = h * 0.35;
+      const maskH = Math.max(h * 0.35 - 8 * s, 0);
       const maskY = finalY + h - maskH;
       const maskR = Math.min(r, maskH / 2);
       this.roundRect(x + 3, maskY, w - 6, maskH, maskR, 'rgba(0,0,0,0.55)');
@@ -622,14 +621,15 @@ module.exports = function extendEffects(Renderer) {
     }
 
     Renderer.prototype._drawCardGlow = function(ctx, cardX, cardY, cardW, cardH, s) {
+      ctx.save();
       const t = Date.now();
       const cardCX = cardX + cardW / 2;
       const cardCY = cardY + cardH / 2;
       const haloR = Math.max(cardW, cardH) * 0.85;
-      const pulse = 0.5 + 0.5 * Math.sin(t / 400);
+      const pulse = 0.5 + 0.5 * Math.sin(t / 500);
       const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-      haloGrad.addColorStop(0, `rgba(255,215,0,${0.15 * pulse})`);
-      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.08 * pulse})`);
+      haloGrad.addColorStop(0, `rgba(255,215,0,${0.12 + 0.06 * pulse})`);
+      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.06 + 0.04 * pulse})`);
       haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
       ctx.fillStyle = haloGrad;
       ctx.beginPath();
@@ -643,15 +643,16 @@ module.exports = function extendEffects(Renderer) {
         { x: cardX - 4*s, y: cardY + cardH + 6*s, r: 4, ph: 1.0 },
       ];
       sparkles.forEach((sp, i) => {
-        const blink = Math.abs(Math.sin(t / 350 + sp.ph));
-        const alpha = 0.3 + 0.7 * blink;
-        const r = sp.r * (0.6 + 0.4 * blink) * s;
+        const blink = 0.5 + 0.5 * Math.sin(t / 600 + sp.ph);
+        const alpha = 0.25 + 0.55 * blink;
+        const r = sp.r * (0.75 + 0.2 * blink) * s;
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.fillStyle = i % 2 === 0 ? '#ffd700' : '#ffffff';
         this._drawSparkleShape(ctx, sp.x, sp.y, r);
         ctx.restore();
       });
+      ctx.restore();
     }
 
     Renderer.prototype._drawSparkleShape = function(ctx, x, y, r) {
