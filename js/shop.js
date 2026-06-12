@@ -288,8 +288,6 @@ class ShopRenderer {
     const ownedW = W - 30 * s;
     const ownedX = 15 * s;
 
-    // 已购买道具栏阴影（右下偏移，营造立体感）
-    this.parent.roundRect(ownedX + 2 * s, ownedY + 2 * s, ownedW, ownedH, 10 * s, 'rgba(0,0,0,0.10)', null);
     // 已购买道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大，未加载时 fallback 米白色）
     const cardBarData = game.cloudStorage && game.cloudStorage.bgIconImages && game.cloudStorage.bgIconImages['card_bar'];
     if (cardBarData && cardBarData.loaded && cardBarData.img) {
