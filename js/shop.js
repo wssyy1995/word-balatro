@@ -352,18 +352,18 @@ class ShopRenderer {
     const oLeftStartX = oBaseLeftStartX - oWitchShift;
     const oRightStartX = oBaseRightStartX + oPotionShift;
 
-    // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）
+    // 竖分割线（亮金棕色实线 + 菱形）
     ctx.beginPath();
     ctx.moveTo(oDividerX, oSlotY + 2 * s);
     ctx.lineTo(oDividerX, oSlotY + oSlotH - 2 * s);
-    ctx.strokeStyle = '#c4a35a';
+    ctx.strokeStyle = '#e0c070';
     ctx.lineWidth = 0.8 * s;
     ctx.stroke();
     // 菱形装饰
     ctx.save();
     ctx.translate(oDividerX, oSlotY + oSlotH / 2);
     ctx.rotate(Math.PI / 4);
-    ctx.fillStyle = '#c4a35a';
+    ctx.fillStyle = '#e0c070';
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
     ctx.restore();
 
