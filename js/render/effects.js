@@ -104,13 +104,12 @@ module.exports = function extendEffects(Renderer) {
       }
       ctx.restore();
   
-      // 底部蒙层 + 名字（临时隐藏）
-      /*
+      // 底部蒙层 + 名字
       const maskH = Math.max(h * 0.35 - 8 * s, 0);
       const maskY = finalY + h - maskH;
       const maskR = Math.min(r, maskH / 2);
       this.roundRect(x + 3, maskY, w - 6, maskH, maskR, 'rgba(0,0,0,0.55)');
-  
+
       // 名字（自适应字号）
       ctx.save();
       const fontSize = Math.min(Math.floor(10 * s), Math.floor(w / 6));
@@ -120,7 +119,6 @@ module.exports = function extendEffects(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText(prop.name, x + w / 2, maskY + maskH / 2);
       ctx.restore();
-      */
   
       // 剩余次数标签（limit 型女巫牌，右上角）
       if (prop.limit !== undefined && prop.usesLeft !== undefined) {
