@@ -97,7 +97,7 @@ module.exports = function extendPlaying(Renderer) {
         const drawY = propY + (propBarH - drawH) / 2;
         // card_bar 四角圆角裁切
         ctx.save();
-        const cbr = 10 * s;
+        const cbr = 18 * s;
         ctx.beginPath();
         ctx.moveTo(drawX + cbr, drawY);
         ctx.lineTo(drawX + drawW - cbr, drawY);
