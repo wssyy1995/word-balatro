@@ -1086,10 +1086,18 @@ class Game {
     let guideEnabled = true;
     let gameJson = {};
     try {
-      if (typeof wx !== 'undefined' && wx.getAppConfigSync) {
-        gameJson = wx.getAppConfigSync() || {};
-      } else if (typeof wx !== 'undefined' && wx.getGameJsonConfig) {
-        gameJson = wx.getGameJsonConfig() || {};
+      if (typeof wx !== 'undefined') {
+        // 优先读取 game.json（getGameJsonConfig 是读 game.json 的专用 API）
+        if (wx.getGameJsonConfig) {
+          gameJson = wx.getGameJsonConfig() || {};
+        }
+        // 如果 game.json 里没有 enableGuide，再尝试 app.json 兜底
+        if (gameJson.enableGuide === undefined && wx.getAppConfigSync) {
+          const appConfig = wx.getAppConfigSync() || {};
+          if (appConfig.enableGuide !== undefined) {
+            gameJson.enableGuide = appConfig.enableGuide;
+          }
+        }
       }
       guideEnabled = gameJson.enableGuide !== false;
     } catch (e) {
