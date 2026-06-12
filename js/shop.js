@@ -303,7 +303,7 @@ class ShopRenderer {
       const drawY = ownedY + (ownedH - drawH) / 2;
       // card_bar 四角圆角裁切
       ctx.save();
-      const cbr = 18 * s;
+      const cbr = 16 * s;
       ctx.beginPath();
       ctx.moveTo(drawX + cbr, drawY);
       ctx.lineTo(drawX + drawW - cbr, drawY);

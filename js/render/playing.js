@@ -89,15 +89,15 @@ module.exports = function extendPlaying(Renderer) {
         const barAspect = (cardBarData.width > 0 && cardBarData.height > 0)
           ? cardBarData.width / cardBarData.height
           : propW / propBarH;
-        const targetW = propW -8*s;
-        const imageScale = 1.05;
+        const targetW = propW ;
+        const imageScale = 1.02;
         const drawW = targetW * imageScale;
         const drawH = drawW / barAspect;
         const drawX = propX + (propW - drawW) / 2;
         const drawY = propY + (propBarH - drawH) / 2;
         // card_bar 四角圆角裁切
         ctx.save();
-        const cbr = 18 * s;
+        const cbr = 16 * s;
         ctx.beginPath();
         ctx.moveTo(drawX + cbr, drawY);
         ctx.lineTo(drawX + drawW - cbr, drawY);
