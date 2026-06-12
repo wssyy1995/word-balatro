@@ -159,10 +159,10 @@ module.exports = function extendPlaying(Renderer) {
           const jCx = sx + slotW / 2;
           const jCy = slotY + slotH / 2;
           const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
-          const jRadius = Math.max(slotW, slotH) * 0.48 * jBreath;
+          const jRadius = Math.max(slotW, slotH) * 0.52 * jBreath;
           const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, jRadius);
-          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.3 * jBreath})`);
-          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.12 * jBreath})`);
+          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.34 * jBreath})`);
+          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.15 * jBreath})`);
           jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
           ctx.fillStyle = jGrad;
           ctx.beginPath();
@@ -243,10 +243,10 @@ module.exports = function extendPlaying(Renderer) {
           const pCx = sx + slotW / 2;
           const pCy = slotY + slotH / 2;
           const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
-          const pRadius = Math.max(slotW, slotH) * 0.48 * pBreath;
+          const pRadius = Math.max(slotW, slotH) * 0.52 * pBreath;
           const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, pRadius);
-          pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.3 * pBreath})`);
-          pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.12 * pBreath})`);
+          pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.34 * pBreath})`);
+          pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.15 * pBreath})`);
           pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
           ctx.fillStyle = pGrad;
           ctx.beginPath();
