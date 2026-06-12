@@ -585,7 +585,23 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   }
 
   if (chosenCards.length < 2) {
-    console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张，fallback 到元音规则补牌`);
+    const safeSeedLen = Math.min(seedWordLength, need);
+    if (safeSeedLen >= 2) {
+      console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张，从词库生成保底种子词`);
+      const seedWord = getSeedWord(safeSeedLen, safeSeedLen, []);
+      const allSeedLetters = seedWord.toUpperCase().split('');
+      const seedCards = allSeedLetters.map(letter => makeSeedCard(letter, seedWord));
+      const remainingNeed = need - seedCards.length;
+      if (remainingNeed <= 0) {
+        return seedCards.slice(0, need);
+      }
+      const augmentedHand = [...hand, ...seedCards];
+      const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts);
+      const deckLetters = deckCards.map(c => c.letter).join('');
+      console.log(`[SeedSafety] 从 deck 挑选 字母: ${deckLetters || '(无)'}`);
+      return [...seedCards, ...deckCards];
+    }
+    console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张且 need=${need}，fallback 到元音规则补牌`);
     return drawWithVowelRules(deck, hand, need, maxAttempts);
   }
 
@@ -1925,7 +1941,8 @@ class Game {
       card.selected = false;
       if (this.animManager) this.animManager.cardDeselect(card);
     } else {
-      if (this.selected.length >= 9) return;
+      const maxSelect = this._maxHandSize || this.baseHandSize || 9;
+      if (this.selected.length >= maxSelect) return;
       this.selected.push(cardId);
       card.selected = true;
       if (this.animManager) this.animManager.cardSelect(card);
@@ -1950,7 +1967,10 @@ class Game {
   showSeedWordHint() {
     // 找出当前手牌中所有带 _seedWord 标记的种子卡牌
     const seedCards = this.hand.filter(c => c && c._seedWord);
-    if (seedCards.length === 0) return;
+    if (seedCards.length === 0) {
+      this.showHint();
+      return;
+    }
 
     // 按 _seedWord 分组
     const groups = {};
@@ -2299,7 +2319,14 @@ class Game {
       }
     }
     // 构建 perCardSteps：每张 per_card 对应一次独立的字母跳跃步骤
+    // 顺序：每张牌先跳基础（+per_card女巫），再跳装备附加（last_letter_double / letter_trigger_twice）
     const perCardSteps = [];
+    const doubleCount = equippedCardSkills.filter(s => s === 'last_letter_double').length;
+    const lastIdx = playedInOrder.length - 1;
+    const triggerTwiceLetters = equippedCardSkills
+      .map(parseLetterTriggerTwiceSkill)
+      .filter(Boolean);
+
     for (let i = 0; i < playedInOrder.length; i++) {
       const triggered = jokerTriggers[i] || [];
       if (triggered.length === 0) {
@@ -2309,32 +2336,24 @@ class Game {
           perCardSteps.push({ cardIdx: i, jokerIdx: jIdx });
         });
       }
-    }
-    // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃（每张叠加一次动画）
-    const doubleCount = equippedCardSkills.filter(s => s === 'last_letter_double').length;
-    if (doubleCount > 0 && playedInOrder.length > 0) {
-      const lastIdx = playedInOrder.length - 1;
-      const lastTriggered = jokerTriggers[lastIdx] || [];
-      const lastJokerIdx = lastTriggered.length > 0 ? lastTriggered[lastTriggered.length - 1] : null;
-      for (let i = 0; i < doubleCount; i++) {
-        perCardSteps.push({ cardIdx: lastIdx, jokerIdx: lastJokerIdx, isDouble: true });
-      }
-    }
 
-    // 装备卡牌：指定字母触发2次计分 - 额外跳跃动画
-    if (equippedCardSkills && equippedCardSkills.length > 0) {
-      equippedCardSkills.forEach(skillName => {
-        const targetLetter = parseLetterTriggerTwiceSkill(skillName);
-        if (targetLetter) {
-          for (let i = 0; i < playedInOrder.length; i++) {
-            if (playedInOrder[i].letter.toUpperCase() === targetLetter) {
-              const triggered = jokerTriggers[i] || [];
-              const jokerIdx = triggered.length > 0 ? triggered[triggered.length - 1] : null;
-              perCardSteps.push({ cardIdx: i, jokerIdx: jokerIdx, isDouble: true });
-            }
-          }
+      // 装备卡牌：德莱薇尔 - 最后一个字母额外跳跃（每张叠加一次动画）
+      if (doubleCount > 0 && i === lastIdx) {
+        const lastJokerIdx = triggered.length > 0 ? triggered[triggered.length - 1] : null;
+        for (let d = 0; d < doubleCount; d++) {
+          perCardSteps.push({ cardIdx: i, jokerIdx: lastJokerIdx, isDouble: true });
         }
-      });
+      }
+
+      // 装备卡牌：指定字母触发2次计分 - 额外跳跃动画
+      const letter = playedInOrder[i].letter.toUpperCase();
+      const matchCount = triggerTwiceLetters.filter(l => l === letter).length;
+      if (matchCount > 0) {
+        const jokerIdx = triggered.length > 0 ? triggered[triggered.length - 1] : null;
+        for (let d = 0; d < matchCount; d++) {
+          perCardSteps.push({ cardIdx: i, jokerIdx, isDouble: true });
+        }
+      }
     }
     this.pendingCheck.perCardSteps = perCardSteps;
     this.pendingCheck.jokerTriggers = jokerTriggers;

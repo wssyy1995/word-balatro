@@ -299,9 +299,8 @@ module.exports = function extendPlaying(Renderer) {
       maskGrad.addColorStop(1, 'rgba(240,235,224,0.35)');
       this.roundRect(maskX, maskY, maskW, maskH, 10 * s, maskGrad, 'rgba(196,163,90,0.5)', 1 * s);
 
-      // 提示按钮（预览区左侧）
-      const hasSeedCards = game.hand.some(c => c && c._seedWord);
-      if (hasSeedCards) {
+      // 提示按钮（预览区左侧）在游玩过程中始终显示，无种子牌时点击会回退到普通提示
+      if (game.state === 'playing') {
         // === help 按钮空闲上下跳跃动画（25秒未出牌触发，持续2秒） ===
         let helpJumpY = 0;
         if (game._lastPlayTime && Date.now() - game._lastPlayTime > 25000) {
@@ -367,12 +366,12 @@ module.exports = function extendPlaying(Renderer) {
         }
         ctx.restore();
         this.hintBtnRect = { x: hintBtnX, y: hintBtnY, w: hintBtnSize, h: hintBtnSize };
-      } else {
-        this.hintBtnRect = null;
       }
   
       // 预览区域（在卡牌上方）
       const selected = game.getSelectedCards();
+      const previewWord = game.pendingCheck ? game.pendingCheck.word : selected.map(c => c.letter.toLowerCase()).join('');
+      const previewFontSize = Math.floor((previewWord.length > 9 ? 28 * 9 / previewWord.length : 28) * s);
       let valid = false;
       let invalid = false;
       let baseScore = 0;
@@ -416,11 +415,11 @@ module.exports = function extendPlaying(Renderer) {
       if (game.pendingCheck) {
         pc = game.pendingCheck;
         const word = pc.word;
-  
+
         if (pc.state === 'checking') {
           // 检测中：橙色单词 + loading图标 + 动态点号
           ctx.save();
-          ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+          ctx.font = `bold ${previewFontSize}px Georgia, 'Times New Roman', serif`;
           ctx.fillStyle = '#c4a35a';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -441,7 +440,7 @@ module.exports = function extendPlaying(Renderer) {
           const elapsed = Date.now() - (pc.resolveTime || 0);
   
           ctx.save();
-          ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+          ctx.font = `bold ${previewFontSize}px Georgia, 'Times New Roman', serif`;
           ctx.fillStyle = '#2d7d32';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -539,9 +538,9 @@ module.exports = function extendPlaying(Renderer) {
                 }
               }
   
-              // 计算累加分数（按字母索引累计，同字母多步骤不重复加分）
-              for (let i = 0; i <= cardIdx && i < cardsInOrder.length; i++) {
-                let score = cardsInOrder[i].score;
+              // 计算每张字母牌的最终分数（含 per_card 女巫牌加成）
+              const cardFinalScores = cardsInOrder.map((card, i) => {
+                let score = card.score;
                 const triggered = pc.jokerTriggers?.[i] || [];
                 triggered.forEach(jIdx => {
                   const joker = jokers[jIdx];
@@ -553,14 +552,19 @@ module.exports = function extendPlaying(Renderer) {
                     }
                   }
                 });
-                accumulatedScore += score;
+                return score;
+              });
+
+              // 累加基础字母分
+              for (let i = 0; i <= cardIdx && i < cardsInOrder.length; i++) {
+                accumulatedScore += cardFinalScores[i];
               }
-              // 装备卡牌：德莱薇尔 - 最后一个字母分数算两次
-              if (pc.result && pc.result._lastLetterDouble > 0) {
-                if (stepInfo && stepInfo.isDouble) {
-                  accumulatedScore += pc.result._lastLetterDouble;
-                } else if (isAllJumped) {
-                  accumulatedScore += pc.result._lastLetterDouble;
+              // 累加已触发的“分数算多次”额外步骤（last_letter_double / letter_trigger_twice）
+              const activeStepIdx = isAllJumped ? steps.length - 1 : stepIdx;
+              for (let si = 0; si <= activeStepIdx && si < steps.length; si++) {
+                const st = steps[si];
+                if (st.isDouble) {
+                  accumulatedScore += cardFinalScores[st.cardIdx];
                 }
               }
   
@@ -757,7 +761,7 @@ module.exports = function extendPlaying(Renderer) {
           // 非法：橙色单词 + error图标 + 单词不存在
           invalid = true;
           ctx.save();
-          ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+          ctx.font = `bold ${previewFontSize}px Georgia, 'Times New Roman', serif`;
           ctx.fillStyle = '#f1c40f';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -785,7 +789,7 @@ module.exports = function extendPlaying(Renderer) {
           invalid = true;
   
           ctx.save();
-          ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+          ctx.font = `bold ${previewFontSize}px Georgia, 'Times New Roman', serif`;
           ctx.fillStyle = '#f1c40f';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
@@ -835,7 +839,7 @@ module.exports = function extendPlaying(Renderer) {
         // 普通预览：只显示单词（橙色），不检测
         const word = selected.map(c => c.letter.toLowerCase()).join('');
         ctx.save();
-        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.font = `bold ${previewFontSize}px Georgia, 'Times New Roman', serif`;
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
