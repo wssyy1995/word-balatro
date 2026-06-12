@@ -583,7 +583,7 @@ class ShopRenderer {
         const selectedOffsetY = isSelected ? -3 * s : 0;
         const pDrawX = sx + slideOffsetX;
         const pDrawY = oSlotY + selectedOffsetY;
-        // 药水牌背后绿色发光蒙层
+        // 药水牌背后绿色发光蒙层（矩形）
         ctx.save();
         const pCx = pDrawX + slotW / 2;
         const pCy = pDrawY + oSlotH / 2;
@@ -591,10 +591,7 @@ class ShopRenderer {
         pGrad.addColorStop(0, 'rgba(80, 220, 120, 0.45)');
         pGrad.addColorStop(0.6, 'rgba(80, 220, 120, 0.18)');
         pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
-        ctx.fillStyle = pGrad;
-        ctx.beginPath();
-        ctx.ellipse(pCx, pCy, slotW * 0.65, oSlotH * 0.65, 0, 0, Math.PI * 2);
-        ctx.fill();
+        this.parent.roundRect(pDrawX - 4 * s, pDrawY - 4 * s, slotW + 8 * s, oSlotH + 8 * s, 10 * s, pGrad, null);
         ctx.restore();
         this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
