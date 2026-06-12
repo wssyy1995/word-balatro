@@ -284,8 +284,9 @@ class ShopRenderer {
     const actualWitchSlots = game.maxJokerSlots || 4;
     const ownedY = top + 16 * s + 2 * s;
     const ownedH = 92 * s;
-    const ownedW = actualWitchSlots >= 5 ? W - 18 * s : W - 30 * s;
-    const ownedX = actualWitchSlots >= 5 ? 9 * s : 15 * s;
+    // 栏目宽度固定为 4 张女巫牌时的宽度，5 张时通过减小卡牌间距来容纳
+    const ownedW = W - 30 * s;
+    const ownedX = 15 * s;
 
     // 已购买道具栏阴影（右下偏移，营造立体感）
     this.parent.roundRect(ownedX + 2 * s, ownedY + 2 * s, ownedW, ownedH, 10 * s, 'rgba(0,0,0,0.10)', null);
@@ -296,7 +297,7 @@ class ShopRenderer {
         ? cardBarData.width / cardBarData.height
         : ownedW / ownedH;
       const targetW = ownedW;
-      const imageScale = 1.1;
+      const imageScale = 1.08;
       const drawW = targetW * imageScale;
       const drawH = drawW / barAspect;
       const drawX = ownedX + (ownedW - drawW) / 2;
@@ -317,23 +318,21 @@ class ShopRenderer {
 
     const actualTotalSlots = actualWitchSlots + 2;
 
-    // 动态 gap：保持单卡宽度不变，槽位增加时 gap 缩小甚至为负（重叠）
+    // 动态 gap：栏目宽度不变，槽位增加时减小间距（可能重叠）
     const rawGap = (ownedW - oPadX * 2 - oDividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
-    const actualGap = rawGap + (actualWitchSlots >= 5 ? 3.5 * s : 0);
-    const slotW = rawSlotW - (actualWitchSlots >= 5 ? 2 * s : 0);
-    const oSlotH = actualWitchSlots >= 5
-      ? (ownedH - oSlotTop - 9 * s) * (slotW / rawSlotW)
-      : ownedH - oSlotTop - 9 * s;
+    const actualGap = rawGap;
+    const slotW = rawSlotW;
+    const oSlotH = ownedH - oSlotTop - 9 * s;
 
     const oSlotY = ownedY + oSlotTop;
-    const oBaseLeftStartX = ownedX + oPadX - (actualWitchSlots >= 5 ? 2 * s : 0);
+    const oBaseLeftStartX = ownedX + oPadX;
     const witchRightEdge = oBaseLeftStartX + actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
     const oDividerX = witchRightEdge + actualGap / 2 + oDividerW / 2;
     const oBaseRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
 
-    // 女巫牌左移、药水牌右移，分割线保持不动（4张时各1px，5张时更多）
-    const oWitchShift = actualWitchSlots >= 5 ? 5 * s : 1 * s;
-    const oPotionShift = actualWitchSlots >= 5 ? 3.5 * s : 1 * s;
+    // 女巫牌左移、药水牌右移，分割线保持不动
+    const oWitchShift = 1 * s;
+    const oPotionShift = 1 * s;
     const oLeftStartX = oBaseLeftStartX - oWitchShift;
     const oRightStartX = oBaseRightStartX + oPotionShift;
 
