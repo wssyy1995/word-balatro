@@ -90,7 +90,7 @@ module.exports = function extendPlaying(Renderer) {
           ? cardBarData.width / cardBarData.height
           : propW / propBarH;
         const targetW = propW ;
-        const imageScale = 1.05;
+        const imageScale = 1.04;
         const drawW = targetW * imageScale;
         const drawH = drawW / barAspect;
         const drawX = propX + (propW - drawW) / 2;
@@ -158,7 +158,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.save();
           const jCx = sx + slotW / 2;
           const jCy = slotY + slotH / 2;
-          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
+          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 400 + i * 0.7);
           const jRadius = Math.max(slotW, slotH) * 0.52 * jBreath;
           const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, jRadius);
           jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.34 * jBreath})`);
@@ -242,7 +242,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.save();
           const pCx = sx + slotW / 2;
           const pCy = slotY + slotH / 2;
-          const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
+          const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 400 + i * 0.7);
           const pRadius = Math.max(slotW, slotH) * 0.52 * pBreath;
           const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, pRadius);
           pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.34 * pBreath})`);

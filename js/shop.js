@@ -501,7 +501,7 @@ class ShopRenderer {
           ctx.save();
           const jCx = drawX + drawW / 2;
           const jCy = drawY + drawH / 2;
-          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
+          const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 400 + i * 0.7);
           const jRadius = Math.max(drawW, drawH) * 0.52 * jBreath;
           const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, jRadius);
           jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.34 * jBreath})`);
@@ -611,7 +611,7 @@ class ShopRenderer {
         ctx.save();
         const pCx = pDrawX + slotW / 2;
         const pCy = pDrawY + oSlotH / 2;
-        const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
+        const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 400 + i * 0.7);
         const pRadius = Math.max(slotW, oSlotH) * 0.52 * pBreath;
         const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, pRadius);
         pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.34 * pBreath})`);
