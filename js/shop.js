@@ -478,11 +478,16 @@ class ShopRenderer {
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
           // 女巫牌背后紫色发光蒙层
           ctx.save();
-          ctx.shadowColor = 'rgba(162, 89, 255, 0.55)';
-          ctx.shadowBlur = 20 * s;
-          ctx.shadowOffsetX = 0;
-          ctx.shadowOffsetY = 0;
-          this.parent.roundRect(drawX + 2 * s, drawY + 2 * s, drawW - 4 * s, drawH - 4 * s, 8 * s, 'rgba(162, 89, 255, 0.12)', null);
+          const jCx = drawX + drawW / 2;
+          const jCy = drawY + drawH / 2;
+          const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, Math.max(drawW, drawH) * 0.65);
+          jGrad.addColorStop(0, 'rgba(162, 89, 255, 0.45)');
+          jGrad.addColorStop(0.6, 'rgba(162, 89, 255, 0.18)');
+          jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
+          ctx.fillStyle = jGrad;
+          ctx.beginPath();
+          ctx.ellipse(jCx, jCy, drawW * 0.65, drawH * 0.65, 0, 0, Math.PI * 2);
+          ctx.fill();
           ctx.restore();
           if (glow > 0.01) {
             ctx.shadowColor = `rgba(162,155,254,${glow})`;
@@ -585,11 +590,16 @@ class ShopRenderer {
         const pDrawY = oSlotY + selectedOffsetY;
         // 药水牌背后绿色发光蒙层
         ctx.save();
-        ctx.shadowColor = 'rgba(80, 220, 120, 0.55)';
-        ctx.shadowBlur = 20 * s;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-        this.parent.roundRect(pDrawX + 2 * s, pDrawY + 2 * s, slotW - 4 * s, oSlotH - 4 * s, 8 * s, 'rgba(80, 220, 120, 0.12)', null);
+        const pCx = pDrawX + slotW / 2;
+        const pCy = pDrawY + oSlotH / 2;
+        const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, Math.max(slotW, oSlotH) * 0.65);
+        pGrad.addColorStop(0, 'rgba(80, 220, 120, 0.45)');
+        pGrad.addColorStop(0.6, 'rgba(80, 220, 120, 0.18)');
+        pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
+        ctx.fillStyle = pGrad;
+        ctx.beginPath();
+        ctx.ellipse(pCx, pCy, slotW * 0.65, oSlotH * 0.65, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
         this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY + selectedOffsetY, w: slotW, h: oSlotH, index: i, array: 'potions' });
