@@ -145,8 +145,8 @@ module.exports = function extendPlaying(Renderer) {
           const jBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
           const jRadius = Math.max(slotW, slotH) * 0.48 * jBreath;
           const jGrad = ctx.createRadialGradient(jCx, jCy, 0, jCx, jCy, jRadius);
-          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.26 * jBreath})`);
-          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.11 * jBreath})`);
+          jGrad.addColorStop(0, `rgba(162, 89, 255, ${0.3 * jBreath})`);
+          jGrad.addColorStop(0.55, `rgba(162, 89, 255, ${0.12 * jBreath})`);
           jGrad.addColorStop(1, 'rgba(162, 89, 255, 0)');
           ctx.fillStyle = jGrad;
           ctx.beginPath();
@@ -229,8 +229,8 @@ module.exports = function extendPlaying(Renderer) {
           const pBreath = 0.88 + 0.12 * Math.sin(Date.now() / 500 + i * 0.7);
           const pRadius = Math.max(slotW, slotH) * 0.48 * pBreath;
           const pGrad = ctx.createRadialGradient(pCx, pCy, 0, pCx, pCy, pRadius);
-          pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.26 * pBreath})`);
-          pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.11 * pBreath})`);
+          pGrad.addColorStop(0, `rgba(80, 220, 120, ${0.3 * pBreath})`);
+          pGrad.addColorStop(0.55, `rgba(80, 220, 120, ${0.12 * pBreath})`);
           pGrad.addColorStop(1, 'rgba(80, 220, 120, 0)');
           ctx.fillStyle = pGrad;
           ctx.beginPath();
