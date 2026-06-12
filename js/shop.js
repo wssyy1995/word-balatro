@@ -323,9 +323,9 @@ class ShopRenderer {
     const oSlotY = ownedY + oSlotTop;
     const leftGroupW = actualWitchSlots * slotW + (actualWitchSlots - 1) * actualGap;
     const rightGroupW = 2 * slotW + actualGap;
-    const contentW = leftGroupW + rightGroupW + oDividerW + actualGap;
+    const ownedContentW = leftGroupW + rightGroupW + oDividerW + actualGap;
     // 内容整体居中：超出栏目时左右自然溢出，但不影响 card_bar 宽度
-    const oBaseLeftStartX = ownedX + (ownedW - contentW) / 2;
+    const oBaseLeftStartX = ownedX + (ownedW - ownedContentW) / 2;
     const witchRightEdge = oBaseLeftStartX + leftGroupW;
     const oDividerX = witchRightEdge + actualGap / 2 + oDividerW / 2;
     const oBaseRightStartX = oDividerX + oDividerW / 2 + actualGap / 2;
