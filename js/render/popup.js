@@ -1379,8 +1379,16 @@ module.exports = function extendPopup(Renderer) {
       const sloganY = py + ph - 24 * s + sloganAnim.yShift;
       const collectedCount = collected.length;
       const isAllCollected = collectedCount >= 10 && words.length > 0;
-      // 全部完成时：底部文案周期性小幅度上下跳跃
-      const sloganBounceY = isAllCollected ? Math.sin(Date.now() / 80) * 1.5 * s : 0;
+      // 全部完成时：底部文案周期性小幅度上下跳跃（连续跳2次，暂停1秒）
+      let sloganBounceY = 0;
+      if (isAllCollected) {
+        const cycle = 1500; // 2次跳跃 500ms + 暂停 1000ms
+        const t = Date.now() % cycle;
+        if (t < 500) {
+          const phase = (t % 250) / 250;
+          sloganBounceY = -Math.sin(phase * Math.PI) * 1 * s;
+        }
+      }
       ctx.save();
       ctx.globalAlpha = sloganAnim.alpha * ca;
       ctx.font = `${isAllCollected ? 'bold ' : ''}${Math.floor(11 * s)}px sans-serif`;
