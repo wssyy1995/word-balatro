@@ -1394,7 +1394,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
-      // 全部学习完成：播放两次放慢的「合法单词」金色烟花（间隔 600ms）
+      // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（间隔 600ms）
       if (isAllCollected) {
         const now = Date.now();
         if (!game._dailyWordsSparkleState) {
@@ -1405,8 +1405,10 @@ module.exports = function extendPopup(Renderer) {
         if (state.count < 2 && now - state.lastTime >= interval) {
           state.count++;
           state.lastTime = now;
-          this._spawnSparkles(W / 2 - 60 * s, sloganY, 12, null, 0.5);
-          this._spawnSparkles(W / 2 + 60 * s, sloganY, 12, null, 0.5);
+          const leftX = W / 2 - titleWidth / 2 - 30 * s;
+          const rightX = W / 2 + titleWidth / 2 + 30 * s;
+          this._spawnSparkles(leftX, titleY, 12, null, 0.5);
+          this._spawnSparkles(rightX, titleY, 12, null, 0.5);
         }
       } else {
         game._dailyWordsSparkleState = null;
