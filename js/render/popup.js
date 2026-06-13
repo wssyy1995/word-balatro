@@ -1394,15 +1394,22 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
-      // 全部学习完成：播放一次放慢的「合法单词」金色烟花
+      // 全部学习完成：播放两次放慢的「合法单词」金色烟花（间隔 600ms）
       if (isAllCollected) {
-        if (!game._dailyWordsSparkleSpawned) {
-          game._dailyWordsSparkleSpawned = true;
+        const now = Date.now();
+        if (!game._dailyWordsSparkleState) {
+          game._dailyWordsSparkleState = { count: 0, lastTime: 0 };
+        }
+        const state = game._dailyWordsSparkleState;
+        const interval = state.count === 0 ? 0 : 600;
+        if (state.count < 2 && now - state.lastTime >= interval) {
+          state.count++;
+          state.lastTime = now;
           this._spawnSparkles(W / 2 - 60 * s, sloganY, 12, null, 0.5);
           this._spawnSparkles(W / 2 + 60 * s, sloganY, 12, null, 0.5);
         }
       } else {
-        game._dailyWordsSparkleSpawned = false;
+        game._dailyWordsSparkleState = null;
       }
 
       // 滚动条
