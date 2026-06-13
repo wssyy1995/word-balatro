@@ -2039,8 +2039,9 @@ class Game {
   }
 
   async playHand() {
-    // 用户点击出牌时清除种子词提示高亮
+    // 用户点击出牌时清除种子词提示高亮与新词提示
     this.hand.forEach(c => { if (c) delete c._hintHighlight; });
+    this._dailyNewWordHint = null;
 
     // 重置 help 按钮空闲波纹定时器
     this._lastPlayTime = Date.now();
@@ -2998,7 +2999,11 @@ class Game {
       if (!canForm) continue;
 
       const meaning = (typeof item === 'string' ? null : item.meaning) || getWordMeaning(w) || '';
-      this._dailyNewWordHint = { word: w, meaning };
+      // 同一词保持原有 showTime，避免重复重置淡出计时
+      const showTime = this._dailyNewWordHint && this._dailyNewWordHint.word === w
+        ? this._dailyNewWordHint.showTime
+        : Date.now();
+      this._dailyNewWordHint = { word: w, meaning, showTime };
       return;
     }
   }

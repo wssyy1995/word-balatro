@@ -857,15 +857,28 @@ module.exports = function extendPlaying(Renderer) {
       }
 
       // 学习模式：若手牌可直接拼出某个未收集的每日新词，主动在预览区下方显示释义
+      // 10 秒内未点击出牌则淡出
       if (!game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint) {
-        const hintText = `[新词提示] ${game._dailyNewWordHint.meaning}`;
-        ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#27ae60';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        ctx.fillText(hintText, W / 2, wordAreaY + maskHalfH + 6 * s);
-        ctx.restore();
+        const elapsed = Date.now() - game._dailyNewWordHint.showTime;
+        const fadeStart = 10000;
+        const fadeDuration = 1000;
+        let hintAlpha = 1;
+        if (elapsed >= fadeStart + fadeDuration) {
+          game._dailyNewWordHint = null;
+        } else if (elapsed > fadeStart) {
+          hintAlpha = 1 - (elapsed - fadeStart) / fadeDuration;
+        }
+        if (hintAlpha > 0 && game._dailyNewWordHint) {
+          const hintText = `[新词提示] ${game._dailyNewWordHint.meaning}`;
+          ctx.save();
+          ctx.globalAlpha = hintAlpha;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#27ae60';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(hintText, W / 2, wordAreaY + maskHalfH + 6 * s);
+          ctx.restore();
+        }
       }
   
       // 分数预览（两个方块）—— 始终显示背景图
