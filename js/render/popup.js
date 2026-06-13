@@ -1394,14 +1394,14 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
-      // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（间隔 600ms）
+      // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（首次延迟 500ms，之后间隔 600ms）
       if (isAllCollected) {
         const now = Date.now();
         if (!game._dailyWordsSparkleState) {
           game._dailyWordsSparkleState = { count: 0, lastTime: 0 };
         }
         const state = game._dailyWordsSparkleState;
-        const interval = state.count === 0 ? 0 : 600;
+        const interval = state.count === 0 ? 500 : 600;
         if (state.count < 2 && now - state.lastTime >= interval) {
           state.count++;
           state.lastTime = now;
