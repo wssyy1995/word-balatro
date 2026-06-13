@@ -254,6 +254,43 @@ module.exports = function extendPlaying(Renderer) {
           ctx.fill();
           ctx.restore();
 
+          // disable_potion_card 禁用动画：1000ms 边框光晕 + 锁图标 easeOutBack 弹出
+          if (potion._disabled) {
+            const elapsed = game._disablePotionAnim ? Date.now() - game._disablePotionAnim.startTime : Infinity;
+            const isAnimating = game._disablePotionAnim && elapsed >= 0 && elapsed < 1000;
+            if (isAnimating) {
+              this._drawLashBorder(ctx, sx, slotY, slotW, slotH, 4 * s, s, elapsed / 1000, 1.0);
+            }
+            if (!isAnimating) {
+              ctx.save();
+              this.roundRect(sx, slotY, slotW, slotH, 4 * s, 'rgba(60, 60, 60, 0.5)');
+
+              // 锁图标 easeOutBack 弹出动画（边框结束后开始，持续400ms）
+              const iconElapsed = game._disablePotionAnim
+                ? Math.max(0, elapsed - 1000)
+                : Infinity;
+              const iconDuration = 400;
+              const iconProgress = iconElapsed < iconDuration
+                ? Easing.easeOutBack(Math.min(iconElapsed / iconDuration, 1))
+                : 1;
+              const iconSize = 20 * s * iconProgress;
+              const iconX = sx + (slotW - iconSize) / 2;
+              const iconY = slotY + (slotH - iconSize) / 2;
+
+              if (this.cardDisableIconLoaded && this.cardDisableIcon) {
+                ctx.drawImage(this.cardDisableIcon, iconX, iconY, iconSize, iconSize);
+              } else {
+                ctx.font = `bold ${Math.floor(iconSize)}px sans-serif`;
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🔒', sx + slotW / 2, slotY + slotH / 2);
+              }
+
+              ctx.restore();
+            }
+          }
+
           this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
         } else {
           this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');

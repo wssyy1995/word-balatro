@@ -1757,10 +1757,15 @@ function handleInput(x, y) {
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
       if (potionHit) {
-        vibrate();
-        if (game.audioManager) game.audioManager.play('tap');
         const potion = game.potions[potionHit.potionIndex];
         if (!potion) return;
+        // 本回合被禁用的药水牌无法使用
+        if (potion._disabled) {
+          game.hintToast = { text: '女巫约束：本回合禁用魔法药水牌', expireAt: Date.now() + 2000, startTime: Date.now() };
+          return;
+        }
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         // 字母置换药水：游戏中直接使用，弹出选择弹窗
         if (potion.effect === 'change_letter') {
           const selectedCards = game.getSelectedCards();

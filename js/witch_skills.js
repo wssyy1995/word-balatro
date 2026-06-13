@@ -10,8 +10,8 @@ const WITCH_SKILLS = [
   { level: 21, name: '女巫_H',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
   { level: 24, name: '女巫_I',  reward: 'shop_discount_5',rate:1,reward_desc: '本回合卡牌商店，打5折' },
   { level: 27, name: '女巫_J',  reward: 'card_upgrade_letter',rate:0.3,reward_desc: '有概率获得一张: 字母升级' },
-  { level: 30, name: '女巫_K', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
-  { level: 33, name: '女巫_L', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 29, name: '女巫_K', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
+  { level: 32, name: '女巫_L', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
   { level: 36, name: '女巫_M', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
   { level: 39, name: '女巫_N', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
   { level: 42, name: '女巫_O', reward: 'card_upgrade_letter',    rate: 0.3, reward_desc: '有概率获得一张: 字母升级' },
@@ -40,7 +40,8 @@ const SKILL_POOL = [
   { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
+  { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'}
 ];
 // const SKILL_POOL = [
 //   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
@@ -107,6 +108,9 @@ function checkSkill(skillName, game, playedCards) {
       return playedCards.length === 3;
     case 'force_letter_4':
       return playedCards.length === 4;
+    case 'disable_potion_card':
+      // 禁用魔法药水牌：约束在道具点击层处理，出牌本身不受限制
+      return true;
     default:
       return true;
   }
@@ -121,6 +125,8 @@ function getSkillFailText(skillName) {
       return '女巫约束：每次出牌只能出3张字母牌';
     case 'force_letter_4':
       return '女巫约束：每次出牌只能出4张字母牌';
+    case 'disable_potion_card':
+      return '女巫约束：本回合禁用魔法药水牌';
     default:
       return '女巫约束未满足';
   }

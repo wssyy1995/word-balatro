@@ -1232,6 +1232,7 @@ class Game {
     this._witchStarBurst = null;
     this._witchStarBurstAuto = false;
     this._disableWitchAnim = null;
+    this._disablePotionAnim = null;
     this._hastePlayActive = false;
     this._hastePlayStartTime = null;
     this._letterGodAnim = null;
@@ -1778,6 +1779,15 @@ class Game {
     } else {
       (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
       this._disableWitchAnim = null;
+    }
+
+    // disable_potion_card：回合开始时禁用所有药水牌（延迟1秒播放边框动画）
+    if (disableSkill && disableSkill.skill === 'disable_potion_card' && this.potions && this.potions.some(p => p)) {
+      this.potions.forEach(p => { if (p) p._disabled = true; });
+      this._disablePotionAnim = { startTime: Date.now() + 1000 };
+    } else {
+      (this.potions || []).forEach(p => { if (p) p._disabled = false; });
+      this._disablePotionAnim = null;
     }
 
     // === 争分夺秒：每回合开始时重置，由 applyCrystalEffects 重新激活 ===
