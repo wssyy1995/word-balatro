@@ -1716,6 +1716,7 @@ class Game {
     }
 
     this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord);
+    this._updateDailyNewWordHint();
 
     this.selected = [];
     this.score = 0;
@@ -2597,6 +2598,7 @@ class Game {
 
       this.hand = this.hand.filter(c => c !== null);
       this.hand.forEach(c => { if (c) c.selected = false; });
+      this._updateDailyNewWordHint();
       if (this.storageManager) this.storageManager.saveProgress();
     }, 600);
 
@@ -2910,6 +2912,7 @@ class Game {
 
       this.hand = this.hand.filter(c => c !== null);
       this.hand.forEach(c => { if (c) c.selected = false; });
+      this._updateDailyNewWordHint();
     }, 600);
 
     this.discardsLeft--
@@ -2962,6 +2965,43 @@ class Game {
   }
 
   // ===== 每日单词挑战 =====
+
+  _updateDailyNewWordHint() {
+    this._dailyNewWordHint = null;
+    if (!this.settings || !this.settings.dailyWordChallengeEnabled) return;
+    if (!this.dailyChallenge || !this.dailyChallenge.words) return;
+
+    const collected = this.dailyChallenge.collected || [];
+    const handCards = (this.hand || []).filter(Boolean);
+    const handFreq = {};
+    for (const c of handCards) {
+      const ch = c.letter.toUpperCase();
+      handFreq[ch] = (handFreq[ch] || 0) + 1;
+    }
+
+    for (const item of this.dailyChallenge.words) {
+      const w = (typeof item === 'string' ? item : item.word).toLowerCase();
+      if (collected.includes(w)) continue;
+
+      const freq = {};
+      for (const ch of w.toUpperCase()) {
+        freq[ch] = (freq[ch] || 0) + 1;
+      }
+
+      let canForm = true;
+      for (const ch of Object.keys(freq)) {
+        if ((handFreq[ch] || 0) < freq[ch]) {
+          canForm = false;
+          break;
+        }
+      }
+      if (!canForm) continue;
+
+      const meaning = (typeof item === 'string' ? null : item.meaning) || getWordMeaning(w) || '';
+      this._dailyNewWordHint = { word: w, meaning };
+      return;
+    }
+  }
 
   _initDailyChallenge() {
     this.dailyChallenge = null;
@@ -3041,6 +3081,11 @@ class Game {
     this.dailyChallenge.collected.push(w);
     if (this.storageManager) {
       this.storageManager.saveDailyChallenge(this.dailyChallenge);
+    }
+
+    // 如果当前正在提示这个词，清除提示
+    if (this._dailyNewWordHint && this._dailyNewWordHint.word === w) {
+      this._dailyNewWordHint = null;
     }
 
     // 显示收集提示
