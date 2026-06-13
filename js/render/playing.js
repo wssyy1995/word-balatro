@@ -869,11 +869,11 @@ module.exports = function extendPlaying(Renderer) {
           hintAlpha = 1 - (elapsed - fadeStart) / fadeDuration;
         }
         if (hintAlpha > 0 && game._dailyNewWordHint) {
-          const hintText = `[新词提示] ${game._dailyNewWordHint.meaning}`;
+          const hintText = `[新词提示]  ${game._dailyNewWordHint.meaning}`;
           ctx.save();
           ctx.globalAlpha = hintAlpha;
           ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-          ctx.fillStyle = '#27ae60';
+          ctx.fillStyle = '#f0c314';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
           ctx.fillText(hintText, W / 2, wordAreaY + maskHalfH + 6 * s);
