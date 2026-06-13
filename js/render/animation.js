@@ -6,19 +6,19 @@ module.exports = function extendAnimation(Renderer) {
       // 动画更新（后续实现）
     }
 
-    Renderer.prototype._spawnSparkles = function(cx, cy, count = 20, colors = null) {
+    Renderer.prototype._spawnSparkles = function(cx, cy, count = 20, colors = null, speedScale = 1) {
       const s = this.scale;
       const palette = colors || ['#ffd700', '#ffffff'];
       for (let i = 0; i < count; i++) {
         const angle = Math.random() * Math.PI * 2;
-        const speed = 1 + Math.random() * 2.5;
+        const speed = (1 + Math.random() * 2.5) * speedScale;
         this.sparkles.push({
           x: cx,
           y: cy,
           vx: Math.cos(angle) * speed * s,
-          vy: Math.sin(angle) * speed * s - 1.5 * s,
+          vy: Math.sin(angle) * speed * s - 1.5 * s * speedScale,
           life: 1,
-          decay: 0.015 + Math.random() * 0.02,
+          decay: (0.015 + Math.random() * 0.02) * speedScale,
           size: (1.5 + Math.random() * 2.5) * s,
           color: palette[Math.floor(Math.random() * palette.length)],
         });

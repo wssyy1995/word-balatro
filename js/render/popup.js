@@ -1390,18 +1390,19 @@ module.exports = function extendPopup(Renderer) {
       } else if (collectedCount >= 1) {
         sloganText = `✦  每日10个新词，积累从现在开始！(${collectedCount}/10)   ✦`;
       }
-      ctx.fillStyle = isAllCollected ? '#2ecc71' : '#a09070';
+      ctx.fillStyle = isAllCollected ? '#2d7d32' : '#a09070';
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
-      // 全部学习完成：持续播放「合法单词」时的金色烟花（完全复用原动画）
+      // 全部学习完成：播放一次放慢的「合法单词」金色烟花
       if (isAllCollected) {
-        const now = Date.now();
-        if (!game._dailyWordsSparkleLast || now - game._dailyWordsSparkleLast > 400) {
-          game._dailyWordsSparkleLast = now;
-          this._spawnSparkles(W / 2 - 60 * s, sloganY, 12);
-          this._spawnSparkles(W / 2 + 60 * s, sloganY, 12);
+        if (!game._dailyWordsSparkleSpawned) {
+          game._dailyWordsSparkleSpawned = true;
+          this._spawnSparkles(W / 2 - 60 * s, sloganY, 12, null, 0.5);
+          this._spawnSparkles(W / 2 + 60 * s, sloganY, 12, null, 0.5);
         }
+      } else {
+        game._dailyWordsSparkleSpawned = false;
       }
 
       // 滚动条
