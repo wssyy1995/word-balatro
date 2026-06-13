@@ -1004,9 +1004,10 @@ class Renderer {
       rotation += Math.sin(elapsed / 150) * 1.6;
 
       // 装备按钮风格边框水波纹：连续生成，避免循环重置闪烁
-      const RING_INTERVAL = 1500;
-      const RING_DURATION = 2400;
-      const maxExpand = 16 * s;
+      const RING_INTERVAL = 1300;
+      const RING_DURATION = 2100;
+      const RING_FADE_IN = 300; // 开头淡入，避免突然出现金色色块
+      const maxExpand = 12 * s;
       const br = 10 * s;
       if (!card._hintHighlight.rings) {
         card._hintHighlight.rings = [];
@@ -1020,10 +1021,17 @@ class Renderer {
         rings.shift();
       }
       for (const ring of rings) {
-        const ringElapsed = now - ring.start;
-        const progress = ringElapsed / RING_DURATION;
+        const ringElapsed = Math.max(0, now - ring.start);
+        const progress = Math.min(ringElapsed / RING_DURATION, 1);
         const expand = progress * maxExpand;
-        const alpha = 0.55 * (1 - progress) * (1 - progress);
+        let alpha = 0.7 * (1 - progress) * (1 - progress);
+        // 开头淡入，避免突然出现金色色块
+        if (ringElapsed < RING_FADE_IN) {
+          alpha *= ringElapsed / RING_FADE_IN;
+        }
+        // alpha 接近 0 时跳过绘制，避免微亮残留
+        if (alpha <= 0.001) continue;
+
         const ex = drawX - expand;
         const ey = drawY - expand;
         const ew = w + expand * 2;
@@ -1042,9 +1050,9 @@ class Renderer {
         ctx.lineTo(ex, ey + er);
         ctx.quadraticCurveTo(ex, ey, ex + er, ey);
         ctx.closePath();
-        ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.3})`;
+        ctx.fillStyle = `rgba(250, 205, 100, ${alpha * 0.2})`;
         ctx.fill();
-        ctx.strokeStyle = `rgba(212, 169, 78, ${alpha})`;
+        ctx.strokeStyle = `rgba(200, 155, 65, ${alpha})`;
         ctx.lineWidth = 2.0 * s;
         ctx.stroke();
         ctx.restore();

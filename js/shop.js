@@ -26,34 +26,34 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:5, desc:'元音字母分×3'},
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:6, desc:'元音字母分×3'},
     {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:6, desc:'单词首字母为元音时，该首字母分+60'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
     // {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, desc:'单词字母>=5时，倍率×1.5'},
     // {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, desc:'单词字母>=6时，倍率×2'},
-    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:5, cost:8, desc:'单词字母含J/Q/X/Y/Z时，倍率+5'},
-    {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:7, desc:'打出非法单词，不扣除出牌次数'},
+    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:5, cost:12, desc:'单词字母含J/Q/X/Y/Z时，倍率+5'},
+    {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
-    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:9, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
+    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:10, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:10, desc:'每次打出非法单词，倍率累计+1'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:8, desc:'出牌<=3个字母,30%概率倍率+8'},
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:12, desc:'出牌<=3个字母,30%概率倍率+8'},
     {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:6, cost:8, desc:'相邻重复字母，倍率+6'},
-    {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:8, cost:8, desc:'单词首尾字母相同，倍率+8'},
-    {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:6, desc:'每次出牌若与上一手首字母相同，倍率累计+3；中断后重置'},
-    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:5, cost:9, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+5'},
-    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:9, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
+    {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:8, cost:9, desc:'单词首尾字母相同，倍率+8'},
+    {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:8, desc:'每次出牌若与上一手首字母相同，倍率累计+3；中断后重置'},
+    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:5, cost:12, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+5'},
+    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:14, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
     {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
-    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:6, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'}
+    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:8, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'}
   ],
   crystal: [
-    {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:2, desc:'下一回合弃牌次数+1'},
+    {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
     {name:'额外出牌', type:'crystal', effect:'extra_hands', value:1, cost:3, desc:'下一回合出牌次数+1'},
     {name:'额外手牌', type:'crystal', effect:'extra_letter', value:1, cost:4, desc:'下一回合,增加一张字母手牌'}
     // {name:'金币祝福', type:'crystal', effect:'bonus_gold', value:3, cost:3, desc:'下一回合开始时获得3金币'}
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:3, desc:'下一回合目标分数×0.8'},
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:3, desc:'重掷下一回合的女巫技能'},
-    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:2, desc:'下回合前20秒出牌不消耗次数'}
+    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:4, desc:'下回合前20秒出牌不消耗次数'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},

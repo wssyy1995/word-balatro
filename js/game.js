@@ -2616,7 +2616,7 @@ class Game {
     }
 
     if (this.audioManager) this.audioManager.play('round_win');
-    let baseGold = 4;
+    let baseGold = 3;
     // 装备卡结算加成（多张叠加）
     let coinBonus = 0;
     let handPenalty = 0;

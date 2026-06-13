@@ -1,0 +1,62 @@
+[
+  {
+    "date": "2026-06-13",
+    "words": [
+      { "word": "giant", "meaning": "n. 巨人；adj. 巨大的", "phonetic": "/ˈdʒaɪənt/", "example": "The giant towered over the village.", "example_meaning": "这个巨人高耸于村庄之上。" },
+      { "word": "habit", "meaning": "n. 习惯", "phonetic": "/ˈhæbɪt/", "example": "Reading before bed is my habit.", "example_meaning": "睡前阅读是我的习惯。" },
+      { "word": "infer", "meaning": "v. 推断；推论", "phonetic": "/ɪnˈfɜːr/", "example": "We can infer his answer from his smile.", "example_meaning": "我们可以从他的微笑中推断出答案。" },
+      { "word": "judge", "meaning": "n. 法官；v. 判断", "phonetic": "/dʒʌdʒ/", "example": "The judge made a fair decision.", "example_meaning": "法官做出了公正的判决。" },
+      { "word": "kneel", "meaning": "v. 跪下", "phonetic": "/niːl/", "example": "He had to kneel to tie his shoes.", "example_meaning": "他不得不跪下系鞋带。" },
+      { "word": "laugh", "meaning": "v. 笑；n. 笑声", "phonetic": "/læf/", "example": "Her joke made everyone laugh.", "example_meaning": "她的笑话让大家都笑了。" },
+      { "word": "merit", "meaning": "n. 优点；价值", "phonetic": "/ˈmerɪt/", "example": "The plan has many merits.", "example_meaning": "这个计划有很多优点。" },
+      { "word": "nerve", "meaning": "n. 神经；勇气", "phonetic": "/nɜːrv/", "example": "It takes nerve to speak in public.", "example_meaning": "在公共场合演讲需要勇气。" },
+      { "word": "orbit", "meaning": "n. 轨道；v. 环绕", "phonetic": "/ˈɔːrbɪt/", "example": "The satellite entered orbit around Earth.", "example_meaning": "卫星进入了绕地轨道。" },
+      { "word": "pilot", "meaning": "n. 飞行员", "phonetic": "/ˈpaɪlət/", "example": "The pilot landed the plane safely.", "example_meaning": "飞行员安全降落了飞机。" }
+    ]
+  },
+  {
+    "date": "2026-06-14",
+    "words": [
+      { "word": "query", "meaning": "n./v. 疑问；询问", "phonetic": "/ˈkwɪri/", "example": "She raised a query about the budget.", "example_meaning": "她对预算提出了疑问。" },
+      { "word": "robin", "meaning": "n. 知更鸟", "phonetic": "/ˈrɑːbɪn/", "example": "A robin sat on the branch.", "example_meaning": "一只知更鸟停在树枝上。" },
+      { "word": "swift", "meaning": "adj. 迅速的", "phonetic": "/swɪft/", "example": "He gave a swift reply.", "example_meaning": "他迅速做出了回复。" },
+      { "word": "torch", "meaning": "n. 火把；手电筒", "phonetic": "/tɔːrtʃ/", "example": "We used a torch in the dark cave.", "example_meaning": "我们在黑暗的洞穴里使用了手电筒。" },
+      { "word": "unify", "meaning": "v. 统一；使一致", "phonetic": "/ˈjuːnɪfaɪ/", "example": "The leader sought to unify the country.", "example_meaning": "这位领导人寻求统一国家。" },
+      { "word": "vital", "meaning": "adj. 至关重要的", "phonetic": "/ˈvaɪtl/", "example": "Water is vital for life.", "example_meaning": "水对生命至关重要。" },
+      { "word": "weave", "meaning": "v. 编织；编造", "phonetic": "/wiːv/", "example": "She can weave beautiful baskets.", "example_meaning": "她能编织漂亮的篮子。" },
+      { "word": "yearn", "meaning": "v. 渴望；向往", "phonetic": "/jɜːrn/", "example": "He yearned for adventure.", "example_meaning": "他渴望冒险。" },
+      { "word": "zest", "meaning": "n. 热情；风味", "phonetic": "/zest/", "example": "She has a zest for life.", "example_meaning": "她对生活充满热情。" },
+      { "word": "angel", "meaning": "n. 天使", "phonetic": "/ˈeɪndʒl/", "example": "The children dressed as angels.", "example_meaning": "孩子们打扮成天使。" }
+    ]
+  },
+  {
+    "date": "2026-06-15",
+    "words": [
+      { "word": "brisk", "meaning": "adj. 轻快的；凉爽的", "phonetic": "/brɪsk/", "example": "We took a brisk walk.", "example_meaning": "我们轻快地散了步。" },
+      { "word": "coral", "meaning": "n. 珊瑚；adj. 珊瑚色的", "phonetic": "/ˈkɔːrəl/", "example": "Coral reefs are home to many fish.", "example_meaning": "珊瑚礁是许多鱼类的家园。" },
+      { "word": "drift", "meaning": "v./n. 漂流；漂移", "phonetic": "/drɪft/", "example": "The boat began to drift out to sea.", "example_meaning": "船开始向海上漂去。" },
+      { "word": "erupt", "meaning": "v. 爆发；喷发", "phonetic": "/ɪˈrʌpt/", "example": "The volcano could erupt at any time.", "example_meaning": "这座火山随时可能喷发。" },
+      { "word": "flock", "meaning": "n. 群；v. 聚集", "phonetic": "/flɑːk/", "example": "A flock of birds flew overhead.", "example_meaning": "一群鸟从头顶飞过。" },
+      { "word": "glide", "meaning": "v. 滑翔；滑动", "phonetic": "/ɡlaɪd/", "example": "The dancer seemed to glide across the stage.", "example_meaning": "舞者似乎在舞台上滑行。" },
+      { "word": "hasty", "meaning": "adj. 匆忙的；草率的", "phonetic": "/ˈheɪsti/", "example": "He made a hasty decision.", "example_meaning": "他做了一个草率的决定。" },
+      { "word": "issue", "meaning": "n. 问题；v. 发行", "phonetic": "/ˈɪʃuː/", "example": "The magazine issued a new edition.", "example_meaning": "这本杂志发行了新一期。" },
+      { "word": "jumbo", "meaning": "adj. 巨大的", "phonetic": "/ˈdʒʌmboʊ/", "example": "They ordered a jumbo pizza.", "example_meaning": "他们点了一个巨大的披萨。" },
+      { "word": "loyal", "meaning": "adj. 忠诚的", "phonetic": "/ˈlɔɪəl/", "example": "The dog remained loyal to its owner.", "example_meaning": "这只狗对主人保持忠诚。" }
+    ]
+  },
+  {
+    "date": "2026-06-16",
+    "words": [
+      { "word": "mural", "meaning": "n. 壁画", "phonetic": "/ˈmjʊrəl/", "example": "The mural brightened the whole street.", "example_meaning": "这幅壁画点亮了整条街。" },
+      { "word": "nylon", "meaning": "n. 尼龙", "phonetic": "/ˈnaɪlɑːn/", "example": "My jacket is made of nylon.", "example_meaning": "我的夹克是尼龙做的。" },
+      { "word": "ozone", "meaning": "n. 臭氧", "phonetic": "/ˈoʊzoʊn/", "example": "The ozone layer protects us from the sun.", "example_meaning": "臭氧层保护我们免受太阳伤害。" },
+      { "word": "perch", "meaning": "v. 栖息；n. 栖木", "phonetic": "/pɜːrtʃ/", "example": "The bird perched on the fence.", "example_meaning": "鸟儿栖息在栅栏上。" },
+      { "word": "quack", "meaning": "n./v. （鸭）嘎嘎叫；庸医", "phonetic": "/kwæk/", "example": "The ducks began to quack.", "example_meaning": "鸭子开始嘎嘎叫。" },
+      { "word": "ranch", "meaning": "n. 牧场", "phonetic": "/ræntʃ/", "example": "They live on a cattle ranch.", "example_meaning": "他们住在一个养牛牧场。" },
+      { "word": "scold", "meaning": "v. 责骂；训斥", "phonetic": "/skoʊld/", "example": "Mother scolded him for being late.", "example_meaning": "妈妈因为他迟到而责骂了他。" },
+      { "word": "thorn", "meaning": "n. 刺；荆棘", "phonetic": "/θɔːrn/", "example": "Be careful of the thorns on the rose.", "example_meaning": "小心玫瑰上的刺。" },
+      { "word": "urban", "meaning": "adj. 城市的", "phonetic": "/ˈɜːrbən/", "example": "Traffic is a common urban problem.", "example_meaning": "交通是常见的城市问题。" },
+      { "word": "vocal", "meaning": "adj. 声音的；直言的", "phonetic": "/ˈvoʊkl/", "example": "She was very vocal about her opinions.", "example_meaning": "她非常直言不讳地表达自己的观点。" }
+    ]
+  }
+]
