@@ -1400,7 +1400,7 @@ module.exports = function extendPopup(Renderer) {
       if (isAllCollected) {
         const now = Date.now();
         if (!game._dailyWordsSparkleState) {
-          game._dailyWordsSparkleState = { count: 0, lastTime: 0 };
+          game._dailyWordsSparkleState = { count: 0, lastTime: now };
         }
         const state = game._dailyWordsSparkleState;
         const interval = state.count === 0 ? 800 : 600;
