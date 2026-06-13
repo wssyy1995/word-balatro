@@ -858,7 +858,7 @@ module.exports = function extendPlaying(Renderer) {
 
       // 学习模式：若手牌可直接拼出某个未收集的每日新词，主动在预览区下方显示释义
       if (!game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint) {
-        const hintText = `[新词提示] ${game._dailyNewWordHint.word}  ${game._dailyNewWordHint.meaning}`;
+        const hintText = `[新词提示] ${game._dailyNewWordHint.meaning}`;
         ctx.save();
         ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = '#27ae60';
