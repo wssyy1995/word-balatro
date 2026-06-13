@@ -139,8 +139,10 @@ Renderer.prototype.render = function(game) {
     // 绘制动画
     this.updateAnimations();
     
-    // 绘制烟花粒子
-    this._updateAndDrawSparkles(ctx, s);
+    // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
+    if (!game._dailyWordsPopup) {
+      this._updateAndDrawSparkles(ctx, s);
+    }
     
     // 绘制飞行中的总分
     this._updateAndDrawFlyingScore(ctx, s, game);

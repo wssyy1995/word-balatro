@@ -1386,7 +1386,7 @@ module.exports = function extendPopup(Renderer) {
       const isAllCollected = collectedCount >= 10 && words.length > 0;
       let sloganText = '✦  每日10个新词，积累从现在开始！  ✦';
       if (isAllCollected) {
-        sloganText = '✦  你太棒了！今日10个新词学习完成,跟朋友分享下吧！  ✦';
+        sloganText = '✦  你太棒了！今日新词学习完成,跟朋友分享下吧！  ✦';
       } else if (collectedCount >= 1) {
         sloganText = `✦  每日10个新词，积累从现在开始！(${collectedCount}/10)   ✦`;
       }
@@ -1416,6 +1416,9 @@ module.exports = function extendPopup(Renderer) {
         this.roundRect(scrollbarX, scrollbarY, 3 * s, scrollbarH, 1.5 * s, '#8b6914');
         ctx.restore();
       }
+
+      // 在弹窗最上层绘制烟花粒子（避免被弹窗背景遮挡）
+      this._updateAndDrawSparkles(ctx, s);
 
       // 记录内容区域（用于滚动检测）
       this.dailyWordsContentRect = { x: px + 10 * s, y: contentTop, w: pw - 20 * s, h: contentH };
