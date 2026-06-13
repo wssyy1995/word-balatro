@@ -1331,6 +1331,18 @@ function handleInput(x, y) {
         game._forceCardBookFlash = true;
         game._cardBookIconFlashStart = Date.now();
       }
+      if (debugHit.action === 'debug_completeDailyWords') {
+        if (game.dailyChallenge && game.dailyChallenge.words) {
+          const wordList = game.dailyChallenge.words.map(item => typeof item === 'string' ? item.toLowerCase() : item.word.toLowerCase());
+          game.dailyChallenge.collected = [...wordList];
+          if (!game.dailyChallenge.rewarded) {
+            game.dailyChallenge.rewarded = true;
+            game.gold += 50;
+          }
+          if (game.storageManager) game.storageManager.saveDailyChallenge(game.dailyChallenge);
+          game.hintToast = { text: '今日新词已全部学习完成！', expireAt: Date.now() + 2000, startTime: Date.now() };
+        }
+      }
       renderer.debugMenuOpen = false;
       return;
     }

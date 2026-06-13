@@ -86,6 +86,7 @@ module.exports = function extendDebug(Renderer) {
         { label: '触发图鉴引导', action: 'debug_triggerCardBookGuide' },
         { label: '👻 结束游戏', action: 'debug_endGame' },
         { label: '图鉴闪烁', action: 'debug_flashCardBook' },
+        { label: '今日新词完成', action: 'debug_completeDailyWords' },
       ];
       const itemW = 130 * s;
       const itemH = 34 * s;
