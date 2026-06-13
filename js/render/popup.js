@@ -1379,6 +1379,8 @@ module.exports = function extendPopup(Renderer) {
       const sloganY = py + ph - 24 * s + sloganAnim.yShift;
       const collectedCount = collected.length;
       const isAllCollected = collectedCount >= 10 && words.length > 0;
+      // 全部完成时：底部文案周期性小幅度上下跳跃
+      const sloganBounceY = isAllCollected ? Math.sin(Date.now() / 350) * 2.5 * s : 0;
       ctx.save();
       ctx.globalAlpha = sloganAnim.alpha * ca;
       ctx.font = `${isAllCollected ? 'bold ' : ''}${Math.floor(11 * s)}px sans-serif`;
@@ -1391,7 +1393,7 @@ module.exports = function extendPopup(Renderer) {
         sloganText = `✦  每日10个新词，积累从现在开始！(${collectedCount}/10)   ✦`;
       }
       ctx.fillStyle = isAllCollected ? '#2d7d32' : '#a09070';
-      ctx.fillText(sloganText, W / 2, sloganY);
+      ctx.fillText(sloganText, W / 2, sloganY + sloganBounceY);
       ctx.restore();
 
       // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（首次延迟 500ms，之后间隔 600ms）
