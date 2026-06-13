@@ -1383,7 +1383,14 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#a09070';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('✦  每日10个新词，积累从现在开始！  ✦', W / 2, sloganY);
+      const collectedCount = collected.length;
+      let sloganText = '✦  每日10个新词，积累从现在开始！  ✦';
+      if (collectedCount >= 10) {
+        sloganText = '✦  你太棒了!今日10个新词全部学习完成,快分享给朋友吧！  ✦';
+      } else if (collectedCount >= 1) {
+        sloganText = `✦  每日10个新词，积累从现在开始！  ✦ (${collectedCount}/10)`;
+      }
+      ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
       // 滚动条
