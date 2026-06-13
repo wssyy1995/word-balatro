@@ -1409,8 +1409,9 @@ module.exports = function extendPopup(Renderer) {
           state.lastTime = now;
           const leftX = W / 2 - titleWidth / 2 - 30 * s;
           const rightX = W / 2 + titleWidth / 2 + 30 * s;
-          this._spawnSparkles(leftX, titleY, 12, null, 0.5);
-          this._spawnSparkles(rightX, titleY, 12, null, 0.5);
+          const completePalette = ['#2ecc71', '#27ae60', '#ffd700', '#ffffff'];
+          this._spawnSparkles(leftX, titleY, 12, completePalette, 0.5);
+          this._spawnSparkles(rightX, titleY, 12, completePalette, 0.5);
         }
       } else {
         game._dailyWordsSparkleState = null;
