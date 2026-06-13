@@ -1380,18 +1380,28 @@ module.exports = function extendPopup(Renderer) {
       ctx.save();
       ctx.globalAlpha = sloganAnim.alpha * ca;
       ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = '#a09070';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const collectedCount = collected.length;
+      const isAllCollected = collectedCount >= 10 && words.length > 0;
       let sloganText = '✦  每日10个新词，积累从现在开始！  ✦';
-      if (collectedCount >= 10) {
-        sloganText = '✦  你太棒了!今日10个新词全部学习完成,快分享给朋友吧！  ✦';
+      if (isAllCollected) {
+        sloganText = '✦  你太棒了！今日10个新词学习完成,跟朋友分享下吧！  ✦';
       } else if (collectedCount >= 1) {
         sloganText = `✦  每日10个新词，积累从现在开始！(${collectedCount}/10)   ✦`;
       }
+      ctx.fillStyle = isAllCollected ? '#2ecc71' : '#a09070';
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
+
+      // 全部学习完成：持续播放绿色烟花
+      if (isAllCollected) {
+        const now = Date.now();
+        if (!game._dailyWordsSparkleLast || now - game._dailyWordsSparkleLast > 400) {
+          game._dailyWordsSparkleLast = now;
+          this._spawnSparkles(W / 2, sloganY, 14, ['#2ecc71', '#27ae60', '#a8e6cf']);
+        }
+      }
 
       // 滚动条
       if (totalContentH > contentH) {
