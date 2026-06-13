@@ -1377,13 +1377,13 @@ module.exports = function extendPopup(Renderer) {
       // 底部标语
       const sloganAnim = Easing.fadeIn(elapsed, 500, 250, 6 * s);
       const sloganY = py + ph - 24 * s + sloganAnim.yShift;
-      ctx.save();
-      ctx.globalAlpha = sloganAnim.alpha * ca;
-      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
       const collectedCount = collected.length;
       const isAllCollected = collectedCount >= 10 && words.length > 0;
+      ctx.save();
+      ctx.globalAlpha = sloganAnim.alpha * ca;
+      ctx.font = `${isAllCollected ? 'bold ' : ''}${Math.floor(11 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
       let sloganText = '✦  每日10个新词，积累从现在开始！  ✦';
       if (isAllCollected) {
         sloganText = '✦  你太棒了！今日新词学习完成,跟朋友分享下吧！  ✦';
