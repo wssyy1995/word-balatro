@@ -465,8 +465,13 @@ wx.onTouchStart((e) => {
     const dwBackHit = renderer.dailyWordsBackRect && renderer.hitTest(x, y, [renderer.dailyWordsBackRect]);
     const dwCloseHit = renderer.dailyWordsCloseRect && renderer.hitTest(x, y, [renderer.dailyWordsCloseRect]);
     const dwSwitchHit = renderer.dailyWordsSwitchRect && renderer.hitTest(x, y, [renderer.dailyWordsSwitchRect]);
+    const dwShareHit = renderer.dailyWordsShareRect && renderer.hitTest(x, y, [renderer.dailyWordsShareRect]);
     if (dwBackHit) {
       game._dailyWordsBackPressed = true;
+      return;
+    }
+    if (dwShareHit) {
+      game._dailyWordsSharePressed = true;
       return;
     }
     const dwContentHit = renderer.dailyWordsContentRect && renderer.hitTest(x, y, [renderer.dailyWordsContentRect]);
@@ -662,6 +667,11 @@ wx.onTouchMove((e) => {
     const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsSwitchRect]);
     if (!hit) game._dailyWordsSwitchPressed = false;
+  }
+  if (game._dailyWordsSharePressed && renderer.dailyWordsShareRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsShareRect]);
+    if (!hit) game._dailyWordsSharePressed = false;
   }
   // 今日新词弹窗滚动
   if (game._dailyWordsPopup && game._dailyWordsScrollState === 'dragging') {
@@ -910,6 +920,23 @@ wx.onTouchEnd(() => {
         };
         game.settings.dailyWordHintShown = true;
         if (game.storageManager) game.storageManager.saveSettings(game.settings);
+      }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._dailyWordsSharePressed) {
+      game._dailyWordsSharePressed = false;
+      try {
+        const tempFilePath = canvas.toTempFilePathSync();
+        wx.shareAppMessage({
+          title: `我今天在女巫的词牌里学习了10个新单词!一起来学习!`,
+          imageUrl: tempFilePath,
+          query: `from=daily_words&round=${game.round || 1}&score=${game.totalScore || 0}`
+        });
+      } catch (e) {
+        wx.shareAppMessage({
+          title: `我今天在女巫的词牌里学习了10个新单词!一起来学习!`,
+          query: `from=daily_words&round=${game.round || 1}&score=${game.totalScore || 0}`
+        });
       }
       if (game.audioManager) game.audioManager.play('tap');
     }

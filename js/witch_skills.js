@@ -70,7 +70,9 @@ const WITCH_CARDS = [
   { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'letter_trigger_twice_G',card_skill_desc:'打出单词包含字母G，该字母触发2次计分'},
   { card_id: 'witch_card_21', witch_name: '赫丝佩瑞丝', witch_desc:'异界来客，裂隙彼岸之人',card_skill_name: 'letter_trigger_twice_H',card_skill_desc:'打出单词包含字母H，该字母触发2次计分'},
   { card_id: 'witch_card_24', witch_name: '伊洛薇尔', witch_desc:'暮光行者，昼夜的守门人',card_skill_name: 'letter_trigger_twice_I',card_skill_desc:'打出单词包含字母I，该字母触发2次计分'},
-  { card_id: 'witch_card_27', witch_name: '薇尔莉特', witch_desc:'星语者，以字母编织命运之人',card_skill_name: 'letter_trigger_twice_J',card_skill_desc:'打出单词包含字母J，该字母触发2次计分'}
+  { card_id: 'witch_card_27', witch_name: '柔莉丝特', witch_desc:'诡笑之星，以戏法乱人心的嘲弄者',card_skill_name: 'letter_trigger_twice_J',card_skill_desc:'打出单词包含字母J，该字母触发2次计分'},
+  { card_id: 'witch_card_29', witch_name: '卡莉瑟薇', witch_desc:'美之守望者，容颜即武器',card_skill_name: 'letter_trigger_twice_K',card_skill_desc:'打出单词包含字母K，该字母触发2次计分'},
+  { card_id: 'witch_card_32', witch_name: '莉丝薇娜', witch_desc:'消融咒缚之脉，解除一切禁锢',card_skill_name: 'letter_trigger_twice_L',card_skill_desc:'打出单词包含字母L，该字母触发2次计分'}
 
 ];
 

@@ -1402,6 +1402,24 @@ module.exports = function extendPopup(Renderer) {
       }
       ctx.fillStyle = isAllCollected ? '#2d7d32' : '#a09070';
       ctx.fillText(sloganText, W / 2, sloganY + sloganBounceY);
+
+      // 全部学习完成：在底部文案末尾绘制转发按钮（不跟随文案跳动）
+      this.dailyWordsShareRect = null;
+      if (isAllCollected && this.shareIconLoaded && this.shareIcon) {
+        const textWidth = ctx.measureText(sloganText).width;
+        const iconSize = 22 * s;
+        const gap = 8 * s;
+        const iconX = W / 2 + textWidth / 2 + gap;
+        const iconY = sloganY - iconSize / 2;
+        ctx.drawImage(this.shareIcon, iconX, iconY, iconSize, iconSize);
+        this.dailyWordsShareRect = {
+          x: iconX - 4 * s,
+          y: iconY - 4 * s,
+          w: iconSize + 8 * s,
+          h: iconSize + 8 * s
+        };
+      }
+
       ctx.restore();
 
       // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（首次延迟 500ms，之后间隔 600ms）

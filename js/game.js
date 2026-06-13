@@ -1241,6 +1241,7 @@ class Game {
     this._dailyWordsClosePressed = false;
     this._dailyWordsBackPressed = false;
     this._dailyWordsSwitchPressed = false;
+    this._dailyWordsSharePressed = false;
     this._dailyWordsSwitchHint = null;
     this._dailyWordsScrollY = 0;
     this._dailyWordsScrollStartY = 0;

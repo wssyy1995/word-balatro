@@ -177,6 +177,19 @@ class Renderer {
       this.helpIconLoaded = false;
     }
 
+    // 加载转发按钮图标
+    this.shareIcon = null;
+    this.shareIconLoaded = false;
+    try {
+      const shareImg = wx.createImage();
+      shareImg.src = 'images/share.png';
+      shareImg.onload = () => { this.shareIconLoaded = true; };
+      shareImg.onerror = () => { this.shareIconLoaded = false; };
+      this.shareIcon = shareImg;
+    } catch (e) {
+      this.shareIconLoaded = false;
+    }
+
     // 加载求助弹窗资源（pop_close 本地加载，buy_tip/share_tip 由 cloudStorage 统一预加载）
     this.tipHelpImages = {};
     ['pop_close'].forEach(name => {
