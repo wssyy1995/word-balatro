@@ -1394,14 +1394,13 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(sloganText, W / 2, sloganY);
       ctx.restore();
 
-      // 全部学习完成：持续播放绿色烟花（完全复用单词验证合法时的双点烟花动画）
+      // 全部学习完成：持续播放「合法单词」时的金色烟花（完全复用原动画）
       if (isAllCollected) {
         const now = Date.now();
         if (!game._dailyWordsSparkleLast || now - game._dailyWordsSparkleLast > 400) {
           game._dailyWordsSparkleLast = now;
-          const greenPalette = ['#2ecc71', '#27ae60', '#a8e6cf'];
-          this._spawnSparkles(W / 2 - 60 * s, sloganY, 12, greenPalette);
-          this._spawnSparkles(W / 2 + 60 * s, sloganY, 12, greenPalette);
+          this._spawnSparkles(W / 2 - 60 * s, sloganY, 12);
+          this._spawnSparkles(W / 2 + 60 * s, sloganY, 12);
         }
       }
 
