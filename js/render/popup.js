@@ -1403,7 +1403,7 @@ module.exports = function extendPopup(Renderer) {
           game._dailyWordsSparkleState = { count: 0, lastTime: 0 };
         }
         const state = game._dailyWordsSparkleState;
-        const interval = state.count === 0 ? 500 : 600;
+        const interval = state.count === 0 ? 800 : 600;
         if (state.count < 2 && now - state.lastTime >= interval) {
           state.count++;
           state.lastTime = now;
