@@ -139,7 +139,7 @@ word-balatro/
 
 **`toggleSelect(cardId)`**
 - 选中/取消选中单张卡牌
-- 限制最多选 9 张
+- 限制最多选当前手牌上限张（`_maxHandSize || baseHandSize`，默认 9 张）
 - 触发 `cardSelect` / `cardDeselect` 动画
 - 播放选牌/取消音效
 
@@ -154,7 +154,7 @@ word-balatro/
 6. 勇敢试错：非法单词且未触发容错咒文时，illegal_boost 倍率 +1
 7. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
 9. 字母之神（letter_god）预处理：若触发，先将所有出牌字母分数改为最高分
-10. 以小博大（last_chance）：若最后一次出牌且 <4 字母，50% 概率 mult +10
+10. 以小博大（last_chance）：若出牌 ≤3 个字母，30% 概率 mult +8
 11. letter_X_mult_half 惩罚检测（含 A/E/S/I）→ 满足条件则倍率减半
 12. 合法 → calcWordScore() 计算分数
 13. 启动完整动画时间线（事件驱动，renderer 推进）：
@@ -243,7 +243,7 @@ for each flat_bonus 女巫牌:
 | 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
 | 生命延续 | `life_extension` | limit | 出牌耗尽时（限1次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
 | 勇敢试错 | `illegal_boost` | whole_word | 打出非法单词后 | 倍率 +1（若同时触发容错咒文则不生效） |
-| 以小博大 | `last_chance` | whole_word | 最后一次出牌且 <4 字母 | 20% 概率 mult +8 |
+| 以小博大 | `last_chance` | whole_word | 出牌 ≤3 个字母 | 30% 概率 mult +8 |
 | 双子合影 | `double_same` | whole_word | 含相邻重复字母 | mult +5 |
 | 首尾呼应 | `firstend_same` | whole_word | 首尾字母相同 | mult +6 |
 | 首字连击 | `initial_succession` | whole_word | 连续打出同首字母单词 | 每次 mult +3，中断后重置 |
@@ -254,6 +254,7 @@ for each flat_bonus 女巫牌:
 
 > 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
+> `length_4/5/6`（四/五/六字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放。
 
 **目标分数公式**
 采用分段系数累加：
@@ -316,7 +317,7 @@ target = 150 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 - 不满足则放回重洗，最多重试 **10 次**，10 次后兜底直接返回
 - 新牌从左侧飞入动画，填入 `null` 占位符位置
 
-> 弃牌后若已装备**赫丝佩瑞丝**（`out_card_different`），补牌前会先过滤掉原弃牌字母。
+> 若旧存档中仍持有 `out_card_different` 装备技能，弃牌后补牌会先过滤掉原弃牌字母。
 
 **存档恢复时的保底检查（`ensureValidWordInHand`）**
 
@@ -399,7 +400,7 @@ js/render/
 ├── effects.js       # 道具卡牌渲染、星辰燔边粒子系统
 ├── animation.js     # 字母之神飞星、飞分、闪光粒子
 ├── hud.js           # 顶部标题栏、HUD（回合/目标分/女巫头像）
-├── playing.js       # 主玩法界面（手牌矩阵、道具栏、预览、按钮）
+├── playing.js       # 主玩法界面（手牌、道具、预览、按钮）
 ├── popup.js         # 弹窗系统（换字母/药水/升级/续命/通用面板）
 ├── guide.js         # 新手引导覆盖层（playing/shop/cardbook 三阶段）
 ├── cardbook.js      # 卡牌图鉴图标与详情弹窗
@@ -571,6 +572,9 @@ gap = 8 * scale
 
 出牌合法后，左方块上方可能显示 `xN`（per_card 女巫牌倍率提示）。
 
+- 预览区左侧常驻 `help` 按钮，点击可打开求助弹窗（2 金币购买提示或分享后免费提示）。
+- 预览单词字体自适应：长度 >9 时按 `28×9/长度` 缩放，防止超长单词溢出。
+
 #### 3.3.9 商店页面布局
 
 ```
@@ -626,7 +630,7 @@ gap = 8 * scale
 └──────────────────┘
 ```
 
-> 注：`extraDiscards = this.discardsLeft`，即剩余弃牌次数直接折算为金币。
+> 注：`extraDiscards = this.discardsLeft`，即剩余弃牌次数直接折算为金币。当前版本 `baseGold` 固定为 3，再叠加装备卡结算加成。
 
 #### 3.3.12 药水升级页面（potion 状态）
 
@@ -731,13 +735,15 @@ gap = 8 * scale
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 17 种 | 4-10 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
-| **水晶球**（crystal） | 6 种 | 3-8 金币 | 购买即生效 | 蓝色 |
-| **魔法药水**（potion） | 3 种 | 4-6 金币 | 道具栏 2 格 | 绿色 |
+| **女巫牌**（witch） | 15 种 | 6-14 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
+| **水晶球**（crystal） | 6 种 | 3-4 金币 | 购买即生效 | 蓝色 |
+| **魔法药水**（potion） | 3 种 | 5-6 金币 | 道具栏 2 格 | 绿色 |
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复。
 
-**女巫牌列表**：元音强化、元音为首、五字母连击、六字母连击、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家。
+**女巫牌列表**：元音强化、元音为首、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家。
+
+> 注：`length_4/5/6`（四/五/六字母连击）在 `SHOP_POOL` 中已注释掉，当前商店暂不投放。
 
 ### 4.2 药水种类
 
@@ -796,17 +802,18 @@ gap = 8 * scale
 
 | 卡牌 | 女巫 | 技能名称 | 效果 |
 |------|------|---------|------|
-| witch_card_3 | 爱莉亚 | each_round_coin_plus1 | 每回合结算，基础金币 +1 |
-| witch_card_5 | 柏丽桑忒 | each_round_hand_plus1 | 每回合出牌次数 +1，但基础金币 -2 |
-| witch_card_8 | 喀薇娅 | illegal_words_one | 每回合首次非法单词不扣除出牌次数 |
-| witch_card_11 | 德莱薇尔 | last_letter_double | 单词最后一个字母分数算两次（含 per_card 女巫牌加成） |
-| witch_card_14 | 艾莉瑟瑞丝 | witch_skill_protect | 有女巫技能的回合，首次出牌跳过约束检查 |
-| witch_card_16 | 菲兰瑟娅 | shop_discount | 每回合分数超过目标分30%，则该回合的卡牌商店打6折 |
-| witch_card_18 | 格莱薇妮娅 | score_overflow | 每回合溢出分数（超过目标分部分）的10%计入下回合初始分 |
-| witch_card_21 | 赫丝佩瑞丝 | out_card_different | 每次弃牌后补入的字母，一定会排除原弃牌字母 |
-| witch_card_24 | 伊洛薇尔 | witch_skill_extra_hands | 若本回合有女巫，出牌和弃牌次数均+1 |
+| witch_card_3 | 爱莉亚 | letter_trigger_twice_A | 打出单词包含字母 A，该字母触发 2 次计分 |
+| witch_card_5 | 柏丽桑忒 | letter_trigger_twice_B | 打出单词包含字母 B，该字母触发 2 次计分 |
+| witch_card_8 | 喀薇娅 | letter_trigger_twice_C | 打出单词包含字母 C，该字母触发 2 次计分 |
+| witch_card_11 | 德莱薇尔 | letter_trigger_twice_D | 打出单词包含字母 D，该字母触发 2 次计分 |
+| witch_card_14 | 艾莉瑟瑞丝 | letter_trigger_twice_E | 打出单词包含字母 E，该字母触发 2 次计分 |
+| witch_card_16 | 菲兰瑟娅 | letter_trigger_twice_F | 打出单词包含字母 F，该字母触发 2 次计分 |
+| witch_card_18 | 格莱薇妮娅 | letter_trigger_twice_G | 打出单词包含字母 G，该字母触发 2 次计分 |
+| witch_card_21 | 赫丝佩瑞丝 | letter_trigger_twice_H | 打出单词包含字母 H，该字母触发 2 次计分 |
+| witch_card_24 | 伊洛薇尔 | letter_trigger_twice_I | 打出单词包含字母 I，该字母触发 2 次计分 |
+| witch_card_27 | 薇尔莉特 | letter_trigger_twice_J | 打出单词包含字母 J，该字母触发 2 次计分 |
 
-> 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。
+> 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。当前版本统一为 `letter_trigger_twice_X` 系列；若多张装备且单词含多个目标字母，可叠加触发。
 
 ---
 
@@ -1217,7 +1224,8 @@ letterUpgrades = Map {
 | v1.9.5 | 2026-06-10 | 重做种子词机制：固定双种子词（3字母+4字母），新增元音种类/次数双重限制；种子词不消耗牌堆；随机补牌仅允许辅音且不与种子词字母重复；种子牌在手牌中随机打散 |
 | v1.9.6 | 2026-06-10 | 新增每日挑战学习模式：每日10个目标单词，开启后第二组种子词替换为每日新词字母，打出目标词收集成功；集齐10词奖励50金币；设置弹窗新增今日新词入口与可滚动单词列表；好友排行榜增加「回合」列；游戏结束按规则上传 score/bestround；新增 getDailyWords/updateBestRound 云函数 |
 | v1.9.7 | 2026-06-11 | 目标分数系数全面下调：2~5关20、6~10关25、11~20关30、21~30关35、31~40关40、41~50关45、51+关50；同步更新 README 目标分数表；预览区左侧新增 help 按钮，点击后弹出求助选择弹窗，支持 2 金币购买提示或分享后免费获得提示，提示以金色水波纹高亮种子词卡牌；求助弹窗绘制对齐设置弹窗规范（`overlayAlpha` 0.55、`enterOffset` 20、`closeOffset` 30），修复副标题 `ctx.restore()` 遗漏导致的 `globalAlpha`/`fillStyle` 状态泄漏问题，调用位置移至 `render()` 通用部分末尾确保蒙层覆盖所有内容 |
+| v1.9.8 | 2026-06-13 | 修复提示水波纹金色色块爆发并调整参数；回合基础金币改为 3；商店价格与资源更新（女巫牌 6~14 金币、水晶球 3~4 金币、药水 5~6 金币）；手牌选择上限改为当前手牌上限（`_maxHandSize \|\| baseHandSize`）；help 按钮常驻显示；预览字体根据单词长度自适应；新增 `letter_trigger_twice` 图鉴装备卡计分与跳跃动画；呼吸蒙层速度从 500ms 加快到 400ms；已购买道具栏竖分割线改为亮金棕色；5 张女巫牌时间距最小值从 1*s 调整为 0.6*s；card_bar 云路径更新为 v7 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-11*
+*文档基于实际代码整理，最后更新：2026-06-13*
