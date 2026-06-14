@@ -1202,6 +1202,7 @@ class Game {
     this._hudWitchPopup = null;
     this._witchAngryTip = null;
     this.pendingCheck = null;
+    this._seedWordHint = null;
     this.settlementData = null;
     this.witchRewardData = null;
     this._lifeExtensionAnim = null;
@@ -1673,6 +1674,7 @@ class Game {
 
     wordCheckState.clear();
     this.pendingCheck = null;
+    this._seedWordHint = null;
 
     // 根据女巫技能设置保底词长度
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
@@ -2015,6 +2017,9 @@ class Game {
       card._hintHighlight = { startTime: Date.now(), word: targetWord };
     }
 
+    // 记录当前提示的单词及释义，用于预览区展示
+    this._seedWordHint = { word: targetWord, meaning: getWordMeaning(targetWord), startTime: Date.now() };
+
     // 播放音效与震动（开发者工具跳过震动）
     if (this.audioManager) this.audioManager.play('card_placement');
     let isDevTools = false;
@@ -2050,8 +2055,9 @@ class Game {
   }
 
   async playHand() {
-    // 用户点击出牌时清除种子词提示高亮与新词提示
+    // 用户点击出牌时清除种子词提示高亮、提示预览与新词提示
     this.hand.forEach(c => { if (c) delete c._hintHighlight; });
+    this._seedWordHint = null;
     this._dailyNewWordHint = null;
 
     // 重置 help 按钮空闲波纹定时器

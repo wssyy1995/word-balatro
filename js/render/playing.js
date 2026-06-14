@@ -893,9 +893,23 @@ module.exports = function extendPlaying(Renderer) {
         ctx.restore();
       }
 
+      // 单词求助提示：在单次预览下方显示中文释义
+      if (!game.pendingCheck && game.state === 'playing' && game._seedWordHint) {
+        if (game._seedWordHint.meaning) {
+          const mText = `[提示] ${formatMeaning(game._seedWordHint.meaning)}`;
+          ctx.save();
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#f39c12';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(mText, W / 2, wordAreaY + maskHalfH + 6 * s);
+          ctx.restore();
+        }
+      }
+
       // 学习模式：若手牌可直接拼出某个未收集的每日新词，主动在预览区下方显示释义
       // 前 10 秒不显示，10 秒后若仍未出牌再淡入出现
-      if (!game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint) {
+      if (!game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint && !game._seedWordHint) {
         const elapsed = Date.now() - game._dailyNewWordHint.showTime;
         const showDelay = 10000;
         if (elapsed < showDelay) {

@@ -332,7 +332,7 @@ module.exports = function extendCardbook(Renderer) {
         }
       }
   
-      // 装备已满5张提示
+      // 装备已满3张提示
       if (game._equipFullToast) {
         const toastElapsed = Date.now() - game._equipFullToast.startTime;
         if (toastElapsed > 2500) {
