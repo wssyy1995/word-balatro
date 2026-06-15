@@ -1229,17 +1229,25 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // 返回按钮（参考问题反馈弹窗样式）
+      // 返回按钮（使用 setting_right.png 水平镜像）
       const backY = py + 26 * s;
-      const backLabel = '‹';
+      const backIconSize = 22 * s;
+      const backIconX = px + 14 * s;
+      const backW = backIconSize;
+      const rightIcon = this.settingIcons && this.settingIcons.right;
       ctx.save();
       ctx.globalAlpha = ca;
-      ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
-      ctx.fillStyle = '#8b6914';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      const backW = ctx.measureText(backLabel).width;
-      ctx.fillText(backLabel, px + 14 * s, backY);
+      if (rightIcon && rightIcon.loaded && rightIcon.img) {
+        ctx.translate(backIconX + backIconSize / 2, backY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('‹', backIconX, backY);
+      }
       ctx.restore();
       // 记录返回点击区域（加大）
       this.dailyWordsBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
@@ -1943,17 +1951,25 @@ module.exports = function extendPopup(Renderer) {
         ctx.save();
         ctx.translate(offsetX, 0);
 
-        // 返回按钮
+        // 返回按钮（使用 setting_right.png 水平镜像）
         const backY = py + 26 * s;
-        const backLabel = '‹';
+        const backIconSize = 22 * s;
+        const backIconX = px + 14 * s;
+        const backW = backIconSize;
+        const rightIcon = this.settingIcons && this.settingIcons.right;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
-        ctx.fillStyle = '#8b6914';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        const backW = ctx.measureText(backLabel).width;
-        ctx.fillText(backLabel, px + 14 * s, backY);
+        if (rightIcon && rightIcon.loaded && rightIcon.img) {
+          ctx.translate(backIconX + backIconSize / 2, backY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+        } else {
+          ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+          ctx.fillStyle = '#8b6914';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('‹', backIconX, backY);
+        }
         ctx.restore();
 
         // 记录返回点击区域（加大）
@@ -2124,17 +2140,25 @@ module.exports = function extendPopup(Renderer) {
       ctx.stroke();
       ctx.restore();
 
-      // 返回按钮
+      // 返回按钮（使用 setting_right.png 水平镜像）
       const backY = py + 26 * s;
-      const backLabel = '‹';
+      const backIconSize = 22 * s;
+      const backIconX = px + 14 * s;
+      const backW = backIconSize;
+      const rightIcon = this.settingIcons && this.settingIcons.right;
       ctx.save();
       ctx.globalAlpha = contentAlpha;
-      ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
-      ctx.fillStyle = '#8b6914';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      const backW = ctx.measureText(backLabel).width;
-      ctx.fillText(backLabel, px + 14 * s, backY);
+      if (rightIcon && rightIcon.loaded && rightIcon.img) {
+        ctx.translate(backIconX + backIconSize / 2, backY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('‹', backIconX, backY);
+      }
       ctx.restore();
       this.wordBookBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
 
