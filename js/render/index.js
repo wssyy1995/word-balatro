@@ -55,8 +55,8 @@ Renderer.prototype.render = function(game) {
       this.drawHUD(game);
       this.settlementRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'witch_reward') {
-      // 女巫奖励弹窗
-      this.drawHUD(game);
+      // 女巫奖励弹窗（现在从商店页延迟弹出，背景保持商店页）
+      this._drawShopBackground(game);
       this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
       // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景为游戏页面
@@ -65,25 +65,8 @@ Renderer.prototype.render = function(game) {
         this.drawPlaying(game);
         this._drawNewWitchCardPopup(game);
       } else {
-        // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
-        this.drawTopHeader(game);
-
-        // 游戏标题
-        const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
-        const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
-        ctx.save();
-        ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
-        ctx.fillStyle = '#8b6914';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const shopTitleText = '女巫的词牌';
-        ctx.fillText(shopTitleText, W / 2, titleY);
-        const shopTitleW = ctx.measureText(shopTitleText).width;
-        ctx.restore();
-
-        this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
-
-        this.shopRenderer.draw(ctx, game, W, H, s);
+        // 商店页面背景 + 内容
+        this._drawShopBackground(game);
         // 商店页女巫牌详情弹窗（含右上角售出按钮）
         this._drawWitchDetailPopup(ctx, game, s);
         // 确认购买弹窗（覆盖在商店上方）
@@ -973,6 +956,34 @@ Renderer.prototype.render = function(game) {
 
     // 保存点击区域
     this.newWitchCardCollectBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+  };
+
+  // ===== 商店页背景绘制（标题栏 + 图鉴图标 + 商店内容） =====
+  // 用于 shop 状态和 witch_reward 状态保持背景一致
+  Renderer.prototype._drawShopBackground = function(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const s = this.scale;
+
+    // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
+    this.drawTopHeader(game);
+
+    // 游戏标题
+    const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+    const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
+    ctx.save();
+    ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const shopTitleText = '女巫的词牌';
+    ctx.fillText(shopTitleText, W / 2, titleY);
+    const shopTitleW = ctx.measureText(shopTitleText).width;
+    ctx.restore();
+
+    this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
+
+    this.shopRenderer.draw(ctx, game, W, H, s);
   };
 
 module.exports = { Renderer };
