@@ -49,7 +49,9 @@ module.exports = function extendPopup(Renderer) {
       const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
       const hasPredicted = joker.trigger === 'predicted_letter' && joker._predictedLetter;
       const hasLastWord = joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession';
+      const hasValueHalfConstraint = !popup.isShop && game._witchCardValueHalfActive && joker.value !== undefined && joker.value !== null;
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
+      if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫约束：当前倍率
       if (hasLastWord && !popup.isShop) contentH += lineH + 2 * s; // 上一手单词（仅限游戏页）
       if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
@@ -173,6 +175,21 @@ module.exports = function extendPopup(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText(joker.desc, popupX + pad, cy);
       ctx.restore();
+
+      // 女巫约束：witch_card_value_half 时显示当前实际倍率
+      if (hasValueHalfConstraint) {
+        cy += lineH + 2 * s;
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
+        const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
+        const constraintText = isMultiplier ? `女巫约束：当前倍率为 x${valueText}` : `女巫约束：当前倍率为 +${valueText}`;
+        ctx.fillText(constraintText, popupX + pad, cy);
+        ctx.restore();
+      }
   
       // 上一手单词（消元术 / 首字连击）
       if ((joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession') && !popup.isShop) {
