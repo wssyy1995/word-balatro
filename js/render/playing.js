@@ -170,10 +170,10 @@ module.exports = function extendPlaying(Renderer) {
           ctx.fill();
           ctx.restore();
 
-          // disable_one_witch_card 禁用动画：1000ms 边框光晕 + 锁图标 easeOutBack 弹出
+          // disable_one_witch_card / disable_two_witch_card 禁用动画：1000ms 边框光晕 + 锁图标 easeOutBack 弹出
           if (joker._disabled) {
             const elapsed = game._disableWitchAnim ? Date.now() - game._disableWitchAnim.startTime : Infinity;
-            const isAnimating = game._disableWitchAnim && game._disableWitchAnim.jokerIndex === i && elapsed >= 0 && elapsed < 1000;
+            const isAnimating = game._disableWitchAnim && game._disableWitchAnim.jokerIndices && game._disableWitchAnim.jokerIndices.includes(i) && elapsed >= 0 && elapsed < 1000;
             if (isAnimating) {
               this._drawLashBorder(ctx, sx, slotY, slotW, slotH, 4 * s, s, elapsed / 1000, 1.0);
             }
@@ -182,7 +182,7 @@ module.exports = function extendPlaying(Renderer) {
               this.roundRect(sx, slotY, slotW, slotH, 4 * s, 'rgba(60, 60, 60, 0.5)');
   
               // 锁图标 easeOutBack 弹出动画（边框结束后开始，持续400ms）
-              const iconElapsed = game._disableWitchAnim && game._disableWitchAnim.jokerIndex === i
+              const iconElapsed = game._disableWitchAnim && game._disableWitchAnim.jokerIndices && game._disableWitchAnim.jokerIndices.includes(i)
                 ? Math.max(0, elapsed - 1000)
                 : Infinity;
               const iconDuration = 400;

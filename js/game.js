@@ -1768,15 +1768,22 @@ class Game {
       }
     });
 
-    // disable_one_witch_card：回合开始时随机禁用1张女巫牌（延迟1秒播放边框动画）
+    // disable_one_witch_card / disable_two_witch_card：回合开始时随机禁用1张或2张女巫牌（延迟1秒播放边框动画）
     const disableSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    if (disableSkill && disableSkill.skill === 'disable_one_witch_card' && this.jokers && this.jokers.length > 0) {
+    const disableWitchSkillName = disableSkill && (disableSkill.skill === 'disable_one_witch_card' || disableSkill.skill === 'disable_two_witch_card') ? disableSkill.skill : null;
+    if (disableWitchSkillName && this.jokers && this.jokers.length > 0) {
       const validJokers = this.jokers.filter(j => j);
       if (validJokers.length > 0) {
         this.jokers.forEach(j => { if (j) j._disabled = false; });
-        const target = validJokers[Math.floor(Math.random() * validJokers.length)];
-        target._disabled = true;
-        this._disableWitchAnim = { startTime: Date.now() + 1000, jokerIndex: this.jokers.indexOf(target) };
+        const disableCount = disableWitchSkillName === 'disable_two_witch_card' ? 2 : 1;
+        // 打乱后取前 N 张，确保不重复
+        const shuffled = [...validJokers].sort(() => Math.random() - 0.5);
+        const targets = shuffled.slice(0, Math.min(disableCount, validJokers.length));
+        targets.forEach(target => { target._disabled = true; });
+        this._disableWitchAnim = {
+          startTime: Date.now() + 1000,
+          jokerIndices: targets.map(target => this.jokers.indexOf(target))
+        };
       }
     } else {
       (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
