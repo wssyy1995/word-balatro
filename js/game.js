@@ -1275,8 +1275,6 @@ class Game {
     this._witchStarBurst = null;
     this._witchStarBurstAuto = false;
     this._disableWitchAnim = null;
-    this._witchCardValueHalfAnim = null;
-    this._witchCardValueHalfActive = false;
     this._disablePotionAnim = null;
     this._hastePlayActive = false;
     this._hastePlayStartTime = null;
