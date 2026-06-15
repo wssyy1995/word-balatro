@@ -888,7 +888,7 @@ Renderer.prototype.render = function(game) {
     // 词牌大图闪烁星星（随机分布、更大更多）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100, true, 14, 1.5);
+    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100, true, 14, 1.2);
     ctx.restore();
 
     // 卡牌名称
