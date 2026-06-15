@@ -669,10 +669,25 @@ module.exports = function extendEffects(Renderer) {
       ctx.fill();
     }
 
-    Renderer.prototype._drawGentleStars = function(cx, cy, size, s, globalAlpha = 1, glowMult = 1) {
+    Renderer.prototype._drawGentleStars = function(cx, cy, size, s, globalAlpha = 1, glowMult = 1, theme = 'purple') {
       const ctx = this.ctx;
       const now = Date.now();
       const breath = 0.5 + 0.5 * Math.sin(now / 800);
+  
+      // 配色主题：紫色（默认）/ 金色
+      const colors = theme === 'gold' ? {
+        glowInner: '255,220,130',
+        glowOuter: '218,165,32',
+        star: '255,240,180',
+        pentagram: '218,165,32',
+        shadow: '218,165,32'
+      } : {
+        glowInner: '180,140,220',
+        glowOuter: '155,89,182',
+        star: '220,190,255',
+        pentagram: '155,89,182',
+        shadow: '155,89,182'
+      };
   
       ctx.save();
       ctx.translate(cx, cy);
@@ -680,14 +695,14 @@ module.exports = function extendEffects(Renderer) {
       ctx.globalCompositeOperation = 'source-over';
       ctx.shadowBlur = 0;
   
-      // === 淡紫色径向光晕 ===
+      // === 径向光晕 ===
       // 降低整体亮度并避免中心实心色块：从中心低透明度向外自然过渡
       const glowR = size * 0.65 * glowMult;
       const glowAlpha = 0.12 * breath * glowMult;
       const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
-      glowGrad.addColorStop(0, `rgba(180,140,220,${glowAlpha * 0.35})`);
-      glowGrad.addColorStop(0.5, `rgba(155,89,182,${glowAlpha * 0.8})`);
-      glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
+      glowGrad.addColorStop(0, `rgba(${colors.glowInner},${glowAlpha * 0.35})`);
+      glowGrad.addColorStop(0.5, `rgba(${colors.glowOuter},${glowAlpha * 0.8})`);
+      glowGrad.addColorStop(1, `rgba(${colors.glowOuter},0)`);
   
       ctx.fillStyle = glowGrad;
       ctx.beginPath();
@@ -703,13 +718,13 @@ module.exports = function extendEffects(Renderer) {
         const twinkle = 0.5 + 0.5 * Math.sin(now / 350 + i * 2.5);
         const starSize = (1.6 + 1.0 * Math.sin(i * 3)) * s;
   
-        ctx.fillStyle = `rgba(220,190,255,${0.9 * twinkle})`;
+        ctx.fillStyle = `rgba(${colors.star},${0.9 * twinkle})`;
         ctx.beginPath();
         ctx.arc(Math.cos(angle) * dist, Math.sin(angle) * dist, starSize, 0, Math.PI * 2);
         ctx.fill();
       }
   
-      // === 紫色五角星（复用字母之神同款）===
+      // === 五角星 ===
       const pentagramCount = 6;
       for (let i = 0; i < pentagramCount; i++) {
         const seed = i * 213.7 + 50;
@@ -723,9 +738,9 @@ module.exports = function extendEffects(Renderer) {
         const starRot = now / 550 + i * 1.3;
   
         ctx.save();
-        ctx.shadowColor = 'rgba(155,89,182,0.85)';
+        ctx.shadowColor = `rgba(${colors.shadow},0.85)`;
         ctx.shadowBlur = 10 * s * twinkle;
-        ctx.fillStyle = `rgba(155,89,182,${0.85 * twinkle})`;
+        ctx.fillStyle = `rgba(${colors.pentagram},${0.85 * twinkle})`;
         this._drawStar(ctx, px, py, starOuterR, starInnerR, 5, starRot);
         ctx.restore();
   

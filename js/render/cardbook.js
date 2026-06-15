@@ -29,9 +29,9 @@ module.exports = function extendCardbook(Renderer) {
       const drawX = iconX;
       const drawY = iconY + floatOffsetY;
 
-      // 常驻绘制紫色星星光晕
+      // 常驻绘制金色星星光晕
       if (isInShop) {
-        this._drawGentleStars(drawX + iconW / 2, drawY + iconH / 2, 28 * s, s, 1, 1.2);
+        this._drawGentleStars(drawX + iconW / 2, drawY + iconH / 2, 28 * s, s, 1, 1.2, 'gold');
       }
 
       // 绘制图标（上下浮动）
