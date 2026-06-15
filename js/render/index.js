@@ -882,13 +882,13 @@ Renderer.prototype.render = function(game) {
     // 金色光晕（新词牌弹窗中使用较弱光晕）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.6);
+    this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.45);
     ctx.restore();
 
-    // 词牌上方闪烁星星（复用 card_book 选中态星星动画）
+    // 词牌大图闪烁星星（随机分布、更大更多）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100);
+    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100, true, 14, 1.5);
     ctx.restore();
 
     // 卡牌名称

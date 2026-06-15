@@ -756,35 +756,41 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
-    // 卡牌选中态闪烁小星星（菱形星心 + 十字光芒，随机分布在卡牌边缘）
+    // 卡牌选中态闪烁小星星（菱形星心 + 十字光芒）
     // 原实现位于 card_book 的 cell 选中态，抽成通用方法供新词牌弹窗等复用
-    Renderer.prototype._drawCardPressedStars = function(ctx, x, y, w, h, s, seed = 0) {
+    // randomArea=false 时沿卡牌边缘分布，randomArea=true 时在卡牌区域内随机分布
+    Renderer.prototype._drawCardPressedStars = function(ctx, x, y, w, h, s, seed = 0, randomArea = false, starCount = 6, sizeScale = 1) {
       const time = Date.now();
       const pr = (n) => {
         const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
         return v - Math.floor(v);
       };
-      const starCount = 6;
       const edgeThick = 12 * s;
       const margin = 4 * s;
       for (let i = 0; i < starCount; i++) {
-        const isHorizontalEdge = pr(seed + i + 200) < 0.5;
         let sx, sy;
-        if (isHorizontalEdge) {
-          const isTop = pr(seed + i + 250) < 0.5;
-          sx = x + pr(seed + i + 300) * w;
-          sy = isTop
-            ? y + margin + pr(seed + i + 350) * edgeThick
-            : y + h - margin - pr(seed + i + 350) * edgeThick;
+        if (randomArea) {
+          const innerMargin = Math.min(w, h) * 0.08;
+          sx = x + innerMargin + pr(seed + i + 300) * (w - innerMargin * 2);
+          sy = y + innerMargin + pr(seed + i + 350) * (h - innerMargin * 2);
         } else {
-          const isLeft = pr(seed + i + 250) < 0.5;
-          sx = isLeft
-            ? x + margin + pr(seed + i + 350) * edgeThick
-            : x + w - margin - pr(seed + i + 350) * edgeThick;
-          sy = y + pr(seed + i + 300) * h;
+          const isHorizontalEdge = pr(seed + i + 200) < 0.5;
+          if (isHorizontalEdge) {
+            const isTop = pr(seed + i + 250) < 0.5;
+            sx = x + pr(seed + i + 300) * w;
+            sy = isTop
+              ? y + margin + pr(seed + i + 350) * edgeThick
+              : y + h - margin - pr(seed + i + 350) * edgeThick;
+          } else {
+            const isLeft = pr(seed + i + 250) < 0.5;
+            sx = isLeft
+              ? x + margin + pr(seed + i + 350) * edgeThick
+              : x + w - margin - pr(seed + i + 350) * edgeThick;
+            sy = y + pr(seed + i + 300) * h;
+          }
         }
         const offset = i * 80;
-        const size = 2.8 * s;
+        const size = 2.8 * s * sizeScale;
         const alpha = 0.25 + 0.75 * Math.abs(Math.sin((time + offset) / 400));
         ctx.save();
         // 菱形星心
