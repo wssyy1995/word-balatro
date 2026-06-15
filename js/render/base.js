@@ -354,6 +354,19 @@ class Renderer {
     } catch (e) {
       this.popCloseLoaded = false;
     }
+
+    // 加载名字标签
+    this.nameTagImage = null;
+    this.nameTagLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/name_tag.png';
+      img.onload = () => { this.nameTagLoaded = true; };
+      img.onerror = () => { this.nameTagLoaded = false; };
+      this.nameTagImage = img;
+    } catch (e) {
+      this.nameTagLoaded = false;
+    }
     
     // 加载女巫礼物图标
     this.witchGiftIcon = null;
