@@ -1,6 +1,36 @@
 const { Easing } = require('../animation');
 
 module.exports = function extendGuide(Renderer) {
+    // 绘制引导对话框左上角名字标签
+    Renderer.prototype._drawGuideNameTag = function(ctx, dialogDrawX, dialogDrawY, s) {
+      const tagH = 36 * s;
+      const tagW = tagH * (100 / 40); // name_tag.png 原始尺寸 100x40
+      const tagX = dialogDrawX + 14 * s;
+      const tagY = dialogDrawY - tagH / 2 - 2 * s;
+      ctx.save();
+      if (this.nameTagLoaded && this.nameTagImage) {
+        ctx.drawImage(this.nameTagImage, tagX, tagY, tagW, tagH);
+      } else {
+        // 兜底：金色圆角标签 + 文字
+        const witchNameTag = '小女巫';
+        const tagFontSize = Math.floor(12 * s);
+        ctx.font = `bold ${tagFontSize}px sans-serif`;
+        const tagTextW = ctx.measureText(witchNameTag).width;
+        const tagPadX = 8 * s;
+        const tagPadY = 3 * s;
+        const fallbackW = tagTextW + tagPadX * 2;
+        const fallbackH = tagFontSize + tagPadY * 2;
+        const fallbackX = tagX;
+        const fallbackY = tagY + (tagH - fallbackH) / 2;
+        this.roundRect(fallbackX, fallbackY, fallbackW, fallbackH, fallbackH / 2, '#c4a35a', '#c4a35a', 0);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(witchNameTag, fallbackX + fallbackW / 2, fallbackY + fallbackH / 2);
+      }
+      ctx.restore();
+    };
+
     Renderer.prototype._drawGuideOverlay = function(game) {
       const ctx = this.ctx;
       const W = this.W;
@@ -122,32 +152,7 @@ module.exports = function extendGuide(Renderer) {
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
 
       // 小女巫名字标签（左上角）
-      const tagH = 36 * s;
-      const tagW = tagH * (100 / 40); // name_tag.png 原始尺寸 100x40
-      const tagX = dialogDrawX + 14 * s;
-      const tagY = dialogDrawY - tagH / 2 - 2 * s;
-      ctx.save();
-      if (this.nameTagLoaded && this.nameTagImage) {
-        ctx.drawImage(this.nameTagImage, tagX, tagY, tagW, tagH);
-      } else {
-        // 兜底：金色圆角标签 + 文字
-        const witchNameTag = '小女巫';
-        const tagFontSize = Math.floor(12 * s);
-        ctx.font = `bold ${tagFontSize}px sans-serif`;
-        const tagTextW = ctx.measureText(witchNameTag).width;
-        const tagPadX = 8 * s;
-        const tagPadY = 3 * s;
-        const fallbackW = tagTextW + tagPadX * 2;
-        const fallbackH = tagFontSize + tagPadY * 2;
-        const fallbackX = tagX;
-        const fallbackY = tagY + (tagH - fallbackH) / 2;
-        this.roundRect(fallbackX, fallbackY, fallbackW, fallbackH, fallbackH / 2, '#c4a35a', '#c4a35a', 0);
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(witchNameTag, fallbackX + fallbackW / 2, fallbackY + fallbackH / 2);
-      }
-      ctx.restore();
+      this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
   
       // === 3. 逐字显示的文字 ===
       ctx.save();
@@ -390,6 +395,9 @@ module.exports = function extendGuide(Renderer) {
   
       // 对话框背景
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+      // 小女巫名字标签（左上角）
+      this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
   
       // 逐字显示文字
       ctx.save();
@@ -654,6 +662,9 @@ module.exports = function extendGuide(Renderer) {
   
       // 对话框背景
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+      // 小女巫名字标签（左上角）
+      this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
   
       // 逐字显示文字（支持 [xxx] 高亮：加粗 + 深紫色）
       ctx.save();
