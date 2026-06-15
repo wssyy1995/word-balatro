@@ -249,6 +249,7 @@
       _cardBookGuideTextStartTime: null,
       _lifeExtensionAnim: null,
       _disableWitchAnim: null,
+      _witchCardValueHalfAnim: null,
       _changeLetterHint: null,
       _witchStarBurst: null,
       _witchStarBurstAuto: false,

@@ -441,6 +441,19 @@ class Renderer {
       this.cardDisableIconLoaded = false;
     }
 
+    // 加载女巫牌倍率下降图标
+    this.cardValueDownIcon = null;
+    this.cardValueDownIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_value_down.png';
+      img.onload = () => { this.cardValueDownIconLoaded = true; };
+      img.onerror = () => { this.cardValueDownIconLoaded = false; };
+      this.cardValueDownIcon = img;
+    } catch (e) {
+      this.cardValueDownIconLoaded = false;
+    }
+
     // 加载 discount 标签图标
     this.discountIcon = null;
     this.discountIconLoaded = false;

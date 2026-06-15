@@ -813,8 +813,14 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
-function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null) {
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null, valueHalfActive = false) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
+
+  // 辅助函数：当 witch_card_value_half 生效时，女巫牌 value 减半（保留1位小数）
+  const getHalvedValue = (value) => {
+    if (!valueHalfActive || value === undefined || value === null) return value;
+    return Math.round(value * 0.5 * 10) / 10;
+  };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
 
@@ -845,18 +851,21 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
       case 'per_card':
         cards.forEach((c, i) => {
           if (_matchCardTrigger(c, j.trigger, i, j)) {
+            const jValue = getHalvedValue(j.value);
             if (j.operation === 'add') {
-              cardAddScores[i] += j.value;
+              cardAddScores[i] += jValue;
             } else {
-              cardMults[i] *= j.value;
+              cardMults[i] *= jValue;
             }
           }
         });
         break;
       case 'whole_word': {
         let wwMatched;
+        const jValue = getHalvedValue(j.value);
+        const jPenalty = getHalvedValue(j.penalty);
         if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
-          wwMatched = j.value > 0;
+          wwMatched = jValue > 0;
         } else if (j.trigger === 'end_ed') {
           wwMatched = pendingCheck?.endEdValid || false;
         } else if (j.trigger === 'end_s') {
@@ -883,14 +892,14 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         }
         if (wwMatched) {
           if (j.trigger === 'illegal_boost' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
-            mult += j.value;
+            mult += jValue;
           } else {
-            mult = Math.ceil(mult * j.value);
+            mult = Math.ceil(mult * jValue);
           }
         } else if (j.penalty !== undefined) {
           // 未触发时执行惩罚（no_duplicate 第一手不惩罚）
           if (j.trigger !== 'no_duplicate' || (lastPlayedLetters && lastPlayedLetters.size > 0)) {
-            mult += j.penalty;
+            mult += jPenalty;
           }
         }
         break;
@@ -938,7 +947,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
 
   for (const j of activeJokers) {
     if (j.type === 'witch' && j.scope === 'flat_bonus') {
-      baseScore += j.value;
+      baseScore += getHalvedValue(j.value);
     }
   }
 
@@ -1275,6 +1284,7 @@ class Game {
     this._witchStarBurst = null;
     this._witchStarBurstAuto = false;
     this._disableWitchAnim = null;
+    this._witchCardValueHalfAnim = null;
     this._disablePotionAnim = null;
     this._hastePlayActive = false;
     this._hastePlayStartTime = null;
@@ -1837,6 +1847,13 @@ class Game {
       this._disableWitchAnim = null;
     }
 
+    // witch_card_value_half：回合开始时所有女巫牌边框动画 + 倍率下降蒙层（延迟1秒播放）
+    if (disableSkill && disableSkill.skill === 'witch_card_value_half' && this.jokers && this.jokers.some(j => j)) {
+      this._witchCardValueHalfAnim = { startTime: Date.now() + 1000 };
+    } else {
+      this._witchCardValueHalfAnim = null;
+    }
+
     // disable_potion_card：回合开始时禁用所有药水牌（延迟1秒播放边框动画）
     if (disableSkill && disableSkill.skill === 'disable_potion_card' && this.potions && this.potions.some(p => p)) {
       this.potions.forEach(p => { if (p) p._disabled = true; });
@@ -2321,14 +2338,22 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
+    // 判断当前回合是否有 witch_card_value_half 技能（女巫牌 value 减半）
+    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    const valueHalfActive = currentWitchSkill && currentWitchSkill.skill === 'witch_card_value_half';
+    this.pendingCheck.valueHalfActive = valueHalfActive;
+
+    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters, valueHalfActive);
 
     // === 以小博大（出牌<=3个字母，30%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
     if (lastPrayer && playedInOrder.length < 4) {
       const success = Math.random() < 0.3;
-      const boostValue = 8;
+      let boostValue = lastPrayer.value || 8;
+      if (valueHalfActive) {
+        boostValue = Math.round(boostValue * 0.5 * 10) / 10;
+      }
       if (success) {
         result.mult += boostValue;
         result.score = Math.ceil(result.base * result.mult);
@@ -2341,7 +2366,6 @@ class Game {
     }
 
     // === letter_X_mult_half 惩罚检测（通用） ===
-    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
 
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
@@ -2824,6 +2848,7 @@ class Game {
         // 进入商店前取消所有女巫牌禁用状态
         (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
         this._disableWitchAnim = null;
+        this._witchCardValueHalfAnim = null;
         this.state = 'shop';
         this._checkCardBookUnlock();
         this.shopItems = generateShopItems(this);
@@ -2877,6 +2902,7 @@ class Game {
           // 进入商店前取消所有女巫牌禁用状态
           (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
           this._disableWitchAnim = null;
+          this._witchCardValueHalfAnim = null;
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);
@@ -2892,6 +2918,7 @@ class Game {
           // 进入商店前取消所有女巫牌禁用状态
           (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
           this._disableWitchAnim = null;
+          this._witchCardValueHalfAnim = null;
           this.state = 'shop';
           this._checkCardBookUnlock();
           this.shopItems = generateShopItems(this);

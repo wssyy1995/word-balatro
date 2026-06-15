@@ -43,8 +43,10 @@ const SKILL_POOL = [
   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  { skill: 'force_contain_A', desc: '本回合，打出的单词必须包含\'A\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  { skill: 'force_contain_B', desc: '本回合，打出的单词必须包含\'B\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'}
+  { skill: 'force_contain_A', desc: '打出的单词必须包含\'A\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'force_contain_B', desc: '打出的单词必须包含\'B\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'force_contain_O', desc: '打出的单词必须包含\'O\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'witch_card_value_half', desc: '所有女巫牌的倍率效果都减半', angry_tip: '太依赖道具，也不行哦。'}
 ];
 // const SKILL_POOL = [
 //   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
@@ -130,6 +132,9 @@ function checkSkill(skillName, game, playedCards) {
     case 'disable_two_witch_card':
       // 禁用类约束：约束在道具/女巫牌点击层处理，出牌本身不受限制
       return true;
+    case 'witch_card_value_half':
+      // 倍率效果减半：不影响出牌本身是否合法
+      return true;
     default:
       return true;
   }
@@ -156,6 +161,8 @@ function getSkillFailText(skillName) {
       return '女巫约束：本回合随机禁用1张女巫牌';
     case 'disable_two_witch_card':
       return '女巫约束：本回合随机禁用2张女巫牌';
+    case 'witch_card_value_half':
+      return '女巫约束：本回合所有女巫牌倍率效果减半';
     default:
       return '女巫约束未满足';
   }

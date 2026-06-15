@@ -206,6 +206,41 @@ module.exports = function extendPlaying(Renderer) {
               ctx.restore();
             }
           }
+
+          // witch_card_value_half：回合开始时所有女巫牌边框动画 + 倍率下降蒙层
+          if (game._witchCardValueHalfAnim) {
+            const elapsed = Date.now() - game._witchCardValueHalfAnim.startTime;
+            const isAnimating = elapsed >= 0 && elapsed < 1000;
+            if (isAnimating) {
+              this._drawLashBorder(ctx, sx, slotY, slotW, slotH, 4 * s, s, elapsed / 1000, 1.0);
+            }
+            if (!isAnimating) {
+              ctx.save();
+              this.roundRect(sx, slotY, slotW, slotH, 4 * s, 'rgba(60, 60, 60, 0.5)');
+
+              // 倍率下降图标 easeOutBack 弹出动画（边框结束后开始，持续400ms）
+              const iconElapsed = Math.max(0, elapsed - 1000);
+              const iconDuration = 400;
+              const iconProgress = iconElapsed < iconDuration
+                ? Easing.easeOutBack(Math.min(iconElapsed / iconDuration, 1))
+                : 1;
+              const iconSize = 20 * s * iconProgress;
+              const iconX = sx + (slotW - iconSize) / 2;
+              const iconY = slotY + (slotH - iconSize) / 2;
+
+              if (this.cardValueDownIconLoaded && this.cardValueDownIcon) {
+                ctx.drawImage(this.cardValueDownIcon, iconX, iconY, iconSize, iconSize);
+              } else {
+                ctx.font = `bold ${Math.floor(iconSize)}px sans-serif`;
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('↓', sx + slotW / 2, slotY + slotH / 2);
+              }
+
+              ctx.restore();
+            }
+          }
   
           // 生命延续触发：紫色边框光晕闪烁
           if (game._lifeExtensionAnim && game._lifeExtensionAnim.jokerIndex === i) {
@@ -562,15 +597,23 @@ module.exports = function extendPlaying(Renderer) {
                 : (stepInfo ? stepInfo.cardIdx : -1);
               const jokers = game.jokers || [];
   
+              // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
+              const valueHalfActivePhase1 = pendingCheck && pendingCheck.valueHalfActive;
+              const getHalvedValuePhase1 = (value) => {
+                if (!valueHalfActivePhase1 || value === undefined || value === null) return value;
+                return Math.round(value * 0.5 * 10) / 10;
+              };
+
               // per_card 倍率/加分提示 — 当前步骤对应的 per_card
               pc._perCardMultText = null;
               if (!isAllJumped && cardIdx >= 0 && stepInfo && stepInfo.jokerIdx !== null) {
                 const activeJoker = jokers[stepInfo.jokerIdx];
                 if (activeJoker && activeJoker.value) {
+                  const displayValue = getHalvedValuePhase1(activeJoker.value);
                   if (activeJoker.operation === 'add') {
-                    pc._perCardMultText = `+${activeJoker.value}`;
+                    pc._perCardMultText = `+${displayValue}`;
                   } else {
-                    pc._perCardMultText = `x${activeJoker.value}`;
+                    pc._perCardMultText = `x${displayValue}`;
                   }
                 }
               }
@@ -583,9 +626,9 @@ module.exports = function extendPlaying(Renderer) {
                   const joker = jokers[jIdx];
                   if (joker && joker.value) {
                     if (joker.operation === 'add') {
-                      score += joker.value;
+                      score += getHalvedValuePhase1(joker.value);
                     } else {
-                      score *= joker.value;
+                      score *= getHalvedValuePhase1(joker.value);
                     }
                   }
                 });
@@ -1088,17 +1131,24 @@ module.exports = function extendPlaying(Renderer) {
           currentStep = Math.floor(afterBase / STEP_DURATION);
         }
   
+        // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
+        const valueHalfActive = pendingCheck && pendingCheck.valueHalfActive;
+        const getHalvedValue = (value) => {
+          if (!valueHalfActive || value === undefined || value === null) return value;
+          return Math.round(value * 0.5 * 10) / 10;
+        };
+
         // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
         let curMult = pendingLength;
         for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
           const item = wjList[i];
           const joker = item.joker;
           if (item.isPenalty) {
-            curMult += joker.penalty;
+            curMult += getHalvedValue(joker.penalty);
           } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-            curMult += joker.value;
+            curMult += getHalvedValue(joker.value);
           } else {
-            curMult = Math.ceil(curMult * joker.value);
+            curMult = Math.ceil(curMult * getHalvedValue(joker.value));
           }
         }
         displayValue = curMult;
@@ -1112,11 +1162,11 @@ module.exports = function extendPlaying(Renderer) {
             const item = wjList[labelIdx];
             const joker = item.joker;
             if (item.isPenalty) {
-              labelText = `${joker.penalty}`;
+              labelText = `${getHalvedValue(joker.penalty)}`;
             } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-              labelText = `+${joker.value}`;
+              labelText = `+${getHalvedValue(joker.value)}`;
             } else {
-              labelText = `x${joker.value}`;
+              labelText = `x${getHalvedValue(joker.value)}`;
             }
           }
         }
