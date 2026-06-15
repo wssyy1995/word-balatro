@@ -60,9 +60,13 @@ Renderer.prototype.render = function(game) {
       this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
       // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景与结算弹窗一致（只显示 HUD）
-      if (game._newWitchCardPopup) {
+      // 包含 settlement 关闭后到弹窗出现前的 200ms 延迟，避免背景突变为商店
+      const isNewWitchCardPhase = game._newWitchCardPopup || (game._pendingWitchRewardDelay && !game._witchRewardDelayStartTime);
+      if (isNewWitchCardPhase) {
         this.drawHUD(game);
-        this._drawNewWitchCardPopup(game);
+        if (game._newWitchCardPopup) {
+          this._drawNewWitchCardPopup(game);
+        }
       } else {
         // 商店页面背景 + 内容
         this._drawShopBackground(game);
@@ -927,6 +931,12 @@ Renderer.prototype.render = function(game) {
     ctx.save();
     ctx.globalAlpha = closeAlpha;
     this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.6);
+    ctx.restore();
+
+    // 词牌上方闪烁星星（复用图鉴金色星星动画）
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    this._drawGentleStars(cardCX, cardCY, Math.max(cardW, cardH) * 0.55, s, 1, 1.2, 'gold');
     ctx.restore();
 
     // 卡牌名称
