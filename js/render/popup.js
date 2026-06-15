@@ -2118,6 +2118,7 @@ module.exports = function extendPopup(Renderer) {
       this.wordBookContentRect = null;
 
       const contentAlpha = closeAlpha;
+      const belowTitleOffset = 2 * s; // 标题下方分割线及内容整体下移
 
       // 内层细边框
       ctx.save();
@@ -2203,7 +2204,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.restore();
 
       // 标题下装饰线
-      const decoLineY = titleY + 16 * s;
+      const decoLineY = titleY + 16 * s + belowTitleOffset;
       const decoLineW = pw * 0.45;
       const decoLineX = px + (pw - decoLineW) / 2;
       ctx.save();
@@ -2244,7 +2245,7 @@ module.exports = function extendPopup(Renderer) {
       // 列表区域
       const headerH = 34 * s;
       const contentTop = statY + 22 * s;
-      const contentBottom = py + ph - 18 * s;
+      const contentBottom = py + ph - 18 * s + belowTitleOffset;
       const contentH = contentBottom - contentTop - headerH;
       const rowH = 38 * s;
       const listW = pw - 32 * s;
