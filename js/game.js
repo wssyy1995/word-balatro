@@ -1595,6 +1595,33 @@ class Game {
     console.log('[Game] 从存档恢复，回合:', this.round, '状态:', this.state, '目标分:', this.target);
     console.log('[Game] 恢复 jokers:', JSON.stringify(this.jokers), 'potions:', JSON.stringify(this.potions));
 
+    // 恢复 witch_card_value_half 状态：根据当前回合技能重新设置动画状态和 value 减半
+    const currentSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    this._witchCardValueHalfActive = !!(currentSkill && currentSkill.skill === 'witch_card_value_half');
+    (this.jokers || []).forEach(j => {
+      if (!j || j.type !== 'witch') return;
+      // 确保有原始值记录
+      if (j._originalValue === undefined) j._originalValue = j.value;
+      if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
+      // 根据当前技能状态重新应用/恢复 value
+      if (j._originalValue !== undefined) {
+        j.value = this._witchCardValueHalfActive
+          ? Math.round(j._originalValue * 0.5 * 10) / 10
+          : j._originalValue;
+      }
+      if (j._originalPenalty !== undefined) {
+        j.penalty = this._witchCardValueHalfActive
+          ? Math.round(j._originalPenalty * 0.5 * 10) / 10
+          : j._originalPenalty;
+      }
+    });
+    if (this._witchCardValueHalfActive && this.state === 'playing' && this.jokers && this.jokers.some(j => j)) {
+      // startTime 设为过去时间，使恢复后直接显示蒙层和漂浮动画，不重新播放边框光晕
+      this._witchCardValueHalfAnim = { startTime: Date.now() - 2000 };
+    } else {
+      this._witchCardValueHalfAnim = null;
+    }
+
     // 每日单词挑战：恢复时也初始化
     this._initDailyChallenge();
   }
