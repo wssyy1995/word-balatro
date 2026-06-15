@@ -575,6 +575,107 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 绘制女巫奖励风格标题（金色渐变文字 + 两侧菱形渐变装饰线）
+    // 用于女巫奖励弹窗、获得新词牌弹窗等需要统一标题风格的地方
+    Renderer.prototype._drawWitchRewardTitle = function(ctx, text, W, titleY, s, options = {}) {
+      const { alpha = 1 } = options;
+      const gold = '#c4a35a';
+      const titleFontSize = 24 * s;
+
+      // 先设置字体以测量文字宽度
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      const textMetrics = ctx.measureText(text);
+      const textWidth = textMetrics.width;
+
+      // 文字两侧装饰线参数
+      const solidSize = 1.5 * s;
+      const hollowSize = 2 * s;
+      const gap = 8 * s;             // 文字到实心菱形
+      const solidToHollow = 8 * s;   // 实心菱形到空心菱形
+      const lineOffset = 3 * s;      // 线与空心菱形之间的间距
+      const lineLength = 45 * s;     // 线起点到线末端
+
+      const leftSolidX = W / 2 - textWidth / 2 - gap;
+      const leftHollowX = leftSolidX - solidToHollow;
+      const leftLineEndX = leftHollowX - lineLength;
+      const rightSolidX = W / 2 + textWidth / 2 + gap;
+      const rightHollowX = rightSolidX + solidToHollow;
+      const rightLineEndX = rightHollowX + lineLength;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // --- 左侧（从右到左：实心小菱形 → 空心菱形 → 渐变线）---
+      ctx.save();
+      ctx.translate(leftSolidX, titleY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(leftHollowX, titleY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = gold;
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      const leftLineStartX = leftHollowX - lineOffset;
+      const leftGrad = ctx.createLinearGradient(leftLineStartX, titleY, leftLineEndX, titleY);
+      leftGrad.addColorStop(0, gold);
+      leftGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = leftGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(leftLineStartX, titleY);
+      ctx.lineTo(leftLineEndX, titleY);
+      ctx.stroke();
+
+      // --- 右侧（从左到右：实心小菱形 → 空心菱形 → 渐变线）---
+      ctx.save();
+      ctx.translate(rightSolidX, titleY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-solidSize, -solidSize, solidSize * 2, solidSize * 2);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(rightHollowX, titleY);
+      ctx.rotate(Math.PI / 4);
+      ctx.strokeStyle = gold;
+      ctx.lineWidth = 1.2 * s;
+      ctx.strokeRect(-hollowSize, -hollowSize, hollowSize * 2, hollowSize * 2);
+      ctx.restore();
+
+      const rightLineStartX = rightHollowX + lineOffset;
+      const rightGrad = ctx.createLinearGradient(rightLineStartX, titleY, rightLineEndX, titleY);
+      rightGrad.addColorStop(0, gold);
+      rightGrad.addColorStop(1, 'rgba(196,163,90,0)');
+      ctx.strokeStyle = rightGrad;
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(rightLineStartX, titleY);
+      ctx.lineTo(rightLineEndX, titleY);
+      ctx.stroke();
+
+      ctx.restore();
+
+      // 金色渐变文字
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = `bold ${Math.floor(titleFontSize)}px Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const textGrad = ctx.createLinearGradient(W / 2, titleY - 10 * s, W / 2, titleY + 10 * s);
+      textGrad.addColorStop(0, '#f5d78e');
+      textGrad.addColorStop(0.5, '#dfc06e');
+      textGrad.addColorStop(1, '#b5973e');
+      ctx.fillStyle = textGrad;
+      ctx.fillText(text, W / 2, titleY);
+      ctx.restore();
+    }
+
     Renderer.prototype._drawModalPanel = function(ctx, W, H, s, config) {
       const {
         isClosing, closeStartTime, closeDuration = 200, closeOffset = 40,

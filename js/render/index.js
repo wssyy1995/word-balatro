@@ -1,6 +1,6 @@
 // ===== Renderer 组装入口 =====
 const { Renderer } = require('./base');
-const { WITCH_SKILLS } = require('../witch_skills');
+const { WITCH_SKILLS, getSkillForLevel } = require('../witch_skills');
 
 require('./effects')(Renderer);
 require('./animation')(Renderer);
@@ -83,6 +83,32 @@ Renderer.prototype.render = function(game) {
       // 确认购买弹窗（覆盖在商店上方）
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
+      }
+
+      // 获得新词牌弹窗（领取结算后、女巫奖励前）
+      if (game._newWitchCardPopup) {
+        this._drawNewWitchCardPopup(game);
+      }
+
+      // 女巫奖励延迟 1s 进入
+      if (game._pendingWitchRewardDelay && !game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
+        const delayElapsed = Date.now() - (game._witchRewardDelayStartTime || Date.now());
+        if (delayElapsed >= 1000) {
+          game._pendingWitchRewardDelay = false;
+          game._witchRewardDelayStartTime = null;
+          const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
+          if (witchSkill && game.witchSkillPassed) {
+            game.witchRewardData = {
+              skill: witchSkill,
+              phase: 'gift',
+              giftStartTime: Date.now(),
+              startTime: Date.now(),
+              result: null,
+              rewardItem: null,
+            };
+            game.state = 'witch_reward';
+          }
+        }
       }
 
       // 商店女巫技能引导触发检查
@@ -822,6 +848,129 @@ Renderer.prototype.render = function(game) {
         ctx.restore();
       }
     }
+  };
+
+  // ===== 获得新词牌弹窗（回合结算 → 商店页 → 点击收集 → 1s后女巫奖励） =====
+  Renderer.prototype._drawNewWitchCardPopup = function(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+    const data = game._newWitchCardPopup;
+    if (!data) return;
+
+    const darkBlue = '#1a2f4a';
+    const isClosing = game._closingNewWitchCardPopup;
+    const elapsed = isClosing ? 99999 : Date.now() - (data.startTime || Date.now());
+
+    const panel = this._drawModalPanel(ctx, W, H, s, {
+      isClosing,
+      closeStartTime: game._closeNewWitchCardPopupStartTime,
+      width: 300,
+      height: 400,
+      overlayAlpha: 0.65,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, closeAlpha } = panel;
+
+    // 标题：复用女巫奖励标题风格
+    const titleY = py + 48 * s;
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    this._drawWitchRewardTitle(ctx, '获得新词牌!', W, titleY, s, { alpha: closeAlpha });
+    ctx.restore();
+
+    // 当前回合女巫卡牌大图
+    const level = data.level;
+    const iconName = level ? `witch_card_${level}` : null;
+    const iconData = iconName ? this.witchCardImages[iconName] : null;
+    const cardMaxW = 220 * s;
+    const cardMaxH = 240 * s;
+    let cardW = cardMaxW;
+    let cardH = cardMaxH;
+    if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
+      const containerAspect = cardMaxW / cardMaxH;
+      const aspect = iconData.width / iconData.height;
+      if (containerAspect > aspect) {
+        cardH = cardMaxH;
+        cardW = cardH * aspect;
+      } else {
+        cardW = cardMaxW;
+        cardH = cardW / aspect;
+      }
+    }
+    const cardCX = W / 2;
+    const cardCY = py + ph / 2 - 10 * s;
+    const cardX = cardCX - cardW / 2;
+    const cardY = cardCY - cardH / 2;
+
+    // 圆角裁剪绘制卡牌图
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    ctx.beginPath();
+    const cr = 6 * s;
+    ctx.moveTo(cardX + cr, cardY);
+    ctx.lineTo(cardX + cardW - cr, cardY);
+    ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + cr);
+    ctx.lineTo(cardX + cardW, cardY + cardH - cr);
+    ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - cr, cardY + cardH);
+    ctx.lineTo(cardX + cr, cardY + cardH);
+    ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - cr);
+    ctx.lineTo(cardX, cardY + cr);
+    ctx.quadraticCurveTo(cardX, cardY, cardX + cr, cardY);
+    ctx.closePath();
+    ctx.clip();
+
+    if (iconData && iconData.loaded && iconData.img) {
+      ctx.drawImage(iconData.img, cardX, cardY, cardW, cardH);
+    } else {
+      // 未加载兜底：米白圆角矩形 + 女巫名字
+      ctx.fillStyle = '#f5f0e6';
+      ctx.fill();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const skillDef = level ? WITCH_SKILLS.find(s => s.level === level) : null;
+      const placeholderText = skillDef ? skillDef.name : '女巫卡牌';
+      ctx.fillText(placeholderText, cardCX, cardCY);
+    }
+    ctx.restore();
+
+    // 金色光晕
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
+    ctx.restore();
+
+    // 卡牌名称
+    const skillDef = level ? WITCH_SKILLS.find(s => s.level === level) : null;
+    if (skillDef && skillDef.name) {
+      const nameY = cardY + cardH + 28 * s;
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(skillDef.name, W / 2, nameY);
+      ctx.restore();
+    }
+
+    // 收集按钮
+    const btnW = 140 * s;
+    const btnH = 44 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = py + ph - btnH - 32 * s;
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    this._drawScaledButton(ctx, '收集', btnX, btnY, btnW, btnH, s, game._newWitchCardCollectBtnPressed || false, { color: '#c4a35a', radius: 8 });
+    ctx.restore();
+
+    // 保存点击区域
+    this.newWitchCardCollectBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
   };
 
 module.exports = { Renderer };

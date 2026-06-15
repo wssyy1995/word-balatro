@@ -1254,8 +1254,14 @@ class Game {
     this._closeStartTime = null;
     this._closingWitchReward = false;
     this._closeWitchRewardStartTime = null;
+    this._newWitchCardPopup = null;
+    this._closingNewWitchCardPopup = false;
+    this._closeNewWitchCardPopupStartTime = null;
+    this._pendingWitchRewardDelay = false;
+    this._witchRewardDelayStartTime = null;
     this._shopToGameTransition = null;
     this._challengeBtnPressed = false;
+    this._newWitchCardCollectBtnPressed = false;
     this._sellingProp = null;
     this._successBtnPressed = false;
     this._successPressedBtn = null;
@@ -2964,27 +2970,46 @@ class Game {
       const witchSkill = this.settlementData ? this.settlementData.witchSkill : null;
       this.settlementData = null;
       this._closingSettlement = false;
+
+      // 统一进入商店页面
+      (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
+      this._disableWitchAnim = null;
+      this._witchCardValueHalfAnim = null;
+      this.state = 'shop';
+      this._checkCardBookUnlock();
+      this.shopItems = generateShopItems(this);
+
       if (witchSkill) {
-        // 进入女巫奖励阶段
-        this.witchRewardData = {
-          skill: witchSkill,
-          phase: 'gift',
-          giftStartTime: Date.now(),
+        // 女巫奖励改为：进入商店后先弹出"获得新词牌"，点击收集后再延迟1s进入女巫奖励
+        this._newWitchCardPopup = {
           startTime: Date.now(),
-          result: null,
-          rewardItem: null,
+          level: witchSkill.level,
+          skill: witchSkill,
         };
-        this.state = 'witch_reward';
-      } else {
-        // 进入商店前取消所有女巫牌禁用状态
-        (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
-        this._disableWitchAnim = null;
-        this._witchCardValueHalfAnim = null;
-        this.state = 'shop';
-        this._checkCardBookUnlock();
-        this.shopItems = generateShopItems(this);
-        if (this.storageManager) this.storageManager.saveProgress();
+        this._pendingWitchRewardDelay = true;
+        this._witchRewardDelayStartTime = null; // 点击收集后再设置
+
+        // 预加载当前回合 witch_card 大图
+        if (this.cloudStorage && witchSkill.level) {
+          this.cloudStorage.preloadWitchCardForLevel(witchSkill.level, this.renderer).catch(err => {
+            console.error('[NewWitchCard] 预加载 witch_card 失败:', err);
+          });
+        }
       }
+
+      if (this.storageManager) this.storageManager.saveProgress();
+    }, 200);
+  }
+
+  closeNewWitchCardPopup() {
+    if (!this._newWitchCardPopup || this._closingNewWitchCardPopup) return;
+    this._closingNewWitchCardPopup = true;
+    this._closeNewWitchCardPopupStartTime = Date.now();
+    this._delay(() => {
+      this._newWitchCardPopup = null;
+      this._closingNewWitchCardPopup = false;
+      // 弹窗关闭后开始计算女巫奖励延迟
+      this._witchRewardDelayStartTime = Date.now();
     }, 200);
   }
 

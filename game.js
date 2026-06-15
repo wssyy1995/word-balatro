@@ -952,6 +952,7 @@ wx.onTouchEnd(() => {
   renderer.pressedBtn = null;
   game._cardBookIconPressed = false;
   game._cardBookEquipBtnPressed = false;
+  game._newWitchCardCollectBtnPressed = false;
 
   // 取消未触发的长按定时器
   if (longPressTimer) {
@@ -2052,6 +2053,25 @@ function handleInput(x, y) {
   }
 
   if (game.state === 'shop') {
+    // 获得新词牌弹窗优先处理（覆盖在商店上方）
+    if (game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
+      if (renderer.newWitchCardCollectBtnRect) {
+        const hit = renderer.hitTest(x, y, [renderer.newWitchCardCollectBtnRect]);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game._newWitchCardCollectBtnPressed = true;
+          setTimeout(() => {
+            game._newWitchCardCollectBtnPressed = false;
+            game.closeNewWitchCardPopup();
+          }, 150);
+          return;
+        }
+      }
+      // 弹窗出现时屏蔽商店其他交互
+      return;
+    }
+
     // 商店女巫技能引导：优先处理引导点击，禁用其他交互
     if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
       if (renderer.shopGuideDialogRect) {

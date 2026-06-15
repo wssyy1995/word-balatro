@@ -809,6 +809,7 @@ class Renderer {
     this._lastFloatingText = null;
     this.debugMenuOpen = false;
     this.pressedBtn = null;
+    this.newWitchCardCollectBtnRect = null;
     this.settlementRenderer.claimBtnPressed = false;
     this.witchRewardRenderer.okBtnPressed = false;
     this.witchRewardRenderer.stashBtnPressed = false;
