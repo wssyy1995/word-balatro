@@ -1884,7 +1884,7 @@ module.exports = function extendPopup(Renderer) {
 
             const leftIcon = this.settingIcons && this.settingIcons.left;
             if (leftIcon && leftIcon.loaded && leftIcon.img) {
-              const iconSize = 16 * s;
+              const iconSize = 14 * s;
               ctx.save();
               ctx.globalAlpha = contentAlpha * 0.8;
               ctx.drawImage(leftIcon.img, ctrlRightX - 4 * s - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
