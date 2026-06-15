@@ -164,7 +164,7 @@ class WitchRewardRenderer {
 
     // 画遮罩（带淡入）— gift 阶段深黑，result 阶段浅遮罩
     ctx.save();
-    const overlayAlpha = data.phase === 'gift' ? 0.65 : 0.45;
+    const overlayAlpha = data.phase === 'gift' ? 0.75 : 0.55;
     ctx.fillStyle = `rgba(0,0,0,${overlayAlpha * Math.min(elapsed / 200, 1)})`;
     ctx.fillRect(0, 0, W, H);
 
@@ -300,7 +300,7 @@ class WitchRewardRenderer {
         isClosing: game._closingWitchReward,
         closeStartTime: game._closeWitchRewardStartTime,
         width: 300, height: 340,
-        overlayAlpha: 0.45,
+        overlayAlpha: 0.6,
         elapsed: Date.now() - (data.startTime || Date.now()),
         onCloseComplete: () => {}
       });

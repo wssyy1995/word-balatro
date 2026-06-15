@@ -59,10 +59,9 @@ Renderer.prototype.render = function(game) {
       this._drawShopBackground(game);
       this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
-      // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景为游戏页面
+      // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景与结算弹窗一致（只显示 HUD）
       if (game._newWitchCardPopup) {
         this.drawHUD(game);
-        this.drawPlaying(game);
         this._drawNewWitchCardPopup(game);
       } else {
         // 商店页面背景 + 内容
