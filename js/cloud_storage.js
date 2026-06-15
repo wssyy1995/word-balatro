@@ -1,6 +1,8 @@
 // ===== 微信云存储管理器 =====
 // 环境 ID: cloud1-d3gecbtu10e4035de
 
+const { WITCH_SKILLS } = require('./witch_skills');
+
 class CloudStorageManager {
   constructor(env) {
     this.env = env;
@@ -76,17 +78,15 @@ class CloudStorageManager {
     };
 
     // 默认 witch_card 图片云文件映射
-    this.defaultWitchCardFileMap = {
-      'witch_card_3': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_3.png',
-      'witch_card_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_5.png',
-      'witch_card_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_8.png',
-      'witch_card_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_11.png',
-      'witch_card_14': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_14.png',
-      'witch_card_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_16.png',
-      'witch_card_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_18.png',
-      'witch_card_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_21.png',
-      'witch_card_24': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card/witch_card_24.png'
-    };
+    // 根据 WITCH_SKILLS 配置动态生成，避免硬编码和重复
+    this.defaultWitchCardFileMap = {};
+    const witchCardBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card';
+    WITCH_SKILLS.forEach(skill => {
+      if (skill && skill.level) {
+        const key = `witch_card_${skill.level}`;
+        this.defaultWitchCardFileMap[key] = `${witchCardBase}/${key}.png`;
+      }
+    });
 
     // 默认 bg_icon 图片云文件映射
     this.defaultBgIconFileMap = {

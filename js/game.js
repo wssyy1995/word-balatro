@@ -1338,6 +1338,27 @@ class Game {
     this._settingsRankPressed = false;
     this._settingsFeedbackPressed = false;
 
+    // 单词本弹窗
+    this._wordBookPopup = null;
+    this._closingWordBook = false;
+    this._closeWordBookStartTime = null;
+    this._wordBookClosePressed = false;
+    this._wordBookBackPressed = false;
+    this._wordBookScrollY = 0;
+    this._wordBookScrollState = null; // 'dragging' | 'inertia' | 'bounce' | null
+    this._wordBookScrollVelocity = 0;
+    this._wordBookScrollDragStartY = 0;
+    this._wordBookScrollTouchStartY = 0;
+    this._wordBookScrollLastTouchY = 0;
+    this._wordBookScrollLastTime = 0;
+    this._wordBookMaxScroll = 0;
+    this._wordBookContentH = 0;
+    this._wordBookScrollBounceTarget = 0;
+    this._wordBookScrollBounceStartY = 0;
+    this._wordBookScrollBounceStartTime = 0;
+    this._wordBookSortBy = 'count'; // 'word' | 'count'
+    this._wordBookSortOrder = 'desc'; // 'asc' | 'desc'
+
     // 问题反馈
     this._feedbackPage = 'main';           // 'main' | 'feedback'
     this._feedbackTransition = null;       // { from, to, startTime, duration }
@@ -2249,7 +2270,7 @@ class Game {
           if (this.storageManager) {
             this.storageManager.setHighScore(this.totalScore);
             this.storageManager.setBestRound(this.round);
-            uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
+            uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
             this.storageManager.updateStats(this);
             this.storageManager.clearProgress();
           }
@@ -2290,7 +2311,7 @@ class Game {
             if (this.storageManager) {
               this.storageManager.setHighScore(this.totalScore);
               this.storageManager.setBestRound(this.round);
-              uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
+              uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
               this.storageManager.updateStats(this);
               this.storageManager.clearProgress();
             }
@@ -2341,7 +2362,7 @@ class Game {
               if (this.storageManager) {
                 this.storageManager.setHighScore(this.totalScore);
                 this.storageManager.setBestRound(this.round);
-                uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
+                uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
                 this.storageManager.updateStats(this);
                 this.storageManager.clearProgress();
               }
@@ -2593,6 +2614,12 @@ class Game {
       this._checkDailyWordCollect(playedWord);
     }
 
+    // 记录到本地单词本（pending 会在回合结算时同步到云端）
+    if (playedWord && this.storageManager) {
+      const wordBookResult = this.storageManager.addPlayedWord(playedWord);
+      console.log('[WordBook] 记录单词:', playedWord, '总去重:', wordBookResult.totalUnique, '总次数:', wordBookResult.totalCount, '新单词:', wordBookResult.isNew);
+    }
+
     // 计分动画结束，更新上一手单词记录
     if (playedInOrder && playedInOrder.length > 0) {
       this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
@@ -2613,7 +2640,7 @@ class Game {
         if (this.storageManager) {
           this.storageManager.setHighScore(this.totalScore);
           this.storageManager.setBestRound(this.round);
-          uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound());
+          uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
           this.storageManager.updateStats(this);
           this.storageManager.clearProgress();
         }
@@ -2826,6 +2853,48 @@ class Game {
     }
 
     if (this.storageManager) this.storageManager.saveProgress();
+
+    // 回合结算时：将本回合累计的单词本增量同步到云端
+    this.syncWordBook();
+  }
+
+  /**
+   * 将本地单词本 pending 增量同步到云端
+   * 每次 _showSettlement 触发一次，数据量小且幂等
+   */
+  syncWordBook() {
+    if (!this.storageManager) return;
+    const book = this.storageManager.getWordBook();
+    const pending = book && book.pending ? book.pending : {};
+    const entries = Object.entries(pending).filter(([, count]) => count > 0);
+    if (entries.length === 0) {
+      console.log('[SyncWordBook] 无待同步增量');
+      return;
+    }
+
+    const wordsToSync = {};
+    for (const [word, count] of entries) {
+      wordsToSync[word] = count;
+    }
+
+    console.log('[SyncWordBook] 同步增量:', JSON.stringify(wordsToSync));
+    wx.cloud.callFunction({
+      name: 'syncWordBook',
+      data: { words: wordsToSync }
+    }).then(res => {
+      console.log('[SyncWordBook] 同步结果:', res.result);
+      if (res.result && res.result.code === 0) {
+        this.storageManager.clearPendingWords();
+      }
+    }).catch(err => {
+      console.error('[SyncWordBook] 同步失败:', err);
+    });
+  }
+
+  getWordBookUniqueCount() {
+    if (!this.storageManager) return 0;
+    const book = this.storageManager.getWordBook();
+    return Object.keys(book && book.words ? book.words : {}).length;
   }
 
   _checkCardBookUnlock() {
@@ -3307,6 +3376,47 @@ class Game {
     }
   }
 
+  // 单词本弹窗滚动物理更新（惯性滚动 + 边界回弹）
+  _updateWordBookScroll(deltaTime) {
+    if (!this._wordBookPopup) return;
+    if (this._wordBookScrollState === 'dragging') return;
+
+    const maxScroll = this._wordBookMaxScroll || 0;
+    const state = this._wordBookScrollState;
+
+    // 惯性滚动
+    if (state === 'inertia') {
+      const dt = Math.min(deltaTime, 32);
+      this._wordBookScrollY += this._wordBookScrollVelocity * dt;
+      this._wordBookScrollVelocity *= Math.pow(0.92, dt / 16);
+
+      if (this._wordBookScrollY < 0 || this._wordBookScrollY > maxScroll) {
+        this._wordBookScrollState = 'bounce';
+        this._wordBookScrollBounceTarget = this._wordBookScrollY < 0 ? 0 : maxScroll;
+      } else if (Math.abs(this._wordBookScrollVelocity) < 0.05) {
+        this._wordBookScrollState = 'idle';
+        this._wordBookScrollVelocity = 0;
+      }
+    }
+
+    // 边界回弹
+    if (state === 'bounce') {
+      const target = this._wordBookScrollBounceTarget || 0;
+      const startY = this._wordBookScrollBounceStartY || target;
+      const elapsed = Date.now() - (this._wordBookScrollBounceStartTime || Date.now());
+      const duration = 450;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = Easing.easeOutBack(progress);
+      this._wordBookScrollY = startY + (target - startY) * eased;
+
+      if (progress >= 1) {
+        this._wordBookScrollY = target;
+        this._wordBookScrollState = 'idle';
+        this._wordBookScrollVelocity = 0;
+      }
+    }
+  }
+
   winRound() {
     this.score = this.target;
     this.totalScore += this.target;
@@ -3397,6 +3507,9 @@ class Game {
     }
     // 今日新词弹窗滚动物理更新
     this._updateDailyWordsScroll(deltaTime);
+
+    // 单词本弹窗滚动物理更新
+    this._updateWordBookScroll(deltaTime);
 
     // toast 弹出 2s 后触发星星飞行动画
     if (this.hintToast && this.hintToast.starFlyAt && Date.now() > this.hintToast.starFlyAt && !this.hintToast._starFlown) {
@@ -3500,7 +3613,7 @@ class Game {
   }
 }
 
-function uploadScoreAndRound(currentScore, currentRound) {
+function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
   if (!wx.setUserCloudStorage) return;
 
   const doUpload = (updates) => {
@@ -3517,11 +3630,15 @@ function uploadScoreAndRound(currentScore, currentRound) {
 
   if (wx.getUserCloudStorage) {
     wx.getUserCloudStorage({
-      keyList: ['score', 'bestround'],
+      keyList: ['score', 'bestround', 'wordCount'],
       success: (res) => {
         const kvList = res.KVDataList || [];
         const cloudScore = parseInt(kvList.find(kv => kv.key === 'score')?.value || '0', 10);
         const cloudRound = parseInt(kvList.find(kv => kv.key === 'bestround')?.value || '0', 10);
+        const cloudWordCount = parseInt(kvList.find(kv => kv.key === 'wordCount')?.value || '0', 10);
+
+        console.log('[Rank] 本地数据 — score:', currentScore, 'round:', currentRound, 'wordCount:', currentWordCount,
+                    '| 云端数据 — score:', cloudScore, 'round:', cloudRound, 'wordCount:', cloudWordCount);
 
         const updates = [];
         if (currentRound > cloudRound) {
@@ -3532,7 +3649,10 @@ function uploadScoreAndRound(currentScore, currentRound) {
           // 规则2：round 没创新高，但 score 创新高，只更新 score
           updates.push({ key: 'score', value: String(currentScore) });
         }
-        // 规则3：都不高，不更新
+        // 规则3：单词量独立更新
+        if (currentWordCount > cloudWordCount) {
+          updates.push({ key: 'wordCount', value: String(currentWordCount) });
+        }
         doUpload(updates);
       },
       fail: (err) => {
@@ -3541,10 +3661,11 @@ function uploadScoreAndRound(currentScore, currentRound) {
       }
     });
   } else {
-    // 不支持读取时直接上传两个字段
+    // 不支持读取时直接上传所有字段
     doUpload([
       { key: 'score', value: String(currentScore) },
-      { key: 'bestround', value: String(currentRound) }
+      { key: 'bestround', value: String(currentRound) },
+      { key: 'wordCount', value: String(currentWordCount) }
     ]);
   }
 }

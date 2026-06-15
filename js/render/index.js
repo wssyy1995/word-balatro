@@ -786,6 +786,11 @@ Renderer.prototype.render = function(game) {
       this.drawSettingsPopup(game);
     }
 
+    // 单词本弹窗
+    if (game._wordBookPopup) {
+      this.drawWordBookPopup(game);
+    }
+
     // 求助提示弹窗
     if (game._tipHelpPopup) {
       this.drawTipHelpPopup(game);

@@ -503,6 +503,65 @@ wx.onTouchStart((e) => {
     return;
   }
 
+  // 单词本弹窗交互（优先处理）
+  if (game._wordBookPopup && !game._closingWordBook) {
+    const wbBackHit = renderer.wordBookBackRect && renderer.hitTest(x, y, [renderer.wordBookBackRect]);
+    const wbCloseHit = renderer.wordBookCloseRect && renderer.hitTest(x, y, [renderer.wordBookCloseRect]);
+    const wbWordHeaderHit = renderer.wordBookWordHeaderRect && renderer.hitTest(x, y, [renderer.wordBookWordHeaderRect]);
+    const wbCountHeaderHit = renderer.wordBookCountHeaderRect && renderer.hitTest(x, y, [renderer.wordBookCountHeaderRect]);
+    const wbContentHit = renderer.wordBookContentRect && renderer.hitTest(x, y, [renderer.wordBookContentRect]);
+
+    if (wbBackHit) {
+      game._wordBookBackPressed = true;
+      return;
+    }
+    if (wbCloseHit) {
+      game._wordBookClosePressed = true;
+      return;
+    }
+    if (wbWordHeaderHit) {
+      // 点击单词表头：切换升序/倒序
+      if (game._wordBookSortBy === 'word') {
+        game._wordBookSortOrder = game._wordBookSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        game._wordBookSortBy = 'word';
+        game._wordBookSortOrder = 'asc';
+      }
+      game._wordBookScrollY = 0;
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+    if (wbCountHeaderHit) {
+      // 点击次数表头：切换升序/倒序
+      if (game._wordBookSortBy === 'count') {
+        game._wordBookSortOrder = game._wordBookSortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        game._wordBookSortBy = 'count';
+        game._wordBookSortOrder = 'desc';
+      }
+      game._wordBookScrollY = 0;
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+    if (wbContentHit) {
+      game._wordBookScrollState = 'dragging';
+      game._wordBookScrollVelocity = 0;
+      game._wordBookScrollDragStartY = game._wordBookScrollY || 0;
+      game._wordBookScrollTouchStartY = y;
+      game._wordBookScrollLastTouchY = y;
+      game._wordBookScrollLastTime = Date.now();
+      return;
+    }
+    // 点击弹窗外部（遮罩区域）关闭弹窗，回到设置弹窗
+    const wbPanelHit = renderer.wordBookPanelRect && renderer.hitTest(x, y, [renderer.wordBookPanelRect]);
+    if (!wbPanelHit) {
+      game._closingWordBook = true;
+      game._closeWordBookStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    return;
+  }
+
   // 设置弹窗交互（优先处理）
   if (game._settingsPopup && !game._closingSettings) {
     // 精确检测关闭按钮（延迟关闭）
@@ -527,6 +586,14 @@ wx.onTouchStart((e) => {
     if (dailyChallengeHit) {
       // 打开今日新词弹窗
       game._dailyWordsPopup = { startTime: Date.now() };
+      if (game.audioManager) game.audioManager.play('tap');
+      return;
+    }
+    if (renderer.settingsWordBookRect && renderer.hitTest(x, y, [renderer.settingsWordBookRect])) {
+      // 打开单词本弹窗
+      game._wordBookPopup = { startTime: Date.now() };
+      game._wordBookScrollY = 0;
+      game._wordBookScrollState = null;
       if (game.audioManager) game.audioManager.play('tap');
       return;
     }
@@ -673,6 +740,19 @@ wx.onTouchMove((e) => {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsShareRect]);
     if (!hit) game._dailyWordsSharePressed = false;
   }
+
+  // 移出单词本弹窗按钮区域时取消按下状态
+  if (game._wordBookBackPressed && renderer.wordBookBackRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookBackRect]);
+    if (!hit) game._wordBookBackPressed = false;
+  }
+  if (game._wordBookClosePressed && renderer.wordBookCloseRect) {
+    const touch = e.touches[0];
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookCloseRect]);
+    if (!hit) game._wordBookClosePressed = false;
+  }
+
   // 今日新词弹窗滚动
   if (game._dailyWordsPopup && game._dailyWordsScrollState === 'dragging') {
     const touch = e.touches[0];
@@ -705,6 +785,37 @@ wx.onTouchMove((e) => {
 
     game._dailyWordsScrollLastTouchY = y;
     game._dailyWordsScrollLastTime = now;
+  }
+
+  // 单词本弹窗滚动
+  if (game._wordBookPopup && game._wordBookScrollState === 'dragging') {
+    const touch = e.touches[0];
+    const now = Date.now();
+    const y = touch.clientY;
+    const frameDelta = game._wordBookScrollLastTouchY - y;
+    const totalDelta = game._wordBookScrollTouchStartY - y;
+    const dt = now - game._wordBookScrollLastTime;
+
+    let targetY = game._wordBookScrollDragStartY + totalDelta;
+
+    const maxScroll = renderer.wordBookContentRect ? game._wordBookMaxScroll || 0 : 0;
+    const contentH = game._wordBookContentH || 1;
+    if (targetY < 0) {
+      const over = -targetY;
+      targetY = -over * 0.55 * Math.pow(over / contentH, 0.35);
+    } else if (maxScroll > 0 && targetY > maxScroll) {
+      const over = targetY - maxScroll;
+      targetY = maxScroll + over * 0.55 * Math.pow(over / contentH, 0.35);
+    }
+
+    game._wordBookScrollY = targetY;
+
+    if (dt > 0) {
+      game._wordBookScrollVelocity = frameDelta / dt;
+    }
+
+    game._wordBookScrollLastTouchY = y;
+    game._wordBookScrollLastTime = now;
   }
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
     const touch = e.touches[0];
@@ -1010,6 +1121,47 @@ wx.onTouchEnd(() => {
           }
         }, 80);
       }
+    }
+  }
+
+  // 单词本弹窗交互处理（松开时）
+  if (game._wordBookPopup) {
+    if (game._wordBookScrollState === 'dragging') {
+      game._wordBookScrollState = 'idle';
+      const maxScroll = game._wordBookMaxScroll || 0;
+      const scrollY = game._wordBookScrollY || 0;
+      const velocity = game._wordBookScrollVelocity || 0;
+
+      if (scrollY < 0 || (maxScroll > 0 && scrollY > maxScroll)) {
+        game._wordBookScrollState = 'bounce';
+        game._wordBookScrollBounceTarget = scrollY < 0 ? 0 : maxScroll;
+        game._wordBookScrollBounceStartY = scrollY;
+        game._wordBookScrollBounceStartTime = Date.now();
+      } else if (maxScroll > 0 && Math.abs(velocity) > 0.5) {
+        game._wordBookScrollState = 'inertia';
+      }
+    }
+
+    if (game._wordBookBackPressed) {
+      game._wordBookBackPressed = false;
+      // 关闭单词本弹窗，回到设置弹窗
+      game._closingWordBook = true;
+      game._closeWordBookStartTime = Date.now();
+      game._settingsPopup = { startTime: Date.now() };
+      game._closingSettings = false;
+      game._closeSettingsStartTime = null;
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+    if (game._wordBookClosePressed) {
+      game._wordBookClosePressed = false;
+      game._closingWordBook = true;
+      game._closeWordBookStartTime = Date.now();
+      // 同时关闭设置弹窗
+      if (game._settingsPopup) {
+        game._closingSettings = true;
+        game._closeSettingsStartTime = Date.now();
+      }
+      if (game.audioManager) game.audioManager.play('tap');
     }
   }
 

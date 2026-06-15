@@ -1531,8 +1531,8 @@ module.exports = function extendPopup(Renderer) {
       const isClosing = game._closingSettings;
       const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
 
-      const panelW = 280;
-      const panelH = 340;
+      const panelW = 282;
+      const panelH = 342;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
@@ -1562,6 +1562,7 @@ module.exports = function extendPopup(Renderer) {
       // 重置点击区域
       this.settingsSoundRect = null;
       this.settingsDailyChallengeRect = null;
+      this.settingsWordBookRect = null;
       this.settingsRankRect = null;
       this.settingsFeedbackRect = null;
       this.feedbackBackRect = null;
@@ -1743,10 +1744,10 @@ module.exports = function extendPopup(Renderer) {
             value: game.settings && game.settings.soundEnabled !== false
           },
           {
-            key: 'dailyChallenge',
-            iconKey: 'study',
-            title: '学习模式',
-            subtitle: '每天10个新词挑战',
+            key: 'wordBook',
+            iconKey: 'wordbook',
+            title: '单词本',
+            subtitle: '查看历史打出单词',
             type: 'arrow'
           },
           {
@@ -1762,19 +1763,26 @@ module.exports = function extendPopup(Renderer) {
             title: '问题反馈',
             subtitle: '告诉我们你的建议与问题',
             type: 'arrow'
+          },
+          {
+            key: 'dailyChallenge',
+            iconKey: 'study',
+            title: '学习模式',
+            subtitle: '每天10个新词挑战',
+            type: 'arrow'
           }
         ];
 
-        const itemH = 58 * s;
+        const itemH = 57 * s;
         const itemStartY = titleY + 28 * s;
-        const iconSize = 50 * s;
+        const iconSize = 52 * s;
 
         items.forEach((item, i) => {
           const itemY = itemStartY + i * itemH;
           const centerY = itemY + itemH / 2;
 
           // 图标图片
-          const iconX = px + 22 * s;
+          const iconX = px + 22 * s - 4;
           const iconY = centerY;
           const iconData = item.iconKey && this.settingIcons && this.settingIcons[item.iconKey];
           if (iconData && iconData.loaded && iconData.img) {
@@ -1794,6 +1802,9 @@ module.exports = function extendPopup(Renderer) {
             ctx.restore();
           }
 
+          // 标题和副标题位置
+          const textX = iconX + iconSize + 4 * s ;
+
           // 标题
           ctx.save();
           ctx.globalAlpha = contentAlpha;
@@ -1801,7 +1812,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillStyle = '#3a2e1e';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.title, iconX + iconSize + 11 * s, centerY - 7 * s);
+          ctx.fillText(item.title, textX, centerY - 7 * s);
           ctx.restore();
 
           // 副标题
@@ -1811,7 +1822,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillStyle = '#8a7a6a';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
-          ctx.fillText(item.subtitle, iconX + iconSize + 11 * s, centerY + 11 * s);
+          ctx.fillText(item.subtitle, textX, centerY + 11 * s);
           ctx.restore();
 
           // 右侧控件
@@ -1885,6 +1896,7 @@ module.exports = function extendPopup(Renderer) {
             if (item.key === 'rank') this.settingsRankRect = rect;
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
             if (item.key === 'dailyChallenge') this.settingsDailyChallengeRect = rect;
+            if (item.key === 'wordBook') this.settingsWordBookRect = rect;
           }
 
           // 分隔线（非最后一项）
@@ -2031,5 +2043,322 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
     }
+
+    // ===== 单词本弹窗 =====
+    Renderer.prototype.drawWordBookPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._wordBookPopup;
+      if (!popup) return;
+
+      const isClosing = game._closingWordBook;
+      const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
+
+      const panelW = 300;
+      const panelH = 420;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing,
+        closeStartTime: game._closeWordBookStartTime,
+        width: panelW,
+        height: panelH,
+        borderRadius: 16,
+        borderWidth: 1.5,
+        bgColor: '#f5f0e6',
+        borderColor: '#c4a35a',
+        overlayAlpha: 0.55,
+        overlayFadeInDuration: 200,
+        enterOffset: 20,
+        closeOffset: 30,
+        elapsed,
+        onCloseComplete: () => {
+          game._wordBookPopup = null;
+          game._closingWordBook = false;
+          game._closeWordBookStartTime = null;
+          game._wordBookScrollY = 0;
+          game._wordBookScrollState = null;
+        }
+      });
+
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+
+      // 重置点击区域
+      this.wordBookBackRect = null;
+      this.wordBookCloseRect = null;
+      this.wordBookWordHeaderRect = null;
+      this.wordBookCountHeaderRect = null;
+      this.wordBookPanelRect = { x: px, y: py, w: pw, h: ph };
+      this.wordBookContentRect = null;
+
+      const contentAlpha = closeAlpha;
+
+      // 内层细边框
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      const inset = 4 * s;
+      const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
+      ctx.moveTo(ix + ir, iy);
+      ctx.lineTo(ix + iw - ir, iy);
+      ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+      ctx.lineTo(ix + iw, iy + ih - ir);
+      ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+      ctx.lineTo(ix + ir, iy + ih);
+      ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+      ctx.lineTo(ix, iy + ir);
+      ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // 返回按钮
+      const backY = py + 26 * s;
+      const backLabel = '‹';
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      const backW = ctx.measureText(backLabel).width;
+      ctx.fillText(backLabel, px + 14 * s, backY);
+      ctx.restore();
+      this.wordBookBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
+
+      // 关闭按钮（使用 pop_close.png，与设置弹窗一致）
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 3;
+      const closeY = py + 10 * s - 3;
+      const closePressOffset = game._wordBookClosePressed ? 2 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + closePressOffset, closeSize, closeSize);
+      } else {
+        // 兜底：绘制 X
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + closePressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
+      ctx.restore();
+      this.wordBookCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+
+      // 标题
+      const titleY = py + 32 * s;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('单词本', W / 2, titleY);
+      ctx.restore();
+
+      // 标题下装饰线
+      const decoLineY = titleY + 16 * s;
+      const decoLineW = pw * 0.45;
+      const decoLineX = px + (pw - decoLineW) / 2;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+      ctx.restore();
+
+      // 读取单词本数据
+      const book = (game.storageManager && game.storageManager.getWordBook) ? game.storageManager.getWordBook() : { words: {} };
+      const words = book && book.words ? book.words : {};
+      const sortBy = game._wordBookSortBy || 'word';
+      const sortOrder = game._wordBookSortOrder || 'asc';
+      const wordEntries = Object.entries(words)
+        .sort((a, b) => {
+          if (sortBy === 'count') {
+            // 按次数排序
+            if (a[1] !== b[1]) return sortOrder === 'asc' ? a[1] - b[1] : b[1] - a[1];
+            return sortOrder === 'asc' ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0]);
+          } else {
+            // 按单词排序
+            if (a[0] !== b[0]) return sortOrder === 'asc' ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0]);
+            return sortOrder === 'asc' ? a[1] - b[1] : b[1] - a[1];
+          }
+        });
+      const totalUnique = wordEntries.length;
+
+      // 统计文本
+      const statY = decoLineY + 20 * s;
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`累计打出 ${totalUnique} 个不同单词`, W / 2, statY);
+      ctx.restore();
+
+      // 列表区域
+      const headerH = 34 * s;
+      const contentTop = statY + 22 * s;
+      const contentBottom = py + ph - 18 * s;
+      const contentH = contentBottom - contentTop - headerH;
+      const rowH = 38 * s;
+      const listW = pw - 32 * s;
+      const listX = px + 16 * s;
+      const headerY = contentTop;
+
+      // 表头背景
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      this.roundRect(listX, headerY, listW, headerH, 8 * s, 'rgba(196,163,90,0.25)', 'rgba(196,163,90,0.5)');
+      ctx.restore();
+
+      // 表头文字与点击区域
+      const headerTextY = headerY + headerH / 2;
+      const headerPadX = 14 * s;
+      const wordHeaderX = listX + headerPadX;
+      const countHeaderX = listX + listW - headerPadX;
+
+      // 单词表头
+      const isWordSort = sortBy === 'word';
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = isWordSort ? '#5a4a2a' : '#8a7a6a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('单词' + (isWordSort ? (sortOrder === 'asc' ? ' ▲' : ' ▼') : ''), wordHeaderX, headerTextY);
+      ctx.restore();
+
+      // 次数表头
+      const isCountSort = sortBy === 'count';
+      ctx.save();
+      ctx.globalAlpha = contentAlpha;
+      ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+      ctx.fillStyle = isCountSort ? '#5a4a2a' : '#8a7a6a';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText((isCountSort ? (sortOrder === 'asc' ? '▲ ' : '▼ ') : '') + '次数', countHeaderX, headerTextY);
+      ctx.restore();
+
+      // 记录表头点击区域
+      this.wordBookWordHeaderRect = { x: listX, y: headerY, w: listW * 0.5, h: headerH };
+      this.wordBookCountHeaderRect = { x: listX + listW * 0.5, y: headerY, w: listW * 0.5, h: headerH };
+
+      // 表头与列表分隔线
+      ctx.save();
+      ctx.globalAlpha = contentAlpha * 0.5;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.moveTo(listX + 6 * s, headerY + headerH);
+      ctx.lineTo(listX + listW - 6 * s, headerY + headerH);
+      ctx.stroke();
+      ctx.restore();
+
+      const listTop = contentTop + headerH;
+
+      // 列表背景
+      ctx.save();
+      ctx.globalAlpha = contentAlpha * 0.5;
+      this.roundRect(listX, listTop, listW, contentH, 10 * s, 'rgba(255,255,255,0.35)');
+      ctx.restore();
+
+      // 可滚动内容
+      const maxScroll = Math.max(0, wordEntries.length * rowH - contentH + 10 * s);
+      const scrollY = Math.max(0, Math.min(game._wordBookScrollY || 0, maxScroll));
+      game._wordBookMaxScroll = maxScroll;
+      game._wordBookContentH = wordEntries.length * rowH + 10 * s;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(listX, listTop, listW, contentH);
+      ctx.clip();
+
+      const startY = listTop + 5 * s - scrollY;
+      for (let i = 0; i < wordEntries.length; i++) {
+        const [word, count] = wordEntries[i];
+        const y = startY + i * rowH;
+        if (y + rowH < listTop || y > listTop + contentH) continue;
+
+        // 隔行背景
+        if (i % 2 === 1) {
+          ctx.save();
+          ctx.globalAlpha = contentAlpha * 0.25;
+          ctx.fillStyle = 'rgba(196,163,90,0.12)';
+          ctx.fillRect(listX + 2 * s, y, listW - 4 * s, rowH);
+          ctx.restore();
+        }
+
+        // 单词
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(15 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#3a2e1e';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word.toUpperCase(), listX + 12 * s, y + rowH / 2);
+        ctx.restore();
+
+        // 次数标签
+        const tagH = 18 * s;
+        const tagW = 44 * s;
+        const tagX = listX + listW - tagW - 10 * s;
+        const tagY = y + (rowH - tagH) / 2;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        this.roundRect(tagX, tagY, tagW, tagH, tagH / 2, '#8b6914');
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${count}次`, tagX + tagW / 2, tagY + tagH / 2);
+        ctx.restore();
+      }
+
+      // 空状态
+      if (wordEntries.length === 0) {
+        ctx.save();
+        ctx.globalAlpha = contentAlpha * 0.7;
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#8a7a6a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('还没有打出过单词哦~', listX + listW / 2, listTop + contentH / 2);
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      // 记录内容区域用于滚动
+      this.wordBookContentRect = { x: listX, y: listTop, w: listW, h: contentH };
+
+      // 滚动指示器（当内容可滚动时）
+      if (maxScroll > 0) {
+        const barH = Math.max(20 * s, contentH * contentH / (contentH + maxScroll));
+        const barY = listTop + (contentH - barH) * (scrollY / maxScroll);
+        const barX = listX + listW - 4 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha * 0.4;
+        ctx.fillStyle = '#8b6914';
+        ctx.beginPath();
+        ctx.arc(barX, barY + 2 * s, 2 * s, 0, Math.PI * 2);
+        ctx.arc(barX, barY + barH - 2 * s, 2 * s, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(barX - 2 * s, barY + 2 * s, 4 * s, barH - 4 * s);
+        ctx.restore();
+      }
+    };
 
 };

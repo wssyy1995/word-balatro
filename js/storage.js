@@ -323,6 +323,53 @@ class StorageManager {
     return this.set('settings', settings);
   }
 
+  // ===== 单词本（历史打出单词记录） =====
+  // 结构：{ words: { word: count }, pending: { word: count }, lastSyncAt: number }
+
+  getWordBook() {
+    return this.get('word_book', { words: {}, pending: {}, lastSyncAt: 0 });
+  }
+
+  saveWordBook(wordBook) {
+    return this.set('word_book', wordBook);
+  }
+
+  /**
+   * 记录一个打出的合法单词
+   * @param {string} word 单词（小写）
+   * @returns {{ totalUnique: number, totalCount: number, isNew: boolean }}
+   */
+  addPlayedWord(word) {
+    if (!word) return { totalUnique: 0, totalCount: 0, isNew: false };
+    const lower = String(word).toLowerCase().trim();
+    if (!lower) return { totalUnique: 0, totalCount: 0, isNew: false };
+
+    const book = this.getWordBook();
+    book.words = book.words || {};
+    book.pending = book.pending || {};
+
+    const isNew = !book.words[lower];
+    book.words[lower] = (book.words[lower] || 0) + 1;
+    book.pending[lower] = (book.pending[lower] || 0) + 1;
+
+    this.saveWordBook(book);
+    console.log('[WordBook] 本地更新:', lower, 'count:', book.words[lower], 'pending:', book.pending[lower]);
+
+    return {
+      totalUnique: Object.keys(book.words).length,
+      totalCount: Object.values(book.words).reduce((sum, c) => sum + c, 0),
+      isNew
+    };
+  }
+
+  clearPendingWords() {
+    const book = this.getWordBook();
+    book.pending = {};
+    book.lastSyncAt = Date.now();
+    console.log('[WordBook] pending 已清空，lastSyncAt:', book.lastSyncAt);
+    return this.saveWordBook(book);
+  }
+
   // ===== 每日单词挑战 =====
 
   getDailyChallenge() {

@@ -125,7 +125,15 @@ async function drawRankList() {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bestround, contentX + contentW * 0.70, y + rowH / 2);
+    ctx.fillText(bestround, contentX + contentW * 0.58, y + rowH / 2);
+
+    // 单词量
+    const wordCount = player.KVDataList.find(kv => kv.key === 'wordCount')?.value || '0';
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(wordCount, contentX + contentW * 0.75, y + rowH / 2);
 
     // 分数
     const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
@@ -218,7 +226,15 @@ function drawFriendList(w, rowH) {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bestround, pw * 0.70, y + rh / 2);
+    ctx.fillText(bestround, pw * 0.58, y + rh / 2);
+
+    // 单词量
+    const wordCount = player.KVDataList.find(kv => kv.key === 'wordCount')?.value || '0';
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(wordCount, pw * 0.75, y + rh / 2);
 
     // 分数
     const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
@@ -288,8 +304,9 @@ function _drawRankPanelFrame() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('排名', contentX + contentW * 0.10, startY + rowH / 2);
-  ctx.fillText('玩家', contentX + contentW * 0.38, startY + rowH / 2);
-  ctx.fillText('回合', contentX + contentW * 0.70, startY + rowH / 2);
+  ctx.fillText('玩家', contentX + contentW * 0.34, startY + rowH / 2);
+  ctx.fillText('回合', contentX + contentW * 0.58, startY + rowH / 2);
+  ctx.fillText('单词量', contentX + contentW * 0.75, startY + rowH / 2);
   ctx.textAlign = 'right';
   ctx.fillText('总分', contentX + contentW * 0.92, startY + rowH / 2);
 
@@ -348,7 +365,7 @@ function fetchRankData() {
 
 function _doFetchFriendRank() {
   wx.getFriendCloudStorage({
-    keyList: ['score', 'bestround'],
+    keyList: ['score', 'bestround', 'wordCount'],
     success: (res) => {
       console.log('[OpenData] getFriendCloudStorage success', res.data?.length);
       const data = res.data || [];

@@ -712,6 +712,7 @@ gap = 8 * scale
 | `word_balatro_equipped_witch_card` | 已装备的女巫卡牌（跨局永久保留） |
 | `word_balatro_daily_revive` | 每日复活次数记录（日期 + 是否已使用） |
 | `word_balatro_daily_challenge` | 每日挑战状态（日期 + 10 个目标词 + 已收集列表 + 奖励状态） |
+| `word_balatro_word_book` | 单词本（历史打出单词及次数 + 待同步增量） |
 | `word_balatro_best_round` | 历史最高到达回合 |
 
 ### 3.7 cloud_storage.js — 微信云存储
@@ -867,6 +868,45 @@ gap = 8 * scale
 | `word_balatro_daily_challenge` | `{ date, words, collected, rewarded }` |
 | `word_balatro_settings.dailyWordChallengeEnabled` | 开关状态 |
 | `word_balatro_settings.dailyWordHintShown` | 首次提示是否已展示 |
+
+---
+
+## 4.7 单词本（Word Book）
+
+记录玩家历史打出的所有合法单词及每个单词的打出次数，数据本地持久化并在回合结算时增量同步到云数据库。
+
+### 4.7.1 机制
+
+- **本地记录**：每次打出合法单词后，立即写入本地 `word_balatro_word_book`
+  - `words`：去重单词表 `{ word: count }`
+  - `pending`：自上次成功同步到云端的增量 `{ word: count }`
+  - `lastSyncAt`：上次成功同步时间戳
+- **云端同步**：每回合弹出结算弹窗时，调用 `syncWordBook` 云函数，仅上传 `pending` 增量
+- **控制数据量**：
+  - 不上传完整词表，只传本局/本回合新增/变化的单词
+  - 云端使用 `$inc` 原子累加，避免读-改-写竞争
+  - 同步成功后清空本地 `pending`
+
+### 4.7.2 单词本弹窗
+
+设置弹窗中新增「单词本」入口，点击后打开单词本弹窗：
+
+- 顶部显示累计去重单词总数
+- 列表按打出次数降序、字母升序排列
+- 每行显示：单词（大写）+ 次数标签
+- 支持上下拖动滚动、惯性滚动与边界回弹
+- 从单词本返回时回到设置弹窗
+
+### 4.7.3 好友排行榜
+
+好友排行榜新增 **「单词量」** 列，展示每位好友历史打出的去重单词数量。该数值通过 `wx.setUserCloudStorage` 的 `wordCount` 字段上传，与 `score`、`bestround` 独立比较更新。
+
+### 4.7.4 持久化
+
+| 键 | 内容 |
+|----|------|
+| `word_balatro_word_book` | `{ words: { word: count }, pending: { word: count }, lastSyncAt }` |
+| 云端 `user_word_books` | `{ _openid, words: { word: count }, totalUnique, totalCount, create_time, update_time }` |
 
 ---
 
@@ -1038,6 +1078,7 @@ letterUpgrades = Map {
 前端 → 直连百度接口（带 token）→ 返回翻译/词典结果
 前端 → 云函数 getDailyWords → 返回今日 10 个目标单词
 前端 → 云函数 updateBestRound → 更新好友排行榜 bestround
+前端 → 云函数 syncWordBook → 同步历史打出单词到云数据库
 前端 → 云函数 login → 上报用户设备信息
 ```
 
@@ -1092,14 +1133,15 @@ letterUpgrades = Map {
 **架构设计**
 - **开放数据域** `openDataContext/index.js`：独立 JS 运行环境，通过 `wx.getFriendCloudStorage()` 拉取好友数据，在 `sharedCanvas` 上绘制排行榜 UI
 - **主域** `game.js`：负责设置 `sharedCanvas` 的物理像素宽高（解决 ScreenCanvas 文字模糊问题），每帧通过 `ctx.drawImage(odc.canvas)` 将排行榜渲染到主画布
-- **分数与回合上传**：游戏结束时调用 `uploadScoreAndRound()`，按以下规则写入微信云端：
+- **分数、回合与单词量上传**：游戏结束时调用 `uploadScoreAndRound()`，按以下规则写入微信云端：
   - 若当前到达回合 > 云端 bestround：同时更新 `score` 和 `bestround`
   - 若回合未创新高但总分 > 云端 score：仅更新 `score`
+  - 若当前去重单词量 > 云端 wordCount：更新 `wordCount`
   - 都不高时不更新，避免覆盖云端更高记录
 
 **排行榜弹窗 UI**
 - 深色圆角面板（`#2a2a3a` 边框 `#4a4a6a`）
-- 表头：排名、头像、昵称、**回合**、总分
+- 表头：排名、头像、昵称、**回合**、**单词量**、总分
 - 当前玩家高亮显示（蓝色背景条）
 - 顶部标题「好友排行榜」+ 右上角红色圆形关闭按钮
 - 头像通过 `wx.createImage()` 异步加载并缓存
@@ -1235,6 +1277,7 @@ letterUpgrades = Map {
 | v1.9.8 | 2026-06-13 | 修复提示水波纹金色色块爆发并调整参数；回合基础金币改为 3；商店价格与资源更新（女巫牌 6~14 金币、水晶球 3~4 金币、药水 5~6 金币）；手牌选择上限改为当前手牌上限（`_maxHandSize \|\| baseHandSize`）；help 按钮常驻显示；预览字体根据单词长度自适应；新增 `letter_trigger_twice` 图鉴装备卡计分与跳跃动画；呼吸蒙层速度从 500ms 加快到 400ms；已购买道具栏竖分割线改为亮金棕色；5 张女巫牌时间距最小值从 1*s 调整为 0.6*s；card_bar 云路径更新为 v7 |
 | v1.9.9 | 2026-06-14 | 目标分数基准从 150 提升至 250，后续分段系数上调（11~20:33、21~30:43、31~40:55、41~50+:70），同步更新 README 目标分数表；新增女巫技能 `disable_potion_card`（本回合禁用所有魔法药水牌）；图鉴女巫牌关卡调整（女巫_K 30→29、女巫_L 33→32）；新增图鉴女巫卡牌 `witch_card_29` 卡莉瑟薇、`witch_card_32` 莉丝薇娜；`witch_card_27` 名称从薇尔莉特改为柔莉丝特；使用求助后预览区下方显示种子词中文释义；今日新词弹窗 10 词集齐后新增截图分享按钮 |
 | v1.10.0 | 2026-06-15 | 新增女巫技能 `disable_two_witch_card`（回合开始时随机禁用 2 张女巫牌）；`_disableWitchAnim` 改为使用 `jokerIndices` 数组以支持多张禁用动画 |
+| v1.10.1 | 2026-06-15 | 新增单词本系统：记录历史打出单词及次数，本地 `word_balatro_word_book` 持久化，回合结算时通过 `syncWordBook` 云函数增量同步到 `user_word_books`；设置弹窗新增「单词本」入口与可滚动弹窗；好友排行榜新增「单词量」列，通过 `wordCount` 字段上传 |
 
 ---
 
