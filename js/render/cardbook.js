@@ -227,49 +227,7 @@ module.exports = function extendCardbook(Renderer) {
       ctx.fill();
       if (!isEquipped) {
         // ── 呼吸光边波纹 ──
-        if (!this._equipBtnRings) this._equipBtnRings = [];
-        const now = Date.now();
-        const RING_INTERVAL = 1700;
-        const RING_DURATION = 2200;
-
-        if (this._equipBtnRings.length === 0 || now - this._equipBtnRings[this._equipBtnRings.length - 1].start > RING_INTERVAL) {
-          this._equipBtnRings.push({ start: now });
-        }
-        while (this._equipBtnRings.length > 0 && now - this._equipBtnRings[0].start > RING_DURATION) {
-          this._equipBtnRings.shift();
-        }
-
-        for (const ring of this._equipBtnRings) {
-          const elapsed = now - ring.start;
-          const progress = elapsed / RING_DURATION;
-          const expand = progress * 10 * s;
-          const alpha = 0.55 * (1 - progress) * (1 - progress);
-
-          ctx.save();
-          ctx.beginPath();
-          const er = 5 * s + expand;
-          const ex = btnX - expand;
-          const ey = drawBtnY - expand;
-          const ew = btnW + 2 * expand;
-          const eh = btnH + 2 * expand;
-          ctx.moveTo(ex + er, ey);
-          ctx.lineTo(ex + ew - er, ey);
-          ctx.quadraticCurveTo(ex + ew, ey, ex + ew, ey + er);
-          ctx.lineTo(ex + ew, ey + eh - er);
-          ctx.quadraticCurveTo(ex + ew, ey + eh, ex + ew - er, ey + eh);
-          ctx.lineTo(ex + er, ey + eh);
-          ctx.quadraticCurveTo(ex, ey + eh, ex, ey + eh - er);
-          ctx.lineTo(ex, ey + er);
-          ctx.quadraticCurveTo(ex, ey, ex + er, ey);
-          ctx.closePath();
-
-          ctx.fillStyle = `rgba(255, 215, 120, ${alpha * 0.35})`;
-          ctx.fill();
-          ctx.strokeStyle = `rgba(212, 169, 78, ${alpha})`;
-          ctx.lineWidth = 2.2 * s;
-          ctx.stroke();
-          ctx.restore();
-        }
+        this._drawButtonRipple(ctx, btnX, drawBtnY, btnW, btnH, s, { stateKey: 'equip', radius: 5 });
       }
       ctx.restore();
   

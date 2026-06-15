@@ -540,6 +540,68 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 按钮呼吸光边波纹（参考 card_book 装备按钮效果）
+    // stateKey 用于区分不同按钮的波纹状态；options 可自定义颜色、频率、强度
+    Renderer.prototype._drawButtonRipple = function(ctx, x, y, w, h, s, options = {}) {
+      const {
+        stateKey = 'default',
+        interval = 1700,
+        duration = 2200,
+        alphaScale = 1,
+        lineWidthScale = 1,
+        fillAlpha = 0.35,
+        strokeAlpha = 0.55,
+        color = { r: 255, g: 215, b: 120 },
+        strokeColor = { r: 212, g: 169, b: 78 },
+        radius = 5
+      } = options;
+
+      if (!this._buttonRippleStates) this._buttonRippleStates = {};
+      if (!this._buttonRippleStates[stateKey]) this._buttonRippleStates[stateKey] = [];
+
+      const rings = this._buttonRippleStates[stateKey];
+      const now = Date.now();
+
+      if (rings.length === 0 || now - rings[rings.length - 1].start > interval) {
+        rings.push({ start: now });
+      }
+      while (rings.length > 0 && now - rings[0].start > duration) {
+        rings.shift();
+      }
+
+      for (const ring of rings) {
+        const elapsed = now - ring.start;
+        const progress = elapsed / duration;
+        const expand = progress * 10 * s;
+        const alpha = strokeAlpha * (1 - progress) * (1 - progress) * alphaScale;
+
+        ctx.save();
+        ctx.beginPath();
+        const er = radius * s + expand;
+        const ex = x - expand;
+        const ey = y - expand;
+        const ew = w + 2 * expand;
+        const eh = h + 2 * expand;
+        ctx.moveTo(ex + er, ey);
+        ctx.lineTo(ex + ew - er, ey);
+        ctx.quadraticCurveTo(ex + ew, ey, ex + ew, ey + er);
+        ctx.lineTo(ex + ew, ey + eh - er);
+        ctx.quadraticCurveTo(ex + ew, ey + eh, ex + ew - er, ey + eh);
+        ctx.lineTo(ex + er, ey + eh);
+        ctx.quadraticCurveTo(ex, ey + eh, ex, ey + eh - er);
+        ctx.lineTo(ex, ey + er);
+        ctx.quadraticCurveTo(ex, ey, ex + er, ey);
+        ctx.closePath();
+
+        ctx.fillStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${fillAlpha * (1 - progress) * alphaScale})`;
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${strokeColor.r}, ${strokeColor.g}, ${strokeColor.b}, ${alpha})`;
+        ctx.lineWidth = 2.2 * s * lineWidthScale;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     Renderer.prototype._drawTitleDivider = function(ctx, x, y, w, s, options = {}) {
       const {
         color = '#c4a35a',
