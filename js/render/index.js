@@ -59,67 +59,69 @@ Renderer.prototype.render = function(game) {
       this.drawHUD(game);
       this.witchRewardRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'shop') {
-      // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
-      this.drawTopHeader(game);
-
-      // 游戏标题
-      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
-      const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
-      ctx.save();
-      ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
-      ctx.fillStyle = '#8b6914';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const shopTitleText = '女巫的词牌';
-      ctx.fillText(shopTitleText, W / 2, titleY);
-      const shopTitleW = ctx.measureText(shopTitleText).width;
-      ctx.restore();
-
-      this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
-
-      this.shopRenderer.draw(ctx, game, W, H, s);
-      // 商店页女巫牌详情弹窗（含右上角售出按钮）
-      this._drawWitchDetailPopup(ctx, game, s);
-      // 确认购买弹窗（覆盖在商店上方）
-      if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
-        this.confirmBuyRenderer.draw(ctx, game, W, H, s);
-      }
-
-      // 获得新词牌弹窗（领取结算后、女巫奖励前）
+      // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景为游戏页面
       if (game._newWitchCardPopup) {
+        this.drawHUD(game);
+        this.drawPlaying(game);
         this._drawNewWitchCardPopup(game);
-      }
+      } else {
+        // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
+        this.drawTopHeader(game);
 
-      // 女巫奖励延迟 1s 进入
-      if (game._pendingWitchRewardDelay && !game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
-        const delayElapsed = Date.now() - (game._witchRewardDelayStartTime || Date.now());
-        if (delayElapsed >= 1000) {
-          game._pendingWitchRewardDelay = false;
-          game._witchRewardDelayStartTime = null;
-          const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
-          if (witchSkill && game.witchSkillPassed) {
-            game.witchRewardData = {
-              skill: witchSkill,
-              phase: 'gift',
-              giftStartTime: Date.now(),
-              startTime: Date.now(),
-              result: null,
-              rewardItem: null,
-            };
-            game.state = 'witch_reward';
+        // 游戏标题
+        const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+        const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);
+        ctx.save();
+        ctx.font = `${Math.floor(22 * s)}px ${this.titleFontFamily}`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const shopTitleText = '女巫的词牌';
+        ctx.fillText(shopTitleText, W / 2, titleY);
+        const shopTitleW = ctx.measureText(shopTitleText).width;
+        ctx.restore();
+
+        this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
+
+        this.shopRenderer.draw(ctx, game, W, H, s);
+        // 商店页女巫牌详情弹窗（含右上角售出按钮）
+        this._drawWitchDetailPopup(ctx, game, s);
+        // 确认购买弹窗（覆盖在商店上方）
+        if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+          this.confirmBuyRenderer.draw(ctx, game, W, H, s);
+        }
+
+        // 女巫奖励延迟 1s 进入
+        if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
+          const delayElapsed = Date.now() - (game._witchRewardDelayStartTime || Date.now());
+          if (delayElapsed >= 1000) {
+            game._pendingWitchRewardDelay = false;
+            game._witchRewardDelayStartTime = null;
+            const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
+            if (witchSkill && game.witchSkillPassed) {
+              game.witchRewardData = {
+                skill: witchSkill,
+                phase: 'gift',
+                giftStartTime: Date.now(),
+                startTime: Date.now(),
+                result: null,
+                rewardItem: null,
+              };
+              game.state = 'witch_reward';
+            }
           }
         }
       }
 
-      // 商店女巫技能引导触发检查
-      if (game.round === 2 && game.shopGuidePhase === 0) {
+      // 商店女巫技能引导触发检查（获得新词牌弹窗期间不触发）
+      if (!game._newWitchCardPopup && game.round === 2 && game.shopGuidePhase === 0) {
         game.shopGuidePhase = 1;
         game._shopGuideStartTime = Date.now();
       }
       // 商店引导覆盖层
-      if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
+      if (!game._newWitchCardPopup && game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
         this._drawShopGuideOverlay(game);
-      } else if (game.shopGuidePhase === 3 && game._shopGuideExitStartTime) {
+      } else if (!game._newWitchCardPopup && game.shopGuidePhase === 3 && game._shopGuideExitStartTime) {
         const exitElapsed = Date.now() - game._shopGuideExitStartTime;
         if (exitElapsed < 600) {
           // 0~600ms：女巫+对话框弹出去，蒙层保持
@@ -142,8 +144,8 @@ Renderer.prototype.render = function(game) {
         }
       }
 
-      // 卡牌图鉴引导触发检查（第3关商店）
-      if (game.round === 3 && game.cardBookGuidePhase === 0 && game.cardBookUnlocked) {
+      // 卡牌图鉴引导触发检查（第3关商店，获得新词牌弹窗期间不触发）
+      if (!game._newWitchCardPopup && game.round === 3 && game.cardBookGuidePhase === 0 && game.cardBookUnlocked) {
         game.cardBookGuidePhase = 1;
         game._cardBookGuideStartTime = Date.now();
         game._cardBookGuideTextStartTime = Date.now();
