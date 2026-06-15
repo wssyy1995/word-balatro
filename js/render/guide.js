@@ -122,10 +122,10 @@ module.exports = function extendGuide(Renderer) {
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
 
       // 小女巫名字标签（左上角）
-      const tagH = 34 * s;
+      const tagH = 36 * s;
       const tagW = tagH * (100 / 40); // name_tag.png 原始尺寸 100x40
       const tagX = dialogDrawX + 14 * s;
-      const tagY = dialogDrawY - tagH / 2;
+      const tagY = dialogDrawY - tagH / 2 - 2 * s;
       ctx.save();
       if (this.nameTagLoaded && this.nameTagImage) {
         ctx.drawImage(this.nameTagImage, tagX, tagY, tagW, tagH);
