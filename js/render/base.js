@@ -526,7 +526,7 @@ class Renderer {
     
     // 设置弹窗图标
     this.settingIcons = {};
-    const settingIconNames = ['sound', 'study', 'wordbook', 'rank', 'feedback', 'left'];
+    const settingIconNames = ['sound', 'study', 'wordbook', 'rank', 'feedback', 'right'];
     settingIconNames.forEach(name => {
       try {
         const img = wx.createImage();

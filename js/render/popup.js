@@ -1882,12 +1882,12 @@ module.exports = function extendPopup(Renderer) {
               ctx.restore();
             }
 
-            const leftIcon = this.settingIcons && this.settingIcons.left;
-            if (leftIcon && leftIcon.loaded && leftIcon.img) {
+            const rightIcon = this.settingIcons && this.settingIcons.right;
+            if (rightIcon && rightIcon.loaded && rightIcon.img) {
               const iconSize = 10 * s;
               ctx.save();
               ctx.globalAlpha = contentAlpha * 0.8;
-              ctx.drawImage(leftIcon.img, ctrlRightX - 4 * s - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+              ctx.drawImage(rightIcon.img, ctrlRightX - 4 * s - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
               ctx.restore();
             } else {
               ctx.save();
