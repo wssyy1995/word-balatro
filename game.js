@@ -1022,6 +1022,14 @@ wx.onTouchEnd(() => {
       const newValue = !oldValue;
       game.settings.dailyWordChallengeEnabled = newValue;
       if (game.storageManager) game.storageManager.saveSettings(game.settings);
+      // 学习模式打开埋点
+      if (newValue && !oldValue) {
+        if (typeof wx !== 'undefined' && wx.reportEvent) {
+          wx.reportEvent("study_mode_open", {
+            "userid": game.userid || ''
+          });
+        }
+      }
       // 打开时弹出提示（仅首次）
       if (newValue && !oldValue && !game.settings.dailyWordHintShown) {
         game._dailyWordsSwitchHint = {
