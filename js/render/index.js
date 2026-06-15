@@ -909,19 +909,21 @@ Renderer.prototype.render = function(game) {
     const btnW = 140 * s;
     const btnH = 44 * s;
     const btnX = (W - btnW) / 2;
-    const btnY = py + ph - btnH - 32 * s;
+    const btnY = py + ph - btnH - 30 * s;
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    // 微弱的 2 层水波纹（比装备按钮更弱、更短周期，保证同时约 2 层）
+    // 微弱的 2 层水波纹（比装备按钮更弱、更短周期，保证同时约 2 层；颜色加深）
     this._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, {
       stateKey: 'collect',
       radius: 8,
       interval: 900,
       duration: 1800,
-      alphaScale: 0.5,
+      alphaScale: 0.55,
       lineWidthScale: 0.8,
-      fillAlpha: 0.2,
-      strokeAlpha: 0.4
+      fillAlpha: 0.22,
+      strokeAlpha: 0.45,
+      color: { r: 255, g: 195, b: 70 },
+      strokeColor: { r: 188, g: 140, b: 40 }
     });
     this._drawScaledButton(ctx, '收集', btnX, btnY, btnW, btnH, s, game._newWitchCardCollectBtnPressed || false, { color: '#c4a35a', radius: 8 });
     ctx.restore();
