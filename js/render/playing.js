@@ -598,14 +598,16 @@ module.exports = function extendPlaying(Renderer) {
               const jokers = game.jokers || [];
   
               // per_card 倍率/加分提示 — 当前步骤对应的 per_card
+              const formatLabelValue = (v) => Number.isInteger(v) ? String(v) : v.toFixed(1);
               pc._perCardMultText = null;
               if (!isAllJumped && cardIdx >= 0 && stepInfo && stepInfo.jokerIdx !== null) {
                 const activeJoker = jokers[stepInfo.jokerIdx];
                 if (activeJoker && activeJoker.value) {
+                  const displayValue = formatLabelValue(activeJoker.value);
                   if (activeJoker.operation === 'add') {
-                    pc._perCardMultText = `+${activeJoker.value}`;
+                    pc._perCardMultText = `+${displayValue}`;
                   } else {
-                    pc._perCardMultText = `x${activeJoker.value}`;
+                    pc._perCardMultText = `x${displayValue}`;
                   }
                 }
               }
@@ -1146,12 +1148,13 @@ module.exports = function extendPlaying(Renderer) {
           if (stepProgress < 1.0) {
             const item = wjList[labelIdx];
             const joker = item.joker;
+            const formatLabelValue = (v) => Number.isInteger(v) ? String(v) : v.toFixed(1);
             if (item.isPenalty) {
-              labelText = `${joker.penalty}`;
+              labelText = `${formatLabelValue(joker.penalty)}`;
             } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-              labelText = `+${joker.value}`;
+              labelText = `+${formatLabelValue(joker.value)}`;
             } else {
-              labelText = `x${joker.value}`;
+              labelText = `x${formatLabelValue(joker.value)}`;
             }
           }
         }
