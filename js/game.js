@@ -10,7 +10,7 @@ const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -218,9 +218,19 @@ function countVowelFreq(word) {
   return freq;
 }
 
-function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = [], dailyWord = null) {
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = [], dailyWord = null, requiredLetter = null) {
   // 固定生成一个长度3的种子词（不从牌堆抽取，直接创建）
-  const candidates3 = getCandidatesByLen(3, 3, excludeLetters);
+  let candidates3 = getCandidatesByLen(3, 3, excludeLetters);
+  let candidates4 = getCandidatesByLen(4, 4, excludeLetters);
+
+  // force_contain_X：优先选择包含指定字母的种子词，保证保底单词中至少有一个含该字母
+  if (requiredLetter) {
+    const withLetter3 = candidates3.filter(w => w.toUpperCase().includes(requiredLetter));
+    const withLetter4 = candidates4.filter(w => w.toUpperCase().includes(requiredLetter));
+    if (withLetter3.length > 0) candidates3 = withLetter3;
+    if (withLetter4.length > 0) candidates4 = withLetter4;
+  }
+
   shuffle(candidates3);
 
   let seedWord3 = candidates3[0] || getSeedWord(3, 3, excludeLetters);
@@ -243,7 +253,6 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   } else {
     // 普通模式：再生成一个长度4的种子词
     // 要求：两个种子词的所有字母加起来，不同元音不能超过2个
-    const candidates4 = getCandidatesByLen(4, 4, excludeLetters);
     shuffle(candidates4);
 
     // 将长度4候选词按元音集合分组（key 为排序后的元音字符串），实现 O(1) 查表
@@ -452,7 +461,25 @@ function ensureValidWordInHand(deck, hand, seedMinLen = 3, seedMaxLen = 6, maxHa
 }
 
 // 补牌时确保元音规则：至少2种不同元音，且每种元音不超过2张
-function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
+// 确保补牌结果中至少包含一张指定字母牌；若 deck 中没有则生成一张
+function ensureRequiredLetter(cards, deck, requiredLetter) {
+  if (!requiredLetter) return cards;
+  if (cards.some(c => c && c.letter === requiredLetter)) return cards;
+
+  const idx = deck.findIndex(c => c.letter === requiredLetter);
+  if (idx >= 0) {
+    const replaced = cards.pop();
+    if (replaced) deck.push(replaced);
+    cards.push(deck.splice(idx, 1)[0]);
+  } else {
+    const replaced = cards.pop();
+    if (replaced) deck.push(replaced);
+    cards.push(makeSeedCard(requiredLetter, null));
+  }
+  return cards;
+}
+
+function drawWithVowelRules(deck, hand, need, maxAttempts = 10, requiredLetter = null) {
   const VOWELS = ['A', 'E', 'I', 'O', 'U'];
 
   // 统计保留手牌中的元音
@@ -463,8 +490,9 @@ function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
     }
   }
 
+  let drawn;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const drawn = deck.splice(0, need);
+    drawn = deck.splice(0, need);
 
     const vowelCounts = { ...handVowelCounts };
     for (const card of drawn) {
@@ -477,7 +505,7 @@ function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
     const maxVowelCount = Math.max(0, ...Object.values(vowelCounts));
 
     if (vowelTypes >= 2 && maxVowelCount <= 2) {
-      return drawn;
+      return ensureRequiredLetter(drawn, deck, requiredLetter);
     }
 
     // 不满足，放回 deck 并重新洗牌
@@ -486,15 +514,18 @@ function drawWithVowelRules(deck, hand, need, maxAttempts = 10) {
   }
 
   // 兜底：直接返回
-  return deck.splice(0, need);
+  drawn = deck.splice(0, need);
+  return ensureRequiredLetter(drawn, deck, requiredLetter);
 }
 
 // 从 WORD_DATA 中找出包含指定手牌字母（支持重复）的指定长度单词
-function findSeedWord(handLetters, length = 4) {
+// requiredLetter: 可选，要求单词同时包含该字母
+function findSeedWord(handLetters, length = 4, requiredLetter = null) {
   const candidates = [];
   for (const word of WORD_DATA.keys()) {
     if (word.length !== length) continue;
     const upper = word.toUpperCase();
+    if (requiredLetter && !upper.includes(requiredLetter)) continue;
     const temp = upper.split('');
     let matched = 0;
     for (const l of handLetters) {
@@ -559,7 +590,7 @@ function makeSeedCard(letter, seedWord) {
 
 // 出牌/弃牌后补牌：优先从保留手牌生成种子词保底，剩余按元音规则补牌
 // options.seedWordLength: 种子词长度，出牌默认 4，弃 1 张时建议传 3
-function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts = 10, action = 'unknown' } = {}) {
+function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts = 10, action = 'unknown', requiredLetter = null } = {}) {
   const VOWELS = ['A', 'E', 'I', 'O', 'U'];
   const handCards = hand.filter(Boolean);
 
@@ -588,31 +619,42 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
     const safeSeedLen = Math.min(seedWordLength, need);
     if (safeSeedLen >= 2) {
       console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张，从词库生成保底种子词`);
-      const seedWord = getSeedWord(safeSeedLen, safeSeedLen, []);
+      // force_contain_X：优先生成包含指定字母的保底种子词
+      let seedWord = null;
+      if (requiredLetter) {
+        const candidates = [];
+        for (const word of WORD_DATA.keys()) {
+          if (word.length === safeSeedLen && word.toUpperCase().includes(requiredLetter)) {
+            candidates.push(word);
+          }
+        }
+        if (candidates.length > 0) seedWord = candidates[Math.floor(Math.random() * candidates.length)];
+      }
+      if (!seedWord) seedWord = getSeedWord(safeSeedLen, safeSeedLen, []);
       const allSeedLetters = seedWord.toUpperCase().split('');
       const seedCards = allSeedLetters.map(letter => makeSeedCard(letter, seedWord));
       const remainingNeed = need - seedCards.length;
       if (remainingNeed <= 0) {
-        return seedCards.slice(0, need);
+        return ensureRequiredLetter(seedCards.slice(0, need), deck, requiredLetter);
       }
       const augmentedHand = [...hand, ...seedCards];
-      const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts);
+      const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts, requiredLetter);
       const deckLetters = deckCards.map(c => c.letter).join('');
       console.log(`[SeedSafety] 从 deck 挑选 字母: ${deckLetters || '(无)'}`);
-      return [...seedCards, ...deckCards];
+      return ensureRequiredLetter([...seedCards, ...deckCards], deck, requiredLetter);
     }
     console.log(`[SeedSafety] ${action}: 保留手牌不足 2 张且 need=${need}，fallback 到元音规则补牌`);
-    return drawWithVowelRules(deck, hand, need, maxAttempts);
+    return ensureRequiredLetter(drawWithVowelRules(deck, hand, need, maxAttempts, requiredLetter), deck, requiredLetter);
   }
 
   const chosenLetters = chosenCards.map(c => c.letter);
   console.log(`[SeedSafety] 从手牌中挑选字母: ${chosenLetters.join(' 和 ')}`);
 
-  // 2. 找包含这 2 个字母的种子单词
-  const seedWord = findSeedWord(chosenLetters, seedWordLength);
+  // 2. 找包含这 2 个字母的种子单词；force_contain_X 时额外要求包含指定字母
+  const seedWord = findSeedWord(chosenLetters, seedWordLength, requiredLetter);
   if (!seedWord) {
     console.log(`[SeedSafety] ${action}: 未找到包含 ${chosenLetters.join('')} 的 ${seedWordLength} 字母单词，fallback 到元音规则补牌`);
-    return drawWithVowelRules(deck, hand, need, maxAttempts);
+    return ensureRequiredLetter(drawWithVowelRules(deck, hand, need, maxAttempts, requiredLetter), deck, requiredLetter);
   }
 
   console.log(`[SeedSafety] 从 word_data 挑选 长度: ${seedWordLength} 的单词: ${seedWord}`);
@@ -621,7 +663,7 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   const seedLetters = getSeedLettersFromWord(seedWord, chosenLetters);
   if (seedLetters.length === 0) {
     console.log(`[SeedSafety] ${action}: 种子单词无剩余字母，fallback 到元音规则补牌`);
-    return drawWithVowelRules(deck, hand, need, maxAttempts);
+    return ensureRequiredLetter(drawWithVowelRules(deck, hand, need, maxAttempts, requiredLetter), deck, requiredLetter);
   }
 
   // 4. 创建种子卡牌
@@ -631,15 +673,15 @@ function drawWithSeedSafety(deck, hand, need, { seedWordLength = 4, maxAttempts 
   const remainingNeed = need - seedCards.length;
   if (remainingNeed <= 0) {
     console.log(`[SeedSafety] 从 deck 挑选 字母: (无需 deck 补牌)`);
-    return seedCards.slice(0, need);
+    return ensureRequiredLetter(seedCards.slice(0, need), deck, requiredLetter);
   }
 
   const augmentedHand = [...hand, ...seedCards];
-  const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts);
+  const deckCards = drawWithVowelRules(deck, augmentedHand, remainingNeed, maxAttempts, requiredLetter);
   const deckLetters = deckCards.map(c => c.letter).join('');
   console.log(`[SeedSafety] 从 deck 挑选 字母: ${deckLetters || '(无)'}`);
 
-  return [...seedCards, ...deckCards];
+  return ensureRequiredLetter([...seedCards, ...deckCards], deck, requiredLetter);
 }
 
 // 频率表算法：O(|WORD_DATA|) 远快于全排列 O(n!)
@@ -1541,6 +1583,7 @@ class Game {
         // 确保手牌中有合法单词
         const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
         const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
+        this._requiredLetter = witchSkill ? getForceContainLetter(witchSkill.skill) : null;
         ensureValidWordInHand(this.deck, this.hand, this._seedMinLen, this._seedMaxLen, this._maxHandSize, excludeLetters);
       } else {
         this.hand = validHand;
@@ -1689,6 +1732,10 @@ class Game {
       this._seedMaxLen = 6;
     }
 
+    // force_contain_X：提取本回合要求必须包含的字母
+    const requiredLetter = witchSkill ? getForceContainLetter(witchSkill.skill) : null;
+    this._requiredLetter = requiredLetter;
+
     this.deck = createDeck();
     // no_letter_a：牌堆中排除指定字母
     const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
@@ -1719,7 +1766,7 @@ class Game {
       }
     }
 
-    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord);
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord, requiredLetter);
     this._updateDailyNewWordHint();
 
     this.selected = [];
@@ -2604,7 +2651,7 @@ class Game {
       // 3. 从牌堆顶部补牌
       const need = finalPlayedCards.length;
       const validHand = this.hand.filter(Boolean);
-      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '出牌' });
+      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '出牌', requiredLetter: this._requiredLetter });
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -2918,7 +2965,7 @@ class Game {
       const need = discardedCards.length;
       const validHand = this.hand.filter(Boolean);
       const seedWordLength = discardedCards.length === 1 ? 3 : 4;
-      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '弃牌', seedWordLength });
+      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '弃牌', seedWordLength, requiredLetter: this._requiredLetter });
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {

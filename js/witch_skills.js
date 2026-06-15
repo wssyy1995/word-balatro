@@ -88,6 +88,13 @@ function shuffleSkills(arr) {
   return result;
 }
 
+// 解析 force_contain_X 类技能，返回要求的字母（如 'A'）
+function getForceContainLetter(skillName) {
+  if (!skillName) return null;
+  const match = skillName.match(/^force_contain_([A-Z])$/);
+  return match ? match[1] : null;
+}
+
 // 获取指定回合的女巫技能
 // shuffledSkills：打乱后的 SKILL_POOL 数组，若传入则按索引动态分配 skill + desc + angry_tip
 function getSkillForLevel(level, shuffledSkills = null) {
@@ -102,6 +109,13 @@ function getSkillForLevel(level, shuffledSkills = null) {
 
 // 检查技能是否满足
 function checkSkill(skillName, game, playedCards) {
+  // force_contain_X：打出的单词必须包含指定字母
+  const requiredLetter = getForceContainLetter(skillName);
+  if (requiredLetter) {
+    const word = playedCards.map(c => c.letter.toUpperCase()).join('');
+    return word.includes(requiredLetter);
+  }
+
   switch (skillName) {
     case 'need_letter_4':
       return playedCards.length >= 4;
@@ -121,6 +135,12 @@ function checkSkill(skillName, game, playedCards) {
 
 // 获取技能失败提示文字
 function getSkillFailText(skillName) {
+  // force_contain_X
+  const requiredLetter = getForceContainLetter(skillName);
+  if (requiredLetter) {
+    return `女巫约束：本回合打出的单词必须包含字母 '${requiredLetter}'`;
+  }
+
   switch (skillName) {
     case 'need_letter_4':
       return '女巫约束：每次出牌必须不少于4个字母';
@@ -280,5 +300,6 @@ module.exports = {
   createRewardItem,
   giveReward,
   shuffleSkills,
-  parseLetterTriggerTwiceSkill
+  parseLetterTriggerTwiceSkill,
+  getForceContainLetter
 };
