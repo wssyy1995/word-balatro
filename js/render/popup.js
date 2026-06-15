@@ -1231,7 +1231,7 @@ module.exports = function extendPopup(Renderer) {
 
       // 返回按钮（使用 setting_right.png 水平镜像）
       const backY = py + 26 * s;
-      const backIconSize = 18 * s;
+      const backIconSize = 17 * s;
       const backIconX = px + 14 * s;
       const backW = backIconSize;
       const rightIcon = this.settingIcons && this.settingIcons.right;
@@ -1953,7 +1953,7 @@ module.exports = function extendPopup(Renderer) {
 
         // 返回按钮（使用 setting_right.png 水平镜像）
         const backY = py + 26 * s;
-        const backIconSize = 18 * s;
+        const backIconSize = 17 * s;
         const backIconX = px + 14 * s;
         const backW = backIconSize;
         const rightIcon = this.settingIcons && this.settingIcons.right;
@@ -2143,7 +2143,7 @@ module.exports = function extendPopup(Renderer) {
 
       // 返回按钮（使用 setting_right.png 水平镜像）
       const backY = py + 26 * s;
-      const backIconSize = 18 * s;
+      const backIconSize = 17 * s;
       const backIconX = px + 14 * s;
       const backW = backIconSize;
       const rightIcon = this.settingIcons && this.settingIcons.right;
