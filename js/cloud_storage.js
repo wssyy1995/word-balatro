@@ -60,22 +60,15 @@ class CloudStorageManager {
     };
 
     // 默认 witch 图片云文件映射
-    this.defaultWitchFileMap = {
-      'witch_38': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_38.png',
-      'witch_35': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_35.png',
-      'witch_32': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_32.png',
-      'witch_29': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_29.png',
-      'witch_27': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_27.png',
-      'witch_24': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_24.png',
-      'witch_21': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_21.png',
-      'witch_18': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_18.png',
-      'witch_16': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_16.png',
-      'witch_14': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_14.png',
-      'witch_11': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_11.png',
-      'witch_3': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_3.png',
-      'witch_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_5.png',
-      'witch_8': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_8.png',
-    };
+    // 根据 WITCH_SKILLS 配置动态生成，避免硬编码和重复
+    this.defaultWitchFileMap = {};
+    const witchBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch';
+    WITCH_SKILLS.forEach(skill => {
+      if (skill && skill.level) {
+        const key = `witch_${skill.level}`;
+        this.defaultWitchFileMap[key] = `${witchBase}/${key}.png`;
+      }
+    });
 
     // 默认 witch_card 图片云文件映射
     // 根据 WITCH_SKILLS 配置动态生成，避免硬编码和重复
