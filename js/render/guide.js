@@ -120,6 +120,25 @@ module.exports = function extendGuide(Renderer) {
   
       // 对话框背景（奶油色）
       this.roundRect(dialogDrawX, dialogDrawY, dialogW, dialogH, dialogR, '#f5f0e6', '#c4a35a', 2 * s);
+
+      // 小女巫名字标签（左上角）
+      const witchNameTag = '小女巫';
+      const tagFontSize = Math.floor(12 * s);
+      ctx.save();
+      ctx.font = `bold ${tagFontSize}px sans-serif`;
+      const tagTextW = ctx.measureText(witchNameTag).width;
+      const tagPadX = 8 * s;
+      const tagPadY = 3 * s;
+      const tagW = tagTextW + tagPadX * 2;
+      const tagH = tagFontSize + tagPadY * 2;
+      const tagX = dialogDrawX + 10 * s;
+      const tagY = dialogDrawY - tagH / 2;
+      this.roundRect(tagX, tagY, tagW, tagH, tagH / 2, '#c4a35a', '#c4a35a', 0);
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(witchNameTag, tagX + tagW / 2, tagY + tagH / 2);
+      ctx.restore();
   
       // === 3. 逐字显示的文字 ===
       ctx.save();
