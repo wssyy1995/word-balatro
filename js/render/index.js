@@ -633,57 +633,9 @@ Renderer.prototype.render = function(game) {
         ctx.stroke();
         ctx.restore();
 
-        // 选中态闪烁小星星（随机分布在卡牌上）
+        // 选中态闪烁小星星（复用通用方法）
         if (isPressed) {
-          const time = Date.now();
-          const pr = (seed) => {
-            const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
-            return x - Math.floor(x);
-          };
-          const starCount = 6;
-          const edgeThick = 12 * s;
-          const margin = 4 * s;
-          for (let i = 0; i < starCount; i++) {
-            const isHorizontalEdge = pr(level * 10 + i + 200) < 0.5;
-            let sx, sy;
-            if (isHorizontalEdge) {
-              const isTop = pr(level * 10 + i + 250) < 0.5;
-              sx = pos.x + pr(level * 10 + i + 300) * cellW;
-              sy = isTop
-                ? pos.y + margin + pr(level * 10 + i + 350) * edgeThick
-                : pos.y + cellH - margin - pr(level * 10 + i + 350) * edgeThick;
-            } else {
-              const isLeft = pr(level * 10 + i + 250) < 0.5;
-              sx = isLeft
-                ? pos.x + margin + pr(level * 10 + i + 350) * edgeThick
-                : pos.x + cellW - margin - pr(level * 10 + i + 350) * edgeThick;
-              sy = pos.y + pr(level * 10 + i + 300) * cellH;
-            }
-            const offset = i * 80;
-            const size = 2.8 * s;
-            const alpha = 0.25 + 0.75 * Math.abs(Math.sin((time + offset) / 400));
-            ctx.save();
-            // 菱形星心
-            ctx.fillStyle = `rgba(255, 240, 180, ${alpha})`;
-            ctx.beginPath();
-            ctx.moveTo(sx, sy - size);
-            ctx.lineTo(sx + size * 0.5, sy);
-            ctx.lineTo(sx, sy + size);
-            ctx.lineTo(sx - size * 0.5, sy);
-            ctx.closePath();
-            ctx.fill();
-            // 十字光芒
-            ctx.strokeStyle = `rgba(255, 240, 180, ${alpha * 0.6})`;
-            ctx.lineWidth = 0.8 * s;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(sx - size * 1.6, sy);
-            ctx.lineTo(sx + size * 1.6, sy);
-            ctx.moveTo(sx, sy - size * 1.6);
-            ctx.lineTo(sx, sy + size * 1.6);
-            ctx.stroke();
-            ctx.restore();
-          }
+          this._drawCardPressedStars(ctx, pos.x, pos.y, cellW, cellH, s, level * 10);
         }
 
         // 已装备标识（右上角小标签）
@@ -933,10 +885,10 @@ Renderer.prototype.render = function(game) {
     this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.6);
     ctx.restore();
 
-    // 词牌上方闪烁星星（复用图鉴金色星星动画）
+    // 词牌上方闪烁星星（复用 card_book 选中态星星动画）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawGentleStars(cardCX, cardCY, Math.max(cardW, cardH) * 0.55, s, 1, 1.2, 'gold');
+    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100);
     ctx.restore();
 
     // 卡牌名称

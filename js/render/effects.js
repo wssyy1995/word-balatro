@@ -756,6 +756,60 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 卡牌选中态闪烁小星星（菱形星心 + 十字光芒，随机分布在卡牌边缘）
+    // 原实现位于 card_book 的 cell 选中态，抽成通用方法供新词牌弹窗等复用
+    Renderer.prototype._drawCardPressedStars = function(ctx, x, y, w, h, s, seed = 0) {
+      const time = Date.now();
+      const pr = (n) => {
+        const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+        return v - Math.floor(v);
+      };
+      const starCount = 6;
+      const edgeThick = 12 * s;
+      const margin = 4 * s;
+      for (let i = 0; i < starCount; i++) {
+        const isHorizontalEdge = pr(seed + i + 200) < 0.5;
+        let sx, sy;
+        if (isHorizontalEdge) {
+          const isTop = pr(seed + i + 250) < 0.5;
+          sx = x + pr(seed + i + 300) * w;
+          sy = isTop
+            ? y + margin + pr(seed + i + 350) * edgeThick
+            : y + h - margin - pr(seed + i + 350) * edgeThick;
+        } else {
+          const isLeft = pr(seed + i + 250) < 0.5;
+          sx = isLeft
+            ? x + margin + pr(seed + i + 350) * edgeThick
+            : x + w - margin - pr(seed + i + 350) * edgeThick;
+          sy = y + pr(seed + i + 300) * h;
+        }
+        const offset = i * 80;
+        const size = 2.8 * s;
+        const alpha = 0.25 + 0.75 * Math.abs(Math.sin((time + offset) / 400));
+        ctx.save();
+        // 菱形星心
+        ctx.fillStyle = `rgba(255, 240, 180, ${alpha})`;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy - size);
+        ctx.lineTo(sx + size * 0.5, sy);
+        ctx.lineTo(sx, sy + size);
+        ctx.lineTo(sx - size * 0.5, sy);
+        ctx.closePath();
+        ctx.fill();
+        // 十字光芒
+        ctx.strokeStyle = `rgba(255, 240, 180, ${alpha * 0.6})`;
+        ctx.lineWidth = 0.8 * s;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(sx - size * 1.6, sy);
+        ctx.lineTo(sx + size * 1.6, sy);
+        ctx.moveTo(sx, sy - size * 1.6);
+        ctx.lineTo(sx, sy + size * 1.6);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
     Renderer.prototype._drawSparkleShape = function(ctx, x, y, r) {
       ctx.beginPath();
       ctx.moveTo(x, y - r);
