@@ -72,7 +72,9 @@ word-balatro/
 
 | A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 |
+| 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 |
+
+> 注：当前版本为 `beta:难度降低` 后的字母分数，所有字母在基准值上统一 +10；字母升级/随机强化在此基础上计算。
 
 **字母分布（98 张牌）**
 
@@ -134,6 +136,8 @@ word-balatro/
 | `animManager` | AnimationManager | 动画管理器实例 |
 | `audioManager` | AudioManager | 音效管理器实例 |
 | `storageManager` | StorageManager | 本地存储管理器实例 |
+
+> 注：新游戏初始金币为 4，每回合结算基础金币为 3（见 3.3.11）。
 
 #### 3.2.2 核心方法
 
@@ -238,7 +242,7 @@ for each flat_bonus 女巫牌:
 | 元音为首 | `initial_vowel` | per_card | 单词首字母为元音 | 该首字母 score +60 |
 | 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult ×1.5 |
 | 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult ×2 |
-| 珍稀之力 | `has_face` | whole_word | 单词含 J/Q/X/Y/Z | mult +5 |
+| 珍稀之力 | `has_face` | whole_word | 单词含 J/Q/X/Y/Z | mult +4 |
 | 容错咒文 | `shield_illegal` | — | 打出非法单词 | 不扣除出牌次数 |
 | 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
 | 生命延续 | `life_extension` | limit | 出牌耗尽时（限1次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
@@ -247,7 +251,7 @@ for each flat_bonus 女巫牌:
 | 双子合影 | `double_same` | whole_word | 含相邻重复字母 | mult +5 |
 | 首尾呼应 | `firstend_same` | whole_word | 首尾字母相同 | mult +6 |
 | 首字连击 | `initial_succession` | whole_word | 连续打出同首字母单词 | 每次 mult +3，中断后重置 |
-| 回到过去 | `end_ed` | whole_word | 单词末尾加 "ed" 也合法 | mult +5 |
+| 回到过去 | `end_ed` | whole_word | 单词末尾加 "ed" 也合法 | mult +4 |
 | 复制魔法 | `end_s` | whole_word | 单词末尾加 "s" 也合法 | mult +3 |
 | 消元术 | `no_duplicate` | whole_word | 与上一手无重复字母 | mult +2（否则 -1） |
 | 预言家 | `predicted_letter` | per_card | 回合开始时预言的字母 | 该字母分数 +100 |
@@ -333,14 +337,15 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 
 #### 3.2.5 单词检测系统
 
-**四层检测**
+**三层检测**
 
 | 层级 | 来源 | 速度 |
 |------|------|------|
 | L1 | `WORD_DATA`（核心离线词库） | 毫秒级 |
 | L1.5 | `EXPAND_WORD_DATA`（扩展离线词库） | 毫秒级 |
 | L2 | `onlineWordCache` / 百度翻译词典版 API | 1-3 秒 |
-| L3 | `MyMemory` 翻译（后台） | 异步 |
+
+> 注：早期版本曾接入 `MyMemory` 作为后台兜底翻译，当前已移除，统一由百度翻译词典版 API 负责在线校验与释义。
 
 **校验状态机（`pendingCheck`）**
 - `checking` → 显示橙色单词 + loading 动态点号
@@ -354,12 +359,12 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 
 | 回合 | 约束 | 奖励 |
 |------|------|------|
-| 第 3 关 | 动态分配* | 字母置换药水（50%） |
-| 第 5 关 | 动态分配* | 金币翻倍（50%） |
+| 第 3 关 | 动态分配* | 字母置换药水（100%） |
+| 第 5 关 | 动态分配* | 额外字母（100%） |
 | 第 8 关 | 动态分配* | 女巫槽位+1（100%） |
-| 第 11 关 | 动态分配* | 额外字母（100%） |
-| 第 14 关 | 动态分配* | 随机强化药水（50%） |
-| 第 16 关 | 动态分配* | 随机强化药水（30%） |
+| 第 11 关 | 动态分配* | 商店5折（100%） |
+| 第 14 关 | 动态分配* | 金币翻倍（50%） |
+| 第 16 关 | 动态分配* | 随机强化药水（100%） |
 | 第 18 关 | 动态分配* | 额外出牌（100%） |
 | 第 21 关 | 动态分配* | 字母升级（30%） |
 | 第 24 关 | 动态分配* | 商店5折（100%） |
@@ -378,6 +383,10 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 > - `disable_one_witch_card`：回合开始时随机禁用 1 张女巫牌
 > - `disable_two_witch_card`：回合开始时随机禁用 2 张女巫牌
 > - `disable_potion_card`：本回合禁用所有魔法药水牌
+> - `force_contain_A`：打出的单词必须包含字母 A
+> - `force_contain_B`：打出的单词必须包含字母 B
+> - `force_contain_O`：打出的单词必须包含字母 O
+> - `witch_card_value_half`：本回合所有女巫牌倍率效果减半
 
 过关且满足约束后，进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，根据技能 `rate` 概率获得奖励。奖励类型包括：
 - **buff 类**：额外出牌、额外字母、金币翻倍、女巫槽位+1、商店5折（直接生效）
@@ -397,15 +406,15 @@ module.exports = require('./render/index');
 
 ```
 js/render/
-├── index.js         # 组装入口：加载扩展模块，定义 render(game) 状态机
+├── index.js         # 组装入口：加载扩展模块，定义 render(game) 状态机与全局覆盖层调度
 ├── base.js          # Renderer 核心类、构造函数、通用工具方法
-├── effects.js       # 道具卡牌渲染、星辰燔边粒子系统
-├── animation.js     # 字母之神飞星、飞分、闪光粒子
-├── hud.js           # 顶部标题栏、HUD（回合/目标分/女巫头像）
-├── playing.js       # 主玩法界面（手牌、道具、预览、按钮）
-├── popup.js         # 弹窗系统（换字母/药水/升级/续命/通用面板）
-├── guide.js         # 新手引导覆盖层（playing/shop/cardbook 三阶段）
-├── cardbook.js      # 卡牌图鉴图标与详情弹窗
+├── effects.js       # 道具卡牌渲染、粒子、弹窗面板、光晕、按钮、分隔线等通用特效
+├── animation.js     # 烟花/字母之神飞星、飞分、闪光粒子、药水升级动画绘制
+├── hud.js           # 顶部标题栏、HUD、Toast、飞行星星
+├── playing.js       # 主玩法界面（手牌、道具、预览、按钮、出牌动画状态机）
+├── popup.js         # 弹窗系统（换字母/药水/升级/续命/设置/反馈/单词本/今日新词）
+├── guide.js         # 新手引导（witch_1/2）、商店引导（witch_3）、图鉴引导（witch_4）
+├── cardbook.js      # 卡牌图鉴图标、详情面板、全部/已装备 Tab
 ├── debug.js         # 调试菜单、云存储日志面板
 ├── gameover.js      # GameOverRenderer 独立类
 └── test.js          # 自测脚本（mock Canvas + game，验证加载与渲染）
@@ -413,17 +422,17 @@ js/render/
 
 | 模块 | 行数 | 职责 | 导出方式 |
 |------|------|------|----------|
-| `base.js` | ~980 | `Renderer` 类定义、构造函数、通用工具 | `class Renderer` |
-| `effects.js` | ~747 | 道具卡牌绘制（含自毁/禁用动画）、粒子 | 函数扩展 |
-| `animation.js` | ~365 | 飞星、飞分、闪光、脉冲 | 函数扩展 |
-| `hud.js` | ~482 | 顶部栏、金币胶囊、回合/目标分 | 函数扩展 |
-| `playing.js` | ~1132 | 主玩法画面、手牌矩阵、底部按钮 | 函数扩展 |
-| `popup.js` | ~1016 | 各类弹窗、通用面板 `_drawModalPanel` | 函数扩展 |
-| `guide.js` | ~664 | 三阶段新手引导覆盖层 | 函数扩展 |
-| `cardbook.js` | ~298 | 图鉴图标、详情翻页 | 函数扩展 |
-| `debug.js` | ~122 | 云日志、调试菜单 | 函数扩展 |
-| `gameover.js` | ~234 | **独立类** `GameOverRenderer` | 独立类 |
-| `index.js` | ~569 | 组装所有扩展、定义 `render()` 状态机 | 组装入口 |
+| `base.js` | ~1173 | `Renderer` 类定义、构造函数、通用工具、资源占位 | `class Renderer` |
+| `effects.js` | ~766 | 道具卡牌绘制、粒子、`_drawModalPanel`、`_drawCardGlow`、`_calcPulseScale`、按钮 | 函数扩展 |
+| `animation.js` | ~366 | 烟花/星星粒子、飞行总分、字母之神飞星、药水升级动画 | 函数扩展 |
+| `hud.js` | ~659 | 顶部栏、金币胶囊、回合/目标分、女巫头像、Toast 及飞行星星 | 函数扩展 |
+| `playing.js` | ~1582 | 主玩法布局、手牌网格、预览/分数方块、出牌动画状态机、求助提示 | 函数扩展 |
+| `popup.js` | ~2372 | 女巫详情、字母置换、药水升级/随机强化、设置/反馈、单词本、今日新词 | 函数扩展 |
+| `guide.js` | ~687 | 新手引导（witch_1/2）、商店引导（witch_3）、图鉴引导（witch_4） | 函数扩展 |
+| `cardbook.js` | ~411 | 图鉴图标/NEW 角标、详情面板、全部/已装备 Tab | 函数扩展 |
+| `debug.js` | ~123 | 云日志、调试菜单 | 函数扩展 |
+| `gameover.js` | ~243 | **独立类** `GameOverRenderer` | 独立类 |
+| `index.js` | ~827 | 组装扩展、`render()` 状态机、设置/单词本/今日新词/排行榜覆盖层 | 组装入口 |
 
 #### 3.3.2 导出规范
 
@@ -491,7 +500,7 @@ this.gameOverRenderer = new GameOverRenderer(this);
 | 新的子渲染器（独立类） | 新建文件（模式 B）|
 
 - **命名**：公开方法无前缀（`drawHUD`），私有/内部方法用 `_`（`_drawPropCard`）
-- **`index.js` 保持薄层**：只负责 `require` 扩展和 `render()` 状态机，不写具体绘制逻辑
+- **`index.js` 保持薄层**：负责 `require` 扩展和 `render()` 状态机，以及设置/单词本/今日新词/排行榜等全局覆盖层的调度；各覆盖层具体绘制仍由对应模块或本文件聚焦方法实现
 - **加载顺序**：`base.js` 必须先加载拿到 `Renderer` 类，扩展模块任意顺序
 
 #### 3.3.4 渲染架构
@@ -510,15 +519,20 @@ render(game)
 │   ├── potion       → drawPotion()（字母升级/随机强化不显示顶部栏）
 │   ├── life_extended → drawHUD() + drawPlaying() + 续命弹窗
 │   └── gameover     → drawHUD() + drawPlaying() + gameOverRenderer.draw()
-├── updateAnimations()
+├── game.animManager.update()   # 通用动画属性更新（来自 js/animation.js）
 ├── _updateAndDrawSparkles()    # 烟花粒子
 ├── _updateAndDrawFlyingScore() # 飞行总分
 ├── _shopToGameTransition()     # 页面过渡遮罩
-├── _drawGuideOverlay()         # 新手引导覆盖层（Phase 1~5）
+├── 设置/单词本/今日新词弹窗  # 由 index.js 统一调度
+├── _drawGuideOverlay()         # 新手引导覆盖层（Phase 1~4）
+├── _drawShopGuideOverlay()     # 商店女巫技能引导
+├── _drawCardBookGuideOverlay() # 卡牌图鉴引导
 ├── _drawCloudDebugLogs()       # 云存储调试日志
 ├── _drawDebugMenu()            # 调试菜单（长按 top_icon 触发）
-└── _drawRankList()             # 主域绘制开放数据域排行榜（OffScreenCanvas）
+└── 开放数据域排行榜绘制       # 主域直接 drawImage(sharedCanvas)
 ```
+
+> 注：`js/render/animation.js` 中的 `updateAnimations()` 当前为空实现，通用动画更新由 `game.animManager`（`js/animation.js` 的 `AnimationManager`）负责；`render/animation.js` 主要承担粒子、飞分、字母之神飞星等绘制类动画。
 
 #### 3.3.5 坐标系与适配
 
@@ -755,7 +769,7 @@ gap = 8 * scale
 |------|------|-------|
 | 字母升级 | 指定字母分数 +10（加法叠加，全局跨回合保留） | 10 |
 | 字母置换 | 将手牌中一张替换为指定字母 | - |
-| 随机强化 | 随机强化 1 个字母，分数 ×2（商店）/ ×4（女巫奖励） | 2/4 |
+| 随机强化 | 随机强化 1 个字母，分数乘以 1.5~4.0 倍随机倍数（商店）；女巫奖励的随机强化固定 ×4 | 2/4 |
 
 > 药水购买后需在成功弹窗选择"暂存"（放入道具栏）或"立即使用"。字母置换药水仅在道具栏点击后游戏中直接使用。
 
@@ -789,6 +803,8 @@ gap = 8 * scale
 ### 4.5 刷新
 
 商店标题栏右侧设有**全局重掷按钮**，消耗 3 金币可刷新全部三行商品（每行重新随机生成 2 款）。余额不足时按钮置灰。
+
+此外，每行商品左侧分类标签旁仍保留**单行刷新按钮**，消耗 5 金币可刷新对应行的 2 款商品。
 
 ### 4.6 卡牌图鉴（Card Book）
 
@@ -1047,7 +1063,7 @@ gap = 8 * scale
 
 // 魔法药水
 { name: "字母升级", type: "potion", effect: "upgrade_letter",
-  value: 10, cost: 4, desc: "指定一张字母牌，分数 +10" }
+  value: 10, cost: 5, desc: "指定一张字母牌，分数 +10" }
 ```
 
 ### 6.3 字母升级记录（LetterUpgrade）
