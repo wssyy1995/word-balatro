@@ -42,7 +42,9 @@ const SKILL_POOL = [
   { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'}
+  { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'force_contain_A', desc: '本回合，打出的单词必须包含\'A\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'force_contain_B', desc: '本回合，打出的单词必须包含\'B\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'}
 ];
 // const SKILL_POOL = [
 //   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
