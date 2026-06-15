@@ -598,7 +598,7 @@ module.exports = function extendPlaying(Renderer) {
               const jokers = game.jokers || [];
   
               // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
-              const valueHalfActivePhase1 = pendingCheck && pendingCheck.valueHalfActive;
+              const valueHalfActivePhase1 = pc && pc.valueHalfActive;
               const getHalvedValuePhase1 = (value) => {
                 if (!valueHalfActivePhase1 || value === undefined || value === null) return value;
                 return Math.round(value * 0.5 * 10) / 10;
@@ -1132,7 +1132,7 @@ module.exports = function extendPlaying(Renderer) {
         }
   
         // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
-        const valueHalfActive = pendingCheck && pendingCheck.valueHalfActive;
+        const valueHalfActive = pc && pc.valueHalfActive;
         const getHalvedValue = (value) => {
           if (!valueHalfActive || value === undefined || value === null) return value;
           return Math.round(value * 0.5 * 10) / 10;
