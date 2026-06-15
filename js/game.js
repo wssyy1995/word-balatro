@@ -2126,9 +2126,10 @@ class Game {
       if (this.audioManager) this.audioManager.play('card_illegal');
 
       // 勇敢试错：每次非法单词倍率 +1；若同时触发容错咒文，不生效
-      const hasShield = (this.jokers || []).some(j => j.trigger === 'shield_illegal');
+      // 禁用的女巫牌不生效
+      const hasShield = (this.jokers || []).some(j => j && j.trigger === 'shield_illegal' && !j._disabled);
       (this.jokers || []).forEach(j => {
-        if (j.trigger === 'illegal_boost' && !hasShield) {
+        if (j && j.trigger === 'illegal_boost' && !j._disabled && !hasShield) {
           j.value = (j.value || 0) + 1;
         }
       });
@@ -2154,7 +2155,8 @@ class Game {
       }
 
       // 检查是否有"容错咒文"女巫牌（非法单词不扣出牌次数）
-      const shieldJoker = (this.jokers || []).find(j => j.trigger === 'shield_illegal');
+      // 禁用的女巫牌不生效
+      const shieldJoker = (this.jokers || []).find(j => j && j.trigger === 'shield_illegal' && !j._disabled);
       if (shieldJoker) {
         // 触发容错咒文动画：跳跃 + 紫色光晕
         shieldJoker._triggered = true;
@@ -2306,10 +2308,11 @@ class Game {
     this.pendingCheck.animPhase = 0;
 
     // === 首领连击：连续打出首字母相同的单词，本牌倍率累加+3；中断后重置 ===
+    // 禁用的女巫牌不生效
     const currentInitial = playedInOrder[0]?.letter;
     if (currentInitial) {
       (this.jokers || []).forEach(j => {
-        if (j && j.trigger === 'initial_succession') {
+        if (j && j.trigger === 'initial_succession' && !j._disabled) {
           if (this._lastInitialLetter === currentInitial) {
             j.value = (j.value || 0) + 3;
           } else {
@@ -2441,7 +2444,8 @@ class Game {
   }
 
   _checkLifeExtension() {
-    const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension');
+    // 禁用的女巫牌不生效
+    const lifeExtIdx = (this.jokers || []).findIndex(j => j && j.scope === 'limit' && j.trigger === 'life_extension' && !j._disabled);
     if (lifeExtIdx < 0) return false;
     const joker = this.jokers[lifeExtIdx];
     if (joker.usesLeft !== undefined && joker.usesLeft <= 0) return false;
