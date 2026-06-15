@@ -2308,7 +2308,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#3a2e1e';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(word.toUpperCase(), listX + 12 * s, y + rowH / 2);
+        ctx.fillText(word.toLowerCase(), listX + 12 * s, y + rowH / 2);
         ctx.restore();
 
         // 次数标签
@@ -2321,9 +2321,17 @@ module.exports = function extendPopup(Renderer) {
         this.roundRect(tagX, tagY, tagW, tagH, tagH / 2, '#8b6914');
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`${count}次`, tagX + tagW / 2, tagY + tagH / 2);
+        const countStr = String(count);
+        const countW = ctx.measureText(countStr).width;
+        const unitW = ctx.measureText('次').width;
+        const gap = 1 * s;
+        const totalW = countW + gap + unitW;
+        const textX = tagX + tagW / 2 - totalW / 2;
+        const textY = tagY + tagH / 2;
+        ctx.fillText(countStr, textX, textY);
+        ctx.fillText('次', textX + countW + gap, textY);
         ctx.restore();
       }
 

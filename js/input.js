@@ -62,7 +62,8 @@ class InputHandler {
             success: (res) => {
               if (res.confirm) {
                 game.state = 'gameover';
-                // lastPlayResult 需要全局变量或在 game 中存储
+                game.gameOverReason = 'surrender';
+                if (game._uploadRankData) game._uploadRankData();
               }
             }
           });

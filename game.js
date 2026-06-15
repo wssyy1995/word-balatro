@@ -1,6 +1,6 @@
 // require('./js/render/test');
 // 微信小游戏入口
-const { Game, uploadScoreAndRound } = require('./js/game');
+const { Game } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
@@ -1497,9 +1497,7 @@ function handleInput(x, y) {
         game.gameOverReason = 'debug';
         if (game.audioManager) game.audioManager.play('game_over');
         if (game.storageManager) {
-          game.storageManager.setHighScore(game.totalScore);
-          game.storageManager.setBestRound(game.round);
-          uploadScoreAndRound(game.storageManager.getHighScore(), game.storageManager.getBestRound());
+          game._uploadRankData();
           game.storageManager.updateStats(game);
           // 同步保存 gameover 状态并清理旧进度，避免下次启动时误判为可恢复存档
           game.storageManager.saveProgress();

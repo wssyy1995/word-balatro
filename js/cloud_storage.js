@@ -94,7 +94,8 @@ class CloudStorageManager {
       'buy_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/buy_tip.png',
       'share_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip.png',
       'share_tip_limit': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip_limit.png',
-      'card_bar': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_bar_v7.png'
+      'card_bar': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_bar_v7.png',
+      'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
@@ -1279,7 +1280,7 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer 的 bgImage（仅注入 bg）
+  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景）
   injectBgIconToRenderer(renderer) {
     const bgData = this.bgIconImages['bg'];
     if (bgData && bgData.loaded && bgData.img) {
@@ -1288,6 +1289,15 @@ class CloudStorageManager {
       this.log('已注入 bg_icon renderer: bg');
     } else {
       this.log('bg_icon bg 未加载，跳过注入');
+    }
+
+    const cardBookData = this.bgIconImages['card_book'];
+    if (cardBookData && cardBookData.loaded && cardBookData.img) {
+      renderer.cardBookImage = cardBookData.img;
+      renderer.cardBookImageLoaded = true;
+      this.log('已注入 bg_icon renderer: card_book');
+    } else {
+      this.log('bg_icon card_book 未加载，跳过注入');
     }
   }
 

@@ -125,7 +125,7 @@ async function drawRankList() {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bestround, contentX + contentW * 0.58, y + rowH / 2);
+    ctx.fillText(bestround, contentX + contentW * 0.62, y + rowH / 2);
 
     // 单词量
     const wordCount = player.KVDataList.find(kv => kv.key === 'wordCount')?.value || '0';
@@ -133,15 +133,7 @@ async function drawRankList() {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(wordCount, contentX + contentW * 0.75, y + rowH / 2);
-
-    // 分数
-    const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
-    ctx.fillStyle = '#fff';
-    ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(score, contentX + contentW * 0.92, y + rowH / 2);
+    ctx.fillText(wordCount, contentX + contentW * 0.86, y + rowH / 2);
   }
 
   if (rankData.length === 0) {
@@ -226,7 +218,7 @@ function drawFriendList(w, rowH) {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(bestround, pw * 0.58, y + rh / 2);
+    ctx.fillText(bestround, pw * 0.62, y + rh / 2);
 
     // 单词量
     const wordCount = player.KVDataList.find(kv => kv.key === 'wordCount')?.value || '0';
@@ -234,15 +226,7 @@ function drawFriendList(w, rowH) {
     ctx.font = `bold ${Math.floor(W * 0.03)}px sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(wordCount, pw * 0.75, y + rh / 2);
-
-    // 分数
-    const score = player.KVDataList.find(kv => kv.key === 'score')?.value || '0';
-    ctx.fillStyle = '#fff';
-    ctx.font = `${Math.floor(W * 0.03)}px sans-serif`;
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(score, pw * 0.92, y + rh / 2);
+    ctx.fillText(wordCount, pw * 0.86, y + rh / 2);
   }
 
   if (rankData.length === 0) {
@@ -304,11 +288,9 @@ function _drawRankPanelFrame() {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('排名', contentX + contentW * 0.10, startY + rowH / 2);
-  ctx.fillText('玩家', contentX + contentW * 0.34, startY + rowH / 2);
-  ctx.fillText('回合', contentX + contentW * 0.58, startY + rowH / 2);
-  ctx.fillText('单词量', contentX + contentW * 0.75, startY + rowH / 2);
-  ctx.textAlign = 'right';
-  ctx.fillText('总分', contentX + contentW * 0.92, startY + rowH / 2);
+  ctx.fillText('玩家', contentX + contentW * 0.36, startY + rowH / 2);
+  ctx.fillText('最高回合', contentX + contentW * 0.62, startY + rowH / 2);
+  ctx.fillText('单词量', contentX + contentW * 0.86, startY + rowH / 2);
 
   return { panelX, panelY, panelW, panelH, contentX, contentW, rowH, startY, W, H };
 }

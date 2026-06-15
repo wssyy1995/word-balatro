@@ -2121,23 +2121,43 @@ class Game {
       groups[card._seedWord].push(card);
     }
 
-    // 取第一个种子词
     const words = Object.keys(groups);
-    const targetWord = words[0];
 
-    // 在手牌中按字母匹配该种子词（不要求 _seedWord 标记）
-    const wordCards = [];
-    const used = new Set();
-    for (const ch of targetWord.toUpperCase()) {
-      for (let i = 0; i < this.hand.length; i++) {
-        const card = this.hand[i];
-        if (!card || used.has(i)) continue;
-        if (card.letter === ch) {
-          used.add(i);
-          wordCards.push(card);
+    // 找一个能在当前手牌中完整拼出的种子词
+    let targetWord = null;
+    let wordCards = [];
+    for (const word of words) {
+      const matched = [];
+      const used = new Set();
+      let complete = true;
+      for (const ch of word.toUpperCase()) {
+        let found = false;
+        for (let i = 0; i < this.hand.length; i++) {
+          const card = this.hand[i];
+          if (!card || used.has(i)) continue;
+          if (card.letter === ch) {
+            used.add(i);
+            matched.push(card);
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          complete = false;
           break;
         }
       }
+      if (complete) {
+        targetWord = word;
+        wordCards = matched;
+        break;
+      }
+    }
+
+    // 没有能完整拼出的种子词，降级为普通提示
+    if (!targetWord) {
+      this.showHint();
+      return;
     }
 
     // 给种子词对应卡牌添加高亮动画（不直接选中）
@@ -2268,9 +2288,7 @@ class Game {
           this.gameOverReason = 'forbidden_word';
           if (this.audioManager) this.audioManager.play('game_over');
           if (this.storageManager) {
-            this.storageManager.setHighScore(this.totalScore);
-            this.storageManager.setBestRound(this.round);
-            uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
+            this._uploadRankData();
             this.storageManager.updateStats(this);
             this.storageManager.clearProgress();
           }
@@ -2309,9 +2327,7 @@ class Game {
             this.gameOverReason = 'out_of_hands';
             if (this.audioManager) this.audioManager.play('game_over');
             if (this.storageManager) {
-              this.storageManager.setHighScore(this.totalScore);
-              this.storageManager.setBestRound(this.round);
-              uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
+              this._uploadRankData();
               this.storageManager.updateStats(this);
               this.storageManager.clearProgress();
             }
@@ -2360,9 +2376,7 @@ class Game {
               this.gameOverReason = 'out_of_hands';
               if (this.audioManager) this.audioManager.play('game_over');
               if (this.storageManager) {
-                this.storageManager.setHighScore(this.totalScore);
-                this.storageManager.setBestRound(this.round);
-                uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
+                this._uploadRankData();
                 this.storageManager.updateStats(this);
                 this.storageManager.clearProgress();
               }
@@ -2638,9 +2652,7 @@ class Game {
         this.gameOverReason = 'out_of_hands';
         if (this.audioManager) this.audioManager.play('game_over');
         if (this.storageManager) {
-          this.storageManager.setHighScore(this.totalScore);
-          this.storageManager.setBestRound(this.round);
-          uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
+          this._uploadRankData();
           this.storageManager.updateStats(this);
           this.storageManager.clearProgress();
         }
@@ -2856,6 +2868,9 @@ class Game {
 
     // 回合结算时：将本回合累计的单词本增量同步到云端
     this.syncWordBook();
+
+    // 同步上传排行榜数据（分数/回合/单词量）
+    this._uploadRankData();
   }
 
   /**
@@ -2895,6 +2910,16 @@ class Game {
     if (!this.storageManager) return 0;
     const book = this.storageManager.getWordBook();
     return Object.keys(book && book.words ? book.words : {}).length;
+  }
+
+  _uploadRankData() {
+    if (!this.storageManager) {
+      uploadScoreAndRound(this.totalScore, this.round, this.getWordBookUniqueCount());
+      return;
+    }
+    this.storageManager.setHighScore(this.totalScore);
+    this.storageManager.setBestRound(this.round);
+    uploadScoreAndRound(this.storageManager.getHighScore(), this.storageManager.getBestRound(), this.getWordBookUniqueCount());
   }
 
   _checkCardBookUnlock() {

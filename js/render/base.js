@@ -315,15 +315,8 @@ class Renderer {
     }
     this.cardBookImage = null;
     this.cardBookImageLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/card_book.png';
-      img.onload = () => { this.cardBookImageLoaded = true; };
-      img.onerror = () => { this.cardBookImageLoaded = false; };
-      this.cardBookImage = img;
-    } catch (e) {
-      this.cardBookImageLoaded = false;
-    }
+    // card_book.png 强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    // 不再尝试加载本地 images/bg_icon/card_book.png，避免文件缺失报错
 
     // 加载卡牌图鉴翻页按钮
     this.cardBookLeftBtn = null;

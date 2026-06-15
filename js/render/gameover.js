@@ -123,11 +123,12 @@ class GameOverRenderer {
     const lineY = py + 92 * s;
     const lineH = 38 * s;
 
-    const highScore = game.storageManager ? game.storageManager.getHighScore() : 0;
+    const bestRound = game.storageManager ? game.storageManager.getBestRound() : 0;
+    const wordCount = game.storageManager && game.getWordBookUniqueCount ? game.getWordBookUniqueCount() : 0;
     const items = [
       { label: '到达回合', value: `${game.round}` },
-      { label: '本局总分', value: `${game.totalScore}` },
-      { label: '历史最高', value: `${highScore}` },
+      { label: '最高回合', value: `${bestRound}` },
+      { label: '单词总量', value: `${wordCount}` },
     ];
 
     items.forEach((item, i) => {
