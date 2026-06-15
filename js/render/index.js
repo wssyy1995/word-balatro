@@ -963,6 +963,7 @@ Renderer.prototype.render = function(game) {
   Renderer.prototype._drawShopBackground = function(game) {
     const ctx = this.ctx;
     const W = this.W;
+    const H = this.H;
     const s = this.scale;
 
     // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
