@@ -1532,7 +1532,7 @@ module.exports = function extendPopup(Renderer) {
       const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
 
       const panelW = 282;
-      const panelH = 342;
+      const panelH = 343;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
