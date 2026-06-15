@@ -677,14 +677,16 @@ module.exports = function extendEffects(Renderer) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.globalAlpha = globalAlpha;
+      ctx.globalCompositeOperation = 'source-over';
       ctx.shadowBlur = 0;
   
       // === 淡紫色径向光晕 ===
-      const glowR = size * 0.6 * glowMult;
-      const glowAlpha = 0.18 * breath * glowMult;
-      const glowGrad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, glowR);
-      glowGrad.addColorStop(0, `rgba(180,140,220,${glowAlpha})`);
-      glowGrad.addColorStop(0.4, `rgba(155,89,182,${glowAlpha * 0.6})`);
+      // 降低整体亮度并避免中心实心色块：从中心低透明度向外自然过渡
+      const glowR = size * 0.65 * glowMult;
+      const glowAlpha = 0.12 * breath * glowMult;
+      const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowR);
+      glowGrad.addColorStop(0, `rgba(180,140,220,${glowAlpha * 0.35})`);
+      glowGrad.addColorStop(0.5, `rgba(155,89,182,${glowAlpha * 0.8})`);
       glowGrad.addColorStop(1, 'rgba(155,89,182,0)');
   
       ctx.fillStyle = glowGrad;
