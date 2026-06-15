@@ -909,7 +909,7 @@ Renderer.prototype.render = function(game) {
     const btnW = 140 * s;
     const btnH = 44 * s;
     const btnX = (W - btnW) / 2;
-    const btnY = py + ph - btnH - 30 * s;
+    const btnY = py + ph - btnH - 29 * s;
     ctx.save();
     ctx.globalAlpha = closeAlpha;
     // 微弱的 2 层水波纹（比装备按钮更弱、更短周期，保证同时约 2 层；颜色加深）
