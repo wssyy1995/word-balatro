@@ -226,7 +226,13 @@ module.exports = function extendPlaying(Renderer) {
                 : 1;
               const iconSize = 20 * s * iconProgress;
               const iconX = sx + (slotW - iconSize) / 2;
-              const iconY = slotY + (slotH - iconSize) / 2;
+              let iconY = slotY + (slotH - iconSize) / 2;
+              // 弹出完成后添加持续性缓慢上下漂浮动画，幅度 2*s
+              if (iconElapsed >= iconDuration) {
+                const floatElapsed = iconElapsed - iconDuration;
+                const floatPeriod = 1500;
+                iconY += Math.sin(floatElapsed * Math.PI * 2 / floatPeriod) * 2 * s;
+              }
 
               if (this.cardValueDownIconLoaded && this.cardValueDownIcon) {
                 ctx.drawImage(this.cardValueDownIcon, iconX, iconY, iconSize, iconSize);
@@ -235,7 +241,7 @@ module.exports = function extendPlaying(Renderer) {
                 ctx.fillStyle = '#fff';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('↓', sx + slotW / 2, slotY + slotH / 2);
+                ctx.fillText('↓', sx + slotW / 2, iconY + iconSize / 2);
               }
 
               ctx.restore();
