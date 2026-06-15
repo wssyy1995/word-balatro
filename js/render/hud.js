@@ -113,7 +113,7 @@ module.exports = function extendHud(Renderer) {
         const c4 = barX + col1W + line1Offset + colOtherW * 2.5 - colShift;
   
         // === 列1：女巫头像（大图直接显示，不裁剪 + 呼吸摇摆） ===
-        const avatarH = barH + 5*s;
+        const avatarH = barH + 8*s;
         const avatarW = Math.min(avatarH, col1W);
         const baseX = barX + 25* s;
         const baseY = barY + (barH - avatarH) / 2-5*s;
