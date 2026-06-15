@@ -1882,14 +1882,23 @@ module.exports = function extendPopup(Renderer) {
               ctx.restore();
             }
 
-            ctx.save();
-            ctx.globalAlpha = contentAlpha * 0.6;
-            ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-            ctx.fillStyle = '#8a7a6a';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('›', ctrlRightX - 4 * s, centerY);
-            ctx.restore();
+            const leftIcon = this.settingIcons && this.settingIcons.left;
+            if (leftIcon && leftIcon.loaded && leftIcon.img) {
+              const iconSize = 16 * s;
+              ctx.save();
+              ctx.globalAlpha = contentAlpha * 0.8;
+              ctx.drawImage(leftIcon.img, ctrlRightX - 4 * s - iconSize / 2, centerY - iconSize / 2, iconSize, iconSize);
+              ctx.restore();
+            } else {
+              ctx.save();
+              ctx.globalAlpha = contentAlpha * 0.6;
+              ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+              ctx.fillStyle = '#8a7a6a';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('›', ctrlRightX - 4 * s, centerY);
+              ctx.restore();
+            }
 
             // 记录整行点击区域
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
