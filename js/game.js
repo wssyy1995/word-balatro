@@ -813,14 +813,8 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
-function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null, valueHalfActive = false) {
+function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
-
-  // 辅助函数：当 witch_card_value_half 生效时，女巫牌 value 减半（保留1位小数）
-  const getHalvedValue = (value) => {
-    if (!valueHalfActive || value === undefined || value === null) return value;
-    return Math.round(value * 0.5 * 10) / 10;
-  };
 
   const activeJokers = (jokers || []).filter(j => j && !j._disabled);
 
@@ -851,21 +845,18 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
       case 'per_card':
         cards.forEach((c, i) => {
           if (_matchCardTrigger(c, j.trigger, i, j)) {
-            const jValue = getHalvedValue(j.value);
             if (j.operation === 'add') {
-              cardAddScores[i] += jValue;
+              cardAddScores[i] += j.value;
             } else {
-              cardMults[i] *= jValue;
+              cardMults[i] *= j.value;
             }
           }
         });
         break;
       case 'whole_word': {
         let wwMatched;
-        const jValue = getHalvedValue(j.value);
-        const jPenalty = getHalvedValue(j.penalty);
         if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
-          wwMatched = jValue > 0;
+          wwMatched = j.value > 0;
         } else if (j.trigger === 'end_ed') {
           wwMatched = pendingCheck?.endEdValid || false;
         } else if (j.trigger === 'end_s') {
@@ -892,14 +883,14 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         }
         if (wwMatched) {
           if (j.trigger === 'illegal_boost' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
-            mult += jValue;
+            mult += j.value;
           } else {
-            mult = Math.ceil(mult * jValue);
+            mult = Math.ceil(mult * j.value);
           }
         } else if (j.penalty !== undefined) {
           // 未触发时执行惩罚（no_duplicate 第一手不惩罚）
           if (j.trigger !== 'no_duplicate' || (lastPlayedLetters && lastPlayedLetters.size > 0)) {
-            mult += jPenalty;
+            mult += j.penalty;
           }
         }
         break;
@@ -947,7 +938,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
 
   for (const j of activeJokers) {
     if (j.type === 'witch' && j.scope === 'flat_bonus') {
-      baseScore += getHalvedValue(j.value);
+      baseScore += j.value;
     }
   }
 
@@ -1285,6 +1276,7 @@ class Game {
     this._witchStarBurstAuto = false;
     this._disableWitchAnim = null;
     this._witchCardValueHalfAnim = null;
+    this._witchCardValueHalfActive = false;
     this._disablePotionAnim = null;
     this._hastePlayActive = false;
     this._hastePlayStartTime = null;
@@ -1847,8 +1839,27 @@ class Game {
       this._disableWitchAnim = null;
     }
 
-    // witch_card_value_half：回合开始时所有女巫牌边框动画 + 倍率下降蒙层（延迟1秒播放）
-    if (disableSkill && disableSkill.skill === 'witch_card_value_half' && this.jokers && this.jokers.some(j => j)) {
+    // witch_card_value_half：回合开始时所有女巫牌 value/penalty 实际减半，并播放边框动画 + 倍率下降蒙层
+    const valueHalfActive = disableSkill && disableSkill.skill === 'witch_card_value_half';
+    this._witchCardValueHalfActive = !!valueHalfActive;
+    (this.jokers || []).forEach(j => {
+      if (!j || j.type !== 'witch') return;
+      // 保存原始 value/penalty（首次遇到时）
+      if (j._originalValue === undefined) j._originalValue = j.value;
+      if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
+      // 根据技能状态切换为减半值或恢复原始值（保留1位小数）
+      if (j._originalValue !== undefined) {
+        j.value = valueHalfActive
+          ? Math.round(j._originalValue * 0.5 * 10) / 10
+          : j._originalValue;
+      }
+      if (j._originalPenalty !== undefined) {
+        j.penalty = valueHalfActive
+          ? Math.round(j._originalPenalty * 0.5 * 10) / 10
+          : j._originalPenalty;
+      }
+    });
+    if (valueHalfActive && this.jokers && this.jokers.some(j => j)) {
       this._witchCardValueHalfAnim = { startTime: Date.now() + 1000 };
     } else {
       this._witchCardValueHalfAnim = null;
@@ -2194,7 +2205,11 @@ class Game {
       const hasShield = (this.jokers || []).some(j => j && j.trigger === 'shield_illegal' && !j._disabled);
       (this.jokers || []).forEach(j => {
         if (j && j.trigger === 'illegal_boost' && !j._disabled && !hasShield) {
-          j.value = (j.value || 0) + 1;
+          // 基于原始 value 累加，若当前处于 witch_card_value_half 则显示值继续减半
+          j._originalValue = (j._originalValue || 0) + 1;
+          j.value = this._witchCardValueHalfActive
+            ? Math.round(j._originalValue * 0.5 * 10) / 10
+            : j._originalValue;
         }
       });
 
@@ -2338,22 +2353,14 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    // 判断当前回合是否有 witch_card_value_half 技能（女巫牌 value 减半）
-    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    const valueHalfActive = currentWitchSkill && currentWitchSkill.skill === 'witch_card_value_half';
-    this.pendingCheck.valueHalfActive = valueHalfActive;
-
-    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters, valueHalfActive);
+    const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
     // === 以小博大（出牌<=3个字母，30%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
     if (lastPrayer && playedInOrder.length < 4) {
       const success = Math.random() < 0.3;
-      let boostValue = lastPrayer.value || 8;
-      if (valueHalfActive) {
-        boostValue = Math.round(boostValue * 0.5 * 10) / 10;
-      }
+      const boostValue = 8;
       if (success) {
         result.mult += boostValue;
         result.score = Math.ceil(result.base * result.mult);
@@ -2366,6 +2373,7 @@ class Game {
     }
 
     // === letter_X_mult_half 惩罚检测（通用） ===
+    const currentWitchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     this.pendingCheck.multHalfResult = applyLetterMultHalf(currentWitchSkill, playedInOrder, result);
 
     this.pendingCheck.letterGodTriggered = letterGodTriggered;
@@ -2384,11 +2392,15 @@ class Game {
     if (currentInitial) {
       (this.jokers || []).forEach(j => {
         if (j && j.trigger === 'initial_succession' && !j._disabled) {
+          // 基于原始 value 累加/重置，若当前处于 witch_card_value_half 则显示值继续减半
           if (this._lastInitialLetter === currentInitial) {
-            j.value = (j.value || 0) + 3;
+            j._originalValue = (j._originalValue || 0) + 3;
           } else {
-            j.value = 0;
+            j._originalValue = 0;
           }
+          j.value = this._witchCardValueHalfActive
+            ? Math.round(j._originalValue * 0.5 * 10) / 10
+            : j._originalValue;
         }
       });
       this._lastInitialLetter = currentInitial;

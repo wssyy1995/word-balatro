@@ -597,23 +597,15 @@ module.exports = function extendPlaying(Renderer) {
                 : (stepInfo ? stepInfo.cardIdx : -1);
               const jokers = game.jokers || [];
   
-              // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
-              const valueHalfActivePhase1 = pc && pc.valueHalfActive;
-              const getHalvedValuePhase1 = (value) => {
-                if (!valueHalfActivePhase1 || value === undefined || value === null) return value;
-                return Math.round(value * 0.5 * 10) / 10;
-              };
-
               // per_card 倍率/加分提示 — 当前步骤对应的 per_card
               pc._perCardMultText = null;
               if (!isAllJumped && cardIdx >= 0 && stepInfo && stepInfo.jokerIdx !== null) {
                 const activeJoker = jokers[stepInfo.jokerIdx];
                 if (activeJoker && activeJoker.value) {
-                  const displayValue = getHalvedValuePhase1(activeJoker.value);
                   if (activeJoker.operation === 'add') {
-                    pc._perCardMultText = `+${displayValue}`;
+                    pc._perCardMultText = `+${activeJoker.value}`;
                   } else {
-                    pc._perCardMultText = `x${displayValue}`;
+                    pc._perCardMultText = `x${activeJoker.value}`;
                   }
                 }
               }
@@ -626,9 +618,9 @@ module.exports = function extendPlaying(Renderer) {
                   const joker = jokers[jIdx];
                   if (joker && joker.value) {
                     if (joker.operation === 'add') {
-                      score += getHalvedValuePhase1(joker.value);
+                      score += joker.value;
                     } else {
-                      score *= getHalvedValuePhase1(joker.value);
+                      score *= joker.value;
                     }
                   }
                 });
@@ -1131,24 +1123,17 @@ module.exports = function extendPlaying(Renderer) {
           currentStep = Math.floor(afterBase / STEP_DURATION);
         }
   
-        // 判断当前是否触发 witch_card_value_half（女巫牌 value 减半）
-        const valueHalfActive = pc && pc.valueHalfActive;
-        const getHalvedValue = (value) => {
-          if (!valueHalfActive || value === undefined || value === null) return value;
-          return Math.round(value * 0.5 * 10) / 10;
-        };
-
         // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
         let curMult = pendingLength;
         for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
           const item = wjList[i];
           const joker = item.joker;
           if (item.isPenalty) {
-            curMult += getHalvedValue(joker.penalty);
+            curMult += joker.penalty;
           } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-            curMult += getHalvedValue(joker.value);
+            curMult += joker.value;
           } else {
-            curMult = Math.ceil(curMult * getHalvedValue(joker.value));
+            curMult = Math.ceil(curMult * joker.value);
           }
         }
         displayValue = curMult;
@@ -1162,11 +1147,11 @@ module.exports = function extendPlaying(Renderer) {
             const item = wjList[labelIdx];
             const joker = item.joker;
             if (item.isPenalty) {
-              labelText = `${getHalvedValue(joker.penalty)}`;
+              labelText = `${joker.penalty}`;
             } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-              labelText = `+${getHalvedValue(joker.value)}`;
+              labelText = `+${joker.value}`;
             } else {
-              labelText = `x${getHalvedValue(joker.value)}`;
+              labelText = `x${joker.value}`;
             }
           }
         }
