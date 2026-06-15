@@ -721,7 +721,7 @@ module.exports = function extendEffects(Renderer) {
       return { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha };
     }
 
-    Renderer.prototype._drawCardGlow = function(ctx, cardX, cardY, cardW, cardH, s) {
+    Renderer.prototype._drawCardGlow = function(ctx, cardX, cardY, cardW, cardH, s, alphaScale = 1) {
       ctx.save();
       const t = Date.now();
       const cardCX = cardX + cardW / 2;
@@ -729,14 +729,14 @@ module.exports = function extendEffects(Renderer) {
       const haloR = Math.max(cardW, cardH) * 0.85;
       const pulse = 0.5 + 0.5 * Math.sin(t / 500);
       const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-      haloGrad.addColorStop(0, `rgba(255,215,0,${0.12 + 0.06 * pulse})`);
-      haloGrad.addColorStop(0.5, `rgba(255,200,60,${0.06 + 0.04 * pulse})`);
+      haloGrad.addColorStop(0, `rgba(255,215,0,${(0.12 + 0.06 * pulse) * alphaScale})`);
+      haloGrad.addColorStop(0.5, `rgba(255,200,60,${(0.06 + 0.04 * pulse) * alphaScale})`);
       haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
       ctx.fillStyle = haloGrad;
       ctx.beginPath();
       ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
       ctx.fill();
-  
+
       const sparkles = [
         { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
         { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
@@ -745,7 +745,7 @@ module.exports = function extendEffects(Renderer) {
       ];
       sparkles.forEach((sp, i) => {
         const blink = 0.5 + 0.5 * Math.sin(t / 600 + sp.ph);
-        const alpha = 0.25 + 0.55 * blink;
+        const alpha = (0.25 + 0.55 * blink) * alphaScale;
         const r = sp.r * (0.75 + 0.2 * blink) * s;
         ctx.save();
         ctx.globalAlpha = alpha;

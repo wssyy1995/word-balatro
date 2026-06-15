@@ -2981,11 +2981,15 @@ class Game {
 
       if (witchSkill) {
         // 女巫奖励改为：进入商店后先弹出"获得新词牌"，点击收集后再延迟1s进入女巫奖励
-        this._newWitchCardPopup = {
-          startTime: Date.now(),
-          level: witchSkill.level,
-          skill: witchSkill,
-        };
+        // 结算弹窗关闭后延迟 200ms 再显示新词牌弹窗，并播放音效
+        this._delay(() => {
+          if (this.audioManager) this.audioManager.play('buy_success');
+          this._newWitchCardPopup = {
+            startTime: Date.now(),
+            level: witchSkill.level,
+            skill: witchSkill,
+          };
+        }, 200);
         this._pendingWitchRewardDelay = true;
         this._witchRewardDelayStartTime = null; // 点击收集后再设置
 

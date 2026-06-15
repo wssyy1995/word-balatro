@@ -923,10 +923,10 @@ Renderer.prototype.render = function(game) {
     }
     ctx.restore();
 
-    // 金色光晕
+    // 金色光晕（新词牌弹窗中使用较弱光晕）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
+    this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.6);
     ctx.restore();
 
     // 卡牌名称
