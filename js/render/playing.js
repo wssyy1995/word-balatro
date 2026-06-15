@@ -224,7 +224,7 @@ module.exports = function extendPlaying(Renderer) {
               const iconProgress = iconElapsed < iconDuration
                 ? Easing.easeOutBack(Math.min(iconElapsed / iconDuration, 1))
                 : 1;
-              const iconSize = 20 * s * iconProgress;
+              const iconSize = 24 * s * iconProgress;
               const iconX = sx + (slotW - iconSize) / 2;
               let iconY = slotY + (slotH - iconSize) / 2;
               // 弹出完成后添加持续性缓慢上下漂浮动画，幅度 2*s
