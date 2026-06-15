@@ -161,7 +161,7 @@ module.exports = function extendGuide(Renderer) {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
   
-      const textPad = 18 * s;
+      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
       const textMaxW = dialogW - textPad * 2;
@@ -406,7 +406,7 @@ module.exports = function extendGuide(Renderer) {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
 
-      const textPad = 18 * s;
+      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
       const textMaxW = dialogW - textPad * 2;
@@ -671,7 +671,7 @@ module.exports = function extendGuide(Renderer) {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
 
-      const textPad = 18 * s;
+      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
       const textMaxW = dialogW - textPad * 2;
