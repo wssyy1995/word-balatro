@@ -81,17 +81,17 @@ Renderer.prototype.render = function(game) {
           this.confirmBuyRenderer.draw(ctx, game, W, H, s);
         }
 
-        // 女巫奖励延迟 1s 进入；图鉴引导进行中（Phase 1~4）时暂停计时
+        // 女巫奖励延迟 600ms 进入；图鉴引导进行中（Phase 1~4）时暂停计时
         if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
           if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 4) {
-            // 图鉴引导优先，重置计时起点，等引导结束后再开始 1s 延迟
+            // 图鉴引导优先，重置计时起点，等引导结束后再开始 600ms 延迟
             game._witchRewardDelayStartTime = null;
           } else {
             if (!game._witchRewardDelayStartTime) {
               game._witchRewardDelayStartTime = Date.now();
             }
             const delayElapsed = Date.now() - game._witchRewardDelayStartTime;
-            if (delayElapsed >= 1000) {
+            if (delayElapsed >= 600) {
               game._pendingWitchRewardDelay = false;
               game._witchRewardDelayStartTime = null;
               const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
