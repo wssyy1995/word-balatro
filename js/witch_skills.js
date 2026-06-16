@@ -82,6 +82,13 @@ const WITCH_CARDS = [
   { card_id: 'witch_card_35', card_letter: 'M', witch_name: '莫薇希娅',   witch_desc: '衔尾之女，轮回的见证者',                card_skill_name: 'letter_trigger_twice_M', card_skill_desc: '打出单词包含字母M，该字母触发2次计分' },
   { card_id: 'witch_card_38', card_letter: 'N', witch_name: '妮瓦瑞丝',   witch_desc: '永冬的守夜人，寒霜为袍',                card_skill_name: 'letter_trigger_twice_N', card_skill_desc: '打出单词包含字母N，该字母触发2次计分' },
   { card_id: 'witch_card_41', card_letter: 'O', witch_name: '奥菲妮娅',   witch_desc: '寂静王座的掌灯人',                      card_skill_name: 'letter_trigger_twice_O', card_skill_desc: '打出单词包含字母O，该字母触发2次计分' },
+  { card_id: 'witch_card_44', card_letter: 'P', witch_name: '佩洛薇拉',   witch_desc: '帷幕后的低语者，只向挚爱现身',                      card_skill_name: 'letter_trigger_twice_P', card_skill_desc: '打出单词包含字母P，该字母触发2次计分' },
+  { card_id: 'witch_card_47', card_letter: 'Q', witch_name: '奎薇莉娅',   witch_desc: '千面者，无定形之巫',                      card_skill_name: 'letter_trigger_twice_Q', card_skill_desc: '打出单词包含字母Q，该字母触发2次计分' },
+  { card_id: 'witch_card_50', card_letter: 'R', witch_name: '拉薇希娅',   witch_desc: '以沙哑咒语催魂的唤灵人',                      card_skill_name: 'letter_trigger_twice_R', card_skill_desc: '打出单词包含字母R，该字母触发2次计分' },
+  { card_id: 'witch_card_53', card_letter: 'S', witch_name: '茜达尔',   witch_desc: '古木之心，根脉蔓延整片幽林',                      card_skill_name: 'letter_trigger_twice_S', card_skill_desc: '打出单词包含字母S，该字母触发2次计分' },
+  { card_id: 'witch_card_56', card_letter: 'T', witch_name: '翠诺莎',   witch_desc: '寂静王座的掌灯人',                      card_skill_name: 'letter_trigger_twice_T', card_skill_desc: '打出单词包含字母T，该字母触发2次计分' },
+  { card_id: 'witch_card_59', card_letter: 'U', witch_name: '安柏瑞拉',   witch_desc: '微暗之女，影中行走之人',                      card_skill_name: 'letter_trigger_twice_U', card_skill_desc: '打出单词包含字母U，该字母触发2次计分' },
+  { card_id: 'witch_card_62', card_letter: 'V', witch_name: '薇尔菲拉',   witch_desc: '面纱织爱者，以神秘为礼',                      card_skill_name: 'letter_trigger_twice_V', card_skill_desc: '打出单词包含字母V，该字母触发2次计分' },
 ];
 
 // 打乱数组（Fisher-Yates）

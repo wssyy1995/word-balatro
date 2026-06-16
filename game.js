@@ -2188,7 +2188,7 @@ function handleInput(x, y) {
                     duration: 3500,
                   };
                   game.hintToast = {
-                    text: '长按女巫牌进行排序，卡牌按顺序进行触发',
+                    text: '长按女巫牌可以排序，卡牌按顺序进行触发',
                     expireAt: Date.now() + 3500,
                     startTime: Date.now(),
                     customPosition: 'propBarBottom',
