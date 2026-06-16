@@ -486,44 +486,13 @@ class Renderer {
       this.targetScoreIconLoaded = false;
     }
 
-    // 加载卡牌背景图
+    // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
     this.cardTemplateLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/card_template.png';
-      img.onload = () => { this.cardTemplateLoaded = true; };
-      img.onerror = () => { this.cardTemplateLoaded = false; };
-      this.cardTemplate = img;
-    } catch (e) {
-      this.cardTemplateLoaded = false;
-    }
-
-    // 加载卡牌升级背景图（装备女巫卡牌后对应字母牌使用）
-    this.cardTemplateUpgrade = null;
-    this.cardTemplateUpgradeLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/card_template_upgrade.png';
-      img.onload = () => { this.cardTemplateUpgradeLoaded = true; };
-      img.onerror = () => { this.cardTemplateUpgradeLoaded = false; };
-      this.cardTemplateUpgrade = img;
-    } catch (e) {
-      this.cardTemplateUpgradeLoaded = false;
-    }
-    
-    // 加载卡牌选中态背景图
     this.cardTemplateSelected = null;
     this.cardTemplateSelectedLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/card_template_selected.png';
-      img.onload = () => { this.cardTemplateSelectedLoaded = true; };
-      img.onerror = () => { this.cardTemplateSelectedLoaded = false; };
-      this.cardTemplateSelected = img;
-    } catch (e) {
-      this.cardTemplateSelectedLoaded = false;
-    }
+    this.cardTemplateUpgrade = null;
+    this.cardTemplateUpgradeLoaded = false;
     // 加载游戏进度栏背景图
     this.gameProgressImage = null;
     this.gameProgressLoaded = false;

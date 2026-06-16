@@ -90,7 +90,10 @@ class CloudStorageManager {
       'share_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip.png',
       'share_tip_limit': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip_limit.png',
       'card_bar': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_bar_v7.png',
-      'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png'
+      'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png',
+      'card_template': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template.png',
+      'card_template_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_selected.png',
+      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
@@ -1275,7 +1278,7 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景）
+  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板）
   injectBgIconToRenderer(renderer) {
     const bgData = this.bgIconImages['bg'];
     if (bgData && bgData.loaded && bgData.img) {
@@ -1294,6 +1297,21 @@ class CloudStorageManager {
     } else {
       this.log('bg_icon card_book 未加载，跳过注入');
     }
+
+    // 卡牌模板从 bg_icon 云存储注入
+    const templateNames = ['card_template', 'card_template_selected', 'card_template_upgrade'];
+    const templateFields = ['cardTemplate', 'cardTemplateSelected', 'cardTemplateUpgrade'];
+    const loadedFlags = ['cardTemplateLoaded', 'cardTemplateSelectedLoaded', 'cardTemplateUpgradeLoaded'];
+    templateNames.forEach((name, i) => {
+      const data = this.bgIconImages[name];
+      if (data && data.loaded && data.img) {
+        renderer[templateFields[i]] = data.img;
+        renderer[loadedFlags[i]] = true;
+        this.log('已注入 bg_icon renderer: ' + name);
+      } else {
+        this.log('bg_icon ' + name + ' 未加载，跳过注入');
+      }
+    });
   }
 
   // ===== music 文件管理 =====
