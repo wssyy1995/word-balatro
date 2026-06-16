@@ -1620,6 +1620,18 @@ function handleInput(x, y) {
             }
             game.equippedWitchCards = [...equippedArr, level];
             console.log('[Equipped] 装备 witch_card_' + level, '当前:', game.equippedWitchCards);
+            // 触发装备字母牌升级动画
+            const { WITCH_CARDS } = require('./js/witch_skills');
+            const equippedConfig = WITCH_CARDS.find(c => {
+              const cardLevel = parseInt(c.card_id.replace('witch_card_', ''), 10);
+              return cardLevel === level;
+            });
+            if (equippedConfig && equippedConfig.card_letter) {
+              game._cardBookEquipAnim = {
+                startTime: Date.now(),
+                letter: equippedConfig.card_letter.toUpperCase(),
+              };
+            }
           }
           if (game.storageManager) {
             game.storageManager.saveEquippedWitchCard(game.equippedWitchCards);

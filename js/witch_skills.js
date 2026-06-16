@@ -113,11 +113,13 @@ function getForceContainLetter(skillName) {
 function getSkillForLevel(level, shuffledSkills = null) {
   const config = WITCH_SKILLS.find(s => s.level === level);
   if (!config) return null;
-  if (!shuffledSkills) return { ...config, skill: null };
   const idx = WITCH_SKILLS.indexOf(config);
-  const skillDef = idx >= 0 && idx < shuffledSkills.length ? shuffledSkills[idx] : null;
-  if (!skillDef) return { ...config, skill: null };
-  return { ...config, skill: skillDef.skill, desc: skillDef.desc, angry_tip: skillDef.angry_tip };
+  // SKILL_POOL 长度可能小于 WITCH_SKILLS，超出时循环复用技能定义
+  if (shuffledSkills && shuffledSkills.length > 0) {
+    const skillDef = shuffledSkills[idx % shuffledSkills.length];
+    return { ...config, skill: skillDef.skill, desc: skillDef.desc, angry_tip: skillDef.angry_tip };
+  }
+  return { ...config, skill: '', desc: '' };
 }
 
 // 检查技能是否满足

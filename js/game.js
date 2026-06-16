@@ -1213,6 +1213,7 @@ class Game {
       this._cardBookDetailStartTime = null;
       this._closeCardBookDetailStartTime = null;
       this._cardBookEquipBtnPressed = false;
+      this._cardBookEquipAnim = null;
       this._cardBookCloseBtnPressed = false;
       this._cardBookCellPressed = null;
       this.collectedWitchCards = this.storageManager.loadCollectedWitchCards() || [];
@@ -1507,6 +1508,7 @@ class Game {
     this._cardBookDetailStartTime = null;
     this._closeCardBookDetailStartTime = null;
     this._cardBookEquipBtnPressed = false;
+    this._cardBookEquipAnim = null;
     this._cardBookCloseBtnPressed = false;
     this._rankCloseBtnPressed = false;
     this._cardBookCellPressed = null;

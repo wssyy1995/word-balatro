@@ -555,11 +555,27 @@ class WitchRewardRenderer {
             // 立即使用（金色背景）
             this.parent._drawScaledButton(ctx, '立即使用', startX, btnY, btnW, collectBtnH, s, this.useBtnPressed, { color: '#c4a35a', radius: 8 });
 
-            // 暂存（米色边框按钮）
+            // 暂存（米色边框按钮 / 灰色禁用）
             const stashX = startX + btnW + btnGap;
-            this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
+            const rewardEffect = data.rewardItem.effect;
+            const isStashablePotion = rewardEffect === 'upgrade_letter' || rewardEffect === 'random_upgrade';
+            const potionFull = (game.potions || []).length >= 2;
+            const stashDisabled = isStashablePotion && potionFull;
 
-            this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
+            if (stashDisabled) {
+              this.parent.roundRect(stashX, btnY, btnW, collectBtnH, 8 * s, '#e0e0e0', '#999');
+              ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+              ctx.fillStyle = '#999';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('暂存', stashX + btnW / 2, btnY + collectBtnH / 2 - 6 * s);
+              ctx.font = `${Math.floor(10 * s)}px sans-serif`;
+              ctx.fillText('(已达上限)', stashX + btnW / 2, btnY + collectBtnH / 2 + 8 * s);
+            } else {
+              this.parent._drawScaledButton(ctx, '暂存', stashX, btnY, btnW, collectBtnH, s, this.stashBtnPressed, { color: '#f5f0e6', textColor: '#5a4a2a', radius: 8, stroke: '#c4a35a' });
+            }
+
+            this.stashBtnRect = stashDisabled ? null : { x: stashX, y: btnY, w: btnW, h: collectBtnH };
             this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
           }
           this.okBtnRect = null;

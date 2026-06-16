@@ -92,8 +92,9 @@ class CloudStorageManager {
       'card_bar': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_bar_v7.png',
       'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png',
       'card_template': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template.png',
-      'card_template_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_selected.png',
-      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade.png'
+      'card_template_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_selected_new.png',
+      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade6.png',
+      'card_template_upgrade_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade_selected.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）

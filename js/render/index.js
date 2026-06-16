@@ -792,6 +792,11 @@ Renderer.prototype.render = function(game) {
       this._drawDailyWordsPopup(game);
     }
 
+    // 卡牌图鉴装备字母牌升级动画（覆盖在普通弹窗之上）
+    if (game._cardBookEquipAnim) {
+      this._drawCardBookEquipAnim(ctx, game, W, H, s);
+    }
+
     // 调试菜单（最后绘制，确保在最上层）
     if (this.debugMenuOpen && this.topIconRect) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);

@@ -1,4 +1,5 @@
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
+const { LETTER_SCORE, FACE_CARDS } = require('../data');
 const { Easing } = require('../animation');
 
 module.exports = function extendCardbook(Renderer) {
@@ -364,6 +365,121 @@ module.exports = function extendCardbook(Renderer) {
       }
       lines.push(line);
       return lines;
+    }
+
+    // 装备 witch_card 后的字母牌升级动画
+    // 0~500ms: 显示 card_template
+    // 500~800ms: card_template 横向缩成线后切换 card_template_upgrade 横向展开（翻牌效果）
+    // 800~1800ms: 显示 card_template_upgrade
+    Renderer.prototype._drawCardBookEquipAnim = function(ctx, game, W, H, s) {
+      const anim = game._cardBookEquipAnim;
+      if (!anim) return;
+
+      const elapsed = Date.now() - (anim.startTime || Date.now());
+      const normalDuration = 500;
+      const crossFadeDuration = 300;
+      const upgradeDuration = 1000;
+      const popInDuration = 300;
+      const totalDuration = normalDuration + crossFadeDuration + upgradeDuration;
+
+      if (elapsed >= totalDuration) {
+        game._cardBookEquipAnim = null;
+        return;
+      }
+
+      const letter = anim.letter;
+      if (!letter) return;
+
+      // 构造临时字母牌对象
+      const baseScore = LETTER_SCORE[letter] || 0;
+      const animCard = {
+        letter,
+        baseScore,
+        score: baseScore,
+        isFace: FACE_CARDS.has(letter),
+        selected: false,
+        newCard: false,
+        upgraded: false,
+        upgradeMult: 1,
+        upgradeAdd: 0,
+        animOffset: null,
+        selectOffset: 0,
+        jumpOffsetY: 0,
+      };
+
+      // 卡牌居中，尺寸比手牌略大
+      const targetCardW = Math.min(this.cardW * 1.4, W * 0.5);
+      const targetCardH = targetCardW * (this.cardH / this.cardW);
+      const cardX = (W - targetCardW) / 2;
+      const cardY = (H - targetCardH) / 2;
+      const baseScale = targetCardW / this.cardW;
+
+      // 弹出缩放：前 300ms 从 0.7 → 1
+      let popScale = 1;
+      if (elapsed < popInDuration) {
+        popScale = 0.7 + 0.3 * Easing.easeOutBack(elapsed / popInDuration);
+      }
+
+      // 翻牌转换参数
+      const halfCross = crossFadeDuration / 2;
+      const normalShrinkStart = normalDuration;
+      const normalShrinkEnd = normalDuration + halfCross;
+      const upgradeGrowStart = normalShrinkEnd;
+      const upgradeGrowEnd = upgradeGrowStart + halfCross;
+
+      ctx.save();
+      ctx.translate(cardX + targetCardW / 2, cardY + targetCardH / 2);
+      ctx.scale(popScale * baseScale, popScale * baseScale);
+
+      // 翻牌开始时播放 word_score 音效（只播一次）
+      if (elapsed >= normalDuration && !anim._flipSoundPlayed) {
+        anim._flipSoundPlayed = true;
+        if (game.audioManager) game.audioManager.play('word_score');
+      }
+
+      // 卡牌背后白色光晕（跟随翻牌缩放）
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.7)';
+      ctx.shadowBlur = 28 * s;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // 保存当前已装备字母集合，临时修改以强制渲染指定模板
+      const originalEquipped = this._equippedLetters;
+
+      if (elapsed < upgradeGrowStart) {
+        // 普通模板阶段（前 500ms 全宽，后 150ms 横向缩成线）
+        let normalScaleX = 1;
+        if (elapsed > normalShrinkStart) {
+          normalScaleX = Math.max(0, 1 - (elapsed - normalShrinkStart) / halfCross);
+        }
+        if (normalScaleX > 0) {
+          const withoutLetter = new Set(originalEquipped);
+          withoutLetter.delete(letter);
+          this._equippedLetters = withoutLetter;
+          ctx.save();
+          ctx.scale(normalScaleX, 1);
+          this.drawCard(animCard, -this.cardW / 2, -this.cardH / 2);
+          ctx.restore();
+        }
+      } else {
+        // 升级模板阶段（前 150ms 横向从线展开，后 1000ms 全宽）
+        let upgradeScaleX = 1;
+        if (elapsed < upgradeGrowEnd) {
+          upgradeScaleX = Math.max(0, (elapsed - upgradeGrowStart) / halfCross);
+        }
+        if (upgradeScaleX > 0) {
+          const withLetter = new Set(originalEquipped);
+          withLetter.add(letter);
+          this._equippedLetters = withLetter;
+          ctx.save();
+          ctx.scale(upgradeScaleX, 1);
+          this.drawCard(animCard, -this.cardW / 2, -this.cardH / 2);
+          ctx.restore();
+        }
+      }
+
+      this._equippedLetters = originalEquipped;
+      ctx.restore();
     }
 
 };
