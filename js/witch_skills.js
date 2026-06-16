@@ -67,19 +67,21 @@ const SKILL_POOL = [
 // ];
 //将WITCH_CARDS 统一改成字母触发2次
 const WITCH_CARDS = [
-  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'爱之女巫，喜悦和希望的守望者',card_skill_name: 'letter_trigger_twice_A',card_skill_desc:'打出单词包含字母A，该字母触发2次计分'},
-  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者',card_skill_name: 'letter_trigger_twice_B',card_skill_desc:'打出单词包含字母B，该字母触发2次计分'},
-  { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'letter_trigger_twice_C',card_skill_desc:'打出单词包含字母C，该字母触发2次计分'},
-  { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'letter_trigger_twice_D',card_skill_desc:'打出单词包含字母D，该字母触发2次计分'},
-  { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'letter_trigger_twice_E',card_skill_desc:'打出单词包含字母E，该字母触发2次计分'},
-  { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'letter_trigger_twice_F',card_skill_desc:'打出单词包含字母F，该字母触发2次计分'},
-  { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'letter_trigger_twice_G',card_skill_desc:'打出单词包含字母G，该字母触发2次计分'},
-  { card_id: 'witch_card_21', witch_name: '赫丝佩瑞丝', witch_desc:'异界来客，裂隙彼岸之人',card_skill_name: 'letter_trigger_twice_H',card_skill_desc:'打出单词包含字母H，该字母触发2次计分'},
-  { card_id: 'witch_card_24', witch_name: '伊洛薇尔', witch_desc:'暮光行者，昼夜的守门人',card_skill_name: 'letter_trigger_twice_I',card_skill_desc:'打出单词包含字母I，该字母触发2次计分'},
-  { card_id: 'witch_card_27', witch_name: '柔莉丝特', witch_desc:'诡笑之星，以戏法乱人心的嘲弄者',card_skill_name: 'letter_trigger_twice_J',card_skill_desc:'打出单词包含字母J，该字母触发2次计分'},
-  { card_id: 'witch_card_29', witch_name: '卡莉瑟薇', witch_desc:'美之守望者，容颜即武器',card_skill_name: 'letter_trigger_twice_K',card_skill_desc:'打出单词包含字母K，该字母触发2次计分'},
-  { card_id: 'witch_card_32', witch_name: '莉丝薇娜', witch_desc:'消融咒缚之脉，解除一切禁锢',card_skill_name: 'letter_trigger_twice_L',card_skill_desc:'打出单词包含字母L，该字母触发2次计分'}
-
+  { card_id: 'witch_card_3',  card_letter: 'A', witch_name: '爱莉亚',     witch_desc: '爱之女巫，喜悦和希望的守望者',          card_skill_name: 'letter_trigger_twice_A', card_skill_desc: '打出单词包含字母A，该字母触发2次计分' },
+  { card_id: 'witch_card_5',  card_letter: 'B', witch_name: '柏丽桑忒',   witch_desc: '荆棘花园的看守者',                      card_skill_name: 'letter_trigger_twice_B', card_skill_desc: '打出单词包含字母B，该字母触发2次计分' },
+  { card_id: 'witch_card_8',  card_letter: 'C', witch_name: '喀薇娅',     witch_desc: '虚空中编织咒文之人',                    card_skill_name: 'letter_trigger_twice_C', card_skill_desc: '打出单词包含字母C，该字母触发2次计分' },
+  { card_id: 'witch_card_11', card_letter: 'D', witch_name: '德莱薇尔',   witch_desc: '以亡魂之丝纺命运的织者',                card_skill_name: 'letter_trigger_twice_D', card_skill_desc: '打出单词包含字母D，该字母触发2次计分' },
+  { card_id: 'witch_card_14', card_letter: 'E', witch_name: '艾莉瑟瑞丝', witch_desc: '挣脱枷锁者，禁咒破译者',                card_skill_name: 'letter_trigger_twice_E', card_skill_desc: '打出单词包含字母E，该字母触发2次计分' },
+  { card_id: 'witch_card_16', card_letter: 'F', witch_name: '菲兰瑟娅',   witch_desc: '牵动命运之线的人',                      card_skill_name: 'letter_trigger_twice_F', card_skill_desc: '打出单词包含字母F，该字母触发2次计分' },
+  { card_id: 'witch_card_18', card_letter: 'G', witch_name: '格莱薇妮娅', witch_desc: '持重者，不动如山的审判官',              card_skill_name: 'letter_trigger_twice_G', card_skill_desc: '打出单词包含字母G，该字母触发2次计分' },
+  { card_id: 'witch_card_21', card_letter: 'H', witch_name: '赫丝佩瑞丝', witch_desc: '异界来客，裂隙彼岸之人',                card_skill_name: 'letter_trigger_twice_H', card_skill_desc: '打出单词包含字母H，该字母触发2次计分' },
+  { card_id: 'witch_card_24', card_letter: 'I', witch_name: '伊洛薇尔',   witch_desc: '暮光行者，昼夜的守门人',                card_skill_name: 'letter_trigger_twice_I', card_skill_desc: '打出单词包含字母I，该字母触发2次计分' },
+  { card_id: 'witch_card_27', card_letter: 'J', witch_name: '柔莉丝特',   witch_desc: '诡笑之星，以戏法乱人心的嘲弄者',        card_skill_name: 'letter_trigger_twice_J', card_skill_desc: '打出单词包含字母J，该字母触发2次计分' },
+  { card_id: 'witch_card_29', card_letter: 'K', witch_name: '卡莉瑟薇',   witch_desc: '美之守望者，容颜即武器',                card_skill_name: 'letter_trigger_twice_K', card_skill_desc: '打出单词包含字母K，该字母触发2次计分' },
+  { card_id: 'witch_card_32', card_letter: 'L', witch_name: '莉丝薇娜',   witch_desc: '消融咒缚之脉，解除一切禁锢',            card_skill_name: 'letter_trigger_twice_L', card_skill_desc: '打出单词包含字母L，该字母触发2次计分' },
+  { card_id: 'witch_card_35', card_letter: 'M', witch_name: '莫薇希娅',   witch_desc: '衔尾之女，轮回的见证者',                card_skill_name: 'letter_trigger_twice_M', card_skill_desc: '打出单词包含字母M，该字母触发2次计分' },
+  { card_id: 'witch_card_38', card_letter: 'N', witch_name: '妮瓦瑞丝',   witch_desc: '永冬的守夜人，寒霜为袍',                card_skill_name: 'letter_trigger_twice_N', card_skill_desc: '打出单词包含字母N，该字母触发2次计分' },
+  { card_id: 'witch_card_41', card_letter: 'O', witch_name: '奥菲妮娅',   witch_desc: '寂静王座的掌灯人',                      card_skill_name: 'letter_trigger_twice_O', card_skill_desc: '打出单词包含字母O，该字母触发2次计分' },
 ];
 
 // 打乱数组（Fisher-Yates）
