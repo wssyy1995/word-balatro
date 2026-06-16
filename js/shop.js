@@ -44,7 +44,8 @@ const SHOP_POOL = {
     {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4, cost:12, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+4'},
     {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:14, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
     {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
-    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'}
+    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
+    {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:5, desc:'每次出牌，倍率随机×0.8~2.5'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},

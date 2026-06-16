@@ -809,7 +809,7 @@ function _matchWordTrigger(cards, trigger) {
       const word = cards.map(c => c.letter.toLowerCase()).join('');
       return word.length >= 2 && word[0] === word[word.length - 1];
     }
-
+    case 'chaos_orb': return true; // 混沌法球：每次出牌必触发
     default: return false;
   }
 }
@@ -2418,6 +2418,13 @@ class Game {
         playedCardIds: played.map(c => c.id),
       };
       if (this.storageManager) this.storageManager.saveProgress();
+    }
+
+    // === 混沌法球：每次出牌随机生成 0.8~2.5 倍率 ===
+    const chaosOrb = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'chaos_orb' && !j._disabled);
+    if (chaosOrb) {
+      const chaosMult = 0.8 + Math.random() * 1.7; // 0.8 ~ 2.5
+      chaosOrb.value = chaosMult;
     }
 
     const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
