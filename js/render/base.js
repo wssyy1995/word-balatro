@@ -498,6 +498,19 @@ class Renderer {
     } catch (e) {
       this.cardTemplateLoaded = false;
     }
+
+    // 加载卡牌升级背景图（装备女巫卡牌后对应字母牌使用）
+    this.cardTemplateUpgrade = null;
+    this.cardTemplateUpgradeLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_template_upgrade.png';
+      img.onload = () => { this.cardTemplateUpgradeLoaded = true; };
+      img.onerror = () => { this.cardTemplateUpgradeLoaded = false; };
+      this.cardTemplateUpgrade = img;
+    } catch (e) {
+      this.cardTemplateUpgradeLoaded = false;
+    }
     
     // 加载卡牌选中态背景图
     this.cardTemplateSelected = null;
@@ -650,6 +663,7 @@ class Renderer {
     this.cloudLogRect = null;
     this.cloudLogScrollBarRect = null;
     this.showCloudDebugLogs = false; // 调试日志开关，需要排查时设为 true
+    this._equippedLetters = new Set(); // 已装备女巫卡牌对应的字母集合
     
     // 子渲染器
     this.settlementRenderer = new SettlementRenderer(this);
@@ -997,6 +1011,22 @@ class Renderer {
     }
   }
 
+  // 根据已装备的女巫卡牌更新对应字母集合（装备某张 WITCH_CARDS 后，
+  // 该卡牌 card_letter 对应的字母牌使用升级模板）
+  _updateEquippedLetters(game) {
+    this._equippedLetters = new Set();
+    if (!game || !game.equippedWitchCards || game.equippedWitchCards.length === 0) return;
+    for (const level of game.equippedWitchCards) {
+      const witchCard = WITCH_CARDS.find(c => {
+        const cardLevel = parseInt(c.card_id.replace('witch_card_', ''), 10);
+        return cardLevel === level;
+      });
+      if (witchCard && witchCard.card_letter) {
+        this._equippedLetters.add(witchCard.card_letter.toUpperCase());
+      }
+    }
+  }
+
   drawCard(card, x, y, isNew = false, displayScoreOverride = null) {
     const ctx = this.ctx;
     const w = this.cardW;
@@ -1103,9 +1133,12 @@ class Renderer {
     const darkBlue = '#1a2f4a';
     const warmGold = '#9a7b3d';
 
-    // === 1. 背景图（普通 / 选中态） ===
+    // === 1. 背景图（普通 / 选中态 / 升级态） ===
+    const isUpgradeLetter = this._equippedLetters && this._equippedLetters.has((card.letter || '').toUpperCase());
     if (card.selected && this.cardTemplateSelected && this.cardTemplateSelectedLoaded) {
       ctx.drawImage(this.cardTemplateSelected, -hw, -hh, w, h);
+    } else if (isUpgradeLetter && this.cardTemplateUpgrade && this.cardTemplateUpgradeLoaded) {
+      ctx.drawImage(this.cardTemplateUpgrade, -hw, -hh, w, h);
     } else if (this.cardTemplate && this.cardTemplateLoaded) {
       ctx.drawImage(this.cardTemplate, -hw, -hh, w, h);
     } else {

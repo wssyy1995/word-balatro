@@ -18,6 +18,9 @@ Renderer.prototype.render = function(game) {
     const H = this.H;
     const s = this.scale;
 
+    // 同步已装备女巫卡牌对应的字母集合（影响字母牌模板）
+    this._updateEquippedLetters(game);
+
     // 绘制背景
     ctx.clearRect(0, 0, W, H);
     if (this.bgImage && this.bgLoaded) {
