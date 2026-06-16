@@ -883,7 +883,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
           wwMatched = _matchWordTrigger(cards, j.trigger);
         }
         if (wwMatched) {
-          if (j.trigger === 'illegal_boost' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
+          if (j.trigger === 'illegal_boost' || j.trigger === 'chaos_orb' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
             mult += j.value;
           } else {
             mult = Math.ceil(mult * j.value);
@@ -1258,6 +1258,7 @@ class Game {
     this._newWitchCardPopup = null;
     this._closingNewWitchCardPopup = false;
     this._closeNewWitchCardPopupStartTime = null;
+    this._newWitchCardPopupClosed = false;
     this._pendingWitchRewardDelay = false;
     this._witchRewardDelayStartTime = null;
     this._shopToGameTransition = null;
@@ -2420,10 +2421,10 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    // === 混沌法球：每次出牌随机生成 0.8~2.5 倍率 ===
+    // === 混沌法球：每次出牌随机给倍率 +0.5~1.5 ===
     const chaosOrb = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'chaos_orb' && !j._disabled);
     if (chaosOrb) {
-      const chaosMult = 0.8 + Math.random() * 1.7; // 0.8 ~ 2.5
+      const chaosMult = 0.5 + Math.random() * 1.0; // 0.5 ~ 1.5
       chaosOrb.value = chaosMult;
     }
 
@@ -2990,6 +2991,7 @@ class Game {
       if (witchSkill) {
         // 女巫奖励改为：进入商店后先弹出"获得新词牌"，点击收集后再延迟1s进入女巫奖励
         // 结算弹窗关闭后延迟 200ms 再显示新词牌弹窗，并播放音效
+        this._newWitchCardPopupClosed = false;
         this._delay(() => {
           if (this.audioManager) this.audioManager.play('buy_success');
           this._newWitchCardPopup = {
@@ -3020,6 +3022,7 @@ class Game {
     this._delay(() => {
       this._newWitchCardPopup = null;
       this._closingNewWitchCardPopup = false;
+      this._newWitchCardPopupClosed = true;
       // 弹窗关闭后开始计算女巫奖励延迟
       this._witchRewardDelayStartTime = Date.now();
     }, 200);

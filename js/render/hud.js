@@ -469,7 +469,15 @@ module.exports = function extendHud(Renderer) {
       const toastW = textW + padding * 2 + iconSize + iconSpacing - 10 * s;
       const toastX = (W - toastW) / 2;
       // 位置：单词预览区上方（再往上 11px），无预览区时回退到屏幕底部
-      let toastY = this.wordAreaY ? this.wordAreaY - toastH - 10 * s - 3 * s - 3 * s - 3 * s : this.H - 118 * s;
+      // 支持自定义位置（如商店页道具栏下方）
+      let toastY;
+      if (game.hintToast.customY !== undefined && game.hintToast.customY !== null) {
+        toastY = game.hintToast.customY;
+      } else if (game.hintToast.customPosition === 'propBarBottom' && this.shopPropBarBottomY && game.state === 'shop') {
+        toastY = this.shopPropBarBottomY + 12 * s;
+      } else {
+        toastY = this.wordAreaY ? this.wordAreaY - toastH - 10 * s - 3 * s - 3 * s - 3 * s : this.H - 118 * s;
+      }
 
       // 进入动画：从下往上弹出 + 缩放（350ms easeOutBack）
       let animOffsetY = 0;

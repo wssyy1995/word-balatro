@@ -1138,7 +1138,7 @@ module.exports = function extendPlaying(Renderer) {
           const joker = item.joker;
           if (item.isPenalty) {
             curMult += joker.penalty;
-          } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
+          } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.trigger === 'chaos_orb' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
             curMult += joker.value;
           } else {
             curMult = Math.ceil(curMult * joker.value);
@@ -1157,7 +1157,7 @@ module.exports = function extendPlaying(Renderer) {
             const formatLabelValue = (v) => Number.isInteger(v) ? String(v) : v.toFixed(1);
             if (item.isPenalty) {
               labelText = `${formatLabelValue(joker.penalty)}`;
-            } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
+            } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.trigger === 'chaos_orb' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
               labelText = `+${formatLabelValue(joker.value)}`;
             } else {
               labelText = `x${formatLabelValue(joker.value)}`;

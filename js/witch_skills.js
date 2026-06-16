@@ -67,8 +67,8 @@ const SKILL_POOL = [
 // ];
 //将WITCH_CARDS 统一改成字母触发2次
 const WITCH_CARDS = [
-  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'金之女巫，黄金时代的最后守望者',card_skill_name: 'letter_trigger_twice_A',card_skill_desc:'打出单词包含字母A，该字母触发2次计分'},
-  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'letter_trigger_twice_B',card_skill_desc:'打出单词包含字母B，该字母触发2次计分'},
+  { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'爱之女巫，喜悦和希望的守望者',card_skill_name: 'letter_trigger_twice_A',card_skill_desc:'打出单词包含字母A，该字母触发2次计分'},
+  { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者',card_skill_name: 'letter_trigger_twice_B',card_skill_desc:'打出单词包含字母B，该字母触发2次计分'},
   { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'letter_trigger_twice_C',card_skill_desc:'打出单词包含字母C，该字母触发2次计分'},
   { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'letter_trigger_twice_D',card_skill_desc:'打出单词包含字母D，该字母触发2次计分'},
   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'letter_trigger_twice_E',card_skill_desc:'打出单词包含字母E，该字母触发2次计分'},

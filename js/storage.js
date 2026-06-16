@@ -192,6 +192,15 @@ class StorageManager {
     return this.get('cardbook_guide_phase', null);
   }
 
+  // ===== 女巫排序提示（仅弹一次）=====
+  saveJokerSortHintShown(shown = true) {
+    return this.set('joker_sort_hint_shown', shown);
+  }
+
+  loadJokerSortHintShown() {
+    return this.get('joker_sort_hint_shown', false);
+  }
+
   // ===== 最高分 =====
   
   getHighScore() {

@@ -26,26 +26,26 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:8, desc:'元音字母分×3'},
-    {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:6, desc:'单词首字母为元音时，该首字母分+60'},
-    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:40, cost:7, desc:'单词首尾字母各+40分'},
-    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, desc:'单词字母>=4时，倍率×1.5'},
-    // {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, desc:'单词字母>=5时，倍率×1.5'},
-    // {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, desc:'单词字母>=6时，倍率×2'},
-    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:4, cost:12, desc:'单词字母含J/Q/X/Y/Z时，倍率+4'},
-    {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, desc:'打出非法单词，不扣除出牌次数'},
-    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
-    {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:8, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
-    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:12, desc:'每次打出非法单词，倍率累计+1'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:10, desc:'出牌<=3个字母,30%概率倍率+8'},
-    {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5, cost:12, desc:'相邻重复字母，倍率+5'},
-    {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, cost:12, desc:'单词首尾字母相同，倍率+6'},
-    {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:8, desc:'每次出牌若与上一手首字母相同，倍率累计+3；中断后重置'},
-    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4, cost:12, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+4'},
-    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:14, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
-    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
-    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
-    {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:5, desc:'每次出牌，倍率随机×0.8~2.5'}
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:8, min_level:1, desc:'元音字母分×3'},
+    {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:6, min_level:1, desc:'单词首字母为元音时，该首字母分+60'},
+    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:40, cost:7, min_level:1, desc:'单词首尾字母各+40分'},
+    // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, min_level:1, desc:'单词字母>=4时，倍率×1.5'},
+    // {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, min_level:1, desc:'单词字母>=5时，倍率×1.5'},
+    // {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, min_level:1, desc:'单词字母>=6时，倍率×2'},
+    // {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:4, cost:12, min_level:1, desc:'单词字母含J/Q/X/Y/Z时，倍率+4'},
+    // {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, min_level:1, desc:'打出非法单词，不扣除出牌次数'},
+    // {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, min_level:1, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
+    // {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:8, min_level:1, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
+    // {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:12, min_level:1, desc:'每次打出非法单词，倍率累计+1'},
+    // {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:10, min_level:1, desc:'出牌<=3个字母,30%概率倍率+8'},
+    // {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5, cost:12, min_level:1, desc:'相邻重复字母，倍率+5'},
+    // {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, cost:12, min_level:1, desc:'单词首尾字母相同，倍率+6'},
+    // {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:8, min_level:1, desc:'每次出牌若与上一手首字母相同，倍率累计+3；中断后重置'},
+    // {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4, cost:12, min_level:1, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+4'},
+    // {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:14, min_level:1, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
+    // {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:8, min_level:1, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
+    // {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
+    {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:5, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.5]'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -77,11 +77,12 @@ function generateShopItems(game) {
   const items = [];
   const equippedWitchNames = new Set((game.jokers || []).filter(j => j).map(j => j.name));
 
-  // 女巫牌：过滤已装备的，确保有2张可展示
-  let witchPool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
+  // 女巫牌：过滤已装备的 + 过滤当前回合未解锁的(min_level)，确保有2张可展示
+  const isWitchAvailable = w => !equippedWitchNames.has(w.name) && game.round >= (w.min_level || 1);
+  let witchPool = SHOP_POOL.witch.filter(isWitchAvailable);
   if (witchPool.length < 2) {
-    // 过滤后不足2张，从全部池子补充（避免空位）
-    witchPool = SHOP_POOL.witch;
+    // 过滤后不足2张，从满足 min_level 的池子补充（仍不违反 min_level 限制）
+    witchPool = SHOP_POOL.witch.filter(w => game.round >= (w.min_level || 1));
   }
   const witchShuffled = _shuffle(witchPool);
   items.push(witchShuffled[0], witchShuffled[1]);
@@ -103,8 +104,8 @@ function refreshModule(game, modIdx) {
 
   if (type === 'witch') {
     const equippedWitchNames = new Set((game.jokers || []).filter(j => j).map(j => j.name));
-    pool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name));
-    if (pool.length < 2) pool = SHOP_POOL.witch;
+    pool = SHOP_POOL.witch.filter(w => !equippedWitchNames.has(w.name) && game.round >= (w.min_level || 1));
+    if (pool.length < 2) pool = SHOP_POOL.witch.filter(w => game.round >= (w.min_level || 1));
   } else {
     pool = SHOP_POOL[type];
   }
@@ -286,6 +287,7 @@ class ShopRenderer {
     const actualWitchSlots = game.maxJokerSlots || 4;
     const ownedY = top + 16 * s + 2 * s;
     const ownedH = 92 * s;
+    this.parent.shopPropBarBottomY = ownedY + ownedH;
 
     // 栏目宽度固定，card_bar.png 宽度不可变
     const ownedW = W - 30 * s;
@@ -490,10 +492,23 @@ class ShopRenderer {
             shakeX = Math.sin(t / 45 + i * 2.1) * 0.6 * s;
             shakeY = Math.cos(t / 45 + i * 1.6) * 0.6 * s;
           }
+          // 装备第 2 张女巫牌时的提示抖动：2 张一起轻微抖动 3 秒
+          let hintShakeX = 0;
+          let hintShakeY = 0;
+          if (game._jokerShakeHint) {
+            const shakeElapsed = Date.now() - game._jokerShakeHint.startTime;
+            if (shakeElapsed < game._jokerShakeHint.duration) {
+              const t = Date.now();
+              hintShakeX = Math.sin(t / 35 + i * 1.2) * 0.8 * s;
+              hintShakeY = Math.cos(t / 40 + i * 0.9) * 0.6 * s;
+            } else {
+              game._jokerShakeHint = null;
+            }
+          }
           const drawW = slotW * scale;
           const drawH = oSlotH * scale;
-          const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX;
-          const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY;
+          const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX + hintShakeX;
+          const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY + hintShakeY;
           if (glow > 0.01) {
             ctx.shadowColor = `rgba(162,155,254,${glow})`;
             ctx.shadowBlur = 22 * s;

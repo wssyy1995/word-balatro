@@ -2179,6 +2179,23 @@ function handleInput(x, y) {
                 item.usesLeft = item.limit;
               }
               game.jokers.push(item);
+              // 装备第 2 张女巫牌时：2张女巫牌一起轻微抖动 + toast 提示排序（每个用户仅一次）
+              if (game.jokers.length === 2) {
+                const hasShownSortHint = game.storageManager && game.storageManager.loadJokerSortHintShown();
+                if (!hasShownSortHint) {
+                  game._jokerShakeHint = {
+                    startTime: Date.now(),
+                    duration: 3000,
+                  };
+                  game.hintToast = {
+                    text: '长按女巫牌进行排序，卡牌按顺序进行触发',
+                    expireAt: Date.now() + 3000,
+                    startTime: Date.now(),
+                    customPosition: 'propBarBottom',
+                  };
+                  if (game.storageManager) game.storageManager.saveJokerSortHintShown(true);
+                }
+              }
               if (game.storageManager) game.storageManager.saveProgress();
             }
             // 药水牌且点击"暂存"
@@ -2456,7 +2473,7 @@ function handleInput(x, y) {
 
     if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
       const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
-      if (btnHit && !game._challengeBtnPressed) {
+      if (btnHit && !game._challengeBtnPressed && !game._pendingWitchRewardDelay) {
         vibrate();
         if (game.audioManager) game.audioManager.play('challenge');
         game._challengeBtnPressed = true;

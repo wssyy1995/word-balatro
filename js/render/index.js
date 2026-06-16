@@ -61,7 +61,8 @@ Renderer.prototype.render = function(game) {
     } else if (game.state === 'shop') {
       // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景与结算弹窗一致（只显示 HUD）
       // 包含 settlement 关闭后到弹窗出现前的 200ms 延迟，避免背景突变为商店
-      const isNewWitchCardPhase = game._newWitchCardPopup || (game._pendingWitchRewardDelay && !game._witchRewardDelayStartTime);
+      // "获得新词牌"弹窗阶段：弹窗显示中/弹出前，保持 HUD 背景；弹窗关闭后一律进入商店背景
+      const isNewWitchCardPhase = game._newWitchCardPopup || (game._pendingWitchRewardDelay && !game._newWitchCardPopupClosed && !game._witchRewardDelayStartTime);
       if (isNewWitchCardPhase) {
         this.drawHUD(game);
         if (game._newWitchCardPopup) {
@@ -77,23 +78,31 @@ Renderer.prototype.render = function(game) {
           this.confirmBuyRenderer.draw(ctx, game, W, H, s);
         }
 
-        // 女巫奖励延迟 1s 进入
+        // 女巫奖励延迟 1s 进入；图鉴引导进行中（Phase 1~3）时暂停计时
         if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
-          const delayElapsed = Date.now() - (game._witchRewardDelayStartTime || Date.now());
-          if (delayElapsed >= 1000) {
-            game._pendingWitchRewardDelay = false;
+          if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+            // 图鉴引导优先，重置计时起点，等引导结束后再开始 1s 延迟
             game._witchRewardDelayStartTime = null;
-            const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
-            if (witchSkill && game.witchSkillPassed) {
-              game.witchRewardData = {
-                skill: witchSkill,
-                phase: 'gift',
-                giftStartTime: Date.now(),
-                startTime: Date.now(),
-                result: null,
-                rewardItem: null,
-              };
-              game.state = 'witch_reward';
+          } else {
+            if (!game._witchRewardDelayStartTime) {
+              game._witchRewardDelayStartTime = Date.now();
+            }
+            const delayElapsed = Date.now() - game._witchRewardDelayStartTime;
+            if (delayElapsed >= 1000) {
+              game._pendingWitchRewardDelay = false;
+              game._witchRewardDelayStartTime = null;
+              const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
+              if (witchSkill && game.witchSkillPassed) {
+                game.witchRewardData = {
+                  skill: witchSkill,
+                  phase: 'gift',
+                  giftStartTime: Date.now(),
+                  startTime: Date.now(),
+                  result: null,
+                  rewardItem: null,
+                };
+                game.state = 'witch_reward';
+              }
             }
           }
         }
@@ -130,11 +139,20 @@ Renderer.prototype.render = function(game) {
         }
       }
 
-      // 卡牌图鉴引导触发检查（第3关商店，获得新词牌弹窗期间不触发）
+      // 卡牌图鉴引导触发检查（第3关商店）
+      // 若正在等待女巫奖励，必须等"获得新词牌"弹窗关闭后才触发；
+      // 若没有女巫奖励，进入商店后直接触发。
       if (!game._newWitchCardPopup && game.round === 3 && game.cardBookGuidePhase === 0 && game.cardBookUnlocked) {
-        game.cardBookGuidePhase = 1;
-        game._cardBookGuideStartTime = Date.now();
-        game._cardBookGuideTextStartTime = Date.now();
+        const canTriggerGuide = !game._pendingWitchRewardDelay || game._newWitchCardPopupClosed;
+        if (canTriggerGuide) {
+          game.cardBookGuidePhase = 1;
+          game._cardBookGuideStartTime = Date.now();
+          game._cardBookGuideTextStartTime = Date.now();
+          // 如果正在排队等待女巫奖励，先暂停计时，等引导结束后再弹出女巫奖励
+          if (game._pendingWitchRewardDelay) {
+            game._witchRewardDelayStartTime = null;
+          }
+        }
       }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
