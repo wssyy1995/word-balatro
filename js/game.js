@@ -1634,19 +1634,25 @@ class Game {
       // 确保有原始值记录
       if (j._originalValue === undefined) j._originalValue = j.value;
       if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
-      // 根据当前技能状态重新应用/恢复 value
-      if (j._originalValue !== undefined) {
-        j.value = this._witchCardValueHalfActive
-          ? Math.round(j._originalValue * 0.5 * 10) / 10
-          : j._originalValue;
-      }
-      if (j._originalPenalty !== undefined) {
-        j.penalty = this._witchCardValueHalfActive
-          ? Math.round(j._originalPenalty * 0.5 * 10) / 10
-          : j._originalPenalty;
+      // witch_card_value_half 只对 scope 为 whole_word 的女巫牌生效
+      if (j.scope === 'whole_word') {
+        if (j._originalValue !== undefined) {
+          j.value = this._witchCardValueHalfActive
+            ? Math.round(j._originalValue * 0.5 * 10) / 10
+            : j._originalValue;
+        }
+        if (j._originalPenalty !== undefined) {
+          j.penalty = this._witchCardValueHalfActive
+            ? Math.round(j._originalPenalty * 0.5 * 10) / 10
+            : j._originalPenalty;
+        }
+      } else {
+        // 非 whole_word 女巫牌始终恢复原始值
+        if (j._originalValue !== undefined) j.value = j._originalValue;
+        if (j._originalPenalty !== undefined) j.penalty = j._originalPenalty;
       }
     });
-    if (this._witchCardValueHalfActive && this.state === 'playing' && this.jokers && this.jokers.some(j => j)) {
+    if (this._witchCardValueHalfActive && this.state === 'playing' && this.jokers && this.jokers.some(j => j && j.scope === 'whole_word')) {
       // startTime 设为过去时间，使恢复后直接显示蒙层和漂浮动画，不重新播放边框光晕
       this._witchCardValueHalfAnim = { startTime: Date.now() - 2000 };
     } else {
@@ -1897,7 +1903,7 @@ class Game {
       this._disableWitchAnim = null;
     }
 
-    // witch_card_value_half：回合开始时所有女巫牌 value/penalty 实际减半，并播放边框动画 + 倍率下降蒙层
+    // witch_card_value_half：回合开始时 scope 为 whole_word 的女巫牌 value/penalty 实际减半，并播放边框动画 + 倍率下降蒙层
     const valueHalfActive = disableSkill && disableSkill.skill === 'witch_card_value_half';
     this._witchCardValueHalfActive = !!valueHalfActive;
     (this.jokers || []).forEach(j => {
@@ -1905,19 +1911,25 @@ class Game {
       // 保存原始 value/penalty（首次遇到时）
       if (j._originalValue === undefined) j._originalValue = j.value;
       if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
-      // 根据技能状态切换为减半值或恢复原始值（保留1位小数）
-      if (j._originalValue !== undefined) {
-        j.value = valueHalfActive
-          ? Math.round(j._originalValue * 0.5 * 10) / 10
-          : j._originalValue;
-      }
-      if (j._originalPenalty !== undefined) {
-        j.penalty = valueHalfActive
-          ? Math.round(j._originalPenalty * 0.5 * 10) / 10
-          : j._originalPenalty;
+      // witch_card_value_half 只对 scope 为 whole_word 的女巫牌生效
+      if (j.scope === 'whole_word') {
+        if (j._originalValue !== undefined) {
+          j.value = valueHalfActive
+            ? Math.round(j._originalValue * 0.5 * 10) / 10
+            : j._originalValue;
+        }
+        if (j._originalPenalty !== undefined) {
+          j.penalty = valueHalfActive
+            ? Math.round(j._originalPenalty * 0.5 * 10) / 10
+            : j._originalPenalty;
+        }
+      } else {
+        // 非 whole_word 女巫牌始终恢复原始值
+        if (j._originalValue !== undefined) j.value = j._originalValue;
+        if (j._originalPenalty !== undefined) j.penalty = j._originalPenalty;
       }
     });
-    if (valueHalfActive && this.jokers && this.jokers.some(j => j)) {
+    if (valueHalfActive && this.jokers && this.jokers.some(j => j && j.scope === 'whole_word')) {
       this._witchCardValueHalfAnim = { startTime: Date.now() + 1000 };
     } else {
       this._witchCardValueHalfAnim = null;
@@ -2285,9 +2297,9 @@ class Game {
       const hasShield = (this.jokers || []).some(j => j && j.trigger === 'shield_illegal' && !j._disabled);
       (this.jokers || []).forEach(j => {
         if (j && j.trigger === 'illegal_boost' && !j._disabled && !hasShield) {
-          // 基于原始 value 累加，若当前处于 witch_card_value_half 则显示值继续减半
+          // 基于原始 value 累加，若当前处于 witch_card_value_half 且该牌 scope 为 whole_word 则显示值继续减半
           j._originalValue = (j._originalValue || 0) + 1;
-          j.value = this._witchCardValueHalfActive
+          j.value = this._witchCardValueHalfActive && j.scope === 'whole_word'
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
         }
@@ -2473,13 +2485,13 @@ class Game {
     if (currentInitial) {
       (this.jokers || []).forEach(j => {
         if (j && j.trigger === 'initial_succession' && !j._disabled) {
-          // 基于原始 value 累加/重置，若当前处于 witch_card_value_half 则显示值继续减半
+          // 基于原始 value 累加/重置，若当前处于 witch_card_value_half 且该牌 scope 为 whole_word 则显示值继续减半
           if (this._lastInitialLetter === currentInitial) {
             j._originalValue = (j._originalValue || 0) + 3;
           } else {
             j._originalValue = 0;
           }
-          j.value = this._witchCardValueHalfActive
+          j.value = this._witchCardValueHalfActive && j.scope === 'whole_word'
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
         }

@@ -49,7 +49,7 @@ module.exports = function extendPopup(Renderer) {
       const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
       const hasPredicted = joker.trigger === 'predicted_letter' && joker._predictedLetter;
       const hasLastWord = joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession';
-      const hasValueHalfConstraint = !popup.isShop && game._witchCardValueHalfActive && joker.value !== undefined && joker.value !== null;
+      const hasValueHalfConstraint = !popup.isShop && game._witchCardValueHalfActive && joker.scope === 'whole_word' && joker.value !== undefined && joker.value !== null;
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
       if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫约束：当前倍率
       if (hasLastWord && !popup.isShop) contentH += lineH + 2 * s; // 上一手单词（仅限游戏页）

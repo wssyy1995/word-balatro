@@ -207,8 +207,8 @@ module.exports = function extendPlaying(Renderer) {
             }
           }
 
-          // witch_card_value_half：回合开始时所有女巫牌边框动画 + 倍率下降蒙层
-          if (game._witchCardValueHalfAnim) {
+          // witch_card_value_half：回合开始时 scope 为 whole_word 的女巫牌边框动画 + 倍率下降蒙层
+          if (game._witchCardValueHalfAnim && joker.scope === 'whole_word') {
             const elapsed = Date.now() - game._witchCardValueHalfAnim.startTime;
             const isAnimating = elapsed >= 0 && elapsed < 1000;
             if (isAnimating) {

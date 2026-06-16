@@ -2122,7 +2122,7 @@ function handleInput(x, y) {
         }
         return;
       }
-      // Phase 3: 退场动画中，阻塞输入
+      // Phase 4: 退场动画中，阻塞输入
       return;
     }
 
