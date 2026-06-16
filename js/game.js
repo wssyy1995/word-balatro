@@ -1442,10 +1442,13 @@ class Game {
     if (savedProgress && savedProgress._cardBookGuideText2StartTime !== undefined) {
       this._cardBookGuideText2StartTime = savedProgress._cardBookGuideText2StartTime;
     }
+    if (savedProgress && savedProgress._cardBookGuideText3StartTime !== undefined) {
+      this._cardBookGuideText3StartTime = savedProgress._cardBookGuideText3StartTime;
+    }
     if (this.cardBookGuidePhase === 1 && !this._cardBookGuideStartTime) {
       this._cardBookGuideStartTime = Date.now() - 2000;
     }
-    if (this.cardBookGuidePhase === 3 && !this._cardBookGuideExitStartTime) {
+    if (this.cardBookGuidePhase === 4 && !this._cardBookGuideExitStartTime) {
       this._cardBookGuideExitStartTime = Date.now() - 2000;
     }
     this._cardBookGuideExitStartTime = this._cardBookGuideExitStartTime || null;
@@ -1578,6 +1581,7 @@ class Game {
     if (p._cardBookGuideStartTime !== undefined) this._cardBookGuideStartTime = p._cardBookGuideStartTime;
     if (p._cardBookGuideTextStartTime !== undefined) this._cardBookGuideTextStartTime = p._cardBookGuideTextStartTime;
     if (p._cardBookGuideText2StartTime !== undefined) this._cardBookGuideText2StartTime = p._cardBookGuideText2StartTime;
+    if (p._cardBookGuideText3StartTime !== undefined) this._cardBookGuideText3StartTime = p._cardBookGuideText3StartTime;
     if (p._cardBookGuideExitStartTime !== undefined) this._cardBookGuideExitStartTime = p._cardBookGuideExitStartTime;
 
     // 恢复装备女巫卡牌跨回合状态
@@ -2046,7 +2050,7 @@ class Game {
   }
 
   advanceCardBookGuide() {
-    if (this.cardBookGuidePhase < 1 || this.cardBookGuidePhase > 2) return;
+    if (this.cardBookGuidePhase < 1 || this.cardBookGuidePhase > 3) return;
 
     this.cardBookGuidePhase++;
     this._cardBookGuideSkipTyping = false;
@@ -2054,17 +2058,19 @@ class Game {
 
     if (this.cardBookGuidePhase === 2) {
       this._cardBookGuideText2StartTime = Date.now();
+    } else if (this.cardBookGuidePhase === 3) {
+      this._cardBookGuideText3StartTime = Date.now();
     }
 
-    // Phase 3（退场）：触发退场动画
-    if (this.cardBookGuidePhase >= 3) {
-      this.cardBookGuidePhase = 3;
+    // Phase 4（退场）：触发退场动画
+    if (this.cardBookGuidePhase >= 4) {
+      this.cardBookGuidePhase = 4;
       this._cardBookGuideExitStartTime = Date.now();
     }
 
     if (this.storageManager) {
       this.storageManager.saveProgress();
-      if (this.cardBookGuidePhase >= 4) {
+      if (this.cardBookGuidePhase >= 5) {
         this.storageManager.saveCardBookGuidePhase(this.cardBookGuidePhase);
       }
     }

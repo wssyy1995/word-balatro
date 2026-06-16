@@ -467,7 +467,7 @@ module.exports = function extendGuide(Renderer) {
         '',
         '太棒了！你通过了女巫的试炼，获得了第一张字母词牌：[A]！',
         '[装备]字母词牌可以获得额外的能力，即使试炼失败重来，词牌也不会回收。但最多只能装备 [3] 张哦。',
-        '我也给你准备了小奖励，来挑一挑吧~',
+        '我也给你准备了小奖励，来挑一个吧~',
       ];
   
       const FADE_DURATION = 500;
@@ -484,15 +484,15 @@ module.exports = function extendGuide(Renderer) {
       // Phase 1: 500ms~1500ms 只画 evenodd 蒙层+金色边框（聚光灯），不弹出女巫
       const showWitch = phase !== 1 || elapsed >= DELAY_BEFORE_FADE + WITCH_DELAY;
   
-      // Phase 3 退场检查：600ms 后结束
-      if (phase === 3) {
+      // Phase 4 退场检查：600ms 后结束
+      if (phase === 4) {
         const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
         if (exitElapsed >= 600) {
-          game.cardBookGuidePhase = 4;
+          game.cardBookGuidePhase = 5;
           game._cardBookGuideExitStartTime = null;
           if (game.storageManager) {
             game.storageManager.saveProgress();
-            game.storageManager.saveCardBookGuidePhase(4);
+            game.storageManager.saveCardBookGuidePhase(5);
           }
           return;
         }
@@ -507,7 +507,7 @@ module.exports = function extendGuide(Renderer) {
       let overlayAlpha;
       if (phase === 1) {
         overlayAlpha = 0.75 * Math.min(Math.max(0, elapsed - DELAY_BEFORE_FADE) / FADE_DURATION, 1);
-      } else if (phase === 3) {
+      } else if (phase === 4) {
         const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
         overlayAlpha = 0.75 * Math.max(0, 1 - exitElapsed / 500);
       } else {
@@ -552,29 +552,35 @@ module.exports = function extendGuide(Renderer) {
         ctx.setLineDash([]);
         ctx.restore();
       } else if (phase >= 3) {
-        // Phase 3: 全屏蒙层
+        // Phase 3/4: 全屏蒙层
         ctx.save();
         ctx.fillStyle = `rgba(0, 0, 0, ${overlayAlpha})`;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
       }
   
-      // Phase 1 聚光灯显示期间（500ms~1500ms），只画聚光灯，不弹出女巫；Phase 2 正常显示女巫
+      // Phase 1 聚光灯显示期间（500ms~1500ms），只画聚光灯，不弹出女巫；Phase 2/3 正常显示女巫
       if (phase === 1 && !showWitch) {
         return;
       }
   
-      // === Phase 1/2: 女巫帧动画 + 对话框 ===
+      // === Phase 1/2/3: 女巫帧动画 + 对话框 ===
       const isPhase1 = phase === 1;
       const isPhase2 = phase === 2;
+      const isPhase3 = phase === 3;
       const fullText = GUIDE_TEXTS[phase] || '';
   
       const POPUP_DURATION = 600;
       const POST_POPUP_DELAY = 500;
-      // Phase 1: 文本等弹出动画完成后开始显示；Phase 2: 女巫和对话框保持不动，文本立即开始显示
-      const textStartTime = isPhase1
-        ? (game._cardBookGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY
-        : (game._cardBookGuideText2StartTime || Date.now());
+      // Phase 1: 文本等弹出动画完成后开始显示；Phase 2/3: 女巫和对话框保持不动，文本立即开始显示
+      let textStartTime;
+      if (isPhase1) {
+        textStartTime = (game._cardBookGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
+      } else if (isPhase2) {
+        textStartTime = (game._cardBookGuideText2StartTime || Date.now());
+      } else {
+        textStartTime = (game._cardBookGuideText3StartTime || Date.now());
+      }
       const charInterval = 65;
       const textElapsed = Date.now() - textStartTime;
       // 预处理 fullText：移除 [] 标记并记录高亮字符
@@ -634,13 +640,13 @@ module.exports = function extendGuide(Renderer) {
           imgY = imgTargetY;
           dialogDrawY = dialogTargetY;
         }
-      } else if (phase === 2) {
-        // Phase 2：女巫和对话框保持显示，不需要重新弹出
+      } else if (phase === 2 || phase === 3) {
+        // Phase 2/3：女巫和对话框保持显示，不需要重新弹出
         imgX = imgTargetX;
         dialogDrawX = dialogTargetX;
         imgY = imgTargetY;
         dialogDrawY = dialogTargetY;
-      } else if (phase === 3) {
+      } else if (phase === 4) {
         const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
         const exitProgress = Math.min(exitElapsed / 600, 1);
         const eased = Easing.easeOutBackStrong(exitProgress);
@@ -697,11 +703,11 @@ module.exports = function extendGuide(Renderer) {
       }
       ctx.restore();
   
-      // 倒三角按钮（文字显示完全后才显示，Phase 3 退场时不显示）
+      // 倒三角按钮（文字显示完全后才显示，Phase 4 退场时不显示）
       // 对话框区域始终可点击（用于双击跳过打字）
       this.cardBookGuideDialogRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
       this.cardBookGuideNextBtnRect = null;
-      if (isTextComplete && phase !== 3) {
+      if (isTextComplete && phase !== 4) {
         const btnSize = 16 * s;
         const btnX = dialogDrawX + dialogW - btnSize - 16 * s;
         const btnY = dialogDrawY + dialogH - btnSize - 12 * s;

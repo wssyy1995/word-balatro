@@ -81,9 +81,9 @@ Renderer.prototype.render = function(game) {
           this.confirmBuyRenderer.draw(ctx, game, W, H, s);
         }
 
-        // 女巫奖励延迟 1s 进入；图鉴引导进行中（Phase 1~3）时暂停计时
+        // 女巫奖励延迟 1s 进入；图鉴引导进行中（Phase 1~4）时暂停计时
         if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
-          if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+          if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 4) {
             // 图鉴引导优先，重置计时起点，等引导结束后再开始 1s 延迟
             game._witchRewardDelayStartTime = null;
           } else {
@@ -249,8 +249,8 @@ Renderer.prototype.render = function(game) {
         panelH = Math.round(bookH / s) + 70;
       }
 
-      // 图鉴引导阶段（Phase 1~3），card_book 不画自己的遮罩，由 guide evenodd 蒙层统一控制背景暗化
-      const isGuideOverlay = game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3;
+      // 图鉴引导阶段（Phase 1~4），card_book 不画自己的遮罩，由 guide evenodd 蒙层统一控制背景暗化
+      const isGuideOverlay = game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 4;
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: game._closingCardBook,
         closeStartTime: game._closeCardBookStartTime,
@@ -762,9 +762,10 @@ Renderer.prototype.render = function(game) {
     // 卡牌图鉴引导覆盖层（覆盖在 card_book 弹窗之上）
     // Phase 1: 高亮图标 + 女巫弹出 + 第一段文本
     // Phase 2: 女巫 + 第二段文本
-    // Phase 3: 退场动画
-    // Phase 4: 结束，不再渲染
-    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
+    // Phase 3: 女巫 + 第三段文本
+    // Phase 4: 退场动画
+    // Phase 5: 结束，不再渲染
+    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 4) {
       this._drawCardBookGuideOverlay(game);
     }
 

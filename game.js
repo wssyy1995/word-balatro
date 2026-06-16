@@ -2098,9 +2098,9 @@ function handleInput(x, y) {
     }
 
     // 卡牌图鉴引导交互处理（简化版：Phase 1 高亮图标 → 弹出女巫+对话框 → 点击推进）
-    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 3) {
-      if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2) {
-        // Phase 1/2: 女巫+对话框阶段，点击对话框推进
+    if (game.cardBookGuidePhase >= 1 && game.cardBookGuidePhase <= 4) {
+      if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2 || game.cardBookGuidePhase === 3) {
+        // Phase 1/2/3: 女巫+对话框阶段，点击对话框推进
         if (renderer.cardBookGuideDialogRect) {
           const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideDialogRect]);
           if (btnHit) {
