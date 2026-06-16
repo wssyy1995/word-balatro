@@ -241,7 +241,7 @@ module.exports = function extendCardbook(Renderer) {
       // 回合中禁止切换提示
       if (game._equipBlockToast) {
         const toastElapsed = Date.now() - game._equipBlockToast.startTime;
-        if (toastElapsed > 3000) {
+        if (toastElapsed > 3500) {
           game._equipBlockToast = null;
         } else {
           const toastText = game._equipBlockToast.text;
@@ -262,7 +262,7 @@ module.exports = function extendCardbook(Renderer) {
           }
           const toastY = btnY - toastH - 6 * s;
           const toastFadeIn = Math.min(1, toastElapsed / 150);
-          const toastFadeOut = toastElapsed > 2500 ? (3000 - toastElapsed) / 500 : 1;
+          const toastFadeOut = toastElapsed > 3000 ? (3500 - toastElapsed) / 500 : 1;
           const toastAlpha = toastFadeIn * toastFadeOut;
   
           ctx.save();
@@ -293,7 +293,7 @@ module.exports = function extendCardbook(Renderer) {
       // 装备已满3张提示
       if (game._equipFullToast) {
         const toastElapsed = Date.now() - game._equipFullToast.startTime;
-        if (toastElapsed > 2500) {
+        if (toastElapsed > 3500) {
           game._equipFullToast = null;
         } else {
           const toastText = game._equipFullToast.text;
@@ -314,7 +314,7 @@ module.exports = function extendCardbook(Renderer) {
           }
           const toastY = btnY - toastH - 6 * s;
           const toastFadeIn = Math.min(1, toastElapsed / 150);
-          const toastFadeOut = toastElapsed > 2000 ? (2500 - toastElapsed) / 500 : 1;
+          const toastFadeOut = toastElapsed > 3000 ? (3500 - toastElapsed) / 500 : 1;
           const toastAlpha = toastFadeIn * toastFadeOut;
 
           ctx.save();

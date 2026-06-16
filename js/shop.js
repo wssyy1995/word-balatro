@@ -28,13 +28,13 @@ const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:8, min_level:1, desc:'元音字母分×3'},
     {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:60, cost:6, min_level:1, desc:'单词首字母为元音时，该首字母分+60'},
-    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:40, cost:7, min_level:1, desc:'单词首尾字母各+40分'},
+    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:30, cost:8, min_level:1, desc:'单词首尾字母各+30分'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, min_level:1, desc:'单词字母>=4时，倍率×1.5'},
     // {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', value:1.5, cost:10, min_level:1, desc:'单词字母>=5时，倍率×1.5'},
     // {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', value:2, cost:10, min_level:1, desc:'单词字母>=6时，倍率×2'},
     {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:4, cost:12, min_level:1, desc:'单词字母含J/Q/X/Y/Z时，倍率+4'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, min_level:1, desc:'打出非法单词，不扣除出牌次数'},
-    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, min_level:10, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
+    {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, min_level:5, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:8, min_level:12, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:12, min_level:5, desc:'每次打出非法单词，倍率累计+1'},
     {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:10, min_level:1, desc:'出牌<=3个字母,30%概率倍率+8'},
@@ -499,8 +499,8 @@ class ShopRenderer {
             const shakeElapsed = Date.now() - game._jokerShakeHint.startTime;
             if (shakeElapsed < game._jokerShakeHint.duration) {
               const t = Date.now();
-              hintShakeX = Math.sin(t / 35 + i * 1.2) * 0.8 * s;
-              hintShakeY = Math.cos(t / 40 + i * 0.9) * 0.6 * s;
+              hintShakeX = Math.sin(t / 35 + i * 1.2) * 0.5 * s;
+              hintShakeY = Math.cos(t / 40 + i * 0.9) * 0.35 * s;
             } else {
               game._jokerShakeHint = null;
             }
