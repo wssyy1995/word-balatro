@@ -777,13 +777,14 @@ function findValidWordInHand(hand) {
 
 // 判断单张卡是否匹配女巫牌的 trigger 条件
 // index: 卡牌在单词中的位置（从0开始），用于 initial_vowel 等需要位置信息的 trigger
-function _matchCardTrigger(card, trigger, index = -1, joker = null) {
+function _matchCardTrigger(card, trigger, index = -1, joker = null, totalCards = -1) {
   switch (trigger) {
     case 'letter_a': return card.letter === 'A';
     case 'letter_e': return card.letter === 'E';
     case 'has_vowel': return 'AEIOU'.includes(card.letter);
     case 'high_letter': return ['J','Q','X','Z'].includes(card.letter);
     case 'initial_vowel': return index === 0 && 'AEIOU'.includes(card.letter);
+    case 'left_right_open': return index === 0 || index === totalCards - 1; // 首尾字母触发
     case 'predicted_letter': return joker && card.letter === (joker._predictedLetter || '');
     default: return false;
   }
@@ -844,7 +845,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
     switch (j.scope) {
       case 'per_card':
         cards.forEach((c, i) => {
-          if (_matchCardTrigger(c, j.trigger, i, j)) {
+          if (_matchCardTrigger(c, j.trigger, i, j, cards.length)) {
             if (j.operation === 'add') {
               cardAddScores[i] += j.value;
             } else {
@@ -2482,7 +2483,7 @@ class Game {
         const joker = jokers[j];
         if (!joker || joker._disabled) continue;
         if (joker.type !== 'witch' || joker.scope !== 'per_card') continue;
-        if (_matchCardTrigger(card, joker.trigger, i, joker)) triggered.push(j);
+        if (_matchCardTrigger(card, joker.trigger, i, joker, playedInOrder.length)) triggered.push(j);
       }
       jokerTriggers.push(triggered);
     }
