@@ -1130,7 +1130,7 @@ class ShopRenderer {
         }
 
         // 竖向卡牌（cover 模式绘制图标，金色边框，无额外深色背景）
-        const cardX = unitX;
+        const cardX = unitX + 1 * s;
         const cardY = unitY + (unitH - cardH) / 2;
         const cardR = 6 * s;
 
@@ -1182,7 +1182,7 @@ class ShopRenderer {
         ctx.restore();
 
         // 文字区域（卡牌右侧，淡色行背景上 → 深色文字）
-        const textX = cardX + cardW + 8 * s;
+        const textX = unitX + cardW + 8 * s;
         const textMaxW = unitW - cardW - 8 * s;
 
         let nameColor, descColor;
