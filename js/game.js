@@ -3705,8 +3705,8 @@ class Game {
 }
 
 function requestGlobalProfile() {
-  // 微信小游戏优先使用 getUserInfo，小程序可用 getUserProfile
-  const api = wx.getUserProfile || wx.getUserInfo;
+  // 微信小游戏应优先使用 getUserInfo；getUserProfile 主要针对小程序，小游戏里调用可能直接 fail
+  const api = wx.getUserInfo || wx.getUserProfile;
   if (!api) {
     console.warn('[GlobalRank] 当前环境不支持 getUserProfile/getUserInfo');
     return Promise.resolve(false);
