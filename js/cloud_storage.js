@@ -1262,7 +1262,7 @@ class CloudStorageManager {
     img.src = urlData.tempFileURL;
     await new Promise((resolve) => {
       img.onload = () => {
-        this.log('bg_icon 下载完成: ' + name);
+        this.log('bg_icon: ' + name);
         this.bgIconImages[name] = {
           img,
           loaded: true,
