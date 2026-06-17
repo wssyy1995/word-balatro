@@ -858,7 +858,7 @@ class ShopRenderer {
       { title: '魔法药水牌', color: '#355c4e', rowBg: '#e8f5ee', type: 'potion', barKey: 'shop_card_bar_potion' },
     ];
 
-    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2;
+    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2 + 10 * s;
     const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s;
 
     this.shopRefreshRects = [];
@@ -1003,14 +1003,19 @@ class ShopRenderer {
         let targetH = rowH;
         if (mod.type === 'witch') {
           targetW = rowW + 16 * s;
-          targetH = rowH + 18 * s;
+          targetH = rowH + 20 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 16 * s;
-        } else if (mod.type === 'potion') {
-          targetW = rowW -10*s;
-          targetH = rowH + 12 * s;
-          targetX = rowX + 2 * s;
-          targetY = rowY - 2 * s;
+        } else if (mod.type === 'crystal') {
+          targetW = rowW + 16 * s;
+          targetH = rowH + 18 * s;
+          targetX = rowX - 7 * s;
+          targetY = rowY - 15 * s;
+        }else if (mod.type === 'potion') {
+          targetW = rowW +16*s;
+          targetH = rowH + 22 * s;
+          targetX = rowX -8*s;
+          targetY = rowY - 12 * s;
         }
         const r = 6 * s;
         ctx.beginPath();
