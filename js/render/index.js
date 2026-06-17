@@ -1186,7 +1186,19 @@ Renderer.prototype.render = function(game) {
       }
     }
 
-    // 为没有头像的玩家按排行榜显示顺序分配默认头像索引
+    // 预加载默认昵称列表
+    if (!this._rankNames) {
+      try {
+        const fs = wx.getFileSystemManager();
+        const text = fs.readFileSync('images/rank_avatar/rank_name.txt', 'utf8');
+        this._rankNames = text.split('\n').map(s => s.trim()).filter(Boolean);
+      } catch (e) {
+        console.warn('[Rank] 读取默认昵称失败', e);
+        this._rankNames = [];
+      }
+    }
+
+    // 为没有头像的玩家按排行榜显示顺序分配默认头像/昵称索引
     let defaultAvatarIdx = 0;
     for (let i = 0; i < Math.min(topList.length, maxRows); i++) {
       const player = topList[i];
@@ -1297,7 +1309,11 @@ Renderer.prototype.render = function(game) {
     ctx.font = `${Math.floor(10 * s)}px sans-serif`;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const nick = player.nickname || '匿名玩家';
+    let nick = player.nickname || '匿名玩家';
+    // 使用默认头像的玩家，按同一索引显示默认昵称
+    if (player._defaultAvatarIndex !== undefined && this._rankNames && this._rankNames.length > 0) {
+      nick = this._rankNames[player._defaultAvatarIndex % this._rankNames.length];
+    }
     // 昵称紧挨头像右侧，保持 2px 间距
     const nickX = avatarX + avatarR + 2 * s;
     ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, rowY + rowH / 2);
