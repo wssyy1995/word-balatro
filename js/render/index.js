@@ -1198,25 +1198,26 @@ Renderer.prototype.render = function(game) {
       }
     }
 
-    // 如果本次用户拒绝了头像昵称授权，强制把自己行（topList 或 self）显示为默认头像/昵称
+    // 如果本次用户拒绝了头像昵称授权，自己行不使用预置头像/昵称，仅清空头像、保留脱敏昵称
     if (game._globalProfileDeniedThisTime) {
       topList.forEach(p => {
         if (p.isSelf) {
           p.avatarUrl = '';
-          p.nickname = '';
+          delete p._defaultAvatarIndex;
         }
       });
       if (self) {
         self.avatarUrl = '';
-        self.nickname = '';
+        delete self._defaultAvatarIndex;
       }
     }
 
-    // 为没有头像的玩家按排行榜显示顺序分配默认头像/昵称索引
+    // 为没有头像的玩家按排行榜显示顺序分配默认头像/昵称索引（拒绝授权的自己行除外）
     let defaultAvatarIdx = 0;
+    const shouldUseDefaultAvatar = (p) => !p.avatarUrl && !(p.isSelf && game._globalProfileDeniedThisTime);
     for (let i = 0; i < Math.min(topList.length, maxRows); i++) {
       const player = topList[i];
-      if (!player.avatarUrl) {
+      if (shouldUseDefaultAvatar(player)) {
         player._defaultAvatarIndex = defaultAvatarIdx++;
       }
       const rowY = listY + i * rowH;
@@ -1228,7 +1229,7 @@ Renderer.prototype.render = function(game) {
     if (self && !selfInTop) {
       const selfY = listY + Math.min(topList.length, maxRows) * rowH + 8 * s;
       if (selfY + rowH <= y + h) {
-        if (!self.avatarUrl) {
+        if (shouldUseDefaultAvatar(self)) {
           self._defaultAvatarIndex = defaultAvatarIdx++;
         }
         // 分隔线

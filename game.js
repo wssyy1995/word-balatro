@@ -330,7 +330,7 @@ function showGlobalAuthButton() {
           }
         });
       } else {
-        // 用户拒绝或未获取到，标记本次拒绝，榜单中自己行强制使用默认头像/昵称
+        // 用户拒绝或未获取到，标记本次拒绝，榜单中自己行不使用预制头像/昵称
         game._globalProfileDeniedThisTime = true;
         loadGlobalRank(false);
       }
