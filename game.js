@@ -2614,7 +2614,7 @@ function handleInput(x, y) {
           game._lifeExtensionBtnPressed = false;
           game._lifeExtensionAnim = null;
           // 发放结算金币（与 _showSettlement 逻辑一致）
-          const baseGold = 3 + Math.round(game.round / 3);
+          const baseGold = 2 + Math.round(game.round / 3);
           const extraHands = game.handsLeft * 2;
           const extraDiscards = game.discardsLeft * 1;
           game.gold += baseGold + extraHands + extraDiscards;
