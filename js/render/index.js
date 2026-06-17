@@ -1173,8 +1173,26 @@ Renderer.prototype.render = function(game) {
 
     if (!this._globalAvatarCache) this._globalAvatarCache = {};
 
+    // 预加载默认头像图集（4 张 5×5 图，每张 40×40 像素头像）
+    if (!this._rankAvatarSprites) {
+      this._rankAvatarSprites = [];
+      for (let i = 1; i <= 4; i++) {
+        const img = wx.createImage();
+        img.src = `images/rank_avatar/rank_avatar_${i}.png`;
+        const entry = { img, loaded: false };
+        img.onload = () => { entry.loaded = true; };
+        img.onerror = () => { entry.loaded = false; };
+        this._rankAvatarSprites.push(entry);
+      }
+    }
+
+    // 为没有头像的玩家按排行榜显示顺序分配默认头像索引
+    let defaultAvatarIdx = 0;
     for (let i = 0; i < Math.min(topList.length, maxRows); i++) {
       const player = topList[i];
+      if (!player.avatarUrl) {
+        player._defaultAvatarIndex = defaultAvatarIdx++;
+      }
       const rowY = listY + i * rowH;
       this._drawGlobalRankRow(ctx, player, x, rowY, w, rowH, s);
     }
@@ -1184,6 +1202,9 @@ Renderer.prototype.render = function(game) {
     if (self && !selfInTop) {
       const selfY = listY + Math.min(topList.length, maxRows) * rowH + 8 * s;
       if (selfY + rowH <= y + h) {
+        if (!self.avatarUrl) {
+          self._defaultAvatarIndex = defaultAvatarIdx++;
+        }
         // 分隔线
         ctx.save();
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
@@ -1224,6 +1245,7 @@ Renderer.prototype.render = function(game) {
     const avatarUrl = player.avatarUrl;
 
     let avatarImg = null;
+    let defaultAvatar = null;
     if (avatarUrl) {
       if (!this._globalAvatarCache) this._globalAvatarCache = {};
       const cache = this._globalAvatarCache;
@@ -1237,6 +1259,23 @@ Renderer.prototype.render = function(game) {
         img.onload = () => { cache[avatarUrl].loaded = true; };
         img.onerror = () => { cache[avatarUrl].loaded = false; };
       }
+    } else if (player._defaultAvatarIndex !== undefined && this._rankAvatarSprites) {
+      // 从 4 张 5×5 图集中按顺序裁剪默认头像（每张 200×200，单头像 40×40）
+      const idx = player._defaultAvatarIndex % 100;
+      const sheetIdx = Math.floor(idx / 25);
+      const innerIdx = idx % 25;
+      const row = Math.floor(innerIdx / 5);
+      const col = innerIdx % 5;
+      const sheet = this._rankAvatarSprites[sheetIdx];
+      if (sheet && sheet.loaded) {
+        defaultAvatar = {
+          img: sheet.img,
+          sx: col * 40,
+          sy: row * 40,
+          sw: 40,
+          sh: 40,
+        };
+      }
     }
 
     ctx.save();
@@ -1245,7 +1284,9 @@ Renderer.prototype.render = function(game) {
     ctx.fillStyle = '#555';
     ctx.fill();
     ctx.clip();
-    if (avatarImg) {
+    if (defaultAvatar) {
+      ctx.drawImage(defaultAvatar.img, defaultAvatar.sx, defaultAvatar.sy, defaultAvatar.sw, defaultAvatar.sh, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+    } else if (avatarImg) {
       ctx.drawImage(avatarImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
     }
     ctx.restore();
