@@ -411,6 +411,20 @@ function drawLoading() {
   ctx.fillText('⏳ 排行榜加载中...', W / 2, frame.panelY + frame.panelH / 2 + sp(20));
 }
 
+// panel 模式下只在内容区域显示 loading
+function drawPanelLoading(rect) {
+  const x = Math.floor(rect.x * scale);
+  const y = Math.floor(rect.y * scale);
+  const w = Math.floor(rect.w * scale);
+  const h = Math.floor(rect.h * scale);
+  ctx.clearRect(x, y, w, h);
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${Math.floor(w * 0.04)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('⏳ 排行榜加载中...', x + w / 2, y + h / 2);
+}
+
 function drawError(msg) {
   const { W, H } = getCanvasSize();
   ctx.clearRect(0, 0, W, H);
@@ -426,8 +440,29 @@ function drawError(msg) {
   ctx.fillText('请检查隐私授权后重试', W / 2, frame.panelY + frame.panelH / 2 + sp(20));
 }
 
+// panel 模式下只在内容区域显示错误
+function drawPanelError(rect, msg) {
+  const x = Math.floor(rect.x * scale);
+  const y = Math.floor(rect.y * scale);
+  const w = Math.floor(rect.w * scale);
+  const h = Math.floor(rect.h * scale);
+  ctx.clearRect(x, y, w, h);
+  ctx.fillStyle = '#ff6b6b';
+  ctx.font = `${Math.floor(w * 0.035)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(msg || '加载失败', x + w / 2, y + h / 2 - sp(10));
+  ctx.fillStyle = '#aaa';
+  ctx.font = `${Math.floor(w * 0.03)}px sans-serif`;
+  ctx.fillText('请检查隐私授权后重试', x + w / 2, y + h / 2 + sp(20));
+}
+
 function fetchRankData() {
-  drawLoading();
+  if (drawMode === 'panel' && listRect) {
+    drawPanelLoading(listRect);
+  } else {
+    drawLoading();
+  }
   // 先串行获取用户信息（含授权），避免与 getFriendCloudStorage 并行触发两个授权弹窗
   wx.getUserInfo({
     openIdList: ['selfOpenId'],
@@ -474,7 +509,12 @@ function _doFetchFriendRank() {
     },
     fail: (err) => {
       console.error('[OpenData] getFriendCloudStorage fail', err);
-      if (isVisible) drawError('获取好友排行失败');
+      if (!isVisible) return;
+      if (drawMode === 'panel' && listRect) {
+        drawPanelError(listRect, '获取好友排行失败');
+      } else {
+        drawError('获取好友排行失败');
+      }
     }
   });
 }
