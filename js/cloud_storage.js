@@ -374,9 +374,9 @@ class CloudStorageManager {
 
     const loaded = Object.keys(this.shopCardImages).filter(n => this.shopCardImages[n].loaded);
     const failed = names.filter(n => !this.shopCardImages[n] || !this.shopCardImages[n].loaded);
-    this.log('下载完成：' + loaded.length + '/' + names.length + '张成功');
+    this.log('shop_card 目录下 ' + loaded.length + '/' + names.length + ' 张图片下载完成');
     if (failed.length > 0) {
-      this.log('失败：' + failed.join(', '));
+      this.log('shop_card 失败：' + failed.join(', '));
     }
   }
 
@@ -507,7 +507,7 @@ class CloudStorageManager {
     }
     const loaded = Object.keys(this.witchImages).filter(n => this.witchImages[n].loaded);
     const failed = names.filter(n => !this.witchImages[n] || !this.witchImages[n].loaded);
-    this.log('witch 下载完成：' + loaded.length + '/' + names.length + '张成功');
+    this.log('witch 目录下 ' + loaded.length + '/' + names.length + ' 张图片下载完成');
     if (failed.length > 0) {
       this.log('witch 失败：' + failed.join(', '));
     }
@@ -573,7 +573,6 @@ class CloudStorageManager {
       const img = wx.createImage();
       loadSuccess = await new Promise((resolve) => {
         img.onload = () => {
-          this.log('下载完成: ' + name);
           this.shopCardImages[name] = {
             img,
             loaded: true,
@@ -653,7 +652,6 @@ class CloudStorageManager {
     img.src = urlData.tempFileURL;
     await new Promise((resolve) => {
       img.onload = () => {
-        this.log('witch 下载完成: ' + name);
         this.witchImages[name] = {
           img,
           loaded: true,
@@ -880,7 +878,7 @@ class CloudStorageManager {
       if (this.guideSpritesheets[gk].loaded) sheetLoaded++;
     });
 
-    this.log(`guide 下载完成：帧序列 ${frameLoaded}/${frameTotal}，精灵图 ${sheetLoaded} 张`);
+    this.log(`guide 目录下 帧序列 ${frameLoaded}/${frameTotal}，精灵图 ${sheetLoaded} 张下载完成`);
   }
 
   async _loadGuideImage(name) {
@@ -947,7 +945,6 @@ class CloudStorageManager {
     img.src = urlData.tempFileURL;
     await new Promise((resolve) => {
       img.onload = () => {
-        this.log('guide 下载完成: ' + name);
         this.guideImages[groupKey].frames[frameIdx] = { img, loaded: true };
         resolve();
       };
@@ -1017,7 +1014,6 @@ class CloudStorageManager {
     img.src = urlData.tempFileURL;
     await new Promise((resolve) => {
       img.onload = () => {
-        this.log('guide 精灵图下载完成: ' + name);
         this.guideSpritesheets[groupKey] = { img, loaded: true };
         resolve();
       };
@@ -1206,7 +1202,7 @@ class CloudStorageManager {
     }
     const loaded = Object.keys(this.bgIconImages).filter(n => this.bgIconImages[n].loaded);
     const failed = names.filter(n => !this.bgIconImages[n] || !this.bgIconImages[n].loaded);
-    this.log('bg_icon 下载完成：' + loaded.length + '/' + names.length + '张成功');
+    this.log('bg_icon 目录下 ' + loaded.length + '/' + names.length + ' 张图片下载完成');
     if (failed.length > 0) {
       this.log('bg_icon 失败：' + failed.join(', '));
     }
@@ -1262,7 +1258,6 @@ class CloudStorageManager {
     img.src = urlData.tempFileURL;
     await new Promise((resolve) => {
       img.onload = () => {
-        this.log('bg_icon: ' + name);
         this.bgIconImages[name] = {
           img,
           loaded: true,
@@ -1480,7 +1475,6 @@ class CloudStorageManager {
               try {
                 fs.copyFileSync(res.tempFilePath, cachePath);
                 this.musicCache[name] = cachePath;
-                this.log('music 下载成功: ' + name);
               } catch (e) {
                 this.log('music 缓存失败: ' + name + ' ' + (e && e.message ? e.message : String(e)));
               }
@@ -1517,7 +1511,7 @@ class CloudStorageManager {
     });
 
     await Promise.allSettled(downloadTasks);
-    this.log('music 下载完成，共' + Object.keys(this.musicCache).length + '个');
+    this.log('music 目录下 ' + Object.keys(this.musicCache).length + '/' + names.length + ' 个音频下载完成');
   }
 }
 
