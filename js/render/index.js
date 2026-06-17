@@ -1328,8 +1328,8 @@ Renderer.prototype.render = function(game) {
     if (player._defaultAvatarIndex !== undefined && this._rankNames && this._rankNames.length > 0) {
       nick = this._rankNames[player._defaultAvatarIndex % this._rankNames.length];
     }
-    // 昵称紧挨头像右侧，保持 4px 间距
-    const nickX = avatarX + avatarR + 4 * s;
+    // 昵称紧挨头像右侧，保持 8px 间距
+    const nickX = avatarX + avatarR + 8 * s;
     ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, rowY + rowH / 2);
     ctx.restore();
 
