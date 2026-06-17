@@ -6,7 +6,7 @@
  * 2. 查询 user_best_round 表，按 best_round 降序取 Top 50
  * 3. 根据 openid 关联 user_word_books 表的 totalUnique（单词量）
  * 4. 根据 openid 关联 users 表的头像昵称；未授权则使用默认头像 + 脱敏名称
- * 5. 计算当前玩家自己的全球排名（best_round 比自己高的人数 + 1）
+ * 5. 计算当前玩家自己的全国排名（best_round 比自己高的人数 + 1）
  * 6. 返回 { topList: Top50数组, self: 自己排名信息 }
  *
  * 调用方式（前端）：
@@ -89,7 +89,7 @@ exports.main = async (event, context) => {
       .get();
     const selfBestRound = selfRoundRes.data[0]?.best_round || 0;
 
-    // 6. 计算自己的全球排名：best_round 比自己高的人数 + 1
+    // 6. 计算自己的全国排名：best_round 比自己高的人数 + 1
     let selfRank = 1;
     if (selfBestRound > 0) {
       const countRes = await db.collection('user_best_round')

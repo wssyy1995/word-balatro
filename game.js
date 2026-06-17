@@ -222,7 +222,7 @@ function switchRankTab(tab) {
     });
     game._showingRankList = true;
   } else {
-    // 切换到全球榜：隐藏好友榜，由主域绘制
+    // 切换到全国榜：隐藏好友榜，由主域绘制
     hideRankList();
     game._showingRankList = false;
     handleGlobalTabEnter();
@@ -350,7 +350,7 @@ function destroyGlobalAuthButton() {
 async function loadGlobalRank(requestProfile = true) {
   if (!game) return;
 
-  // 每次切换到全球榜都重新拉取
+  // 每次切换到全国榜都重新拉取
   game._globalRankLoading = true;
   game._globalRankError = null;
   game._globalRankData = null;
@@ -371,13 +371,13 @@ async function loadGlobalRank(requestProfile = true) {
     if (result && result.code === 0) {
       game._globalRankData = result;
     } else {
-      const msg = result && result.message ? result.message : '获取全球榜失败';
+      const msg = result && result.message ? result.message : '获取全国榜失败';
       game._globalRankError = msg;
       console.error('[GlobalRank] 数据返回错误', result);
     }
   } catch (e) {
     game._globalRankLoading = false;
-    game._globalRankError = e.message || '获取全球榜失败';
+    game._globalRankError = e.message || '获取全国榜失败';
     console.error('[GlobalRank] loadGlobalRank 异常', e);
   }
 }

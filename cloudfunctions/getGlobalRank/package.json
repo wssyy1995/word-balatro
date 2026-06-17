@@ -1,7 +1,7 @@
 {
   "name": "getGlobalRank",
   "version": "1.0.0",
-  "description": "获取全球排行榜 Top50 及玩家自己排名",
+  "description": "获取全国排行榜 Top50 及玩家自己排名",
   "main": "index.js",
   "dependencies": {
     "wx-server-sdk": "latest"

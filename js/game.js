@@ -3718,7 +3718,7 @@ function requestGlobalProfile() {
 
   return new Promise((resolve) => {
     const callParams = isProfile
-      ? { desc: '用于在全球排行榜中展示你的头像和昵称' }
+      ? { desc: '用于在全国排行榜中展示你的头像和昵称' }
       : { openIdList: ['selfOpenId'], lang: 'zh_CN' };
 
     api({

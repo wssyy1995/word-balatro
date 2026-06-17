@@ -803,7 +803,7 @@ Renderer.prototype.render = function(game) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
     }
 
-    // 绘制排行榜弹窗（好友榜 + 全球榜 Tab）
+    // 绘制排行榜弹窗（好友榜 + 全国榜 Tab）
     if (game._showingRankPopup) {
       this._drawRankPopup(game);
     }
@@ -980,7 +980,7 @@ Renderer.prototype.render = function(game) {
     this.shopRenderer.draw(ctx, game, W, H, s);
   };
 
-  // ===== 排行榜弹窗（好友/全球 Tab）=====
+  // ===== 排行榜弹窗（好友/全国 Tab）=====
   Renderer.prototype._drawRankPopup = function(game) {
     const ctx = this.ctx;
     const W = this.W;
@@ -1015,7 +1015,7 @@ Renderer.prototype.render = function(game) {
     ctx.fillText('排行榜', W / 2, panelY + 14 * s);
     ctx.restore();
 
-    // 4. Tab「好友 / 全球」
+    // 4. Tab「好友 / 全国」
     const tabY = panelY + 46 * s;
     const tabW = 140 * s;
     const tabH = 28 * s;
@@ -1043,7 +1043,7 @@ Renderer.prototype.render = function(game) {
     ctx.fillStyle = activeTab === 'friend' ? '#2a2a3a' : 'rgba(255,255,255,0.7)';
     ctx.fillText('好友', tabX + activeW / 2, tabY + tabH / 2);
     ctx.fillStyle = activeTab === 'global' ? '#2a2a3a' : 'rgba(255,255,255,0.7)';
-    ctx.fillText('全球', tabX + activeW * 1.5, tabY + tabH / 2);
+    ctx.fillText('全国', tabX + activeW * 1.5, tabY + tabH / 2);
     ctx.restore();
 
     // 5. 关闭按钮
@@ -1081,7 +1081,7 @@ Renderer.prototype.render = function(game) {
       return;
     }
 
-    // 8. 全球榜：主域绘制
+    // 8. 全国榜：主域绘制
     this._drawGlobalRankList(game, {
       x: contentX,
       y: contentY,
@@ -1102,7 +1102,7 @@ Renderer.prototype.render = function(game) {
       ctx.font = `${Math.floor(13 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('全球榜需要头像昵称授权', x + w / 2, y + h / 2 - 35 * s);
+      ctx.fillText('全国榜需要头像昵称授权', x + w / 2, y + h / 2 - 35 * s);
       ctx.fillText('请点击下方按钮完成授权', x + w / 2, y + h / 2 - 12 * s);
       ctx.fillStyle = '#888';
       ctx.font = `${Math.floor(11 * s)}px sans-serif`;
@@ -1117,7 +1117,7 @@ Renderer.prototype.render = function(game) {
       ctx.font = `${Math.floor(14 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('⏳ 全球榜加载中...', x + w / 2, y + h / 2);
+      ctx.fillText('⏳ 全国榜加载中...', x + w / 2, y + h / 2);
       ctx.restore();
       return;
     }
@@ -1146,7 +1146,7 @@ Renderer.prototype.render = function(game) {
       ctx.font = `${Math.floor(13 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('暂无全球数据', x + w / 2, y + h / 2);
+      ctx.fillText('暂无全国数据', x + w / 2, y + h / 2);
       ctx.restore();
       return;
     }
