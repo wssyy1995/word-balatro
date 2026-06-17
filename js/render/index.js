@@ -1198,6 +1198,20 @@ Renderer.prototype.render = function(game) {
       }
     }
 
+    // 如果本次用户拒绝了头像昵称授权，强制把自己行（topList 或 self）显示为默认头像/昵称
+    if (game._globalProfileDeniedThisTime) {
+      topList.forEach(p => {
+        if (p.isSelf) {
+          p.avatarUrl = '';
+          p.nickname = '';
+        }
+      });
+      if (self) {
+        self.avatarUrl = '';
+        self.nickname = '';
+      }
+    }
+
     // 为没有头像的玩家按排行榜显示顺序分配默认头像/昵称索引
     let defaultAvatarIdx = 0;
     for (let i = 0; i < Math.min(topList.length, maxRows); i++) {

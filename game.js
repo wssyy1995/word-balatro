@@ -203,6 +203,7 @@ function hideRankPopup() {
   game._globalRankLoading = false;
   game._globalRankError = null;
   game._showingGlobalAuthButton = false;
+  game._globalProfileDeniedThisTime = false;
 }
 
 function switchRankTab(tab) {
@@ -242,6 +243,7 @@ async function handleGlobalTabEnter() {
   if (isAuth) {
     destroyGlobalAuthButton();
     game._showingGlobalAuthButton = false;
+    game._globalProfileDeniedThisTime = false;
     loadGlobalRank(false);
   } else {
     // 未授权：隐藏 loading，显示原生授权按钮，由用户主动点击后授权
@@ -312,6 +314,8 @@ function showGlobalAuthButton() {
     // 延迟一帧执行网络请求，确保 loading 先渲染出来
     setTimeout(() => {
       if (userInfo.avatarUrl && userInfo.nickName) {
+        // 用户同意授权，本次不强制默认
+        game._globalProfileDeniedThisTime = false;
         // 上传头像昵称
         wx.cloud.callFunction({
           name: 'updateUserProfile',
@@ -326,7 +330,8 @@ function showGlobalAuthButton() {
           }
         });
       } else {
-        // 用户拒绝或未获取到，也尝试加载榜单（显示脱敏名称）
+        // 用户拒绝或未获取到，标记本次拒绝，榜单中自己行强制使用默认头像/昵称
+        game._globalProfileDeniedThisTime = true;
         loadGlobalRank(false);
       }
     }, 50);
