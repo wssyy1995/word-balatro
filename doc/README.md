@@ -31,6 +31,7 @@ word-balatro/
 │   ├── baiduDict/       # 百度翻译词典版 API（换取 access_token）
 │   ├── getDailyWords/   # 每日挑战单词获取
 │   ├── updateBestRound/ # 排行榜 bestround 上传
+│   ├── syncWordBook/    # 单词本增量同步到云数据库
 │   └── login/           # 用户登录信息上报
 ├── scripts/             # 构建脚本（词库生成、精灵图打包等）
 └── js/
@@ -59,7 +60,8 @@ word-balatro/
     ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
     ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
     ├── witch_skills.js  # 女巫技能约束与奖励
-    └── input.js         # InputHandler 类（触摸事件处理，game.js 入口引用）
+    ├── input.js         # InputHandler 类（触摸事件处理，game.js 入口引用）
+    └── report.js        # 埋点事件上报封装（devtools 环境下跳过）
 ```
 
 ---
@@ -738,18 +740,20 @@ gap = 8 * scale
 
 ### 3.7 cloud_storage.js — 微信云存储
 
-用于管理 `shop_card`、`witch`、`bg_icon`、`guide` 系列图片的上传、下载与运行时注入：
+用于管理 `shop_card`、`witch`、`bg_icon`、`guide`、`rank_avatar` 系列图片的上传、下载与运行时注入：
 
 - **上传**：
   - `uploadShopCards()`：批量上传 `images/shop_card/` 到云存储
   - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`~`witch_guide_4`），witch 头像上传至 `witch/`，guide 精灵图上传至 `witch/guide/`（自动跳过各目录下的旧单帧图）
   - `uploadBgIconImages()`：上传背景图与卡牌模板到 `bg_icon/`
+  - `uploadRankAvatarImages()`：批量上传 `images/rank_avatar/` 到云存储（全国榜默认头像）
 - **下载**：
   - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
   - `preloadBgIconImages()`：预加载页下载背景图与卡牌模板
   - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的精灵图并注入渲染器；预加载页通过它下载 witch_guide_1/2
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
-- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` 将云缓存图片覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
+  - `preloadRankAvatarImages()`：**第一回合按需下载**，不在预加载页加载，进入第 1 关后后台下载全国榜默认头像
+- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` / `injectRankAvatarToRenderer()` 将云缓存图片覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
 
 ---
@@ -1333,6 +1337,7 @@ letterUpgrades = Map {
 | v1.10.5 | 2026-06-17 | 基础目标分系数上调：2~5 关 25、6~10 关 30、11~20 关 36、31~40 关 51、41~50 关 60；同步更新 README 目标分数表 |
 | v1.10.6 | 2026-06-17 | 临时调整女巫奖励触发范围：女巫约束仍按原关卡生效，但女巫奖励阶段（`witch_reward`）仅在第 3 关触发，第 5 关及以后通关后不再进入奖励阶段；同步更新 README |
 | v1.10.7 | 2026-06-17 | 再次上调基础目标分系数：2~5 关 30、6~10 关 35、11~20 关 37、21~30 关 40、31~40 关 44、41~50 关 50、51+ 关 60；同步更新 README 目标分数表 |
+| v1.10.8 | 2026-06-17 | 新增 `js/report.js` 统一封装埋点上报，开发者工具环境下自动跳过不上报；新增 `rank_avatar` 全国榜默认头像云存储支持（上传、第一回合按需下载、注入渲染器）；抽离云存储文件 ID 前缀为 `CLOUD_BASE` 变量；同步更新 README |
 
 ---
 
