@@ -1348,10 +1348,18 @@ class ShopRenderer {
         this.shopPriceBtnRects.push({ x: btnX - 2, y: btnY - 2, w: btnW + 4, h: btnH + 4, index: itemIdx });
       }
 
-      // 两张卡牌都售罄时，显示刷新按钮
+      // 两张卡牌都售罄时，在行中间显示灰色提示
       const itemIdx0 = modIdx * 2;
       const itemIdx1 = modIdx * 2 + 1;
-      // 两张卡牌都售罄时不再显示刷新按钮（已由全局重掷按钮替代）
+      if (!game.shopItems[itemIdx0] && !game.shopItems[itemIdx1]) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(120, 120, 120, 0.9)';
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('抢光啦...', rowX + rowW / 2, rowY + rowH / 2);
+        ctx.restore();
+      }
     });
 
     // === 下一回合女巫技能模块 ===
