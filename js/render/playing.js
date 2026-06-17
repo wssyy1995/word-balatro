@@ -34,12 +34,12 @@ module.exports = function extendPlaying(Renderer) {
       const btnTop = H - 90 * s;
       // 把 extraHeight 分配给顶部偏移和底部间距；最小间距限制为 4*s，避免卡牌与按钮重叠
       const cardGap = Math.max(4 * s, 50 * s + extraHeight * 0.25 - 10); // 卡牌底部到按钮间距
-      const cardBottom = btnTop - cardGap + 3 * s;              // 卡牌底部
+      const cardBottom = btnTop - cardGap + 3 * s + 5;              // 卡牌底部（统一下移 5px）
       const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
       const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心
       this.wordAreaY = wordAreaY;
       const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部
-      const propY = hudBottom + 6 * s;                         // 道具栏顶部（固定间距，跟随 HUD 整体下移）
+      const propY = hudBottom + 6 * s - 3 + 5;                         // 道具栏顶部（固定间距，跟随 HUD 整体下移，再统一下移 5px）
   
       this.cardRects = []; // 存储卡牌点击区域
   
@@ -92,8 +92,8 @@ module.exports = function extendPlaying(Renderer) {
           : propW / propBarH;
         const targetW = propW ;
         const imageScale = 1.04;
-        const drawW = targetW * imageScale;
-        const drawH = drawW / barAspect;
+        const drawW = targetW * imageScale + (actualWitchSlots >= 5 ? 6 : 0);
+        const drawH = drawW / barAspect + 12;
         const drawX = propX + (propW - drawW) / 2;
         const drawY = propY + (propBarH - drawH) / 2;
         // card_bar 四角圆角裁切

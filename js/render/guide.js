@@ -258,7 +258,7 @@ module.exports = function extendGuide(Renderer) {
         : { x: 15 * s, y: H * 0.65, w: W - 30 * s, h: 120 * s };
       const spotPad = 10 * s;
       const spotX = spotRect.x - spotPad;
-      const spotY = spotRect.y - spotPad;
+      const spotY = spotRect.y - spotPad + 10;
       const spotW = spotRect.w + spotPad * 2;
       const spotH = spotRect.h + spotPad * 2;
       const spotR = 14 * s;

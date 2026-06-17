@@ -135,7 +135,7 @@ module.exports = function extendHud(Renderer) {
         const avatarH = barH + 22*s;
         const avatarW = Math.min(avatarH, col1W);
         const baseX = barX + 25* s;
-        const baseY = barY + (barH - avatarH) / 2-5*s;
+        const baseY = barY + (barH - avatarH) / 2 - 5*s - 5 - 3;
         // 保存头像点击区域（提前设置，供星星动画使用）
         this.hudWitchAvatarRect = { x: baseX, y: baseY, w: avatarW, h: avatarH };
   

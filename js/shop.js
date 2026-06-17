@@ -297,8 +297,8 @@ class ShopRenderer {
         : ownedW / ownedH;
       const targetW = ownedW;
       const imageScale = 1.06;
-      const drawW = targetW * imageScale;
-      const drawH = drawW / barAspect;
+      const drawW = targetW * imageScale + (actualWitchSlots >= 5 ? 6 : 0);
+      const drawH = drawW / barAspect * 1.15;
       const drawX = ownedX + (ownedW - drawW) / 2;
       const drawY = ownedY + (ownedH - drawH) / 2;
       // card_bar 四角圆角裁切
@@ -1369,7 +1369,7 @@ class ShopRenderer {
 
     // === 下一回合模块（始终显示）===
     const moduleH = witchSkill ? 113 * s : 100 * s;
-    const moduleY = containerY + containerH + 50 * s - 5;
+    const moduleY = containerY + containerH + 50 * s - 5 - 5;
     const moduleX = 15 * s;
     const moduleW = W - 30 * s;
 
