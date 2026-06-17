@@ -3743,6 +3743,44 @@ function requestGlobalProfile() {
   });
 }
 
+function normalizeGlobalRankResult(result) {
+  if (!result) return { code: -1, message: '返回为空' };
+
+  // 标准格式：直接透传
+  if (result.code === 0 && result.topList) {
+    return result;
+  }
+
+  // 兼容线上已有格式：{ success: true, list: [...], selfRank: N, selfData: {...} }
+  if (result.success === true && Array.isArray(result.list)) {
+    const normalizeItem = (item) => ({
+      rank: item.rank || 0,
+      openid: item.openid || '',
+      bestRound: item.bestRound || item.best_round || 0,
+      wordCount: item.wordCount || item.word_count || 0,
+      avatarUrl: item.avatarUrl || item.avatar_url || '',
+      nickname: item.nickname || item.maskName || '匿名玩家',
+      isSelf: !!item.isSelf,
+    });
+
+    return {
+      code: 0,
+      topList: result.list.map(normalizeItem),
+      self: result.selfData ? {
+        rank: result.selfRank || result.selfData.rank || 0,
+        openid: result.selfData.openid || '',
+        bestRound: result.selfData.bestRound || result.selfData.best_round || 0,
+        wordCount: result.selfData.wordCount || result.selfData.word_count || 0,
+        avatarUrl: result.selfData.avatarUrl || result.selfData.avatar_url || '',
+        nickname: result.selfData.nickname || result.selfData.maskName || '匿名玩家',
+        isSelf: true,
+      } : null,
+    };
+  }
+
+  return result;
+}
+
 function fetchGlobalRank() {
   if (!wx.cloud || !wx.cloud.callFunction) {
     console.error('[GlobalRank] wx.cloud.callFunction 不可用');
@@ -3753,8 +3791,9 @@ function fetchGlobalRank() {
       name: 'getGlobalRank',
       data: {},
       success: (res) => {
-        console.log('[GlobalRank] 拉取成功', res.result);
-        resolve(res.result || { code: -1, message: '返回为空' });
+        const normalized = normalizeGlobalRankResult(res.result);
+        console.log('[GlobalRank] 拉取成功', res.result, '适配后', normalized);
+        resolve(normalized || { code: -1, message: '返回为空' });
       },
       fail: (err) => {
         console.error('[GlobalRank] 拉取失败', err);
