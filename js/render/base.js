@@ -493,6 +493,8 @@ class Renderer {
     this.cardTemplateSelectedLoaded = false;
     this.cardTemplateUpgrade = null;
     this.cardTemplateUpgradeLoaded = false;
+    this.cardTemplateUpgradeSelected = null;
+    this.cardTemplateUpgradeSelectedLoaded = false;
     // 加载游戏进度栏背景图
     this.gameProgressImage = null;
     this.gameProgressLoaded = false;
@@ -1102,9 +1104,11 @@ class Renderer {
     const darkBlue = '#1a2f4a';
     const warmGold = '#9a7b3d';
 
-    // === 1. 背景图（普通 / 选中态 / 升级态） ===
+    // === 1. 背景图（普通 / 选中态 / 升级态 / 升级选中态） ===
     const isUpgradeLetter = this._equippedLetters && this._equippedLetters.has((card.letter || '').toUpperCase());
-    if (card.selected && this.cardTemplateSelected && this.cardTemplateSelectedLoaded) {
+    if (card.selected && isUpgradeLetter && this.cardTemplateUpgradeSelected && this.cardTemplateUpgradeSelectedLoaded) {
+      ctx.drawImage(this.cardTemplateUpgradeSelected, -hw, -hh, w, h);
+    } else if (card.selected && this.cardTemplateSelected && this.cardTemplateSelectedLoaded) {
       ctx.drawImage(this.cardTemplateSelected, -hw, -hh, w, h);
     } else if (isUpgradeLetter && this.cardTemplateUpgrade && this.cardTemplateUpgradeLoaded) {
       ctx.drawImage(this.cardTemplateUpgrade, -hw, -hh, w, h);

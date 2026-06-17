@@ -93,8 +93,8 @@ class CloudStorageManager {
       'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png',
       'card_template': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template.png',
       'card_template_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_selected_new.png',
-      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade6.png',
-      'card_template_upgrade_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade_selected.png'
+      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade9.png',
+      'card_template_upgrade_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade_selected2.png'
     };
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
@@ -1300,9 +1300,9 @@ class CloudStorageManager {
     }
 
     // 卡牌模板从 bg_icon 云存储注入
-    const templateNames = ['card_template', 'card_template_selected', 'card_template_upgrade'];
-    const templateFields = ['cardTemplate', 'cardTemplateSelected', 'cardTemplateUpgrade'];
-    const loadedFlags = ['cardTemplateLoaded', 'cardTemplateSelectedLoaded', 'cardTemplateUpgradeLoaded'];
+    const templateNames = ['card_template', 'card_template_selected', 'card_template_upgrade', 'card_template_upgrade_selected'];
+    const templateFields = ['cardTemplate', 'cardTemplateSelected', 'cardTemplateUpgrade', 'cardTemplateUpgradeSelected'];
+    const loadedFlags = ['cardTemplateLoaded', 'cardTemplateSelectedLoaded', 'cardTemplateUpgradeLoaded', 'cardTemplateUpgradeSelectedLoaded'];
     templateNames.forEach((name, i) => {
       const data = this.bgIconImages[name];
       if (data && data.loaded && data.img) {
