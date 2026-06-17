@@ -847,8 +847,9 @@ class ShopRenderer {
     const cardH = unitH - 20 * s;
 
     const innerPad = 6 * s;
-    const rowGap = 30;           // 行间距（像素）
-    const containerPad = 25;     // 容器上下内边距（像素），与行间距独立
+    const rowGap = 30;                    // 行间距（像素）
+    const containerPadTop = 20;           // 容器顶部内边距（像素），第一行上移 5px
+    const containerPadBottom = 23;        // 容器底部内边距（像素），第三行到底部减 2px
     const titleH = 50 * s;
     const titleGap = 6 * s;
 
@@ -858,7 +859,7 @@ class ShopRenderer {
       { title: '魔法药水牌', color: '#355c4e', rowBg: '#e8f5ee', type: 'potion', barKey: 'shop_card_bar_potion' },
     ];
 
-    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2;
+    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPadTop + containerPadBottom;
     const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s + 5;
 
     this.shopRefreshRects = [];
@@ -987,7 +988,7 @@ class ShopRenderer {
     this.parent.roundRect(modX - 3, containerY, modW + 6, containerH, 10 * s, cream, gold, 1.5 * s);
 
     rowConfigs.forEach((mod, modIdx) => {
-      const rowY = containerY + containerPad + modIdx * (rowH + rowGap);
+      const rowY = containerY + containerPadTop + modIdx * (rowH + rowGap);
 
       // 行背景：优先使用 bg_icon 分类栏图片，未加载完成则回退到 canvas 绘制
       const barImgData = this.parent.shopCardBarImages && this.parent.shopCardBarImages[mod.barKey];
@@ -1002,19 +1003,19 @@ class ShopRenderer {
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 18 * s;
+          targetW = rowW + 17 * s;
           targetH = rowH + 28 * s;
-          targetX = rowX - 7 * s;
+          targetX = rowX - 8 * s;
           targetY = rowY - 16 * s;
         } else if (mod.type === 'crystal') {
-          targetW = rowW + 18 * s;
+          targetW = rowW + 17 * s;
           targetH = rowH + 28 * s;
-          targetX = rowX - 7 * s;
+          targetX = rowX - 8 * s;
           targetY = rowY - 15 * s;
         }else if (mod.type === 'potion') {
-          targetW = rowW +19*s;
+          targetW = rowW +18*s;
           targetH = rowH + 28 * s;
-          targetX = rowX -8*s;
+          targetX = rowX -9*s;
           targetY = rowY - 15 * s;
         }
         const r = 6 * s;
