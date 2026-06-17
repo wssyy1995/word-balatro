@@ -970,6 +970,12 @@ wx.onTouchEnd(() => {
   if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
     const iconHit = renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.topIconRect]);
     if (iconHit) {
+      // 点击设置按钮埋点
+      if (typeof wx !== 'undefined' && wx.reportEvent) {
+        wx.reportEvent("top_icon", {
+          "userid": game.userid || ''
+        });
+      }
       if (game._settingsPopup) {
         game._closingSettings = true;
         game._closeSettingsStartTime = Date.now();
