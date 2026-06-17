@@ -1,6 +1,6 @@
 // require('./js/render/test');
 // 微信小游戏入口
-const { Game } = require('./js/game');
+const { Game, requestGlobalProfile, fetchGlobalRank } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
@@ -110,11 +110,31 @@ function getOpenDataContext() {
   return openDataContext;
 }
 
-function showRankList() {
-    const odc = getOpenDataContext();
-  if (!odc) {
-      return;
-  }
+function calcRankPanelRect() {
+  const s = renderer ? renderer.scale || 1 : 1;
+  const W = canvas ? canvas.width / scaleDpr : 375;
+  const H = canvas ? canvas.height / scaleDpr : 667;
+  const panelW = Math.min(W * 0.9, 340 * s);
+  const panelH = Math.min(H * 0.75, 520 * s);
+  const panelX = (W - panelW) / 2;
+  const panelY = (H - panelH) / 2;
+  const headerH = 76 * s; // 标题 + Tab 高度
+  const paddingX = 16 * s;
+  const paddingB = 16 * s;
+  return {
+    panelX, panelY, panelW, panelH,
+    contentX: panelX + paddingX,
+    contentY: panelY + headerH,
+    contentW: panelW - paddingX * 2,
+    contentH: panelH - headerH - paddingB,
+    closeSize: 28 * s,
+    s, W, H
+  };
+}
+
+function showRankList(panelRect) {
+  const odc = getOpenDataContext();
+  if (!odc) return;
   isRankShowing = true;
   if (game) game._showingRankList = true;
 
@@ -124,17 +144,28 @@ function showRankList() {
     try {
       sharedCanvas.width = canvas.width;
       sharedCanvas.height = canvas.height;
-      } catch (e) {
-      console.warn('sharedCanvas set failed', e.message);    }
-  } else {
+    } catch (e) {
+      console.warn('sharedCanvas set failed', e.message);
     }
+  }
 
-  odc.postMessage({
-    action: 'show',
-    scaleDpr,
-    canvasWidth: canvas.width,
-    canvasHeight: canvas.height,
-  });
+  // 如果在弹窗内显示好友榜，使用 showPanel 模式，只绘制内容区域
+  if (panelRect) {
+    odc.postMessage({
+      action: 'showPanel',
+      scaleDpr,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+      rect: panelRect,
+    });
+  } else {
+    odc.postMessage({
+      action: 'show',
+      scaleDpr,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+    });
+  }
 }
 
 function hideRankList() {
@@ -143,6 +174,68 @@ function hideRankList() {
   isRankShowing = false;
   if (game) game._showingRankList = false;
   odc.postMessage({ action: 'hide' });
+}
+
+function showRankPopup(tab = 'friend') {
+  if (!game) return;
+  game._showingRankPopup = true;
+  game._rankTab = tab;
+  switchRankTab(tab);
+}
+
+function hideRankPopup() {
+  if (!game) return;
+  hideRankList();
+  game._showingRankPopup = false;
+  game._rankTab = 'friend';
+  game._globalRankData = null;
+  game._globalRankLoading = false;
+  game._globalRankError = null;
+}
+
+function switchRankTab(tab) {
+  if (!game) return;
+  game._rankTab = tab;
+
+  if (tab === 'friend') {
+    // 切换到好友榜：使用开放域 panel 模式
+    const rect = calcRankPanelRect();
+    showRankList({
+      x: rect.contentX,
+      y: rect.contentY,
+      w: rect.contentW,
+      h: rect.contentH,
+    });
+    game._showingRankList = true;
+  } else {
+    // 切换到全球榜：隐藏好友榜，由主域绘制
+    hideRankList();
+    game._showingRankList = false;
+    loadGlobalRank();
+  }
+}
+
+async function loadGlobalRank() {
+  if (!game) return;
+
+  // 每次切换到全球榜都重新拉取
+  game._globalRankLoading = true;
+  game._globalRankError = null;
+  game._globalRankData = null;
+
+  // 先尝试授权获取头像昵称（只有用户主动点击全球榜才会走到这里）
+  if (!game._globalProfileRequested) {
+    game._globalProfileRequested = true;
+    await requestGlobalProfile();
+  }
+
+  const result = await fetchGlobalRank();
+  game._globalRankLoading = false;
+  if (result.code === 0) {
+    game._globalRankData = result;
+  } else {
+    game._globalRankError = result.message || '获取全球榜失败';
+  }
 }
 
 // 提交问题反馈到云数据库
@@ -651,14 +744,12 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 排行榜显示时，优先检测关闭按钮（延迟关闭），点击面板外部才关闭
-  if (isRankShowing) {
-    // 估算排行榜关闭按钮区域（与开放域 drawRankList 中关闭按钮位置一致）
-    const s = renderer.scale || 1;
-    const panelW = Math.min(renderer.W * 0.9, 340 * s);
-    const panelH = Math.min(renderer.H * 0.75, 520 * s);
-    const panelX = (renderer.W - panelW) / 2;
-    const panelY = (renderer.H - panelH) / 2;
+  // 排行榜弹窗显示时，优先检测关闭按钮和 Tab 切换
+  if (game._showingRankPopup) {
+    const rect = calcRankPanelRect();
+    const { panelX, panelY, panelW, panelH, s } = rect;
+
+    // 关闭按钮区域
     const closeSize = 28 * s;
     const closeX = panelX + panelW - closeSize - 14 * s;
     const closeY = panelY + 14 * s;
@@ -675,15 +766,35 @@ wx.onTouchStart((e) => {
       game._rankCloseBtnPressed = true;
       if (game.audioManager) game.audioManager.play('tap');
       const odc = getOpenDataContext();
-      if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: true });
+      if (odc && game._rankTab === 'friend') odc.postMessage({ action: 'closeBtnPress', pressed: true });
       return;
     }
-    // 点击面板内部（非关闭按钮）不关闭
+
+    // Tab 点击区域（标题下方居中）
+    const tabY = panelY + 46 * s;
+    const tabW = 140 * s;
+    const tabH = 30 * s;
+    const tabX = panelX + (panelW - tabW) / 2;
+    const friendTabRect = { x: tabX, y: tabY, w: tabW / 2, h: tabH };
+    const globalTabRect = { x: tabX + tabW / 2, y: tabY, w: tabW / 2, h: tabH };
+
+    if (game._rankTab !== 'friend' && renderer.hitTest(x, y, [friendTabRect])) {
+      if (game.audioManager) game.audioManager.play('tap');
+      switchRankTab('friend');
+      return;
+    }
+    if (game._rankTab !== 'global' && renderer.hitTest(x, y, [globalTabRect])) {
+      if (game.audioManager) game.audioManager.play('tap');
+      switchRankTab('global');
+      return;
+    }
+
+    // 点击面板内部（非关闭按钮/Tab）不关闭
     const insidePanel = x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH;
     if (insidePanel) {
       return;
     }
-    hideRankList();
+    hideRankPopup();
     return;
   }
 
@@ -1205,7 +1316,7 @@ wx.onTouchEnd(() => {
       game._closingSettings = true;
       game._closeSettingsStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
-      showRankList();
+      showRankPopup('friend');
     }
     if (game._settingsFeedbackPressed) {
       game._settingsFeedbackPressed = false;
@@ -1304,8 +1415,8 @@ wx.onTouchEnd(() => {
   if (game._rankCloseBtnPressed) {
     game._rankCloseBtnPressed = false;
     const odc = getOpenDataContext();
-    if (odc) odc.postMessage({ action: 'closeBtnPress', pressed: false });
-    hideRankList();
+    if (odc && game._rankTab === 'friend') odc.postMessage({ action: 'closeBtnPress', pressed: false });
+    hideRankPopup();
   }
 
   touchStartPos = null;
@@ -2650,8 +2761,8 @@ function handleInput(x, y) {
     if (game._reviveBtnPressed) return;
 
     // 排行榜显示时，点击任意位置关闭
-    if (isRankShowing) {
-      hideRankList();
+    if (game._showingRankPopup) {
+      hideRankPopup();
       return;
     }
 
@@ -2685,7 +2796,7 @@ function handleInput(x, y) {
       if (rankHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        showRankList();
+        showRankPopup('friend');
         return;
       }
     }

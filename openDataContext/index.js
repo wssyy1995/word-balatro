@@ -295,6 +295,108 @@ function _drawRankPanelFrame() {
   return { panelX, panelY, panelW, panelH, contentX, contentW, rowH, startY, W, H };
 }
 
+// 只绘制面板内容区域（表头 + 列表），不绘制外层面板框架
+// rect: { x, y, w, h } 为主域传入的逻辑像素坐标，内部乘以 scale 转为物理像素
+function drawPanelContent(rect) {
+  const x = Math.floor(rect.x * scale);
+  const y = Math.floor(rect.y * scale);
+  const w = Math.floor(rect.w * scale);
+  const h = Math.floor(rect.h * scale);
+
+  ctx.clearRect(x, y, w, h);
+
+  const rowH = Math.min(sp(52), Math.floor(h / 10));
+  const startY = y;
+
+  // 表头
+  ctx.fillStyle = 'rgba(196,163,90,0.15)';
+  ctx.fillRect(x, startY, w, rowH);
+
+  ctx.fillStyle = '#c4a35a';
+  ctx.font = `bold ${Math.floor(w * 0.032)}px sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('排名', x + w * 0.10, startY + rowH / 2);
+  ctx.fillText('玩家', x + w * 0.36, startY + rowH / 2);
+  ctx.fillText('最高回合', x + w * 0.62, startY + rowH / 2);
+  ctx.fillText('单词量', x + w * 0.86, startY + rowH / 2);
+
+  // 列表
+  const listY = startY + rowH + sp(4);
+  const maxRows = Math.floor((y + h - listY - sp(8)) / rowH);
+
+  for (let i = 0; i < Math.min(rankData.length, maxRows); i++) {
+    const player = rankData[i];
+    const rowY = listY + i * rowH;
+    const isSelf = player.openid === selfOpenId;
+
+    if (isSelf) {
+      ctx.fillStyle = 'rgba(196, 163, 90, 0.18)';
+      ctx.fillRect(x, rowY, w, rowH);
+    } else if (i % 2 === 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(x, rowY, w, rowH);
+    }
+
+    // 排名
+    ctx.fillStyle = i < 3 ? '#ffd700' : '#aaa';
+    ctx.font = `bold ${Math.floor(w * 0.035)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(i + 1), x + w * 0.10, rowY + rowH / 2);
+
+    // 头像
+    const avatarX = x + w * 0.26;
+    const avatarY = rowY + rowH / 2;
+    const avatarR = Math.min(rowH * 0.35, sp(18));
+    if (player.avatarImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(player.avatarImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#555';
+      ctx.beginPath();
+      ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 昵称
+    ctx.fillStyle = isSelf ? '#f5f0e6' : '#ccc';
+    ctx.font = `${Math.floor(w * 0.028)}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const nick = player.nickname || '匿名';
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, x + w * 0.38, rowY + rowH / 2);
+
+    // 回合
+    const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(w * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(bestround, x + w * 0.62, rowY + rowH / 2);
+
+    // 单词量
+    const wordCount = player.KVDataList.find(kv => kv.key === 'wordCount')?.value || '0';
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(w * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(wordCount, x + w * 0.86, rowY + rowH / 2);
+  }
+
+  if (rankData.length === 0) {
+    ctx.fillStyle = '#888';
+    ctx.font = `${Math.floor(w * 0.03)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('暂无好友数据', x + w / 2, y + h / 2);
+  }
+}
+
 function drawLoading() {
   const { W, H } = getCanvasSize();
   ctx.clearRect(0, 0, W, H);
@@ -361,7 +463,9 @@ function _doFetchFriendRank() {
         p.avatarImg = img;
       }))).then(() => {
         if (!isVisible) return;
-        if (drawMode === 'list' && listRect) {
+        if (drawMode === 'panel' && listRect) {
+          drawPanelContent(listRect);
+        } else if (drawMode === 'list' && listRect) {
           drawFriendList(listRect.w, listRect.rowH);
         } else {
           drawRankList();
@@ -395,6 +499,20 @@ wx.onMessage((msg) => {
       console.log('[OpenData] received show, canvas size', canvasWidth, canvasHeight, 'scale', scale);
       fetchRankData();
       break;
+    case 'showPanel':
+      drawMode = 'panel';
+      if (msg.scaleDpr) scale = msg.scaleDpr;
+      if (msg.canvasWidth) canvasWidth = msg.canvasWidth;
+      if (msg.canvasHeight) canvasHeight = msg.canvasHeight;
+      if (msg.rect) listRect = msg.rect;
+      try {
+        if (msg.canvasWidth) sharedCanvas.width = msg.canvasWidth;
+        if (msg.canvasHeight) sharedCanvas.height = msg.canvasHeight;
+      } catch (e) {}
+      isVisible = true;
+      console.log('[OpenData] received showPanel, canvas size', canvasWidth, canvasHeight, 'scale', scale, 'rect', listRect);
+      fetchRankData();
+      break;
     case 'showList':
       drawMode = 'list';
       if (msg.scaleDpr) scale = msg.scaleDpr;
@@ -415,7 +533,9 @@ wx.onMessage((msg) => {
       break;
     case 'resize':
       if (!isVisible) return;
-      if (drawMode === 'list' && listRect) {
+      if (drawMode === 'panel' && listRect) {
+        drawPanelContent(listRect);
+      } else if (drawMode === 'list' && listRect) {
         drawFriendList(listRect.w, listRect.rowH);
       } else {
         drawRankList();
@@ -424,7 +544,9 @@ wx.onMessage((msg) => {
     case 'closeBtnPress':
       closeBtnPressed = msg.pressed || false;
       if (isVisible) {
-        if (drawMode === 'list' && listRect) {
+        if (drawMode === 'panel' && listRect) {
+          drawPanelContent(listRect);
+        } else if (drawMode === 'list' && listRect) {
           drawFriendList(listRect.w, listRect.rowH);
         } else {
           drawRankList();

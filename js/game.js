@@ -1511,6 +1511,12 @@ class Game {
     this._cardBookEquipAnim = null;
     this._cardBookCloseBtnPressed = false;
     this._rankCloseBtnPressed = false;
+    this._rankTab = 'friend'; // 'friend' | 'global'
+    this._showingRankPopup = false;
+    this._globalRankData = null;
+    this._globalRankLoading = false;
+    this._globalRankError = null;
+    this._globalProfileRequested = false;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
@@ -3698,6 +3704,65 @@ class Game {
   }
 }
 
+function requestGlobalProfile() {
+  if (!wx.getUserProfile) {
+    console.warn('[GlobalRank] 当前环境不支持 getUserProfile');
+    return Promise.resolve(false);
+  }
+  return new Promise((resolve) => {
+    wx.getUserProfile({
+      desc: '用于在全球排行榜中展示你的头像和昵称',
+      success: (res) => {
+        const { avatarUrl, nickName } = res.userInfo || {};
+        if (!avatarUrl || !nickName) {
+          resolve(false);
+          return;
+        }
+        if (!wx.cloud || !wx.cloud.callFunction) {
+          resolve(false);
+          return;
+        }
+        wx.cloud.callFunction({
+          name: 'updateUserProfile',
+          data: { avatarUrl, nickname: nickName },
+          success: () => {
+            console.log('[GlobalRank] 头像昵称上传成功');
+            resolve(true);
+          },
+          fail: (err) => {
+            console.error('[GlobalRank] 头像昵称上传失败', err);
+            resolve(false);
+          }
+        });
+      },
+      fail: (err) => {
+        console.warn('[GlobalRank] 用户拒绝授权头像昵称', err);
+        resolve(false);
+      }
+    });
+  });
+}
+
+function fetchGlobalRank() {
+  if (!wx.cloud || !wx.cloud.callFunction) {
+    return Promise.resolve({ code: -1, message: '云函数不可用' });
+  }
+  return new Promise((resolve) => {
+    wx.cloud.callFunction({
+      name: 'getGlobalRank',
+      data: {},
+      success: (res) => {
+        console.log('[GlobalRank] 拉取成功', res.result);
+        resolve(res.result || { code: -1, message: '返回为空' });
+      },
+      fail: (err) => {
+        console.error('[GlobalRank] 拉取失败', err);
+        resolve({ code: -1, message: err.message || '拉取失败' });
+      }
+    });
+  });
+}
+
 function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
   if (!wx.setUserCloudStorage) return;
 
@@ -3755,4 +3820,4 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
   }
 }
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank };

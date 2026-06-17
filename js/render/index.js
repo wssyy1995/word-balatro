@@ -803,18 +803,9 @@ Renderer.prototype.render = function(game) {
       this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
     }
 
-    // 绘制开放数据域（排行榜，OffScreenCanvas 模式）
-    if (game._showingRankList) {
-      const odc = wx.getOpenDataContext ? wx.getOpenDataContext() : null;
-      if (odc && odc.canvas) {
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-        // 先兜底画一层蒙层，防止 ODC 绘制异常时窗口背后透明
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-        ctx.fillRect(0, 0, W, H);
-        ctx.drawImage(odc.canvas, 0, 0, W, H);
-        ctx.restore();
-      }
+    // 绘制排行榜弹窗（好友榜 + 全球榜 Tab）
+    if (game._showingRankPopup) {
+      this._drawRankPopup(game);
     }
   };
 
@@ -987,6 +978,289 @@ Renderer.prototype.render = function(game) {
     this._drawCardBookIcon(game, W / 2, titleY, shopTitleW);
 
     this.shopRenderer.draw(ctx, game, W, H, s);
+  };
+
+  // ===== 排行榜弹窗（好友/全球 Tab）=====
+  Renderer.prototype._drawRankPopup = function(game) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    const panelW = Math.min(W * 0.9, 340 * s);
+    const panelH = Math.min(H * 0.75, 520 * s);
+    const panelX = (W - panelW) / 2;
+    const panelY = (H - panelH) / 2;
+    const contentPaddingX = 16 * s;
+    const contentPaddingB = 16 * s;
+    const headerH = 76 * s; // 标题 + Tab
+
+    // 1. 蒙层
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // 2. 面板背景
+    ctx.save();
+    this.roundRect(panelX, panelY, panelW, panelH, 16 * s, '#2a2a3a', '#4a4a6a', 1.5 * s);
+    ctx.restore();
+
+    // 3. 标题「排行榜」
+    ctx.save();
+    ctx.fillStyle = '#f5f0e6';
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('排行榜', W / 2, panelY + 14 * s);
+    ctx.restore();
+
+    // 4. Tab「好友 / 全球」
+    const tabY = panelY + 46 * s;
+    const tabW = 140 * s;
+    const tabH = 28 * s;
+    const tabX = panelX + (panelW - tabW) / 2;
+    const tabR = tabH / 2;
+
+    // Tab 背景
+    ctx.save();
+    this.roundRect(tabX, tabY, tabW, tabH, tabR, 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.15)', 1 * s);
+    ctx.restore();
+
+    const activeTab = game._rankTab || 'friend';
+    const activeW = tabW / 2;
+    const activeX = activeTab === 'friend' ? tabX : tabX + activeW;
+
+    // 激活项高亮
+    ctx.save();
+    this.roundRect(activeX + 2 * s, tabY + 2 * s, activeW - 4 * s, tabH - 4 * s, tabR - 2 * s, '#c4a35a', null);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = activeTab === 'friend' ? '#2a2a3a' : 'rgba(255,255,255,0.7)';
+    ctx.fillText('好友', tabX + activeW / 2, tabY + tabH / 2);
+    ctx.fillStyle = activeTab === 'global' ? '#2a2a3a' : 'rgba(255,255,255,0.7)';
+    ctx.fillText('全球', tabX + activeW * 1.5, tabY + tabH / 2);
+    ctx.restore();
+
+    // 5. 关闭按钮
+    const closeSize = 28 * s;
+    const closeX = panelX + panelW - closeSize - 14 * s;
+    const closeY = panelY + 14 * s;
+    const closePressOffset = game._rankCloseBtnPressed ? 2 * s : 0;
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,107,107,0.9)';
+    ctx.beginPath();
+    ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2 + closePressOffset, closeSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(closeSize * 0.65)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 2 * s + closePressOffset);
+    ctx.restore();
+
+    // 6. 内容区域
+    const contentX = panelX + contentPaddingX;
+    const contentY = panelY + headerH;
+    const contentW = panelW - contentPaddingX * 2;
+    const contentH = panelH - headerH - contentPaddingB;
+
+    // 7. 好友榜：绘制开放域内容
+    if (activeTab === 'friend') {
+      const odc = wx.getOpenDataContext ? wx.getOpenDataContext() : null;
+      if (odc && odc.canvas) {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(odc.canvas, 0, 0, W, H);
+        ctx.restore();
+      }
+      return;
+    }
+
+    // 8. 全球榜：主域绘制
+    this._drawGlobalRankList(game, {
+      x: contentX,
+      y: contentY,
+      w: contentW,
+      h: contentH,
+    });
+  };
+
+  Renderer.prototype._drawGlobalRankList = function(game, rect) {
+    const ctx = this.ctx;
+    const s = this.scale;
+    const { x, y, w, h } = rect;
+
+    if (game._globalRankLoading) {
+      ctx.save();
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('⏳ 全球榜加载中...', x + w / 2, y + h / 2);
+      ctx.restore();
+      return;
+    }
+
+    if (game._globalRankError || !game._globalRankData) {
+      ctx.save();
+      ctx.fillStyle = '#ff6b6b';
+      ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(game._globalRankError || '加载失败', x + w / 2, y + h / 2 - 10 * s);
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillText('请稍后重试', x + w / 2, y + h / 2 + 12 * s);
+      ctx.restore();
+      return;
+    }
+
+    const data = game._globalRankData;
+    const topList = data.topList || [];
+    const self = data.self;
+
+    if (topList.length === 0 && !self) {
+      ctx.save();
+      ctx.fillStyle = '#888';
+      ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('暂无全球数据', x + w / 2, y + h / 2);
+      ctx.restore();
+      return;
+    }
+
+    const rowH = Math.min(52 * s, h / 10);
+
+    // 表头
+    ctx.save();
+    ctx.fillStyle = 'rgba(196,163,90,0.15)';
+    ctx.fillRect(x, y, w, rowH);
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('排名', x + w * 0.10, y + rowH / 2);
+    ctx.fillText('玩家', x + w * 0.36, y + rowH / 2);
+    ctx.fillText('最高回合', x + w * 0.62, y + rowH / 2);
+    ctx.fillText('单词量', x + w * 0.86, y + rowH / 2);
+    ctx.restore();
+
+    // 列表
+    const listY = y + rowH + 4 * s;
+    const maxRows = Math.floor((y + h - listY - 8 * s) / rowH);
+
+    if (!this._globalAvatarCache) this._globalAvatarCache = {};
+
+    for (let i = 0; i < Math.min(topList.length, maxRows); i++) {
+      const player = topList[i];
+      const rowY = listY + i * rowH;
+      this._drawGlobalRankRow(ctx, player, x, rowY, w, rowH, s);
+    }
+
+    // 自己不在 Top 列表时，底部显示自己排名
+    const selfInTop = topList.some(p => p.isSelf);
+    if (self && !selfInTop) {
+      const selfY = listY + Math.min(topList.length, maxRows) * rowH + 8 * s;
+      if (selfY + rowH <= y + h) {
+        // 分隔线
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(x + 10 * s, selfY - 4 * s, w - 20 * s, 1 * s);
+        ctx.restore();
+        this._drawGlobalRankRow(ctx, self, x, selfY, w, rowH, s);
+      }
+    }
+  };
+
+  Renderer.prototype._drawGlobalRankRow = function(ctx, player, rowX, rowY, rowW, rowH, s) {
+    const isSelf = player.isSelf;
+
+    // 行背景
+    ctx.save();
+    if (isSelf) {
+      ctx.fillStyle = 'rgba(196, 163, 90, 0.18)';
+      ctx.fillRect(rowX, rowY, rowW, rowH);
+    } else if (player.rank % 2 === 0) {
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(rowX, rowY, rowW, rowH);
+    }
+    ctx.restore();
+
+    // 排名
+    ctx.save();
+    ctx.fillStyle = player.rank <= 3 ? '#ffd700' : '#aaa';
+    ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(player.rank), rowX + rowW * 0.10, rowY + rowH / 2);
+    ctx.restore();
+
+    // 头像
+    const avatarX = rowX + rowW * 0.26;
+    const avatarY = rowY + rowH / 2;
+    const avatarR = Math.min(rowH * 0.35, 18 * s);
+    const avatarUrl = player.avatarUrl;
+
+    let avatarImg = null;
+    if (avatarUrl) {
+      if (!this._globalAvatarCache) this._globalAvatarCache = {};
+      const cache = this._globalAvatarCache;
+      const cached = cache[avatarUrl];
+      if (cached && cached.loaded) {
+        avatarImg = cached.img;
+      } else if (!cached) {
+        const img = wx.createImage();
+        img.src = avatarUrl;
+        cache[avatarUrl] = { img, loaded: false };
+        img.onload = () => { cache[avatarUrl].loaded = true; };
+        img.onerror = () => { cache[avatarUrl].loaded = false; };
+      }
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(avatarX, avatarY, avatarR, 0, Math.PI * 2);
+    ctx.fillStyle = '#555';
+    ctx.fill();
+    ctx.clip();
+    if (avatarImg) {
+      ctx.drawImage(avatarImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+    }
+    ctx.restore();
+
+    // 昵称
+    ctx.save();
+    ctx.fillStyle = isSelf ? '#f5f0e6' : '#ccc';
+    ctx.font = `${Math.floor(10 * s)}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const nick = player.nickname || '匿名玩家';
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, rowX + rowW * 0.38, rowY + rowH / 2);
+    ctx.restore();
+
+    // 最高回合
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(player.bestRound), rowX + rowW * 0.62, rowY + rowH / 2);
+    ctx.restore();
+
+    // 单词量
+    ctx.save();
+    ctx.fillStyle = '#c4a35a';
+    ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(player.wordCount), rowX + rowW * 0.86, rowY + rowH / 2);
+    ctx.restore();
   };
 
 module.exports = { Renderer };
