@@ -1003,12 +1003,12 @@ class ShopRenderer {
         let targetH = rowH;
         if (mod.type === 'witch') {
           targetW = rowW + 18 * s;
-          targetH = rowH + 26 * s;
+          targetH = rowH + 28 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 16 * s;
         } else if (mod.type === 'crystal') {
           targetW = rowW + 18 * s;
-          targetH = rowH + 26 * s;
+          targetH = rowH + 28 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 15 * s;
         }else if (mod.type === 'potion') {
@@ -1288,6 +1288,8 @@ class ShopRenderer {
 
         // 金币图标 + 文案（整体居中）
         const midY = btnY + btnH / 2 + pressOffset;
+        // 统一按钮文字字号，避免 else 分支继承不确定的 ctx.font 状态
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         if (game._shopDiscountActive && isActive) {
           // 显示原价（灰色删除线）+ 折后价
           const originalText = String(item.cost);
