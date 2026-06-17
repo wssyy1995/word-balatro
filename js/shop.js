@@ -1124,8 +1124,8 @@ class ShopRenderer {
           ctx.beginPath();
           ctx.moveTo(unitX - cardGap / 2, unitY + 10 * s);
           ctx.lineTo(unitX - cardGap / 2, unitY + unitH - 10 * s);
-          ctx.strokeStyle = 'rgba(196,163,90,0.2)';
-          ctx.lineWidth = 1 * s;
+          ctx.strokeStyle = 'rgba(250, 245, 232, 0.55)';
+          ctx.lineWidth = 1.5 * s;
           ctx.stroke();
           ctx.restore();
         }
