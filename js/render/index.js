@@ -53,7 +53,17 @@ Renderer.prototype.render = function(game) {
       // toast 飞行星星动画
       this._drawToastFlyStar();
 
-      // 新手引导（覆盖在游戏页最上层）
+      // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
+      if (!game._dailyWordsPopup) {
+        this._updateAndDrawSparkles(ctx, s);
+      }
+
+      // 绘制飞行中的总分
+      this._updateAndDrawFlyingScore(ctx, s, game);
+
+      ctx.restore();
+
+      // 新手引导（覆盖在游戏页最上层，必须在 restore 之后绘制，避免被 translate(0,10) 下移导致顶部露白）
       if (game._guideEnabled && game.guidePhase >= 1 && game.guidePhase <= 4) {
         this._drawGuideOverlay(game);
       } else if (game.guidePhase === 5 && game._guideExitStartTime) {
@@ -68,16 +78,6 @@ Renderer.prototype.render = function(game) {
           ctx.restore();
         }
       }
-
-      // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
-      if (!game._dailyWordsPopup) {
-        this._updateAndDrawSparkles(ctx, s);
-      }
-
-      // 绘制飞行中的总分
-      this._updateAndDrawFlyingScore(ctx, s, game);
-
-      ctx.restore();
 
       // 字母置换弹窗（覆盖在游戏页面上方，独立模态弹窗，不下移）
       if (game._changeLetterPopup) {
@@ -144,32 +144,6 @@ Renderer.prototype.render = function(game) {
         game.shopGuidePhase = 1;
         game._shopGuideStartTime = Date.now();
       }
-      // 商店引导覆盖层
-      if (!game._newWitchCardPopup && game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
-        this._drawShopGuideOverlay(game);
-      } else if (!game._newWitchCardPopup && game.shopGuidePhase === 3 && game._shopGuideExitStartTime) {
-        const exitElapsed = Date.now() - game._shopGuideExitStartTime;
-        if (exitElapsed < 600) {
-          // 0~600ms：女巫+对话框弹出去，蒙层保持
-          this._drawShopGuideOverlay(game);
-        } else if (exitElapsed < 1100) {
-          // 600~1100ms：蒙层从 0.75 渐变到透明（500ms 变亮）
-          const fadeProgress = (exitElapsed - 600) / 500;
-          ctx.save();
-          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
-          ctx.fillRect(0, 0, W, H);
-          ctx.restore();
-        } else {
-          // 1100ms 后彻底结束
-          game.shopGuidePhase = 4;
-          game._shopGuideExitStartTime = null;
-          if (game.storageManager) {
-            game.storageManager.saveProgress();
-            game.storageManager.saveShopGuidePhase(4);
-          }
-        }
-      }
-
       // 卡牌图鉴引导触发检查（第3关商店）
       // 若正在等待女巫奖励，必须等"获得新词牌"弹窗关闭后才触发；
       // 若没有女巫奖励，进入商店后直接触发。
@@ -195,6 +169,32 @@ Renderer.prototype.render = function(game) {
       this._updateAndDrawFlyingScore(ctx, s, game);
 
       ctx.restore();
+
+      // 商店引导覆盖层（必须在 restore 之后绘制，避免蒙层被 translate(0,10) 下移导致顶部露白）
+      if (!game._newWitchCardPopup && game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
+        this._drawShopGuideOverlay(game);
+      } else if (!game._newWitchCardPopup && game.shopGuidePhase === 3 && game._shopGuideExitStartTime) {
+        const exitElapsed = Date.now() - game._shopGuideExitStartTime;
+        if (exitElapsed < 600) {
+          // 0~600ms：女巫+对话框弹出去，蒙层保持
+          this._drawShopGuideOverlay(game);
+        } else if (exitElapsed < 1100) {
+          // 600~1100ms：蒙层从 0.75 渐变到透明（500ms 变亮）
+          const fadeProgress = (exitElapsed - 600) / 500;
+          ctx.save();
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        } else {
+          // 1100ms 后彻底结束
+          game.shopGuidePhase = 4;
+          game._shopGuideExitStartTime = null;
+          if (game.storageManager) {
+            game.storageManager.saveProgress();
+            game.storageManager.saveShopGuidePhase(4);
+          }
+        }
+      }
 
       // 独立模态弹窗：获得新词牌、确认购买（不下移）
       if (isNewWitchCardPhase && game._newWitchCardPopup) {
