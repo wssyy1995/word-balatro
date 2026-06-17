@@ -1005,10 +1005,10 @@ class ShopRenderer {
           targetW = rowW + 16 * s;
           targetH = rowH + 18 * s;
           targetX = rowX - 7 * s;
-          targetY = rowY - 15 * s;
+          targetY = rowY - 16 * s;
         } else if (mod.type === 'potion') {
-          targetW = rowW -20*s;
-          targetH = rowH + 4 * s;
+          targetW = rowW -10*s;
+          targetH = rowH + 12 * s;
           targetX = rowX + 2 * s;
           targetY = rowY - 2 * s;
         }
@@ -1289,7 +1289,7 @@ class ShopRenderer {
           const discountText = String(finalCost);
           ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
           const originalW = ctx.measureText(originalText).width;
-          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
           const discountW = ctx.measureText(discountText).width;
           const innerGap = 4 * s;
           const totalTextW = originalW + innerGap + discountW;
@@ -1312,7 +1312,7 @@ class ShopRenderer {
           ctx.lineTo(textStartX + originalW + 1 * s, midY);
           ctx.stroke();
           // 折后价
-          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
           ctx.fillStyle = '#8b6914';
           ctx.fillText(discountText, textStartX + originalW + innerGap, midY);
         } else {
