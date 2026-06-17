@@ -3,6 +3,10 @@
 
 const { WITCH_SKILLS } = require('./witch_skills');
 
+// 云存储文件 ID 前缀
+const CLOUD_BASE = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466';
+function c(path) { return CLOUD_BASE + path; }
+
 class CloudStorageManager {
   constructor(env) {
     this.env = env;
@@ -27,46 +31,46 @@ class CloudStorageManager {
 
     // 默认云文件映射（已上传的 shop_card 图片，fileID 固定）
     this.defaultFileMap = {
-      'life_extension': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/life_extension.png',
-      'bonus_gold': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/bonus_gold.png',
-      'change_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/change_letter.png',
-      'extra_discard': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_discard.png',
-      'extra_hands': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_hands.png',
-      'extra_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/extra_letter.png',
-      'has_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_face.png',
-      'has_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/has_vowel.png',
-      'initial_vowel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/initial_vowel.png',
-      'length_4': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_4.png',
-      'length_5': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_5.png',
-      'length_6': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/length_6.png',
-      'letter_a': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_a.png',
-      'letter_e': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_e.png',
-      'reduce_target': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/reduce_target.png',
-      'upgrade_any': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_any.png',
-      'upgrade_face': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_face.png',
-      'upgrade_letter': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/upgrade_letter.png',
-      'shield_illegal':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/shield_illegal.png',
-      'illegal_boost':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/illegal_boost.png',
-      'random_upgrade':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/random_upgrade.png',
-      'letter_god':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/letter_god.png',
-      'last_chance':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/last_chance.png',
-      'reroll_skill':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/reroll_skill.png',
-      'haste_play':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/haste_play.png',
-      'firstend_same':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/firstend_same.png',
-      'double_same':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/double_same.png',
-      'initial_succession':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/initial_succession.png',
-      'end_s':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/end_s.png',
-      'end_ed':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/end_ed.png',
-      'predicted_letter':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/predicted_letter.png',
-      'no_duplicate':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/no_duplicate.png',
-      'chaos_orb':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/chaos_orb.png',
-      'left_right_open':'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/shop_card/left_right_open.png'
+      'life_extension': c('/shop_card/life_extension.png'),
+      'bonus_gold': c('/shop_card/bonus_gold.png'),
+      'change_letter': c('/shop_card/change_letter.png'),
+      'extra_discard': c('/shop_card/extra_discard.png'),
+      'extra_hands': c('/shop_card/extra_hands.png'),
+      'extra_letter': c('/shop_card/extra_letter.png'),
+      'has_face': c('/shop_card/has_face.png'),
+      'has_vowel': c('/shop_card/has_vowel.png'),
+      'initial_vowel': c('/shop_card/initial_vowel.png'),
+      'length_4': c('/shop_card/length_4.png'),
+      'length_5': c('/shop_card/length_5.png'),
+      'length_6': c('/shop_card/length_6.png'),
+      'letter_a': c('/shop_card/letter_a.png'),
+      'letter_e': c('/shop_card/letter_e.png'),
+      'reduce_target': c('/shop_card/reduce_target.png'),
+      'upgrade_any': c('/shop_card/upgrade_any.png'),
+      'upgrade_face': c('/shop_card/upgrade_face.png'),
+      'upgrade_letter': c('/shop_card/upgrade_letter.png'),
+      'shield_illegal':c('/shop_card/shield_illegal.png'),
+      'illegal_boost':c('/shop_card/illegal_boost.png'),
+      'random_upgrade':c('/shop_card/random_upgrade.png'),
+      'letter_god':c('/shop_card/letter_god.png'),
+      'last_chance':c('/shop_card/last_chance.png'),
+      'reroll_skill':c('/shop_card/reroll_skill.png'),
+      'haste_play':c('/shop_card/haste_play.png'),
+      'firstend_same':c('/shop_card/firstend_same.png'),
+      'double_same':c('/shop_card/double_same.png'),
+      'initial_succession':c('/shop_card/initial_succession.png'),
+      'end_s':c('/shop_card/end_s.png'),
+      'end_ed':c('/shop_card/end_ed.png'),
+      'predicted_letter':c('/shop_card/predicted_letter.png'),
+      'no_duplicate':c('/shop_card/no_duplicate.png'),
+      'chaos_orb':c('/shop_card/chaos_orb.png'),
+      'left_right_open':c('/shop_card/left_right_open.png')
     };
 
     // 默认 witch 图片云文件映射
     // 根据 WITCH_SKILLS 配置动态生成，避免硬编码和重复
     this.defaultWitchFileMap = {};
-    const witchBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch';
+    const witchBase = c('/witch');
     WITCH_SKILLS.forEach(skill => {
       if (skill && skill.level) {
         const key = `witch_${skill.level}`;
@@ -77,7 +81,7 @@ class CloudStorageManager {
     // 默认 witch_card 图片云文件映射
     // 根据 WITCH_SKILLS 配置动态生成，避免硬编码和重复
     this.defaultWitchCardFileMap = {};
-    const witchCardBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/witch_card';
+    const witchCardBase = c('/witch/witch_card');
     WITCH_SKILLS.forEach(skill => {
       if (skill && skill.level) {
         const key = `witch_card_${skill.level}`;
@@ -87,47 +91,47 @@ class CloudStorageManager {
 
     // 默认 bg_icon 图片云文件映射
     this.defaultBgIconFileMap = {
-      'bg': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/bg.png',
-      'buy_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/buy_tip.png',
-      'share_tip': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip.png',
-      'share_tip_limit': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/share_tip_limit.png',
-      'card_bar': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_bar_v7.png',
-      'card_book': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_book.png',
-      'card_template': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template.png',
-      'card_template_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_selected_new.png',
-      'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade9.png',
-      'card_template_upgrade_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade_selected2.png'
+      'bg': c('/bg_icon/bg.png'),
+      'buy_tip': c('/bg_icon/buy_tip.png'),
+      'share_tip': c('/bg_icon/share_tip.png'),
+      'share_tip_limit': c('/bg_icon/share_tip_limit.png'),
+      'card_bar': c('/bg_icon/card_bar_v7.png'),
+      'card_book': c('/bg_icon/card_book.png'),
+      'card_template': c('/bg_icon/card_template.png'),
+      'card_template_selected': c('/bg_icon/card_template_selected_new.png'),
+      'card_template_upgrade': c('/bg_icon/card_template_upgrade9.png'),
+      'card_template_upgrade_selected': c('/bg_icon/card_template_upgrade_selected2.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
     this.defaultRankAvatarFileMap = {};
-    const rankAvatarBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/rank_avatar';
+    const rankAvatarBase = c('/rank_avatar');
     for (let i = 1; i <= 4; i++) {
       this.defaultRankAvatarFileMap[`rank_avatar_${i}`] = `${rankAvatarBase}/rank_avatar_${i}.png`;
     }
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
     this.defaultMusicFileMap = {
-      'buy_success': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/buy_success.mp3',
-      'card_illegal': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_illegal.mp3',
-      'card_placement': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_placement.mp3',
-      'card_shuffle': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_shuffle.mp3',
-      'card_valid': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_valid.mp3',
-      'challenge': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/challange.mp3',
-      'game_over': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/game_over.mp3',
-      'round_win': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/round_win.mp3',
-      'tap': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/tap.mp3',
-      'card_sell': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_sell.mp3',
-      'card_book_page': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_book_page.mp3',
-      'card_jump': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/card_jump.mp3',
-      'answer_tone': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/answer_tone.mp3',
-      'word_score': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/word_score.mp3',
-      'spin_wheel': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/music/sound_effect/spin_whell.mp3',
+      'buy_success': c('/music/sound_effect/buy_success.mp3'),
+      'card_illegal': c('/music/sound_effect/card_illegal.mp3'),
+      'card_placement': c('/music/sound_effect/card_placement.mp3'),
+      'card_shuffle': c('/music/sound_effect/card_shuffle.mp3'),
+      'card_valid': c('/music/sound_effect/card_valid.mp3'),
+      'challenge': c('/music/sound_effect/challange.mp3'),
+      'game_over': c('/music/sound_effect/game_over.mp3'),
+      'round_win': c('/music/sound_effect/round_win.mp3'),
+      'tap': c('/music/sound_effect/tap.mp3'),
+      'card_sell': c('/music/sound_effect/card_sell.mp3'),
+      'card_book_page': c('/music/sound_effect/card_book_page.mp3'),
+      'card_jump': c('/music/sound_effect/card_jump.mp3'),
+      'answer_tone': c('/music/sound_effect/answer_tone.mp3'),
+      'word_score': c('/music/sound_effect/word_score.mp3'),
+      'spin_wheel': c('/music/sound_effect/spin_whell.mp3'),
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
     this.defaultGuideFileMap = {};
-    const guideBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/witch/guide';
+    const guideBase = c('/witch/guide');
     this.defaultGuideFileMap['witch_guide_1_spritesheet'] = `${guideBase}/witch_guide_1/spritesheet.png`;
     this.defaultGuideFileMap['witch_guide_2_spritesheet'] = `${guideBase}/witch_guide_2/spritesheet.png`;
     this.defaultGuideFileMap['witch_guide_3_spritesheet'] = `${guideBase}/witch_guide_3/spritesheet.png`;
