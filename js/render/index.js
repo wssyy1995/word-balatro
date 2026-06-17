@@ -31,6 +31,14 @@ Renderer.prototype.render = function(game) {
     }
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
+      // 进入第一回合后，后台下载 rank_avatar 云图集（不在预加载页加载）
+      if (game.round === 1 && !game._rankAvatarPreloaded && game.cloudStorage) {
+        game._rankAvatarPreloaded = true;
+        game.cloudStorage.preloadRankAvatarImages().then(() => {
+          if (game.cloudStorage) game.cloudStorage.injectRankAvatarToRenderer(this);
+        });
+      }
+
       this.drawHUD(game);
       // 自动触发 HUD 女巫头像星星动画（约束失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
       if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {
@@ -1286,22 +1294,35 @@ Renderer.prototype.render = function(game) {
         img.onload = () => { cache[avatarUrl].loaded = true; };
         img.onerror = () => { cache[avatarUrl].loaded = false; };
       }
-    } else if (player._defaultAvatarIndex !== undefined && this._rankAvatarSprites) {
+    } else if (player._defaultAvatarIndex !== undefined) {
       // 从 4 张 5×5 图集中按顺序裁剪默认头像（每张 200×200，单头像 40×40）
+      // 优先使用云存储图集，未下载完成则回退本地
       const idx = player._defaultAvatarIndex % 100;
       const sheetIdx = Math.floor(idx / 25);
       const innerIdx = idx % 25;
       const row = Math.floor(innerIdx / 5);
       const col = innerIdx % 5;
-      const sheet = this._rankAvatarSprites[sheetIdx];
-      if (sheet && sheet.loaded) {
+      const cloudImages = this.rankAvatarImages;
+      const cloudSheet = cloudImages && cloudImages[`rank_avatar_${sheetIdx + 1}`];
+      if (cloudSheet && cloudSheet.loaded && cloudSheet.img) {
         defaultAvatar = {
-          img: sheet.img,
+          img: cloudSheet.img,
           sx: col * 40,
           sy: row * 40,
           sw: 40,
           sh: 40,
         };
+      } else if (this._rankAvatarSprites) {
+        const sheet = this._rankAvatarSprites[sheetIdx];
+        if (sheet && sheet.loaded) {
+          defaultAvatar = {
+            img: sheet.img,
+            sx: col * 40,
+            sy: row * 40,
+            sw: 40,
+            sh: 40,
+          };
+        }
       }
     }
 

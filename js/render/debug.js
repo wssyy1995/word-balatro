@@ -80,6 +80,7 @@ module.exports = function extendDebug(Renderer) {
         { label: '上传shop_card', action: 'debug_upload_shop_card' },
         { label: '上传witch', action: 'debug_upload_witch' },
         { label: '上传bg_icon', action: 'debug_upload_bg_icon' },
+        { label: '上传rank_avatar', action: 'debug_upload_rank_avatar' },
         { label: '上传music', action: 'debug_upload_music' },
         { label: '触发新人引导', action: 'debug_triggerGuide' },
         { label: '触发商店引导', action: 'debug_triggerShopGuide' },

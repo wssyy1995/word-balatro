@@ -12,12 +12,14 @@ class CloudStorageManager {
     this.bgIconImages = {};   // { name: { img, loaded, width, height } }
     this.guideImages = {};    // { witch_1: { frames: [...], loaded: false }, witch_2: ... }
     this.guideSpritesheets = {}; // { witch_4: { img, loaded } } 精灵图缓存
+    this.rankAvatarImages = {}; // { name: { img, loaded, width, height } }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
     this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
     this.guideFileMap = {};   // { 'witch_guide_1_spritesheet': fileID, ... }
     this.musicFileMap = {};   // { name: fileID }
+    this.rankAvatarFileMap = {}; // { name: fileID }
     this.musicCache = {};     // { name: localPath }
     this.initialized = false;
     this.uploading = false;
@@ -96,6 +98,13 @@ class CloudStorageManager {
       'card_template_upgrade': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade9.png',
       'card_template_upgrade_selected': 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/bg_icon/card_template_upgrade_selected2.png'
     };
+
+    // 默认 rank_avatar 图片云文件映射
+    this.defaultRankAvatarFileMap = {};
+    const rankAvatarBase = 'cloud://cloud1-d3gecbtu10e4035de.636c-cloud1-d3gecbtu10e4035de-1429704466/rank_avatar';
+    for (let i = 1; i <= 4; i++) {
+      this.defaultRankAvatarFileMap[`rank_avatar_${i}`] = `${rankAvatarBase}/rank_avatar_${i}.png`;
+    }
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
     this.defaultMusicFileMap = {
@@ -234,6 +243,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('music 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 rank_avatar 映射兜底
+    this.rankAvatarFileMap = { ...this.defaultRankAvatarFileMap };
+
+    // 加载 rank_avatar 的本地缓存映射
+    try {
+      const rankAvatarStored = wx.getStorageSync('cloud_rank_avatar_map');
+      if (rankAvatarStored) {
+        const rankAvatarLocalMap = JSON.parse(rankAvatarStored);
+        this.rankAvatarFileMap = { ...this.rankAvatarFileMap, ...rankAvatarLocalMap };
+        this.log('rank_avatar 本地缓存映射已加载，共' + Object.keys(rankAvatarLocalMap).length + '张');
+      } else {
+        this.log('无 rank_avatar 本地缓存，使用默认云映射，共' + Object.keys(this.defaultRankAvatarFileMap).length + '张');
+      }
+    } catch (e) {
+      this.log('rank_avatar 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
   }
 
@@ -1183,6 +1209,72 @@ class CloudStorageManager {
     return results;
   }
 
+  // 上传 images/rank_avatar 目录下所有 rank_avatar_*.png 到云存储
+  async uploadRankAvatarImages() {
+    if (this.uploading) return { success: false, message: '正在上传中...' };
+    this.uploading = true;
+
+    const results = { success: [], failed: [] };
+    const fs = wx.getFileSystemManager();
+
+    let files = [];
+    try {
+      files = fs.readdirSync('images/rank_avatar/');
+    } catch (e) {
+      this.log('读取 rank_avatar 目录失败: ' + (e && e.message ? e.message : String(e)));
+      this.uploading = false;
+      return { success: false, message: '读取目录失败', error: e };
+    }
+
+    const pngFiles = files.filter(f => /^rank_avatar_\d+\.png$/i.test(f));
+    this.log('扫描 images/rank_avatar/ 目录下');
+    this.log('扫描到 ' + pngFiles.length + ' 张本地 rank_avatar 图片');
+
+    for (const fileName of pngFiles) {
+      const name = fileName.replace(/\.png$/i, '');
+      const localPath = `images/rank_avatar/${fileName}`;
+      const cloudPath = `rank_avatar/${fileName}`;
+
+      this.log('开始上传 rank_avatar/' + name);
+
+      let uploadRes = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: localPath,
+          });
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            this.log('上传失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (uploadRes) {
+        this.rankAvatarFileMap[name] = uploadRes.fileID;
+        results.success.push({ name, fileID: uploadRes.fileID });
+        this.log('上传成功 rank_avatar/' + name);
+      } else {
+        console.error('上传失败:', name, lastError);
+        this.log('上传失败 rank_avatar/' + name + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        results.failed.push({ name, error: lastError });
+      }
+    }
+
+    // 保存映射到本地缓存
+    try {
+      wx.setStorageSync('cloud_rank_avatar_map', JSON.stringify(this.rankAvatarFileMap));
+    } catch (e) {}
+
+    this.uploading = false;
+    return results;
+  }
+
   // 从云存储下载并缓存所有 bg_icon 图片（后台静默加载）
   async preloadBgIconImages(onProgress = null) {
     const names = Object.keys(this.bgIconFileMap);
@@ -1272,6 +1364,102 @@ class CloudStorageManager {
         resolve();
       };
     });
+  }
+
+  // 从云存储下载并缓存所有 rank_avatar 图片（不在预加载页加载，进入第一回合后按需调用）
+  async preloadRankAvatarImages(onProgress = null) {
+    const names = Object.keys(this.rankAvatarFileMap);
+    if (names.length === 0) {
+      this.log('没有 rank_avatar 云存储映射，跳过下载');
+      return;
+    }
+
+    this.log('开始下载 rank_avatar 图片，共' + names.length + '张');
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadRankAvatarImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const loaded = Object.keys(this.rankAvatarImages).filter(n => this.rankAvatarImages[n].loaded);
+    const failed = names.filter(n => !this.rankAvatarImages[n] || !this.rankAvatarImages[n].loaded);
+    this.log('rank_avatar 目录下 ' + loaded.length + '/' + names.length + ' 张图片下载完成');
+    if (failed.length > 0) {
+      this.log('rank_avatar 失败：' + failed.join(', '));
+    }
+  }
+
+  async _loadRankAvatarImage(name) {
+    const existing = this.rankAvatarImages[name];
+    if (existing && existing.loaded && existing.img) {
+      return;
+    }
+
+    const fileID = this.rankAvatarFileMap[name];
+    if (!fileID) return;
+
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+
+    if (!urlData) {
+      const detail = lastError ? lastError.message : 'unknown';
+      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
+      this.rankAvatarImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+      return;
+    }
+
+    if (existing && existing.img) {
+      existing.img.src = '';
+    }
+
+    const img = wx.createImage();
+    img.src = urlData.tempFileURL;
+    await new Promise((resolve) => {
+      img.onload = () => {
+        this.rankAvatarImages[name] = {
+          img,
+          loaded: true,
+          width: img.width || 0,
+          height: img.height || 0,
+        };
+        resolve();
+      };
+      img.onerror = (e) => {
+        this.log('rank_avatar 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+        this.rankAvatarImages[name] = { img: null, loaded: false, width: 0, height: 0 };
+        resolve();
+      };
+    });
+  }
+
+  // 将云缓存 rank_avatar 图片注入到 renderer（全国榜默认头像使用）
+  injectRankAvatarToRenderer(renderer) {
+    renderer.rankAvatarImages = this.rankAvatarImages;
   }
 
   // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板）

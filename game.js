@@ -1712,6 +1712,18 @@ function handleInput(x, y) {
           console.error('bg_icon 上传失败:', err);
         });
       }
+      if (debugHit.action === 'debug_upload_rank_avatar') {
+        cloudStorage.uploadRankAvatarImages().then(res => {
+          game.hintToast = { text: `rank_avatar 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+          return cloudStorage.preloadRankAvatarImages();
+        }).then(() => {
+          cloudStorage.injectRankAvatarToRenderer(renderer);
+          game.hintToast = { text: 'rank_avatar 云图片已加载到游戏', expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'rank_avatar 上传失败', expireAt: Date.now() + 2000 };
+          console.error('rank_avatar 上传失败:', err);
+        });
+      }
       if (debugHit.action === 'debug_upload_music') {
         cloudStorage.uploadMusicFiles().then(res => {
           game.hintToast = { text: `music 上传完成：${res.success.length} 个成功`, expireAt: Date.now() + 2000 };
