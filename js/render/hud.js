@@ -170,7 +170,7 @@ module.exports = function extendHud(Renderer) {
         const textMetrics = ctx.measureText(tagText);
         const tagW = textMetrics.width + tagPaddingX * 2;
         const tagX = baseX + avatarW ;
-        const tagY = barY - 9 * s + 1 * s;
+        const tagY = barY - 9 * s + 2 * s;
         const tagR = 6 * s;
   
         // 标签整体呼吸缩放（以中心为原点）
