@@ -156,9 +156,9 @@ module.exports = function extendHud(Renderer) {
         ctx.restore();
   
         // === 女巫技能描述标签（头像右侧，标题下方）===
-        const tagH = 22 * s;
-        const tagPaddingX = 10 * s;
-        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        const tagH = 24 * s;
+        const tagPaddingX = 11 * s;
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         let tagText = witchSkill.desc;
         if (game._witchAngryTip) {
           if (Date.now() < game._witchAngryTip.expireAt) {
@@ -246,7 +246,7 @@ module.exports = function extendHud(Renderer) {
   
         // 标签文字（白色）
         ctx.save();
-        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
