@@ -561,6 +561,8 @@ gap = 8 * scale
 - 新牌标记 `NEW`（绿色，首次渲染）
 - 禁用标记（红色边框 + 抖动，disable_one_witch_card 触发）
 
+> 注：卡牌模板文件现统一放在 `images/bg_icon/` 目录下，运行时强制从云存储下载并注入（`card_template`、`card_template_selected`、`card_template_upgrade`、`card_template_upgrade_selected`），不再由渲染器直接本地加载。已装备图鉴女巫卡牌后，对应字母牌渲染时使用升级模板（`card_template_upgrade.png` / `card_template_upgrade_selected.png`）。
+
 卡牌支持动画偏移：`animOffset`（飞入/飞出）、`selectOffset`（选中上移）、`jumpOffsetY`（字母跳跃）。
 
 #### 3.3.7 手牌与道具栏布局
@@ -739,13 +741,13 @@ gap = 8 * scale
 - **上传**：
   - `uploadShopCards()`：批量上传 `images/shop_card/` 到云存储
   - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`~`witch_guide_4`），witch 头像上传至 `witch/`，guide 精灵图上传至 `witch/guide/`（自动跳过各目录下的旧单帧图）
-  - `uploadBgIconImages()`：上传背景图到 `bg_icon/`
+  - `uploadBgIconImages()`：上传背景图与卡牌模板到 `bg_icon/`
 - **下载**：
   - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
-  - `preloadBgIconImages()`：预加载页下载背景图
+  - `preloadBgIconImages()`：预加载页下载背景图与卡牌模板
   - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的精灵图并注入渲染器；预加载页通过它下载 witch_guide_1/2
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
-- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` 将云缓存图片覆盖到渲染器
+- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` 将云缓存图片覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
 
 ---
@@ -764,7 +766,7 @@ gap = 8 * scale
 
 **女巫牌列表**：元音强化、元音为首、左右开弓、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家、混沌法球。
 
-> 部分女巫牌设有 `min_level` 解锁门槛，例如双子合影（Lv.20）、字母之神（Lv.5）等；低回合商店不会刷出高等级牌。`length_4/5/6`（四/五/六字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放。
+> 部分女巫牌设有 `min_level` 解锁门槛，例如生命延续（Lv.10）、双子合影（Lv.10）、首尾呼应（Lv.15）、回到过去（Lv.5）、复制魔法（Lv.10）、字母之神（Lv.5）等；低回合商店不会刷出高等级牌。`length_4/5/6`（四/五/六字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放。
 
 ### 4.2 药水种类
 
@@ -837,8 +839,19 @@ gap = 8 * scale
 | witch_card_27 | 柔莉丝特 | letter_trigger_twice_J | 打出单词包含字母 J，该字母触发 2 次计分 |
 | witch_card_29 | 卡莉瑟薇 | letter_trigger_twice_K | 打出单词包含字母 K，该字母触发 2 次计分 |
 | witch_card_32 | 莉丝薇娜 | letter_trigger_twice_L | 打出单词包含字母 L，该字母触发 2 次计分 |
+| witch_card_35 | 莫薇希娅 | letter_trigger_twice_M | 打出单词包含字母 M，该字母触发 2 次计分 |
+| witch_card_38 | 妮瓦瑞丝 | letter_trigger_twice_N | 打出单词包含字母 N，该字母触发 2 次计分 |
+| witch_card_41 | 奥菲妮娅 | letter_trigger_twice_O | 打出单词包含字母 O，该字母触发 2 次计分 |
+| witch_card_44 | 佩洛薇拉 | letter_trigger_twice_P | 打出单词包含字母 P，该字母触发 2 次计分 |
+| witch_card_47 | 奎薇莉娅 | letter_trigger_twice_Q | 打出单词包含字母 Q，该字母触发 2 次计分 |
+| witch_card_50 | 拉薇希娅 | letter_trigger_twice_R | 打出单词包含字母 R，该字母触发 2 次计分 |
+| witch_card_53 | 茜达尔 | letter_trigger_twice_S | 打出单词包含字母 S，该字母触发 2 次计分 |
+| witch_card_56 | 翠诺莎 | letter_trigger_twice_T | 打出单词包含字母 T，该字母触发 2 次计分 |
+| witch_card_59 | 安柏瑞拉 | letter_trigger_twice_U | 打出单词包含字母 U，该字母触发 2 次计分 |
+| witch_card_62 | 薇尔菲拉 | letter_trigger_twice_V | 打出单词包含字母 V，该字母触发 2 次计分 |
 
 > 装备后女巫头像显示在商店已装备栏最右侧，技能在每回合自动生效。当前版本统一为 `letter_trigger_twice_X` 系列；若多张装备且单词含多个目标字母，可叠加触发。
+> 装备图鉴女巫卡牌时，会触发字母牌升级动画：对应字母牌从普通模板翻转为升级模板（带白色光晕与 `word_score` 音效），持续约 1.8 秒。
 
 **女巫牌排序**
 
@@ -852,8 +865,8 @@ gap = 8 * scale
 每回合结算后，如果玩家首次收集到本关对应的女巫卡牌（存入 `collectedWitchCards`），会先在商店页弹出「获得新词牌」弹窗：
 - 展示新收集的女巫卡牌头像、名称与技能说明
 - 提供「收下」按钮，点击后弹窗关闭
-- 弹窗关闭后延迟 1 秒再进入女巫奖励阶段（`witch_reward`）
-- 若此时卡牌图鉴引导（第 3 关商店）正在进行，女巫奖励计时暂停，等引导结束后再开始 1 秒延迟
+- 弹窗关闭后延迟 600ms 再进入女巫奖励阶段（`witch_reward`）
+- 若此时卡牌图鉴引导（第 3 关商店）正在进行，女巫奖励计时暂停，等引导结束后再开始 600ms 延迟
 
 ---
 
@@ -1313,6 +1326,7 @@ letterUpgrades = Map {
 | v1.10.0 | 2026-06-15 | 新增女巫技能 `disable_two_witch_card`（回合开始时随机禁用 2 张女巫牌）；`_disableWitchAnim` 改为使用 `jokerIndices` 数组以支持多张禁用动画 |
 | v1.10.1 | 2026-06-15 | 新增单词本系统：记录历史打出单词及次数，本地 `word_balatro_word_book` 持久化，回合结算时通过 `syncWordBook` 云函数增量同步到 `user_word_books`；设置弹窗新增「单词本」入口与可滚动弹窗；好友排行榜新增「单词量」列，通过 `wordCount` 字段上传 |
 | v1.10.2 | 2026-06-16 | 新增女巫牌「左右开弓」「混沌法球」；女巫牌按 `min_level` 解锁并在商店中动态过滤；已装备女巫牌支持长按拖拽排序，装备第 2 张时播放提示抖动；结算后新增「获得新词牌」弹窗，关闭后延迟 1 秒进入女巫奖励；女巫奖励蒙层调暗；补牌机制统一为 `drawWithSeedSafety`（保留手牌生成种子词保底 + 元音规则兜底）；同步更新 README |
+| v1.10.3 | 2026-06-16 | `witch_card_value_half` 约束只对 `whole_word` 作用域的女巫牌生效；引导结束后女巫奖励弹窗延迟从 1s 调整为 600ms；卡牌模板迁移到 `images/bg_icon/` 并强制从云存储加载注入；调整卡牌样式并补充图鉴女巫卡牌 P~V；商店女巫牌 `min_level` 调整（生命延续 12→10、双子合影 20→10、回到过去 10→5、复制魔法 15→10）；女巫奖励药水「暂存」按钮在道具栏已满时置灰禁用；装备图鉴女巫卡牌时新增字母牌升级翻转动画与音效 |
 
 ---
 
