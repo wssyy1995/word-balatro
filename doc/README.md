@@ -770,7 +770,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
   - `preloadBgIconImages()`：预加载页下载背景图与卡牌模板
   - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的精灵图并注入渲染器；预加载页通过它下载 witch_guide_1/2
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
-  - `preloadRankAvatarImages()`：**第一回合按需下载**，不在预加载页加载，进入第 1 关后后台下载全国榜默认头像
+  - `preloadRankAvatarImages()`：**预加载页完成后进入游戏页面时下载**，不在预加载页加载，后台下载全国榜默认头像
 - **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` / `injectRankAvatarToRenderer()` 将云缓存图片覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
 

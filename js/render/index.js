@@ -34,14 +34,6 @@ Renderer.prototype.render = function(game) {
       ctx.save();
       ctx.translate(0, 10);
 
-      // 进入第一回合后，后台下载 rank_avatar 云图集（不在预加载页加载）
-      if (game.round === 1 && !game._rankAvatarPreloaded && game.cloudStorage) {
-        game._rankAvatarPreloaded = true;
-        game.cloudStorage.preloadRankAvatarImages().then(() => {
-          if (game.cloudStorage) game.cloudStorage.injectRankAvatarToRenderer(this);
-        });
-      }
-
       this.drawHUD(game);
       // 自动触发 HUD 女巫头像星星动画（约束失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
       if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {

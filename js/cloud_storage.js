@@ -1370,7 +1370,7 @@ class CloudStorageManager {
     });
   }
 
-  // 从云存储下载并缓存所有 rank_avatar 图片（不在预加载页加载，进入第一回合后按需调用）
+  // 从云存储下载并缓存所有 rank_avatar 图片（不在预加载页加载，预加载完成后进入游戏页面时调用）
   async preloadRankAvatarImages(onProgress = null) {
     const names = Object.keys(this.rankAvatarFileMap);
     if (names.length === 0) {
