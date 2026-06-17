@@ -1219,8 +1219,8 @@ class ShopRenderer {
         ctx.restore();
 
         // 价格按钮（暖米色，金币图标+价格）
-        const btnH = 20 * s;
-        const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
+        const btnH = 20 * s + 1;
+        const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s + 1; // 整体下移 4px
         const coinSize = 13 * s;
         const finalCost = game._shopDiscountActive ? Math.round(item.cost * game._shopDiscountRate) : item.cost;
         const canAfford = game.gold >= finalCost;
