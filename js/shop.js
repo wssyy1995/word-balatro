@@ -1274,7 +1274,7 @@ class ShopRenderer {
         ctx.shadowColor = 'rgba(0,0,0,0.25)';
         ctx.shadowBlur = 4 * s;
         ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 6 * s, isActive ? '#FFF1D4' : '#e0e0e0');
+        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 8 * s, isActive ? '#FFF1D4' : '#e0e0e0');
         ctx.restore();
 
         // 顶部高光条（所有状态都有）
