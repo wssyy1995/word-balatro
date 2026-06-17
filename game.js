@@ -296,27 +296,34 @@ function showGlobalAuthButton() {
   globalAuthButton.onTap((res) => {
     console.log('[GlobalRank] 授权按钮点击', res);
     const userInfo = res.userInfo || {};
-    if (userInfo.avatarUrl && userInfo.nickName) {
-      // 上传头像昵称
-      wx.cloud.callFunction({
-        name: 'updateUserProfile',
-        data: { avatarUrl: userInfo.avatarUrl, nickname: userInfo.nickName },
-        success: () => {
-          console.log('[GlobalRank] 头像昵称上传成功');
-          destroyGlobalAuthButton();
-          loadGlobalRank(false);
-        },
-        fail: (err) => {
-          console.error('[GlobalRank] 头像昵称上传失败', err);
-          destroyGlobalAuthButton();
-          loadGlobalRank(false);
-        }
-      });
-    } else {
-      // 用户拒绝或未获取到，也尝试加载榜单（显示脱敏名称）
-      destroyGlobalAuthButton();
-      loadGlobalRank(false);
-    }
+
+    // 立即销毁按钮、显示 loading，避免用户感知卡顿
+    destroyGlobalAuthButton();
+    game._globalRankLoading = true;
+    game._globalRankError = null;
+    game._globalRankData = null;
+
+    // 延迟一帧执行网络请求，确保 loading 先渲染出来
+    setTimeout(() => {
+      if (userInfo.avatarUrl && userInfo.nickName) {
+        // 上传头像昵称
+        wx.cloud.callFunction({
+          name: 'updateUserProfile',
+          data: { avatarUrl: userInfo.avatarUrl, nickname: userInfo.nickName },
+          success: () => {
+            console.log('[GlobalRank] 头像昵称上传成功');
+            loadGlobalRank(false);
+          },
+          fail: (err) => {
+            console.error('[GlobalRank] 头像昵称上传失败', err);
+            loadGlobalRank(false);
+          }
+        });
+      } else {
+        // 用户拒绝或未获取到，也尝试加载榜单（显示脱敏名称）
+        loadGlobalRank(false);
+      }
+    }, 50);
   });
 
   globalAuthButton.show();
