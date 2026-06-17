@@ -1298,7 +1298,9 @@ Renderer.prototype.render = function(game) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名玩家';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, rowX + rowW * 0.38 - 3 * s, rowY + rowH / 2);
+    // 昵称紧挨头像右侧，保持 2px 间距
+    const nickX = avatarX + avatarR + 2 * s;
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, rowY + rowH / 2);
     ctx.restore();
 
     // 最高回合

@@ -117,7 +117,8 @@ async function drawRankList() {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, contentX + contentW * 0.38, y + rowH / 2);
+    const nickX = avatarX + avatarR + sp(2);
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, y + rowH / 2);
 
     // 回合
     const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
@@ -210,7 +211,8 @@ function drawFriendList(w, rowH) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, pw * 0.38, y + rh / 2);
+    const nickX = avatarX + avatarR + sp(2);
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, y + rh / 2);
 
     // 回合
     const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
@@ -369,7 +371,8 @@ function drawPanelContent(rect) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, x + w * 0.38, rowY + rowH / 2);
+    const nickX = avatarX + avatarR + sp(2);
+    ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, rowY + rowH / 2);
 
     // 回合
     const bestround = player.KVDataList.find(kv => kv.key === 'bestround')?.value || '0';
