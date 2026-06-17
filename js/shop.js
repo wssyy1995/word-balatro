@@ -1,6 +1,7 @@
 const { LETTER_SCORE, letterUpgrades, calcBaseTarget } = require('./data');
 const { getSkillForLevel, getRewardName } = require('./witch_skills');
 const { Easing } = require('./animation');
+const { reportEvent } = require('./report');
 
 // 自动换行绘制文本，返回占用的总高度
 function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -137,13 +138,11 @@ function buyItem(game, idx) {
   if (item.type === 'witch') {
     // 女巫牌：购买后不在此加入 jokers，成功弹窗点击"装备"后才加入
     game.shopItems[idx] = null;
-    if (typeof wx !== 'undefined' && wx.reportEvent) {
-      wx.reportEvent("card_buy", {
-        "card_type": item.type,
-        "card_name": item.name || '',
-        "userid": game.userid || ''
-      });
-    }
+    reportEvent("card_buy", {
+      "card_type": item.type,
+      "card_name": item.name || '',
+      "userid": game.userid || ''
+    });
     if (game.storageManager) game.storageManager.saveProgress();
     return true;
   } else if (item.type === 'crystal') {
@@ -154,25 +153,21 @@ function buyItem(game, idx) {
       }
     }
     game.shopItems[idx] = null;
-    if (typeof wx !== 'undefined' && wx.reportEvent) {
-      wx.reportEvent("card_buy", {
-        "card_type": item.type,
-        "card_name": item.name || item.effect || '',
-        "userid": game.userid || ''
-      });
-    }
+    reportEvent("card_buy", {
+      "card_type": item.type,
+      "card_name": item.name || item.effect || '',
+      "userid": game.userid || ''
+    });
     if (game.storageManager) game.storageManager.saveProgress();
     return true;
   } else if (item.type === 'potion') {
     // 药水牌：购买后不在此加入 potions，成功弹窗点击"暂存"后才加入
     game.shopItems[idx] = null;
-    if (typeof wx !== 'undefined' && wx.reportEvent) {
-      wx.reportEvent("card_buy", {
-        "card_type": item.type,
-        "card_name": item.name || item.effect || '',
-        "userid": game.userid || ''
-      });
-    }
+    reportEvent("card_buy", {
+      "card_type": item.type,
+      "card_name": item.name || item.effect || '',
+      "userid": game.userid || ''
+    });
     if (game.storageManager) game.storageManager.saveProgress();
     return true;
   }

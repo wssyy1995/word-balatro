@@ -1,4 +1,5 @@
 const { Easing } = require('../animation');
+const { reportEvent } = require('../report');
 
 class GameOverRenderer {
   constructor(renderer) {
@@ -13,13 +14,11 @@ class GameOverRenderer {
       this.animStartTime = Date.now();
       this.lastGameOverReason = game.gameOverReason;
       // 上报：游戏结束（弹窗首次显示）
-      if (typeof wx !== 'undefined' && wx.reportEvent) {
-        wx.reportEvent("gameover", {
-          "round": game.round,
-          "current_coin": game.gold,
-          "userid": game.userid || ''
-        });
-      }
+      reportEvent("gameover", {
+        "round": game.round,
+        "current_coin": game.gold,
+        "userid": game.userid || ''
+      });
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;

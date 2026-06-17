@@ -8,6 +8,7 @@ const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
+const { reportEvent } = require('./js/report');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -1231,11 +1232,9 @@ wx.onTouchEnd(() => {
     const iconHit = renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.topIconRect]);
     if (iconHit) {
       // 点击设置按钮埋点
-      if (typeof wx !== 'undefined' && wx.reportEvent) {
-        wx.reportEvent("top_icon", {
-          "userid": game.userid || ''
-        });
-      }
+      reportEvent("top_icon", {
+        "userid": game.userid || ''
+      });
       if (game._settingsPopup) {
         game._closingSettings = true;
         game._closeSettingsStartTime = Date.now();
@@ -1297,11 +1296,9 @@ wx.onTouchEnd(() => {
       if (game.storageManager) game.storageManager.saveSettings(game.settings);
       // 学习模式打开埋点
       if (newValue && !oldValue) {
-        if (typeof wx !== 'undefined' && wx.reportEvent) {
-          wx.reportEvent("study_mode_open", {
-            "userid": game.userid || ''
-          });
-        }
+        reportEvent("study_mode_open", {
+          "userid": game.userid || ''
+        });
       }
       // 打开时弹出提示（仅首次）
       if (newValue && !oldValue && !game.settings.dailyWordHintShown) {
@@ -1348,12 +1345,10 @@ wx.onTouchEnd(() => {
         if (game.audioManager) game.audioManager.play('card_sell');
         game.hintToast = { text: '购买提示成功！', expireAt: Date.now() + 1200, startTime: Date.now() };
         if (game.storageManager) game.storageManager.saveProgress();
-        if (typeof wx !== 'undefined' && wx.reportEvent) {
-          wx.reportEvent("word_help_buy", {
-            "userid": game.userid || '',
-            "round": game.round
-          });
-        }
+        reportEvent("word_help_buy", {
+          "userid": game.userid || '',
+          "round": game.round
+        });
         game._delay(() => {
           game.closeTipHelpPopup();
           game.showSeedWordHint();
@@ -1376,12 +1371,10 @@ wx.onTouchEnd(() => {
         if (game.audioManager) game.audioManager.play('card_illegal');
       } else if (!game._tipHelpShareDelaying) {
         game._tipHelpShareDelaying = true;
-        if (typeof wx !== 'undefined' && wx.reportEvent) {
-          wx.reportEvent("word_help_share", {
-            "userid": game.userid || '',
-            "round": game.round
-          });
-        }
+        reportEvent("word_help_share", {
+          "userid": game.userid || '',
+          "round": game.round
+        });
         // 延迟 80ms 让按钮恢复后再拉起分享
         game._delay(() => {
           game._tipHelpShareDelaying = false;
@@ -2694,13 +2687,11 @@ function handleInput(x, y) {
               game._confirmBuySuccessTime = Date.now();
               if (game.audioManager) game.audioManager.play('buy_success');
               // 上报：卡牌购买
-              if (typeof wx !== 'undefined' && wx.reportEvent) {
-                const typeMap = { witch: '1', crystal: '2', potion: '3' };
-                wx.reportEvent("card_buy", {
-                  "card_type": typeMap[itemData.type] || itemData.type,
-                  "card_name": itemData.name
-                });
-              }
+              const typeMap = { witch: '1', crystal: '2', potion: '3' };
+              reportEvent("card_buy", {
+                "card_type": typeMap[itemData.type] || itemData.type,
+                "card_name": itemData.name
+              });
             }
             game._buyConfirmPopup = null;
             game._buyConfirmBtnPressed = false;

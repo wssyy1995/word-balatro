@@ -11,6 +11,7 @@ const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
+const { reportEvent } = require('./report');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -1783,12 +1784,10 @@ class Game {
 
   resetRound() {
     // 上报：回合开始
-    if (typeof wx !== 'undefined' && wx.reportEvent) {
-      wx.reportEvent("round_start", {
-        "round": this.round,
-        "userid": this.userid || ''
-      });
-    }
+    reportEvent("round_start", {
+      "round": this.round,
+      "userid": this.userid || ''
+    });
 
     wordCheckState.clear();
     this.pendingCheck = null;
@@ -2828,12 +2827,10 @@ class Game {
 
   _showSettlement() {
     // 上报：回合通关
-    if (typeof wx !== 'undefined' && wx.reportEvent) {
-      wx.reportEvent("round_pass", {
-        "round": this.round,
-        "userid": this.userid || ''
-      });
-    }
+    reportEvent("round_pass", {
+      "round": this.round,
+      "userid": this.userid || ''
+    });
 
     if (this.audioManager) this.audioManager.play('round_win');
     let baseGold = 2;
