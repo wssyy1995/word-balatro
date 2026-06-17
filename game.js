@@ -226,15 +226,27 @@ async function loadGlobalRank() {
   // 先尝试授权获取头像昵称（只有用户主动点击全球榜才会走到这里）
   if (!game._globalProfileRequested) {
     game._globalProfileRequested = true;
-    await requestGlobalProfile();
+    try {
+      await requestGlobalProfile();
+    } catch (e) {
+      console.warn('[GlobalRank] 授权请求异常', e);
+    }
   }
 
-  const result = await fetchGlobalRank();
-  game._globalRankLoading = false;
-  if (result.code === 0) {
-    game._globalRankData = result;
-  } else {
-    game._globalRankError = result.message || '获取全球榜失败';
+  try {
+    const result = await fetchGlobalRank();
+    game._globalRankLoading = false;
+    if (result && result.code === 0) {
+      game._globalRankData = result;
+    } else {
+      const msg = result && result.message ? result.message : '获取全球榜失败';
+      game._globalRankError = msg;
+      console.error('[GlobalRank] 数据返回错误', result);
+    }
+  } catch (e) {
+    game._globalRankLoading = false;
+    game._globalRankError = e.message || '获取全球榜失败';
+    console.error('[GlobalRank] loadGlobalRank 异常', e);
   }
 }
 

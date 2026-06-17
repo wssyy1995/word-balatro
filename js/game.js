@@ -3745,6 +3745,7 @@ function requestGlobalProfile() {
 
 function fetchGlobalRank() {
   if (!wx.cloud || !wx.cloud.callFunction) {
+    console.error('[GlobalRank] wx.cloud.callFunction 不可用');
     return Promise.resolve({ code: -1, message: '云函数不可用' });
   }
   return new Promise((resolve) => {
@@ -3757,7 +3758,7 @@ function fetchGlobalRank() {
       },
       fail: (err) => {
         console.error('[GlobalRank] 拉取失败', err);
-        resolve({ code: -1, message: err.message || '拉取失败' });
+        resolve({ code: -1, message: `[Cloud] ${err.message || '云函数调用失败'}`, err });
       }
     });
   });

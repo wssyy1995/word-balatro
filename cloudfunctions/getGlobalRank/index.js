@@ -129,6 +129,10 @@ exports.main = async (event, context) => {
     return { code: 0, topList, self };
   } catch (e) {
     console.error('[GetGlobalRank] 查询失败', e);
-    return { code: -1, message: e.message || '查询失败' };
+    return {
+      code: -1,
+      message: e.message || '查询失败',
+      stack: e.stack || '',
+    };
   }
 };
