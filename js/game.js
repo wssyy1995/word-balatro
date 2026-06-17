@@ -1519,6 +1519,18 @@ class Game {
     this._globalRankError = null;
     this._globalProfileRequested = false;
     this._showingGlobalAuthButton = false;
+    // 全国榜滚动状态
+    this._globalRankScrollY = 0;
+    this._globalRankMaxScroll = 0;
+    this._globalRankScrollState = 'idle'; // 'idle' | 'dragging' | 'inertia' | 'bounce'
+    this._globalRankScrollVelocity = 0;
+    this._globalRankScrollDragStartY = 0;
+    this._globalRankScrollTouchStartY = 0;
+    this._globalRankScrollLastTouchY = 0;
+    this._globalRankScrollLastTime = 0;
+    this._globalRankScrollBounceTarget = 0;
+    this._globalRankScrollBounceStartY = 0;
+    this._globalRankScrollBounceStartTime = 0;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
@@ -3506,6 +3518,47 @@ class Game {
     }
   }
 
+  // 全国榜弹窗滚动物理更新（惯性滚动 + 边界回弹）
+  _updateGlobalRankScroll(deltaTime) {
+    if (!this._showingRankPopup || this._rankTab !== 'global') return;
+    if (this._globalRankScrollState === 'dragging') return;
+
+    const maxScroll = this._globalRankMaxScroll || 0;
+    const state = this._globalRankScrollState;
+
+    // 惯性滚动
+    if (state === 'inertia') {
+      const dt = Math.min(deltaTime, 32);
+      this._globalRankScrollY += this._globalRankScrollVelocity * dt;
+      this._globalRankScrollVelocity *= Math.pow(0.92, dt / 16);
+
+      if (this._globalRankScrollY < 0 || this._globalRankScrollY > maxScroll) {
+        this._globalRankScrollState = 'bounce';
+        this._globalRankScrollBounceTarget = this._globalRankScrollY < 0 ? 0 : maxScroll;
+      } else if (Math.abs(this._globalRankScrollVelocity) < 0.05) {
+        this._globalRankScrollState = 'idle';
+        this._globalRankScrollVelocity = 0;
+      }
+    }
+
+    // 边界回弹
+    if (state === 'bounce') {
+      const target = this._globalRankScrollBounceTarget || 0;
+      const startY = this._globalRankScrollBounceStartY || target;
+      const elapsed = Date.now() - (this._globalRankScrollBounceStartTime || Date.now());
+      const duration = 450;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = Easing.easeOutBack(progress);
+      this._globalRankScrollY = startY + (target - startY) * eased;
+
+      if (progress >= 1) {
+        this._globalRankScrollY = target;
+        this._globalRankScrollState = 'idle';
+        this._globalRankScrollVelocity = 0;
+      }
+    }
+  }
+
   winRound() {
     this.score = this.target;
     this.totalScore += this.target;
@@ -3599,6 +3652,9 @@ class Game {
 
     // 单词本弹窗滚动物理更新
     this._updateWordBookScroll(deltaTime);
+
+    // 全国榜弹窗滚动物理更新
+    this._updateGlobalRankScroll(deltaTime);
 
     // toast 弹出 2s 后触发星星飞行动画
     if (this.hintToast && this.hintToast.starFlyAt && Date.now() > this.hintToast.starFlyAt && !this.hintToast._starFlown) {

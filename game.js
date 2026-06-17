@@ -194,6 +194,21 @@ function showRankPopup(tab = 'friend') {
   switchRankTab(tab);
 }
 
+function resetGlobalRankScroll() {
+  if (!game) return;
+  game._globalRankScrollY = 0;
+  game._globalRankMaxScroll = 0;
+  game._globalRankScrollState = 'idle';
+  game._globalRankScrollVelocity = 0;
+  game._globalRankScrollDragStartY = 0;
+  game._globalRankScrollTouchStartY = 0;
+  game._globalRankScrollLastTouchY = 0;
+  game._globalRankScrollLastTime = 0;
+  game._globalRankScrollBounceTarget = 0;
+  game._globalRankScrollBounceStartY = 0;
+  game._globalRankScrollBounceStartTime = 0;
+}
+
 function hideRankPopup() {
   if (!game) return;
   hideRankList();
@@ -205,6 +220,7 @@ function hideRankPopup() {
   game._globalRankError = null;
   game._showingGlobalAuthButton = false;
   game._globalProfileDeniedThisTime = false;
+  resetGlobalRankScroll();
 }
 
 function switchRankTab(tab) {
@@ -227,6 +243,7 @@ function switchRankTab(tab) {
     // 切换到全国榜：隐藏好友榜，由主域绘制
     hideRankList();
     game._showingRankList = false;
+    resetGlobalRankScroll();
     handleGlobalTabEnter();
   }
 }
@@ -967,6 +984,20 @@ wx.onTouchStart((e) => {
       return;
     }
 
+    // 全国榜内容区域：开始滚动拖动
+    if (game._rankTab === 'global') {
+      const contentRect = { x: rect.contentX, y: rect.contentY, w: rect.contentW, h: rect.contentH };
+      if (renderer.hitTest(x, y, [contentRect])) {
+        game._globalRankScrollState = 'dragging';
+        game._globalRankScrollVelocity = 0;
+        game._globalRankScrollDragStartY = game._globalRankScrollY || 0;
+        game._globalRankScrollTouchStartY = y;
+        game._globalRankScrollLastTouchY = y;
+        game._globalRankScrollLastTime = Date.now();
+        return;
+      }
+    }
+
     // 点击面板内部（非关闭按钮/Tab）不关闭
     const insidePanel = x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH;
     if (insidePanel) {
@@ -1096,6 +1127,37 @@ wx.onTouchMove((e) => {
 
     game._wordBookScrollLastTouchY = y;
     game._wordBookScrollLastTime = now;
+  }
+
+  // 全国榜弹窗滚动
+  if (game._showingRankPopup && game._rankTab === 'global' && game._globalRankScrollState === 'dragging') {
+    const now = Date.now();
+    const y = touch.clientY;
+    const frameDelta = game._globalRankScrollLastTouchY - y;
+    const totalDelta = game._globalRankScrollTouchStartY - y;
+    const dt = now - game._globalRankScrollLastTime;
+
+    let targetY = game._globalRankScrollDragStartY + totalDelta;
+
+    const maxScroll = game._globalRankMaxScroll || 0;
+    const rankRect = calcRankPanelRect();
+    const contentH = rankRect.contentH || 1;
+    if (targetY < 0) {
+      const over = -targetY;
+      targetY = -over * 0.55 * Math.pow(over / contentH, 0.35);
+    } else if (maxScroll > 0 && targetY > maxScroll) {
+      const over = targetY - maxScroll;
+      targetY = maxScroll + over * 0.55 * Math.pow(over / contentH, 0.35);
+    }
+
+    game._globalRankScrollY = targetY;
+
+    if (dt > 0) {
+      game._globalRankScrollVelocity = frameDelta / dt;
+    }
+
+    game._globalRankScrollLastTouchY = y;
+    game._globalRankScrollLastTime = now;
   }
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
@@ -1401,6 +1463,25 @@ wx.onTouchEnd(() => {
             shareTipHelpState = { startTime: Date.now(), resolving: true };
           }
         }, 80);
+      }
+    }
+  }
+
+  // 全国榜弹窗交互处理（松开时）
+  if (game._showingRankPopup && game._rankTab === 'global') {
+    if (game._globalRankScrollState === 'dragging') {
+      game._globalRankScrollState = 'idle';
+      const maxScroll = game._globalRankMaxScroll || 0;
+      const scrollY = game._globalRankScrollY || 0;
+      const velocity = game._globalRankScrollVelocity || 0;
+
+      if (scrollY < 0 || (maxScroll > 0 && scrollY > maxScroll)) {
+        game._globalRankScrollState = 'bounce';
+        game._globalRankScrollBounceTarget = scrollY < 0 ? 0 : maxScroll;
+        game._globalRankScrollBounceStartY = scrollY;
+        game._globalRankScrollBounceStartTime = Date.now();
+      } else if (maxScroll > 0 && Math.abs(velocity) > 0.5) {
+        game._globalRankScrollState = 'inertia';
       }
     }
   }

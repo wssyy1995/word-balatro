@@ -1210,7 +1210,14 @@ Renderer.prototype.render = function(game) {
 
     // 列表
     const listY = y + rowH + 4 * s;
-    const maxRows = Math.floor((y + h - listY - 8 * s) / rowH);
+    const selfInTop = topList.some(p => p.isSelf);
+    const selfFixedH = (self && !selfInTop) ? rowH + 8 * s : 0;
+    const listVisibleH = Math.max(0, y + h - listY - 8 * s - selfFixedH);
+
+    // 计算最大滚动距离（用于物理滚动与边界回弹）
+    const totalListH = topList.length * rowH;
+    const maxScroll = Math.max(0, totalListH - listVisibleH);
+    game._globalRankMaxScroll = maxScroll;
 
     if (!this._globalAvatarCache) this._globalAvatarCache = {};
 
@@ -1251,19 +1258,33 @@ Renderer.prototype.render = function(game) {
     // 为没有头像的玩家按排行榜显示顺序分配默认头像/昵称索引（拒绝授权的自己行除外）
     let defaultAvatarIdx = 0;
     const shouldUseDefaultAvatar = (p) => !p.avatarUrl && !(p.isSelf && game._globalProfileDeniedThisTime);
-    for (let i = 0; i < Math.min(topList.length, maxRows); i++) {
+    for (let i = 0; i < topList.length; i++) {
       const player = topList[i];
       if (shouldUseDefaultAvatar(player)) {
         player._defaultAvatarIndex = defaultAvatarIdx++;
       }
-      const rowY = listY + i * rowH;
-      this._drawGlobalRankRow(ctx, player, x, rowY, w, rowH, s);
     }
 
-    // 自己不在 Top 列表时，底部显示自己排名
-    const selfInTop = topList.some(p => p.isSelf);
+    const scrollY = game._globalRankScrollY || 0;
+
+    // 裁剪列表区域并绘制所有可见行
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(x, listY, w, listVisibleH);
+    ctx.clip();
+
+    for (let i = 0; i < topList.length; i++) {
+      const player = topList[i];
+      const rowY = listY + i * rowH - scrollY;
+      // 跳过完全不可见的行，减少绘制开销
+      if (rowY + rowH < listY || rowY > listY + listVisibleH) continue;
+      this._drawGlobalRankRow(ctx, player, x, rowY, w, rowH, s);
+    }
+    ctx.restore();
+
+    // 自己不在 Top 列表时，底部固定显示自己排名
     if (self && !selfInTop) {
-      const selfY = listY + Math.min(topList.length, maxRows) * rowH + 8 * s;
+      const selfY = y + h - 8 * s - rowH;
       if (selfY + rowH <= y + h) {
         if (shouldUseDefaultAvatar(self)) {
           self._defaultAvatarIndex = defaultAvatarIdx++;
