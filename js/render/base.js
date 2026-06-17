@@ -57,6 +57,9 @@ class Renderer {
     // 背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.bgImage = null;
     this.bgLoaded = false;
+
+    // 商店分类栏背景图（由 cloudStorage 在预加载时注入）
+    this.shopCardBarImages = {};
     
     // 新手引导（由 cloudStorage 在预加载时注入，不再使用本地图片）
     // witch_1~4 均使用精灵图（单张大图 + 坐标）

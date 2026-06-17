@@ -97,6 +97,9 @@ class CloudStorageManager {
       'share_tip_limit': c('/bg_icon/share_tip_limit.png'),
       'card_bar': c('/bg_icon/card_bar_v7.png'),
       'card_book': c('/bg_icon/card_book.png'),
+      'shop_card_bar_witch': c('/bg_icon/shop_card_bar_witch.png'),
+      'shop_card_bar_crystal': c('/bg_icon/shop_card_bar_crystal.png'),
+      'shop_card_bar_potion': c('/bg_icon/shop_card_bar_potion.png'),
       'card_template': c('/bg_icon/card_template.png'),
       'card_template_selected': c('/bg_icon/card_template_selected_new.png'),
       'card_template_upgrade': c('/bg_icon/card_template_upgrade9.png'),
@@ -1485,6 +1488,19 @@ class CloudStorageManager {
     } else {
       this.log('bg_icon card_book 未加载，跳过注入');
     }
+
+    // 商店分类栏背景图
+    const shopCardBarNames = ['shop_card_bar_witch', 'shop_card_bar_crystal', 'shop_card_bar_potion'];
+    if (!renderer.shopCardBarImages) renderer.shopCardBarImages = {};
+    shopCardBarNames.forEach(name => {
+      const data = this.bgIconImages[name];
+      if (data && data.loaded && data.img) {
+        renderer.shopCardBarImages[name] = data.img;
+        this.log('已注入 bg_icon renderer: ' + name);
+      } else {
+        this.log('bg_icon ' + name + ' 未加载，跳过注入');
+      }
+    });
 
     // 卡牌模板从 bg_icon 云存储注入
     const templateNames = ['card_template', 'card_template_selected', 'card_template_upgrade', 'card_template_upgrade_selected'];

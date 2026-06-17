@@ -853,9 +853,9 @@ class ShopRenderer {
     const titleGap = 6 * s;
 
     const rowConfigs = [
-      { title: '女巫牌', color: '#5c4574', rowBg: '#f0e8f5', type: 'witch' },
-      { title: '水晶球牌', color: '#354e6f', rowBg: '#e8eef5', type: 'crystal' },
-      { title: '魔法药水牌', color: '#355c4e', rowBg: '#e8f5ee', type: 'potion' },
+      { title: '女巫牌', color: '#5c4574', rowBg: '#f0e8f5', type: 'witch', barKey: 'shop_card_bar_witch' },
+      { title: '水晶球牌', color: '#354e6f', rowBg: '#e8eef5', type: 'crystal', barKey: 'shop_card_bar_crystal' },
+      { title: '魔法药水牌', color: '#355c4e', rowBg: '#e8f5ee', type: 'potion', barKey: 'shop_card_bar_potion' },
     ];
 
     const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2;
@@ -989,81 +989,116 @@ class ShopRenderer {
     rowConfigs.forEach((mod, modIdx) => {
       const rowY = containerY + containerPad + modIdx * (rowH + rowGap);
 
-      // 行背景（淡色 + 加深同色边框）
-      const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
-      this.parent.roundRect(modX + innerPad, rowY, modW - innerPad * 2, rowH, 6 * s, mod.rowBg, rowBorderColors[mod.type], 1 * s);
-
-
-
-      // 顶部装饰标题（半遮在行背景上方）
-      const capsuleH = 24 * s;
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      const capsuleTitleW = ctx.measureText(mod.title).width;
-      const badgeW = capsuleTitleW + 32 * s;
-      const capsuleY = rowY - capsuleH / 2;
-
-      // 深色带尖角面板
-      const badgeH = capsuleH * 0.78;
-      const badgeCX = modX + modW / 2;
-      const badgeCY = capsuleY + capsuleH / 2;
-      const tipW = Math.min(7 * s, badgeH * 0.35);
-
-      ctx.save();
-      ctx.beginPath();
-      const bh2 = badgeH / 2;
-      const bw2 = badgeW / 2;
-      ctx.moveTo(badgeCX - bw2 + tipW, badgeCY - bh2);
-      ctx.lineTo(badgeCX + bw2 - tipW, badgeCY - bh2);
-      ctx.lineTo(badgeCX + bw2, badgeCY);
-      ctx.lineTo(badgeCX + bw2 - tipW, badgeCY + bh2);
-      ctx.lineTo(badgeCX - bw2 + tipW, badgeCY + bh2);
-      ctx.lineTo(badgeCX - bw2, badgeCY);
-      ctx.closePath();
-      ctx.fillStyle = mod.color;
-      ctx.fill();
-      ctx.lineWidth = 1 * s;
-      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-      ctx.stroke();
-      ctx.restore();
-
-      // 3. 小星星装饰（四角星）
-      const drawStar = (cx, cy, sz, innerScale = 0.5) => {
-        const starPath = (x, y, r) => {
-          ctx.moveTo(x, y - r);
-          ctx.lineTo(x + r * 0.25, y - r * 0.25);
-          ctx.lineTo(x + r, y);
-          ctx.lineTo(x + r * 0.25, y + r * 0.25);
-          ctx.lineTo(x, y + r);
-          ctx.lineTo(x - r * 0.25, y + r * 0.25);
-          ctx.lineTo(x - r, y);
-          ctx.lineTo(x - r * 0.25, y - r * 0.25);
-          ctx.closePath();
-        };
+      // 行背景：优先使用 bg_icon 分类栏图片，未加载完成则回退到 canvas 绘制
+      const barImgData = this.parent.shopCardBarImages && this.parent.shopCardBarImages[mod.barKey];
+      const barImgLoaded = barImgData && barImgData.width > 0 && barImgData.height > 0;
+      const rowX = modX + innerPad;
+      const rowW = modW - innerPad * 2;
+      if (barImgLoaded) {
         ctx.save();
-        // 外层：胶囊颜色边缘
-        ctx.fillStyle = mod.color;
+        const r = 6 * s;
         ctx.beginPath();
-        starPath(cx, cy, sz);
-        ctx.fill();
-        // 内层：米白色中心
-        ctx.fillStyle = '#faf5e8';
-        ctx.beginPath();
-        starPath(cx, cy, sz * innerScale);
-        ctx.fill();
+        ctx.moveTo(rowX + r, rowY);
+        ctx.lineTo(rowX + rowW - r, rowY);
+        ctx.quadraticCurveTo(rowX + rowW, rowY, rowX + rowW, rowY + r);
+        ctx.lineTo(rowX + rowW, rowY + rowH - r);
+        ctx.quadraticCurveTo(rowX + rowW, rowY + rowH, rowX + rowW - r, rowY + rowH);
+        ctx.lineTo(rowX + r, rowY + rowH);
+        ctx.quadraticCurveTo(rowX, rowY + rowH, rowX, rowY + rowH - r);
+        ctx.lineTo(rowX, rowY + r);
+        ctx.quadraticCurveTo(rowX, rowY, rowX + r, rowY);
+        ctx.closePath();
+        ctx.clip();
+        const imgAspect = barImgData.width / barImgData.height;
+        const rowAspect = rowW / rowH;
+        let drawW, drawH, drawX, drawY;
+        if (imgAspect > rowAspect) {
+          drawH = rowH;
+          drawW = drawH * imgAspect;
+          drawX = rowX + (rowW - drawW) / 2;
+          drawY = rowY;
+        } else {
+          drawW = rowW;
+          drawH = drawW / imgAspect;
+          drawX = rowX;
+          drawY = rowY + (rowH - drawH) / 2;
+        }
+        ctx.drawImage(barImgData, drawX, drawY, drawW, drawH);
         ctx.restore();
-      };
+      } else {
+        const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
+        this.parent.roundRect(rowX, rowY, rowW, rowH, 6 * s, mod.rowBg, rowBorderColors[mod.type], 1 * s);
 
-      drawStar(badgeCX - bw2, badgeCY, 4 * s, 0.35);
-      drawStar(badgeCX + bw2, badgeCY, 4 * s, 0.35);
-      // 面板上再点缀两颗小星
-      drawStar(badgeCX - bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
-      drawStar(badgeCX + bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
+        // 顶部装饰标题（半遮在行背景上方）
+        const capsuleH = 24 * s;
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        const capsuleTitleW = ctx.measureText(mod.title).width;
+        const badgeW = capsuleTitleW + 32 * s;
+        const capsuleY = rowY - capsuleH / 2;
 
-      // 5. 文字
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(mod.title, badgeCX, badgeCY + 0.5 * s);
+        // 深色带尖角面板
+        const badgeH = capsuleH * 0.78;
+        const badgeCX = modX + modW / 2;
+        const badgeCY = capsuleY + capsuleH / 2;
+        const tipW = Math.min(7 * s, badgeH * 0.35);
+
+        ctx.save();
+        ctx.beginPath();
+        const bh2 = badgeH / 2;
+        const bw2 = badgeW / 2;
+        ctx.moveTo(badgeCX - bw2 + tipW, badgeCY - bh2);
+        ctx.lineTo(badgeCX + bw2 - tipW, badgeCY - bh2);
+        ctx.lineTo(badgeCX + bw2, badgeCY);
+        ctx.lineTo(badgeCX + bw2 - tipW, badgeCY + bh2);
+        ctx.lineTo(badgeCX - bw2 + tipW, badgeCY + bh2);
+        ctx.lineTo(badgeCX - bw2, badgeCY);
+        ctx.closePath();
+        ctx.fillStyle = mod.color;
+        ctx.fill();
+        ctx.lineWidth = 1 * s;
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.stroke();
+        ctx.restore();
+
+        // 3. 小星星装饰（四角星）
+        const drawStar = (cx, cy, sz, innerScale = 0.5) => {
+          const starPath = (x, y, r) => {
+            ctx.moveTo(x, y - r);
+            ctx.lineTo(x + r * 0.25, y - r * 0.25);
+            ctx.lineTo(x + r, y);
+            ctx.lineTo(x + r * 0.25, y + r * 0.25);
+            ctx.lineTo(x, y + r);
+            ctx.lineTo(x - r * 0.25, y + r * 0.25);
+            ctx.lineTo(x - r, y);
+            ctx.lineTo(x - r * 0.25, y - r * 0.25);
+            ctx.closePath();
+          };
+          ctx.save();
+          // 外层：胶囊颜色边缘
+          ctx.fillStyle = mod.color;
+          ctx.beginPath();
+          starPath(cx, cy, sz);
+          ctx.fill();
+          // 内层：米白色中心
+          ctx.fillStyle = '#faf5e8';
+          ctx.beginPath();
+          starPath(cx, cy, sz * innerScale);
+          ctx.fill();
+          ctx.restore();
+        };
+
+        drawStar(badgeCX - bw2, badgeCY, 4 * s, 0.35);
+        drawStar(badgeCX + bw2, badgeCY, 4 * s, 0.35);
+        // 面板上再点缀两颗小星
+        drawStar(badgeCX - bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
+        drawStar(badgeCX + bw2 * 0.55, badgeCY, 1.2 * s, 0.4);
+
+        // 5. 文字
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(mod.title, badgeCX, badgeCY + 0.5 * s);
+      }
 
       // 2 个商品单元（左右各一）
       for (let i = 0; i < 2; i++) {
