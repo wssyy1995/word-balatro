@@ -858,7 +858,7 @@ class ShopRenderer {
       { title: '魔法药水牌', color: '#355c4e', rowBg: '#e8f5ee', type: 'potion', barKey: 'shop_card_bar_potion' },
     ];
 
-    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2 + 10 * s;
+    const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2;
     const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s + 5;
 
     this.shopRefreshRects = [];
