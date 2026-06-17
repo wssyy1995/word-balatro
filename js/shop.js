@@ -1003,19 +1003,19 @@ class ShopRenderer {
         let targetH = rowH;
         if (mod.type === 'witch') {
           targetW = rowW + 18 * s;
-          targetH = rowH + 22 * s;
+          targetH = rowH + 26 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 16 * s;
         } else if (mod.type === 'crystal') {
           targetW = rowW + 18 * s;
-          targetH = rowH + 22 * s;
+          targetH = rowH + 26 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 15 * s;
         }else if (mod.type === 'potion') {
-          targetW = rowW +18*s;
-          targetH = rowH + 22 * s;
+          targetW = rowW +19*s;
+          targetH = rowH + 28 * s;
           targetX = rowX -8*s;
-          targetY = rowY - 10 * s;
+          targetY = rowY - 15 * s;
         }
         const r = 6 * s;
         ctx.beginPath();
@@ -1115,7 +1115,7 @@ class ShopRenderer {
         if (!item) continue;
 
         const unitX = modX + modPad + i * (unitW + cardGap) + (i === 1 ? 2 : 0);
-        const unitY = rowY + 3;
+        const unitY = rowY + 3 + 2 * s;
 
         // 两个单元之间的分隔线
         if (i === 1) {
