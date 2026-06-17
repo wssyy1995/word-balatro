@@ -1214,29 +1214,24 @@ Renderer.prototype.render = function(game) {
 
     if (!this._globalAvatarCache) this._globalAvatarCache = {};
 
-    // 预加载默认头像图集（4 张 5×5 图，每张 40×40 像素头像）
-    if (!this._rankAvatarSprites) {
-      this._rankAvatarSprites = [];
-      for (let i = 1; i <= 4; i++) {
-        const img = wx.createImage();
-        img.src = `images/rank_avatar/rank_avatar_${i}.png`;
-        const entry = { img, loaded: false };
-        img.onload = () => { entry.loaded = true; };
-        img.onerror = () => { entry.loaded = false; };
-        this._rankAvatarSprites.push(entry);
-      }
-    }
-
-    // 预加载默认昵称列表
+    // 默认昵称列表（原 images/rank_avatar/rank_name.txt，本地目录已删除后改为硬编码）
     if (!this._rankNames) {
-      try {
-        const fs = wx.getFileSystemManager();
-        const text = fs.readFileSync('images/rank_avatar/rank_name.txt', 'utf8');
-        this._rankNames = text.split('\n').map(s => s.trim()).filter(Boolean);
-      } catch (e) {
-        console.warn('[Rank] 读取默认昵称失败', e);
-        this._rankNames = [];
-      }
+      this._rankNames = [
+        '不开会员', '休眠中-', '4AM', '半糖°', '次元裂缝', '悠悠Y²', '已读不认', '空気', 'null.',
+        '离线模式', '透明人_', 'ω猫', '改个名吧', '暂不营业', '假装在_', '一弄0.o', '电量1%', '=懒=',
+        '晚风·Free', '算了.r', '深海气泡', '关闭通话a.iris', '早睡失败户', '薄荷清晨', '已黑化☾',
+        '泡芙掉了', 'ctrl+z', '云朵偷喝我酒', '对方正在输入...', '信号丢失中...', '在逃公主',
+        '草莓味的猫', '先活着再说', 'bug制造机', 'mango冰淇淋', '海岛信风', '星星不亮了',
+        '不想上班星球', '苦苦k.', '关闭免打扰', '假冷静', '芋泥啵啵', '日落便利店', '硅基心跳',
+        '已读慢回', '反卷战士', '橘子汽水味', '重启试试', '咸鱼翻身中', '数据迷雾', '404 not found',
+        '山间慢邮', '月亮不营业', '低像素人类', '自动回复中', '打嗝的河豚', '算法诗人', '选择性清醒',
+        '桃気𓆡', '苔痕上阶', '欧米茄ω', '甜甜圈洞', '延迟响应', '宅心人厚', '宇宙溜达', '不失眠星球',
+        '云端漫步☁', '小辣鸡', '五行缺觉', 'luna♪', '数字游牧', '晚风吻尽', '此人404', 'love yourself',
+        'momo·', '加载中99%', '电量低于50%', '深夜网抑云', '栖木·', '暂无灵感', '樱桃小丸犊子',
+        '面包脑袋', '萤火岛屿', 'echo~', '快乐废物', '指令未完', '困困鱼', '精神内耗重症区', '四月涧',
+        '无聊有限公司CEO', '快乐水omega', '肥宅快乐水', '电量耗尽请投币', '芋泥没啵啵', '维度旅行者',
+        '吃瓜一线', '精神现状存疑', '反方向的钟·'
+      ];
     }
 
     // 如果本次用户拒绝了头像昵称授权，自己行不使用预置头像/昵称，仅清空头像、保留脱敏昵称
@@ -1345,17 +1340,6 @@ Renderer.prototype.render = function(game) {
           sw: 40,
           sh: 40,
         };
-      } else if (this._rankAvatarSprites) {
-        const sheet = this._rankAvatarSprites[sheetIdx];
-        if (sheet && sheet.loaded) {
-          defaultAvatar = {
-            img: sheet.img,
-            sx: col * 40,
-            sy: row * 40,
-            sw: 40,
-            sh: 40,
-          };
-        }
       }
     }
 
