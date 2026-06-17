@@ -117,7 +117,7 @@ async function drawRankList() {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    const nickX = avatarX + avatarR + sp(2);
+    const nickX = avatarX + avatarR + sp(4);
     ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, y + rowH / 2);
 
     // 回合
@@ -211,7 +211,7 @@ function drawFriendList(w, rowH) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    const nickX = avatarX + avatarR + sp(2);
+    const nickX = avatarX + avatarR + sp(4);
     ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, y + rh / 2);
 
     // 回合
@@ -371,7 +371,7 @@ function drawPanelContent(rect) {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const nick = player.nickname || '匿名';
-    const nickX = avatarX + avatarR + sp(2);
+    const nickX = avatarX + avatarR + sp(4);
     ctx.fillText(nick.length > 5 ? nick.slice(0, 5) + '…' : nick, nickX, rowY + rowH / 2);
 
     // 回合
