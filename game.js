@@ -211,11 +211,20 @@ function switchRankTab(tab) {
     // 切换到全球榜：隐藏好友榜，由主域绘制
     hideRankList();
     game._showingRankList = false;
-    loadGlobalRank();
+
+    // 必须在用户点击的同步回调里发起 getUserProfile，否则微信不会弹授权框
+    if (!game._globalProfileRequested) {
+      game._globalProfileRequested = true;
+      requestGlobalProfile().finally(() => {
+        loadGlobalRank(false);
+      });
+    } else {
+      loadGlobalRank(false);
+    }
   }
 }
 
-async function loadGlobalRank() {
+async function loadGlobalRank(requestProfile = true) {
   if (!game) return;
 
   // 每次切换到全球榜都重新拉取
@@ -223,8 +232,8 @@ async function loadGlobalRank() {
   game._globalRankError = null;
   game._globalRankData = null;
 
-  // 先尝试授权获取头像昵称（只有用户主动点击全球榜才会走到这里）
-  if (!game._globalProfileRequested) {
+  // 仅在非 Tab 切换入口时，内部兜底请求授权
+  if (requestProfile && !game._globalProfileRequested) {
     game._globalProfileRequested = true;
     try {
       await requestGlobalProfile();
