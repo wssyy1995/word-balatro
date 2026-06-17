@@ -993,7 +993,7 @@ Renderer.prototype.render = function(game) {
     const panelY = (H - panelH) / 2;
     const contentPaddingX = 16 * s;
     const contentPaddingB = 16 * s;
-    const headerH = 76 * s; // 标题 + Tab
+    const headerH = 78 * s; // 标题 + Tab + Tab 与表头间距
 
     // 1. 蒙层
     ctx.save();

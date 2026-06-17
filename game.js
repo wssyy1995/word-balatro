@@ -119,7 +119,7 @@ function calcRankPanelRect() {
   const panelH = Math.min(H * 0.75, 520 * s);
   const panelX = (W - panelW) / 2;
   const panelY = (H - panelH) / 2;
-  const headerH = 76 * s; // 标题 + Tab 高度
+  const headerH = 78 * s; // 标题 + Tab 高度 + Tab 与表头间距
   const paddingX = 16 * s;
   const paddingB = 16 * s;
   return {
