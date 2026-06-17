@@ -996,15 +996,15 @@ class ShopRenderer {
       const rowW = modW - innerPad * 2;
       if (barImgLoaded) {
         ctx.save();
-        // 各分类栏图片绘制区域微调：女巫牌宽度+4s/高度+2s；魔法药水牌宽度-4s/高度+4s；水晶球不变
+        // 各分类栏图片绘制区域微调：女巫牌宽度+10s/高度+2s；魔法药水牌宽度-4s/高度+4s；水晶球不变
         let targetX = rowX;
         let targetY = rowY;
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 4 * s;
+          targetW = rowW + 10 * s;
           targetH = rowH + 2 * s;
-          targetX = rowX - 2 * s;
+          targetX = rowX - 5 * s;
           targetY = rowY - 1 * s;
         } else if (mod.type === 'potion') {
           targetW = rowW - 4 * s;
