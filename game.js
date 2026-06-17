@@ -102,6 +102,7 @@ wx.onKeyboardConfirm(() => {
 // ===== 排行榜相关 =====
 let openDataContext = null;
 let isRankShowing = false;
+let globalAuthButton = null; // wx.createUserInfoButton 实例
 
 function getOpenDataContext() {
   if (!openDataContext && wx.getOpenDataContext) {
@@ -130,6 +131,15 @@ function calcRankPanelRect() {
     closeSize: 28 * s,
     s, W, H
   };
+}
+
+function calcGlobalAuthButtonRect() {
+  const rect = calcRankPanelRect();
+  const btnW = 180 * rect.s;
+  const btnH = 44 * rect.s;
+  const btnX = rect.panelX + (rect.panelW - btnW) / 2;
+  const btnY = rect.contentY + rect.contentH / 2 - btnH / 2;
+  return { x: btnX, y: btnY, w: btnW, h: btnH };
 }
 
 function showRankList(panelRect) {
@@ -186,11 +196,13 @@ function showRankPopup(tab = 'friend') {
 function hideRankPopup() {
   if (!game) return;
   hideRankList();
+  destroyGlobalAuthButton();
   game._showingRankPopup = false;
   game._rankTab = 'friend';
   game._globalRankData = null;
   game._globalRankLoading = false;
   game._globalRankError = null;
+  game._showingGlobalAuthButton = false;
 }
 
 function switchRankTab(tab) {
@@ -199,6 +211,8 @@ function switchRankTab(tab) {
 
   if (tab === 'friend') {
     // 切换到好友榜：使用开放域 panel 模式
+    destroyGlobalAuthButton();
+    game._showingGlobalAuthButton = false;
     const rect = calcRankPanelRect();
     showRankList({
       x: rect.contentX,
@@ -211,17 +225,113 @@ function switchRankTab(tab) {
     // 切换到全球榜：隐藏好友榜，由主域绘制
     hideRankList();
     game._showingRankList = false;
+    handleGlobalTabEnter();
+  }
+}
 
-    // 必须在用户点击的同步回调里发起 getUserProfile，否则微信不会弹授权框
-    if (!game._globalProfileRequested) {
-      game._globalProfileRequested = true;
-      requestGlobalProfile().finally(() => {
-        loadGlobalRank(false);
+async function handleGlobalTabEnter() {
+  if (!game) return;
+
+  // 先检查是否已经授权过头像昵称
+  const isAuth = await checkUserInfoAuth();
+  if (isAuth) {
+    destroyGlobalAuthButton();
+    game._showingGlobalAuthButton = false;
+    loadGlobalRank(false);
+  } else {
+    // 未授权：显示原生授权按钮，由用户主动点击后授权
+    showGlobalAuthButton();
+  }
+}
+
+function checkUserInfoAuth() {
+  if (!wx.getSetting) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    wx.getSetting({
+      success: (res) => {
+        const auth = !!(res.authSetting && res.authSetting['scope.userInfo']);
+        console.log('[GlobalRank] scope.userInfo 授权状态', auth);
+        resolve(auth);
+      },
+      fail: (err) => {
+        console.warn('[GlobalRank] getSetting 失败', err);
+        resolve(false);
+      }
+    });
+  });
+}
+
+function showGlobalAuthButton() {
+  if (!game) return;
+  if (!wx.createUserInfoButton) {
+    console.warn('[GlobalRank] 当前环境不支持 createUserInfoButton');
+    loadGlobalRank(false);
+    return;
+  }
+
+  // 如果已经有按钮，先销毁避免重复
+  destroyGlobalAuthButton();
+
+  const rect = calcGlobalAuthButtonRect();
+  console.log('[GlobalRank] 创建授权按钮', rect);
+
+  game._showingGlobalAuthButton = true;
+  globalAuthButton = wx.createUserInfoButton({
+    type: 'text',
+    text: '授权头像昵称',
+    style: {
+      left: rect.x,
+      top: rect.y,
+      width: rect.w,
+      height: rect.h,
+      lineHeight: rect.h,
+      backgroundColor: 'rgba(196, 163, 90, 0.95)',
+      color: '#ffffff',
+      textAlign: 'center',
+      fontSize: 16,
+      borderRadius: 8,
+    }
+  });
+
+  globalAuthButton.onTap((res) => {
+    console.log('[GlobalRank] 授权按钮点击', res);
+    const userInfo = res.userInfo || {};
+    if (userInfo.avatarUrl && userInfo.nickName) {
+      // 上传头像昵称
+      wx.cloud.callFunction({
+        name: 'updateUserProfile',
+        data: { avatarUrl: userInfo.avatarUrl, nickname: userInfo.nickName },
+        success: () => {
+          console.log('[GlobalRank] 头像昵称上传成功');
+          destroyGlobalAuthButton();
+          loadGlobalRank(false);
+        },
+        fail: (err) => {
+          console.error('[GlobalRank] 头像昵称上传失败', err);
+          destroyGlobalAuthButton();
+          loadGlobalRank(false);
+        }
       });
     } else {
+      // 用户拒绝或未获取到，也尝试加载榜单（显示脱敏名称）
+      destroyGlobalAuthButton();
       loadGlobalRank(false);
     }
+  });
+
+  globalAuthButton.show();
+}
+
+function destroyGlobalAuthButton() {
+  if (globalAuthButton) {
+    try {
+      globalAuthButton.destroy();
+    } catch (e) {
+      console.warn('[GlobalRank] 销毁授权按钮异常', e);
+    }
+    globalAuthButton = null;
   }
+  if (game) game._showingGlobalAuthButton = false;
 }
 
 async function loadGlobalRank(requestProfile = true) {

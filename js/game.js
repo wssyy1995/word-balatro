@@ -1517,6 +1517,7 @@ class Game {
     this._globalRankLoading = false;
     this._globalRankError = null;
     this._globalProfileRequested = false;
+    this._showingGlobalAuthButton = false;
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];

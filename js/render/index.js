@@ -1095,6 +1095,22 @@ Renderer.prototype.render = function(game) {
     const s = this.scale;
     const { x, y, w, h } = rect;
 
+    // 授权按钮提示：提示用户点击下方原生授权按钮
+    if (game._showingGlobalAuthButton) {
+      ctx.save();
+      ctx.fillStyle = '#aaa';
+      ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('全球榜需要头像昵称授权', x + w / 2, y + h / 2 - 35 * s);
+      ctx.fillText('请点击下方按钮完成授权', x + w / 2, y + h / 2 - 12 * s);
+      ctx.fillStyle = '#888';
+      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillText('（拒绝授权将显示匿名信息）', x + w / 2, y + h / 2 + 38 * s);
+      ctx.restore();
+      return;
+    }
+
     if (game._globalRankLoading) {
       ctx.save();
       ctx.fillStyle = '#aaa';
