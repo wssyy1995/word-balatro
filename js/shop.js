@@ -847,7 +847,7 @@ class ShopRenderer {
     const cardH = unitH - 20 * s;
 
     const innerPad = 6 * s;
-    const rowGap = 25;           // 行间距（像素）
+    const rowGap = 30;           // 行间距（像素）
     const containerPad = 25;     // 容器上下内边距（像素），与行间距独立
     const titleH = 50 * s;
     const titleGap = 6 * s;
@@ -1002,20 +1002,20 @@ class ShopRenderer {
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 16 * s;
-          targetH = rowH + 20 * s;
+          targetW = rowW + 18 * s;
+          targetH = rowH + 22 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 16 * s;
         } else if (mod.type === 'crystal') {
-          targetW = rowW + 16 * s;
-          targetH = rowH + 18 * s;
+          targetW = rowW + 18 * s;
+          targetH = rowH + 22 * s;
           targetX = rowX - 7 * s;
           targetY = rowY - 15 * s;
         }else if (mod.type === 'potion') {
-          targetW = rowW +16*s;
+          targetW = rowW +18*s;
           targetH = rowH + 22 * s;
           targetX = rowX -8*s;
-          targetY = rowY - 12 * s;
+          targetY = rowY - 10 * s;
         }
         const r = 6 * s;
         ctx.beginPath();
