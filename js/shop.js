@@ -859,7 +859,7 @@ class ShopRenderer {
     ];
 
     const containerH = rowConfigs.length * rowH + (rowConfigs.length - 1) * rowGap + containerPad * 2 + 10 * s;
-    const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s;
+    const containerY = ownedY + ownedH + 10 * s + titleH + titleGap - 15 * s + 5;
 
     this.shopRefreshRects = [];
     this.shopPriceBtnRects = [];
