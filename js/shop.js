@@ -893,9 +893,9 @@ class ShopRenderer {
     }
 
     // 左右米色细线装饰（内浓外淡渐变）
-    const decoLineW = 60 * s - 10;
+    const decoLineW = (60 * s - 10) * 2;
     const lineY = titleMidY - 0.7*s;
-    ctx.lineWidth = 0.9 * s;
+    ctx.lineWidth = 1 * s;
 
     // 左侧横线：外端淡 → 内端浓
     const leftGrad = ctx.createLinearGradient(titleStartX - decoLineW, lineY, titleStartX + titleIconSize * 0.6, lineY);
@@ -943,7 +943,7 @@ class ShopRenderer {
       if (pe < 150) rerollPressOffset = 1 * s;
     }
 
-    const rerollBtnY = titleMidY - rerollBtnH / 2 - 1 + rerollPressOffset;
+    const rerollBtnY = titleMidY - rerollBtnH / 2 - 1 + rerollPressOffset + 10 + 3 + 2 + 1 + 1 + 1;
     const btnColor = canAfford ? '#FFF1D4' : '#e0e0e0';
     const textColor = canAfford ? '#8b6914' : '#999';
 
@@ -952,7 +952,7 @@ class ShopRenderer {
     ctx.shadowColor = 'rgba(0,0,0,0.25)';
     ctx.shadowBlur = 4 * s;
     ctx.shadowOffsetY = 2 * s;
-    this.parent.roundRect(rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH, 7 * s, btnColor);
+    this.parent.roundRect(rerollBtnX, rerollBtnY, rerollBtnW, rerollBtnH, 9 * s, btnColor);
     ctx.restore();
 
     // 顶部高光条
@@ -984,8 +984,8 @@ class ShopRenderer {
 
     ctx.restore();
 
-    // 大容器（奶油色边框包裹三行，左右各外扩 3px）
-    this.parent.roundRect(modX - 3, containerY, modW + 6, containerH, 10 * s, cream, gold, 1.5 * s);
+    // 大容器（奶油色边框包裹三行，左右各外扩 3px）—— 暂时隐藏
+    // this.parent.roundRect(modX - 3, containerY, modW + 6, containerH, 10 * s, cream, gold, 1.5 * s);
 
     rowConfigs.forEach((mod, modIdx) => {
       const rowY = containerY + containerPadTop + modIdx * (rowH + rowGap);
@@ -1003,19 +1003,19 @@ class ShopRenderer {
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 17 * s;
+          targetW = rowW + 24 * s;
           targetH = rowH + 28 * s;
-          targetX = rowX - 8 * s;
+          targetX = rowX - 12 * s;
           targetY = rowY - 16 * s;
         } else if (mod.type === 'crystal') {
-          targetW = rowW + 17 * s;
+          targetW = rowW + 24 * s;
           targetH = rowH + 28 * s;
-          targetX = rowX - 8 * s;
+          targetX = rowX - 12 * s;
           targetY = rowY - 15 * s;
         }else if (mod.type === 'potion') {
-          targetW = rowW +18*s;
+          targetW = rowW + 24 * s;
           targetH = rowH + 28 * s;
-          targetX = rowX -9*s;
+          targetX = rowX -12 * s;
           targetY = rowY - 15 * s;
         }
         const r = 6 * s;
@@ -1358,7 +1358,7 @@ class ShopRenderer {
         ctx.font = `${Math.floor(12 * s)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('抢光啦...', rowX + rowW / 2, rowY + rowH / 2);
+        ctx.fillText('已售罄，请重掷商店...', rowX + rowW / 2, rowY + rowH / 2);
         ctx.restore();
       }
     });
@@ -1368,8 +1368,8 @@ class ShopRenderer {
     const witchSkill = getSkillForLevel(nextRound, game._shuffledSkills);
 
     // === 下一回合模块（始终显示）===
-    const moduleH = witchSkill ? 120 * s : 100 * s;
-    const moduleY = containerY + containerH + 50 * s;
+    const moduleH = witchSkill ? 113 * s : 100 * s;
+    const moduleY = containerY + containerH + 50 * s - 5;
     const moduleX = 15 * s;
     const moduleW = W - 30 * s;
 
@@ -1547,7 +1547,7 @@ class ShopRenderer {
 
       // 文字区域
       const textX = avatarX + avatarSize + 12 * s;
-      challengeBtnX = moduleX + moduleW - challengeBtnW - 18 * s;
+      challengeBtnX = moduleX + moduleW - challengeBtnW - 18 * s + 2;
       const textMaxW = challengeBtnX - textX - 10 * s;
 
       let skillY = dividerY + 18 * s;
