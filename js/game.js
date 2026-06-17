@@ -3705,16 +3705,29 @@ class Game {
 }
 
 function requestGlobalProfile() {
-  if (!wx.getUserProfile) {
-    console.warn('[GlobalRank] 当前环境不支持 getUserProfile');
+  // 微信小游戏优先使用 getUserInfo，小程序可用 getUserProfile
+  const api = wx.getUserProfile || wx.getUserInfo;
+  if (!api) {
+    console.warn('[GlobalRank] 当前环境不支持 getUserProfile/getUserInfo');
     return Promise.resolve(false);
   }
+
+  const isProfile = api === wx.getUserProfile;
+  console.log('[GlobalRank] 使用授权接口', isProfile ? 'getUserProfile' : 'getUserInfo');
+
   return new Promise((resolve) => {
-    wx.getUserProfile({
-      desc: '用于在全球排行榜中展示你的头像和昵称',
+    const callParams = isProfile
+      ? { desc: '用于在全球排行榜中展示你的头像和昵称' }
+      : { openIdList: ['selfOpenId'], lang: 'zh_CN' };
+
+    api({
+      ...callParams,
       success: (res) => {
-        const { avatarUrl, nickName } = res.userInfo || {};
-        if (!avatarUrl || !nickName) {
+        const userInfo = res.userInfo || {};
+        const avatarUrl = userInfo.avatarUrl;
+        const nickname = userInfo.nickName;
+        console.log('[GlobalRank] 授权成功', { avatarUrl: !!avatarUrl, nickname: !!nickname });
+        if (!avatarUrl || !nickname) {
           resolve(false);
           return;
         }
@@ -3724,7 +3737,7 @@ function requestGlobalProfile() {
         }
         wx.cloud.callFunction({
           name: 'updateUserProfile',
-          data: { avatarUrl, nickname: nickName },
+          data: { avatarUrl, nickname },
           success: () => {
             console.log('[GlobalRank] 头像昵称上传成功');
             resolve(true);
