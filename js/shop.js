@@ -1002,12 +1002,12 @@ class ShopRenderer {
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 10 * s;
-          targetH = rowH + 2 * s;
+          targetW = rowW + 14 * s;
+          targetH = rowH + 8 * s;
           targetX = rowX - 5 * s;
           targetY = rowY - 1 * s;
         } else if (mod.type === 'potion') {
-          targetW = rowW - 4 * s;
+          targetW = rowW -20*s;
           targetH = rowH + 4 * s;
           targetX = rowX + 2 * s;
           targetY = rowY - 2 * s;
@@ -1025,21 +1025,8 @@ class ShopRenderer {
         ctx.quadraticCurveTo(targetX, targetY, targetX + r, targetY);
         ctx.closePath();
         ctx.clip();
-        const imgAspect = barImgData.width / barImgData.height;
-        const rowAspect = targetW / targetH;
-        let drawW, drawH, drawX, drawY;
-        if (imgAspect > rowAspect) {
-          drawH = targetH;
-          drawW = drawH * imgAspect;
-          drawX = targetX + (targetW - drawW) / 2;
-          drawY = targetY;
-        } else {
-          drawW = targetW;
-          drawH = drawW / imgAspect;
-          drawX = targetX;
-          drawY = targetY + (targetH - drawH) / 2;
-        }
-        ctx.drawImage(barImgData, drawX, drawY, drawW, drawH);
+        // 直接拉伸填充到目标区域，不保持图片比例，确保 targetW/targetH 绝对生效
+        ctx.drawImage(barImgData, targetX, targetY, targetW, targetH);
         ctx.restore();
       } else {
         const rowBorderColors = { witch: '#e0d0e8', crystal: '#d0d8e0', potion: '#d0e0d8' };
