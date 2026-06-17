@@ -21,7 +21,11 @@ word-balatro/
 ├── game.js              # 游戏入口：初始化、主循环、触摸输入分发
 ├── game.json            # 小游戏配置（竖屏、无状态栏）
 ├── project.config.json  # 微信项目配置（需替换 appid）
-├── README.md            # 本文档
+├── doc/
+│   ├── README.md                       # 本文档
+│   ├── GAME_LAYOUT_AND_ADAPTATION.md   # 页面布局与机型适配文档
+│   ├── ANIMATION_GUIDE.md              # 动画开发规范
+│   └── START.md                        # 开发启动说明
 ├── test_full.js         # 全量测试脚本（离线词库校验等）
 ├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
 ├── raw_words/           # 原始词库数据（构建脚本输入）
@@ -56,7 +60,7 @@ word-balatro/
     ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
     ├── settlement.js    # 回合金币结算弹窗 + 女巫奖励渲染
     ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
-    ├── cloud_storage.js # 微信云存储：shop_card / witch 图片上传/下载/注入
+    ├── cloud_storage.js # 微信云存储：shop_card / witch / bg_icon / guide / rank_avatar 图片上传/下载/注入
     ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
     ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
     ├── witch_skills.js  # 女巫技能约束与奖励
@@ -547,14 +551,28 @@ render(game)
 baseScale = min(windowWidth / 375, windowHeight / 667)
 scale = clamp(baseScale, 0.8, 1.4)
 
-卡牌尺寸动态计算：
-cardW = min(74 * scale, (width - 48) / 3)
+// 折叠屏/矮屏二次约束：当 scale > 1.0 且 740*s 超过可用高度时，
+// 整体压低 scale，避免 16:10 折叠屏（如 HUAWEI Pura X 内屏）内容溢出
+requiredHeight = 740 * scale + 10
+availableHeight = height - safeTop - safeBottom
+if (scale > 1.0 && requiredHeight > availableHeight && availableHeight > 0) {
+  scale = max((availableHeight - 10) / 740, 0.75)
+}
+
+卡牌尺寸动态计算（最多支持 4 列 × 3 行）：
+cardW = min(74 * scale, (width - 48) / 4)
 cardH = min(88 * scale, (height - 200) / 3)
 gap = 8 * scale
+
+主界面基准高度 740*s，盈余/不足自适应：
+extraHeight = height - 740 * scale  // 可为负值
+topOffset = extraHeight * 0.05
+cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 ```
 
 > 注：当手牌数 > 9（额外手牌效果）时，布局自动切换为 4 列自适应 + 最后一行居中。
-> 针对灵动岛机型（iOS safeTop ≥ 59）增加顶部安全区域 padding。
+> 针对灵动岛机型（iOS safeTop ≥ 44）增加顶部安全区域 padding。
+> `playing` / `shop` / `life_extended` 三个状态下，页面内容整体下移 10px，底部操作按钮额外上移 5px，触摸命中已做对应反向偏移；详见 `doc/GAME_LAYOUT_AND_ADAPTATION.md`。
 
 #### 3.3.6 卡牌渲染
 
@@ -1338,6 +1356,7 @@ letterUpgrades = Map {
 | v1.10.6 | 2026-06-17 | 临时调整女巫奖励触发范围：女巫约束仍按原关卡生效，但女巫奖励阶段（`witch_reward`）仅在第 3 关触发，第 5 关及以后通关后不再进入奖励阶段；同步更新 README |
 | v1.10.7 | 2026-06-17 | 再次上调基础目标分系数：2~5 关 30、6~10 关 35、11~20 关 37、21~30 关 40、31~40 关 44、41~50 关 50、51+ 关 60；同步更新 README 目标分数表 |
 | v1.10.8 | 2026-06-17 | 新增 `js/report.js` 统一封装埋点上报，开发者工具环境下自动跳过不上报；新增 `rank_avatar` 全国榜默认头像云存储支持（上传、第一回合按需下载、注入渲染器）；抽离云存储文件 ID 前缀为 `CLOUD_BASE` 变量；同步更新 README |
+| v1.10.9 | 2026-06-17 | 适配 HUAWEI Pura X 等折叠屏/矮屏设备：scale 在高度不足时自动压低（最低 0.75），`extraHeight` 允许负值以压缩布局间距；`playing` / `shop` / `life_extended` 页面内容整体下移 10px，底部按钮上移 5px，商店挑战按钮放大；新增 `doc/GAME_LAYOUT_AND_ADAPTATION.md` 布局适配文档；同步更新 README |
 
 ---
 
