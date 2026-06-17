@@ -1115,7 +1115,7 @@ class ShopRenderer {
         if (!item) continue;
 
         const unitX = modX + modPad + i * (unitW + cardGap) + (i === 1 ? 2 : 0);
-        const unitY = rowY + 3 + 2 * s;
+        const unitY = rowY + 3 + 2 * s + 1;
 
         // 两个单元之间的分隔线
         if (i === 1) {
