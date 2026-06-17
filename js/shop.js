@@ -996,32 +996,43 @@ class ShopRenderer {
       const rowW = modW - innerPad * 2;
       if (barImgLoaded) {
         ctx.save();
+        // witch 行图片整体放大一点：宽度 +6*s，高度 +3*s，居中扩展
+        let targetX = rowX;
+        let targetY = rowY;
+        let targetW = rowW;
+        let targetH = rowH;
+        if (mod.type === 'witch') {
+          targetW = rowW + 6 * s;
+          targetH = rowH + 3 * s;
+          targetX = rowX - 3 * s;
+          targetY = rowY - (3 * s) / 2;
+        }
         const r = 6 * s;
         ctx.beginPath();
-        ctx.moveTo(rowX + r, rowY);
-        ctx.lineTo(rowX + rowW - r, rowY);
-        ctx.quadraticCurveTo(rowX + rowW, rowY, rowX + rowW, rowY + r);
-        ctx.lineTo(rowX + rowW, rowY + rowH - r);
-        ctx.quadraticCurveTo(rowX + rowW, rowY + rowH, rowX + rowW - r, rowY + rowH);
-        ctx.lineTo(rowX + r, rowY + rowH);
-        ctx.quadraticCurveTo(rowX, rowY + rowH, rowX, rowY + rowH - r);
-        ctx.lineTo(rowX, rowY + r);
-        ctx.quadraticCurveTo(rowX, rowY, rowX + r, rowY);
+        ctx.moveTo(targetX + r, targetY);
+        ctx.lineTo(targetX + targetW - r, targetY);
+        ctx.quadraticCurveTo(targetX + targetW, targetY, targetX + targetW, targetY + r);
+        ctx.lineTo(targetX + targetW, targetY + targetH - r);
+        ctx.quadraticCurveTo(targetX + targetW, targetY + targetH, targetX + targetW - r, targetY + targetH);
+        ctx.lineTo(targetX + r, targetY + targetH);
+        ctx.quadraticCurveTo(targetX, targetY + targetH, targetX, targetY + targetH - r);
+        ctx.lineTo(targetX, targetY + r);
+        ctx.quadraticCurveTo(targetX, targetY, targetX + r, targetY);
         ctx.closePath();
         ctx.clip();
         const imgAspect = barImgData.width / barImgData.height;
-        const rowAspect = rowW / rowH;
+        const rowAspect = targetW / targetH;
         let drawW, drawH, drawX, drawY;
         if (imgAspect > rowAspect) {
-          drawH = rowH;
+          drawH = targetH;
           drawW = drawH * imgAspect;
-          drawX = rowX + (rowW - drawW) / 2;
-          drawY = rowY;
+          drawX = targetX + (targetW - drawW) / 2;
+          drawY = targetY;
         } else {
-          drawW = rowW;
+          drawW = targetW;
           drawH = drawW / imgAspect;
-          drawX = rowX;
-          drawY = rowY + (rowH - drawH) / 2;
+          drawX = targetX;
+          drawY = targetY + (targetH - drawH) / 2;
         }
         ctx.drawImage(barImgData, drawX, drawY, drawW, drawH);
         ctx.restore();
