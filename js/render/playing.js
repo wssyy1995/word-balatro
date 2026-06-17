@@ -20,7 +20,8 @@ module.exports = function extendPlaying(Renderer) {
       // 顺序：道具栏 → 分数方块 → 单词预览区 → 卡牌区
       // 改卡牌底部和按钮的间距时，上方区域自动跟随
       const boxSize = 56 * s;
-      const extraHeight = s < 1.0 ? Math.max(0, H - Math.floor(740 * s)) : 0;
+      // 高度盈余/不足自适应：extraHeight 可为负，在矮屏/折叠屏上压缩间距
+      const extraHeight = H - Math.floor(740 * s);
       const topOffset = extraHeight * 0.05;
       const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0) + topOffset;
       const h = 70 * s;  // 与 drawHUD 中的 h 保持一致
@@ -29,10 +30,10 @@ module.exports = function extendPlaying(Renderer) {
       const cardGridH = maxRows * this.cardH + (maxRows - 1) * this.gap;
       const maskHalfH = 20 * s; // 预览蒙层半高（maskH = 40*s）
       const propBarH = 84 * s;
-  
+
       const btnTop = H - 90 * s;
-      // tall/narrow 且元素被缩小的屏幕（s<1）自适应：把多余高度分配给底部间距和道具栏下移
-      const cardGap = 50 * s + extraHeight * 0.25 - 10;         // 卡牌底部到按钮间距
+      // 把 extraHeight 分配给顶部偏移和底部间距；最小间距限制为 4*s，避免卡牌与按钮重叠
+      const cardGap = Math.max(4 * s, 50 * s + extraHeight * 0.25 - 10); // 卡牌底部到按钮间距
       const cardBottom = btnTop - cardGap + 3 * s;              // 卡牌底部
       const cardAreaY = cardBottom - cardGridH;                 // 卡牌顶部
       const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心
@@ -1269,8 +1270,8 @@ module.exports = function extendPlaying(Renderer) {
         }
       }
   
-      // 底部图片按钮区域
-      const btnY = H - 90 * s;
+      // 底部图片按钮区域（出牌/弃牌/清空选择整体上移 5px）
+      const btnY = H - 90 * s - 5;
       const btnW = 90 * s;
       const btnH = 56 * s;
       const btnGap = 20 * s;

@@ -31,6 +31,9 @@ Renderer.prototype.render = function(game) {
     }
     // 根据状态绘制不同界面
     if (game.state === 'playing') {
+      ctx.save();
+      ctx.translate(0, 10);
+
       // 进入第一回合后，后台下载 rank_avatar 云图集（不在预加载页加载）
       if (game.round === 1 && !game._rankAvatarPreloaded && game.cloudStorage) {
         game._rankAvatarPreloaded = true;
@@ -55,12 +58,39 @@ Renderer.prototype.render = function(game) {
       if (game._letterGodAnim) {
         this._drawLetterGodAnim(game);
       }
-      // 字母置换弹窗（覆盖在游戏页面上方）
+      // toast 飞行星星动画
+      this._drawToastFlyStar();
+
+      // 新手引导（覆盖在游戏页最上层）
+      if (game._guideEnabled && game.guidePhase >= 1 && game.guidePhase <= 4) {
+        this._drawGuideOverlay(game);
+      } else if (game.guidePhase === 5 && game._guideExitStartTime) {
+        const exitElapsed = Date.now() - game._guideExitStartTime;
+        if (exitElapsed < 600) {
+          this._drawGuideOverlay(game);
+        } else if (exitElapsed < 1100) {
+          const fadeProgress = (exitElapsed - 600) / 500;
+          ctx.save();
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
+          ctx.fillRect(0, 0, W, H);
+          ctx.restore();
+        }
+      }
+
+      // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
+      if (!game._dailyWordsPopup) {
+        this._updateAndDrawSparkles(ctx, s);
+      }
+
+      // 绘制飞行中的总分
+      this._updateAndDrawFlyingScore(ctx, s, game);
+
+      ctx.restore();
+
+      // 字母置换弹窗（覆盖在游戏页面上方，独立模态弹窗，不下移）
       if (game._changeLetterPopup) {
         this.drawChangeLetterPopup(game);
       }
-      // toast 飞行星星动画
-      this._drawToastFlyStar();
     } else if (game.state === 'settlement') {
       // 金币结算弹窗（保留 HUD 背景）
       this.drawHUD(game);
@@ -74,20 +104,17 @@ Renderer.prototype.render = function(game) {
       // 包含 settlement 关闭后到弹窗出现前的 200ms 延迟，避免背景突变为商店
       // "获得新词牌"弹窗阶段：弹窗显示中/弹出前，保持 HUD 背景；弹窗关闭后一律进入商店背景
       const isNewWitchCardPhase = game._newWitchCardPopup || (game._pendingWitchRewardDelay && !game._newWitchCardPopupClosed && !game._witchRewardDelayStartTime);
+
+      ctx.save();
+      ctx.translate(0, 10);
+
       if (isNewWitchCardPhase) {
         this.drawHUD(game);
-        if (game._newWitchCardPopup) {
-          this._drawNewWitchCardPopup(game);
-        }
       } else {
         // 商店页面背景 + 内容
         this._drawShopBackground(game);
         // 商店页女巫牌详情弹窗（含右上角售出按钮）
         this._drawWitchDetailPopup(ctx, game, s);
-        // 确认购买弹窗（覆盖在商店上方）
-        if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
-          this.confirmBuyRenderer.draw(ctx, game, W, H, s);
-        }
 
         // 女巫奖励延迟 600ms 进入；图鉴引导进行中（Phase 1~4）时暂停计时
         if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
@@ -166,12 +193,42 @@ Renderer.prototype.render = function(game) {
           }
         }
       }
+
+      // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
+      if (!game._dailyWordsPopup) {
+        this._updateAndDrawSparkles(ctx, s);
+      }
+
+      // 绘制飞行中的总分
+      this._updateAndDrawFlyingScore(ctx, s, game);
+
+      ctx.restore();
+
+      // 独立模态弹窗：获得新词牌、确认购买（不下移）
+      if (isNewWitchCardPhase && game._newWitchCardPopup) {
+        this._drawNewWitchCardPopup(game);
+      }
+      if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
+        this.confirmBuyRenderer.draw(ctx, game, W, H, s);
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'life_extended') {
       // 生命延续：先绘制游戏背景，再叠加闪烁/弹窗
+      ctx.save();
+      ctx.translate(0, 10);
       this.drawHUD(game);
       this.drawPlaying(game);
+
+      // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
+      if (!game._dailyWordsPopup) {
+        this._updateAndDrawSparkles(ctx, s);
+      }
+
+      // 绘制飞行中的总分
+      this._updateAndDrawFlyingScore(ctx, s, game);
+
+      ctx.restore();
       this._drawLifeExtensionPopup(game);
     } else if (game.state === 'gameover') {
       // 结束报告弹窗（保留游戏页面背景）
@@ -184,12 +241,16 @@ Renderer.prototype.render = function(game) {
     this.updateAnimations();
     
     // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
-    if (!game._dailyWordsPopup) {
+    // playing/shop/life_extended 状态下已在各自分支中绘制
+    if (!game._dailyWordsPopup && game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended') {
       this._updateAndDrawSparkles(ctx, s);
     }
     
     // 绘制飞行中的总分
-    this._updateAndDrawFlyingScore(ctx, s, game);
+    // playing/shop/life_extended 状态下已在各自分支中绘制
+    if (game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended') {
+      this._updateAndDrawFlyingScore(ctx, s, game);
+    }
     
     // 商店 → 游戏 页面过渡遮罩
     if (game._shopToGameTransition) {
@@ -216,26 +277,6 @@ Renderer.prototype.render = function(game) {
 
     // 云存储调试日志（真机排查用）
     this._drawCloudDebugLogs(ctx, game, s);
-
-    // 新手引导（覆盖在最上层）
-    if (game._guideEnabled && game.guidePhase >= 1 && game.guidePhase <= 4) {
-      this._drawGuideOverlay(game);
-    } else if (game.guidePhase === 5 && game._guideExitStartTime) {
-      // Phase 5 退场动画：女巫和对话框弹出去 → 蒙层淡出
-      const exitElapsed = Date.now() - game._guideExitStartTime;
-      if (exitElapsed < 600) {
-        // 0~600ms：女巫+对话框弹出去，蒙层保持
-        this._drawGuideOverlay(game);
-      } else if (exitElapsed < 1100) {
-        // 600~1100ms：蒙层从 0.75 渐变到透明（500ms 变亮）
-        const fadeProgress = (exitElapsed - 600) / 500;
-        ctx.save();
-        ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
-        ctx.fillRect(0, 0, W, H);
-        ctx.restore();
-      }
-      // 1100ms 后彻底结束，不再绘制引导层
-    }
 
     // 卡牌图鉴弹窗（使用 _drawModalPanel 标准弹窗框架）
     if (game.cardBookOpen) {

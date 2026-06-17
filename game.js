@@ -663,6 +663,25 @@ let longPressTriggered = false;
 const LONG_PRESS_DURATION = 600; // 600ms 长按
 const LONG_PRESS_MOVE_THRESHOLD = 10; // 移动超过 10px 取消长按
 
+// 计算输入 Y 坐标：playing/shop/life_extended 且没有独立弹窗时，
+// 页面内容整体下移 10px，因此触摸命中需要反向偏移 10px 对齐视觉位置
+function getInputY(x, y) {
+  const hasModal = game && (
+    game._dailyWordsPopup ||
+    (game._wordBookPopup && !game._closingWordBook) ||
+    (game._settingsPopup && !game._closingSettings) ||
+    game._showingRankPopup ||
+    game._tipHelpPopup ||
+    game.cardBookOpen ||
+    game._changeLetterPopup ||
+    (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) ||
+    game._newWitchCardPopup ||
+    (game._lifeExtensionAnim && Date.now() - game._lifeExtensionAnim.startTime >= 1000) ||
+    (renderer && renderer.debugMenuOpen)
+  );
+  return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended')) ? y - 10 : y;
+}
+
 // 触摸事件处理
 wx.onTouchStart((e) => {
   // 预加载阶段不响应触摸
@@ -672,6 +691,7 @@ wx.onTouchStart((e) => {
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
+  const inputY = getInputY(x, y);
   touchStartPos = { x, y };
 
   // 日志区域触摸（优先处理滚动）
@@ -687,7 +707,7 @@ wx.onTouchStart((e) => {
 
   // 检测 top_icon：单击打开设置，长按打开调试菜单
   if (renderer.topIconRect) {
-    const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
+    const iconHit = renderer.hitTest(x, inputY, [renderer.topIconRect]);
     if (iconHit) {
       longPressTriggered = false;
       renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
@@ -888,7 +908,7 @@ wx.onTouchStart((e) => {
 
   // 检测卡牌图鉴图标按下
   if (renderer.cardBookIconRect && game.cardBookUnlocked && !game.cardBookOpen) {
-    const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+    const cbHit = renderer.hitTest(x, inputY, [renderer.cardBookIconRect]);
     if (cbHit) {
       game._cardBookIconPressed = true;
     }
@@ -948,14 +968,15 @@ wx.onTouchStart((e) => {
     return;
   }
 
-  handleInput(x, y);
+  handleInput(x, inputY);
 });
 
 wx.onTouchMove((e) => {
   if (!game) return;
+  const touch = e.touches[0];
+  const inputY = getInputY(touch.clientX, touch.clientY);
   // 移动超过阈值时取消长按
   if (longPressTimer && touchStartPos) {
-    const touch = e.touches[0];
     const dx = touch.clientX - touchStartPos.x;
     const dy = touch.clientY - touchStartPos.y;
     if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
@@ -966,58 +987,48 @@ wx.onTouchMove((e) => {
 
   // 移出每日挑战奖励弹窗按钮区域时取消按下状态
   if (game._dailyChallengeSharePressed && renderer.dailyChallengeShareRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyChallengeShareRect]);
     if (!hit) game._dailyChallengeSharePressed = false;
   }
   if (game._dailyChallengeOkPressed && renderer.dailyChallengeOkRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyChallengeOkRect]);
     if (!hit) game._dailyChallengeOkPressed = false;
   }
 
   // 移出设置弹窗按钮区域时取消按下状态
   if (game._settingsSoundPressed && renderer.settingsSoundRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
     if (!hit) game._settingsSoundPressed = false;
   }
   if (game._dailyWordsBackPressed && renderer.dailyWordsBackRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsBackRect]);
     if (!hit) game._dailyWordsBackPressed = false;
   }
   if (game._dailyWordsClosePressed && renderer.dailyWordsCloseRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsCloseRect]);
     if (!hit) game._dailyWordsClosePressed = false;
   }
   if (game._dailyWordsSwitchPressed && renderer.dailyWordsSwitchRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsSwitchRect]);
     if (!hit) game._dailyWordsSwitchPressed = false;
   }
   if (game._dailyWordsSharePressed && renderer.dailyWordsShareRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsShareRect]);
     if (!hit) game._dailyWordsSharePressed = false;
   }
 
   // 移出单词本弹窗按钮区域时取消按下状态
   if (game._wordBookBackPressed && renderer.wordBookBackRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookBackRect]);
     if (!hit) game._wordBookBackPressed = false;
   }
   if (game._wordBookClosePressed && renderer.wordBookCloseRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookCloseRect]);
     if (!hit) game._wordBookClosePressed = false;
   }
 
   // 今日新词弹窗滚动
   if (game._dailyWordsPopup && game._dailyWordsScrollState === 'dragging') {
-    const touch = e.touches[0];
     const now = Date.now();
     const y = touch.clientY;
     const frameDelta = game._dailyWordsScrollLastTouchY - y;
@@ -1051,7 +1062,6 @@ wx.onTouchMove((e) => {
 
   // 单词本弹窗滚动
   if (game._wordBookPopup && game._wordBookScrollState === 'dragging') {
-    const touch = e.touches[0];
     const now = Date.now();
     const y = touch.clientY;
     const frameDelta = game._wordBookScrollLastTouchY - y;
@@ -1080,40 +1090,33 @@ wx.onTouchMove((e) => {
     game._wordBookScrollLastTime = now;
   }
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
     if (!hit) game._settingsCloseBtnPressed = false;
   }
   // 移出求助提示弹窗按钮区域时取消按下状态
   if (game._tipHelpClosePressed && renderer.tipHelpCloseRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpCloseRect]);
     if (!hit) game._tipHelpClosePressed = false;
   }
   if (game._tipHelpBuyPressed && renderer.tipHelpBuyRect && !game._tipHelpBuyDelaying) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpBuyRect]);
     if (!hit) game._tipHelpBuyPressed = false;
   }
   if (game._tipHelpSharePressed && renderer.tipHelpShareRect && !game._tipHelpShareDelaying) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.tipHelpShareRect]);
     if (!hit) game._tipHelpSharePressed = false;
   }
   if (game._feedbackBackPressed && renderer.feedbackBackRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
     if (!hit) game._feedbackBackPressed = false;
   }
   if (game._feedbackSubmitPressed && renderer.feedbackSubmitRect) {
-    const touch = e.touches[0];
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
     if (!hit) game._feedbackSubmitPressed = false;
   }
   // 移出卡牌图鉴图标区域时取消按下状态
   if (game._cardBookIconPressed && renderer.cardBookIconRect) {
-    const touch = e.touches[0];
-    const iconHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookIconRect]);
+    const iconHit = renderer.hitTest(touch.clientX, inputY, [renderer.cardBookIconRect]);
     if (!iconHit) {
       game._cardBookIconPressed = false;
     }
@@ -1121,8 +1124,7 @@ wx.onTouchMove((e) => {
 
   // 移出装备按钮区域时取消按下状态
   if (game._cardBookEquipBtnPressed && renderer.cardBookEquipBtnRect) {
-    const touch = e.touches[0];
-    const btnHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookEquipBtnRect]);
+    const btnHit = renderer.hitTest(touch.clientX, inputY, [renderer.cardBookEquipBtnRect]);
     if (!btnHit) {
       game._cardBookEquipBtnPressed = false;
     }
@@ -1130,8 +1132,7 @@ wx.onTouchMove((e) => {
 
   // 移出卡牌图鉴关闭按钮区域时取消按下状态
   if (game._cardBookCloseBtnPressed && renderer.cardBookCloseBtnRect) {
-    const touch = e.touches[0];
-    const closeHit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.cardBookCloseBtnRect]);
+    const closeHit = renderer.hitTest(touch.clientX, inputY, [renderer.cardBookCloseBtnRect]);
     if (!closeHit) {
       game._cardBookCloseBtnPressed = false;
     }
@@ -1139,7 +1140,6 @@ wx.onTouchMove((e) => {
 
   // 取消女巫牌长按候选（移动超过阈值）
   if (game._pendingJokerSelect && touchStartPos) {
-    const touch = e.touches[0];
     const dx = touch.clientX - touchStartPos.x;
     const dy = touch.clientY - touchStartPos.y;
     if (Math.sqrt(dx * dx + dy * dy) > LONG_PRESS_MOVE_THRESHOLD) {
@@ -1153,9 +1153,8 @@ wx.onTouchMove((e) => {
 
   // 更新女巫牌排序拖动位置与插入槽位
   if (game._jokerSortState) {
-    const touch = e.touches[0];
     game._jokerSortState.currentX = touch.clientX;
-    game._jokerSortState.currentY = touch.clientY;
+    game._jokerSortState.currentY = inputY;
 
     // 计算 insertSlot（手指最接近哪个槽位中心）
     const s = renderer.scale || 1;
@@ -1202,7 +1201,6 @@ wx.onTouchMove((e) => {
   }
 
   if (!renderer.cloudLogDragging) return;
-  const touch = e.touches[0];
   const y = touch.clientY;
   const deltaY = renderer.cloudLogDragStartY - y;
   renderer.cloudLogScrollY = renderer.cloudLogDragStartScrollY + deltaY;
@@ -1229,7 +1227,8 @@ wx.onTouchEnd(() => {
 
   // top_icon 短按：打开设置弹窗（长按未触发时）
   if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
-    const iconHit = renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.topIconRect]);
+    const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
+    const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
       // 点击设置按钮埋点
       reportEvent("top_icon", {
@@ -1564,7 +1563,7 @@ wx.onTouchEnd(() => {
   touchStartPos = null;
 });
 
-function handleInput(x, y) {
+function handleInput(x, inputY) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
   if (game._settingsPopup && !game._closingSettings) return;
 
@@ -1572,7 +1571,7 @@ function handleInput(x, y) {
   if (game._tipHelpPopup && !game._closingTipHelp) {
     // 关闭按钮
     if (renderer.tipHelpCloseRect) {
-      const closeHit = renderer.hitTest(x, y, [renderer.tipHelpCloseRect]);
+      const closeHit = renderer.hitTest(x, inputY, [renderer.tipHelpCloseRect]);
       if (closeHit) {
         vibrate();
         game._tipHelpClosePressed = true;
@@ -1581,7 +1580,7 @@ function handleInput(x, y) {
     }
     // 购买提示按钮
     if (renderer.tipHelpBuyRect && !game._tipHelpBuyDelaying) {
-      const buyHit = renderer.hitTest(x, y, [renderer.tipHelpBuyRect]);
+      const buyHit = renderer.hitTest(x, inputY, [renderer.tipHelpBuyRect]);
       if (buyHit) {
         vibrate();
         game._tipHelpBuyPressed = true;
@@ -1590,7 +1589,7 @@ function handleInput(x, y) {
     }
     // 转发求助按钮
     if (renderer.tipHelpShareRect && !game._tipHelpShareDelaying) {
-      const shareHit = renderer.hitTest(x, y, [renderer.tipHelpShareRect]);
+      const shareHit = renderer.hitTest(x, inputY, [renderer.tipHelpShareRect]);
       if (shareHit) {
         vibrate();
         game._tipHelpSharePressed = true;
@@ -1599,7 +1598,7 @@ function handleInput(x, y) {
     }
     // 点击弹窗外部区域关闭弹窗
     if (renderer.tipHelpPanelRect) {
-      const panelHit = renderer.hitTest(x, y, [renderer.tipHelpPanelRect]);
+      const panelHit = renderer.hitTest(x, inputY, [renderer.tipHelpPanelRect]);
       if (!panelHit) {
         game.closeTipHelpPopup();
       }
@@ -1615,7 +1614,7 @@ function handleInput(x, y) {
   // 新手引导阶段：优先处理引导点击，禁用其他交互
   if (game.guidePhase >= 1 && game.guidePhase <= 4) {
     if (renderer.guideDialogRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.guideDialogRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.guideDialogRect]);
       if (btnHit) {
         const now = Date.now();
         if (game._guideTapTime && now - game._guideTapTime < 300) {
@@ -1637,7 +1636,7 @@ function handleInput(x, y) {
 
   // 检测调试菜单按钮（优先）
   if (renderer.debugMenuOpen && renderer.debugMenuRects) {
-    const debugHit = renderer.hitTest(x, y, renderer.debugMenuRects);
+    const debugHit = renderer.hitTest(x, inputY, renderer.debugMenuRects);
     if (debugHit) {
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(1000);
@@ -1815,7 +1814,7 @@ function handleInput(x, y) {
   if (game.cardBookOpen && !game._closingCardBook) {
     // 0. 检测 tab 切换按钮
     if (renderer.cardBookTabRects) {
-      const tabHit = renderer.hitTest(x, y, renderer.cardBookTabRects);
+      const tabHit = renderer.hitTest(x, inputY, renderer.cardBookTabRects);
       if (tabHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -1830,7 +1829,7 @@ function handleInput(x, y) {
 
     // 1. 先检测是否点击了已解锁卡牌（最高优先级）
     if (renderer.cardBookCellRects && renderer.cardBookCellRects.length > 0) {
-      const cellHit = renderer.hitTest(x, y, renderer.cardBookCellRects);
+      const cellHit = renderer.hitTest(x, inputY, renderer.cardBookCellRects);
       if (cellHit && cellHit.isUnlocked) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -1857,7 +1856,7 @@ function handleInput(x, y) {
 
     // 先检测关闭按钮（X）——延迟关闭，带按下反馈
     if (renderer.cardBookCloseBtnRect) {
-      const closeHit = renderer.hitTest(x, y, [renderer.cardBookCloseBtnRect]);
+      const closeHit = renderer.hitTest(x, inputY, [renderer.cardBookCloseBtnRect]);
       if (closeHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -1870,7 +1869,7 @@ function handleInput(x, y) {
     if (game._cardBookDetailLevel && !game._closingCardBookDetail) {
       // 检测装备/卸下按钮
       if (renderer.cardBookEquipBtnRect) {
-        const equipHit = renderer.hitTest(x, y, [renderer.cardBookEquipBtnRect]);
+        const equipHit = renderer.hitTest(x, inputY, [renderer.cardBookEquipBtnRect]);
         if (equipHit) {
           if (game.state === 'playing') {
             vibrate();
@@ -1919,7 +1918,7 @@ function handleInput(x, y) {
 
       // 检测翻页按钮（点击区域可能超出详情面板，优先处理）
       if (renderer.cardBookPrevBtnRect) {
-        const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+        const prevHit = renderer.hitTest(x, inputY, [renderer.cardBookPrevBtnRect]);
         if (prevHit && game.cardBookPage > 0) {
           vibrate();
           if (game.audioManager) game.audioManager.play('card_book_page');
@@ -1931,7 +1930,7 @@ function handleInput(x, y) {
         }
       }
       if (renderer.cardBookNextBtnRect) {
-        const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+        const nextHit = renderer.hitTest(x, inputY, [renderer.cardBookNextBtnRect]);
         if (nextHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('card_book_page');
@@ -1945,7 +1944,7 @@ function handleInput(x, y) {
 
       const insideDetail = renderer.cardBookDetailPanelRect &&
         x >= renderer.cardBookDetailPanelRect.x && x <= renderer.cardBookDetailPanelRect.x + renderer.cardBookDetailPanelRect.w &&
-        y >= renderer.cardBookDetailPanelRect.y && y <= renderer.cardBookDetailPanelRect.y + renderer.cardBookDetailPanelRect.h;
+        inputY >= renderer.cardBookDetailPanelRect.y && inputY <= renderer.cardBookDetailPanelRect.y + renderer.cardBookDetailPanelRect.h;
       if (insideDetail) {
         // 点击详情面板内部（非按钮），不关闭
         return;
@@ -1961,7 +1960,7 @@ function handleInput(x, y) {
 
     // 先检测翻页按钮（点击区域可能超出面板，优先处理）
     if (renderer.cardBookPrevBtnRect) {
-      const prevHit = renderer.hitTest(x, y, [renderer.cardBookPrevBtnRect]);
+      const prevHit = renderer.hitTest(x, inputY, [renderer.cardBookPrevBtnRect]);
       if (prevHit && game.cardBookPage > 0) {
         vibrate();
         if (game.audioManager) game.audioManager.play('card_book_page');
@@ -1973,7 +1972,7 @@ function handleInput(x, y) {
       }
     }
     if (renderer.cardBookNextBtnRect) {
-      const nextHit = renderer.hitTest(x, y, [renderer.cardBookNextBtnRect]);
+      const nextHit = renderer.hitTest(x, inputY, [renderer.cardBookNextBtnRect]);
       if (nextHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('card_book_page');
@@ -1987,7 +1986,7 @@ function handleInput(x, y) {
 
     const insidePanel = renderer.cardBookPanelRect &&
       x >= renderer.cardBookPanelRect.x && x <= renderer.cardBookPanelRect.x + renderer.cardBookPanelRect.w &&
-      y >= renderer.cardBookPanelRect.y && y <= renderer.cardBookPanelRect.y + renderer.cardBookPanelRect.h;
+      inputY >= renderer.cardBookPanelRect.y && inputY <= renderer.cardBookPanelRect.y + renderer.cardBookPanelRect.h;
     if (insidePanel) {
       // 点击面板内部非按钮区域 → 不关闭
       return;
@@ -2006,7 +2005,7 @@ function handleInput(x, y) {
     if (game._changeLetterPopup) {
       // 检测关闭按钮
       if (renderer.changeLetterCloseRect) {
-        const closeHit = renderer.hitTest(x, y, [renderer.changeLetterCloseRect]);
+        const closeHit = renderer.hitTest(x, inputY, [renderer.changeLetterCloseRect]);
         if (closeHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2016,7 +2015,7 @@ function handleInput(x, y) {
       }
       // 检测字母块点击
       if (renderer.changeLetterRects) {
-        const letterHit = renderer.hitTest(x, y, renderer.changeLetterRects);
+        const letterHit = renderer.hitTest(x, inputY, renderer.changeLetterRects);
         if (letterHit) {
           vibrate();
           game._changeLetterPopup.targetLetter = letterHit.letter;
@@ -2025,7 +2024,7 @@ function handleInput(x, y) {
       }
       // 检测置换按钮
       if (renderer.changeLetterSwapBtnRect && renderer.changeLetterSwapBtnRect.enabled) {
-        const btnHit = renderer.hitTest(x, y, [renderer.changeLetterSwapBtnRect]);
+        const btnHit = renderer.hitTest(x, inputY, [renderer.changeLetterSwapBtnRect]);
         if (btnHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2068,7 +2067,7 @@ function handleInput(x, y) {
 
     // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
     if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
-      const cardHit = renderer.hitTest(x, y, renderer.cardRects);
+      const cardHit = renderer.hitTest(x, inputY, renderer.cardRects);
       if (cardHit) {
         vibrate();
         game.toggleSelect(cardHit.cardId);
@@ -2078,7 +2077,7 @@ function handleInput(x, y) {
 
     // 检测出牌按钮
     if (renderer.playBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.playBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.playBtnRect]);
       if (btnHit) {
         vibrate();
         renderer.pressedBtn = 'play';
@@ -2097,7 +2096,7 @@ function handleInput(x, y) {
 
     // 检测弃牌按钮
     if (renderer.discardBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.discardBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.discardBtnRect]);
       if (btnHit) {
         vibrate();
         renderer.pressedBtn = 'discard';
@@ -2109,7 +2108,7 @@ function handleInput(x, y) {
 
     // 检测清空选择按钮
     if (renderer.resetBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.resetBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.resetBtnRect]);
       if (btnHit) {
         vibrate();
         renderer.pressedBtn = 'reset';
@@ -2122,7 +2121,7 @@ function handleInput(x, y) {
 
     // 检测种子词提示按钮点击（预览区左侧 help 按钮）
     if (renderer.hintBtnRect) {
-      const hintHit = renderer.hitTest(x, y, [renderer.hintBtnRect]);
+      const hintHit = renderer.hitTest(x, inputY, [renderer.hintBtnRect]);
       if (hintHit) {
         vibrate();
         game.showTipHelpPopup();
@@ -2132,7 +2131,7 @@ function handleInput(x, y) {
 
     // 检测字母置换提示按钮点击
     if (renderer.changeLetterHintRect) {
-      const hintHit = renderer.hitTest(x, y, [renderer.changeLetterHintRect]);
+      const hintHit = renderer.hitTest(x, inputY, [renderer.changeLetterHintRect]);
       if (hintHit) {
         vibrate();
         game._changeLetterHint = null;
@@ -2142,7 +2141,7 @@ function handleInput(x, y) {
 
     // 检测 HUD 女巫头像点击（温柔旋转星星）
     if (renderer.hudWitchAvatarRect) {
-      const avatarHit = renderer.hitTest(x, y, [renderer.hudWitchAvatarRect]);
+      const avatarHit = renderer.hitTest(x, inputY, [renderer.hudWitchAvatarRect]);
       if (avatarHit) {
         vibrate();
         const rect = renderer.hudWitchAvatarRect;
@@ -2157,7 +2156,7 @@ function handleInput(x, y) {
 
     // 检测已购买道具栏中的女巫牌点击（显示/关闭详情弹窗）
     if (renderer.witchPropRects) {
-      const witchHit = renderer.hitTest(x, y, renderer.witchPropRects);
+      const witchHit = renderer.hitTest(x, inputY, renderer.witchPropRects);
       if (witchHit) {
         const joker = game.jokers[witchHit.jokerIndex];
         if (joker && joker._disabled) return;
@@ -2180,7 +2179,7 @@ function handleInput(x, y) {
 
     // 检测卡牌图鉴图标点击
     if (renderer.cardBookIconRect && game.cardBookUnlocked) {
-      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      const cbHit = renderer.hitTest(x, inputY, [renderer.cardBookIconRect]);
       if (cbHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2203,7 +2202,7 @@ function handleInput(x, y) {
 
     // 检测已购买道具栏中的药水牌点击
     if (renderer.potionPropRects) {
-      const potionHit = renderer.hitTest(x, y, renderer.potionPropRects);
+      const potionHit = renderer.hitTest(x, inputY, renderer.potionPropRects);
       if (potionHit) {
         const potion = game.potions[potionHit.potionIndex];
         if (!potion) return;
@@ -2243,7 +2242,7 @@ function handleInput(x, y) {
 
   if (game.state === 'settlement') {
     if (renderer.settlementRenderer && renderer.settlementRenderer.claimBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.settlementRenderer.claimBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.settlementRenderer.claimBtnRect]);
       if (btnHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2266,7 +2265,7 @@ function handleInput(x, y) {
     if (data.phase === 'gift') {
       // 点击3个礼盒之一
       if (wr.giftRects && !data._opening && data._selectedGiftIndex === undefined) {
-        const hit = renderer.hitTest(x, y, wr.giftRects);
+        const hit = renderer.hitTest(x, inputY, wr.giftRects);
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2285,7 +2284,7 @@ function handleInput(x, y) {
         if (data.rewardItem && data.rewardItem.type === 'buff') {
           // buff 类奖励：领取按钮
           if (wr.okBtnRect) {
-            const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+            const hit = renderer.hitTest(x, inputY, [wr.okBtnRect]);
             if (hit) {
               vibrate();
               if (game.audioManager) game.audioManager.play('tap');
@@ -2302,7 +2301,7 @@ function handleInput(x, y) {
           const rects = [];
           if (wr.stashBtnRect) rects.push({ ...wr.stashBtnRect, action: 'stash' });
           if (wr.useBtnRect) rects.push({ ...wr.useBtnRect, action: 'use' });
-          const btnHit = renderer.hitTest(x, y, rects);
+          const btnHit = renderer.hitTest(x, inputY, rects);
           if (btnHit) {
             vibrate();
             if (game.audioManager) game.audioManager.play('tap');
@@ -2325,7 +2324,7 @@ function handleInput(x, y) {
       } else {
         // 没中：确定按钮
         if (wr.okBtnRect) {
-          const hit = renderer.hitTest(x, y, [wr.okBtnRect]);
+          const hit = renderer.hitTest(x, inputY, [wr.okBtnRect]);
           if (hit) {
             vibrate();
             if (game.audioManager) game.audioManager.play('tap');
@@ -2345,7 +2344,7 @@ function handleInput(x, y) {
     // 获得新词牌弹窗优先处理（覆盖在商店上方）
     if (game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
       if (renderer.newWitchCardCollectBtnRect) {
-        const hit = renderer.hitTest(x, y, [renderer.newWitchCardCollectBtnRect]);
+        const hit = renderer.hitTest(x, inputY, [renderer.newWitchCardCollectBtnRect]);
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2364,7 +2363,7 @@ function handleInput(x, y) {
     // 商店女巫技能引导：优先处理引导点击，禁用其他交互
     if (game.shopGuidePhase >= 1 && game.shopGuidePhase <= 2) {
       if (renderer.shopGuideDialogRect) {
-        const btnHit = renderer.hitTest(x, y, [renderer.shopGuideDialogRect]);
+        const btnHit = renderer.hitTest(x, inputY, [renderer.shopGuideDialogRect]);
         if (btnHit) {
           const now = Date.now();
           if (game._shopGuideTapTime && now - game._shopGuideTapTime < 300) {
@@ -2391,7 +2390,7 @@ function handleInput(x, y) {
       if (game.cardBookGuidePhase === 1 || game.cardBookGuidePhase === 2 || game.cardBookGuidePhase === 3) {
         // Phase 1/2/3: 女巫+对话框阶段，点击对话框推进
         if (renderer.cardBookGuideDialogRect) {
-          const btnHit = renderer.hitTest(x, y, [renderer.cardBookGuideDialogRect]);
+          const btnHit = renderer.hitTest(x, inputY, [renderer.cardBookGuideDialogRect]);
           if (btnHit) {
             const now = Date.now();
             if (game._cardBookGuideTapTime && now - game._cardBookGuideTapTime < 300) {
@@ -2417,7 +2416,7 @@ function handleInput(x, y) {
 
     // 检测卡牌图鉴图标点击
     if (renderer.cardBookIconRect && game.cardBookUnlocked) {
-      const cbHit = renderer.hitTest(x, y, [renderer.cardBookIconRect]);
+      const cbHit = renderer.hitTest(x, inputY, [renderer.cardBookIconRect]);
       if (cbHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2451,7 +2450,7 @@ function handleInput(x, y) {
         if (renderer.confirmBuyRenderer && renderer.confirmBuyRenderer.successBtn2Rect) {
           rects.push(renderer.confirmBuyRenderer.successBtn2Rect);
         }
-        const btnHit = renderer.hitTest(x, y, rects);
+        const btnHit = renderer.hitTest(x, inputY, rects);
         if (btnHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2530,7 +2529,7 @@ function handleInput(x, y) {
 
     // 检测已购买道具栏点击（选中/取消选中）
     if (renderer.shopRenderer && renderer.shopRenderer.shopOwnedPropRects) {
-      const propHit = renderer.hitTest(x, y, renderer.shopRenderer.shopOwnedPropRects);
+      const propHit = renderer.hitTest(x, inputY, renderer.shopRenderer.shopOwnedPropRects);
       if (propHit) {
         // 女巫牌支持长按排序（400ms），药水牌保持原有短按逻辑
         if (propHit.array === 'jokers') {
@@ -2543,7 +2542,7 @@ function handleInput(x, y) {
               fromIndex: propHit.index,
               insertSlot: propHit.index,
               currentX: x,
-              currentY: y,
+              currentY: inputY,
             };
             // 取消当前选中状态，避免排序时显示售出按钮
             renderer.shopRenderer.shopSelectedOwned = null;
@@ -2565,7 +2564,7 @@ function handleInput(x, y) {
 
     // 检测女巫详情弹窗售出按钮点击（商店页）
     if (game._witchDetailPopup && game._witchDetailPopup.isShop && renderer._shopWitchDetailSellBtnRect) {
-      const sellHit = renderer.hitTest(x, y, [renderer._shopWitchDetailSellBtnRect]);
+      const sellHit = renderer.hitTest(x, inputY, [renderer._shopWitchDetailSellBtnRect]);
       if (sellHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('card_sell');
@@ -2589,7 +2588,7 @@ function handleInput(x, y) {
 
     // 检测售出按钮点击
     if (renderer.shopRenderer && renderer.shopRenderer.shopSellBtnRect) {
-      const sellHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopSellBtnRect]);
+      const sellHit = renderer.hitTest(x, inputY, [renderer.shopRenderer.shopSellBtnRect]);
       if (sellHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('card_sell');
@@ -2612,7 +2611,7 @@ function handleInput(x, y) {
 
     // 检测使用按钮点击（随机强化 / 字母升级药水）
     if (renderer.shopRenderer && renderer.shopRenderer.shopUseBtnRect) {
-      const useHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopUseBtnRect]);
+      const useHit = renderer.hitTest(x, inputY, [renderer.shopRenderer.shopUseBtnRect]);
       if (useHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2645,7 +2644,7 @@ function handleInput(x, y) {
 
     // 检测全局重掷按钮点击（扣除 3 金币，刷新所有模块）
     if (renderer.shopRenderer && renderer.shopRenderer.shopGlobalRerollBtnRect) {
-      const rerollHit = renderer.hitTest(x, y, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
+      const rerollHit = renderer.hitTest(x, inputY, [renderer.shopRenderer.shopGlobalRerollBtnRect]);
       if (rerollHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2662,7 +2661,7 @@ function handleInput(x, y) {
 
     // 检测刷新按钮点击（扣除 5 金币）
     if (renderer.shopRenderer && renderer.shopRenderer.shopRefreshRects) {
-      const refreshHit = renderer.hitTest(x, y, renderer.shopRenderer.shopRefreshRects);
+      const refreshHit = renderer.hitTest(x, inputY, renderer.shopRenderer.shopRefreshRects);
       if (refreshHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2680,7 +2679,7 @@ function handleInput(x, y) {
       const popup = game._buyConfirmPopup;
       // 确认按钮
       if (popup.confirmRect) {
-        const confirmHit = renderer.hitTest(x, y, [popup.confirmRect]);
+        const confirmHit = renderer.hitTest(x, inputY, [popup.confirmRect]);
         if (confirmHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2714,7 +2713,7 @@ function handleInput(x, y) {
       }
       // 取消按钮
       if (popup.cancelRect) {
-        const cancelHit = renderer.hitTest(x, y, [popup.cancelRect]);
+        const cancelHit = renderer.hitTest(x, inputY, [popup.cancelRect]);
         if (cancelHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2731,7 +2730,7 @@ function handleInput(x, y) {
 
     // 点击价格按钮：显示二次确认框
     if (renderer.shopRenderer && renderer.shopRenderer.shopPriceBtnRects) {
-      const priceHit = renderer.hitTest(x, y, renderer.shopRenderer.shopPriceBtnRects);
+      const priceHit = renderer.hitTest(x, inputY, renderer.shopRenderer.shopPriceBtnRects);
       if (priceHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2759,7 +2758,7 @@ function handleInput(x, y) {
     }
 
     if (renderer.shopRenderer && renderer.shopRenderer.nextRoundBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.shopRenderer.nextRoundBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.shopRenderer.nextRoundBtnRect]);
       if (btnHit && !game._challengeBtnPressed && !game._pendingWitchRewardDelay) {
         vibrate();
         if (game.audioManager) game.audioManager.play('challenge');
@@ -2788,7 +2787,7 @@ function handleInput(x, y) {
     if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
       // 检测抽选按钮（只在 idle 阶段可点）
       if (renderer.randomSpinBtnRect && renderer.randomSpinBtnRect.enabled) {
-        const spinHit = renderer.hitTest(x, y, [renderer.randomSpinBtnRect]);
+        const spinHit = renderer.hitTest(x, inputY, [renderer.randomSpinBtnRect]);
         if (spinHit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2801,7 +2800,7 @@ function handleInput(x, y) {
 
     // 检测字母点击
     if (renderer.potionLetterRects) {
-      const letterHit = renderer.hitTest(x, y, renderer.potionLetterRects);
+      const letterHit = renderer.hitTest(x, inputY, renderer.potionLetterRects);
       if (letterHit) {
         vibrate();
         game._potionSelectedLetter = letterHit.letter;
@@ -2811,7 +2810,7 @@ function handleInput(x, y) {
 
     // 检测升级按钮
     if (renderer.potionUpgradeBtnRect && renderer.potionUpgradeBtnRect.enabled) {
-      const btnHit = renderer.hitTest(x, y, [renderer.potionUpgradeBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.potionUpgradeBtnRect]);
       if (btnHit && game._potionSelectedLetter) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2855,7 +2854,7 @@ function handleInput(x, y) {
 
     // 检测暂存按钮
     if (renderer.potionStashBtnRect && renderer.potionStashBtnRect.enabled) {
-      const btnHit = renderer.hitTest(x, y, [renderer.potionStashBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.potionStashBtnRect]);
       if (btnHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2880,7 +2879,7 @@ function handleInput(x, y) {
   if (game.state === 'life_extended') {
     if (game._lifeExtensionBtnPressed) return;
     if (renderer.lifeExtensionBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.lifeExtensionBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.lifeExtensionBtnRect]);
       if (btnHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2920,7 +2919,7 @@ function handleInput(x, y) {
 
     // 复活按钮
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.reviveBtnRect) {
-      const reviveHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.reviveBtnRect]);
+      const reviveHit = renderer.hitTest(x, inputY, [renderer.gameOverRenderer.reviveBtnRect]);
       if (reviveHit) {
         const dailyReviveUsed = game.storageManager && game.storageManager.isDailyReviveUsed();
         if (dailyReviveUsed) {
@@ -2944,7 +2943,7 @@ function handleInput(x, y) {
 
     // 排行榜按钮
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.rankBtnRect) {
-      const rankHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.rankBtnRect]);
+      const rankHit = renderer.hitTest(x, inputY, [renderer.gameOverRenderer.rankBtnRect]);
       if (rankHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2954,7 +2953,7 @@ function handleInput(x, y) {
     }
 
     if (renderer.gameOverRenderer && renderer.gameOverRenderer.restartBtnRect) {
-      const btnHit = renderer.hitTest(x, y, [renderer.gameOverRenderer.restartBtnRect]);
+      const btnHit = renderer.hitTest(x, inputY, [renderer.gameOverRenderer.restartBtnRect]);
       if (btnHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');

@@ -58,5 +58,65 @@
       { "word": "urban", "meaning": "adj. 城市的", "phonetic": "/ˈɜːrbən/", "example": "Traffic is a common urban problem.", "example_meaning": "交通是常见的城市问题。" },
       { "word": "vocal", "meaning": "adj. 声音的；直言的", "phonetic": "/ˈvoʊkl/", "example": "She was very vocal about her opinions.", "example_meaning": "她非常直言不讳地表达自己的观点。" }
     ]
+  },
+  {
+    "date": "2026-06-17",
+    "words": [
+      { "word": "waste", "meaning": "v./n. 浪费", "phonetic": "/weɪst/", "example": "Don't waste water.", "example_meaning": "不要浪费水。" },
+      { "word": "yield", "meaning": "v. 产生；屈服", "phonetic": "/jiːld/", "example": "The farm yields fresh vegetables.", "example_meaning": "这个农场出产新鲜蔬菜。" },
+      { "word": "zebra", "meaning": "n. 斑马", "phonetic": "/ˈziːbrə/", "example": "The zebra has black and white stripes.", "example_meaning": "斑马有黑白条纹。" },
+      { "word": "arena", "meaning": "n. 竞技场", "phonetic": "/əˈriːnə/", "example": "The concert was held in a large arena.", "example_meaning": "演唱会在一个大型竞技场举行。" },
+      { "word": "bloom", "meaning": "v./n. 开花；花朵", "phonetic": "/bluːm/", "example": "The roses bloom in spring.", "example_meaning": "玫瑰在春天开花。" },
+      { "word": "crust", "meaning": "n. 外壳；面包皮", "phonetic": "/krʌst/", "example": "The pizza had a crispy crust.", "example_meaning": "这个披萨有酥脆的饼皮。" },
+      { "word": "elbow", "meaning": "n. 肘部", "phonetic": "/ˈelboʊ/", "example": "He hurt his elbow playing tennis.", "example_meaning": "他打网球时伤到了肘部。" },
+      { "word": "fancy", "meaning": "adj. 精致的；v. 想要", "phonetic": "/ˈfænsi/", "example": "She wore a fancy dress to the party.", "example_meaning": "她穿了一条精致的裙子去参加派对。" },
+      { "word": "groom", "meaning": "v. 梳理；n. 新郎", "phonetic": "/ɡruːm/", "example": "The bride and groom looked happy.", "example_meaning": "新娘和新郎看起来很开心。" },
+      { "word": "hobby", "meaning": "n. 爱好", "phonetic": "/ˈhɑːbi/", "example": "Painting is my favorite hobby.", "example_meaning": "绘画是我最喜欢的爱好。" }
+    ]
+  },
+  {
+    "date": "2026-06-18",
+    "words": [
+      { "word": "ideal", "meaning": "adj. 理想的", "phonetic": "/aɪˈdiːəl/", "example": "This is the ideal place for a picnic.", "example_meaning": "这是野餐的理想地点。" },
+      { "word": "jewel", "meaning": "n. 珠宝", "phonetic": "/ˈdʒuːəl/", "example": "The crown was decorated with jewels.", "example_meaning": "王冠上装饰着珠宝。" },
+      { "word": "laser", "meaning": "n. 激光", "phonetic": "/ˈleɪzər/", "example": "Doctors use laser in surgery.", "example_meaning": "医生在手术中使用激光。" },
+      { "word": "mayor", "meaning": "n. 市长", "phonetic": "/ˈmeɪər/", "example": "The mayor gave a speech.", "example_meaning": "市长发表了演讲。" },
+      { "word": "noble", "meaning": "adj. 高尚的；贵族的", "phonetic": "/ˈnoʊbl/", "example": "He is a man of noble character.", "example_meaning": "他是一个品格高尚的人。" },
+      { "word": "ocean", "meaning": "n. 海洋", "phonetic": "/ˈoʊʃn/", "example": "The ocean looks calm today.", "example_meaning": "今天海洋看起来很平静。" },
+      { "word": "paint", "meaning": "v./n. 绘画；油漆", "phonetic": "/peɪnt/", "example": "She likes to paint landscapes.", "example_meaning": "她喜欢画风景画。" },
+      { "word": "quilt", "meaning": "n. 被子", "phonetic": "/kwɪlt/", "example": "Grandma made a warm quilt.", "example_meaning": "奶奶做了一床暖和的被子。" },
+      { "word": "radar", "meaning": "n. 雷达", "phonetic": "/ˈreɪdɑːr/", "example": "The radar detected a storm.", "example_meaning": "雷达探测到了暴风雨。" },
+      { "word": "saint", "meaning": "n. 圣人", "phonetic": "/seɪnt/", "example": "The church is named after a saint.", "example_meaning": "这座教堂以一位圣人命名。" }
+    ]
+  },
+  {
+    "date": "2026-06-19",
+    "words": [
+      { "word": "troop", "meaning": "n. 部队；一群", "phonetic": "/truːp/", "example": "A troop of soldiers marched past.", "example_meaning": "一队士兵列队走过。" },
+      { "word": "unity", "meaning": "n. 团结；统一", "phonetic": "/ˈjuːnəti/", "example": "The team worked together in unity.", "example_meaning": "团队团结一致地工作。" },
+      { "word": "virus", "meaning": "n. 病毒", "phonetic": "/ˈvaɪrəs/", "example": "The virus spread quickly.", "example_meaning": "病毒传播得很快。" },
+      { "word": "whale", "meaning": "n. 鲸鱼", "phonetic": "/weɪl/", "example": "We saw a whale during the boat trip.", "example_meaning": "我们在乘船旅行时看到了鲸鱼。" },
+      { "word": "youth", "meaning": "n. 青年；青春", "phonetic": "/juːθ/", "example": "Youth is full of dreams.", "example_meaning": "青春充满梦想。" },
+      { "word": "alarm", "meaning": "n. 警报；闹钟", "phonetic": "/əˈlɑːrm/", "example": "The alarm woke me up.", "example_meaning": "闹钟把我叫醒了。" },
+      { "word": "brave", "meaning": "adj. 勇敢的", "phonetic": "/breɪv/", "example": "The brave firefighter saved the cat.", "example_meaning": "勇敢的消防员救了猫。" },
+      { "word": "cargo", "meaning": "n. 货物", "phonetic": "/ˈkɑːrɡoʊ/", "example": "The ship carried heavy cargo.", "example_meaning": "这艘船运载着沉重的货物。" },
+      { "word": "diver", "meaning": "n. 潜水员", "phonetic": "/ˈdaɪvər/", "example": "The diver explored the reef.", "example_meaning": "潜水员探索了珊瑚礁。" },
+      { "word": "eagle", "meaning": "n. 鹰", "phonetic": "/ˈiːɡl/", "example": "An eagle soared above the mountains.", "example_meaning": "一只鹰在山脉上空翱翔。" }
+    ]
+  },
+  {
+    "date": "2026-06-20",
+    "words": [
+      { "word": "flame", "meaning": "n. 火焰", "phonetic": "/fleɪm/", "example": "The candle flame flickered.", "example_meaning": "蜡烛的火焰摇曳着。" },
+      { "word": "globe", "meaning": "n. 地球；球体", "phonetic": "/ɡloʊb/", "example": "She spun the globe with her finger.", "example_meaning": "她用手指转动地球仪。" },
+      { "word": "horse", "meaning": "n. 马", "phonetic": "/hɔːrs/", "example": "The horse ran across the field.", "example_meaning": "马跑过田野。" },
+      { "word": "inbox", "meaning": "n. 收件箱", "phonetic": "/ˈɪnbɑːks/", "example": "I have ten emails in my inbox.", "example_meaning": "我的收件箱里有十封邮件。" },
+      { "word": "jelly", "meaning": "n. 果冻；果酱", "phonetic": "/ˈdʒeli/", "example": "The children ate jelly for dessert.", "example_meaning": "孩子们把果冻当甜点吃。" },
+      { "word": "knife", "meaning": "n. 刀", "phonetic": "/naɪf/", "example": "Be careful with that sharp knife.", "example_meaning": "小心那把锋利的刀。" },
+      { "word": "lemon", "meaning": "n. 柠檬", "phonetic": "/ˈlemən/", "example": "I added lemon to my tea.", "example_meaning": "我在茶里加了柠檬。" },
+      { "word": "melon", "meaning": "n. 瓜", "phonetic": "/ˈmelən/", "example": "We ate sweet melon after dinner.", "example_meaning": "我们晚饭后吃了甜甜的瓜。" },
+      { "word": "novel", "meaning": "n. 小说；adj. 新颖的", "phonetic": "/ˈnɑːvl/", "example": "She is writing a historical novel.", "example_meaning": "她正在写一部历史小说。" },
+      { "word": "onion", "meaning": "n. 洋葱", "phonetic": "/ˈʌnjən/", "example": "I chopped an onion for the soup.", "example_meaning": "我为汤切了一个洋葱。" }
+    ]
   }
 ]

@@ -12,22 +12,7 @@ class Renderer {
     this.W = width;
     this.H = height;
     
-    // 响应式基准计算
-    // 使用 min(width/375, height/667) 确保在任何屏幕上都适配
-    const baseScale = Math.min(width / 375, height / 667);
-    // 限制最大缩放，避免在 iPad 上元素过大
-    this.scale = Math.min(baseScale, 1.4);
-    // 限制最小缩放，避免在小屏幕上元素过小
-    this.scale = Math.max(this.scale, 0.8);
-    
-    // 计算卡牌尺寸（支持最多4列）
-    const maxCardW = Math.floor((width - 48) / 4); // 4列，左右边距24
-    const maxCardH = Math.floor((height - 200) / 3); // 最多3行，预留上方HUD和下方按钮
-    this.cardW = Math.min(Math.floor(74 * this.scale), maxCardW);
-    this.cardH = Math.min(Math.floor(88 * this.scale), maxCardH);
-    this.gap = Math.floor(8 * this.scale);
-    
-    // 安全区域（刘海屏/灵动岛适配）
+    // 安全区域（刘海屏/灵动岛适配）—— 先获取，供 scale 计算参考
     this.safeTop = 0;
     this.safeBottom = 0;
     this.hasDynamicIsland = false;
@@ -42,6 +27,30 @@ class Renderer {
       this.safeTop = 0;
       this.hasDynamicIsland = false;
     }
+
+    // 响应式基准计算
+    // 使用 min(width/375, height/667) 确保在任何屏幕上都适配
+    const baseScale = Math.min(width / 375, height / 667);
+    // 限制最大缩放，避免在 iPad 上元素过大
+    this.scale = Math.min(baseScale, 1.4);
+    // 限制最小缩放，避免在小屏幕上元素过小
+    this.scale = Math.max(this.scale, 0.8);
+
+    // 折叠屏/矮屏适配：当 scale 被放大到 1.0 以上，且 740*s 超过可用高度时，
+    // 整体缩小 scale，避免在 16:10 折叠屏（如 HUAWEI Pura X 内屏）上内容溢出。
+    // 注意：playing/shop/life_extended 页面整体下移了 10px，所以额外预留 10px。
+    const requiredHeight = Math.floor(740 * this.scale + 10);
+    const availableHeight = height - this.safeTop - this.safeBottom;
+    if (this.scale > 1.0 && requiredHeight > availableHeight && availableHeight > 0) {
+      this.scale = Math.max((availableHeight - 10) / 740, 0.75);
+    }
+
+    // 计算卡牌尺寸（支持最多4列）
+    const maxCardW = Math.floor((width - 48) / 4); // 4列，左右边距24
+    const maxCardH = Math.floor((height - 200) / 3); // 最多3行，预留上方HUD和下方按钮
+    this.cardW = Math.min(Math.floor(74 * this.scale), maxCardW);
+    this.cardH = Math.min(Math.floor(88 * this.scale), maxCardH);
+    this.gap = Math.floor(8 * this.scale);
     
     this.animations = [];
     

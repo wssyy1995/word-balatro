@@ -1457,9 +1457,9 @@ class ShopRenderer {
     ctx.setLineDash([]);
     ctx.restore();
 
-    // 挑战按钮
-    const challengeBtnW = 92 * s;
-    const challengeBtnH = 40 * s;
+    // 挑战按钮（整体放大一点）
+    const challengeBtnW = 100 * s;
+    const challengeBtnH = 44 * s;
     let challengeBtnX, challengeBtnY;
 
     if (witchSkill) {

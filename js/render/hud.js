@@ -50,7 +50,8 @@ module.exports = function extendHud(Renderer) {
       const ctx = this.ctx;
       const W = this.W;
       const s = this.scale;
-      const extraHeight = s < 1.0 ? Math.max(0, this.H - Math.floor(740 * s)) : 0;
+      // 高度盈余/不足自适应：与 drawPlaying 保持一致
+      const extraHeight = this.H - Math.floor(740 * s);
       const topOffset = extraHeight * 0.05;
       const top = (this.safeTop || 0) + 18 * s + (this.hasDynamicIsland ? 10 * s : 0) + topOffset;
       const h = 72 * s;
