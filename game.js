@@ -232,6 +232,11 @@ function switchRankTab(tab) {
 async function handleGlobalTabEnter() {
   if (!game) return;
 
+  // 检查授权期间先显示 loading，避免短暂闪现“加载失败”
+  game._globalRankLoading = true;
+  game._globalRankError = null;
+  game._globalRankData = null;
+
   // 先检查是否已经授权过头像昵称
   const isAuth = await checkUserInfoAuth();
   if (isAuth) {
@@ -239,7 +244,8 @@ async function handleGlobalTabEnter() {
     game._showingGlobalAuthButton = false;
     loadGlobalRank(false);
   } else {
-    // 未授权：显示原生授权按钮，由用户主动点击后授权
+    // 未授权：隐藏 loading，显示原生授权按钮，由用户主动点击后授权
+    game._globalRankLoading = false;
     showGlobalAuthButton();
   }
 }
