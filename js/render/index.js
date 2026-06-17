@@ -95,7 +95,8 @@ Renderer.prototype.render = function(game) {
               game._pendingWitchRewardDelay = false;
               game._witchRewardDelayStartTime = null;
               const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
-              if (witchSkill && game.witchSkillPassed) {
+              // 临时仅第 3 关发放女巫奖励
+              if (witchSkill && game.witchSkillPassed && game.round === 3) {
                 game.witchRewardData = {
                   skill: witchSkill,
                   phase: 'gift',
