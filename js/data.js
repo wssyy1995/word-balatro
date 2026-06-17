@@ -91,13 +91,13 @@ function getLetterScore(letter) {
 // 第一关1关=250
 function calcBaseTarget(round) {
   function getCoefficient(r) {
-    if (r <= 5) return 25;
-    if (r <= 10) return 30;
-    if (r <= 20) return 36;
-    if (r <= 30) return 43;
-    if (r <= 40) return 51;
-    if (r <= 50) return 60;
-    return 70;
+    if (r <= 5) return 30;
+    if (r <= 10) return 35;
+    if (r <= 20) return 37;
+    if (r <= 30) return 40;
+    if (r <= 40) return 44;
+    if (r <= 50) return 50;
+    return 60;
   }
   let target = 250;
   for (let r = 2; r <= round; r++) {
