@@ -847,8 +847,8 @@ class ShopRenderer {
     const cardH = unitH - 20 * s;
 
     const innerPad = 6 * s;
-    const rowGap = 20;
-    const containerPad = rowGap;
+    const rowGap = 25;           // 行间距（像素）
+    const containerPad = 20;     // 容器上下内边距（像素），与行间距独立
     const titleH = 50 * s;
     const titleGap = 6 * s;
 
