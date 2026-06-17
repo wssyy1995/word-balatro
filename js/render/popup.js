@@ -184,9 +184,15 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
-        const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
-        const constraintText = isMultiplier ? `女巫约束：当前倍率为 x${valueText}` : `女巫约束：当前倍率为 +${valueText}`;
+        let constraintText;
+        if (joker.trigger === 'chaos_orb') {
+          // 混沌法球：value 为随机倍率加成，女巫约束下加成范围减半
+          constraintText = '女巫约束：倍率加成随机 +[0.25~0.75]';
+        } else {
+          const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
+          const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
+          constraintText = isMultiplier ? `女巫约束：当前倍率为 x${valueText}` : `女巫约束：当前倍率为 +${valueText}`;
+        }
         ctx.fillText(constraintText, popupX + pad, cy);
         ctx.restore();
       }
