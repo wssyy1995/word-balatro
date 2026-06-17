@@ -10,11 +10,29 @@ module.exports = function extendHud(Renderer) {
       const iconSize = 34 * s;
       const iconX = 15 * s + 5 * s;
       const iconY = 10 * s + 5 * s + headerOffset;
-      if (this.topIcon && this.topIconLoaded) {
-        ctx.drawImage(this.topIcon, iconX, iconY, iconSize, iconSize);
+      // top_icon 按压动画：按下时向下偏移，松手后回弹
+      let pressOffsetY = 0;
+      if (this._topIconPressAnim) {
+        const anim = this._topIconPressAnim;
+        const elapsed = Date.now() - anim.startTime;
+        const duration = anim.pressing ? 80 : 150;
+        const progress = Math.min(elapsed / duration, 1);
+        const maxOffset = 3 * s;
+        if (anim.pressing) {
+          pressOffsetY = maxOffset * Easing.easeOutCubic(progress);
+        } else {
+          pressOffsetY = maxOffset * (1 - Easing.easeOutCubic(progress));
+        }
+        if (progress >= 1 && !anim.pressing) {
+          this._topIconPressAnim = null;
+        }
       }
-      // 记录点击区域
-      this.topIconRect = { x: iconX, y: iconY, w: iconSize, h: iconSize };
+      const drawIconY = iconY + pressOffsetY;
+      if (this.topIcon && this.topIconLoaded) {
+        ctx.drawImage(this.topIcon, iconX, drawIconY, iconSize, iconSize);
+      }
+      // 记录点击区域（使用当前绘制位置）
+      this.topIconRect = { x: iconX, y: drawIconY, w: iconSize, h: iconSize };
   
       // 金币胶囊：放在 top_icon 右侧，间距 10px
       const coinIconSize = 22 * s;

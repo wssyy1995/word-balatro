@@ -447,6 +447,7 @@ wx.onTouchStart((e) => {
     const iconHit = renderer.hitTest(x, y, [renderer.topIconRect]);
     if (iconHit) {
       longPressTriggered = false;
+      renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
       longPressTimer = setTimeout(() => {
         longPressTimer = null;
         longPressTriggered = true;
@@ -958,6 +959,11 @@ wx.onTouchEnd(() => {
   if (longPressTimer) {
     clearTimeout(longPressTimer);
     longPressTimer = null;
+  }
+
+  // top_icon 按压动画恢复
+  if (renderer._topIconPressAnim) {
+    renderer._topIconPressAnim = { pressing: false, startTime: Date.now() };
   }
 
   // top_icon 短按：打开设置弹窗（长按未触发时）
