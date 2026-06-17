@@ -1002,10 +1002,10 @@ class ShopRenderer {
         let targetW = rowW;
         let targetH = rowH;
         if (mod.type === 'witch') {
-          targetW = rowW + 14 * s;
-          targetH = rowH + 8 * s;
-          targetX = rowX - 5 * s;
-          targetY = rowY - 1 * s;
+          targetW = rowW + 16 * s;
+          targetH = rowH + 18 * s;
+          targetX = rowX - 7 * s;
+          targetY = rowY - 15 * s;
         } else if (mod.type === 'potion') {
           targetW = rowW -20*s;
           targetH = rowH + 4 * s;
@@ -1213,9 +1213,9 @@ class ShopRenderer {
         ctx.restore();
 
         // 价格按钮（暖米色，金币图标+价格）
-        const btnH = 22 * s;
+        const btnH = 20 * s;
         const btnY = unitY + unitH - btnH - 10 * s + 2 * s + 1 * s; // 整体下移 3px
-        const coinSize = 15 * s;
+        const coinSize = 13 * s;
         const finalCost = game._shopDiscountActive ? Math.round(item.cost * game._shopDiscountRate) : item.cost;
         const canAfford = game.gold >= finalCost;
 
@@ -1245,13 +1245,13 @@ class ShopRenderer {
 
         // 先计算按钮宽度
         ctx.save();
-        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         const priceTextW = ctx.measureText(btnText).width;
         ctx.restore();
         const contentW = showCoin ? coinSize + 4 * s + priceTextW : priceTextW;
         const btnExtraW = isActive ? 23 : 13; // 灰色状态左右各-5px
-        // 可购买 / 余额不足：统一固定宽度（82*s 可容纳金币图标+"余额不足"）；已达上限保持动态宽度
-        const ACTIVE_BTN_W = 82 * s;
+        // 可购买 / 余额不足：统一固定宽度（74*s 可容纳金币图标+"余额不足"）；已达上限保持动态宽度
+        const ACTIVE_BTN_W = 74 * s;
         const useFixedWidth = isActive || !canAfford;
         const btnW = useFixedWidth ? ACTIVE_BTN_W : contentW + 16 * s + btnExtraW;
         const btnX = textX + 2;
@@ -1268,7 +1268,7 @@ class ShopRenderer {
         ctx.shadowColor = 'rgba(0,0,0,0.25)';
         ctx.shadowBlur = 4 * s;
         ctx.shadowOffsetY = 2 * s;
-        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 7 * s, isActive ? '#FFF1D4' : '#e0e0e0');
+        this.parent.roundRect(btnX, btnY + pressOffset, btnW, btnH, 6 * s, isActive ? '#FFF1D4' : '#e0e0e0');
         ctx.restore();
 
         // 顶部高光条（所有状态都有）
@@ -1289,7 +1289,7 @@ class ShopRenderer {
           const discountText = String(finalCost);
           ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
           const originalW = ctx.measureText(originalText).width;
-          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
           const discountW = ctx.measureText(discountText).width;
           const innerGap = 4 * s;
           const totalTextW = originalW + innerGap + discountW;
@@ -1312,7 +1312,7 @@ class ShopRenderer {
           ctx.lineTo(textStartX + originalW + 1 * s, midY);
           ctx.stroke();
           // 折后价
-          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
           ctx.fillStyle = '#8b6914';
           ctx.fillText(discountText, textStartX + originalW + innerGap, midY);
         } else {
@@ -1329,7 +1329,7 @@ class ShopRenderer {
 
         // discount.png 标签（右上角）
         if (game._shopDiscountActive && this.parent.discountIcon && this.parent.discountIconLoaded) {
-          const tagW = 22 * s;
+          const tagW = 20 * s;
           const tagH = tagW;
           const tagX = btnX + btnW - tagW * 0.7;
           const tagY = btnY - tagH * 0.5 + pressOffset;
