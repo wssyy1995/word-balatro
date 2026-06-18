@@ -64,7 +64,8 @@ class CloudStorageManager {
       'predicted_letter':c('/shop_card/predicted_letter.png'),
       'no_duplicate':c('/shop_card/no_duplicate.png'),
       'chaos_orb':c('/shop_card/chaos_orb.png'),
-      'left_right_open':c('/shop_card/left_right_open.png')
+      'left_right_open':c('/shop_card/left_right_open.png'),
+      'is_new_word':c('/shop_card/is_new_word.png')
     };
 
     // 默认 witch 图片云文件映射

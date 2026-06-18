@@ -880,6 +880,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
             }
             wwMatched = !hasOverlap;
           }
+        } else if (j.trigger === 'is_new_word') {
+          // 温故知新：首次打出新单词时触发；基于本地单词本历史记录判断
+          wwMatched = pendingCheck?.isNewWord ?? true;
         } else {
           wwMatched = _matchWordTrigger(cards, j.trigger);
         }
@@ -2459,20 +2462,28 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    // === 混沌法球：每次出牌随机给倍率 +0.5~1.5 ===
+    // === 混沌法球：每次出牌随机给倍率 +0.5~1.2 ===
     const chaosOrb = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'chaos_orb' && !j._disabled);
     if (chaosOrb) {
-      const chaosMult = 0.5 + Math.random() * 1.0; // 0.5 ~ 1.5
+      const chaosMult = 0.5 + Math.random() * 0.7; // 0.5 ~ 1.2
       chaosOrb.value = chaosMult;
     }
 
+    // === 温故知新：基于本地单词本判断当前单词是否首次打出 ===
+    let isNewWord = true;
+    if (this.storageManager) {
+      const book = this.storageManager.getWordBook();
+      isNewWord = !book.words || !book.words[word];
+    }
+    this.pendingCheck.isNewWord = isNewWord;
+
     const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
-    // === 以小博大（出牌<=3个字母，30%概率倍率+8） ===
+    // === 以小博大（出牌<=3个字母，40%概率倍率+8） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
     if (lastPrayer && playedInOrder.length < 4) {
-      const success = Math.random() < 0.3;
+      const success = Math.random() < 0.4;
       const boostValue = 8;
       if (success) {
         result.mult += boostValue;
@@ -2604,6 +2615,9 @@ class Game {
           } else {
             matched = !Array.from(currentLetters).some(l => lastLetters.has(l));
           }
+        } else if (joker.trigger === 'is_new_word') {
+          // 温故知新：首次打出新单词时触发；基于本地单词本历史记录判断
+          matched = this.pendingCheck?.isNewWord ?? true;
         } else {
           matched = _matchWordTrigger(playedInOrder, joker.trigger);
         }

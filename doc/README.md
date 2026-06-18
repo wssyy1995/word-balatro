@@ -164,7 +164,7 @@ word-balatro/
 6. 勇敢试错：非法单词且未触发容错咒文时，illegal_boost 倍率 +1
 7. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
 9. 字母之神（letter_god）预处理：若触发，先将所有出牌字母分数改为最高分
-10. 以小博大（last_chance）：若出牌 ≤3 个字母，30% 概率 mult +8
+10. 以小博大（last_chance）：若出牌 ≤3 个字母，40% 概率 mult +8
 11. letter_X_mult_half 惩罚检测（含 A/E/S/I）→ 满足条件则倍率减半
 12. 合法 → calcWordScore() 计算分数
 13. 启动完整动画时间线（事件驱动，renderer 推进）：
@@ -247,14 +247,14 @@ for each flat_bonus 女巫牌:
 | 元音强化 | `has_vowel` | per_card | 卡牌为元音 | 该卡 score ×3 |
 | 元音为首 | `initial_vowel` | per_card | 单词首字母为元音 | 该首字母 score +60 |
 | 左右开弓 | `left_right_open` | per_card | 单词首尾两张字母牌 | 首尾字母各 score +30 |
-| 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult ×1.5 |
-| 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult ×2 |
+| 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult +1 |
+| 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult +2 |
 | 珍稀之力 | `has_face` | whole_word | 单词含 J/Q/X/Y/Z | mult +4 |
 | 容错咒文 | `shield_illegal` | — | 打出非法单词 | 不扣除出牌次数 |
 | 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
 | 生命延续 | `life_extension` | limit | 出牌耗尽时（限1次） | 挽救游戏结束，目标分差×2 加到下一回合目标分 |
 | 勇敢试错 | `illegal_boost` | whole_word | 打出非法单词后 | 倍率 +1（若同时触发容错咒文则不生效） |
-| 以小博大 | `last_chance` | whole_word | 出牌 ≤3 个字母 | 30% 概率 mult +8 |
+| 以小博大 | `last_chance` | whole_word | 出牌 ≤3 个字母 | 40% 概率 mult +8 |
 | 双子合影 | `double_same` | whole_word | 含相邻重复字母 | mult +5 |
 | 首尾呼应 | `firstend_same` | whole_word | 首尾字母相同 | mult +6 |
 | 首字连击 | `initial_succession` | whole_word | 连续打出同首字母单词 | 每次 mult +3，中断后重置 |
@@ -262,11 +262,12 @@ for each flat_bonus 女巫牌:
 | 复制魔法 | `end_s` | whole_word | 单词末尾加 "s" 也合法 | mult +3 |
 | 消元术 | `no_duplicate` | whole_word | 与上一手无重复字母 | mult +2（否则 -1） |
 | 预言家 | `predicted_letter` | per_card | 回合开始时预言的字母 | 该字母分数 +100 |
-| 混沌法球 | `chaos_orb` | whole_word | 每次出牌必触发 | 倍率随机 +[0.5~1.5] |
+| 混沌法球 | `chaos_orb` | whole_word | 每次出牌必触发 | 倍率随机 +[0.5~1.2] |
+| 温故知新 | `is_new_word` | whole_word | 单词首次打出 | mult +3；否则 mult -1 |
 
 > 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
-> `length_4/5/6`（四/五/六字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放。
+> `length_4`（四字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放；五/六字母连击正常投放。
 
 **目标分数公式**
 采用分段系数累加：
@@ -788,9 +789,9 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复，并按 `min_level`（最低出现关卡）过滤——只有当前回合 ≥ `min_level` 的女巫牌才会出现在商店中；过滤后不足 2 款时，用满足 `min_level` 的池子补充。
 
-**女巫牌列表**：元音强化、元音为首、左右开弓、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家、混沌法球。
+**女巫牌列表**：元音强化、元音为首、左右开弓、五字母连击、六字母连击、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家、混沌法球、温故知新。
 
-> 部分女巫牌设有 `min_level` 解锁门槛，例如生命延续（Lv.10）、双子合影（Lv.10）、首尾呼应（Lv.15）、回到过去（Lv.5）、复制魔法（Lv.10）、字母之神（Lv.5）等；低回合商店不会刷出高等级牌。`length_4/5/6`（四/五/六字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放。
+> 部分女巫牌设有 `min_level` 解锁门槛，例如生命延续（Lv.10）、双子合影（Lv.10）、首尾呼应（Lv.15）、回到过去（Lv.5）、复制魔法（Lv.10）、字母之神（Lv.5）等；低回合商店不会刷出高等级牌。`length_4`（四字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放；五/六字母连击正常投放。
 
 ### 4.2 药水种类
 

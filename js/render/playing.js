@@ -400,7 +400,7 @@ module.exports = function extendPlaying(Renderer) {
           }
         }
 
-        const hintBtnSize = 28 * s;
+        const hintBtnSize = 38 * s;
         const hintBtnX = maskX - hintBtnSize - 8 * s - 1;
         const hintBtnY = wordAreaY - hintBtnSize / 2;
         ctx.save();
