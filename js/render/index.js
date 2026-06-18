@@ -84,8 +84,11 @@ Renderer.prototype.render = function(game) {
         this.drawChangeLetterPopup(game);
       }
     } else if (game.state === 'settlement') {
-      // 金币结算弹窗（保留 HUD 背景）
+      // 金币结算弹窗（保留 HUD 背景，与 playing 状态统一下移 10px，避免背景元素突变）
+      ctx.save();
+      ctx.translate(0, 10);
       this.drawHUD(game);
+      ctx.restore();
       this.settlementRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'witch_reward') {
       // 女巫奖励弹窗（现在从商店页延迟弹出，背景保持商店页）

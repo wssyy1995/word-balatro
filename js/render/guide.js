@@ -715,7 +715,7 @@ module.exports = function extendGuide(Renderer) {
       if ((phase === 1 || phase === 2) && spotRect) {
         const spotPad = 10 * s;
         const spotX = spotRect.x - spotPad;
-        const spotY = spotRect.y - spotPad;
+        const spotY = spotRect.y - spotPad + 8;
         const spotW = spotRect.w + spotPad * 2;
         const spotH = spotRect.h + spotPad * 2;
         const spotR = 14 * s;

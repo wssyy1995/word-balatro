@@ -62,7 +62,8 @@ module.exports = function extendPlaying(Renderer) {
       // 动态 gap：4 张时间距充足；5 张时保证最小 1px 间距，内容整体居中，允许左右溢出
       const rawGap = (propW - padX * 2 - dividerW - actualTotalSlots * rawSlotW) / (actualTotalSlots - 1);
       const minGap = actualWitchSlots >= 5 ? 0.6 * s : -Infinity;
-      const actualGap = Math.max(rawGap, minGap);
+      const gapOffset = actualWitchSlots >= 5 ? 1.0 * s : 0; // 5 张女巫牌时间距共减 1px
+      const actualGap = Math.max(rawGap, minGap) - gapOffset;
       const slotW = rawSlotW;
       const slotH = propBarH - slotTopPad - 6 * s;
 
