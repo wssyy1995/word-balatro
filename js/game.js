@@ -1266,6 +1266,7 @@ class Game {
     this._newWitchCardPopupClosed = false;
     this._pendingWitchRewardDelay = false;
     this._witchRewardDelayStartTime = null;
+    this._witchRewardDelayAfterGuide = false;
     this._shopToGameTransition = null;
     this._challengeBtnPressed = false;
     this._newWitchCardCollectBtnPressed = false;
@@ -1397,9 +1398,9 @@ class Game {
     if (this.guidePhase === 1 && !this._guideOverlayStartTime) {
       this._guideOverlayStartTime = Date.now() - 2000;
     }
-    // Phase 2~4 恢复时若正在引导则重新开始文字动画
+    // Phase 2~4 恢复时若正在引导则重新开始文字动画（延迟 500ms 再打字）
     if (this._guideTextStartTime === undefined && this.guidePhase >= 2 && this.guidePhase <= 4) {
-      this._guideTextStartTime = Date.now();
+      this._guideTextStartTime = Date.now() + 500;
     }
     this._guideCardGiftStartTime = null;
 
@@ -1455,6 +1456,13 @@ class Game {
     }
     if (this.cardBookGuidePhase === 4 && !this._cardBookGuideExitStartTime) {
       this._cardBookGuideExitStartTime = Date.now() - 2000;
+    }
+    // Phase 2/3 恢复时若缺少 text start time，重新开始文字动画（延迟 500ms 再打字）
+    if (this.cardBookGuidePhase === 2 && !this._cardBookGuideText2StartTime) {
+      this._cardBookGuideText2StartTime = Date.now() + 500;
+    }
+    if (this.cardBookGuidePhase === 3 && !this._cardBookGuideText3StartTime) {
+      this._cardBookGuideText3StartTime = Date.now() + 500;
     }
     this._cardBookGuideExitStartTime = this._cardBookGuideExitStartTime || null;
 
@@ -1534,6 +1542,9 @@ class Game {
     this._globalRankScrollBounceTarget = 0;
     this._globalRankScrollBounceStartY = 0;
     this._globalRankScrollBounceStartTime = 0;
+    this._guideMagicCircleStartTime = null;
+    this._guideMagicParticles = [];
+    this._guideFireflyBatches = [];
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
@@ -1976,6 +1987,11 @@ class Game {
     if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
       this.guidePhase = 1;
       this._guideOverlayStartTime = Date.now();
+      this._guideLastVisibleChars = -1;
+      this._guideTypingSoundPlaying = false;
+      this._guideMagicCircleStartTime = null;
+      this._guideMagicParticles = [];
+      this._guideFireflyBatches = [];
       console.log('[Guide] triggered phase 1');
     }
 
@@ -2037,9 +2053,12 @@ class Game {
     }
 
     this.guidePhase++;
-    this._guideTextStartTime = Date.now();
+    // 对话框直接显示的阶段，延迟 500ms 再开始打字
+    this._guideTextStartTime = Date.now() + 500;
     this._guideSkipTyping = false;
     this._guideTapTime = null;
+    this._guideLastVisibleChars = -1;
+    this._guideTypingSoundPlaying = false;
 
     // 阶段5（完成）：先触发退场动画，再清理引导状态
     if (this.guidePhase >= 5) {
@@ -2047,6 +2066,16 @@ class Game {
       this._guideExitStartTime = Date.now();
       this._guideTextStartTime = null;
       this._guideCardGiftStartTime = null;
+      this._guideMagicCircleStartTime = null;
+      this._guideMagicParticles = [];
+      this._guideFireflyBatches = [];
+      // 引导完成时停止打字机循环音效与引导背景音乐，恢复默认 BGM
+      if (this.audioManager) {
+        this.audioManager.stopSound('guide_type');
+        this.audioManager.stopSound('witch_guide_1_bg');
+        this.audioManager.bgmStarted = false;
+        this.audioManager.tryStartBGM();
+      }
     }
 
     if (this.storageManager) {
@@ -2064,6 +2093,7 @@ class Game {
     this.shopGuidePhase++;
     this._shopGuideSkipTyping = false;
     this._shopGuideTapTime = null;
+    this._guideTypingSoundPlaying = false;
 
     if (this.shopGuidePhase === 2) {
       this._shopGuideTextStartTime = Date.now();
@@ -2074,6 +2104,9 @@ class Game {
       this.shopGuidePhase = 3;
       this._shopGuideExitStartTime = Date.now();
       this._shopGuideTextStartTime = null;
+      if (this.audioManager) {
+        this.audioManager.stopSound('guide_type');
+      }
     }
 
     if (this.storageManager) {
@@ -2090,17 +2123,23 @@ class Game {
     this.cardBookGuidePhase++;
     this._cardBookGuideSkipTyping = false;
     this._cardBookGuideTapTime = null;
+    this._guideTypingSoundPlaying = false;
 
     if (this.cardBookGuidePhase === 2) {
-      this._cardBookGuideText2StartTime = Date.now();
+      // Phase 2 对话框保持显示，延迟 500ms 再开始打字
+      this._cardBookGuideText2StartTime = Date.now() + 500;
     } else if (this.cardBookGuidePhase === 3) {
-      this._cardBookGuideText3StartTime = Date.now();
+      // Phase 3 对话框保持显示，延迟 500ms 再开始打字
+      this._cardBookGuideText3StartTime = Date.now() + 500;
     }
 
     // Phase 4（退场）：触发退场动画
     if (this.cardBookGuidePhase >= 4) {
       this.cardBookGuidePhase = 4;
       this._cardBookGuideExitStartTime = Date.now();
+      if (this.audioManager) {
+        this.audioManager.stopSound('guide_type');
+      }
     }
 
     if (this.storageManager) {

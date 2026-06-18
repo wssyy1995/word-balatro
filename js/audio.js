@@ -22,7 +22,7 @@ class AudioManager {
     }
     const audio = wx.createInnerAudioContext();
     audio.src = src;
-    audio.volume = 0.6;
+    audio.volume = (name === 'guide_type') ? 0.35 : 0.6;
     audio.obeyMuteSwitch = false; // ← 关键：真机静音模式下也能播放
     this.sounds[name] = audio;
   }
@@ -49,6 +49,36 @@ class AudioManager {
     audio.play();
   }
 
+  // 循环播放音效（用于引导对话框打字机等需要持续循环的场景）
+  playLoop(name) {
+    if (!this.enabled || !this.soundEnabled) return;
+
+    this._firstInteraction = true;
+
+    let audio = this.sounds[name];
+    if (!audio) {
+      const lazySrc = this._findSrcByName(name);
+      if (lazySrc) {
+        this.load(name, lazySrc);
+        audio = this.sounds[name];
+      }
+    }
+    if (!audio) return;
+
+    audio.loop = true;
+    audio.stop();
+    audio.play();
+  }
+
+  // 停止指定音效并取消循环
+  stopSound(name) {
+    const audio = this.sounds[name];
+    if (audio) {
+      audio.loop = false;
+      audio.stop();
+    }
+  }
+
   // 播放背景音乐（需在用户交互后调用）
   playBGM(src) {
     if (!this.enabled || !this.musicEnabled) return;
@@ -65,9 +95,9 @@ class AudioManager {
     this.bgmStarted = true;
   }
 
-  // 尝试启动 BGM（在用户交互后调用）
+  // 启动 BGM（不再强制要求用户交互，进入游戏后直接尝试播放）
   tryStartBGM(src = 'music/bg/bg_music.mp3') {
-    if (this.bgmStarted || !this._firstInteraction || !this.musicEnabled) return;
+    if (this.bgmStarted || !this.musicEnabled) return;
 
     // 先检查 BGM 文件是否存在，避免文件缺失时抛 readFile 报错
     const fs = wx.getFileSystemManager();
@@ -163,6 +193,8 @@ class AudioManager {
       { name: 'word_score', src: 'music/sound_effect/word_score.mp3' },     // 计分总数弹出
       { name: 'spin_wheel', src: 'music/sound_effect/spin_wheel.mp3' },     // 转盘旋转
       { name: 'levelup', src: 'music/sound_effect/levelup.mp3' },             // 进入下一关
+      { name: 'guide_type', src: 'music/sound_effect/type_2.mp3' },          // 引导对话框打字机音效（3秒循环）
+      { name: 'witch_guide_1_bg', src: 'music/sound_effect/witch_guide_1_bg.mp3' }, // Phase 1 新人引导背景音乐（播放一次）
     ];
 
     // 保存映射用于懒加载

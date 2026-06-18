@@ -632,6 +632,9 @@ function startGame() {
   // 加载 cloudStorage 缓存的音频
   if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);
 
+  // 游戏启动后直接尝试播放 BGM（不强制要求用户交互）
+  if (game.audioManager) game.audioManager.tryStartBGM();
+
   // 从预加载页进入商店页时，强制刷新商店
   if (game.state === 'shop') {
     game.shopItems = generateShopItems(game);
@@ -1709,12 +1712,17 @@ function handleInput(x, inputY) {
         if (game._guideTapTime && now - game._guideTapTime < 300) {
           game._guideSkipTyping = true;
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           return;
         }
         game._guideTapTime = now;
         if (renderer.guideNextBtnRect) {
           vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
           game.advanceGuide();
+        } else {
+          // 文字未显示完时点击对话框，也播放点击音效作为反馈
+          if (game.audioManager) game.audioManager.play('tap');
         }
         return;
       }

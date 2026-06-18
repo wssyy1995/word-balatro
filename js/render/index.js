@@ -118,9 +118,12 @@ Renderer.prototype.render = function(game) {
               game._witchRewardDelayStartTime = Date.now();
             }
             const delayElapsed = Date.now() - game._witchRewardDelayStartTime;
-            if (delayElapsed >= 600) {
+            // 图鉴引导触发后的女巫奖励延迟为 400ms，其他情况保持 600ms
+            const rewardDelay = game._witchRewardDelayAfterGuide ? 400 : 600;
+            if (delayElapsed >= rewardDelay) {
               game._pendingWitchRewardDelay = false;
               game._witchRewardDelayStartTime = null;
+              game._witchRewardDelayAfterGuide = false;
               const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
               // 临时仅第 3 关发放女巫奖励
               if (witchSkill && game.witchSkillPassed && game.round === 3) {
@@ -153,9 +156,10 @@ Renderer.prototype.render = function(game) {
           game.cardBookGuidePhase = 1;
           game._cardBookGuideStartTime = Date.now();
           game._cardBookGuideTextStartTime = Date.now();
-          // 如果正在排队等待女巫奖励，先暂停计时，等引导结束后再弹出女巫奖励
+          // 如果正在排队等待女巫奖励，先暂停计时，等引导结束后改为 400ms 延迟
           if (game._pendingWitchRewardDelay) {
             game._witchRewardDelayStartTime = null;
+            game._witchRewardDelayAfterGuide = true;
           }
         }
       }

@@ -131,6 +131,8 @@ class CloudStorageManager {
       'answer_tone': c('/music/sound_effect/answer_tone.mp3'),
       'word_score': c('/music/sound_effect/word_score.mp3'),
       'spin_wheel': c('/music/sound_effect/spin_whell.mp3'),
+      'guide_type': c('/music/sound_effect/type_2.mp3'),
+      'witch_guide_1_bg': c('/music/sound_effect/witch_guide_1_bg.mp3'),
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
