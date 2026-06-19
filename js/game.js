@@ -3809,6 +3809,163 @@ class Game {
       spinStartTime: Date.now(),
     };
   }
+
+  // ========== 对战模式方法 ==========
+
+  startBattle(difficulty = 'easy') {
+    const { createBattleDeck } = require('./battle');
+    this.state = 'battle';
+    this.battleMode = true;
+    this.battleDifficulty = difficulty;
+    this.battleRound = 1;
+    this.battleTotalRounds = 10;
+    this.battlePlayerScore = 0;
+    this.battleBotScore = 0;
+    this.battlePlayerRoundScores = [];
+    this.battleBotRoundScores = [];
+    this.battlePhase = 'selecting'; // selecting | revealing | round_end | battle_end
+    this.battleBotWord = null;
+    this.battleBotCards = null;
+    this.battleBotThinking = false;
+    this.battleBotReady = false;
+    this.battleBotThinkingStartTime = null;
+    this.battleSelected = [];
+    this._battleDeck = createBattleDeck();
+    this._startBattleRound();
+  }
+
+  _startBattleRound() {
+    const { BattleBot } = require('./battle');
+    const handSize = 12;
+    // 发12张牌给用户和Bot（各自独立，但字母组相同）
+    const deckCopy = [...this._battleDeck];
+    this.battleHand = deckCopy.splice(0, handSize);
+    this.battleBotHand = [...this.battleHand]; // Bot手牌字母组相同
+    this._battleDeck = deckCopy;
+    this.battleSelected = [];
+    this.battlePlayerWord = null;
+    this.battlePlayerCards = null;
+    this.battleBotWord = null;
+    this.battleBotCards = null;
+    this.battlePhase = 'selecting';
+    this.battleBotThinking = true;
+    this.battleBotReady = false;
+    this.battleBotThinkingStartTime = Date.now();
+    this._battleBotThinkDuration = 2000 + Math.floor(Math.random() * 2000); // 2-4秒
+
+    // Bot选择单词（延迟显示）
+    this._battleBot = new BattleBot(this.battleDifficulty);
+    const botChoice = this._battleBot.chooseWord(this.battleBotHand, WORD_DATA, EXPAND_WORD_DATA);
+    this._pendingBotChoice = botChoice;
+
+    // 如果牌堆不够，补充新牌堆
+    if (this._battleDeck.length < handSize) {
+      const { createBattleDeck } = require('./battle');
+      this._battleDeck.push(...createBattleDeck());
+    }
+  }
+
+  // 对战模式：用户点击出牌
+  battlePlayHand() {
+    if (this.battlePhase !== 'selecting') return { valid: false };
+    const selected = this.battleHand.filter(c => c && c.selected);
+    if (selected.length < 2) return { valid: false };
+
+    const word = selected.map(c => c.letter.toLowerCase()).join('');
+    let valid = isValidWord(word);
+
+    if (!valid) {
+      this.hintToast = { text: '单词不存在', expireAt: Date.now() + 1500, startTime: Date.now() };
+      return { valid: false };
+    }
+
+    // 计算分数
+    const mult = selected.length;
+    let baseScore = 0;
+    for (const c of selected) {
+      baseScore += c.score || LETTER_SCORE[c.letter] || 1;
+    }
+    const score = Math.ceil(baseScore * mult);
+
+    this.battlePlayerWord = word;
+    this.battlePlayerCards = selected;
+    this.battlePlayerRoundScore = score;
+
+    // 进入揭晓阶段
+    this.battlePhase = 'revealing';
+
+    // Bot结果揭晓
+    const botChoice = this._pendingBotChoice;
+    if (botChoice) {
+      this.battleBotWord = botChoice.word;
+      this.battleBotCards = botChoice.cards;
+      this.battleBotRoundScore = botChoice.score;
+    } else {
+      // Bot没词，得0分
+      this.battleBotWord = '';
+      this.battleBotCards = [];
+      this.battleBotRoundScore = 0;
+    }
+
+    // 记录分数
+    this.battlePlayerRoundScores.push(this.battlePlayerRoundScore);
+    this.battleBotRoundScores.push(this.battleBotRoundScore);
+    this.battlePlayerScore += this.battlePlayerRoundScore;
+    this.battleBotScore += this.battleBotRoundScore;
+
+    // 延迟进入下一轮或结束
+    this._battleRevealStartTime = Date.now();
+
+    return { valid: true, score };
+  }
+
+  // 揭晓动画结束后调用
+  battleNextRound() {
+    if (this.battlePhase !== 'round_end') return;
+    if (this.battleRound >= this.battleTotalRounds) {
+      this.battlePhase = 'battle_end';
+      return;
+    }
+    this.battleRound++;
+    this._startBattleRound();
+  }
+
+  // 检查Bot思考状态
+  updateBattleBotThinking() {
+    if (!this.battleBotThinking || this.battleBotReady) return;
+    if (this.battleBotThinkingStartTime && Date.now() - this.battleBotThinkingStartTime >= this._battleBotThinkDuration) {
+      this.battleBotThinking = false;
+      this.battleBotReady = true;
+    }
+  }
+
+  // 检查揭晓阶段是否可以进入下一轮
+  checkBattleReveal() {
+    if (this.battlePhase === 'revealing' && this._battleRevealStartTime) {
+      if (Date.now() - this._battleRevealStartTime >= 2000) {
+        this.battlePhase = 'round_end';
+      }
+    }
+  }
+
+  // 退出对战
+  exitBattle() {
+    this.battleMode = false;
+    this.state = 'playing';
+    // 重置回单人模式初始状态
+    this._resetToSinglePlayer();
+  }
+
+  _resetToSinglePlayer() {
+    this.battleHand = null;
+    this.battleBotHand = null;
+    this.battleSelected = null;
+    this._battleDeck = null;
+    this._pendingBotChoice = null;
+    this._battleBot = null;
+  }
+
+  // ========== 对战模式方法结束 ==========
 }
 
 function requestGlobalProfile() {

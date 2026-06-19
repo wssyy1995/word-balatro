@@ -881,6 +881,10 @@ wx.onTouchStart((e) => {
       if (game.audioManager) game.audioManager.play('tap');
       return;
     }
+    if (renderer.settingsBattleRect && renderer.hitTest(x, y, [renderer.settingsBattleRect])) {
+      game._settingsBattlePressed = true;
+      return;
+    }
     if (renderer.settingsWordBookRect && renderer.hitTest(x, y, [renderer.settingsWordBookRect])) {
       // 打开单词本弹窗
       game._wordBookPopup = { startTime: Date.now() };
@@ -1165,6 +1169,10 @@ wx.onTouchMove((e) => {
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
     if (!hit) game._settingsCloseBtnPressed = false;
+  }
+  if (game._settingsBattlePressed && renderer.settingsBattleRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsBattleRect]);
+    if (!hit) game._settingsBattlePressed = false;
   }
   // 移出求助提示弹窗按钮区域时取消按下状态
   if (game._tipHelpClosePressed && renderer.tipHelpCloseRect) {
@@ -1555,6 +1563,17 @@ wx.onTouchEnd(() => {
       game._settingsFeedbackPressed = false;
       game._feedbackPage = 'feedback';
       if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    if (game._settingsBattlePressed) {
+      game._settingsBattlePressed = false;
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      // 延迟启动对战模式，等设置弹窗关闭动画完成
+      setTimeout(() => {
+        if (game) game.startBattle('easy');
+      }, 400);
     }
 
     // 反馈页交互
@@ -2094,6 +2113,71 @@ function handleInput(x, inputY) {
     game._cardBookDetailLevel = null;
     game._closingCardBookDetail = false;
     game._cardBookCellPressed = null;
+    return;
+  }
+
+  if (game.state === 'battle') {
+    // 对战模式输入处理
+    if (game.battlePhase === 'selecting') {
+      // 检测卡牌点击
+      if (renderer.battleCardRects) {
+        const cardHit = renderer.hitTest(x, inputY, renderer.battleCardRects);
+        if (cardHit) {
+          vibrate();
+          const card = cardHit.card;
+          card.selected = !card.selected;
+          return;
+        }
+      }
+      // 检测出牌按钮
+      if (renderer.battlePlayBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.battlePlayBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._battlePlayBtnPressed = true;
+          setTimeout(() => { game._battlePlayBtnPressed = false; }, 150);
+          game.battlePlayHand();
+          return;
+        }
+      }
+      // 检测清空按钮
+      if (renderer.battleClearBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.battleClearBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._battleClearBtnPressed = true;
+          setTimeout(() => { game._battleClearBtnPressed = false; }, 150);
+          if (game.battleHand) {
+            game.battleHand.forEach(c => { if (c) c.selected = false; });
+          }
+          return;
+        }
+      }
+    } else if (game.battlePhase === 'round_end' || game.battlePhase === 'revealing') {
+      // 检测下一轮/查看结果按钮
+      if (renderer.battleNextBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.battleNextBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._battleNextBtnPressed = true;
+          setTimeout(() => { game._battleNextBtnPressed = false; }, 150);
+          game.battleNextRound();
+          return;
+        }
+      }
+    } else if (game.battlePhase === 'battle_end') {
+      // 检测返回菜单按钮
+      if (renderer.battleMenuBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.battleMenuBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._battleMenuBtnPressed = true;
+          setTimeout(() => { game._battleMenuBtnPressed = false; }, 150);
+          game.exitBattle();
+          return;
+        }
+      }
+    }
     return;
   }
 
@@ -3122,6 +3206,11 @@ function gameLoop(timestamp) {
     renderer.render(game);
     transitionStartTime = null;
   } else {
+    // 对战模式状态更新
+    if (game && game.state === 'battle') {
+      game.updateBattleBotThinking();
+      game.checkBattleReveal();
+    }
     game.update(deltaTime);
     renderer.render(game);
   }

@@ -10,6 +10,7 @@ require('./popup')(Renderer);
 require('./guide')(Renderer);
 require('./cardbook')(Renderer);
 require('./debug')(Renderer);
+require('./battle')(Renderer);
 
 // ===== 主渲染入口 =====
 Renderer.prototype.render = function(game) {
@@ -229,7 +230,8 @@ Renderer.prototype.render = function(game) {
 
       ctx.restore();
       this._drawLifeExtensionPopup(game);
-    } else if (game.state === 'gameover') {
+    } else if (game.state === 'battle') {
+      this.drawBattle(game);
       // 结束报告弹窗（保留游戏页面背景）
       this.drawHUD(game);
       this.drawPlaying(game);
