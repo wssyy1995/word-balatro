@@ -211,6 +211,12 @@ Renderer.prototype.render = function(game) {
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
       }
+    } else if (game.state === 'mystery_discount') {
+      // 迷之优惠页面
+      this._drawShopBackground(game);
+      if (this.mysteryDiscountRenderer) {
+        this.mysteryDiscountRenderer.draw(ctx, game, W, H, s);
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'life_extended') {

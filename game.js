@@ -2521,6 +2521,65 @@ function handleInput(x, inputY) {
     }
   }
 
+  // === 迷之优惠页面交互 ===
+  if (game.state === 'mystery_discount') {
+    const md = game._mysteryDiscountState;
+    if (!md) return;
+
+    // 选择优惠券
+    if (md.selectedIdx === null && renderer.mysteryDiscountRenderer) {
+      const rects = renderer.mysteryDiscountRenderer.couponRects || [];
+      const hit = renderer.hitTest(x, y, rects);
+      if (hit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        md.selectedIdx = hit.index;
+        md.scratched = true;
+        md.scratchProgress = 0;
+        md.scratchStartTime = Date.now();
+        return;
+      }
+      return;
+    }
+
+    // 刮开优惠券（点击刮奖区）
+    if (md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
+      if (rect) {
+        const hit = renderer.hitTest(x, y, [rect]);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          md.revealed = true;
+          md.revealStartTime = Date.now();
+          return;
+        }
+      }
+      return;
+    }
+
+    // 点击"收下优惠"按钮
+    if (md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.collectBtnRect;
+      if (rect) {
+        const hit = renderer.hitTest(x, y, [rect]);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          // 应用8折折扣
+          game._shopDiscountActive = true;
+          game._shopDiscountRate = 0.8;
+          game._mysteryDiscountState = null;
+          game.state = 'shop';
+          if (game.storageManager) game.storageManager.saveProgress();
+          return;
+        }
+      }
+      return;
+    }
+    return;
+  }
+
   if (game.state === 'shop') {
     // 获得新词牌弹窗优先处理（覆盖在商店上方）
     if (game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
@@ -2696,6 +2755,20 @@ function handleInput(x, inputY) {
                   }
                 }
               }
+            }
+            // 迷之优惠点击"开奖"
+            if (btnHit.action === 'openMystery' && game._confirmBuyItemData) {
+              game._mysteryDiscountState = {
+                selectedIdx: null,
+                scratched: false,
+                scratchProgress: 0,
+                revealed: false,
+                animStartTime: Date.now(),
+              };
+              game.state = 'mystery_discount';
+              game._closingConfirmBuy = true;
+              game._closeConfirmBuyStartTime = Date.now();
+              return;
             }
             game._closingConfirmBuy = true;
             game._closeConfirmBuyStartTime = Date.now();

@@ -1343,6 +1343,9 @@ class Game {
     this._shopDiscountRate = 0.6;       // 默认折扣率
     this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
 
+    // 迷之优惠状态
+    this._mysteryDiscountState = null;  // { selectedIdx, scratched, scratchProgress, revealed, animStartTime }
+
     // 设置弹窗
     this._settingsPopup = null;
     this._closingSettings = false;
@@ -1624,6 +1627,7 @@ class Game {
     if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
     if (p._shopDiscountRate !== undefined) this._shopDiscountRate = p._shopDiscountRate;
     if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
+    if (p._mysteryDiscountState !== undefined) this._mysteryDiscountState = p._mysteryDiscountState;
 
     // 恢复每日分享次数限制
     if (p._dailyShareDate !== undefined) this._dailyShareDate = p._dailyShareDate;

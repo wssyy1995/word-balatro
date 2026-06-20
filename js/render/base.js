@@ -1,7 +1,7 @@
 const { formatMeaning, isValidWordOnline } = require('../game');
 const { WORD_DATA, onlineWordCache, wordCheckState, LETTER_SCORE, letterUpgrades } = require('../data');
 const { SettlementRenderer, WitchRewardRenderer } = require('../settlement');
-const { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL } = require('../shop');
+const { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL } = require('../shop');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { Easing } = require('../animation');
 const { GameOverRenderer } = require('./gameover');
@@ -654,6 +654,7 @@ class Renderer {
     this.shopRenderer = new ShopRenderer(this);
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
     this.gameOverRenderer = new GameOverRenderer(this);
+    this.mysteryDiscountRenderer = new MysteryDiscountRenderer(this);
     this.lifeExtensionBtnRect = null;
 
     // 女巫牌标签弹出动画状态
