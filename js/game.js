@@ -308,7 +308,7 @@ class Game {
     this.selected = [];
     this.score = 0;
     this.target = Math.floor(150 * this.round * (this.round + 1) / 2);
-    this.handsLeft = 3;
+    this.handsLeft = 999;
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
     this.extraSafety = 0;
@@ -334,7 +334,6 @@ class Game {
   }
 
   async playHand() {
-    if (this.handsLeft <= 0) return { valid: false };
     if (this.selected.length < 3) return { valid: false };
     const played = this.hand.filter(c => c.selected);
     const word = played.map(c => c.letter.toLowerCase()).join('');
