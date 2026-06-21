@@ -399,6 +399,8 @@ class Renderer {
       } else {
         this.text('选择第一张牌（将被复刻）', W / 2, 70 * s, 18, '#fff');
       }
+    } else if (effect === 'temp_double_letter') {
+      this.text('选择一张牌，该字母本回合分数×2', W / 2, 70 * s, 18, '#fff');
     } else {
       this.text('选择一张牌进行强化', W / 2, 70 * s, 18, '#fff');
     }

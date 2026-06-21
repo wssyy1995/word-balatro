@@ -3127,6 +3127,7 @@ const SHOP_POOL = {
     {name:'魔法药水·王牌强化', type:'potion', effect:'upgrade_face', cost:5, desc:'选择一张王牌，分数×3'},
     {name:'魔法药水·通用强化', type:'potion', effect:'upgrade_any', cost:6, desc:'选择任意牌，分数翻倍'},
     {name:'魔法药水·字母复刻', type:'potion', effect:'replicate_letter', cost:5, desc:'选择两张牌，80%概率低分复制高分，20%相反'},
+    {name:'魔法药水·字母共鸣', type:'potion', effect:'temp_double_letter', cost:4, desc:'选择一张牌，该字母本回合基础分数×2'}
   ]
 };
 

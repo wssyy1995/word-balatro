@@ -168,7 +168,7 @@ function findValidWordInHand(hand) {
   return all.length > 0 ? all[0] : null;
 }
 
-function calcWordScore(cards, jokers) {
+function calcWordScore(cards, jokers, tempDoubleLetter) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
   let baseScore = 0;
@@ -176,7 +176,12 @@ function calcWordScore(cards, jokers) {
   let hasFace = false;
 
   for (const c of cards) {
-    baseScore += c.score;
+    let cardScore = c.score;
+    // 字母共鸣：临时翻倍
+    if (tempDoubleLetter && c.letter === tempDoubleLetter) {
+      cardScore = c.score * 2;
+    }
+    baseScore += cardScore;
     if (c.isFace) hasFace = true;
   }
 
@@ -283,6 +288,7 @@ class Game {
     this.extraDiscards = 0;
     this.extraSafety = 0;
     this.extraHands = 0;
+    this.tempDoubleLetter = null;
     this.totalScore = 0;
     this.roundScores = [];
     this.animManager = new AnimationManager();
@@ -312,6 +318,7 @@ class Game {
     this.discardsLeft = 3 + this.extraDiscards;
     this.extraDiscards = 0;
     this.extraSafety = 0;
+    this.tempDoubleLetter = null;
     this.state = 'playing';
   }
 
@@ -345,7 +352,7 @@ class Game {
       return { valid: false, word: played.map(c => c.letter).join('') };
     }
 
-    const result = calcWordScore(played, this.jokers);
+    const result = calcWordScore(played, this.jokers, this.tempDoubleLetter);
     this.score += result.score;
     this.totalScore += result.score;
 
@@ -500,6 +507,18 @@ class Game {
         highCard.upgraded = true;
       }
 
+      if (this.audioManager) this.audioManager.play('upgrade');
+      this.potionMode = null;
+      this.state = 'shop';
+      if (this.storageManager) this.storageManager.saveProgress(this);
+      return true;
+    }
+
+    // 字母共鸣：选择一张牌，该字母本回合临时翻倍
+    if (effect === 'temp_double_letter') {
+      const card = this.hand.find(c => c.id === cardId);
+      if (!card) return false;
+      this.tempDoubleLetter = card.letter;
       if (this.audioManager) this.audioManager.play('upgrade');
       this.potionMode = null;
       this.state = 'shop';
