@@ -3112,7 +3112,8 @@ const SHOP_POOL = {
     {name:'女巫·六字母强化', type:'witch', trigger:'length_6', value:3, cost:8, desc:'6+字母单词×3'},
     {name:'女巫·人头牌强化', type:'witch', trigger:'has_face', value:3, cost:6, desc:'含J/Q/Z时×3'},
     {name:'女巫·高分字母强化', type:'witch', trigger:'high_letter', value:2, cost:5, desc:'含J/Q/X/Z时×2'},
-    {name:'女巫·筹码强化', type:'witch', trigger:'always', value:20, cost:5, desc:'每次出牌+20筹码'},
+    // 女巫牌：当回合结算时，出牌次数为0，基础金币额外+2
+  {name:'女巫·底牌', type:'witch', trigger:'zero_hands_bonus', cost:5, desc:'当回合结算时，若出牌次数为0，基础金币额外+2'}
   ],
   crystal: [
     {name:'水晶球·额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},

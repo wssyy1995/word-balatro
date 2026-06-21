@@ -192,6 +192,7 @@ class Renderer {
       { label: '金币', value: `$${game.gold}` },
       { label: '目标', value: game.target },
       { label: '当前', value: game.score },
+      { label: '出牌', value: game.handsLeft },
       { label: '弃牌', value: game.discardsLeft },
     ];
 
