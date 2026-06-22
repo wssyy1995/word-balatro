@@ -521,18 +521,20 @@ module.exports = function extendAnimation(Renderer) {
           failScores = [scoreB, scoreB];
         }
 
-        const line1 = `60%概率: ${letterA}=${successScores[0]},${letterB}=${successScores[1]}`;
-        const line2 = `40%概率: ${letterA}=${failScores[0]},${letterB}=${failScores[1]}`;
+        const line1 = `60%概率:  ${letterA}=${successScores[0]}, ${letterB}=${successScores[1]}`;
+        const line2 = `40%概率:  ${letterA}=${failScores[0]}, ${letterB}=${failScores[1]}`;
         const tipY = gridBottomY + 18 * s;
-        const lineGap = 16 * s;
+        const lineGap = 18 * s;
 
         ctx.save();
         ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(line1, W / 2, tipY);
-        ctx.fillText(line2, W / 2, tipY + lineGap);
+        const maxTipW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
+        const tipX = W / 2 - maxTipW / 2;
+        ctx.fillText(line1, tipX, tipY);
+        ctx.fillText(line2, tipX, tipY + lineGap);
         ctx.restore();
       }
 
