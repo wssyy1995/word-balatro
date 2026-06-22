@@ -695,7 +695,7 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const canUse = potion.effect === 'random_upgrade' || potion.effect === 'upgrade_letter';
+        const canUse = ['random_upgrade', 'upgrade_letter', 'replicate_letter'].includes(potion.effect);
 
         if (canUse) {
           // 两个按钮并排，宽度保持 slotW 不变，整体以卡牌中心为基准偏移
