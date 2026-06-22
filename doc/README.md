@@ -729,6 +729,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_score` | music/sound_effect/word_score.mp3 | 计分总数弹出（含药水升级分数变化） |
 | `round_win` | music/sound_effect/round_win.mp3 | 回合结算弹窗 |
 | `game_over` | music/sound_effect/game_over.mp3 | 游戏结束弹窗 |
+| `fail` | music/sound_effect/fail.mp3 | 复刻失败等失败提示 |
 | `buy_success` | music/sound_effect/buy_success.mp3 | 购买成功弹窗 |
 | `card_sell` | music/sound_effect/card_sell.mp3 | 售出道具 |
 | `card_book_page` | music/sound_effect/card_book_page.mp3 | 图鉴翻页 |

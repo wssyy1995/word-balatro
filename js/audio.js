@@ -184,6 +184,7 @@ class AudioManager {
       { name: 'card_valid', src: 'music/sound_effect/card_valid.mp3' },     // 单词校验合法
       { name: 'challenge', src: 'music/sound_effect/challenge.mp3' },       // 点击挑战按钮
       { name: 'game_over', src: 'music/sound_effect/game_over.mp3' },       // 游戏结束弹窗
+      { name: 'fail', src: 'music/sound_effect/fail.mp3' },                 // 复刻失败等失败提示
       { name: 'round_win', src: 'music/sound_effect/round_win.mp3' },       // 回合结算弹窗
       { name: 'tap', src: 'music/sound_effect/tap.mp3' },                   // 弹窗/按钮点击
       { name: 'card_sell', src: 'music/sound_effect/card_sell.mp3' },       // 售出道具
