@@ -661,7 +661,7 @@ module.exports = function extendPopup(Renderer) {
 
       const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
 
-      // === 当前字母分提示 ===
+      // === 升级后字母分提示 ===
       if (selectedLetter) {
         const scoreTipY = gridBottomY + 18 * s;
         const baseScore = LETTER_SCORE[selectedLetter];
@@ -669,12 +669,13 @@ module.exports = function extendPopup(Renderer) {
         const currentScore = upgrade
           ? Math.floor(baseScore * (upgrade.mult || 1)) + (upgrade.add || 0)
           : baseScore;
+        const afterScore = currentScore + 10;
         ctx.save();
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`当前字母分:${currentScore}`, W / 2, scoreTipY);
+        ctx.fillText(`升级后: ${currentScore} → ${afterScore}`, W / 2, scoreTipY);
         ctx.restore();
       }
 
