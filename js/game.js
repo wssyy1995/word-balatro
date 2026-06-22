@@ -3841,7 +3841,10 @@ class Game {
       if (elapsed >= 2000) {
         this._replicateAnim.phase = 'result';
         this._replicateAnim.resultStartTime = Date.now();
-        if (this.audioManager) this.audioManager.play(this._replicateAnim.success ? 'round_win' : 'fail');
+        if (this.audioManager) {
+          this.audioManager.stopSound('heart_beat');
+          this.audioManager.play(this._replicateAnim.success ? 'round_win' : 'fail');
+        }
       }
     }
   }
@@ -3929,7 +3932,7 @@ class Game {
       targetLetter
     };
     this._replicateSelectedLetters = [];
-    if (this.audioManager) this.audioManager.play('heart_beat');
+    if (this.audioManager) this.audioManager.playLoop('heart_beat');
   }
 
   startRandomSpin() {
