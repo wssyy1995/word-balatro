@@ -499,21 +499,40 @@ module.exports = function extendAnimation(Renderer) {
 
       const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
 
-      // === 已选字母提示 ===
-      if (selected.length > 0) {
+      // === 已选字母结果预览 ===
+      if (selected.length === 2) {
+        const [letterA, letterB] = selected;
+        const baseA = LETTER_SCORE[letterA];
+        const baseB = LETTER_SCORE[letterB];
+        const upA = letterUpgrades.get(letterA) || {};
+        const upB = letterUpgrades.get(letterB) || {};
+        const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
+        const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
+
+        let successScores, failScores;
+        if (scoreA === scoreB) {
+          successScores = [scoreA, scoreB];
+          failScores = [scoreA, scoreB];
+        } else if (scoreA < scoreB) {
+          successScores = [scoreB, scoreB];
+          failScores = [scoreA, scoreA];
+        } else {
+          successScores = [scoreA, scoreA];
+          failScores = [scoreB, scoreB];
+        }
+
+        const line1 = `60%概率: ${letterA}=${successScores[0]},${letterB}=${successScores[1]}`;
+        const line2 = `40%概率: ${letterA}=${failScores[0]},${letterB}=${failScores[1]}`;
         const tipY = gridBottomY + 18 * s;
-        const tipTexts = selected.map(l => {
-          const base = LETTER_SCORE[l];
-          const up = letterUpgrades.get(l) || {};
-          const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
-          return `${l}=${score}`;
-        }).join('  vs  ');
+        const lineGap = 16 * s;
+
         ctx.save();
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(tipTexts, W / 2, tipY);
+        ctx.fillText(line1, W / 2, tipY);
+        ctx.fillText(line2, W / 2, tipY + lineGap);
         ctx.restore();
       }
 

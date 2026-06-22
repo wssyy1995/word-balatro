@@ -500,33 +500,14 @@ module.exports = function extendPopup(Renderer) {
       // 标题区域 Y 坐标(与商店页"商店"标题位置一致)
       const titleY = top - 10 * s;
 
-      // 标题:shop_icon.png 装饰 + "选择字母" + shop_icon.png 水平镜像
+      // 标题
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const titleText = '字母升级';
-      const titleTextW = ctx.measureText(titleText).width;
-      ctx.fillText(titleText, W / 2, titleY);
+      ctx.fillText('字母升级', W / 2, titleY);
       ctx.restore();
-
-      // 左右装饰图标
-      const decoIconW = 20 * s + 2 * s;
-      const decoIconH = 20 * s;
-      const decoGap = 10 * s - 2 * s;
-      const decoIconY = titleY - decoIconH / 2;
-      if (this.shopIcon && this.shopIconLoaded) {
-        const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
-        ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
-
-        const rightIconX = W / 2 + titleTextW / 2 + decoGap;
-        ctx.save();
-        ctx.translate(rightIconX + decoIconW, decoIconY);
-        ctx.scale(-1, 1);
-        ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
-        ctx.restore();
-      }
 
       // === 副标题 ===
       const subTitleY = titleY + 52 * s;
@@ -739,33 +720,14 @@ module.exports = function extendPopup(Renderer) {
 
       const titleY = top - 10 * s;
 
-      // 标题:shop_icon.png 装饰 + "随机强化" + shop_icon.png 水平镜像
+      // 标题
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const titleText = '随机强化';
-      const titleTextW = ctx.measureText(titleText).width;
-      ctx.fillText(titleText, W / 2, titleY);
+      ctx.fillText('随机强化', W / 2, titleY);
       ctx.restore();
-
-      // 左右装饰图标
-      const decoIconW = 20 * s + 2 * s;
-      const decoIconH = 20 * s;
-      const decoGap = 10 * s - 2 * s;
-      const decoIconY = titleY - decoIconH / 2;
-      if (this.shopIcon && this.shopIconLoaded) {
-        const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
-        ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
-
-        const rightIconX = W / 2 + titleTextW / 2 + decoGap;
-        ctx.save();
-        ctx.translate(rightIconX + decoIconW, decoIconY);
-        ctx.scale(-1, 1);
-        ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
-        ctx.restore();
-      }
 
       // 副标题
       const subTitleY = titleY + 52 * s;
