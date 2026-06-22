@@ -12,6 +12,7 @@ const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
 const { reportEvent } = require('./report');
+const { BattleManager } = require('./battle');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -1144,6 +1145,7 @@ class Game {
     this.storageManager = new StorageManager();
     this.audioManager = new AudioManager();
     this.audioManager.preloadAll();
+    this.battleManager = new BattleManager(this);
 
     // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
     let guideEnabled = true;
@@ -1202,6 +1204,8 @@ class Game {
       this._potionSelectedLetter = null;
       this._potionUpgrading = null;
       this._randomUpgradePopup = null;
+      this._replicateSelectedLetters = [];
+      this._replicateAnim = null;
       this.state = 'playing';
       this.shopItems = null;
       this.safetyRounds = 3;
@@ -1343,6 +1347,9 @@ class Game {
     this._shopDiscountRate = 0.6;       // 默认折扣率
     this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
 
+    // 迷之优惠状态
+    this._mysteryDiscountState = null;  // { selectedIdx, scratched, scratchProgress, revealed, animStartTime }
+
     // 设置弹窗
     this._settingsPopup = null;
     this._closingSettings = false;
@@ -1483,6 +1490,8 @@ class Game {
     this.potionMode = p.potionMode || null;
     this._prePotionState = p._prePotionState || null;
     this._potionSelectedLetter = p._potionSelectedLetter || null;
+    this._replicateSelectedLetters = p._replicateSelectedLetters || [];
+    this._replicateAnim = p._replicateAnim || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
     this.settlementData = p.settlementData || null;
@@ -1493,6 +1502,41 @@ class Game {
       this.state = 'playing';
       this._prePotionState = null;
       this._potionSelectedLetter = null;
+    }
+
+    // 恢复对战模式状态
+    this.battleMode = p.battleMode || false;
+    this.battleDifficulty = p.battleDifficulty || 'easy';
+    this.battleRound = p.battleRound || 1;
+    this.battleTotalRounds = p.battleTotalRounds || 10;
+    this.battlePlayerScore = p.battlePlayerScore || 0;
+    this.battleBotScore = p.battleBotScore || 0;
+    this.battlePlayerRoundScores = p.battlePlayerRoundScores || [];
+    this.battleBotRoundScores = p.battleBotRoundScores || [];
+    this.battlePhase = p.battlePhase || 'selecting';
+    this.battleBotWord = p.battleBotWord || null;
+    this.battleBotCards = p.battleBotCards || null;
+    this.battleBotThinking = p.battleBotThinking || false;
+    this.battleBotReady = p.battleBotReady || false;
+    this.battleBotThinkingStartTime = p.battleBotThinkingStartTime || null;
+    this.battleSelected = p.battleSelected || [];
+    this.battlePendingCheck = p.battlePendingCheck || null;
+    this.battlePlayerWord = p.battlePlayerWord || null;
+    this.battlePlayerCards = p.battlePlayerCards || null;
+    this.battlePlayerRoundScore = p.battlePlayerRoundScore || 0;
+    this.battleBotRoundScore = p.battleBotRoundScore || 0;
+    this.battleBotWordLength = p.battleBotWordLength || 0;
+    this._battleDeck = p._battleDeck || [];
+    this._battlePlayedWords = new Set(p._battlePlayedWords || []);
+    this._pendingBotChoice = p._pendingBotChoice || null;
+    this._battleBotThinkDuration = p._battleBotThinkDuration || null;
+    this._battleRevealStartTime = p._battleRevealStartTime || null;
+    this._battleAnimTimeline = p._battleAnimTimeline || null;
+    this._battleFlyingScores = p._battleFlyingScores || [];
+    this._battleBotReadyAnimStart = p._battleBotReadyAnimStart || null;
+    // 若 state 不是 battle 但存档残留了对战状态，统一清理
+    if (this.state !== 'battle' && this.battleManager) {
+      this.battleManager._resetToSinglePlayer();
     }
     this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
     this.discardsLeft = p.discardsLeft;
@@ -1624,6 +1668,7 @@ class Game {
     if (p._shopDiscountActive !== undefined) this._shopDiscountActive = p._shopDiscountActive;
     if (p._shopDiscountRate !== undefined) this._shopDiscountRate = p._shopDiscountRate;
     if (p._overflowBonus !== undefined) this._overflowBonus = p._overflowBonus;
+    if (p._mysteryDiscountState !== undefined) this._mysteryDiscountState = p._mysteryDiscountState;
 
     // 恢复每日分享次数限制
     if (p._dailyShareDate !== undefined) this._dailyShareDate = p._dailyShareDate;
@@ -1770,6 +1815,11 @@ class Game {
     if (this.storageManager && this.storageManager._saveTimer) {
       clearTimeout(this.storageManager._saveTimer);
       this.storageManager._saveTimer = null;
+    }
+    // 清理对战模式 pendingCheck 定时器
+    if (this._battlePendingCheckTimer) {
+      clearTimeout(this._battlePendingCheckTimer);
+      this._battlePendingCheckTimer = null;
     }
     if (this.audioManager) {
       this.audioManager.destroy();
@@ -2936,6 +2986,14 @@ class Game {
         console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow, 'count:', overflowCount);
       }
     }
+    // 清空奖励：出牌次数用光则基础金币+2
+    const zeroHandsBonus = (this.jokers || []).some(
+      j => j && j.type === 'witch' && j.trigger === 'zero_hands_bonus' && !j._disabled
+    ) && this.handsLeft === 0 ? 2 : 0;
+    if (zeroHandsBonus > 0) {
+      baseGold += zeroHandsBonus;
+      console.log('[EquippedSkill] zero_hands_bonus activated, +', zeroHandsBonus);
+    }
     const extraHands = this.handsLeft * 2;
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
@@ -2948,6 +3006,7 @@ class Game {
       baseGold,
       extraHands,
       extraDiscards,
+      zeroHandsBonus,
       totalGold,
       round: this.round,
       witchSkill: hasWitchReward ? witchSkill : null,
@@ -3770,8 +3829,107 @@ class Game {
           };
           popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
         }
+      } else if (popup.phase === 'done' && !this._potionUpgrading) {
+        // 动画已结束，清理转盘状态
+        this._randomUpgradePopup = null;
       }
     }
+
+    // 复刻水：旋转2秒后进入结果阶段
+    if (this._replicateAnim && this._replicateAnim.phase === 'spinning') {
+      const elapsed = Date.now() - this._replicateAnim.startTime;
+      if (elapsed >= 2000) {
+        this._replicateAnim.phase = 'result';
+        this._replicateAnim.resultStartTime = Date.now();
+        if (this.audioManager) this.audioManager.play(this._replicateAnim.success ? 'round_win' : 'round_fail');
+      }
+    }
+  }
+
+  startReplicate() {
+    if (!this.potionMode || this.potionMode.effect !== 'replicate_letter') return;
+    if (!this._replicateSelectedLetters || this._replicateSelectedLetters.length !== 2) return;
+
+    const [letterA, letterB] = this._replicateSelectedLetters;
+    const baseA = LETTER_SCORE[letterA];
+    const baseB = LETTER_SCORE[letterB];
+    const upA = letterUpgrades.get(letterA) || {};
+    const upB = letterUpgrades.get(letterB) || {};
+    const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
+    const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
+
+    const success = Math.random() < 0.8;
+    let targetLetter, sourceLetter, newScore;
+
+    if (scoreA === scoreB) {
+      // 分数相同，无事发生但标记为成功
+      this._replicateAnim = {
+        phase: 'result',
+        startTime: Date.now(),
+        letters: [letterA, letterB],
+        scores: [scoreA, scoreB],
+        newScores: [scoreA, scoreB],
+        success: true,
+        sameScore: true
+      };
+      this._replicateSelectedLetters = [];
+      return;
+    }
+
+    if (success) {
+      // 80%：低分变高分
+      if (scoreA < scoreB) {
+        targetLetter = letterA;
+        sourceLetter = letterB;
+        newScore = scoreB;
+      } else {
+        targetLetter = letterB;
+        sourceLetter = letterA;
+        newScore = scoreA;
+      }
+    } else {
+      // 20%：高分变低分
+      if (scoreA > scoreB) {
+        targetLetter = letterA;
+        sourceLetter = letterB;
+        newScore = scoreB;
+      } else {
+        targetLetter = letterB;
+        sourceLetter = letterA;
+        newScore = scoreA;
+      }
+    }
+
+    // 计算新分数对应的多层结构（尽量保持mult=1，用add来凑）
+    const baseTarget = LETTER_SCORE[targetLetter];
+    const add = newScore - baseTarget;
+    letterUpgrades.set(targetLetter, { mult: 1, add: Math.max(0, add) });
+
+    // 同步更新当前手牌
+    this.hand.forEach(card => {
+      if (card && card.letter === targetLetter) {
+        card.baseScore = baseTarget;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = 1;
+        card.upgradeAdd = Math.max(0, add);
+      }
+    });
+
+    this._replicateAnim = {
+      phase: 'spinning',
+      startTime: Date.now(),
+      letters: [letterA, letterB],
+      scores: [scoreA, scoreB],
+      newScores: [
+        targetLetter === letterA ? newScore : scoreA,
+        targetLetter === letterB ? newScore : scoreB
+      ],
+      success,
+      targetLetter
+    };
+    this._replicateSelectedLetters = [];
+    if (this.audioManager) this.audioManager.play('spin_wheel');
   }
 
   startRandomSpin() {
@@ -3809,6 +3967,7 @@ class Game {
       spinStartTime: Date.now(),
     };
   }
+
 }
 
 function requestGlobalProfile() {
@@ -3979,5 +4138,8 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
     ]);
   }
 }
+
+// 挂载到原型，避免 battle/manager.js 与 game.js 循环依赖
+Game.prototype.isValidWordOnline = isValidWordOnline;
 
 module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank };

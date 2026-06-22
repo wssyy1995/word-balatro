@@ -50,8 +50,10 @@ class CloudStorageManager {
       'upgrade_face': c('/shop_card/upgrade_face.png'),
       'upgrade_letter': c('/shop_card/upgrade_letter.png'),
       'shield_illegal':c('/shop_card/shield_illegal.png'),
+      'zero_hands_bonus':c('/shop_card/zero_hands_bonus.png'),
       'illegal_boost':c('/shop_card/illegal_boost.png'),
       'random_upgrade':c('/shop_card/random_upgrade.png'),
+      'replicate_letter':c('/shop_card/replicate_letter.png'),
       'letter_god':c('/shop_card/letter_god.png'),
       'last_chance':c('/shop_card/last_chance.png'),
       'reroll_skill':c('/shop_card/reroll_skill.png'),
@@ -104,7 +106,11 @@ class CloudStorageManager {
       'card_template': c('/bg_icon/card_template.png'),
       'card_template_selected': c('/bg_icon/card_template_selected_new.png'),
       'card_template_upgrade': c('/bg_icon/card_template_upgrade9.png'),
-      'card_template_upgrade_selected': c('/bg_icon/card_template_upgrade_selected2.png')
+      'card_template_upgrade_selected': c('/bg_icon/card_template_upgrade_selected2.png'),
+      'battle_player': c('/bg_icon/battle_player.png'),
+      'battle_round_badge': c('/bg_icon/battle_round_badge.png'),
+      'battle_vs': c('/bg_icon/battle_vs.png'),
+      'score_line': c('/bg_icon/score_line.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -1472,7 +1478,7 @@ class CloudStorageManager {
     renderer.rankAvatarImages = this.rankAvatarImages;
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板）
+  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板 + 对战模块）
   injectBgIconToRenderer(renderer) {
     const bgData = this.bgIconImages['bg'];
     if (bgData && bgData.loaded && bgData.img) {
@@ -1481,6 +1487,45 @@ class CloudStorageManager {
       this.log('已注入 bg_icon renderer: bg');
     } else {
       this.log('bg_icon bg 未加载，跳过注入');
+    }
+
+    // 对战模块背景图
+    const battlePlayerData = this.bgIconImages['battle_player'];
+    if (battlePlayerData && battlePlayerData.loaded && battlePlayerData.img) {
+      renderer.battlePlayer = battlePlayerData.img;
+      renderer.battlePlayerLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_player');
+    } else {
+      this.log('bg_icon battle_player 未加载，跳过注入');
+    }
+
+    const battleRoundBadgeData = this.bgIconImages['battle_round_badge'];
+    if (battleRoundBadgeData && battleRoundBadgeData.loaded && battleRoundBadgeData.img) {
+      renderer.battleRoundBadge = battleRoundBadgeData.img;
+      renderer.battleRoundBadgeLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_round_badge');
+    } else {
+      this.log('bg_icon battle_round_badge 未加载，跳过注入');
+    }
+
+    // 对战 VS 徽章图
+    const battleVSData = this.bgIconImages['battle_vs'];
+    if (battleVSData && battleVSData.loaded && battleVSData.img) {
+      renderer.battleVS = battleVSData.img;
+      renderer.battleVSLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_vs');
+    } else {
+      this.log('bg_icon battle_vs 未加载，跳过注入');
+    }
+
+    // 对战单词预览区装饰线
+    const scoreLineData = this.bgIconImages['score_line'];
+    if (scoreLineData && scoreLineData.loaded && scoreLineData.img) {
+      renderer.scoreLine = scoreLineData.img;
+      renderer.scoreLineLoaded = true;
+      this.log('已注入 bg_icon renderer: score_line');
+    } else {
+      this.log('bg_icon score_line 未加载，跳过注入');
     }
 
     const cardBookData = this.bgIconImages['card_book'];

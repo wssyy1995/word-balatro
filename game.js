@@ -9,6 +9,7 @@ const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
 const { reportEvent } = require('./js/report');
+const { handleBattleInput } = require('./js/battle/input');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -1735,6 +1736,11 @@ function handleInput(x, inputY) {
   if (renderer.debugMenuOpen && renderer.debugMenuRects) {
     const debugHit = renderer.hitTest(x, inputY, renderer.debugMenuRects);
     if (debugHit) {
+      if (debugHit.action === 'debug_startBattle') {
+        renderer.debugMenuOpen = false;
+        game.battleManager.startBattle('easy');
+        return;
+      }
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(1000);
       if (debugHit.action === 'debug_addGold') {
@@ -2097,6 +2103,11 @@ function handleInput(x, inputY) {
     return;
   }
 
+  // 对战模式输入处理
+  if (game.state === 'battle' && handleBattleInput(game, renderer, x, inputY, vibrate)) {
+    return;
+  }
+
   if (game.state === 'playing') {
     // 字母置换弹窗打开时，优先处理弹窗点击
     if (game._changeLetterPopup) {
@@ -2437,6 +2448,65 @@ function handleInput(x, inputY) {
     }
   }
 
+  // === 迷之优惠页面交互 ===
+  if (game.state === 'mystery_discount') {
+    const md = game._mysteryDiscountState;
+    if (!md) return;
+
+    // 选择优惠券
+    if (md.selectedIdx === null && renderer.mysteryDiscountRenderer) {
+      const rects = renderer.mysteryDiscountRenderer.couponRects || [];
+      const hit = renderer.hitTest(x, inputY, rects);
+      if (hit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        md.selectedIdx = hit.index;
+        md.scratched = true;
+        md.scratchProgress = 0;
+        md.scratchStartTime = Date.now();
+        return;
+      }
+      return;
+    }
+
+    // 刮开优惠券（点击刮奖区）
+    if (md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
+      if (rect) {
+        const hit = renderer.hitTest(x, inputY, [rect]);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          md.revealed = true;
+          md.revealStartTime = Date.now();
+          return;
+        }
+      }
+      return;
+    }
+
+    // 点击"收下优惠"按钮
+    if (md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.collectBtnRect;
+      if (rect) {
+        const hit = renderer.hitTest(x, inputY, [rect]);
+        if (hit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          // 应用8折折扣
+          game._shopDiscountActive = true;
+          game._shopDiscountRate = 0.8;
+          game._mysteryDiscountState = null;
+          game.state = 'shop';
+          if (game.storageManager) game.storageManager.saveProgress();
+          return;
+        }
+      }
+      return;
+    }
+    return;
+  }
+
   if (game.state === 'shop') {
     // 获得新词牌弹窗优先处理（覆盖在商店上方）
     if (game._newWitchCardPopup && !game._closingNewWitchCardPopup) {
@@ -2612,6 +2682,20 @@ function handleInput(x, inputY) {
                   }
                 }
               }
+            }
+            // 迷之优惠点击"开奖"
+            if (btnHit.action === 'openMystery' && game._confirmBuyItemData) {
+              game._mysteryDiscountState = {
+                selectedIdx: null,
+                scratched: false,
+                scratchProgress: 0,
+                revealed: false,
+                animStartTime: Date.now(),
+              };
+              game.state = 'mystery_discount';
+              game._closingConfirmBuy = true;
+              game._closeConfirmBuyStartTime = Date.now();
+              return;
             }
             game._closingConfirmBuy = true;
             game._closeConfirmBuyStartTime = Date.now();
@@ -2874,6 +2958,58 @@ function handleInput(x, inputY) {
   }
 
   if (game.state === 'potion') {
+    // === 复刻水：动画/结果阶段 ===
+    if (game._replicateAnim) {
+      if (game._replicateAnim.phase === 'result') {
+        vibrate();
+        game._replicateAnim = null;
+        game.potionMode = null;
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+      }
+      return;
+    }
+
+    // === 复刻水：选择阶段 ===
+    if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
+      // 检测字母点击
+      if (renderer.potionLetterRects) {
+        const letterHit = renderer.hitTest(x, inputY, renderer.potionLetterRects);
+        if (letterHit) {
+          vibrate();
+          const selected = game._replicateSelectedLetters || [];
+          const idx = selected.indexOf(letterHit.letter);
+          if (idx >= 0) {
+            selected.splice(idx, 1);
+          } else if (selected.length < 2) {
+            selected.push(letterHit.letter);
+          }
+          game._replicateSelectedLetters = selected;
+          return;
+        }
+      }
+      // 检测开始按钮
+      if (renderer.replicateStartBtnRect && renderer.replicateStartBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.replicateStartBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game.startReplicate();
+          return;
+        }
+      }
+      // 检测重选按钮
+      if (renderer.replicateResetBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.replicateResetBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._replicateSelectedLetters = [];
+          return;
+        }
+      }
+      return;
+    }
+
     // 动画进行中，忽略所有点击
     if (game._potionUpgrading) return;
 
@@ -3122,6 +3258,11 @@ function gameLoop(timestamp) {
     renderer.render(game);
     transitionStartTime = null;
   } else {
+    // 对战模式状态更新
+    if (game && game.state === 'battle' && game.battleManager) {
+      game.battleManager.updateBotThinking();
+      game.battleManager.checkReveal();
+    }
     game.update(deltaTime);
     renderer.render(game);
   }

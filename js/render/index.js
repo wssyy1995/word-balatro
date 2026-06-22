@@ -210,6 +210,11 @@ Renderer.prototype.render = function(game) {
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
       }
+    } else if (game.state === 'mystery_discount') {
+      // 迷之优惠页面（独立全屏页面，不显示商店背景）
+      if (this.mysteryDiscountRenderer) {
+        this.mysteryDiscountRenderer.draw(ctx, game, W, H, s);
+      }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
     } else if (game.state === 'life_extended') {
@@ -229,6 +234,9 @@ Renderer.prototype.render = function(game) {
 
       ctx.restore();
       this._drawLifeExtensionPopup(game);
+    } else if (game.state === 'battle') {
+      // 对战模式
+      this.battleRenderer.draw(ctx, game, W, H, s);
     } else if (game.state === 'gameover') {
       // 结束报告弹窗（保留游戏页面背景）
       this.drawHUD(game);
@@ -240,14 +248,14 @@ Renderer.prototype.render = function(game) {
     this.updateAnimations();
     
     // 绘制烟花粒子（今日新词弹窗会自行绘制其烟花，避免被弹窗背景遮挡）
-    // playing/shop/life_extended 状态下已在各自分支中绘制
-    if (!game._dailyWordsPopup && game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended') {
+    // playing/shop/life_extended/battle 状态下已在各自分支中绘制或不需绘制
+    if (!game._dailyWordsPopup && game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended' && game.state !== 'battle') {
       this._updateAndDrawSparkles(ctx, s);
     }
     
     // 绘制飞行中的总分
-    // playing/shop/life_extended 状态下已在各自分支中绘制
-    if (game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended') {
+    // playing/shop/life_extended/battle 状态下已在各自分支中绘制或不需绘制
+    if (game.state !== 'playing' && game.state !== 'shop' && game.state !== 'life_extended' && game.state !== 'battle') {
       this._updateAndDrawFlyingScore(ctx, s, game);
     }
     

@@ -48,7 +48,8 @@ const SHOP_POOL = {
     {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
     {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
     {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.2]'},
-    {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'}
+    {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'},
+    {name:'清空奖励', type:'witch', scope:'global', trigger:'zero_hands_bonus', value:2, cost:8, min_level:3, desc:'回合结算时，出牌次数用光则基础金币+2'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},
@@ -58,12 +59,14 @@ const SHOP_POOL = {
     ,
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:3, desc:'下一回合目标分数×0.8'},
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:3, desc:'重掷下一回合的女巫技能'},
-    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:4, desc:'下回合前20秒出牌不消耗次数'}
+    {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:4, desc:'下回合前20秒出牌不消耗次数'},
+    {name:'迷之优惠', type:'crystal', effect:'mystery_discount', cost:4, desc:'购买后开奖，本回合商店商品打8折'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:5, desc:'指定一张字母牌，分数 +10'},
-    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'}
+    {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
+    {name:'复刻水', type:'potion', effect:'replicate_letter', cost:6, desc:'选择两个字母，80%概率低分变高分，20%概率相反'}
   ]
 };
 
@@ -147,6 +150,19 @@ function buyItem(game, idx) {
     if (game.storageManager) game.storageManager.saveProgress();
     return true;
   } else if (item.type === 'crystal') {
+    if (item.effect === 'mystery_discount') {
+      // 迷之优惠：不加入 crystalEffects，进入待开奖状态
+      game.shopItems[idx] = null;
+      if (typeof wx !== 'undefined' && wx.reportEvent) {
+        wx.reportEvent("card_buy", {
+          "card_type": item.type,
+          "card_name": item.name || item.effect || '',
+          "userid": game.userid || ''
+        });
+      }
+      if (game.storageManager) game.storageManager.saveProgress();
+      return true;
+    }
     if (item.effect !== 'reroll_skill') {
       game.crystalEffects.push({...item});
       if (item.effect === 'reduce_target') {
@@ -2160,12 +2176,18 @@ class ConfirmBuyRenderer {
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const btnLabel = item.type === 'crystal' ? '生效' : '装备';
+      let btnLabel, btnAction;
+      if (item.type === 'crystal' && item.effect === 'mystery_discount') {
+        btnLabel = '开奖';
+        btnAction = 'openMystery';
+      } else {
+        btnLabel = item.type === 'crystal' ? '生效' : '装备';
+        btnAction = item.type === 'crystal' ? 'applyCrystal' : 'equipWitch';
+      }
       ctx.fillText(btnLabel, W / 2, finalBY + finalBH / 2);
       ctx.restore();
 
       const finalCollectY = collectBtnY;
-      const btnAction = item.type === 'crystal' ? 'applyCrystal' : 'equipWitch';
       this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH, action: btnAction };
       this.successBtn2Rect = null;
     }
@@ -2299,4 +2321,197 @@ class ConfirmBuyRenderer {
   }
 }
 
-module.exports = { ShopRenderer, ConfirmBuyRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects };
+class MysteryDiscountRenderer {
+  constructor(renderer) {
+    this.parent = renderer;
+    this.couponRects = [];
+    this.scratchZoneRect = null;
+    this.collectBtnRect = null;
+  }
+
+  draw(ctx, game, W, H, s) {
+    const md = game._mysteryDiscountState;
+    if (!md) return;
+
+    const elapsed = Date.now() - (md.animStartTime || Date.now());
+    const enterProgress = Math.min(elapsed / 400, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+
+    ctx.save();
+    ctx.globalAlpha = enterEase;
+
+    const darkBlue = '#1a2f4a';
+    const gold = '#c4a35a';
+
+    // === 标题 ===
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = darkBlue;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('迷之优惠', W / 2, 60 * s);
+
+    // 标题下装饰线
+    const decoLineY = 78 * s;
+    const decoLineW = 120 * s;
+    const decoLineX = (W - decoLineW) / 2;
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    ctx.moveTo(decoLineX, decoLineY);
+    ctx.lineTo(decoLineX + decoLineW, decoLineY);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(W / 2, decoLineY);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = gold;
+    ctx.fillRect(-3 * s, -3 * s, 6 * s, 6 * s);
+    ctx.restore();
+
+    // === 副标题 ===
+    ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+    ctx.fillStyle = '#666';
+    ctx.fillText('选择一张优惠券，刮开看看有什么惊喜', W / 2, 102 * s);
+
+    // === 3张优惠券 ===
+    const couponW = 90 * s;
+    const couponH = 130 * s;
+    const gap = 14 * s;
+    const totalW = couponW * 3 + gap * 2;
+    const startX = (W - totalW) / 2;
+    const couponY = 130 * s;
+
+    this.couponRects = [];
+
+    for (let i = 0; i < 3; i++) {
+      const cx = startX + i * (couponW + gap);
+      const cy = couponY;
+      const isSelected = md.selectedIdx === i;
+      const isOther = md.selectedIdx !== null && md.selectedIdx !== i;
+
+      // 其他卡片淡出
+      if (isOther) {
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+      }
+
+      // 选中放大
+      const scale = isSelected ? 1.08 : 1;
+      const sw = couponW * scale;
+      const sh = couponH * scale;
+      const sx = cx + (couponW - sw) / 2;
+      const sy = cy + (couponH - sh) / 2;
+
+      // 优惠券背景（金色边框圆角卡片）
+      this.parent.roundRect(sx, sy, sw, sh, 10 * s, '#fff9f0', gold);
+
+      // 优惠券顶部装饰条
+      ctx.fillStyle = gold;
+      ctx.beginPath();
+      ctx.moveTo(sx + 10 * s, sy);
+      ctx.quadraticCurveTo(sx + sw / 2, sy + 12 * s, sx + sw - 10 * s, sy);
+      ctx.lineTo(sx + sw - 10 * s, sy + 18 * s);
+      ctx.quadraticCurveTo(sx + sw / 2, sy + 30 * s, sx + 10 * s, sy + 18 * s);
+      ctx.closePath();
+      ctx.fill();
+
+      // 优惠券图标（问号）
+      ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
+
+      // 优惠券名称
+      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + sh * 0.72);
+
+      // 虚线分隔（模拟优惠券撕口）
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 1 * s;
+      ctx.setLineDash([4 * s, 4 * s]);
+      ctx.beginPath();
+      ctx.moveTo(sx + 8 * s, sy + sh * 0.58);
+      ctx.lineTo(sx + sw - 8 * s, sy + sh * 0.58);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      if (isOther) {
+        ctx.restore();
+      }
+
+      // 存储点击区域
+      if (md.selectedIdx === null) {
+        this.couponRects.push({ x: cx, y: cy, w: couponW, h: couponH, index: i });
+      }
+    }
+
+    // === 刮奖区（选中后显示）===
+    if (md.selectedIdx !== null && md.scratched) {
+      const i = md.selectedIdx;
+      const cx = startX + i * (couponW + gap);
+      const cy = couponY;
+      const scratchW = couponW * 1.08;
+      const scratchH = 50 * s;
+      const scratchX = cx + (couponW - scratchW) / 2;
+      const scratchY = cy + 20 * s;
+
+      // 刮奖区背景
+      this.parent.roundRect(scratchX, scratchY, scratchW, scratchH, 8 * s, '#e8e0d4', '#c4a35a');
+
+      if (!md.revealed) {
+        // 未刮开：显示"刮开看看"提示
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('点击刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+
+        // 存储刮奖区点击区域
+        this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
+        this.collectBtnRect = null;
+      } else {
+        // 已刮开：显示"8折"
+        const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
+        const revealProgress = Math.min(revealElapsed / 300, 1);
+        const revealEase = Easing.easeOutBack(revealProgress);
+
+        ctx.save();
+        ctx.globalAlpha = revealEase;
+        ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+        ctx.fillStyle = '#d9534f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('8折', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        ctx.restore();
+
+        this.scratchZoneRect = null;
+
+        // === 收下优惠按钮 ===
+        const collectBtnW = 160 * s;
+        const collectBtnH = 44 * s;
+        const collectBtnX = (W - collectBtnW) / 2;
+        const collectBtnY = couponY + couponH + 40 * s;
+
+        const btnScale = revealEase;
+        const bw = collectBtnW * btnScale;
+        const bh = collectBtnH * btnScale;
+        const bx = collectBtnX + (collectBtnW - bw) / 2;
+        const by = collectBtnY + (collectBtnH - bh) / 2;
+
+        this.parent.roundRect(bx, by, bw, bh, 8 * s, '#c4a35a');
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('收下优惠', W / 2, by + bh / 2);
+
+        this.collectBtnRect = { x: collectBtnX, y: collectBtnY, w: collectBtnW, h: collectBtnH };
+      }
+    }
+
+    ctx.restore();
+  }
+}
+
+module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects };
