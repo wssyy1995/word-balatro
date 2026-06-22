@@ -2691,8 +2691,8 @@ function handleInput(x, inputY) {
                 scratchProgress: 0,
                 revealed: false,
                 animStartTime: Date.now(),
-                // 3张优惠券预生成5~9折随机折扣
-                rates: Array.from({ length: 3 }, () => 0.5 + Math.random() * 0.4)
+                // 3张优惠券预生成6~9折随机折扣
+                rates: Array.from({ length: 3 }, () => 0.6 + Math.random() * 0.3)
               };
               game.state = 'mystery_discount';
               game._closingConfirmBuy = true;
