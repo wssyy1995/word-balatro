@@ -542,6 +542,7 @@ module.exports = function extendAnimation(Renderer) {
       const s = this.scale;
       const anim = game._replicateAnim;
       const now = Date.now();
+      const baseCardScale = 1.8;
 
       if (anim.phase === 'spinning') {
         const elapsed = now - anim.startTime;
@@ -555,11 +556,18 @@ module.exports = function extendAnimation(Renderer) {
 
         // 两张字母牌：心跳共振动画（参考 Demo 模式 4）
         const gap = 20 * s;
-        const baseCardScale = 1.8;
         const cardW = this.cardW * baseCardScale;
         const totalW = cardW * 2 + gap;
         const startX = (W - totalW) / 2;
         const baseY = H / 2;
+
+        // 最后 400ms 心跳幅度衰减到 0，自然停止到 baseCardScale
+        const FADE_DURATION = 400;
+        let fadeOut = 1;
+        if (progress > (2000 - FADE_DURATION) / 2000) {
+          fadeOut = 1 - (progress - (2000 - FADE_DURATION) / 2000) / (FADE_DURATION / 2000);
+          fadeOut = Math.max(0, fadeOut);
+        }
 
         const period = 1600;
         const omega = (2 * Math.PI) / period;
@@ -574,7 +582,7 @@ module.exports = function extendAnimation(Renderer) {
         const beats = [hb1, hb2];
 
         anim.letters.forEach((letter, i) => {
-          const hb = beats[i];
+          const hb = beats[i] * fadeOut;
           const cx = startX + i * (cardW + gap) + cardW / 2;
           const cy = baseY - 18 * s * hb * 3;
           const cardScale = baseCardScale * (1 + hb);
@@ -642,15 +650,7 @@ module.exports = function extendAnimation(Renderer) {
         ctx.save();
         ctx.globalAlpha = fadeIn;
         ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;
-        if (anim.success) {
-          const titleGrad = ctx.createLinearGradient(W / 2, titleY - 15 * s, W / 2, titleY + 15 * s);
-          titleGrad.addColorStop(0, '#fff0a0');
-          titleGrad.addColorStop(0.5, '#ffd700');
-          titleGrad.addColorStop(1, '#ffaa00');
-          ctx.fillStyle = titleGrad;
-        } else {
-          ctx.fillStyle = '#c44536';
-        }
+        ctx.fillStyle = anim.success ? '#c4a35a' : '#c44536';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(anim.success ? '复刻成功！' : '复刻失败…', W / 2, titleY);
@@ -665,10 +665,12 @@ module.exports = function extendAnimation(Renderer) {
         this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
         ctx.restore();
 
-        // 两张字母牌（显示新分数）
-        const cardW = this.cardW * 1.6;
-        const cardH = this.cardH * 1.6;
+        // 两张字母牌（显示新分数）：从 spinning 结束时的 baseCardScale 自然过渡到 1.6
+        const targetCardScale = 1.6;
+        const resultScale = baseCardScale - (baseCardScale - targetCardScale) * fadeIn;
         const gap = 20 * s;
+        const cardW = this.cardW * resultScale;
+        const cardH = this.cardH * resultScale;
         const totalW = cardW * 2 + gap;
         const startX = (W - totalW) / 2;
         const cardY = (H - cardH) / 2;
@@ -689,8 +691,8 @@ module.exports = function extendAnimation(Renderer) {
             upgradeMult: 1,
             animOffset: { scale: 1, opacity: 1 }
           };
-          ctx.translate(x + this.cardW * 0.8, cardY + this.cardH * 0.8);
-          ctx.scale(1.6, 1.6);
+          ctx.translate(x + cardW / 2, cardY + cardH / 2);
+          ctx.scale(resultScale, resultScale);
           this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
           ctx.restore();
         });
