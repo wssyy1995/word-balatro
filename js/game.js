@@ -3858,7 +3858,7 @@ class Game {
     const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
     const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
 
-    const success = Math.random() < 0.8;
+    const success = Math.random() < 0.6;
     let targetLetter, sourceLetter, newScore;
 
     if (scoreA === scoreB) {
