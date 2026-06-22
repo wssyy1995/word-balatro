@@ -49,7 +49,7 @@ const SHOP_POOL = {
     {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
     {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.2]'},
     {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'},
-    {name:'清空奖励', type:'witch', scope:'global', trigger:'zero_hands_bonus', value:2, cost:8, min_level:3, desc:'回合结算时，出牌次数用光则基础金币+2'}
+    {name:'出牌小能手', type:'witch', scope:'global', trigger:'zero_hands_bonus', value:2, cost:8, min_level:3, desc:'回合结算时，若剩余出牌次数=0，则金币额外+2'}
   ],
   crystal: [
     {name:'额外弃牌', type:'crystal', effect:'extra_discard', value:1, cost:3, desc:'下一回合弃牌次数+1'},

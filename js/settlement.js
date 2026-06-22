@@ -72,7 +72,7 @@ class SettlementRenderer {
       { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}` },
     ];
     if (settlement.zeroHandsBonus > 0) {
-      items.push({ label: '清空奖励', value: `+${settlement.zeroHandsBonus}` });
+      items.push({ label: '出牌小能手', value: `+${settlement.zeroHandsBonus}`, color: '#4b0082' });
     }
 
     items.forEach((item, i) => {
@@ -81,7 +81,7 @@ class SettlementRenderer {
       ctx.save();
       ctx.globalAlpha = itemAnim.alpha * closeAlpha;
       ctx.font = `${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = '#555';
+      ctx.fillStyle = item.color || '#555';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(item.label, px + 35 * s, y);
