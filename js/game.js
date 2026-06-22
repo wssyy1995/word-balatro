@@ -1204,6 +1204,8 @@ class Game {
       this._potionSelectedLetter = null;
       this._potionUpgrading = null;
       this._randomUpgradePopup = null;
+      this._replicateSelectedLetters = [];
+      this._replicateAnim = null;
       this.state = 'playing';
       this.shopItems = null;
       this.safetyRounds = 3;
@@ -1488,6 +1490,8 @@ class Game {
     this.potionMode = p.potionMode || null;
     this._prePotionState = p._prePotionState || null;
     this._potionSelectedLetter = p._potionSelectedLetter || null;
+    this._replicateSelectedLetters = p._replicateSelectedLetters || [];
+    this._replicateAnim = p._replicateAnim || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
     this.settlementData = p.settlementData || null;
@@ -3825,8 +3829,107 @@ class Game {
           };
           popup.phase = 'done'; // 标记完成，保留转盘状态供背景显示
         }
+      } else if (popup.phase === 'done' && !this._potionUpgrading) {
+        // 动画已结束，清理转盘状态
+        this._randomUpgradePopup = null;
       }
     }
+
+    // 复刻水：旋转2秒后进入结果阶段
+    if (this._replicateAnim && this._replicateAnim.phase === 'spinning') {
+      const elapsed = Date.now() - this._replicateAnim.startTime;
+      if (elapsed >= 2000) {
+        this._replicateAnim.phase = 'result';
+        this._replicateAnim.resultStartTime = Date.now();
+        if (this.audioManager) this.audioManager.play(this._replicateAnim.success ? 'round_win' : 'round_fail');
+      }
+    }
+  }
+
+  startReplicate() {
+    if (!this.potionMode || this.potionMode.effect !== 'replicate_letter') return;
+    if (!this._replicateSelectedLetters || this._replicateSelectedLetters.length !== 2) return;
+
+    const [letterA, letterB] = this._replicateSelectedLetters;
+    const baseA = LETTER_SCORE[letterA];
+    const baseB = LETTER_SCORE[letterB];
+    const upA = letterUpgrades.get(letterA) || {};
+    const upB = letterUpgrades.get(letterB) || {};
+    const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
+    const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
+
+    const success = Math.random() < 0.8;
+    let targetLetter, sourceLetter, newScore;
+
+    if (scoreA === scoreB) {
+      // 分数相同，无事发生但标记为成功
+      this._replicateAnim = {
+        phase: 'result',
+        startTime: Date.now(),
+        letters: [letterA, letterB],
+        scores: [scoreA, scoreB],
+        newScores: [scoreA, scoreB],
+        success: true,
+        sameScore: true
+      };
+      this._replicateSelectedLetters = [];
+      return;
+    }
+
+    if (success) {
+      // 80%：低分变高分
+      if (scoreA < scoreB) {
+        targetLetter = letterA;
+        sourceLetter = letterB;
+        newScore = scoreB;
+      } else {
+        targetLetter = letterB;
+        sourceLetter = letterA;
+        newScore = scoreA;
+      }
+    } else {
+      // 20%：高分变低分
+      if (scoreA > scoreB) {
+        targetLetter = letterA;
+        sourceLetter = letterB;
+        newScore = scoreB;
+      } else {
+        targetLetter = letterB;
+        sourceLetter = letterA;
+        newScore = scoreA;
+      }
+    }
+
+    // 计算新分数对应的多层结构（尽量保持mult=1，用add来凑）
+    const baseTarget = LETTER_SCORE[targetLetter];
+    const add = newScore - baseTarget;
+    letterUpgrades.set(targetLetter, { mult: 1, add: Math.max(0, add) });
+
+    // 同步更新当前手牌
+    this.hand.forEach(card => {
+      if (card && card.letter === targetLetter) {
+        card.baseScore = baseTarget;
+        card.score = newScore;
+        card.upgraded = true;
+        card.upgradeMult = 1;
+        card.upgradeAdd = Math.max(0, add);
+      }
+    });
+
+    this._replicateAnim = {
+      phase: 'spinning',
+      startTime: Date.now(),
+      letters: [letterA, letterB],
+      scores: [scoreA, scoreB],
+      newScores: [
+        targetLetter === letterA ? newScore : scoreA,
+        targetLetter === letterB ? newScore : scoreB
+      ],
+      success,
+      targetLetter
+    };
+    this._replicateSelectedLetters = [];
+    if (this.audioManager) this.audioManager.play('spin_wheel');
   }
 
   startRandomSpin() {

@@ -7,21 +7,21 @@ module.exports = function extendPopup(Renderer) {
     Renderer.prototype._drawWitchDetailPopup = function(ctx, game, s) {
       const popup = game._witchDetailPopup;
       if (!popup) return;
-  
+
       const jokers = game.jokers || [];
       const joker = jokers[popup.jokerIndex];
       if (!joker) return;
-  
-      // 支持传入 rect（商店模式），否则回退到 witchPropRects
+
+      // 支持传入 rect(商店模式),否则回退到 witchPropRects
       const rect = popup.rect || this.witchPropRects[popup.jokerIndex];
       if (!rect) return;
-  
+
       const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
-  
+
       const pad = 10 * s;
       const lineH = 16 * s;
-  
-      // 先计算可作用字母宽度（如果有），用于动态调整弹窗宽度
+
+      // 先计算可作用字母宽度(如果有),用于动态调整弹窗宽度
       const letters = this._getWitchLetters(joker.trigger);
       const hasLetters = letters && letters.length > 0;
       let lettersTotalW = 0;
@@ -30,7 +30,7 @@ module.exports = function extendPopup(Renderer) {
         const circleGap = 8 * s;
         lettersTotalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
       }
-  
+
       // 根据效果描述文字长度动态计算弹窗宽度
       ctx.font = `${Math.floor(12 * s)}px sans-serif`;
       const descW = ctx.measureText(joker.desc).width;
@@ -43,7 +43,7 @@ module.exports = function extendPopup(Renderer) {
       // 确保弹窗不超出屏幕边缘
       const edgePad = 5 * s;
       popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
-  
+
       // 计算内容高度
       const hasLimit = joker.limit !== undefined && joker.usesLeft !== undefined;
       const hasAccumulation = joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation';
@@ -51,16 +51,16 @@ module.exports = function extendPopup(Renderer) {
       const hasLastWord = joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession';
       const hasValueHalfConstraint = !popup.isShop && game._witchCardValueHalfActive && joker.scope === 'whole_word' && joker.value !== undefined && joker.value !== null;
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
-      if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫约束：当前倍率
-      if (hasLastWord && !popup.isShop) contentH += lineH + 2 * s; // 上一手单词（仅限游戏页）
+      if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫约束:当前倍率
+      if (hasLastWord && !popup.isShop) contentH += lineH + 2 * s; // 上一手单词(仅限游戏页)
       if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
-      if (hasPredicted && !popup.isShop) contentH += lineH + 2 * s; // 预言字母（仅限游戏页）
+      if (hasPredicted && !popup.isShop) contentH += lineH + 2 * s; // 预言字母(仅限游戏页)
       if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
       const popupH = contentH;
       const popupY = cardY + cardH + 6 * s + 2 * s;
-  
-      // 出现动画（easeOutBack：从卡牌底部向下弹出）
+
+      // 出现动画(easeOutBack:从卡牌底部向下弹出)
       let appearScale = 1;
       let appearOffsetY = 0;
       if (popup.animStartTime) {
@@ -70,13 +70,13 @@ module.exports = function extendPopup(Renderer) {
         appearScale = 0.5 + 0.5 * ease;
         appearOffsetY = (1 - ease) * 12 * s;
       }
-  
+
       ctx.save();
       ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
       ctx.scale(appearScale, appearScale);
       ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
       ctx.translate(0, appearOffsetY);
-  
+
       // 小三角
       const triW = 8 * s;
       const triH = 6 * s;
@@ -88,12 +88,12 @@ module.exports = function extendPopup(Renderer) {
       ctx.closePath();
       ctx.fillStyle = '#9b59b6';
       ctx.fill();
-  
+
       // 弹窗面板
       const r = 8 * s;
       this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
 
-      // ===== 商店模式：右上角售出按钮 =====
+      // ===== 商店模式:右上角售出按钮 =====
       this._shopWitchDetailSellBtnRect = null;
       if (popup.isShop) {
         const btnPadX = 14 * s;
@@ -144,8 +144,8 @@ module.exports = function extendPopup(Renderer) {
 
       let cy = popupY + pad + lineH / 2;
       const cx = popupX + popupW / 2;
-  
-      // 名称（带星星装饰）
+
+      // 名称(带星星装饰)
       ctx.save();
       ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
       ctx.fillStyle = '#1a2f4a';
@@ -153,9 +153,9 @@ module.exports = function extendPopup(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText(`✦ ${joker.name} ✦`, cx, cy);
       ctx.restore();
-  
+
       cy += lineH + 4 * s;
-  
+
       // 效果标签
       ctx.save();
       ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
@@ -164,9 +164,9 @@ module.exports = function extendPopup(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText('效果', popupX + pad, cy);
       ctx.restore();
-  
+
       cy += lineH;
-  
+
       // 效果描述
       ctx.save();
       ctx.font = `${Math.floor(12 * s)}px sans-serif`;
@@ -176,7 +176,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(joker.desc, popupX + pad, cy);
       ctx.restore();
 
-      // 女巫约束：witch_card_value_half 时显示当前实际倍率
+      // 女巫约束:witch_card_value_half 时显示当前实际倍率
       if (hasValueHalfConstraint) {
         cy += lineH + 2 * s;
         ctx.save();
@@ -186,18 +186,18 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         let constraintText;
         if (joker.trigger === 'chaos_orb') {
-          // 混沌法球：value 为随机倍率加成，女巫约束下加成范围减半
-          constraintText = '女巫约束：倍率加成随机 +[0.25~0.6]';
+          // 混沌法球:value 为随机倍率加成,女巫约束下加成范围减半
+          constraintText = '女巫约束:倍率加成随机 +[0.25~0.6]';
         } else {
           const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
           const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
-          constraintText = isMultiplier ? `女巫约束：当前倍率为 x${valueText}` : `女巫约束：当前倍率为 +${valueText}`;
+          constraintText = isMultiplier ? `女巫约束:当前倍率为 x${valueText}` : `女巫约束:当前倍率为 +${valueText}`;
         }
         ctx.fillText(constraintText, popupX + pad, cy);
         ctx.restore();
       }
-  
-      // 上一手单词（消元术 / 首字连击）
+
+      // 上一手单词(消元术 / 首字连击)
       if ((joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession') && !popup.isShop) {
         cy += lineH + 2 * s;
         ctx.save();
@@ -209,11 +209,11 @@ module.exports = function extendPopup(Renderer) {
         if (joker.trigger === 'initial_succession' || joker.trigger === 'no_duplicate') {
           lastWordText = game._lastPlayedLetters ? Array.from(game._lastPlayedLetters).join('') : '无';
         }
-        ctx.fillText(`上一手单词：${lastWordText}`, popupX + pad, cy);
+        ctx.fillText(`上一手单词:${lastWordText}`, popupX + pad, cy);
         ctx.restore();
       }
-  
-      // 倍率增值（错误即经验 / 首字连击：显示当前累加值）
+
+      // 倍率增值(错误即经验 / 首字连击:显示当前累加值)
       if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
         cy += lineH + 2 * s;
         ctx.save();
@@ -221,11 +221,11 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`倍率累计：+${joker.value}`, popupX + pad, cy);
+        ctx.fillText(`倍率累计:+${joker.value}`, popupX + pad, cy);
         ctx.restore();
       }
-  
-      // 剩余次数（limit 型女巫牌）
+
+      // 剩余次数(limit 型女巫牌)
       if (joker.limit !== undefined && joker.usesLeft !== undefined) {
         cy += lineH + 2 * s;
         ctx.save();
@@ -233,11 +233,11 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = joker.usesLeft > 0 ? '#e74c3c' : '#7f8c8d';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`剩余次数：${joker.usesLeft} / ${joker.limit}`, popupX + pad, cy);
+        ctx.fillText(`剩余次数:${joker.usesLeft} / ${joker.limit}`, popupX + pad, cy);
         ctx.restore();
       }
-  
-      // 预言字母（预言家牌）—— 游戏页显示，商店页隐藏
+
+      // 预言字母(预言家牌)-- 游戏页显示,商店页隐藏
       if (hasPredicted && !popup.isShop) {
         cy += lineH + 2 * s;
         ctx.save();
@@ -245,14 +245,14 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`预言字母：${joker._predictedLetter}`, popupX + pad, cy);
+        ctx.fillText(`预言字母:${joker._predictedLetter}`, popupX + pad, cy);
         ctx.restore();
       }
-  
+
       // 可作用字母
       if (hasLetters) {
         cy += lineH + 8 * s;
-  
+
         ctx.save();
         ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
         ctx.fillStyle = '#888';
@@ -260,14 +260,14 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText('可作用字母', popupX + pad, cy);
         ctx.restore();
-  
+
         cy += lineH + 4 * s;
-  
+
         const circleR = 12 * s;
         const circleGap = 8 * s;
         const totalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
         let lx = popupX + (popupW - totalW) / 2 + circleR;
-  
+
         letters.forEach(letter => {
           ctx.save();
           ctx.beginPath();
@@ -282,8 +282,8 @@ module.exports = function extendPopup(Renderer) {
           ctx.restore();
           lx += circleR * 2 + circleGap;
         });
-  
-        // 底部装饰线（仅在有可作用字母时显示）
+
+        // 底部装饰线(仅在有可作用字母时显示)
         const decoY = popupY + popupH - 10 * s;
         ctx.save();
         ctx.strokeStyle = 'rgba(155,89,182,0.3)';
@@ -296,7 +296,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.stroke();
         ctx.restore();
       }
-  
+
       // 关闭弹窗整体变换
       ctx.restore();
     }
@@ -308,9 +308,9 @@ module.exports = function extendPopup(Renderer) {
       const s = this.scale;
       const popup = game._changeLetterPopup;
       if (!popup) return;
-  
+
       const { LETTER_SCORE } = require('../data');
-  
+
       const elapsed = Date.now() - (popup.startTime || Date.now());
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: game._closingChangeLetter,
@@ -325,11 +325,11 @@ module.exports = function extendPopup(Renderer) {
       });
       if (!panel) return;
       const { px, py, pw, ph, enterProgress, closeAlpha } = panel;
-  
+
       const baseAlpha = enterProgress;
       const gold = '#c4a35a';
-  
-      // 标题：字母置换
+
+      // 标题:字母置换
       ctx.save();
       ctx.globalAlpha = baseAlpha * closeAlpha;
       ctx.font = `bold ${Math.floor(18 * s)}px Georgia, serif`;
@@ -338,7 +338,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText('字母置换', W / 2, py + 30 * s);
       ctx.restore();
-  
+
       // 标题分隔线
       ctx.save();
       ctx.globalAlpha = baseAlpha * closeAlpha;
@@ -349,8 +349,8 @@ module.exports = function extendPopup(Renderer) {
       ctx.lineTo(px + pw - 30 * s, py + 48 * s);
       ctx.stroke();
       ctx.restore();
-  
-      // 选中的字母卡牌（放大到 0.7，保留选中态以显示 selected.png）
+
+      // 选中的字母卡牌(放大到 0.7,保留选中态以显示 selected.png)
       const selectedCard = game.hand.find(c => c && c.id === popup.cardId);
       if (selectedCard) {
         ctx.save();
@@ -360,7 +360,7 @@ module.exports = function extendPopup(Renderer) {
         this.drawCard(selectedCard, -this.cardW / 2, -this.cardH / 2);
         ctx.restore();
       }
-  
+
       // 字母块区域
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const lCols = 7;
@@ -369,7 +369,7 @@ module.exports = function extendPopup(Renderer) {
       const lTotalW = lCols * lBtnSize + (lCols - 1) * lGap;
       const lStartX = (W - lTotalW) / 2;
       const lStartY = py + 160 * s;
-  
+
       this.changeLetterRects = [];
       letters.forEach((letter, i) => {
         const col = i % lCols;
@@ -378,7 +378,7 @@ module.exports = function extendPopup(Renderer) {
         const ly = lStartY + row * (lBtnSize + lGap);
         const isOriginal = letter === popup.originalLetter;
         const isSelected = popup.targetLetter === letter;
-  
+
         ctx.save();
         ctx.globalAlpha = baseAlpha * closeAlpha;
         if (isOriginal) {
@@ -386,7 +386,7 @@ module.exports = function extendPopup(Renderer) {
           this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#e8e4dc');
           ctx.fillStyle = '#b0a898';
         } else if (isSelected) {
-          // 选中态：金色背景
+          // 选中态:金色背景
           this.roundRect(lx, ly, lBtnSize, lBtnSize, 6 * s, '#fdf5e0', '#c4a35a', 2 * s);
           ctx.fillStyle = '#8b6914';
         } else {
@@ -399,13 +399,13 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText(letter, lx + lBtnSize / 2, ly + lBtnSize / 2);
         ctx.restore();
-  
+
         if (!isOriginal) {
           this.changeLetterRects.push({ x: lx, y: ly, w: lBtnSize, h: lBtnSize, letter });
         }
       });
-  
-      // 选中的转换提示 "A → B"（金棕色）
+
+      // 选中的转换提示 "A → B"(金棕色)
       if (popup.targetLetter) {
         const arrowY = lStartY + Math.ceil(letters.length / lCols) * (lBtnSize + lGap) + 12 * s;
         ctx.save();
@@ -417,7 +417,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText(`${popup.originalLetter} → ${popup.targetLetter}`, W / 2, arrowY);
         ctx.restore();
       }
-  
+
       // 置换按钮
       const btnW = 130 * s;
       const btnH = 42 * s;
@@ -436,8 +436,8 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText('置换', W / 2, btnY + btnH / 2);
       ctx.restore();
       this.changeLetterSwapBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, enabled: canSwap };
-  
-      // 关闭按钮（右上角 X）
+
+      // 关闭按钮(右上角 X)
       const closeSize = 28 * s;
       const closeX = px + pw - closeSize - 8 * s;
       const closeY = py + 8 * s;
@@ -457,6 +457,18 @@ module.exports = function extendPopup(Renderer) {
     }
 
     Renderer.prototype.drawPotion = function(game) {
+      // 复刻水：动画/结果阶段优先
+      if (game._replicateAnim) {
+        this._drawReplicateAnim(game);
+        return;
+      }
+
+      // 复刻水：选择阶段
+      if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
+        this._drawReplicateSelect(game);
+        return;
+      }
+
       // 随机强化药水：先画转盘背景，再叠加升级动画
       if (game.potionMode && game.potionMode.effect === 'random_upgrade') {
         this.drawRandomUpgradePopup(game);
@@ -465,30 +477,30 @@ module.exports = function extendPopup(Renderer) {
         }
         return;
       }
-  
+
       // 其他药水：如果 potionMode 已清除，只剩动画，直接处理
       if (game._potionUpgrading && !game.potionMode) {
         this._drawPotionUpgradeAnim(game);
         return;
       }
-  
+
       const ctx = this.ctx;
       const W = this.W;
       const H = this.H;
       const s = this.scale;
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       // LETTER_SCORE 和 letterUpgrades 已在顶部导入
-  
-      // 背景由 render() 统一绘制 bgImage，不覆盖
-  
-      // === 顶部栏（参考商店页样式）===
+
+      // 背景由 render() 统一绘制 bgImage,不覆盖
+
+      // === 顶部栏(参考商店页样式)===
       // 字母升级页面不显示设置和金币胶囊
       // this.drawTopHeader(game);
-  
-      // 标题区域 Y 坐标（与商店页"商店"标题位置一致）
+
+      // 标题区域 Y 坐标(与商店页"商店"标题位置一致)
       const titleY = top - 10 * s;
-  
-      // 标题：shop_icon.png 装饰 + "选择字母" + shop_icon.png 水平镜像
+
+      // 标题:shop_icon.png 装饰 + "选择字母" + shop_icon.png 水平镜像
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -498,7 +510,7 @@ module.exports = function extendPopup(Renderer) {
       const titleTextW = ctx.measureText(titleText).width;
       ctx.fillText(titleText, W / 2, titleY);
       ctx.restore();
-  
+
       // 左右装饰图标
       const decoIconW = 20 * s + 2 * s;
       const decoIconH = 20 * s;
@@ -507,7 +519,7 @@ module.exports = function extendPopup(Renderer) {
       if (this.shopIcon && this.shopIconLoaded) {
         const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
         ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
-  
+
         const rightIconX = W / 2 + titleTextW / 2 + decoGap;
         ctx.save();
         ctx.translate(rightIconX + decoIconW, decoIconY);
@@ -515,7 +527,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
         ctx.restore();
       }
-  
+
       // === 副标题 ===
       const subTitleY = titleY + 52 * s;
       ctx.save();
@@ -523,10 +535,10 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('选择一张字母牌，分数+10，本赛局内有效', W / 2, subTitleY);
+      ctx.fillText('选择一张字母牌,分数+10,本赛局内有效', W / 2, subTitleY);
       ctx.restore();
-  
-      // === 分隔线（两条线 + 中间菱形）===
+
+      // === 分隔线(两条线 + 中间菱形)===
       const dividerY = subTitleY + 22 * s;
       const lineW = 80 * s;
       const lineGap = 8 * s;
@@ -556,7 +568,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-  
+
       // === A-Z 字母网格 ===
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const cols = 4;
@@ -565,49 +577,49 @@ module.exports = function extendPopup(Renderer) {
       const totalGridW = cols * btnSize + (cols - 1) * btnGap;
       const gridStartX = (W - totalGridW) / 2;
       const gridStartY = dividerY + 30 * s;
-  
-      // 王牌强化（upgrade_face）只允许选择 X/Y/Z
+
+      // 王牌强化(upgrade_face)只允许选择 X/Y/Z
       const isFaceOnly = game.potionMode && game.potionMode.effect === 'upgrade_face';
-      // 如果当前选中了不允许的字母，自动清除
+      // 如果当前选中了不允许的字母,自动清除
       if (isFaceOnly && game._potionSelectedLetter && !['X', 'Y', 'Z'].includes(game._potionSelectedLetter)) {
         game._potionSelectedLetter = null;
       }
       const selectedLetter = game._potionSelectedLetter || null;
-  
+
       this.potionLetterRects = [];
       letters.forEach((letter, i) => {
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = gridStartX + col * (btnSize + btnGap);
         const y = gridStartY + row * (btnSize + btnGap);
-  
+
         const isSelected = selectedLetter === letter;
         const isAllowed = !isFaceOnly || ['X', 'Y', 'Z'].includes(letter);
-  
-        // 背景圆角矩形（带底部阴影，微微立体感）
+
+        // 背景圆角矩形(带底部阴影,微微立体感)
         const br = 8 * s;
         ctx.save();
         if (isSelected && isAllowed) {
-          // 选中状态：金色背景+阴影
+          // 选中状态:金色背景+阴影
           ctx.shadowColor = 'rgba(196,163,90,0.35)';
           ctx.shadowBlur = 6 * s;
           ctx.shadowOffsetY = 3 * s;
           this.roundRect(x, y, btnSize, btnSize, br, '#fdf5e0', '#c4a35a', 2.5 * s);
         } else if (!isAllowed) {
-          // 禁用状态：浅灰背景 + 淡阴影
+          // 禁用状态:浅灰背景 + 淡阴影
           ctx.shadowColor = 'rgba(0,0,0,0.06)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
           this.roundRect(x, y, btnSize, btnSize, br, '#e8e4dc', null, 0);
         } else {
-          // 普通状态：米色背景 + 底部阴影
+          // 普通状态:米色背景 + 底部阴影
           ctx.shadowColor = 'rgba(0,0,0,0.08)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
           this.roundRect(x, y, btnSize, btnSize, br, '#f5f0e6', '#d4c9a8', 1.5 * s);
         }
         ctx.restore();
-  
+
         // 字母
         ctx.save();
         ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
@@ -622,14 +634,14 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText(letter, x + btnSize / 2, y + btnSize / 2);
         ctx.restore();
-  
+
         if (isAllowed) {
           this.potionLetterRects.push({ x, y, w: btnSize, h: btnSize, letter });
         }
       });
-  
+
       const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
-  
+
       // === 当前字母分提示 ===
       if (selectedLetter) {
         const scoreTipY = gridBottomY + 18 * s;
@@ -643,19 +655,19 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`当前字母分：${currentScore}`, W / 2, scoreTipY);
+        ctx.fillText(`当前字母分:${currentScore}`, W / 2, scoreTipY);
         ctx.restore();
       }
-  
-      // === 底部按钮区域（升级 + 暂存）===
+
+      // === 底部按钮区域(升级 + 暂存)===
       const btnAreaY = H - 75 * s;
       const potionBtnW = 130 * s;
       const potionBtnH = 46 * s;
       const potionBtnGap = 16 * s;
       const totalBtnW = potionBtnW * 2 + potionBtnGap;
       const btnStartX = (W - totalBtnW) / 2;
-  
-      // 升级按钮（需要选中字母）
+
+      // 升级按钮(需要选中字母)
       const upgradeBtnX = btnStartX;
       const upgradeBtnY = btnAreaY;
       const upgradeEnabled = !!selectedLetter && !game._potionUpgrading && !!game.potionMode;
@@ -670,8 +682,8 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText('升级', upgradeBtnX + potionBtnW / 2, upgradeBtnY + potionBtnH / 2);
       ctx.restore();
       this.potionUpgradeBtnRect = { x: upgradeBtnX, y: upgradeBtnY, w: potionBtnW, h: potionBtnH, enabled: upgradeEnabled };
-  
-      // 暂存按钮（始终可点，除非正在动画中）
+
+      // 暂存按钮(始终可点,除非正在动画中)
       const stashBtnX = btnStartX + potionBtnW + potionBtnGap;
       const stashBtnY = btnAreaY;
       const stashEnabled = !game._potionUpgrading;
@@ -686,8 +698,8 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText('暂存', stashBtnX + potionBtnW / 2, stashBtnY + potionBtnH / 2);
       ctx.restore();
       this.potionStashBtnRect = { x: stashBtnX, y: stashBtnY, w: potionBtnW, h: potionBtnH, enabled: stashEnabled };
-  
-      // 如果正在播放升级动画，叠加在字母选择页面上方
+
+      // 如果正在播放升级动画,叠加在字母选择页面上方
       if (game._potionUpgrading) {
         this._drawPotionUpgradeAnim(game);
       }
@@ -700,14 +712,14 @@ module.exports = function extendPopup(Renderer) {
       const s = this.scale;
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       const popup = game._randomUpgradePopup;
-  
+
       // 顶部栏
       // 随机强化页面不显示设置和金币胶囊
       // this.drawTopHeader(game);
-  
+
       const titleY = top - 10 * s;
-  
-      // 标题：shop_icon.png 装饰 + "随机强化" + shop_icon.png 水平镜像
+
+      // 标题:shop_icon.png 装饰 + "随机强化" + shop_icon.png 水平镜像
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -717,7 +729,7 @@ module.exports = function extendPopup(Renderer) {
       const titleTextW = ctx.measureText(titleText).width;
       ctx.fillText(titleText, W / 2, titleY);
       ctx.restore();
-  
+
       // 左右装饰图标
       const decoIconW = 20 * s + 2 * s;
       const decoIconH = 20 * s;
@@ -726,7 +738,7 @@ module.exports = function extendPopup(Renderer) {
       if (this.shopIcon && this.shopIconLoaded) {
         const leftIconX = W / 2 - titleTextW / 2 - decoGap - decoIconW;
         ctx.drawImage(this.shopIcon, leftIconX, decoIconY, decoIconW, decoIconH);
-  
+
         const rightIconX = W / 2 + titleTextW / 2 + decoGap;
         ctx.save();
         ctx.translate(rightIconX + decoIconW, decoIconY);
@@ -734,7 +746,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.drawImage(this.shopIcon, 0, 0, decoIconW, decoIconH);
         ctx.restore();
       }
-  
+
       // 副标题
       const subTitleY = titleY + 52 * s;
       ctx.save();
@@ -742,9 +754,9 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('点击抽选字母，分数乘以1.5~4倍，本赛局有效', W / 2, subTitleY);
+      ctx.fillText('点击抽选字母,分数乘以1.5~4倍,本赛局有效', W / 2, subTitleY);
       ctx.restore();
-  
+
       // 分隔线
       const dividerY = subTitleY + 22 * s;
       const lineW = 80 * s;
@@ -772,27 +784,27 @@ module.exports = function extendPopup(Renderer) {
       ctx.closePath();
       ctx.fill();
       ctx.restore();
-  
+
       // === 圆形转盘 ===
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const isSpinning = popup && popup.phase === 'spinning';
       const isPaused = popup && (popup.phase === 'paused' || popup.phase === 'done');
       const targetLetter = popup ? popup.targetLetter : null;
-  
+
       const wheelRadius = 160 * s;
       const wheelCenterY = dividerY + 30 * s + wheelRadius + 50 * s;
       const anglePerSector = 360 / 26;
-  
+
       // 计算当前旋转角度和高亮字母
       let currentAngle = 0;
       let highlightIdx = -1;
-  
+
       if (isSpinning || isPaused) {
         const targetIdx = letters.indexOf(targetLetter);
         const targetCenterAngle = targetIdx * anglePerSector + anglePerSector / 2;
         const rotations = 3;
         const finalAngle = 360 * rotations + (360 - targetCenterAngle);
-  
+
         if (isSpinning) {
           const elapsed = Date.now() - popup.spinStartTime;
           const progress = Math.min(elapsed / 3000, 1);
@@ -801,12 +813,12 @@ module.exports = function extendPopup(Renderer) {
         } else {
           currentAngle = finalAngle;
         }
-  
+
         const normalized = ((-currentAngle) % 360 + 360) % 360;
         highlightIdx = Math.floor(normalized / anglePerSector) % 26;
       }
-  
-      // paused 阶段：扇形闪烁约1.5次（浅金色 ↔ 金色，周期750ms）
+
+      // paused 阶段:扇形闪烁约1.5次(浅金色 ↔ 金色,周期750ms)
       let pausedPulse = 1;
       let currentHighlightColor = '#ffe8a0';
       if (isPaused && popup.pauseStartTime && !game._potionUpgrading) {
@@ -821,7 +833,7 @@ module.exports = function extendPopup(Renderer) {
           currentHighlightColor = '#f5c542'; // 之后固定金色
         }
       }
-  
+
       // 绘制转盘外圈圆环
       ctx.save();
       ctx.beginPath();
@@ -829,21 +841,21 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#c4a35a';
       ctx.fill();
       ctx.restore();
-  
-      // 绘制转盘扇形（随转盘旋转）
+
+      // 绘制转盘扇形(随转盘旋转)
       ctx.save();
       ctx.translate(centerX, wheelCenterY);
       ctx.rotate(currentAngle * Math.PI / 180);
-  
+
       const sectorColors = ['#f5f0e6', '#fdf5e0'];
       const anglePerSectorRad = (Math.PI * 2) / 26;
       const startOffset = -Math.PI / 2; // A 从 12 点钟开始
-  
+
       for (let i = 0; i < 26; i++) {
         const startAngle = startOffset + i * anglePerSectorRad;
         const endAngle = startOffset + (i + 1) * anglePerSectorRad;
         const isHighlighted = i === highlightIdx;
-  
+
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.arc(0, 0, wheelRadius, startAngle, endAngle);
@@ -853,7 +865,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.lineWidth = 0.8 * s;
         ctx.strokeStyle = '#d4c9a8';
         ctx.stroke();
-  
+
         // 高亮扇形加金色边框
         if (isHighlighted) {
           ctx.save();
@@ -865,18 +877,18 @@ module.exports = function extendPopup(Renderer) {
           ctx.restore();
         }
       }
-  
-      // 绘制字母（径向排列，从外向内）
+
+      // 绘制字母(径向排列,从外向内)
       for (let i = 0; i < 26; i++) {
         const midAngle = startOffset + i * anglePerSectorRad + anglePerSectorRad / 2;
         const textRadius = wheelRadius * 0.72;
         const tx = Math.cos(midAngle) * textRadius;
         const ty = Math.sin(midAngle) * textRadius;
         const isHighlighted = i === highlightIdx;
-  
+
         ctx.save();
         ctx.translate(tx, ty);
-        // 文字沿半径方向，底部朝向中心 → 旋转 midAngle + PI/2
+        // 文字沿半径方向,底部朝向中心 → 旋转 midAngle + PI/2
         ctx.rotate(midAngle + Math.PI / 2);
         ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         ctx.fillStyle = isHighlighted ? '#8b6914' : '#5a4a2a';
@@ -885,7 +897,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText(letters[i], 0, 0);
         ctx.restore();
       }
-  
+
       // 外圈装饰圆点
       const dotCount = 26;
       const dotRadius = 2.5 * s;
@@ -902,15 +914,15 @@ module.exports = function extendPopup(Renderer) {
         ctx.lineWidth = 0.5 * s;
         ctx.stroke();
       }
-  
+
       ctx.restore(); // 结束转盘旋转
-  
-      // === 中心圆形（抽选按钮 / 倍数显示）===
+
+      // === 中心圆形(抽选按钮 / 倍数显示)===
       const btnRadius = 36 * s;
       const isIdle = !popup || popup.phase === 'idle';
       const isPausedOrDone = popup && (popup.phase === 'paused' || popup.phase === 'done');
       const spinEnabled = isIdle;
-  
+
       ctx.save();
       ctx.beginPath();
       ctx.arc(centerX, wheelCenterY, btnRadius, 0, Math.PI * 2);
@@ -921,22 +933,22 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#fdf5e0';
         ctx.strokeStyle = '#c4a35a';
       } else {
-        // paused / done：金色背景，与扇形高亮颜色一致
+        // paused / done:金色背景,与扇形高亮颜色一致
         ctx.fillStyle = '#f5c542';
         ctx.strokeStyle = '#c4a35a';
       }
       ctx.lineWidth = 2 * s;
       ctx.fill();
       ctx.stroke();
-  
+
       // 按钮内阴影
       ctx.beginPath();
       ctx.arc(centerX, wheelCenterY, btnRadius - 2 * s, 0, Math.PI * 2);
       ctx.strokeStyle = 'rgba(0,0,0,0.1)';
       ctx.lineWidth = 1 * s;
       ctx.stroke();
-  
-      // 文字：idle 显示"抽选"，spinning 快速切换倍数，paused/done 定格最终倍数
+
+      // 文字:idle 显示"抽选",spinning 快速切换倍数,paused/done 定格最终倍数
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       if (isIdle) {
@@ -966,16 +978,16 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
       ctx.restore();
-  
-      // done 阶段且倍率 > 3：中心圆内部放烟花（复用单词验证合法烟花）
+
+      // done 阶段且倍率 > 3:中心圆内部放烟花(复用单词验证合法烟花)
       if (popup && popup.phase === 'done' && game._potionUpgrading && game._potionUpgrading.randomMult > 3) {
         if (!game._potionUpgrading._fireworkSpawned) {
           game._potionUpgrading._fireworkSpawned = true;
           this._spawnSparkles(centerX, wheelCenterY, 20);
         }
       }
-  
-      // 中心按钮点击区域（圆形）
+
+      // 中心按钮点击区域(圆形)
       this.randomSpinBtnRect = {
         x: centerX - btnRadius,
         y: wheelCenterY - btnRadius,
@@ -987,8 +999,8 @@ module.exports = function extendPopup(Renderer) {
         cy: wheelCenterY,
         r: btnRadius
       };
-  
-      // === 顶部指针（不旋转）===
+
+      // === 顶部指针(不旋转)===
       const ptrY = wheelCenterY - wheelRadius - 18 * s;
       const ptrW = 18 * s;
       const ptrH = 22 * s;
@@ -1003,14 +1015,14 @@ module.exports = function extendPopup(Renderer) {
       ctx.strokeStyle = '#c0392b';
       ctx.lineWidth = 1.5 * s;
       ctx.stroke();
-  
+
       // 指针底部小圆点
       ctx.beginPath();
       ctx.arc(centerX, ptrY, 3 * s, 0, Math.PI * 2);
       ctx.fillStyle = '#e74c3c';
       ctx.fill();
       ctx.restore();
-  
+
       // === 当前高亮字母提示 ===
       if ((isSpinning || isPaused) && highlightIdx >= 0) {
         const hintY = wheelCenterY + wheelRadius + 28 * s;
@@ -1020,11 +1032,11 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = isPaused ? '#c0392b' : '#8b6914';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`当前：${hlLetter}`, centerX, hintY);
+        ctx.fillText(`当前:${hlLetter}`, centerX, hintY);
         ctx.restore();
       }
-  
-      // 关闭按钮已移除（随机强化页面无需手动关闭）
+
+      // 关闭按钮已移除(随机强化页面无需手动关闭)
       this.randomUpgradeCloseRect = null;
     }
 
@@ -1035,11 +1047,11 @@ module.exports = function extendPopup(Renderer) {
       const s = this.scale;
       const anim = game._lifeExtensionAnim;
       if (!anim) return;
-  
+
       const elapsed = Date.now() - anim.startTime;
-      // 前1秒只显示闪烁动画（由 drawHUD 绘制），不显示弹窗
+      // 前1秒只显示闪烁动画(由 drawHUD 绘制),不显示弹窗
       if (elapsed < 1000) return;
-  
+
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: false,
         width: 300, height: 260, enterOffset: 25, closeOffset: 40,
@@ -1048,7 +1060,7 @@ module.exports = function extendPopup(Renderer) {
       });
       if (!panel) return;
       const { px, py, pw, ph, elapsed: panelElapsed } = panel;
-  
+
       // 标题
       const titleAnim = Easing.fadeIn(elapsed - 1000, 80, 250, 8 * s);
       ctx.save();
@@ -1059,7 +1071,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.textBaseline = 'middle';
       ctx.fillText('游戏顺延', W / 2, py + 40 * s + titleAnim.yShift);
       ctx.restore();
-  
+
       // 分隔线
       const line1Anim = Easing.fadeIn(elapsed - 1000, 140, 250, 6 * s);
       ctx.save();
@@ -1072,7 +1084,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.lineTo(px + pw - 30 * s, line1Y);
       ctx.stroke();
       ctx.restore();
-  
+
       // 提示文案
       const hintAnim = Easing.fadeIn(elapsed - 1000, 200, 250, 8 * s);
       const hintY = py + 100 * s + hintAnim.yShift;
@@ -1087,7 +1099,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#555';
       ctx.fillText(`下一关目标分 + ${anim.diff} × 2`, W / 2, hintY + 28 * s);
       ctx.restore();
-  
+
       // 确定按钮
       const btnAnim = Easing.fadeIn(elapsed - 1000, 350, 250, 10 * s);
       const btnW = 160 * s;
@@ -1098,7 +1110,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.globalAlpha = btnAnim.alpha;
       this._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, game._lifeExtensionBtnPressed, { color: '#c4a35a', radius: 8 });
       ctx.restore();
-  
+
       // 存储点击区域
       const finalBtnY = py + ph - btnH - 28 * s;
       this.lifeExtensionBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
@@ -1125,7 +1137,7 @@ module.exports = function extendPopup(Renderer) {
       const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
       const ca = closeAlpha;
 
-      // 标题：学习模式
+      // 标题:学习模式
       const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
       ctx.save();
       ctx.globalAlpha = titleAnim.alpha * ca;
@@ -1160,7 +1172,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('每日10个新词，随机添加到每回合游戏中', px + 14 * s + barPad, barY + barH / 2);
+      ctx.fillText('每日10个新词,随机添加到每回合游戏中', px + 14 * s + barPad, barY + barH / 2);
       // 右侧 switch
       const swW = 50 * s;
       const swH = 26 * s;
@@ -1193,7 +1205,7 @@ module.exports = function extendPopup(Renderer) {
         const hintW = hintTextW + hintPad * 2;
         const hintX = swX + swW / 2 - hintW / 2 - 10 * s;
         const hintBaseY = swY - hintH - 6 * s;
-        // 入场动画（从下往上弹 150ms）
+        // 入场动画(从下往上弹 150ms)
         let hintOffsetY = 0;
         let hintAlpha = 1;
         if (hintElapsed < 150) {
@@ -1235,7 +1247,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // 返回按钮（使用 setting_right.png 水平镜像）
+      // 返回按钮(使用 setting_right.png 水平镜像)
       const backY = py + 26 * s;
       const backIconSize = 16 * s;
       const backIconX = px + 14 * s;
@@ -1255,10 +1267,10 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText('‹', backIconX, backY);
       }
       ctx.restore();
-      // 记录返回点击区域（加大）
+      // 记录返回点击区域(加大)
       this.dailyWordsBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
 
-      // 关闭按钮（棕色圆圈）
+      // 关闭按钮(棕色圆圈)
       const closeSize = 26 * s;
       const closeX = px + pw - closeSize - 12 * s;
       const closeY = py + 12 * s;
@@ -1294,7 +1306,7 @@ module.exports = function extendPopup(Renderer) {
       this.dailyWordsContentH = contentH;
       game._dailyWordsMaxScroll = maxScroll;
       game._dailyWordsContentH = contentH;
-      // 仅在非拖动/动画状态下限制滚动范围（rubber band 效果需要允许临时超出）
+      // 仅在非拖动/动画状态下限制滚动范围(rubber band 效果需要允许临时超出)
       const scrollState = game._dailyWordsScrollState;
       if (scrollState !== 'dragging' && scrollState !== 'inertia' && scrollState !== 'bounce') {
         if (game._dailyWordsScrollY > maxScroll) game._dailyWordsScrollY = maxScroll;
@@ -1335,7 +1347,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText(String(i + 1), numX, numY);
 
-        // 状态标签（右侧）
+        // 状态标签(右侧)
         const statusX = px + pw - 28 * s;
         const statusY = cy + 18 * s;
         ctx.textAlign = 'right';
@@ -1350,7 +1362,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillText('○ 未学习', statusX, statusY);
         }
 
-        // 单词（序号右侧）
+        // 单词(序号右侧)
         const wordX = numX + numR + 8 * s;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
@@ -1358,7 +1370,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#1a1a1a';
         ctx.fillText(wObj.word, wordX, cy + 18 * s);
 
-        // 音标（单词右侧）
+        // 音标(单词右侧)
         if (wObj.phonetic) {
           const wordW = ctx.measureText(wObj.word).width;
           ctx.font = `${Math.floor(12 * s)}px sans-serif`;
@@ -1384,7 +1396,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText('例句', wordX + tagW / 2, tagY);
 
-        // 英文例句（目标词加粗）
+        // 英文例句(目标词加粗)
         if (wObj.example) {
           const exX = wordX + tagW + 6 * s;
           const exY = tagY;
@@ -1410,7 +1422,7 @@ module.exports = function extendPopup(Renderer) {
       const sloganY = py + ph - 24 * s + sloganAnim.yShift;
       const collectedCount = collected.length;
       const isAllCollected = collectedCount >= 10 && words.length > 0;
-      // 全部完成时：底部文案周期性小幅度上下跳跃（连续跳2次，暂停2秒）
+      // 全部完成时:底部文案周期性小幅度上下跳跃(连续跳2次,暂停2秒)
       let sloganBounceY = 0;
       if (isAllCollected) {
         const cycle = 2500; // 2次跳跃 500ms + 暂停 2000ms
@@ -1425,16 +1437,16 @@ module.exports = function extendPopup(Renderer) {
       ctx.font = `${isAllCollected ? 'bold ' : ''}${Math.floor(11 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      let sloganText = '✦  每日10个新词，积累从现在开始！  ✦';
+      let sloganText = '✦  每日10个新词,积累从现在开始!  ✦';
       if (isAllCollected) {
-        sloganText = '✦  你太棒了！今日新词学习完成,跟朋友分享下吧！  ✦';
+        sloganText = '✦  你太棒了!今日新词学习完成,跟朋友分享下吧!  ✦';
       } else if (collectedCount >= 1) {
-        sloganText = `✦  每日10个新词，积累从现在开始！(${collectedCount}/10)   ✦`;
+        sloganText = `✦  每日10个新词,积累从现在开始!(${collectedCount}/10)   ✦`;
       }
       ctx.fillStyle = isAllCollected ? '#2d7d32' : '#a09070';
       ctx.fillText(sloganText, W / 2, sloganY + sloganBounceY);
 
-      // 全部学习完成：在底部文案末尾绘制转发按钮（不跟随文案跳动）
+      // 全部学习完成:在底部文案末尾绘制转发按钮(不跟随文案跳动)
       this.dailyWordsShareRect = null;
       if (isAllCollected && this.shareIconLoaded && this.shareIcon) {
         const textWidth = ctx.measureText(sloganText).width;
@@ -1453,7 +1465,7 @@ module.exports = function extendPopup(Renderer) {
 
       ctx.restore();
 
-      // 全部学习完成：在顶部「学习模式」标题左右播放两次放慢的金色烟花（首次延迟 500ms，之后间隔 600ms）
+      // 全部学习完成:在顶部「学习模式」标题左右播放两次放慢的金色烟花(首次延迟 500ms,之后间隔 600ms)
       if (isAllCollected) {
         const now = Date.now();
         if (!game._dailyWordsSparkleState) {
@@ -1486,16 +1498,16 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // 在弹窗最上层绘制烟花粒子（避免被弹窗背景遮挡）
+      // 在弹窗最上层绘制烟花粒子(避免被弹窗背景遮挡)
       this._updateAndDrawSparkles(ctx, s);
 
-      // 记录内容区域（用于滚动检测）
+      // 记录内容区域(用于滚动检测)
       this.dailyWordsContentRect = { x: px + 10 * s, y: contentTop, w: pw - 20 * s, h: contentH };
-      // 记录面板区域（用于点击外部关闭检测）
+      // 记录面板区域(用于点击外部关闭检测)
       this.dailyWordsPanelRect = { x: px, y: py, w: pw, h: ph };
     }
 
-    // 辅助：绘制例句，目标词加粗高亮
+    // 辅助:绘制例句,目标词加粗高亮
     Renderer.prototype._drawExampleWithHighlight = function(ctx, sentence, word, x, y, fontSize, normalColor, highlightColor) {
       const lowerWord = word.toLowerCase();
       const lowerSentence = sentence.toLowerCase();
@@ -1587,7 +1599,7 @@ module.exports = function extendPopup(Renderer) {
 
       const contentAlpha = closeAlpha;
 
-      // === 内层细边框（参考购买成功弹窗） ===
+      // === 内层细边框(参考购买成功弹窗) ===
       ctx.save();
       ctx.globalAlpha = contentAlpha;
       ctx.strokeStyle = '#c4a35a';
@@ -1608,7 +1620,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.stroke();
       ctx.restore();
 
-      // === 右上角关闭按钮（在所有边框之后绘制，确保在最上层） ===
+      // === 右上角关闭按钮(在所有边框之后绘制,确保在最上层) ===
       const closeSize = 32 * s;
       const closeX = px + pw - closeSize - 10 * s + 3;
       const closeY = py + 10 * s - 3;
@@ -1618,7 +1630,7 @@ module.exports = function extendPopup(Renderer) {
       if (this.popCloseLoaded && this.popCloseImage) {
         ctx.drawImage(this.popCloseImage, closeX, closeY + pressOffset, closeSize, closeSize);
       } else {
-        // 兜底：绘制 X
+        // 兜底:绘制 X
         ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
         ctx.beginPath();
         ctx.arc(closeX + closeSize / 2, closeY + pressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
@@ -1722,12 +1734,12 @@ module.exports = function extendPopup(Renderer) {
       }
     }
 
-    // === 内部函数：绘制设置主页 ===
+    // === 内部函数:绘制设置主页 ===
     function drawMainPage(offsetX) {
         ctx.save();
         ctx.translate(offsetX, 0);
 
-        // === 标题：设置 ===
+        // === 标题:设置 ===
         const titleY = py + 32 * s;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
@@ -1738,7 +1750,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText('设置', W / 2, titleY);
         ctx.restore();
 
-        // === 标题下装饰线（参考购买成功弹窗） ===
+        // === 标题下装饰线(参考购买成功弹窗) ===
         const decoLineY = py + 52 * s;
         const decoLineW = pw * 0.5;
         const decoLineX = px + (pw - decoLineW) / 2;
@@ -1882,7 +1894,7 @@ module.exports = function extendPopup(Renderer) {
             // 记录点击区域
             this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
           } else if (item.type === 'arrow') {
-            // 学习模式：在箭头左侧显示开关状态标签
+            // 学习模式:在箭头左侧显示开关状态标签
             if (item.key === 'dailyChallenge') {
               const isOn = game.settings && game.settings.dailyWordChallengeEnabled === true;
               ctx.save();
@@ -1922,7 +1934,7 @@ module.exports = function extendPopup(Renderer) {
             if (item.key === 'wordBook') this.settingsWordBookRect = rect;
           }
 
-          // 分隔线（非最后一项）
+          // 分隔线(非最后一项)
           if (i < items.length - 1) {
             const lineY = itemY + itemH;
             const linePad = 18 * s;
@@ -1952,12 +1964,12 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // === 内部函数：绘制问题反馈页 ===
+      // === 内部函数:绘制问题反馈页 ===
       function drawFeedbackPage(offsetX) {
         ctx.save();
         ctx.translate(offsetX, 0);
 
-        // 返回按钮（使用 setting_right.png 水平镜像）
+        // 返回按钮(使用 setting_right.png 水平镜像)
         const backY = py + 26 * s;
         const backIconSize = 16 * s;
         const backIconX = px + 14 * s;
@@ -1978,10 +1990,10 @@ module.exports = function extendPopup(Renderer) {
         }
         ctx.restore();
 
-        // 记录返回点击区域（加大）
+        // 记录返回点击区域(加大)
         this.feedbackBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
 
-        // 标题：问题反馈
+        // 标题:问题反馈
         const titleY = py + 32 * s;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
@@ -2006,7 +2018,7 @@ module.exports = function extendPopup(Renderer) {
 
         // 输入框文字
         const feedbackText = game._feedbackText || '';
-        const placeholder = '请描述你遇到的问题或建议\n（你的每个建议对我都很宝贵！）';
+        const placeholder = '请描述你遇到的问题或建议\n(你的每个建议对我都很宝贵!)';
         const textX = inputX + 12 * s;
         const textY = inputY + 14 * s;
 
@@ -2147,7 +2159,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.stroke();
       ctx.restore();
 
-      // 返回按钮（使用 setting_right.png 水平镜像）
+      // 返回按钮(使用 setting_right.png 水平镜像)
       const backY = py + 26 * s;
       const backIconSize = 16 * s;
       const backIconX = px + 14 * s;
@@ -2169,7 +2181,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.restore();
       this.wordBookBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
 
-      // 关闭按钮（使用 pop_close.png，与设置弹窗一致）
+      // 关闭按钮(使用 pop_close.png,与设置弹窗一致)
       const closeSize = 32 * s;
       const closeX = px + pw - closeSize - 10 * s + 3;
       const closeY = py + 10 * s - 3;
@@ -2179,7 +2191,7 @@ module.exports = function extendPopup(Renderer) {
       if (this.popCloseLoaded && this.popCloseImage) {
         ctx.drawImage(this.popCloseImage, closeX, closeY + closePressOffset, closeSize, closeSize);
       } else {
-        // 兜底：绘制 X
+        // 兜底:绘制 X
         ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
         ctx.beginPath();
         ctx.arc(closeX + closeSize / 2, closeY + closePressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
@@ -2392,7 +2404,7 @@ module.exports = function extendPopup(Renderer) {
       // 记录内容区域用于滚动
       this.wordBookContentRect = { x: listX, y: listTop, w: listW, h: contentH };
 
-      // 滚动指示器（当内容可滚动时）
+      // 滚动指示器(当内容可滚动时)
       if (maxScroll > 0) {
         const barH = Math.max(20 * s, contentH * contentH / (contentH + maxScroll));
         const barY = listTop + (contentH - barH) * (scrollY / maxScroll);

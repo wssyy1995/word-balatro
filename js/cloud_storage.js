@@ -53,6 +53,7 @@ class CloudStorageManager {
       'zero_hands_bonus':c('/shop_card/zero_hands_bonus.png'),
       'illegal_boost':c('/shop_card/illegal_boost.png'),
       'random_upgrade':c('/shop_card/random_upgrade.png'),
+      'replicate_letter':c('/shop_card/replicate_letter.png'),
       'letter_god':c('/shop_card/letter_god.png'),
       'last_chance':c('/shop_card/last_chance.png'),
       'reroll_skill':c('/shop_card/reroll_skill.png'),
