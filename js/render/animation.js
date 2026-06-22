@@ -1,5 +1,5 @@
 const { Easing } = require('../animation');
-const { LETTER_SCORE } = require('../data');
+const { LETTER_SCORE, letterUpgrades } = require('../data');
 
 module.exports = function extendAnimation(Renderer) {
     Renderer.prototype.updateAnimations = function() {
@@ -553,23 +553,32 @@ module.exports = function extendAnimation(Renderer) {
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
 
-        // 两张字母牌旋转
-        const cardW = this.cardW * 1.8;
-        const cardH = this.cardH * 1.8;
+        // 两张字母牌：心跳共振动画（参考 Demo 模式 4）
         const gap = 20 * s;
+        const baseCardScale = 1.8;
+        const cardW = this.cardW * baseCardScale;
         const totalW = cardW * 2 + gap;
         const startX = (W - totalW) / 2;
-        const cardY = (H - cardH) / 2;
+        const baseY = H / 2;
+
+        const period = 1600;
+        const omega = (2 * Math.PI) / period;
+        function heartbeat(phaseOffset) {
+          const biphasic = Math.abs(Math.sin(omega * elapsed * 1.3 + phaseOffset));
+          const pulse = Math.pow(biphasic, 3);
+          const beat = 0.12 * pulse + 0.03 * Math.sin(omega * elapsed * 0.5 + phaseOffset);
+          return beat;
+        }
+        const hb1 = heartbeat(0);
+        const hb2 = heartbeat(Math.PI * 0.7);
+        const beats = [hb1, hb2];
 
         anim.letters.forEach((letter, i) => {
+          const hb = beats[i];
           const cx = startX + i * (cardW + gap) + cardW / 2;
-          const cy = cardY + cardH / 2;
-          const rotation = progress * Math.PI * 4;
-
-          ctx.save();
-          ctx.translate(cx, cy);
-          ctx.rotate(rotation);
-          ctx.globalAlpha = 0.3 + progress * 0.7;
+          const cy = baseY - 18 * s * hb * 3;
+          const cardScale = baseCardScale * (1 + hb);
+          const glowAlpha = 0.7 * hb * 3;
 
           const base = LETTER_SCORE[letter];
           const up = letterUpgrades.get(letter) || {};
@@ -583,7 +592,38 @@ module.exports = function extendAnimation(Renderer) {
             upgradeMult: up.mult || 1,
             animOffset: { scale: 1, opacity: 1 }
           };
-          ctx.scale(1.8, 1.8);
+
+          // 发光边框
+          if (glowAlpha > 0.01) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(cardScale, cardScale);
+            ctx.shadowColor = `rgba(180,140,210,${glowAlpha})`;
+            ctx.shadowBlur = 22 * s;
+            ctx.strokeStyle = `rgba(200,160,230,${glowAlpha * 0.6})`;
+            ctx.lineWidth = 3 * s;
+            const hw = this.cardW / 2;
+            const hh = this.cardH / 2;
+            const r = 10 * s;
+            ctx.beginPath();
+            ctx.moveTo(-hw + r, -hh);
+            ctx.lineTo(hw - r, -hh);
+            ctx.quadraticCurveTo(hw, -hh, hw, -hh + r);
+            ctx.lineTo(hw, hh - r);
+            ctx.quadraticCurveTo(hw, hh, hw - r, hh);
+            ctx.lineTo(-hw + r, hh);
+            ctx.quadraticCurveTo(-hw, hh, -hw, hh - r);
+            ctx.lineTo(-hw, -hh + r);
+            ctx.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          ctx.save();
+          ctx.globalAlpha = 0.3 + progress * 0.7;
+          ctx.translate(cx, cy);
+          ctx.scale(cardScale, cardScale);
           this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
           ctx.restore();
         });
@@ -601,11 +641,28 @@ module.exports = function extendAnimation(Renderer) {
         const titleY = H * 0.25;
         ctx.save();
         ctx.globalAlpha = fadeIn;
-        ctx.font = `bold ${Math.floor(28 * s)}px Georgia, serif`;
-        ctx.fillStyle = anim.success ? '#2d8a4e' : '#c44536';
+        ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;
+        if (anim.success) {
+          const titleGrad = ctx.createLinearGradient(W / 2, titleY - 15 * s, W / 2, titleY + 15 * s);
+          titleGrad.addColorStop(0, '#fff0a0');
+          titleGrad.addColorStop(0.5, '#ffd700');
+          titleGrad.addColorStop(1, '#ffaa00');
+          ctx.fillStyle = titleGrad;
+        } else {
+          ctx.fillStyle = '#c44536';
+        }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(anim.success ? '复刻成功！' : '复刻失败…', W / 2, titleY);
+        ctx.restore();
+
+        // 标题下分隔线
+        const decoLineY = titleY + 22 * s;
+        const decoLineW = 160 * s;
+        const decoLineX = (W - decoLineW) / 2;
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+        this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
         ctx.restore();
 
         // 两张字母牌（显示新分数）
