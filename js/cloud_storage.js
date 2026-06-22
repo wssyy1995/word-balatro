@@ -67,7 +67,8 @@ class CloudStorageManager {
       'no_duplicate':c('/shop_card/no_duplicate.png'),
       'chaos_orb':c('/shop_card/chaos_orb.png'),
       'left_right_open':c('/shop_card/left_right_open.png'),
-      'is_new_word':c('/shop_card/is_new_word.png')
+      'is_new_word':c('/shop_card/is_new_word.png'),
+      'replicate_letter':c('/shop_card/replicate_letter.png')
     };
 
     // 默认 witch 图片云文件映射
@@ -128,7 +129,9 @@ class CloudStorageManager {
       'card_shuffle': c('/music/sound_effect/card_shuffle.mp3'),
       'card_valid': c('/music/sound_effect/card_valid.mp3'),
       'challenge': c('/music/sound_effect/challange.mp3'),
+      'fail': c('/music/sound_effect/fail.mp3'),
       'game_over': c('/music/sound_effect/game_over.mp3'),
+      'heart_beat': c('/music/sound_effect/heart_beat.mp3'),
       'round_win': c('/music/sound_effect/round_win.mp3'),
       'tap': c('/music/sound_effect/tap.mp3'),
       'card_sell': c('/music/sound_effect/card_sell.mp3'),
