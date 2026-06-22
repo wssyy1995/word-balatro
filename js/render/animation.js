@@ -692,6 +692,14 @@ module.exports = function extendAnimation(Renderer) {
 
         // 结果标题
         const titleY = H * 0.25 + 10 * s;
+
+        // 复刻成功：标题左右放烟花（复用单词校验合法烟花）
+        if (anim.success && !anim._sparklesSpawned) {
+          anim._sparklesSpawned = true;
+          this._spawnSparkles(W / 2 - 60 * s, titleY, 12);
+          this._spawnSparkles(W / 2 + 60 * s, titleY, 12);
+        }
+
         ctx.save();
         ctx.globalAlpha = fadeIn;
         ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;

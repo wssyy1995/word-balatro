@@ -3843,7 +3843,7 @@ class Game {
         this._replicateAnim.resultStartTime = Date.now();
         if (this.audioManager) {
           this.audioManager.stopSound('heart_beat');
-          this.audioManager.play(this._replicateAnim.success ? 'round_win' : 'fail');
+          this.audioManager.play(this._replicateAnim.success ? 'card_valid' : 'fail');
         }
       }
     }
@@ -3876,6 +3876,7 @@ class Game {
         sameScore: true
       };
       this._replicateSelectedLetters = [];
+      if (this.audioManager) this.audioManager.play('card_valid');
       return;
     }
 
