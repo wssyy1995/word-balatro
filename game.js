@@ -9,6 +9,7 @@ const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
 const { reportEvent } = require('./js/report');
+const { handleBattleInput } = require('./js/battle/input');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -881,10 +882,6 @@ wx.onTouchStart((e) => {
       if (game.audioManager) game.audioManager.play('tap');
       return;
     }
-    if (renderer.settingsBattleRect && renderer.hitTest(x, y, [renderer.settingsBattleRect])) {
-      game._settingsBattlePressed = true;
-      return;
-    }
     if (renderer.settingsWordBookRect && renderer.hitTest(x, y, [renderer.settingsWordBookRect])) {
       // 打开单词本弹窗
       game._wordBookPopup = { startTime: Date.now() };
@@ -1169,10 +1166,6 @@ wx.onTouchMove((e) => {
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
     if (!hit) game._settingsCloseBtnPressed = false;
-  }
-  if (game._settingsBattlePressed && renderer.settingsBattleRect) {
-    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsBattleRect]);
-    if (!hit) game._settingsBattlePressed = false;
   }
   // 移出求助提示弹窗按钮区域时取消按下状态
   if (game._tipHelpClosePressed && renderer.tipHelpCloseRect) {
@@ -1565,17 +1558,6 @@ wx.onTouchEnd(() => {
       if (game.audioManager) game.audioManager.play('tap');
     }
 
-    if (game._settingsBattlePressed) {
-      game._settingsBattlePressed = false;
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
-      // 延迟启动对战模式，等设置弹窗关闭动画完成
-      setTimeout(() => {
-        if (game) game.startBattle('easy');
-      }, 400);
-    }
-
     // 反馈页交互
     if (game._feedbackBackPressed) {
       game._feedbackBackPressed = false;
@@ -1754,6 +1736,11 @@ function handleInput(x, inputY) {
   if (renderer.debugMenuOpen && renderer.debugMenuRects) {
     const debugHit = renderer.hitTest(x, inputY, renderer.debugMenuRects);
     if (debugHit) {
+      if (debugHit.action === 'debug_startBattle') {
+        renderer.debugMenuOpen = false;
+        game.battleManager.startBattle('easy');
+        return;
+      }
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(1000);
       if (debugHit.action === 'debug_addGold') {
@@ -2116,68 +2103,8 @@ function handleInput(x, inputY) {
     return;
   }
 
-  if (game.state === 'battle') {
-    // 对战模式输入处理
-    if (game.battlePhase === 'selecting') {
-      // 检测卡牌点击
-      if (renderer.battleCardRects) {
-        const cardHit = renderer.hitTest(x, inputY, renderer.battleCardRects);
-        if (cardHit) {
-          vibrate();
-          const card = cardHit.card;
-          card.selected = !card.selected;
-          return;
-        }
-      }
-      // 检测出牌按钮
-      if (renderer.battlePlayBtnRect) {
-        const btnHit = renderer.hitTest(x, inputY, [renderer.battlePlayBtnRect]);
-        if (btnHit) {
-          vibrate();
-          game._battlePlayBtnPressed = true;
-          setTimeout(() => { game._battlePlayBtnPressed = false; }, 150);
-          game.battlePlayHand();
-          return;
-        }
-      }
-      // 检测清空按钮
-      if (renderer.battleClearBtnRect) {
-        const btnHit = renderer.hitTest(x, inputY, [renderer.battleClearBtnRect]);
-        if (btnHit) {
-          vibrate();
-          game._battleClearBtnPressed = true;
-          setTimeout(() => { game._battleClearBtnPressed = false; }, 150);
-          if (game.battleHand) {
-            game.battleHand.forEach(c => { if (c) c.selected = false; });
-          }
-          return;
-        }
-      }
-    } else if (game.battlePhase === 'round_end' || game.battlePhase === 'revealing') {
-      // 检测下一轮/查看结果按钮
-      if (renderer.battleNextBtnRect) {
-        const btnHit = renderer.hitTest(x, inputY, [renderer.battleNextBtnRect]);
-        if (btnHit) {
-          vibrate();
-          game._battleNextBtnPressed = true;
-          setTimeout(() => { game._battleNextBtnPressed = false; }, 150);
-          game.battleNextRound();
-          return;
-        }
-      }
-    } else if (game.battlePhase === 'battle_end') {
-      // 检测返回菜单按钮
-      if (renderer.battleMenuBtnRect) {
-        const btnHit = renderer.hitTest(x, inputY, [renderer.battleMenuBtnRect]);
-        if (btnHit) {
-          vibrate();
-          game._battleMenuBtnPressed = true;
-          setTimeout(() => { game._battleMenuBtnPressed = false; }, 150);
-          game.exitBattle();
-          return;
-        }
-      }
-    }
+  // 对战模式输入处理
+  if (game.state === 'battle' && handleBattleInput(game, renderer, x, inputY, vibrate)) {
     return;
   }
 
@@ -2529,7 +2456,7 @@ function handleInput(x, inputY) {
     // 选择优惠券
     if (md.selectedIdx === null && renderer.mysteryDiscountRenderer) {
       const rects = renderer.mysteryDiscountRenderer.couponRects || [];
-      const hit = renderer.hitTest(x, y, rects);
+      const hit = renderer.hitTest(x, inputY, rects);
       if (hit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
@@ -2546,7 +2473,7 @@ function handleInput(x, inputY) {
     if (md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
       const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
       if (rect) {
-        const hit = renderer.hitTest(x, y, [rect]);
+        const hit = renderer.hitTest(x, inputY, [rect]);
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -2562,7 +2489,7 @@ function handleInput(x, inputY) {
     if (md.revealed && renderer.mysteryDiscountRenderer) {
       const rect = renderer.mysteryDiscountRenderer.collectBtnRect;
       if (rect) {
-        const hit = renderer.hitTest(x, y, [rect]);
+        const hit = renderer.hitTest(x, inputY, [rect]);
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
@@ -3280,9 +3207,9 @@ function gameLoop(timestamp) {
     transitionStartTime = null;
   } else {
     // 对战模式状态更新
-    if (game && game.state === 'battle') {
-      game.updateBattleBotThinking();
-      game.checkBattleReveal();
+    if (game && game.state === 'battle' && game.battleManager) {
+      game.battleManager.updateBotThinking();
+      game.battleManager.checkReveal();
     }
     game.update(deltaTime);
     renderer.render(game);

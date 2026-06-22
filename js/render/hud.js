@@ -2,7 +2,7 @@ const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills
 const { Easing } = require('../animation');
 
 module.exports = function extendHud(Renderer) {
-    Renderer.prototype.drawTopHeader = function(game) {
+    Renderer.prototype.drawTopHeader = function(game, showGold = true) {
       const ctx = this.ctx;
       const W = this.W;
       const s = this.scale;
@@ -33,17 +33,19 @@ module.exports = function extendHud(Renderer) {
       }
       // 记录点击区域（使用当前绘制位置）
       this.topIconRect = { x: iconX, y: drawIconY, w: iconSize, h: iconSize };
-  
+
       // 金币胶囊：放在 top_icon 右侧，间距 10px
-      const coinIconSize = 22 * s;
-      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
-      const goldText = String(game.gold);
-      const goldTextW = ctx.measureText(goldText).width;
-      const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
-      const coinCapsuleH = 32 * s;
-      const coinX = iconX + iconSize + 7 * s;
-      const coinY = iconY + (iconSize - coinCapsuleH) / 2 + 1 * s;
-      this._drawCoinCapsuleAt(coinX, coinY, game);
+      if (showGold) {
+        const coinIconSize = 22 * s;
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        const goldText = String(game.gold);
+        const goldTextW = ctx.measureText(goldText).width;
+        const coinCapsuleW = coinIconSize + 6 * s + goldTextW + 18 * s;
+        const coinCapsuleH = 32 * s;
+        const coinX = iconX + iconSize + 7 * s;
+        const coinY = iconY + (iconSize - coinCapsuleH) / 2 + 1 * s;
+        this._drawCoinCapsuleAt(coinX, coinY, game);
+      }
     }
 
     Renderer.prototype.drawHUD = function(game) {

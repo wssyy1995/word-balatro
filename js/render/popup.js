@@ -1758,12 +1758,7 @@ module.exports = function extendPopup(Renderer) {
             value: game.settings && game.settings.soundEnabled !== false
           },
           {
-            key: 'battle',
-            iconKey: 'battle',
-            title: '对战模式',
-            subtitle: '与单词小助手一决高下',
-            type: 'arrow'
-          },
+            key: 'wordBook',
             iconKey: 'wordbook',
             title: '单词本',
             subtitle: '查看历史打出单词',
@@ -1923,7 +1918,6 @@ module.exports = function extendPopup(Renderer) {
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
             if (item.key === 'rank') this.settingsRankRect = rect;
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
-            if (item.key === 'battle') this.settingsBattleRect = rect;
             if (item.key === 'dailyChallenge') this.settingsDailyChallengeRect = rect;
             if (item.key === 'wordBook') this.settingsWordBookRect = rect;
           }

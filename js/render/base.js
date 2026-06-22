@@ -5,6 +5,7 @@ const { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL } =
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { Easing } = require('../animation');
 const { GameOverRenderer } = require('./gameover');
+const { BattleRenderer } = require('../battle/renderer');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -247,12 +248,12 @@ class Renderer {
       }
     });
     
-    // 加载计分方块装饰线
+    // 加载计分方块装饰线（已移至 bg_icon 目录，统一走云存储或本地 bg_icon 路径）
     this.scoreLineImg = null;
     this.scoreLineLoaded = false;
     try {
       const img = wx.createImage();
-      img.src = 'images/score_line.png';
+      img.src = 'images/bg_icon/score_line.png';
       img.onload = () => { this.scoreLineLoaded = true; };
       img.onerror = () => { this.scoreLineLoaded = false; };
       this.scoreLineImg = img;
@@ -287,7 +288,23 @@ class Renderer {
     } catch (e) {
       this.errorIconLoaded = false;
     }
-    
+
+    // 对战轮次徽章背景图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.battleRoundBadge = null;
+    this.battleRoundBadgeLoaded = false;
+
+    // 对战玩家 VS 条背景图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.battlePlayer = null;
+    this.battlePlayerLoaded = false;
+
+    // 对战 VS 徽章图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.battleVS = null;
+    this.battleVSLoaded = false;
+
+    // 对战单词预览区装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.scoreLine = null;
+    this.scoreLineLoaded = false;
+
     // 加载商店图标
     // 加载商店图标
     this.shopIcon = null;
@@ -655,6 +672,7 @@ class Renderer {
     this.confirmBuyRenderer = new ConfirmBuyRenderer(this);
     this.gameOverRenderer = new GameOverRenderer(this);
     this.mysteryDiscountRenderer = new MysteryDiscountRenderer(this);
+    this.battleRenderer = new BattleRenderer(this);
     this.lifeExtensionBtnRect = null;
 
     // 女巫牌标签弹出动画状态

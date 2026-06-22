@@ -12,6 +12,7 @@ const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
 const { reportEvent } = require('./report');
+const { BattleManager } = require('./battle');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -1144,6 +1145,7 @@ class Game {
     this.storageManager = new StorageManager();
     this.audioManager = new AudioManager();
     this.audioManager.preloadAll();
+    this.battleManager = new BattleManager(this);
 
     // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
     let guideEnabled = true;
@@ -1497,6 +1499,41 @@ class Game {
       this._prePotionState = null;
       this._potionSelectedLetter = null;
     }
+
+    // 恢复对战模式状态
+    this.battleMode = p.battleMode || false;
+    this.battleDifficulty = p.battleDifficulty || 'easy';
+    this.battleRound = p.battleRound || 1;
+    this.battleTotalRounds = p.battleTotalRounds || 10;
+    this.battlePlayerScore = p.battlePlayerScore || 0;
+    this.battleBotScore = p.battleBotScore || 0;
+    this.battlePlayerRoundScores = p.battlePlayerRoundScores || [];
+    this.battleBotRoundScores = p.battleBotRoundScores || [];
+    this.battlePhase = p.battlePhase || 'selecting';
+    this.battleBotWord = p.battleBotWord || null;
+    this.battleBotCards = p.battleBotCards || null;
+    this.battleBotThinking = p.battleBotThinking || false;
+    this.battleBotReady = p.battleBotReady || false;
+    this.battleBotThinkingStartTime = p.battleBotThinkingStartTime || null;
+    this.battleSelected = p.battleSelected || [];
+    this.battlePendingCheck = p.battlePendingCheck || null;
+    this.battlePlayerWord = p.battlePlayerWord || null;
+    this.battlePlayerCards = p.battlePlayerCards || null;
+    this.battlePlayerRoundScore = p.battlePlayerRoundScore || 0;
+    this.battleBotRoundScore = p.battleBotRoundScore || 0;
+    this.battleBotWordLength = p.battleBotWordLength || 0;
+    this._battleDeck = p._battleDeck || [];
+    this._battlePlayedWords = new Set(p._battlePlayedWords || []);
+    this._pendingBotChoice = p._pendingBotChoice || null;
+    this._battleBotThinkDuration = p._battleBotThinkDuration || null;
+    this._battleRevealStartTime = p._battleRevealStartTime || null;
+    this._battleAnimTimeline = p._battleAnimTimeline || null;
+    this._battleFlyingScores = p._battleFlyingScores || [];
+    this._battleBotReadyAnimStart = p._battleBotReadyAnimStart || null;
+    // 若 state 不是 battle 但存档残留了对战状态，统一清理
+    if (this.state !== 'battle' && this.battleManager) {
+      this.battleManager._resetToSinglePlayer();
+    }
     this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
     this.discardsLeft = p.discardsLeft;
     this.handsLeft = p.handsLeft;
@@ -1774,6 +1811,11 @@ class Game {
     if (this.storageManager && this.storageManager._saveTimer) {
       clearTimeout(this.storageManager._saveTimer);
       this.storageManager._saveTimer = null;
+    }
+    // 清理对战模式 pendingCheck 定时器
+    if (this._battlePendingCheckTimer) {
+      clearTimeout(this._battlePendingCheckTimer);
+      this._battlePendingCheckTimer = null;
     }
     if (this.audioManager) {
       this.audioManager.destroy();
@@ -3814,162 +3856,6 @@ class Game {
     };
   }
 
-  // ========== 对战模式方法 ==========
-
-  startBattle(difficulty = 'easy') {
-    const { createBattleDeck } = require('./battle');
-    this.state = 'battle';
-    this.battleMode = true;
-    this.battleDifficulty = difficulty;
-    this.battleRound = 1;
-    this.battleTotalRounds = 10;
-    this.battlePlayerScore = 0;
-    this.battleBotScore = 0;
-    this.battlePlayerRoundScores = [];
-    this.battleBotRoundScores = [];
-    this.battlePhase = 'selecting'; // selecting | revealing | round_end | battle_end
-    this.battleBotWord = null;
-    this.battleBotCards = null;
-    this.battleBotThinking = false;
-    this.battleBotReady = false;
-    this.battleBotThinkingStartTime = null;
-    this.battleSelected = [];
-    this._battleDeck = createBattleDeck();
-    this._startBattleRound();
-  }
-
-  _startBattleRound() {
-    const { BattleBot } = require('./battle');
-    const handSize = 12;
-    // 发12张牌给用户和Bot（各自独立，但字母组相同）
-    const deckCopy = [...this._battleDeck];
-    this.battleHand = deckCopy.splice(0, handSize);
-    this.battleBotHand = [...this.battleHand]; // Bot手牌字母组相同
-    this._battleDeck = deckCopy;
-    this.battleSelected = [];
-    this.battlePlayerWord = null;
-    this.battlePlayerCards = null;
-    this.battleBotWord = null;
-    this.battleBotCards = null;
-    this.battlePhase = 'selecting';
-    this.battleBotThinking = true;
-    this.battleBotReady = false;
-    this.battleBotThinkingStartTime = Date.now();
-    this._battleBotThinkDuration = 2000 + Math.floor(Math.random() * 2000); // 2-4秒
-
-    // Bot选择单词（延迟显示）
-    this._battleBot = new BattleBot(this.battleDifficulty);
-    const botChoice = this._battleBot.chooseWord(this.battleBotHand, WORD_DATA, EXPAND_WORD_DATA);
-    this._pendingBotChoice = botChoice;
-
-    // 如果牌堆不够，补充新牌堆
-    if (this._battleDeck.length < handSize) {
-      const { createBattleDeck } = require('./battle');
-      this._battleDeck.push(...createBattleDeck());
-    }
-  }
-
-  // 对战模式：用户点击出牌
-  battlePlayHand() {
-    if (this.battlePhase !== 'selecting') return { valid: false };
-    const selected = this.battleHand.filter(c => c && c.selected);
-    if (selected.length < 2) return { valid: false };
-
-    const word = selected.map(c => c.letter.toLowerCase()).join('');
-    let valid = isValidWord(word);
-
-    if (!valid) {
-      this.hintToast = { text: '单词不存在', expireAt: Date.now() + 1500, startTime: Date.now() };
-      return { valid: false };
-    }
-
-    // 计算分数
-    const mult = selected.length;
-    let baseScore = 0;
-    for (const c of selected) {
-      baseScore += c.score || LETTER_SCORE[c.letter] || 1;
-    }
-    const score = Math.ceil(baseScore * mult);
-
-    this.battlePlayerWord = word;
-    this.battlePlayerCards = selected;
-    this.battlePlayerRoundScore = score;
-
-    // 进入揭晓阶段
-    this.battlePhase = 'revealing';
-
-    // Bot结果揭晓
-    const botChoice = this._pendingBotChoice;
-    if (botChoice) {
-      this.battleBotWord = botChoice.word;
-      this.battleBotCards = botChoice.cards;
-      this.battleBotRoundScore = botChoice.score;
-    } else {
-      // Bot没词，得0分
-      this.battleBotWord = '';
-      this.battleBotCards = [];
-      this.battleBotRoundScore = 0;
-    }
-
-    // 记录分数
-    this.battlePlayerRoundScores.push(this.battlePlayerRoundScore);
-    this.battleBotRoundScores.push(this.battleBotRoundScore);
-    this.battlePlayerScore += this.battlePlayerRoundScore;
-    this.battleBotScore += this.battleBotRoundScore;
-
-    // 延迟进入下一轮或结束
-    this._battleRevealStartTime = Date.now();
-
-    return { valid: true, score };
-  }
-
-  // 揭晓动画结束后调用
-  battleNextRound() {
-    if (this.battlePhase !== 'round_end') return;
-    if (this.battleRound >= this.battleTotalRounds) {
-      this.battlePhase = 'battle_end';
-      return;
-    }
-    this.battleRound++;
-    this._startBattleRound();
-  }
-
-  // 检查Bot思考状态
-  updateBattleBotThinking() {
-    if (!this.battleBotThinking || this.battleBotReady) return;
-    if (this.battleBotThinkingStartTime && Date.now() - this.battleBotThinkingStartTime >= this._battleBotThinkDuration) {
-      this.battleBotThinking = false;
-      this.battleBotReady = true;
-    }
-  }
-
-  // 检查揭晓阶段是否可以进入下一轮
-  checkBattleReveal() {
-    if (this.battlePhase === 'revealing' && this._battleRevealStartTime) {
-      if (Date.now() - this._battleRevealStartTime >= 2000) {
-        this.battlePhase = 'round_end';
-      }
-    }
-  }
-
-  // 退出对战
-  exitBattle() {
-    this.battleMode = false;
-    this.state = 'playing';
-    // 重置回单人模式初始状态
-    this._resetToSinglePlayer();
-  }
-
-  _resetToSinglePlayer() {
-    this.battleHand = null;
-    this.battleBotHand = null;
-    this.battleSelected = null;
-    this._battleDeck = null;
-    this._pendingBotChoice = null;
-    this._battleBot = null;
-  }
-
-  // ========== 对战模式方法结束 ==========
 }
 
 function requestGlobalProfile() {
@@ -4140,5 +4026,8 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
     ]);
   }
 }
+
+// 挂载到原型，避免 battle/manager.js 与 game.js 循环依赖
+Game.prototype.isValidWordOnline = isValidWordOnline;
 
 module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank };
