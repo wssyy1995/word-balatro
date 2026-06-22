@@ -50,6 +50,7 @@ class CloudStorageManager {
       'upgrade_face': c('/shop_card/upgrade_face.png'),
       'upgrade_letter': c('/shop_card/upgrade_letter.png'),
       'shield_illegal':c('/shop_card/shield_illegal.png'),
+      'zero_hands_bonus':c('/shop_card/zero_hands_bonus.png'),
       'illegal_boost':c('/shop_card/illegal_boost.png'),
       'random_upgrade':c('/shop_card/random_upgrade.png'),
       'letter_god':c('/shop_card/letter_god.png'),

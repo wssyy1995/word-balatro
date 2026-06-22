@@ -2982,6 +2982,14 @@ class Game {
         console.log('[EquippedSkill] score_overflow bonus:', this._overflowBonus, 'overflow:', overflow, 'count:', overflowCount);
       }
     }
+    // 清空奖励：出牌次数用光则基础金币+2
+    const zeroHandsBonus = (this.jokers || []).some(
+      j => j && j.type === 'witch' && j.trigger === 'zero_hands_bonus' && !j._disabled
+    ) && this.handsLeft === 0 ? 2 : 0;
+    if (zeroHandsBonus > 0) {
+      baseGold += zeroHandsBonus;
+      console.log('[EquippedSkill] zero_hands_bonus activated, +', zeroHandsBonus);
+    }
     const extraHands = this.handsLeft * 2;
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
@@ -2994,6 +3002,7 @@ class Game {
       baseGold,
       extraHands,
       extraDiscards,
+      zeroHandsBonus,
       totalGold,
       round: this.round,
       witchSkill: hasWitchReward ? witchSkill : null,

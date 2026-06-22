@@ -71,6 +71,9 @@ class SettlementRenderer {
       { label: '剩余出牌次数 ×2', value: `+${settlement.extraHands}` },
       { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}` },
     ];
+    if (settlement.zeroHandsBonus > 0) {
+      items.push({ label: '清空奖励', value: `+${settlement.zeroHandsBonus}` });
+    }
 
     items.forEach((item, i) => {
       const itemAnim = Easing.fadeIn(elapsed, 180 + i * 60, 250, 8 * s);
