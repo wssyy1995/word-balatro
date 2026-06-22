@@ -193,6 +193,7 @@ class AudioManager {
       { name: 'answer_tone', src: 'music/sound_effect/answer_tone.mp3' },   // 字母跳跃触发女巫牌
       { name: 'word_score', src: 'music/sound_effect/word_score.mp3' },     // 计分总数弹出
       { name: 'spin_wheel', src: 'music/sound_effect/spin_wheel.mp3' },     // 转盘旋转
+      { name: 'heart_beat', src: 'music/sound_effect/heart_beat.mp3' },      // 复刻水心跳共振动画
       { name: 'levelup', src: 'music/sound_effect/levelup.mp3' },             // 进入下一关
       { name: 'guide_type', src: 'music/sound_effect/type_2.mp3' },          // 引导对话框打字机音效（3秒循环）
       { name: 'witch_guide_1_bg', src: 'music/sound_effect/witch_guide_1_bg.mp3' }, // Phase 1 新人引导背景音乐（播放一次）

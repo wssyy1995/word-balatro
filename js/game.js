@@ -3929,7 +3929,7 @@ class Game {
       targetLetter
     };
     this._replicateSelectedLetters = [];
-    if (this.audioManager) this.audioManager.play('spin_wheel');
+    if (this.audioManager) this.audioManager.play('heart_beat');
   }
 
   startRandomSpin() {

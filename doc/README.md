@@ -737,6 +737,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 |
 | `levelup` | music/sound_effect/levelup.mp3 | 进入下一关 |
 | `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） |
+| `heart_beat` | music/sound_effect/heart_beat.mp3 | 复刻水心跳共振动画 |
 
 **音频管理**：
 - 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
