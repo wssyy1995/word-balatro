@@ -1352,14 +1352,20 @@ class ShopRenderer {
           ctx.fillText(btnText, btnTextX, midY);
         }
 
-        // discount.png 标签（右上角）
-        if (game._shopDiscountActive && this.parent.discountIcon && this.parent.discountIconLoaded) {
+        // 折扣标签雪碧图（右上角）
+        const sheet = this.parent.discountSpritesheet;
+        if (game._shopDiscountActive && sheet && this.parent.discountSpritesheetLoaded) {
           const tagW = 20 * s;
           const tagH = tagW;
           const tagX = btnX + btnW - tagW * 0.7;
           const tagY = btnY - tagH * 0.5 + pressOffset;
+          const discountLevel = Math.max(6, Math.min(9, Math.round((game._shopDiscountRate || 0.8) * 10)));
+          const frameIndex = discountLevel - 6;
+          const frameW = 100;
+          const frameH = 100;
+          const sx = frameIndex * frameW;
           ctx.save();
-          ctx.drawImage(this.parent.discountIcon, tagX, tagY, tagW, tagH);
+          ctx.drawImage(sheet, sx, 0, frameW, frameH, tagX, tagY, tagW, tagH);
           ctx.restore();
         }
 

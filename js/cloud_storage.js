@@ -111,7 +111,8 @@ class CloudStorageManager {
       'battle_player': c('/bg_icon/battle_player.png'),
       'battle_round_badge': c('/bg_icon/battle_round_badge.png'),
       'battle_vs': c('/bg_icon/battle_vs.png'),
-      'score_line': c('/bg_icon/score_line.png')
+      'score_line': c('/bg_icon/score_line.png'),
+      'discount_spritesheet': c('/bg_icon/discount_spritesheet.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -1567,6 +1568,16 @@ class CloudStorageManager {
         this.log('bg_icon ' + name + ' 未加载，跳过注入');
       }
     });
+
+    // 迷之优惠折扣标签雪碧图（6~9折，每帧100x100）
+    const discountSheetData = this.bgIconImages['discount_spritesheet'];
+    if (discountSheetData && discountSheetData.loaded && discountSheetData.img) {
+      renderer.discountSpritesheet = discountSheetData.img;
+      renderer.discountSpritesheetLoaded = true;
+      this.log('已注入 bg_icon renderer: discount_spritesheet');
+    } else {
+      this.log('bg_icon discount_spritesheet 未加载，跳过注入');
+    }
   }
 
   // ===== music 文件管理 =====

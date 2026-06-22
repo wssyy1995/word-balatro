@@ -450,19 +450,6 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
-    // 加载刷新图标
-    this.refreshIcon = null;
-    this.refreshIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/shop_refresh.png';
-      img.onload = () => { this.refreshIconLoaded = true; };
-      img.onerror = () => { this.refreshIconLoaded = false; };
-      this.refreshIcon = img;
-    } catch (e) {
-      this.refreshIconLoaded = false;
-    }
-    
     // 加载禁用锁图标
     this.cardDisableIcon = null;
     this.cardDisableIconLoaded = false;
@@ -489,7 +476,7 @@ class Renderer {
       this.cardValueDownIconLoaded = false;
     }
 
-    // 加载 discount 标签图标
+    // 加载 discount 标签图标（女巫奖励5折）
     this.discountIcon = null;
     this.discountIconLoaded = false;
     try {
@@ -500,6 +487,19 @@ class Renderer {
       this.discountIcon = img;
     } catch (e) {
       this.discountIconLoaded = false;
+    }
+
+    // 加载 discount 标签雪碧图（迷之优惠6~9折，每帧100x100）
+    this.discountSpritesheet = null;
+    this.discountSpritesheetLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/bg_icon/discount_spritesheet.png';
+      img.onload = () => { this.discountSpritesheetLoaded = true; };
+      img.onerror = () => { this.discountSpritesheetLoaded = false; };
+      this.discountSpritesheet = img;
+    } catch (e) {
+      this.discountSpritesheetLoaded = false;
     }
 
     // 加载目标分数图标
