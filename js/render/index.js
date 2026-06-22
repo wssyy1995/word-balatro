@@ -211,8 +211,7 @@ Renderer.prototype.render = function(game) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
       }
     } else if (game.state === 'mystery_discount') {
-      // 迷之优惠页面
-      this._drawShopBackground(game);
+      // 迷之优惠页面（独立全屏页面，不显示商店背景）
       if (this.mysteryDiscountRenderer) {
         this.mysteryDiscountRenderer.draw(ctx, game, W, H, s);
       }
