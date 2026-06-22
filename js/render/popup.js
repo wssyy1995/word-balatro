@@ -572,7 +572,7 @@ module.exports = function extendPopup(Renderer) {
       // === A-Z 字母网格 ===
       const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
       const cols = 4;
-      const btnSize = 52 * s;
+      const btnSize = 54 * s;
       const btnGap = 13 * s;
       const totalGridW = cols * btnSize + (cols - 1) * btnGap;
       const gridStartX = (W - totalGridW) / 2;
@@ -637,7 +637,7 @@ module.exports = function extendPopup(Renderer) {
         }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(letter, centerX, centerY - 6 * s);
+        ctx.fillText(letter, centerX, centerY - 7 * s);
         ctx.restore();
 
         ctx.save();
@@ -651,7 +651,7 @@ module.exports = function extendPopup(Renderer) {
         }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(letterScore, centerX, centerY + 10 * s);
+        ctx.fillText(letterScore, centerX, centerY + 11 * s);
         ctx.restore();
 
         if (isAllowed) {
