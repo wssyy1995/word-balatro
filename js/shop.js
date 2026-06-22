@@ -132,7 +132,7 @@ function buyItem(game, idx) {
 
   // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
   if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return false;
-  const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+  const isAlwaysBuyablePotion = item.type === 'potion' && ['upgrade_letter', 'random_upgrade', 'replicate_letter'].includes(item.effect);
   if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return false;
 
   game.gold -= finalCost;
@@ -1245,7 +1245,7 @@ class ShopRenderer {
         // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
         const isWitch = item.type === 'witch';
         const isPotion = item.type === 'potion';
-        const isAlwaysBuyablePotion = isPotion && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+        const isAlwaysBuyablePotion = isPotion && ['upgrade_letter', 'random_upgrade', 'replicate_letter'].includes(item.effect);
         const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
         const potionFull = (game.potions || []).length >= 2;
         const isWitchFull = isWitch && witchFull;
@@ -2094,7 +2094,7 @@ class ConfirmBuyRenderer {
 
       // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade 且药水槽满）
       const potionFull = (game.potions || []).length >= 2;
-      const isAlwaysBuyable = item.effect === 'upgrade_letter' || item.effect === 'random_upgrade';
+      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter'].includes(item.effect);
       const stashDisabled = isAlwaysBuyable && potionFull;
 
       // 独立按下缩放
