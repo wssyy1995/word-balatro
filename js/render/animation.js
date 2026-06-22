@@ -629,7 +629,7 @@ module.exports = function extendAnimation(Renderer) {
           }
 
           ctx.save();
-          ctx.globalAlpha = 0.3 + progress * 0.7;
+          ctx.globalAlpha = 1;
           ctx.translate(cx, cy);
           ctx.scale(cardScale, cardScale);
           this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
@@ -638,6 +638,12 @@ module.exports = function extendAnimation(Renderer) {
       } else if (anim.phase === 'result') {
         const resultElapsed = now - (anim.resultStartTime || anim.startTime + 2000);
         const fadeIn = Math.min(resultElapsed / 300, 1);
+
+        // 分数过渡与脉冲动画
+        const SCORE_CHANGE_DURATION = 600;
+        const scoreProgress = Math.min(resultElapsed / SCORE_CHANGE_DURATION, 1);
+        const scoreEase = Easing.easeOutCubic(scoreProgress);
+        const scorePulseStart = anim.resultStartTime || anim.startTime + 2000;
 
         // 遮罩
         ctx.save();
@@ -677,23 +683,27 @@ module.exports = function extendAnimation(Renderer) {
 
         anim.letters.forEach((letter, i) => {
           const x = startX + i * (cardW + gap);
-          const score = anim.newScores[i];
+          const oldScore = anim.scores[i];
+          const newScore = anim.newScores[i];
+          const currentScore = Math.round(oldScore + (newScore - oldScore) * scoreEase);
           const base = LETTER_SCORE[letter];
 
           ctx.save();
-          ctx.globalAlpha = fadeIn;
+          // 卡牌保持不透明，避免从 spinning 切换时出现闪烁
+          ctx.globalAlpha = 1;
 
           const tempCard = {
             letter,
-            score,
+            score: currentScore,
             baseScore: base,
             upgraded: true,
             upgradeMult: 1,
-            animOffset: { scale: 1, opacity: 1 }
+            animOffset: { scale: 1, opacity: 1 },
+            _scorePulseAnim: { startTime: scorePulseStart, duration: SCORE_CHANGE_DURATION }
           };
           ctx.translate(x + cardW / 2, cardY + cardH / 2);
           ctx.scale(resultScale, resultScale);
-          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
+          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, currentScore);
           ctx.restore();
         });
 
