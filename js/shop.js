@@ -60,7 +60,7 @@ const SHOP_POOL = {
     {name:'目标减免', type:'crystal', effect:'reduce_target', value:0.8, cost:3, desc:'下一回合目标分数×0.8'},
     {name:'技能重掷', type:'crystal', effect:'reroll_skill', cost:3, desc:'重掷下一回合的女巫技能'},
     {name:'争分夺秒', type:'crystal', effect:'haste_play', value:1, cost:4, desc:'下回合前20秒出牌不消耗次数'},
-    {name:'迷之优惠', type:'crystal', effect:'mystery_discount', cost:4, desc:'购买后开奖，本回合商店商品打8折'}
+    {name:'迷之优惠', type:'crystal', effect:'mystery_discount', cost:8, desc:'刮奖打折券，本回合商店商品随机打5~9折'}
   ],
   potion: [
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:6, desc:'随机强化1个字母，分数乘以1.2~3倍'},
@@ -2471,10 +2471,12 @@ class MysteryDiscountRenderer {
         this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
         this.collectBtnRect = null;
       } else {
-        // 已刮开：显示"8折"
+        // 已刮开：显示随机折扣（5~9折）
         const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
         const revealProgress = Math.min(revealElapsed / 300, 1);
         const revealEase = Easing.easeOutBack(revealProgress);
+        const rate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
+        const discountText = `${Math.round(rate * 10)}折`;
 
         ctx.save();
         ctx.globalAlpha = revealEase;
@@ -2482,7 +2484,7 @@ class MysteryDiscountRenderer {
         ctx.fillStyle = '#d9534f';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('8折', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
         ctx.restore();
 
         this.scratchZoneRect = null;

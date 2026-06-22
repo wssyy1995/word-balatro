@@ -2493,9 +2493,9 @@ function handleInput(x, inputY) {
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
-          // 应用8折折扣
+          // 应用随机折扣（5~9折）
           game._shopDiscountActive = true;
-          game._shopDiscountRate = 0.8;
+          game._shopDiscountRate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
           game._mysteryDiscountState = null;
           game.state = 'shop';
           if (game.storageManager) game.storageManager.saveProgress();
@@ -2691,6 +2691,8 @@ function handleInput(x, inputY) {
                 scratchProgress: 0,
                 revealed: false,
                 animStartTime: Date.now(),
+                // 3张优惠券预生成5~9折随机折扣
+                rates: Array.from({ length: 3 }, () => 0.5 + Math.random() * 0.4)
               };
               game.state = 'mystery_discount';
               game._closingConfirmBuy = true;
