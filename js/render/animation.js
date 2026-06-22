@@ -639,10 +639,8 @@ module.exports = function extendAnimation(Renderer) {
         const resultElapsed = now - (anim.resultStartTime || anim.startTime + 2000);
         const fadeIn = Math.min(resultElapsed / 300, 1);
 
-        // 分数过渡与脉冲动画
+        // 分数缩放脉冲动画
         const SCORE_CHANGE_DURATION = 600;
-        const scoreProgress = Math.min(resultElapsed / SCORE_CHANGE_DURATION, 1);
-        const scoreEase = Easing.easeOutCubic(scoreProgress);
         const scorePulseStart = anim.resultStartTime || anim.startTime + 2000;
 
         // 遮罩
@@ -652,7 +650,7 @@ module.exports = function extendAnimation(Renderer) {
         ctx.restore();
 
         // 结果标题
-        const titleY = H * 0.25;
+        const titleY = H * 0.25 + 10 * s;
         ctx.save();
         ctx.globalAlpha = fadeIn;
         ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;
@@ -683,9 +681,7 @@ module.exports = function extendAnimation(Renderer) {
 
         anim.letters.forEach((letter, i) => {
           const x = startX + i * (cardW + gap);
-          const oldScore = anim.scores[i];
-          const newScore = anim.newScores[i];
-          const currentScore = Math.round(oldScore + (newScore - oldScore) * scoreEase);
+          const score = anim.newScores[i];
           const base = LETTER_SCORE[letter];
 
           ctx.save();
@@ -694,7 +690,7 @@ module.exports = function extendAnimation(Renderer) {
 
           const tempCard = {
             letter,
-            score: currentScore,
+            score,
             baseScore: base,
             upgraded: true,
             upgradeMult: 1,
@@ -703,7 +699,7 @@ module.exports = function extendAnimation(Renderer) {
           };
           ctx.translate(x + cardW / 2, cardY + cardH / 2);
           ctx.scale(resultScale, resultScale);
-          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, currentScore);
+          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
           ctx.restore();
         });
 
