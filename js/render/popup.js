@@ -754,7 +754,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('点击抽选字母,分数乘以1.5~4倍,本赛局有效', W / 2, subTitleY);
+      ctx.fillText('点击抽选字母,分数乘以1.2~3倍,本赛局有效', W / 2, subTitleY);
       ctx.restore();
 
       // 分隔线

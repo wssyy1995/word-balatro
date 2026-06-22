@@ -63,7 +63,7 @@ const SHOP_POOL = {
     {name:'迷之优惠', type:'crystal', effect:'mystery_discount', cost:4, desc:'购买后开奖，本回合商店商品打8折'}
   ],
   potion: [
-    {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.5~4倍'},
+    {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:5, desc:'随机强化1个字母，分数乘以1.2~3倍'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:5, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
     {name:'复刻水', type:'potion', effect:'replicate_letter', cost:6, desc:'选择两个字母，80%概率低分变高分，20%概率相反'}
