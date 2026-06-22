@@ -458,6 +458,12 @@ module.exports = function extendAnimation(Renderer) {
         }
         ctx.restore();
 
+        // 字母与分数
+        const up = letterUpgrades.get(letter) || {};
+        const letterScore = Math.floor(LETTER_SCORE[letter] * (up.mult || 1)) + (up.add || 0);
+        const centerX = x + btnSize / 2;
+        const centerY = y + btnSize / 2;
+
         ctx.save();
         ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
         if (isSelected) {
@@ -469,7 +475,21 @@ module.exports = function extendAnimation(Renderer) {
         }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(letter, x + btnSize / 2, y + btnSize / 2);
+        ctx.fillText(letter, centerX, centerY - 6 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+        if (isSelected) {
+          ctx.fillStyle = '#c4a35a';
+        } else if (!canSelect) {
+          ctx.fillStyle = '#c0b8a8';
+        } else {
+          ctx.fillStyle = '#9a7b3d';
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterScore, centerX, centerY + 10 * s);
         ctx.restore();
 
         if (canSelect) {
@@ -654,7 +674,7 @@ module.exports = function extendAnimation(Renderer) {
         ctx.save();
         ctx.globalAlpha = fadeIn;
         ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;
-        ctx.fillStyle = anim.success ? '#c4a35a' : '#c44536';
+        ctx.fillStyle = anim.success ? '#c4a35a' : '#a33a2b';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(anim.success ? '复刻成功！' : '复刻失败…', W / 2, titleY);

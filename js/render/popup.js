@@ -620,7 +620,12 @@ module.exports = function extendPopup(Renderer) {
         }
         ctx.restore();
 
-        // 字母
+        // 字母与分数
+        const up = letterUpgrades.get(letter) || {};
+        const letterScore = Math.floor(LETTER_SCORE[letter] * (up.mult || 1)) + (up.add || 0);
+        const centerX = x + btnSize / 2;
+        const centerY = y + btnSize / 2;
+
         ctx.save();
         ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
         if (isSelected && isAllowed) {
@@ -632,7 +637,21 @@ module.exports = function extendPopup(Renderer) {
         }
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(letter, x + btnSize / 2, y + btnSize / 2);
+        ctx.fillText(letter, centerX, centerY - 6 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+        if (isSelected && isAllowed) {
+          ctx.fillStyle = '#c4a35a';
+        } else if (!isAllowed) {
+          ctx.fillStyle = '#c0b8a8';
+        } else {
+          ctx.fillStyle = '#9a7b3d';
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterScore, centerX, centerY + 10 * s);
         ctx.restore();
 
         if (isAllowed) {
