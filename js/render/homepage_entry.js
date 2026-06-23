@@ -134,8 +134,8 @@ module.exports = function extendHomepageEntry(Renderer) {
     const inBurst = elapsed >= DRAW && elapsed < TOTAL;
     const burstT = (elapsed - DRAW) / 1000; // 爆发阶段经过的秒数
 
-    const rx = 144 * s;
-    const ry = 124 * s;
+    const rx = 120 * s;
+    const ry = 104 * s;
     const ringCX = cx;
     const ringCY = cy;
 
@@ -164,7 +164,7 @@ module.exports = function extendHomepageEntry(Renderer) {
 
       // 领先的写法之星
       const tip = this._homepageEntryEllipsePt(ringCX, ringCY, rx, ry, drawnAngle);
-      this._drawHomepageEntryStar(ctx, tip.x, tip.y, 7 * s, 1);
+      this._drawHomepageEntryStar(ctx, tip.x, tip.y, 10 * s, 1);
 
       //  subtle connecting line
       if (sweep > 0.05) {
@@ -206,13 +206,13 @@ module.exports = function extendHomepageEntry(Renderer) {
         const px = ringCX + Math.cos(a) * dist;
         const py = ringCY + Math.sin(a) * dist * (ry / rx);
         const alpha = Math.max(0, 1 - burstT / 1.8);
-        this._drawHomepageEntryStar(ctx, px, py, (1.6 + Math.random() * 3.0) * s, alpha);
+        this._drawHomepageEntryStar(ctx, px, py, (2.5 + Math.random() * 4.5) * s, alpha);
       }
 
       // 中心闪光
       const flash = burstT < 0.2 ? burstT / 0.2 : Math.max(0, 1 - (burstT - 0.2) / 0.4);
       if (flash > 0) {
-        this._drawHomepageEntryStar(ctx, ringCX, ringCY, 10 * s, flash);
+        this._drawHomepageEntryStar(ctx, ringCX, ringCY, 16 * s, flash);
       }
     }
 
