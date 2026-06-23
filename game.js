@@ -1391,6 +1391,7 @@ wx.onTouchEnd(() => {
     if (iconHit) {
       showHomepage = true;
       renderer.homepageAnimStartTime = Date.now();
+      renderer._homepageEntryAnim = null;
       if (game && game.audioManager) game.audioManager.play('tap');
     }
   }

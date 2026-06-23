@@ -6,6 +6,7 @@ module.exports = function extendHomepageEntry(Renderer) {
     this._homepageEntryBurstInitialized = false;
     this._homepageEntryBurstParticles = [];
     this._homepageEntryRingStars = [];
+    this._homepageEntryBGMStarted = false;
     for (let i = 0; i < 8; i++) {
       this._homepageEntryRingStars.push({
         angle: (Math.PI * 2 / 8) * i - Math.PI / 2,

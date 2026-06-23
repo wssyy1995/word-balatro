@@ -508,6 +508,7 @@ class Renderer {
     this._homepageBubbleStarted = false;
     this._homepageBubbleCount = 0;
     this._homepageEntryAnim = null;
+    this._homepageEntryBGMStarted = false;
 
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
@@ -859,14 +860,19 @@ class Renderer {
 
     // 主页入场动画：预加载页 → 主页时，在两个大按钮位置播放
     const ENTRY_ANIM_DURATION = 3200;
-    let entryOffset = 0;
+    const ENTRY_BGM_DURATION = 1200;
+    const entryOffset = this._homepageEntryAnim ? ENTRY_ANIM_DURATION : 0;
     if (this._homepageEntryAnim) {
       const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
       if (entryElapsed < ENTRY_ANIM_DURATION) {
-        entryOffset = ENTRY_ANIM_DURATION;
         const animCX = W / 2;
         const animCY = H * 0.49;
         this._drawHomepageEntryAnim(ctx, animCX, animCY, s, entryElapsed);
+        // 金色圆环动画开始时播放 witch_guide_1_bg 音效
+        if (entryElapsed < ENTRY_BGM_DURATION && !this._homepageEntryBGMStarted && game && game.audioManager) {
+          this._homepageEntryBGMStarted = true;
+          game.audioManager.play('witch_guide_1_bg');
+        }
       }
     }
 
@@ -986,8 +992,9 @@ class Renderer {
       bigX += drawW + bigGap;
     });
 
-    // 两个大按钮斜光扫过（round=紫色，battle=绿色）
-    if (this.homepageBtnRects.length >= 2) {
+    // 两个大按钮斜光扫过（round=紫色，battle=绿色），仅在大按钮完全弹出后开始
+    const bigBtnFinishTime = entryOffset + 150 + 550;
+    if (elapsed >= bigBtnFinishTime && this.homepageBtnRects.length >= 2) {
       const roundRect = this.homepageBtnRects[0];
       const battleRect = this.homepageBtnRects[1];
       this._drawRectSweep(ctx, roundRect.x, roundRect.y, roundRect.w, roundRect.h, s, 'purple', 0);
