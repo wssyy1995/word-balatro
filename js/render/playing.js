@@ -620,22 +620,25 @@ module.exports = function extendPlaying(Renderer) {
                 }
               }
   
-              // 计算每张字母牌的最终分数（含 per_card 女巫牌加成）
-              const cardFinalScores = cardsInOrder.map((card, i) => {
-                let score = card.score;
-                const triggered = pc.jokerTriggers?.[i] || [];
-                triggered.forEach(jIdx => {
-                  const joker = jokers[jIdx];
-                  if (joker && joker.value) {
-                    if (joker.operation === 'add') {
-                      score += joker.value;
-                    } else {
-                      score *= joker.value;
+              // 计算每张字母牌的最终分数（含 per_card 女巫牌加成），动画期间只算一次
+              if (!pc._cardFinalScores) {
+                pc._cardFinalScores = cardsInOrder.map((card, i) => {
+                  let score = card.score;
+                  const triggered = pc.jokerTriggers?.[i] || [];
+                  triggered.forEach(jIdx => {
+                    const joker = jokers[jIdx];
+                    if (joker && joker.value) {
+                      if (joker.operation === 'add') {
+                        score += joker.value;
+                      } else {
+                        score *= joker.value;
+                      }
                     }
-                  }
+                  });
+                  return score;
                 });
-                return score;
-              });
+              }
+              const cardFinalScores = pc._cardFinalScores;
 
               // 累加基础字母分
               for (let i = 0; i <= cardIdx && i < cardsInOrder.length; i++) {
@@ -1011,25 +1014,24 @@ module.exports = function extendPlaying(Renderer) {
       }
       if (valid && showFirstBox) {
         const targetScore = pendingBaseScore;
-        // 检查是否需要滚动动画
+        // 检查是否需要滚动动画（复用对象，避免频繁创建）
         if (this.lastBoxScore !== targetScore) {
-          this.scoreRoll = {
-            from: this.lastBoxScore,
-            to: targetScore,
-            startTime: Date.now(),
-            duration: 300,
-          };
+          if (!this.scoreRoll) this.scoreRoll = {};
+          this.scoreRoll.from = this.lastBoxScore;
+          this.scoreRoll.to = targetScore;
+          this.scoreRoll.startTime = Date.now();
+          this.scoreRoll.duration = 350; // 与字母跳跃节奏对齐
           this.lastBoxScore = targetScore;
         }
         // 绘制滚动数字或静止数字
         if (this.scoreRoll) {
           const rollElapsed = Date.now() - this.scoreRoll.startTime;
           const rollProgress = Math.min(rollElapsed / this.scoreRoll.duration, 1);
-          const ease = rollProgress * (2 - rollProgress); // easeOutQuad
+          const ease = Easing.easeOutCubic(rollProgress);
           const cx = leftBoxX + boxSize / 2;
           const cy = boxY + boxSize / 2;
           const offset = boxSize * 0.5;
-  
+
           // 旧数字向上淡出
           ctx.save();
           ctx.globalAlpha = 1 - ease;
@@ -1039,7 +1041,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.textBaseline = 'middle';
           ctx.fillText(String(this.scoreRoll.from), cx, cy - ease * offset);
           ctx.restore();
-  
+
           // 新数字从下方进入
           ctx.save();
           ctx.globalAlpha = ease;
@@ -1049,7 +1051,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.textBaseline = 'middle';
           ctx.fillText(String(this.scoreRoll.to), cx, cy + (1 - ease) * offset);
           ctx.restore();
-  
+
           if (rollProgress >= 1) {
             this.scoreRoll = null;
           }
