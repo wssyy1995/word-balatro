@@ -114,7 +114,14 @@ class CloudStorageManager {
       'battle_round_badge': c('/bg_icon/battle_round_badge.png'),
       'battle_vs': c('/bg_icon/battle_vs.png'),
       'score_line': c('/bg_icon/score_line.png'),
-      'discount_spritesheet': c('/bg_icon/discount_spritesheet.png')
+      'discount_spritesheet': c('/bg_icon/discount_spritesheet.png'),
+      'homepageBg': c('/bg_icon/homepage_bg.png'),
+      'homepageRound': c('/bg_icon/hompage_round.png'),
+      'homepageBattle': c('/bg_icon/hompage_battle.png'),
+      'homepageSetting': c('/bg_icon/hompage_setting.png'),
+      'homepageRanking': c('/bg_icon/hompage_ranking.png'),
+      'homepageDaily': c('/bg_icon/hompage_daily.png'),
+      'homepageStudy': c('/bg_icon/hompage_study.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -1583,6 +1590,19 @@ class CloudStorageManager {
     } else {
       this.log('bg_icon discount_spritesheet 未加载，跳过注入');
     }
+
+    // 主页图片从 bg_icon 云存储注入
+    const homepageNames = ['homepageBg', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy'];
+    homepageNames.forEach(name => {
+      const data = this.bgIconImages[name];
+      if (data && data.loaded && data.img) {
+        renderer[name] = data.img;
+        renderer[`${name}Loaded`] = true;
+        this.log('已注入 bg_icon renderer: ' + name);
+      } else {
+        this.log('bg_icon ' + name + ' 未加载，跳过注入');
+      }
+    });
   }
 
   // ===== music 文件管理 =====

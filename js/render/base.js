@@ -496,7 +496,7 @@ class Renderer {
       this.targetScoreIconLoaded = false;
     }
 
-    // homepage 页面图片（本地加载，不依赖云存储）
+    // 主页图片（由 cloudStorage.injectBgIconToRenderer 从云存储注入）
     this.homepageBg = null;
     this.homepageBgLoaded = false;
     this.homepageRound = null;
@@ -511,26 +511,6 @@ class Renderer {
     this.homepageDailyLoaded = false;
     this.homepageStudy = null;
     this.homepageStudyLoaded = false;
-    const homepageImages = [
-      { key: 'homepageBg', src: 'images/bg_icon/homepage_bg.png' },
-      { key: 'homepageRound', src: 'images/bg_icon/hompage_round.png' },
-      { key: 'homepageBattle', src: 'images/bg_icon/hompage_battle.png' },
-      { key: 'homepageSetting', src: 'images/bg_icon/hompage_setting.png' },
-      { key: 'homepageRanking', src: 'images/bg_icon/hompage_ranking.png' },
-      { key: 'homepageDaily', src: 'images/bg_icon/hompage_daily.png' },
-      { key: 'homepageStudy', src: 'images/bg_icon/hompage_study.png' },
-    ];
-    homepageImages.forEach(({ key, src }) => {
-      try {
-        const img = wx.createImage();
-        img.src = src;
-        img.onload = () => { this[`${key}Loaded`] = true; };
-        img.onerror = () => { this[`${key}Loaded`] = false; };
-        this[key] = img;
-      } catch (e) {
-        this[`${key}Loaded`] = false;
-      }
-    });
     this.homepageBtnRects = [];
     this.homepageAnimStartTime = Date.now();
 
@@ -856,7 +836,7 @@ class Renderer {
     ctx.fillStyle = '#8b6914';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('女巫的词牌', W / 2, H * 0.16);
+    ctx.fillText('女巫的词牌', W / 2, H * 0.18);
     ctx.restore();
 
     this.homepageBtnRects = [];
@@ -946,10 +926,10 @@ class Renderer {
     };
 
     // 中间 45% 高度：左右两个大按钮先缩放弹出
-    const bigBtnMaxW = W * 0.65;
-    const bigBtnMaxH = H * 0.22;
-    const bigBtnY = H * 0.48;
-    const bigGap = W * 0.09;
+    const bigBtnMaxW = W * 0.70;
+    const bigBtnMaxH = H * 0.24;
+    const bigBtnY = H * 0.47;
+    const bigGap = W * 0.11;
 
     const bigBtnInfos = [
       { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
@@ -989,7 +969,7 @@ class Renderer {
     // 下方 65% 高度：4 个小按钮依次从左往右缩放弹出
     const smallBtnMaxW = W * 0.24;
     const smallBtnMaxH = H * 0.12;
-    const smallBtnY = H * 0.68;
+    const smallBtnY = H * 0.72;
     const smallGap = 14 * s;
     const smallKeys = [
       { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
