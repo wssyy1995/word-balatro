@@ -2577,7 +2577,9 @@ class MysteryDiscountRenderer {
         ctx.fillStyle = '#888';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        if (!md.scratchPoints || md.scratchPoints.length === 0) {
+          ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        }
         ctx.restore();
 
         // 存储刮奖区点击区域

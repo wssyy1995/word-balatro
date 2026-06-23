@@ -1695,9 +1695,9 @@ function markScratchCell(md, localX, localY) {
   const rows = md.scratchRows;
   const col = Math.min(cols - 1, Math.max(0, Math.floor(localX * cols)));
   const row = Math.min(rows - 1, Math.max(0, Math.floor(localY * rows)));
-  // 3x3 笔刷，模拟涂抹半径
-  for (let dr = -1; dr <= 1; dr++) {
-    for (let dc = -1; dc <= 1; dc++) {
+  // 5x5 笔刷，模拟涂抹半径（比之前稍粗）
+  for (let dr = -2; dr <= 2; dr++) {
+    for (let dc = -2; dc <= 2; dc++) {
       const r = row + dr;
       const c = col + dc;
       if (r >= 0 && r < rows && c >= 0 && c < cols) {
