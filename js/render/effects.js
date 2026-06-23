@@ -494,34 +494,6 @@ module.exports = function extendEffects(Renderer) {
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
 
-      // 纯白色菱形背景（固定为较宽参考标签的大小，避免 +30 和 x3 大小不一）
-      const measureLabelW = (txt) => {
-        const pre = (txt.length >= 2 && /[x+\-×]/.test(txt[0])) ? txt[0] : '';
-        const num = pre ? txt.slice(1) : txt;
-        ctx.font = `900 ${pSize}px sans-serif`;
-        const pw = pre ? ctx.measureText(pre).width : 0;
-        ctx.font = `900 ${fontSize}px sans-serif`;
-        const nw = ctx.measureText(num).width;
-        return pw + gap + nw;
-      };
-      const fixedLabelW = Math.max(
-        measureLabelW('+99'),
-        measureLabelW('x99'),
-        measureLabelW('+0.5'),
-        measureLabelW('x1.2')
-      );
-      const diamondSize = Math.max(fixedLabelW + 16 * s, fontSize * 1.4);
-      ctx.save();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(0, -diamondSize / 2);
-      ctx.lineTo(diamondSize / 2, 0);
-      ctx.lineTo(0, diamondSize / 2);
-      ctx.lineTo(-diamondSize / 2, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
       const drawLayer = (styleFn, drawFn) => {
         styleFn();
         if (prefix) {
