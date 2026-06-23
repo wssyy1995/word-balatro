@@ -912,15 +912,6 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
     }
 
-    // 游戏标题（与预加载页保持一致）
-    ctx.save();
-    ctx.font = `${Math.floor(30 * s)}px ${this.titleFontFamily}`;
-    ctx.fillStyle = '#8b6914';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('女巫的词牌', W / 2, H * 0.18);
-    ctx.restore();
-
     this.homepageBtnRects = [];
     const elapsed = Date.now() - this.homepageAnimStartTime;
 
