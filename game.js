@@ -729,19 +729,15 @@ wx.onTouchStart((e) => {
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
       renderer._homepagePressedBtn = hit.key;
+      touchStartPos = { x, y };
       longPressTriggered = false;
       if (hit.key === 'setting') {
         // 复用 top_icon 的按下行为（短按打开设置，长按打开调试面板）
         renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
-        touchStartPos = { x, y };
         longPressTimer = setTimeout(() => {
           longPressTimer = null;
           longPressTriggered = true;
-          // 仅在开发版或体验版开放调试菜单
-          const env = wx.getAccountInfoSync ? wx.getAccountInfoSync().miniProgram.envVersion : 'release';
-          if (env === 'develop' || env === 'trial') {
-            renderer.debugMenuOpen = !renderer.debugMenuOpen;
-          }
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
         }, LONG_PRESS_DURATION);
       }
       return;
@@ -776,11 +772,7 @@ wx.onTouchStart((e) => {
       longPressTimer = setTimeout(() => {
         longPressTimer = null;
         longPressTriggered = true;
-        // 仅在开发版或体验版开放调试菜单
-        const env = wx.getAccountInfoSync ? wx.getAccountInfoSync().miniProgram.envVersion : 'release';
-        if (env === 'develop' || env === 'trial') {
-          renderer.debugMenuOpen = !renderer.debugMenuOpen;
-        }
+        renderer.debugMenuOpen = !renderer.debugMenuOpen;
       }, LONG_PRESS_DURATION);
       return; // 长按期间不触发其他交互
     }

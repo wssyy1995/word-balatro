@@ -505,6 +505,8 @@ class Renderer {
     this.homepageStudyLoaded = false;
     this.homepageBtnRects = [];
     this.homepageAnimStartTime = Date.now();
+    this._homepageBubbleStarted = false;
+    this._homepageBubbleCount = 0;
 
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
@@ -833,6 +835,25 @@ class Renderer {
 
     this.homepageBtnRects = [];
     const elapsed = Date.now() - this.homepageAnimStartTime;
+
+    // 4 个小按钮开始弹出时播放 bubble 音效（重复 2 次）
+    const game = wx.game;
+    if (elapsed < 800) {
+      this._homepageBubbleStarted = false;
+      this._homepageBubbleCount = 0;
+    }
+    if (elapsed >= 900 && !this._homepageBubbleStarted && game && game.audioManager) {
+      this._homepageBubbleStarted = true;
+      this._homepageBubbleCount = 0;
+      this._homepageBubbleNextTime = Date.now();
+    }
+    if (this._homepageBubbleStarted && this._homepageBubbleCount < 2 && game && game.audioManager) {
+      if (Date.now() >= this._homepageBubbleNextTime) {
+        game.audioManager.play('bubble');
+        this._homepageBubbleCount++;
+        this._homepageBubbleNextTime = Date.now() + 180;
+      }
+    }
 
     // 按钮入场缩放（果冻感）
     const getBtnScale = (delay, duration) => {
