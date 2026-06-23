@@ -1011,51 +1011,25 @@ module.exports = function extendPlaying(Renderer) {
       }
       if (valid && showFirstBox) {
         const targetScore = pendingBaseScore;
-        // 检查是否需要滚动动画
+        // 数字变化时触发脉冲动画
         if (this.lastBoxScore !== targetScore) {
-          this.scoreRoll = {
-            from: this.lastBoxScore,
-            to: targetScore,
-            startTime: Date.now(),
-            duration: 300,
-          };
+          this.scoreBoxAnim = { startTime: Date.now(), duration: 400 };
           this.lastBoxScore = targetScore;
         }
-        // 绘制滚动数字或静止数字
-        if (this.scoreRoll) {
-          const rollElapsed = Date.now() - this.scoreRoll.startTime;
-          const rollProgress = Math.min(rollElapsed / this.scoreRoll.duration, 1);
-          const ease = rollProgress * (2 - rollProgress); // easeOutQuad
-          const cx = leftBoxX + boxSize / 2;
-          const cy = boxY + boxSize / 2;
-          const offset = boxSize * 0.5;
-  
-          // 旧数字向上淡出
-          ctx.save();
-          ctx.globalAlpha = 1 - ease;
-          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-          ctx.fillStyle = '#f5f0e8';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(String(this.scoreRoll.from), cx, cy - ease * offset);
-          ctx.restore();
-  
-          // 新数字从下方进入
-          ctx.save();
-          ctx.globalAlpha = ease;
-          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-          ctx.fillStyle = '#f5f0e8';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(String(this.scoreRoll.to), cx, cy + (1 - ease) * offset);
-          ctx.restore();
-  
-          if (rollProgress >= 1) {
-            this.scoreRoll = null;
-          }
-        } else {
-          this.text(String(targetScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
-        }
+        // 绘制脉冲数字
+        const scorePulse = this._calcPulseScale(this.scoreBoxAnim, 0.28);
+        let scoreScale = scorePulse.scale;
+        if (scorePulse.progress >= 1) this.scoreBoxAnim = null;
+
+        ctx.save();
+        ctx.translate(leftBoxX + boxSize / 2, boxY + boxSize / 2);
+        ctx.scale(scoreScale, scoreScale);
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.fillStyle = '#f5f0e8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(targetScore), 0, 0);
+        ctx.restore();
         // 左方块标签（方案B光晕呼吸风格）
         if (pc._perCardMultText) {
           if (this.lastLeftLabelText !== pc._perCardMultText) {
@@ -1077,7 +1051,7 @@ module.exports = function extendPlaying(Renderer) {
       } else if (!game.pendingCheck) {
         // 没有 pendingCheck 时重置
         this.lastBoxScore = 0;
-        this.scoreRoll = null;
+        this.scoreBoxAnim = null;
         this.lastMultValue = null;
         this.multAnim = null;
       }

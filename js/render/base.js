@@ -629,7 +629,7 @@ class Renderer {
     // 动画粒子与飞行状态
     this.sparkles = [];
     this.flyingScore = null;
-    this.scoreRoll = null;
+    this.scoreBoxAnim = null;
     this.lastBoxScore = 0;
     this.lastScore = 0;
     this.scoreAnim = null;
@@ -799,7 +799,7 @@ class Renderer {
   resetState() {
     this.sparkles = [];
     this.flyingScore = null;
-    this.scoreRoll = null;
+    this.scoreBoxAnim = null;
     this.scoreAnim = null;
     this.goldAnim = null;
     this._lashParticles = [];
