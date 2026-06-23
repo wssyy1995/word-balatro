@@ -831,31 +831,46 @@ module.exports = function extendEffects(Renderer) {
       ctx.clip();
 
       const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
-      const t = ((Date.now() / 1000 + to) % 4.0) / 4.0;
-      const sweepLen = (w + h) * 1.25;
+      const t = ((Date.now() / 1000 + to) % 7.0) / 7.0;
+      const sweepLen = (w + h) * 0.9;
       const cx = x + w / 2;
       const cy = y + h / 2;
-      const d = -Math.max(w, h) * 0.85 + t * sweepLen;
-      const dx = cx + d - h * 0.25;
-      const dy = cy + d - w * 0.25;
+      const d = -Math.max(w, h) * 0.55 + t * sweepLen;
+      const dx = cx + d - h * 0.2;
+      const dy = cy + d - w * 0.2;
 
-      let centerColor, edgeColor;
+      let tintCenter, tintEdge;
       if (color === 'green') {
-        centerColor = 'rgba(60, 255, 140,';
-        edgeColor = 'rgba(60, 255, 140,';
+        tintCenter = 'rgba(200, 255, 220,';
+        tintEdge = 'rgba(180, 255, 210,';
       } else {
-        centerColor = 'rgba(200, 100, 255,';
-        edgeColor = 'rgba(200, 100, 255,';
+        tintCenter = 'rgba(255, 220, 255,';
+        tintEdge = 'rgba(255, 200, 255,';
       }
 
-      const beamW = Math.min(w, h) * 0.18;
+      // 主光带：宽大、柔和、低饱和
+      const beamW = Math.min(w, h) * 0.55;
       const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
-      grad.addColorStop(0, `${edgeColor}0)`);
-      grad.addColorStop(0.42, `${edgeColor}0.03)`);
-      grad.addColorStop(0.5, `${centerColor}0.45)`);
-      grad.addColorStop(0.58, `${edgeColor}0.03)`);
-      grad.addColorStop(1, `${edgeColor}0)`);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.42, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(0.5, `${tintCenter}0.18)`);
+      grad.addColorStop(0.58, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
       ctx.fillStyle = grad;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+
+      // 第二层更淡的反相微光，增加朦胧层次
+      const t2 = ((Date.now() / 1000 + to + 3.5) % 7.0) / 7.0;
+      const d2 = -Math.max(w, h) * 0.55 + t2 * sweepLen;
+      const dx2 = cx + d2 - h * 0.2;
+      const dy2 = cy + d2 - w * 0.2;
+      const grad2 = ctx.createLinearGradient(dx2 - beamW * 0.8, dy2 - beamW * 0.8, dx2 + beamW * 0.8, dy2 + beamW * 0.8);
+      grad2.addColorStop(0, 'rgba(255,255,255,0)');
+      grad2.addColorStop(0.45, `${tintEdge}0.015)`);
+      grad2.addColorStop(0.5, `${tintCenter}0.08)`);
+      grad2.addColorStop(0.55, `${tintEdge}0.015)`);
+      grad2.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad2;
       ctx.fillRect(x - w, y - h, w * 3, h * 3);
       ctx.restore();
     }
