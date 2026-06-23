@@ -2411,40 +2411,39 @@ class MysteryDiscountRenderer {
       const sx = cx + (couponW - sw) / 2;
       const sy = cy + (couponH - sh) / 2;
 
-      // 优惠券背景（金色边框圆角卡片）
-      this.parent.roundRect(sx, sy, sw, sh, 10 * s, '#fff9f0', gold);
-
-      // 优惠券顶部装饰条
-      ctx.fillStyle = gold;
-      ctx.beginPath();
-      ctx.moveTo(sx + 10 * s, sy);
-      ctx.quadraticCurveTo(sx + sw / 2, sy + 12 * s, sx + sw - 10 * s, sy);
-      ctx.lineTo(sx + sw - 10 * s, sy + 18 * s);
-      ctx.quadraticCurveTo(sx + sw / 2, sy + 30 * s, sx + 10 * s, sy + 18 * s);
-      ctx.closePath();
-      ctx.fill();
-
-      // 优惠券图标（问号）
-      ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-      ctx.fillStyle = darkBlue;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
-
-      // 优惠券名称
-      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
-      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + sh * 0.72);
-
-      // 虚线分隔（模拟优惠券撕口）
-      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-      ctx.lineWidth = 1 * s;
-      ctx.setLineDash([4 * s, 4 * s]);
-      ctx.beginPath();
-      ctx.moveTo(sx + 8 * s, sy + sh * 0.58);
-      ctx.lineTo(sx + sw - 8 * s, sy + sh * 0.58);
-      ctx.stroke();
-      ctx.setLineDash([]);
+      // 优惠券图片（优先使用云存储 cupon.png）
+      const cuponData = this.parent.shopCardImages['cupon'];
+      if (cuponData && cuponData.loaded && cuponData.img) {
+        ctx.save();
+        this.parent._roundedRectPath(ctx, sx, sy, sw, sh, 10 * s);
+        ctx.clip();
+        const aspect = (cuponData.width > 0 && cuponData.height > 0)
+          ? cuponData.width / cuponData.height
+          : sw / sh;
+        let drawW, drawH, imgX, imgY;
+        const cardAspect = sw / sh;
+        if (aspect > cardAspect) {
+          drawW = sw;
+          drawH = drawW / aspect;
+          imgX = sx;
+          imgY = sy + (sh - drawH) / 2;
+        } else {
+          drawH = sh;
+          drawW = drawH * aspect;
+          imgX = sx + (sw - drawW) / 2;
+          imgY = sy;
+        }
+        ctx.drawImage(cuponData.img, imgX, imgY, drawW, drawH);
+        ctx.restore();
+      } else {
+        // fallback：简洁优惠券占位
+        this.parent.roundRect(sx, sy, sw, sh, 10 * s, '#fff9f0', gold);
+        ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
+      }
 
       if (isOther) {
         ctx.restore();
