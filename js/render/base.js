@@ -875,18 +875,6 @@ class Renderer {
         this._homepageBubbleNextTime = Date.now() + 180;
       }
     }
-      const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
-      if (entryElapsed < ENTRY_ANIM_DURATION) {
-        const animCX = W / 2;
-        const animCY = H * 0.49;
-        this._drawHomepageEntryAnim(ctx, animCX, animCY, s, entryElapsed);
-        // 金色圆环动画开始时播放 witch_guide_1_bg 音效
-        if (entryElapsed < ENTRY_BGM_DURATION && !this._homepageEntryBGMStarted && game && game.audioManager) {
-          this._homepageEntryBGMStarted = true;
-          game.audioManager.play('witch_guide_1_bg');
-        }
-      }
-    }
 
     // 按钮入场缩放（果冻感）
     const getBtnScale = (delay, duration) => {
