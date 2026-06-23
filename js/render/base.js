@@ -812,6 +812,91 @@ class Renderer {
     ctx.restore();
   }
 
+  // 主页 → 游戏翻页过渡动画（古卷展轴）
+  drawPageFlip(game, state) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    const elapsed = Date.now() - state.startTime;
+    const duration = state.duration || 1200;
+    const t = Math.min(elapsed / duration, 1);
+    const eased = Easing.easeInOutQuad(t);
+
+    if (eased < 0.5) {
+      // === 第一阶段：homepage 像古卷一样从右向左卷起 ===
+      const roll = eased * 2;
+
+      // 1. 底层游戏页面（playing）
+      this.render(game);
+
+      // 2. homepage 未卷起部分
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W * (1 - roll), H);
+      ctx.clip();
+      this.drawHomepage();
+      ctx.restore();
+
+      // 3. 卷轴
+      const rollX = W * (1 - roll);
+      const rollR = (6 + roll * 10) * s;
+
+      // 卷轴阴影
+      ctx.fillStyle = 'rgba(80,50,20,0.5)';
+      ctx.fillRect(rollX - 2 * s, -2 * s, rollR + 4 * s, H + 4 * s);
+
+      // 卷轴本体渐变
+      const g = ctx.createLinearGradient(rollX, 0, rollX + rollR, 0);
+      g.addColorStop(0, '#e8d5a0');
+      g.addColorStop(0.5, '#f5e8c0');
+      g.addColorStop(1, '#c4a86c');
+      ctx.fillStyle = g;
+      ctx.fillRect(rollX, -1 * s, rollR, H + 2 * s);
+
+      // 卷轴上下木轴装饰
+      ctx.fillStyle = '#a08050';
+      ctx.fillRect(rollX - 2 * s, -4 * s, rollR + 4 * s, 8 * s);
+      ctx.fillRect(rollX - 2 * s, H - 4 * s, rollR + 4 * s, 8 * s);
+      ctx.fillStyle = '#d4af60';
+      ctx.fillRect(rollX, -3 * s, rollR, 6 * s);
+      ctx.fillRect(rollX, H - 3 * s, rollR, 6 * s);
+
+      // 卷轴边缘金色粒子
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = `rgba(255,220,140,${0.3 + 0.4 * Math.random()})`;
+        ctx.beginPath();
+        ctx.arc(rollX - 4 * s + Math.random() * 12 * s, Math.random() * H, 1.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      // === 第二阶段：playing 页面已完全露出，添加展开光效 ===
+      const unroll = (eased - 0.5) * 2;
+
+      this.render(game);
+
+      const glowX = W * unroll;
+      const g2 = ctx.createLinearGradient(glowX - 30 * s, 0, glowX + 10 * s, 0);
+      g2.addColorStop(0, 'rgba(255,240,200,0)');
+      g2.addColorStop(0.5, 'rgba(255,230,180,0.3)');
+      g2.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = g2;
+      ctx.fillRect(glowX - 30 * s, 0, 40 * s, H);
+
+      for (let i = 0; i < 8; i++) {
+        ctx.fillStyle = `rgba(220,170,80,${0.25 + 0.35 * Math.random()})`;
+        ctx.beginPath();
+        ctx.arc(glowX + Math.random() * 20 * s - 10 * s, Math.random() * H, (1.3 + Math.random() * 2.5) * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    if (t >= 1) {
+      state.complete = true;
+    }
+  }
+
   drawHomepage() {
     const ctx = this.ctx;
     const W = this.W;
@@ -903,8 +988,8 @@ class Renderer {
       grad.addColorStop(1, 'rgba(255, 225, 60, 0)');
 
       // 柔和弥散发光
-      ctx.shadowBlur = 30 * s;
-      ctx.shadowColor = `rgba(255, 215, 0, ${0.30 * alpha})`;
+      ctx.shadowBlur = 16 * s;
+      ctx.shadowColor = `rgba(255, 215, 0, ${0.18 * alpha})`;
 
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -913,8 +998,8 @@ class Renderer {
       ctx.restore();
     };
 
-    // 辅助函数：按宽度适配绘制图片按钮，支持缩放与光晕
-    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, showGlow = false, glowAlpha = 1) => {
+    // 辅助函数：按宽度适配绘制图片按钮，支持缩放、光晕与立体感
+    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, showGlow = false, glowAlpha = 1, showDepth = false) => {
       let recordW = maxW;
       let recordH = maxH;
       if (loaded && img && img.width > 0 && img.height > 0) {
@@ -940,6 +1025,24 @@ class Renderer {
           drawGlowHalo(cx, cy, recordW, recordH, glowAlpha);
         }
 
+        // 立体感：下方阴影（金色投影，随按钮飘动呼吸渐变）
+        if (showDepth) {
+          ctx.save();
+          const shadowY = recordH * 0.52;
+          const shadowW = recordW * 0.78;
+          const shadowH = recordH * 0.14;
+          const floatFactor = 0.75 - 0.25 * Math.sin((Date.now() / 1000) * 1.6);
+          const sg = ctx.createRadialGradient(cx, cy + shadowY, 0, cx, cy + shadowY, shadowW / 2);
+          sg.addColorStop(0, `rgba(255, 210, 70, ${0.32 * floatFactor})`);
+          sg.addColorStop(0.45, `rgba(255, 185, 35, ${0.14 * floatFactor})`);
+          sg.addColorStop(1, 'rgba(255, 160, 0, 0)');
+          ctx.fillStyle = sg;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + shadowY, shadowW / 2, shadowH / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
         if (!loaded || !img || img.width <= 0 || img.height <= 0) {
           const fx = cx - maxW / 2;
           const fy = cy - maxH / 2;
@@ -953,6 +1056,8 @@ class Renderer {
           const drawX = cx - recordW / 2;
           const drawY = cy - recordH / 2;
           ctx.drawImage(img, drawX, drawY, recordW, recordH);
+
+
         }
         ctx.restore();
       }
@@ -1043,7 +1148,8 @@ class Renderer {
       if (glowProgress > 1) {
         glowAlpha = Math.max(0, 1 - (glowProgress - 1) * duration / glowFadeDuration);
       }
-      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, showGlow, glowAlpha);
+      const floatOffset = Math.sin((Date.now() / 1000) * 1.6) * 1 * s;
+      drawImgBtn(img, loaded, cx, smallBtnY + floatOffset, drawW, drawH, key, scale, showGlow, glowAlpha, true);
       smallX += drawW + smallGap;
     });
   }

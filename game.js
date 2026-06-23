@@ -467,6 +467,10 @@ let preloadComplete = false;
 // homepage 展示开关（预加载完成后展示，点击通关模式后进入游戏）
 let showHomepage = false;
 
+// 主页 → 游戏 翻页过渡状态
+let pageFlipState = null;
+const PAGE_FLIP_DURATION = 1200;
+
 // 过渡状态（预加载页 → 游戏页）
 let transitionAlpha = 0;
 let transitionStartTime = null;
@@ -1362,10 +1366,23 @@ wx.onTouchEnd(() => {
       if (!game) {
         startGame();
       }
-      if (game && game.audioManager) game.audioManager.play('tap');
-      if (btnKey === 'round') {
-        showHomepage = false;
-      } else if (btnKey === 'setting') {
+      if (btnKey === 'round' || btnKey === 'battle') {
+        if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
+        // 启动主页 → 游戏翻页过渡动画
+        const targetState = btnKey === 'battle' ? 'battle' : 'playing';
+        // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
+        if (targetState === 'battle' && game && game.battleManager) {
+          game.battleManager.startBattle('easy');
+        }
+        pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
+        // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
+        if (btnKey === 'round' && game && game.guidePhase === 1) {
+          game._guideOverlayStartTime = Date.now();
+        }
+      } else {
+        if (game && game.audioManager) game.audioManager.play('tap');
+      }
+      if (btnKey === 'setting') {
         if (game._settingsPopup) {
           game._closingSettings = true;
           game._closeSettingsStartTime = Date.now();
@@ -3405,7 +3422,16 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
-  if (showHomepage) {
+  if (pageFlipState) {
+    // 主页 → 游戏翻页过渡
+    renderer.drawPageFlip(game, pageFlipState);
+    if (pageFlipState.complete) {
+      const targetState = pageFlipState.targetState || 'playing';
+      pageFlipState = null;
+      showHomepage = false;
+      // 双人对战已在点击时初始化，这里只需切到对应状态
+    }
+  } else if (showHomepage) {
     // 测试阶段：优先展示 homepage
     renderer.drawHomepage();
     // 主页 setting 按钮复用 top_icon 行为，设置弹窗打开时叠加在主页上绘制

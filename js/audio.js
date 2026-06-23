@@ -197,6 +197,7 @@ class AudioManager {
       { name: 'levelup', src: 'music/sound_effect/levelup.mp3' },             // 进入下一关
       { name: 'guide_type', src: 'music/sound_effect/type_2.mp3' },          // 引导对话框打字机音效（3秒循环）
       { name: 'witch_guide_1_bg', src: 'music/sound_effect/witch_guide_1_bg.mp3' }, // Phase 1 新人引导背景音乐（播放一次）
+      { name: 'homepage_round_tap', src: 'music/sound_effect/homepage_round_tap.mp3' }, // 主页通关模式按钮点击
     ];
 
     // 保存映射用于懒加载

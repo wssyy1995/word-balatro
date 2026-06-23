@@ -1,128 +1,6 @@
 const { Easing } = require('../animation');
 
 module.exports = function extendGuide(Renderer) {
-    // 生成萤火虫粒子（严格按 HTML 文档 mode 3 萤火环绕实现）
-    Renderer.prototype._spawnFireflies = function(cx, cy, s) {
-      const colors = ['#ffe8a0', '#ffe0c0', '#ffffc0', '#ffd0e0', '#e0ffe0', '#d0e0ff'];
-      const particles = [];
-      for (let i = 0; i < 60; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = (30 + Math.random() * 180) * s;
-        const sx = cx + Math.cos(angle) * dist;
-        const sy = cy + Math.sin(angle) * dist;
-        const tx = -Math.sin(angle);
-        const ty = Math.cos(angle);
-        const speed = (0.5 + Math.random() * 2) * s;
-        particles.push({
-          x: sx,
-          y: sy,
-          vx: tx * speed,
-          vy: ty * speed - 0.3 * s,
-          life: 1,
-          decay: 0.002 + Math.random() * 0.005,
-          size: (2 + Math.random() * 5) * s,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          rotation: Math.random() * Math.PI * 2,
-          rotSpeed: (Math.random() - 0.5) * 0.1,
-          type: 'trail'
-        });
-      }
-      return particles;
-    };
-
-    // 更新并绘制萤火虫粒子（严格按 HTML 文档 trail 类型实现）
-    Renderer.prototype._updateAndDrawMagicParticles = function(ctx, game, s) {
-      const particles = game._guideMagicParticles;
-      if (!particles || particles.length === 0) return;
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= p.decay;
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rotation += p.rotSpeed;
-
-        ctx.save();
-        ctx.globalAlpha = p.life;
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-        const scale = 0.3 + p.life * 0.7;
-        // trail 类型：径向渐变圆形光点
-        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * scale);
-        grad.addColorStop(0, p.color);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(0, 0, p.size * scale, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    };
-
-    // 绘制萤火环绕光晕+萤火虫
-    Renderer.prototype._drawMagicCircle = function(ctx, game, centerX, centerY, s) {
-      const magicElapsed = Date.now() - game._guideMagicCircleStartTime;
-      const MAGIC_DURATION = 2500;
-      const magicProgress = Math.min(magicElapsed / MAGIC_DURATION, 1);
-      if (magicProgress >= 1 && (!game._guideMagicParticles || game._guideMagicParticles.length === 0)) return;
-
-      // 1. 中心多层光晕（glowAlpha）：0~0.6 升到峰值，0.6~1 淡出，避免 0.6 处突变
-      let glowAlpha = 0;
-      if (magicProgress < 0.6) {
-        glowAlpha = Math.sin(magicProgress * Math.PI / 1.2) * 0.5;
-      } else {
-        glowAlpha = Math.max(0, 0.5 * (1 - (magicProgress - 0.6) / 0.4));
-      }
-      if (glowAlpha > 0.01) {
-        const glowGrad = ctx.createRadialGradient(centerX, centerY, 30 * s, centerX, centerY, 220 * s);
-        glowGrad.addColorStop(0, `rgba(255,240,250,${glowAlpha * 0.7})`);
-        glowGrad.addColorStop(0.3, `rgba(255,200,255,${glowAlpha * 0.4})`);
-        glowGrad.addColorStop(0.6, `rgba(200,150,255,${glowAlpha * 0.15})`);
-        glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 220 * s, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // 2. 环境光晕（4 个彩色光球）：与中心光晕同步升起淡出
-      let ambAlpha = 0;
-      if (magicProgress < 0.6) {
-        ambAlpha = Math.min(1, magicProgress / 0.6) * 0.3;
-      } else {
-        ambAlpha = Math.max(0, 0.3 * (1 - (magicProgress - 0.6) / 0.4));
-      }
-      [
-        { x: centerX - 120 * s, y: centerY - 80 * s, r: 60 * s, c: '180,140,255' },
-        { x: centerX + 130 * s, y: centerY - 60 * s, r: 50 * s, c: '255,160,200' },
-        { x: centerX - 80 * s, y: centerY + 90 * s, r: 45 * s, c: '160,200,255' },
-        { x: centerX + 100 * s, y: centerY + 70 * s, r: 55 * s, c: '255,200,160' },
-      ].forEach(sg => {
-        const g = ctx.createRadialGradient(sg.x, sg.y, 0, sg.x, sg.y, sg.r);
-        g.addColorStop(0, `rgba(${sg.c},${ambAlpha})`);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.arc(sg.x, sg.y, sg.r, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      // 3. 按 HTML 文档 mode 3，在 t=0、0.25、0.5 时分批生成萤火虫
-      const batchThresholds = [0, 0.25, 0.5];
-      batchThresholds.forEach((th, idx) => {
-        const tMs = th * MAGIC_DURATION;
-        if (magicElapsed >= tMs && !game._guideFireflyBatches[idx]) {
-          game._guideFireflyBatches[idx] = true;
-          const newParticles = this._spawnFireflies(centerX, centerY, s);
-          game._guideMagicParticles.push(...newParticles);
-        }
-      });
-      this._updateAndDrawMagicParticles(ctx, game, s);
-    };
 
     // 绘制引导对话框左上角名字标签
     Renderer.prototype._drawGuideNameTag = function(ctx, dialogDrawX, dialogDrawY, s) {
@@ -176,8 +54,6 @@ module.exports = function extendGuide(Renderer) {
       const imgH = 220 * s;
       const imgTargetX = dialogTargetX;
       const imgTargetY = H * 0.6 - imgH;
-      const magicCenterX = imgTargetX + imgW / 2;
-      const magicCenterY = imgTargetY + imgH * 0.6;
   
       // Phase 1 入场时序：0~800ms 全亮无UI → 800~1600ms 渐变变暗 → 1600ms+ 显示完整UI
       const overlayStartTime = game._guideOverlayStartTime || Date.now();
@@ -189,29 +65,13 @@ module.exports = function extendGuide(Renderer) {
       if (phase === 1 && overlayElapsed < UI_SHOW_DELAY) {
         this.guideNextBtnRect = null; // 渐变阶段禁止点击
   
-        // 萤火环绕提前 300ms 开始：在 1300ms 时初始化并绘制
-        if (overlayElapsed >= UI_SHOW_DELAY - 300) {
-          if (!game._guideMagicCircleStartTime) {
-            game._guideMagicCircleStartTime = Date.now();
-            game._guideMagicParticles = [];
-            game._guideFireflyBatches = [];
-            // 萤火环绕开始时播放 Phase 1 引导背景音乐（只播放一次，并阻止默认 BGM 重叠）
-            if (game.audioManager) {
-              game.audioManager.bgmStarted = true;
-              game.audioManager.play('witch_guide_1_bg');
-            }
-          }
+        // 渐变变暗阶段：先画遮罩
+        const fadeProgress = Math.min((overlayElapsed - FADE_START) / FADE_DURATION, 1);
+        ctx.save();
+        ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.75})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
   
-          // 渐变变暗阶段：先画遮罩
-          const fadeProgress = Math.min((overlayElapsed - FADE_START) / FADE_DURATION, 1);
-          ctx.save();
-          ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.75})`;
-          ctx.fillRect(0, 0, W, H);
-          ctx.restore();
-  
-          // 在遮罩之上绘制萤火环绕
-          this._drawMagicCircle(ctx, game, magicCenterX, magicCenterY, s);
-        }
         return; // 不画女巫、对话框等
       }
   
@@ -222,16 +82,6 @@ module.exports = function extendGuide(Renderer) {
       const POPUP_DURATION = 600;
       const POST_POPUP_DELAY = 800; // 弹出完成后延迟 800ms 再开始打字
   
-      // UI 显示瞬间即启动萤火环绕（兜底：如果渐变阶段未初始化则在此初始化）
-      if (phase === 1 && !game._guideMagicCircleStartTime) {
-        game._guideMagicCircleStartTime = Date.now();
-        game._guideMagicParticles = [];
-        game._guideFireflyBatches = [];
-        if (game.audioManager) {
-          game.audioManager.bgmStarted = true; // 阻止 tryStartBGM 启动默认 BGM
-          game.audioManager.play('witch_guide_1_bg');
-        }
-      }
   
       // 计算文字开始时间：Phase 1 在女巫+对话框弹出并贴合后延迟 600ms 才开始；Phase 2~4 保持原有逻辑
       const textStartTime = (phase === 1)
@@ -311,15 +161,6 @@ module.exports = function extendGuide(Renderer) {
         dialogDrawY = dialogTargetY;
       }
   
-      // 萤火虫 + 多层光晕效果（Phase 1 女巫弹出期间，按 HTML 文档实现）
-      if (phase === 1 && game._guideMagicCircleStartTime) {
-        // 萤火环绕中心：弹出前固定在最终位置，弹出后跟随女巫当前位置
-        const magicImgX = popupElapsed > 0 ? imgX : imgTargetX;
-        const magicImgY = popupElapsed > 0 ? imgY : imgTargetY;
-        const centerX = magicImgX + imgW / 2;
-        const centerY = magicImgY + imgH * 0.6;
-        this._drawMagicCircle(ctx, game, centerX, centerY, s);
-      }
 
       // 女巫引导图片（精灵图）
       if (imgData && imgData.loaded && imgData.img) {

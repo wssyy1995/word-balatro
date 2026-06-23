@@ -1586,9 +1586,6 @@ class Game {
     this._globalRankScrollBounceTarget = 0;
     this._globalRankScrollBounceStartY = 0;
     this._globalRankScrollBounceStartTime = 0;
-    this._guideMagicCircleStartTime = null;
-    this._guideMagicParticles = [];
-    this._guideFireflyBatches = [];
     this._cardBookCellPressed = null;
     this.collectedWitchCards = this.storageManager ? this.storageManager.loadCollectedWitchCards() : [];
     this.equippedWitchCards = this.storageManager ? this.storageManager.loadEquippedWitchCard() : [];
@@ -2039,9 +2036,6 @@ class Game {
       this._guideOverlayStartTime = Date.now();
       this._guideLastVisibleChars = -1;
       this._guideTypingSoundPlaying = false;
-      this._guideMagicCircleStartTime = null;
-      this._guideMagicParticles = [];
-      this._guideFireflyBatches = [];
       console.log('[Guide] triggered phase 1');
     }
 
@@ -2115,14 +2109,9 @@ class Game {
       this.guidePhase = 5;
       this._guideExitStartTime = Date.now();
       this._guideTextStartTime = null;
-      this._guideCardGiftStartTime = null;
-      this._guideMagicCircleStartTime = null;
-      this._guideMagicParticles = [];
-      this._guideFireflyBatches = [];
-      // 引导完成时停止打字机循环音效与引导背景音乐，恢复默认 BGM
+      // 引导完成时停止打字机循环音效，恢复默认 BGM
       if (this.audioManager) {
         this.audioManager.stopSound('guide_type');
-        this.audioManager.stopSound('witch_guide_1_bg');
         this.audioManager.bgmStarted = false;
         this.audioManager.tryStartBGM();
       }

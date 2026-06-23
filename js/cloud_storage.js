@@ -115,7 +115,7 @@ class CloudStorageManager {
       'battle_vs': c('/bg_icon/battle_vs.png'),
       'score_line': c('/bg_icon/score_line.png'),
       'discount_spritesheet': c('/bg_icon/discount_spritesheet.png'),
-      'homepageBg': c('/bg_icon/homepage_bg.png'),
+      'homepageBg': c('/bg_icon/homepage_bg2.png'),
       'homepageRound': c('/bg_icon/hompage_round.png'),
       'homepageBattle': c('/bg_icon/hompage_battle.png'),
       'homepageSetting': c('/bg_icon/hompage_setting.png'),
@@ -155,6 +155,7 @@ class CloudStorageManager {
       'witch_guide_1_bg': c('/music/sound_effect/witch_guide_1_bg.mp3'),
       'win_success': c('/music/sound_effect/win_success.mp3'),
       'bubble': c('/music/sound_effect/bubble.mp3'),
+      'homepage_round_tap': c('/music/sound_effect/homepage_round_tap.mp3'),
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
