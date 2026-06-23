@@ -1036,7 +1036,7 @@ class Renderer {
       const delay = 900 + i * 150;
       const duration = 550;
       const scale = getBtnScale(delay, duration);
-      const glowProgress = (elapsed - delay) / duration;
+      const glowProgress = (elapsed - delay - entryOffset) / duration;
       const showGlow = glowProgress > 0;
       const glowFadeDuration = 350;
       let glowAlpha = 1;
