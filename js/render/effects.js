@@ -471,7 +471,9 @@ module.exports = function extendEffects(Renderer) {
       }
 
       // 4. 文字（深紫描边 + 紫色主体 + 金色外发光，x/+ 前缀小一点）
+      // 文字与菱形背景保持固定大小，不受外层脉冲 scale 影响，避免左右方块标签大小/间距不一致
       ctx.save();
+      ctx.scale(1 / scale, 1 / scale);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
