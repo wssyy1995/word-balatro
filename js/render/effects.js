@@ -1004,11 +1004,11 @@ module.exports = function extendEffects(Renderer) {
       const gradSize = 70 * s;
       const grad = ctx.createLinearGradient(dx - gradSize, dy - gradSize, dx + gradSize, dy + gradSize);
       grad.addColorStop(0, 'rgba(255,100,150,0)');
-      grad.addColorStop(0.3, 'rgba(255,180,100,0.12)');
-      grad.addColorStop(0.45, 'rgba(255,255,150,0.28)');
-      grad.addColorStop(0.5, 'rgba(200,255,200,0.32)');
-      grad.addColorStop(0.55, 'rgba(150,200,255,0.28)');
-      grad.addColorStop(0.7, 'rgba(200,150,255,0.12)');
+      grad.addColorStop(0.3, 'rgba(255,180,100,0.08)');
+      grad.addColorStop(0.45, 'rgba(255,255,150,0.18)');
+      grad.addColorStop(0.5, 'rgba(200,255,200,0.22)');
+      grad.addColorStop(0.55, 'rgba(150,200,255,0.18)');
+      grad.addColorStop(0.7, 'rgba(200,150,255,0.08)');
       grad.addColorStop(1, 'rgba(255,100,150,0)');
 
       ctx.fillStyle = grad;
