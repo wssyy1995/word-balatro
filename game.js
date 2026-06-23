@@ -731,7 +731,7 @@ wx.onTouchStart((e) => {
   // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮；入场动画播放时不响应）
   const settingsPopupOpen = game && game._settingsPopup && !game._closingSettings;
   const entryAnimPlaying = renderer._homepageEntryAnim &&
-    (Date.now() - renderer._homepageEntryAnim.startTime) < 2000; // 按钮开始弹出后允许交互
+    (Date.now() - renderer._homepageEntryAnim.startTime) < 1500; // 按钮开始弹出后允许交互
   if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
