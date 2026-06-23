@@ -822,6 +822,44 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 通用矩形斜光扫过（屏幕坐标）
+    // color: 'purple' | 'green' | 其他，默认紫色
+    Renderer.prototype._drawRectSweep = function(ctx, x, y, w, h, s, color, timeOffset = 0) {
+      ctx.save();
+      const r = 10 * s;
+      this._roundedRectPath(ctx, x, y, w, h, r);
+      ctx.clip();
+
+      const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
+      const t = ((Date.now() / 1000 + to) % 2.8) / 2.8;
+      const sweepLen = (w + h) * 1.6;
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      const d = -Math.max(w, h) + t * sweepLen;
+      const dx = cx + d - h * 0.3;
+      const dy = cy + d - w * 0.3;
+
+      let centerColor, edgeColor;
+      if (color === 'green') {
+        centerColor = 'rgba(60, 255, 140,';
+        edgeColor = 'rgba(60, 255, 140,';
+      } else {
+        centerColor = 'rgba(200, 100, 255,';
+        edgeColor = 'rgba(200, 100, 255,';
+      }
+
+      const beamW = Math.min(w, h) * 0.35;
+      const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
+      grad.addColorStop(0, `${edgeColor}0)`);
+      grad.addColorStop(0.42, `${edgeColor}0.08)`);
+      grad.addColorStop(0.5, `${centerColor}0.85)`);
+      grad.addColorStop(0.58, `${edgeColor}0.08)`);
+      grad.addColorStop(1, `${edgeColor}0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+      ctx.restore();
+    }
+
     // 卡牌斜光扫过（通关模式紫色 / 对战模式绿色）
     // 在 drawCard 的变换坐标系中调用：卡牌中心为 (0,0)，范围为 (-w/2, -h/2) 到 (w/2, h/2)
     Renderer.prototype._drawCardSweep = function(ctx, w, h, s, color, timeOffset = 0) {

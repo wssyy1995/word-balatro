@@ -923,6 +923,14 @@ class Renderer {
       bigX += drawW + bigGap;
     });
 
+    // 两个大按钮斜光扫过（round=紫色，battle=绿色）
+    if (this.homepageBtnRects.length >= 2) {
+      const roundRect = this.homepageBtnRects[0];
+      const battleRect = this.homepageBtnRects[1];
+      this._drawRectSweep(ctx, roundRect.x, roundRect.y, roundRect.w, roundRect.h, s, 'purple', 0);
+      this._drawRectSweep(ctx, battleRect.x, battleRect.y, battleRect.w, battleRect.h, s, 'green', 0.5);
+    }
+
     // 下方 65% 高度：4 个小按钮，间距按实际绘制宽度计算
     const smallBtnMaxW = W * 0.24;
     const smallBtnMaxH = H * 0.12;
