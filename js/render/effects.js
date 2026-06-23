@@ -477,8 +477,8 @@ module.exports = function extendEffects(Renderer) {
 
       const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
       const numStr = prefix ? text.slice(1) : text;
-      const pSize = prefix ? Math.floor(fontSize * 0.78) : fontSize;
-      const pYOff = 0; // textBaseline='middle' 已垂直居中，无需额外偏移
+      const pSize = fontSize; // 符号与数字同大，避免视觉挤压
+      const pYOff = 0;
 
       // 缓存文本宽度，避免每帧 measureText
       if (!this._fancyLabelTextCache) this._fancyLabelTextCache = {};
@@ -487,7 +487,7 @@ module.exports = function extendEffects(Renderer) {
       const nW = this._fancyLabelTextCache[numStr + '|' + fontSize] ||
         (this._fancyLabelTextCache[numStr + '|' + fontSize] = ctx.measureText(numStr).width);
 
-      const gap = 4 * s;
+      const gap = 8 * s;
       const startX = -(pW + gap + nW) / 2;
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
