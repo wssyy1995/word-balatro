@@ -1197,6 +1197,8 @@ class ShopRenderer {
           ctx.lineWidth = 1 * s;
           ctx.stroke();
         }
+        // 彩虹箔光：商店商品卡牌统一添加对角线彩虹渐变流光
+        this.parent._drawRainbowFoil(ctx, cardX, cardY, cardW, cardH, cardR, s);
         ctx.restore();
 
         // 文字区域（卡牌右侧，淡色行背景上 → 深色文字）

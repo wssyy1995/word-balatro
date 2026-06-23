@@ -978,6 +978,44 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 彩虹箔光：沿对角线扫过的彩虹渐变流光，用于商店卡牌
+    // 未命中现有通用动画方案（自定义渐变位移动画）
+    Renderer.prototype._drawRainbowFoil = function(ctx, x, y, w, h, r, s) {
+      ctx.save();
+      // 圆角裁切，确保流光不溢出卡牌
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.clip();
+
+      const t = Date.now() / 1000;
+      const cycle = 3.2;
+      const p = (t % cycle) / cycle;
+      const dx = x - w * 0.5 + p * (w + h) * 1.4;
+      const dy = y - h * 0.3 + p * (w + h) * 0.7;
+      const gradSize = 70 * s;
+      const grad = ctx.createLinearGradient(dx - gradSize, dy - gradSize, dx + gradSize, dy + gradSize);
+      grad.addColorStop(0, 'rgba(255,100,150,0)');
+      grad.addColorStop(0.3, 'rgba(255,180,100,0.12)');
+      grad.addColorStop(0.45, 'rgba(255,255,150,0.28)');
+      grad.addColorStop(0.5, 'rgba(200,255,200,0.32)');
+      grad.addColorStop(0.55, 'rgba(150,200,255,0.28)');
+      grad.addColorStop(0.7, 'rgba(200,150,255,0.12)');
+      grad.addColorStop(1, 'rgba(255,100,150,0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+      ctx.restore();
+    };
+
     Renderer.prototype._calcPulseScale = function(animState, maxScale = 0.3) {
       if (!animState || !animState.startTime) return { scale: 1, progress: 1 };
       const elapsed = Date.now() - animState.startTime;
