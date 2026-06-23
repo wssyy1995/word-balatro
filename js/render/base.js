@@ -920,6 +920,11 @@ class Renderer {
       }
 
       if (animScale > 0) {
+        // 先绘制金色光晕爆发（在按钮图层下方）
+        if (burstProgress >= 0 && burstProgress < 1) {
+          drawBurstRing(cx, cy, recordW, recordH, burstProgress);
+        }
+
         ctx.save();
         ctx.translate(cx, cy);
         ctx.scale(animScale, animScale);
@@ -940,10 +945,6 @@ class Renderer {
           ctx.drawImage(img, drawX, drawY, recordW, recordH);
         }
         ctx.restore();
-
-        if (burstProgress >= 0 && burstProgress < 1) {
-          drawBurstRing(cx, cy, recordW, recordH, burstProgress);
-        }
       }
 
       this.homepageBtnRects.push({ x: cx - recordW / 2, y: cy - recordH / 2, w: recordW, h: recordH, key });
