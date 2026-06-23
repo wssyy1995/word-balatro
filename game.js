@@ -1679,8 +1679,8 @@ wx.onTouchEnd(() => {
 // === 迷之优惠涂抹刮开辅助函数 ===
 function initScratchGrid(md) {
   if (md.scratchGrid) return;
-  const cols = 12;
-  const rows = 8;
+  const cols = 24;
+  const rows = 16;
   md.scratchGrid = [];
   for (let r = 0; r < rows; r++) {
     md.scratchGrid[r] = new Array(cols).fill(false);
@@ -1688,6 +1688,23 @@ function initScratchGrid(md) {
   md.scratchCols = cols;
   md.scratchRows = rows;
   md.scratchPoints = [];
+}
+
+function markScratchCell(md, localX, localY) {
+  const cols = md.scratchCols;
+  const rows = md.scratchRows;
+  const col = Math.min(cols - 1, Math.max(0, Math.floor(localX * cols)));
+  const row = Math.min(rows - 1, Math.max(0, Math.floor(localY * rows)));
+  // 3x3 笔刷，模拟涂抹半径
+  for (let dr = -1; dr <= 1; dr++) {
+    for (let dc = -1; dc <= 1; dc++) {
+      const r = row + dr;
+      const c = col + dc;
+      if (r >= 0 && r < rows && c >= 0 && c < cols) {
+        md.scratchGrid[r][c] = true;
+      }
+    }
+  }
 }
 
 function addScratchPoint(md, rect, x, y) {
@@ -1701,13 +1718,11 @@ function addScratchPoint(md, rect, x, y) {
   if (last) {
     const dx = localX - last.x;
     const dy = localY - last.y;
-    if (dx * dx + dy * dy < 0.0003) return;
+    if (dx * dx + dy * dy < 0.0002) return;
   }
   md.scratchPoints.push({ x: localX, y: localY });
 
-  const col = Math.min(cols - 1, Math.floor(localX * cols));
-  const row = Math.min(rows - 1, Math.floor(localY * rows));
-  md.scratchGrid[row][col] = true;
+  markScratchCell(md, localX, localY);
 
   if (last) {
     const dx = localX - last.x;
@@ -1717,9 +1732,7 @@ function addScratchPoint(md, rect, x, y) {
       const t = i / steps;
       const ix = last.x + dx * t;
       const iy = last.y + dy * t;
-      const icol = Math.min(cols - 1, Math.floor(ix * cols));
-      const irow = Math.min(rows - 1, Math.floor(iy * rows));
-      md.scratchGrid[irow][icol] = true;
+      markScratchCell(md, ix, iy);
     }
   }
 

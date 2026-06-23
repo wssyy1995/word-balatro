@@ -2489,7 +2489,7 @@ class MysteryDiscountRenderer {
       // 优惠券标题（金棕色，与游戏标题一致）
       // 标题随优惠券 base→target 缩放，但不跟随呼吸脉冲
       const titleScale = md.selectedIdx === null ? scale / pulse : scale;
-      ctx.font = `bold ${Math.floor(12 * s * titleScale)}px sans-serif`;
+      ctx.font = `bold ${Math.floor(12 * s * titleScale)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
@@ -2537,34 +2537,31 @@ class MysteryDiscountRenderer {
       ctx.restore();
 
       if (!md.revealed) {
-        // 涂抹刮开覆盖层
+        // 涂抹刮开覆盖层：按网格绘制未刮开单元格，刮开处直接露出底层折扣
         ctx.save();
         this.parent._roundedRectPath(ctx, scratchX, scratchY, scratchW, scratchH, 8 * s);
         ctx.clip();
 
+        const cols = md.scratchCols || 24;
+        const rows = md.scratchRows || 16;
+        const grid = md.scratchGrid;
+        const cellW = scratchW / cols;
+        const cellH = scratchH / rows;
         ctx.fillStyle = '#c8c0b4';
-        ctx.fillRect(scratchX, scratchY, scratchW, scratchH);
+        for (let r = 0; r < rows; r++) {
+          if (!grid || !grid[r]) continue;
+          for (let c = 0; c < cols; c++) {
+            if (!grid[r][c]) {
+              ctx.fillRect(scratchX + c * cellW, scratchY + r * cellH, cellW + 0.5, cellH + 0.5);
+            }
+          }
+        }
 
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#888';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
-
-        // 根据涂抹轨迹擦除覆盖层（连续笔迹，模拟真实刮卡）
-        ctx.globalCompositeOperation = 'destination-out';
-        const points = md.scratchPoints || [];
-        if (points.length > 0) {
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.lineWidth = 28 * s;
-          ctx.beginPath();
-          ctx.moveTo(scratchX + points[0].x * scratchW, scratchY + points[0].y * scratchH);
-          for (let i = 1; i < points.length; i++) {
-            ctx.lineTo(scratchX + points[i].x * scratchW, scratchY + points[i].y * scratchH);
-          }
-          ctx.stroke();
-        }
         ctx.restore();
 
         // 存储刮奖区点击区域
