@@ -832,7 +832,7 @@ module.exports = function extendEffects(Renderer) {
 
       const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
       const t = ((Date.now() / 1000 + to) % 7.0) / 7.0;
-      const sweepLen = (w + h) * 0.9;
+      const sweepLen = (w + h) * 0.72;
       const cx = x + w / 2;
       const cy = y + h / 2;
       const d = -Math.max(w, h) * 0.55 + t * sweepLen;
