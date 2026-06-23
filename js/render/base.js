@@ -849,6 +849,15 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
     }
 
+    // 游戏标题（与预加载页保持一致）
+    ctx.save();
+    ctx.font = `${Math.floor(30 * s)}px ${this.titleFontFamily}`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('女巫的词牌', W / 2, H * 0.16);
+    ctx.restore();
+
     this.homepageBtnRects = [];
 
     // 辅助函数：按宽度适配绘制图片按钮
@@ -882,10 +891,10 @@ class Renderer {
     };
 
     // 中间 45% 高度：左右两个大按钮
-    const bigBtnMaxW = W * 0.45;
-    const bigBtnMaxH = H * 0.20;
+    const bigBtnMaxW = W * 0.65;
+    const bigBtnMaxH = H * 0.22;
     const bigBtnY = H * 0.48;
-    const bigGap = W * 0.02;
+    const bigGap = W * 0.09;
 
     // 先计算两个大按钮实际绘制尺寸，再按实际宽度 + 固定间距布局
     const bigBtnInfos = [
@@ -915,8 +924,8 @@ class Renderer {
     });
 
     // 下方 65% 高度：4 个小按钮，间距按实际绘制宽度计算
-    const smallBtnMaxW = W * 0.26;
-    const smallBtnMaxH = H * 0.14;
+    const smallBtnMaxW = W * 0.24;
+    const smallBtnMaxH = H * 0.12;
     const smallBtnY = H * 0.68;
     const smallGap = 14 * s;
     const smallKeys = [
@@ -1165,7 +1174,7 @@ class Renderer {
     }
   }
 
-  drawCard(card, x, y, isNew = false, displayScoreOverride = null) {
+  drawCard(card, x, y, isNew = false, displayScoreOverride = null, sweepColor = null) {
     const ctx = this.ctx;
     const w = this.cardW;
     const h = this.cardH;
@@ -1338,6 +1347,11 @@ class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('★', hw - 10 * s, hh - 10 * s);
+    }
+
+    // === 8. 通关/对战模式斜光扫过 ===
+    if (sweepColor) {
+      this._drawCardSweep(ctx, w, h, s, sweepColor, card.id ? card.id * 0.1 : 0);
     }
 
     ctx.restore();

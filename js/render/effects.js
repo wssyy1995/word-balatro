@@ -436,29 +436,30 @@ module.exports = function extendEffects(Renderer) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(scale, scale);
-  
+
       const fontSize = Math.floor(28 * s);
       const t = elapsed * 0.001;
-  
+
       // ============ 方案B · 光晕呼吸 ============
-  
+
       // 1. 底层大光晕（呼吸）—— 透明度适度、半径缩小
       const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
-      for (let i = 3; i >= 1; i--) {
-        const r = (6 + i * 3 + breathe * 2) * s;
+      for (let i = 2; i >= 1; i--) {
+        const r = (9 + i * 3 + breathe * 2) * s;
         const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
-        g.addColorStop(0, `rgba(255,255,255,${0.35 - i * 0.06})`);
-        g.addColorStop(0.5, `rgba(255,255,255,${0.30 - i * 0.035})`);
-        g.addColorStop(1, `rgba(255,255,255,${0.25 - i * 0.02})`);
+        g.addColorStop(0, `rgba(255,255,255,${0.30 - i * 0.08})`);
+        g.addColorStop(0.55, `rgba(255,255,255,${0.22 - i * 0.04})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fillStyle = g;
         ctx.fill();
       }
-  
-      // 3. 金色粒子（12个）
-      for (let i = 0; i < 12; i++) {
-        const a = (Math.PI * 2 / 12) * i + t * 0.35;
+
+      // 3. 金色粒子（6个，降低性能开销）
+      const particleCount = 6;
+      for (let i = 0; i < particleCount; i++) {
+        const a = (Math.PI * 2 / particleCount) * i + t * 0.35;
         const dist = (24 + Math.sin(t * 2 + i) * 7) * s;
         const px = Math.cos(a) * dist;
         const py = Math.sin(a) * dist;
@@ -468,26 +469,29 @@ module.exports = function extendEffects(Renderer) {
         ctx.fillStyle = `rgba(255,220,100,${alpha})`;
         ctx.fill();
       }
-  
+
       // 4. 文字（深紫描边 + 紫色主体 + 金色外发光，x/+ 前缀小一点）
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-  
+
       const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
       const numStr = prefix ? text.slice(1) : text;
       const pSize = prefix ? Math.floor(fontSize * 0.78) : fontSize;
       const pYOff = prefix ? (fontSize - pSize) / 2 - 1 * s : 0;
-  
-      ctx.font = `900 ${pSize}px sans-serif`;
-      const pW = prefix ? ctx.measureText(prefix).width : 0;
-      ctx.font = `900 ${fontSize}px sans-serif`;
-      const nW = ctx.measureText(numStr).width;
+
+      // 缓存文本宽度，避免每帧 measureText
+      if (!this._fancyLabelTextCache) this._fancyLabelTextCache = {};
+      const pW = prefix ? (this._fancyLabelTextCache[prefix + '|' + pSize] ||
+        (this._fancyLabelTextCache[prefix + '|' + pSize] = ctx.measureText(prefix).width)) : 0;
+      const nW = this._fancyLabelTextCache[numStr + '|' + fontSize] ||
+        (this._fancyLabelTextCache[numStr + '|' + fontSize] = ctx.measureText(numStr).width);
+
       const gap = 1 * s;
       const startX = -(pW + gap + nW) / 2;
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
-  
+
       const drawLayer = (styleFn, drawFn) => {
         styleFn();
         if (prefix) {
@@ -497,13 +501,13 @@ module.exports = function extendEffects(Renderer) {
           ctx.font = `900 ${fontSize}px sans-serif`; drawFn(text, 0, 0);
         }
       };
-  
+
       // 深紫描边
       drawLayer(
         () => { ctx.lineWidth = 1.5 * s; ctx.strokeStyle = '#2a0850'; },
         (t, x, y) => ctx.strokeText(t, x, y)
       );
-  
+
       // 紫色主体 + 金色外发光
       drawLayer(
         () => {
@@ -514,7 +518,7 @@ module.exports = function extendEffects(Renderer) {
         },
         (t, x, y) => ctx.fillText(t, x, y)
       );
-  
+
       // 白色高光（向上偏移）
       drawLayer(
         () => {
@@ -524,7 +528,7 @@ module.exports = function extendEffects(Renderer) {
         },
         (t, x, y) => ctx.fillText(t, x, y - fontSize * 0.025)
       );
-  
+
       ctx.restore();
       ctx.restore();
     }
@@ -815,6 +819,41 @@ module.exports = function extendEffects(Renderer) {
         this._drawSparkleShape(ctx, sp.x, sp.y, r);
         ctx.restore();
       });
+      ctx.restore();
+    }
+
+    // 卡牌斜光扫过（通关模式紫色 / 对战模式绿色）
+    // 在 drawCard 的变换坐标系中调用：卡牌中心为 (0,0)，范围为 (-w/2, -h/2) 到 (w/2, h/2)
+    Renderer.prototype._drawCardSweep = function(ctx, w, h, s, color, timeOffset = 0) {
+      ctx.save();
+      const r = 10 * s;
+      this._roundedRectPath(ctx, -w / 2, -h / 2, w, h, r);
+      ctx.clip();
+
+      const t = (Date.now() / 1000 + timeOffset) % 2.8 / 2.8;
+      const sweepLen = (w + h) * 1.4;
+      const d = -Math.max(w, h) * 0.8 + t * sweepLen;
+      const dx = d;
+      const dy = d;
+
+      let centerColor, edgeColor;
+      if (color === 'green') {
+        centerColor = 'rgba(80, 255, 150,';
+        edgeColor = 'rgba(80, 255, 150,';
+      } else {
+        // 默认紫色
+        centerColor = 'rgba(180, 120, 255,';
+        edgeColor = 'rgba(180, 120, 255,';
+      }
+
+      const grad = ctx.createLinearGradient(dx - 60 * s, dy - 60 * s, dx + 60 * s, dy + 60 * s);
+      grad.addColorStop(0, `${edgeColor}0)`);
+      grad.addColorStop(0.45, `${edgeColor}0.05)`);
+      grad.addColorStop(0.5, `${centerColor}0.55)`);
+      grad.addColorStop(0.55, `${edgeColor}0.05)`);
+      grad.addColorStop(1, `${edgeColor}0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(-w * 1.5, -h * 1.5, w * 3, h * 3);
       ctx.restore();
     }
 
