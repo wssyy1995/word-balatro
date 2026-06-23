@@ -487,7 +487,7 @@ module.exports = function extendEffects(Renderer) {
       const nW = this._fancyLabelTextCache[numStr + '|' + fontSize] ||
         (this._fancyLabelTextCache[numStr + '|' + fontSize] = ctx.measureText(numStr).width);
 
-      const gap = 8 * s;
+      const gap = 6 * s;
       const startX = -(pW + gap + nW) / 2;
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
