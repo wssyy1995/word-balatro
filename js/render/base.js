@@ -870,11 +870,28 @@ class Renderer {
       return Easing.easeOutBackStrong(progress);
     };
 
-    // 小按钮弹出瞬间：椭圆形金色边框爆发
+    // 小按钮弹出瞬间：椭圆形金色光晕 + 边框爆发
     const drawBurstRing = (cx, cy, w, h, progress) => {
-      const burstScale = 1.4 - 0.4 * Easing.easeOutCubic(progress);
-      const alpha = 0.9 * (1 - progress);
-      const lineW = Math.max(1, (3 - 2 * progress) * s);
+      // 外层填充光晕：从四周向内收缩并淡出
+      const haloScale = 1.55 - 0.55 * Easing.easeOutCubic(progress);
+      const haloAlpha = 0.55 * (1 - progress);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(haloScale, haloScale);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+      const haloGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(w, h) / 2);
+      haloGrad.addColorStop(0, `rgba(255, 215, 0, ${haloAlpha})`);
+      haloGrad.addColorStop(0.7, `rgba(255, 215, 0, ${haloAlpha * 0.35})`);
+      haloGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      ctx.fillStyle = haloGrad;
+      ctx.fill();
+      ctx.restore();
+
+      // 金色边框
+      const burstScale = 1.35 - 0.35 * Easing.easeOutCubic(progress);
+      const alpha = 0.85 * (1 - progress);
+      const lineW = Math.max(1, (2.5 - 1.5 * progress) * s);
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(burstScale, burstScale);
@@ -1004,10 +1021,10 @@ class Renderer {
     let smallX = (W - smallTotalW) / 2;
     smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
-      const delay = 800 + i * 150;
-      const scale = getBtnScale(delay, 450);
+      const delay = 900 + i * 200;
+      const scale = getBtnScale(delay, 550);
       const burstElapsed = elapsed - delay;
-      const burstDuration = 220;
+      const burstDuration = 260;
       const burstProgress = burstElapsed >= 0 && burstElapsed < burstDuration ? burstElapsed / burstDuration : -1;
       drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, burstProgress);
       smallX += drawW + smallGap;
