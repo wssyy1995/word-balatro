@@ -875,16 +875,23 @@ class Renderer {
       ctx.save();
       ctx.translate(cx, cy);
 
-      const ringW = w * 1.2;
-      const ringH = h * 1.2;
+      const ringW = w * 1.25;
+      const ringH = h * 1.25;
       const grad = ctx.createRadialGradient(
-        0, 0, Math.min(ringW, ringH) * 0.45,
+        0, 0, Math.min(ringW, ringH) * 0.55,
         0, 0, Math.max(ringW, ringH) / 2
       );
-      grad.addColorStop(0, 'rgba(255, 245, 150, 0)');
-      grad.addColorStop(0.55, 'rgba(255, 245, 150, 0.28)');
-      grad.addColorStop(0.75, 'rgba(255, 250, 190, 0.55)');
-      grad.addColorStop(1, 'rgba(255, 245, 150, 0)');
+      grad.addColorStop(0, 'rgba(255, 245, 180, 0)');
+      grad.addColorStop(0.45, 'rgba(255, 245, 180, 0.08)');
+      grad.addColorStop(0.62, 'rgba(255, 250, 210, 0.38)');
+      grad.addColorStop(0.72, 'rgba(255, 252, 225, 0.55)');
+      grad.addColorStop(0.82, 'rgba(255, 250, 210, 0.3)');
+      grad.addColorStop(0.95, 'rgba(255, 245, 180, 0.06)');
+      grad.addColorStop(1, 'rgba(255, 245, 180, 0)');
+
+      // 柔和发光边缘
+      ctx.shadowBlur = 18 * s;
+      ctx.shadowColor = 'rgba(255, 240, 150, 0.55)';
 
       ctx.fillStyle = grad;
       ctx.beginPath();
