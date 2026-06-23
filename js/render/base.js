@@ -839,9 +839,10 @@ class Renderer {
     const elapsed = Date.now() - this.homepageAnimStartTime;
 
     // 主页入场动画：预加载页 → 主页时，在两个大按钮位置播放
-    const ENTRY_ANIM_DURATION = 3200;
+    const ENTRY_ANIM_DURATION = 3200;   // 入场动画总时长
+    const ENTRY_BTN_START = 2300;       // 按钮开始弹出的时间点（爆发阶段中间）
     const ENTRY_BGM_DURATION = 1200;
-    const entryOffset = this._homepageEntryAnim ? ENTRY_ANIM_DURATION : 0;
+    const entryOffset = this._homepageEntryAnim ? ENTRY_BTN_START : 0;
     const game = wx.game;
     if (this._homepageEntryAnim) {
       const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
