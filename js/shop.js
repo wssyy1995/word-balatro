@@ -2479,7 +2479,7 @@ class MysteryDiscountRenderer {
         this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
         this.collectBtnRect = null;
       } else {
-        // 已刮开：显示随机折扣（5~9折）
+        // 已刮开：显示随机折扣（6~9折）
         const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
         const revealProgress = Math.min(revealElapsed / 300, 1);
         const revealEase = Easing.easeOutBack(revealProgress);
