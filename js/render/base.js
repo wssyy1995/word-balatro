@@ -1070,7 +1070,7 @@ class Renderer {
     // 中间 45% 高度：左右两个大按钮先缩放弹出
     const bigBtnMaxW = W * 0.75;
     const bigBtnMaxH = H * 0.26;
-    const bigBtnY = H * 0.49;
+    const bigBtnY = H * 0.49 + 30 * s;
     const bigGap = W * 0.08;
 
     const bigBtnInfos = [
@@ -1112,7 +1112,7 @@ class Renderer {
     // 下方 65% 高度：4 个小按钮依次从左往右缩放弹出
     const smallBtnMaxW = W * 0.24;
     const smallBtnMaxH = H * 0.12;
-    const smallBtnY = H * 0.74;
+    const smallBtnY = H * 0.74 + 30 * s;
     const smallGap = 14 * s;
     const smallKeys = [
       { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
