@@ -547,8 +547,11 @@ async function startPreload() {
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
     preloadComplete = true;
+    startGame();
     showHomepage = true;
     renderer.homepageAnimStartTime = Date.now();
+    renderer._homepageEntryAnim = { startTime: Date.now() };
+    renderer._resetHomepageEntryAnim();
     return;
   }
 
@@ -585,8 +588,11 @@ async function startPreload() {
     cloudStorage.injectGuideToRenderer(renderer);
   }
   preloadComplete = true;
+  startGame();
   showHomepage = true;
   renderer.homepageAnimStartTime = Date.now();
+  renderer._homepageEntryAnim = { startTime: Date.now() };
+  renderer._resetHomepageEntryAnim();
   console.log('[Game] 云图片预加载完成，进入主页');
 }
 
@@ -722,9 +728,11 @@ wx.onTouchStart((e) => {
   const x = touch.clientX;
   const y = touch.clientY;
 
-  // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮）
+  // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮；入场动画播放时不响应）
   const settingsPopupOpen = game && game._settingsPopup && !game._closingSettings;
-  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen) {
+  const entryAnimPlaying = renderer._homepageEntryAnim &&
+    (Date.now() - renderer._homepageEntryAnim.startTime) < 3200;
+  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);

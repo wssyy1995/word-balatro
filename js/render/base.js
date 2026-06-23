@@ -507,6 +507,7 @@ class Renderer {
     this.homepageAnimStartTime = Date.now();
     this._homepageBubbleStarted = false;
     this._homepageBubbleCount = 0;
+    this._homepageEntryAnim = null;
 
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
@@ -838,11 +839,12 @@ class Renderer {
 
     // 4 个小按钮开始弹出时播放 bubble 音效（重复 2 次）
     const game = wx.game;
-    if (elapsed < 800) {
+    const bubbleElapsed = elapsed - entryOffset;
+    if (bubbleElapsed < 800) {
       this._homepageBubbleStarted = false;
       this._homepageBubbleCount = 0;
     }
-    if (elapsed >= 900 && !this._homepageBubbleStarted && game && game.audioManager) {
+    if (bubbleElapsed >= 900 && !this._homepageBubbleStarted && game && game.audioManager) {
       this._homepageBubbleStarted = true;
       this._homepageBubbleCount = 0;
       this._homepageBubbleNextTime = Date.now();
@@ -855,9 +857,22 @@ class Renderer {
       }
     }
 
+    // 主页入场动画：预加载页 → 主页时，在两个大按钮位置播放
+    const ENTRY_ANIM_DURATION = 3200;
+    let entryOffset = 0;
+    if (this._homepageEntryAnim) {
+      const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
+      if (entryElapsed < ENTRY_ANIM_DURATION) {
+        entryOffset = ENTRY_ANIM_DURATION;
+        const animCX = W / 2;
+        const animCY = H * 0.49;
+        this._drawHomepageEntryAnim(ctx, animCX, animCY, s, entryElapsed);
+      }
+    }
+
     // 按钮入场缩放（果冻感）
     const getBtnScale = (delay, duration) => {
-      const e = elapsed - delay;
+      const e = elapsed - delay - entryOffset;
       if (e <= 0) return 0;
       const progress = Math.min(e / duration, 1);
       return Easing.easeOutBackStrong(progress);
