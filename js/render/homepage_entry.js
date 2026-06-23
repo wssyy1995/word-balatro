@@ -124,8 +124,8 @@ module.exports = function extendHomepageEntry(Renderer) {
   // s: 屏幕缩放
   // elapsed: 动画已进行时间（毫秒）
   Renderer.prototype._drawHomepageEntryAnim = function(ctx, cx, cy, s, elapsed) {
-    const DRAW = 1400;   // 轨道绘制阶段（ms）
-    const BURST = 1800;  // 爆发阶段（ms）
+    const DRAW = 1000;   // 轨道绘制阶段（ms）
+    const BURST = 2200;  // 爆发阶段（ms）
     const FADE = 400;    // 圆环淡出时长（ms）
     const TOTAL = 3200;  // 总时长（ms）
 
