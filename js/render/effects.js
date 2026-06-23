@@ -435,14 +435,16 @@ module.exports = function extendEffects(Renderer) {
     Renderer.prototype._drawFancyLabel = function(ctx, cx, cy, s, text, scale, elapsed) {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.scale(scale, scale);
 
       const fontSize = Math.floor(28 * s);
       const t = elapsed * 0.001;
 
-      // ============ 方案B · 光晕呼吸 ============
+      // ============ 方案B · 光晕呼吸（受 scale 脉冲影响） ============
 
-      // 1. 底层大光晕（呼吸）—— 透明度适度、半径缩小
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      // 1. 底层大光晕（呼吸）
       const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
       for (let i = 2; i >= 1; i--) {
         const r = (9 + i * 3 + breathe * 2) * s;
@@ -470,26 +472,24 @@ module.exports = function extendEffects(Renderer) {
         ctx.fill();
       }
 
-      // 4. 文字（深紫描边 + 紫色主体 + 金色外发光，x/+ 前缀小一点）
-      // 文字与菱形背景保持固定大小，不受外层脉冲 scale 影响，避免左右方块标签大小/间距不一致
+      ctx.restore();
+
+      // 4. 文字与菱形背景（固定 scale=1，避免左右方块标签大小/间距不一致）
       ctx.save();
-      ctx.scale(1 / scale, 1 / scale);
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
       const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
       const numStr = prefix ? text.slice(1) : text;
-      const pSize = fontSize; // 符号与数字同大，避免视觉挤压
+      const pSize = fontSize;
       const pYOff = 0;
 
-      // 缓存文本宽度，避免每帧 measureText
-      if (!this._fancyLabelTextCache) this._fancyLabelTextCache = {};
-      const pW = prefix ? (this._fancyLabelTextCache[prefix + '|' + pSize] ||
-        (this._fancyLabelTextCache[prefix + '|' + pSize] = ctx.measureText(prefix).width)) : 0;
-      const nW = this._fancyLabelTextCache[numStr + '|' + fontSize] ||
-        (this._fancyLabelTextCache[numStr + '|' + fontSize] = ctx.measureText(numStr).width);
+      ctx.font = `900 ${pSize}px sans-serif`;
+      const pW = prefix ? ctx.measureText(prefix).width : 0;
+      ctx.font = `900 ${fontSize}px sans-serif`;
+      const nW = ctx.measureText(numStr).width;
 
-      const gap = 6 * s;
+      const gap = 8 * s;
       const startX = -(pW + gap + nW) / 2;
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
