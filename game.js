@@ -1744,7 +1744,7 @@ function addScratchPoint(md, rect, x, y) {
   }
   md.scratchProgress = scratchedCount / (rows * cols);
 
-  if (md.scratchProgress >= 0.4 && !md.revealed) {
+  if (md.scratchProgress >= 0.5 && !md.revealed) {
     md.revealed = true;
     md.revealStartTime = Date.now();
     vibrate();

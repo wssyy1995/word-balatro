@@ -2507,10 +2507,10 @@ class MysteryDiscountRenderer {
 
     // === 刮奖区（选中后显示，跟随被选中的优惠券位置）===
     if (md.selectedIdx !== null && md.scratched) {
-      const scratchW = couponW * 1.08;
-      const scratchH = 56 * s;
+      const scratchW = couponW * 1.08 - 2 * s;
+      const scratchH = 58 * s;
       const scratchX = selectedSX + (selectedSW - scratchW) / 2;
-      const scratchY = selectedSY + (selectedSH - scratchH) / 2 - 2 * s;
+      const scratchY = selectedSY + (selectedSH - scratchH) / 2 - 3 * s;
 
       // 刮奖区背景
       this.parent.roundRect(scratchX, scratchY, scratchW, scratchH, 8 * s, '#e8e0d4', '#c4a35a');
@@ -2521,7 +2521,14 @@ class MysteryDiscountRenderer {
       const revealProgress = md.revealed ? Math.min(revealElapsed / 300, 1) : 0;
       const revealEase = md.revealed ? Easing.easeOutBack(revealProgress) : 0;
 
-      // 折扣数字（底层，完整显示，被覆盖层遮挡）
+      // 折扣标签（优先使用精灵图 6~9折，每帧100x100）
+      const sheet = this.parent.discountSpritesheet;
+      const sheetLoaded = this.parent.discountSpritesheetLoaded;
+      const frameIdx = Math.max(0, Math.min(3, Math.round(rate * 10) - 6));
+      const iconSize = Math.min(scratchW, scratchH) * 0.85;
+      const iconX = scratchX + (scratchW - iconSize) / 2;
+      const iconY = scratchY + (scratchH - iconSize) / 2;
+
       ctx.save();
       ctx.globalAlpha = md.revealed ? revealEase : 1;
       if (md.revealed) {
@@ -2529,11 +2536,15 @@ class MysteryDiscountRenderer {
         ctx.scale(revealEase, revealEase);
         ctx.translate(-(scratchX + scratchW / 2), -(scratchY + scratchH / 2));
       }
-      ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-      ctx.fillStyle = '#d9534f';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
+      if (sheetLoaded && sheet) {
+        ctx.drawImage(sheet, frameIdx * 100, 0, 100, 100, iconX, iconY, iconSize, iconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+        ctx.fillStyle = '#d9534f';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
+      }
       ctx.restore();
 
       if (!md.revealed) {
@@ -2548,11 +2559,16 @@ class MysteryDiscountRenderer {
         const cellW = scratchW / cols;
         const cellH = scratchH / rows;
         ctx.fillStyle = '#c8c0b4';
-        for (let r = 0; r < rows; r++) {
-          if (!grid || !grid[r]) continue;
-          for (let c = 0; c < cols; c++) {
-            if (!grid[r][c]) {
-              ctx.fillRect(scratchX + c * cellW, scratchY + r * cellH, cellW + 0.5, cellH + 0.5);
+        if (!grid) {
+          // 尚未开始涂抹：完整覆盖
+          ctx.fillRect(scratchX, scratchY, scratchW, scratchH);
+        } else {
+          for (let r = 0; r < rows; r++) {
+            if (!grid[r]) continue;
+            for (let c = 0; c < cols; c++) {
+              if (!grid[r][c]) {
+                ctx.fillRect(scratchX + c * cellW, scratchY + r * cellH, cellW + 1, cellH + 1);
+              }
             }
           }
         }
