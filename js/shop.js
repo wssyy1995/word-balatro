@@ -2385,8 +2385,9 @@ class MysteryDiscountRenderer {
     // === 3张优惠券 ===
     const couponW = 90 * s;
     const couponH = 130 * s;
-    const gap = 14 * s + 4;
+    const gap = 14 * s + 6;
     const baseScale = 1.15;
+    const targetScale = 1.6;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
     const baseCenterY = H * 0.5;
@@ -2426,7 +2427,7 @@ class MysteryDiscountRenderer {
       } else if (isSelected) {
         centerX = originalCenterX + (targetCenterX - originalCenterX) * selectEase;
         centerY = originalCenterY + (targetCenterY - originalCenterY) * selectEase;
-        scale = baseScale + (1.5 - baseScale) * selectEase;
+        scale = baseScale + (targetScale - baseScale) * selectEase;
         alpha = 1;
       } else {
         const disappearEase = Easing.easeOutCubic(selectProgress);
@@ -2485,9 +2486,9 @@ class MysteryDiscountRenderer {
         ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
       }
 
-      // 优惠券标题
+      // 优惠券标题（金棕色，与游戏标题一致）
       ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = darkBlue;
+      ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 10 * s);
