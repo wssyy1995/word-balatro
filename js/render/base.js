@@ -882,20 +882,43 @@ class Renderer {
     };
 
     // 中间 45% 高度：左右两个大按钮
-    const bigBtnMaxW = W * 0.42;
-    const bigBtnMaxH = H * 0.18;
-    const bigBtnY = H * 0.45;
-    const gap = W * 0.04;
-    const bigLeftX = W / 2 - gap / 2 - bigBtnMaxW / 2;
-    const bigRightX = W / 2 + gap / 2 + bigBtnMaxW / 2;
-    drawImgBtn(this.homepageRound, this.homepageRoundLoaded, bigLeftX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'round');
-    drawImgBtn(this.homepageBattle, this.homepageBattleLoaded, bigRightX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'battle');
+    const bigBtnMaxW = W * 0.45;
+    const bigBtnMaxH = H * 0.20;
+    const bigBtnY = H * 0.48;
+    const bigGap = W * 0.02;
+
+    // 先计算两个大按钮实际绘制尺寸，再按实际宽度 + 固定间距布局
+    const bigBtnInfos = [
+      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round' },
+      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle' },
+    ].map(({ img, loaded, key }) => {
+      let drawW = bigBtnMaxW;
+      let drawH = bigBtnMaxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        drawW = bigBtnMaxW;
+        drawH = drawW / aspect;
+        if (drawH > bigBtnMaxH) {
+          drawH = bigBtnMaxH;
+          drawW = drawH * aspect;
+        }
+      }
+      return { img, loaded, key, drawW, drawH };
+    });
+
+    const bigTotalW = bigBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + bigGap;
+    let bigX = (W - bigTotalW) / 2;
+    bigBtnInfos.forEach(({ img, loaded, key, drawW, drawH }) => {
+      const cx = bigX + drawW / 2;
+      drawImgBtn(img, loaded, cx, bigBtnY, drawW, drawH, key);
+      bigX += drawW + bigGap;
+    });
 
     // 下方 65% 高度：4 个小按钮，间距按实际绘制宽度计算
-    const smallBtnMaxW = W * 0.23;
-    const smallBtnMaxH = H * 0.12;
-    const smallBtnY = H * 0.65;
-    const smallGap = 8 * s;
+    const smallBtnMaxW = W * 0.26;
+    const smallBtnMaxH = H * 0.14;
+    const smallBtnY = H * 0.68;
+    const smallGap = 14 * s;
     const smallKeys = [
       { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
       { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
