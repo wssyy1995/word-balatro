@@ -57,6 +57,13 @@ word-balatro/
     │   ├── debug.js     # 调试菜单、云日志
     │   ├── gameover.js  # GameOverRenderer 独立类
     │   └── test.js      # 渲染层自测脚本
+    ├── battle/          # 对战模式（独立状态机与渲染）
+    │   ├── index.js     # 对战入口
+    │   ├── manager.js   # 对战逻辑管理
+    │   ├── renderer.js  # 对战画面渲染
+    │   ├── input.js     # 对战输入处理
+    │   ├── deck.js      # 对战牌组
+    │   └── bot.js       # 对战机器人
     ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
     ├── settlement.js    # 回合金币结算弹窗 + 女巫奖励渲染
     ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
@@ -116,7 +123,7 @@ word-balatro/
 | `crystalEffects` | Array | 已购买的水晶球效果（下一回合结算） |
 | `potionMode` | Object | 当前药水使用状态 |
 | `shopItems` | Array | 当前回合 6 款商品（`null` 表示已购买） |
-| `state` | string | `playing` / `settlement` / `witch_reward` / `shop` / `potion` / `life_extended` / `gameover` |
+| `state` | string | `playing` / `settlement` / `witch_reward` / `shop` / `potion` / `mystery_discount` / `life_extended` / `gameover` / `battle` |
 | `handsLeft` | number | 剩余出牌次数（初始 4 + 水晶球加成） |
 | `discardsLeft` | number | 剩余弃牌次数（初始 3 + 水晶球加成） |
 | `extraDiscards` | number | 水晶球额外弃牌次数（跨回合清零） |
@@ -264,7 +271,7 @@ for each flat_bonus 女巫牌:
 | 预言家 | `predicted_letter` | per_card | 回合开始时预言的字母 | 该字母分数 +100 |
 | 混沌法球 | `chaos_orb` | whole_word | 每次出牌必触发 | 倍率随机 +[0.5~1.2] |
 | 温故知新 | `is_new_word` | whole_word | 单词首次打出 | mult +3；否则 mult -1 |
-| 清空奖励 | `zero_hands_bonus` | global | 回合结算时出牌次数已耗尽 | 基础金币 +2 |
+| 出牌小能手 | `zero_hands_bonus` | global | 回合结算时出牌次数已耗尽 | 基础金币 +2 |
 
 > 注：带 `limit` 的女巫牌拥有 `usesLeft` 字段，次数耗尽后卡牌自动销毁（带撕裂动画）。
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
@@ -532,7 +539,8 @@ render(game)
 │   ├── mystery_discount → mysteryDiscountRenderer.draw()（独立全屏开奖页，不显示商店背景）
 │   ├── potion       → drawPotion()（字母升级/随机强化不显示顶部栏）
 │   ├── life_extended → drawHUD() + drawPlaying() + 续命弹窗
-│   └── gameover     → drawHUD() + drawPlaying() + gameOverRenderer.draw()
+│   ├── gameover     → drawHUD() + drawPlaying() + gameOverRenderer.draw()
+│   └── battle       → battleRenderer.draw()（对战模式）
 ├── game.animManager.update()   # 通用动画属性更新（来自 js/animation.js）
 ├── _updateAndDrawSparkles()    # 烟花粒子
 ├── _updateAndDrawFlyingScore() # 飞行总分
@@ -685,7 +693,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - **字母升级**：指定字母分数 +10（加法叠加，全局，跨回合保留）
 - **随机强化**：随机强化手牌中 1 个字母，分数 ×2（商店购买）或 ×4（女巫奖励），老虎机抽奖形式
 - **字母置换**：将手牌中选中的一张牌替换为指定字母（游戏中直接使用）
-- **复刻水**：选择两个字母，80% 概率低分变高分，20% 概率相反；选中两个字母后播放 2 秒旋转动画并揭晓结果，成功后目标字母分数永久替换为源字母分数
+- **复刻水**：选择两个字母，60% 概率低分变高分，40% 概率相反；选中两个字母后播放 2 秒旋转动画并揭晓结果，成功后目标字母分数永久替换为源字母分数
 
 升级后启动弹出动画（oldScore → newScore），播放升级音效。
 
@@ -761,6 +769,10 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_daily_challenge` | 每日挑战状态（日期 + 10 个目标词 + 已收集列表 + 奖励状态） |
 | `word_balatro_word_book` | 单词本（历史打出单词及次数 + 待同步增量） |
 | `word_balatro_best_round` | 历史最高到达回合 |
+| `word_balatro_guide_phase` | 新手引导阶段（终身只显示一次） |
+| `word_balatro_shop_guide_phase` | 商店女巫技能引导阶段（终身只显示一次） |
+| `word_balatro_cardbook_guide_phase` | 卡牌图鉴引导阶段（终身只显示一次） |
+| `word_balatro_joker_sort_hint_shown` | 女巫牌长按拖拽排序提示是否已展示 |
 
 ### 3.7 cloud_storage.js — 微信云存储
 
@@ -788,15 +800,15 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 | 类型 | 数量 | 价格 | 上限 | 标识色 |
 |------|------|------|------|--------|
-| **女巫牌**（witch） | 18 种 | 6-14 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
-| **水晶球**（crystal） | 7 种 | 3-4 金币 | 购买即生效 | 蓝色 |
+| **女巫牌**（witch） | 21 种 | 6-14 金币 | 装备栏默认 4 格（可扩展） | 紫色 |
+| **水晶球**（crystal） | 7 种 | 3-8 金币 | 购买即生效 | 蓝色 |
 | **魔法药水**（potion） | 4 种 | 5-8 金币 | 道具栏 2 格 | 绿色 |
 
 每回合从各池中随机抽取 2 款，共 6 款商品。女巫牌会过滤已装备的名称避免重复，并按 `min_level`（最低出现关卡）过滤——只有当前回合 ≥ `min_level` 的女巫牌才会出现在商店中；过滤后不足 2 款时，用满足 `min_level` 的池子补充。
 
-**女巫牌列表**：元音强化、元音为首、左右开弓、五字母连击、六字母连击、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家、混沌法球、温故知新、清空奖励。
+**女巫牌列表**：元音强化、元音为首、左右开弓、五字母连击、六字母连击、珍稀之力、容错咒文、字母之神、生命延续、勇敢试错、以小博大、双子合影、首尾呼应、首字连击、回到过去、复制魔法、消元术、预言家、混沌法球、温故知新、出牌小能手。
 
-> 部分女巫牌设有 `min_level` 解锁门槛，例如生命延续（Lv.10）、双子合影（Lv.10）、首尾呼应（Lv.15）、回到过去（Lv.5）、复制魔法（Lv.10）、字母之神（Lv.5）、清空奖励（Lv.3）等；低回合商店不会刷出高等级牌。`length_4`（四字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放；五/六字母连击正常投放。
+> 部分女巫牌设有 `min_level` 解锁门槛，例如生命延续（Lv.10）、双子合影（Lv.10）、首尾呼应（Lv.15）、回到过去（Lv.5）、复制魔法（Lv.10）、字母之神（Lv.5）、出牌小能手（Lv.3）等；低回合商店不会刷出高等级牌。`length_4`（四字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放；五/六字母连击正常投放。
 
 ### 4.2 药水种类
 
@@ -820,7 +832,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | 目标减免 | 下一回合目标分数 ×0.8 |
 | 技能重掷 | 重掷下一回合的女巫技能 |
 | 争分夺秒 | 下回合前20秒出牌不消耗次数 |
-| 迷之优惠 | 购买后开奖，本回合商店商品打 8 折 |
+| 迷之优惠 | 购买后进入独立全屏开奖页，3 张优惠券预生成随机折扣（6~9 折），刮开并收下后本回合商店商品按该折扣计价，折扣价向下取整 |
 
 ### 4.4 购买与售出流程
 
@@ -830,7 +842,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
   → 显示购买成功弹窗
      ├── 女巫牌 → 点击"装备" → 加入 jokers[]
      ├── 水晶球 → 点击"生效" → 加入 crystalEffects[]
-     │   └── 迷之优惠 → 进入独立开奖页，开奖后本回合商店商品打 8 折
+     │   └── 迷之优惠 → 点击"开奖"进入独立全屏开奖页，3 张优惠券中预生成 6~9 折随机折扣，选择并刮开后显示实际折扣，点击"收下优惠"后本回合商店商品按该折扣计价（折扣价向下取整），价格按钮右上角显示对应折扣雪碧图标签
      └── 药水牌 → 点击"暂存" → 加入 potions[]
                 → 点击"立即使用" → 进入 potion 状态
                     ├── 复刻水 → 全屏选择两个字母后开奖
@@ -844,7 +856,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 商店标题栏右侧设有**全局重掷按钮**，消耗 3 金币可刷新全部三行商品（每行重新随机生成 2 款）。余额不足时按钮置灰。
 
-此外，每行商品左侧分类标签旁仍保留**单行刷新按钮**，消耗 5 金币可刷新对应行的 2 款商品。
+
 
 ### 4.6 卡牌图鉴（Card Book）
 
@@ -1001,6 +1013,10 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
     │                                                              │
     │←──upgradeCard()── [potion] ←── buy/use potion ──────────────┘
     │       (暂存/升级后返回)
+    │
+    │←──收下优惠── [mystery_discount] ←── 购买迷之优惠 ────────────┘
+    │
+    ├── [battle]（对战模式，独立状态机）
     │
     └── out_of_hands ──→ [life_extended] ──领取──→ [shop]  （如有生命延续女巫牌）
     │
@@ -1368,8 +1384,9 @@ letterUpgrades = Map {
 | v1.10.7 | 2026-06-17 | 再次上调基础目标分系数：2~5 关 30、6~10 关 35、11~20 关 37、21~30 关 40、31~40 关 44、41~50 关 50、51+ 关 60；同步更新 README 目标分数表 |
 | v1.10.8 | 2026-06-17 | 新增 `js/report.js` 统一封装埋点上报，开发者工具环境下自动跳过不上报；新增 `rank_avatar` 全国榜默认头像云存储支持（上传、第一回合按需下载、注入渲染器）；抽离云存储文件 ID 前缀为 `CLOUD_BASE` 变量；同步更新 README |
 | v1.10.9 | 2026-06-17 | 适配 HUAWEI Pura X 等折叠屏/矮屏设备：scale 在高度不足时自动压低（最低 0.75），`extraHeight` 允许负值以压缩布局间距；`playing` / `shop` / `life_extended` 页面内容整体下移 10px，底部按钮上移 5px，商店挑战按钮放大；新增 `doc/GAME_LAYOUT_AND_ADAPTATION.md` 布局适配文档；同步更新 README |
-| v1.11.0 | 2026-06-22 | 新增女巫牌「清空奖励」：回合结算时出牌次数用光则基础金币 +2；新增魔法药水「复刻水」：选择两个字母，80% 概率低分变高分，20% 概率相反；新增水晶球「迷之优惠」：购买后进入独立全屏开奖页，开奖后本回合商店商品打 8 折；同步更新 README |
+| v1.11.0 | 2026-06-22 | 新增女巫牌「出牌小能手」：回合结算时出牌次数用光则基础金币 +2；新增魔法药水「复刻水」：选择两个字母，60% 概率低分变高分，40% 概率相反；新增水晶球「迷之优惠」：购买后进入独立全屏开奖页，开奖后本回合商店商品随机打折；同步更新 README |
+| v1.11.1 | 2026-06-23 | 迷之优惠折扣从固定 8 折调整为随机 6~9 折，折扣价向下取整，价格按钮右上角使用雪碧图标签显示实际折扣；同步修正 README 中女巫牌数量、价格范围、复刻水概率、状态机与存储键等描述 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-22*
+*文档基于实际代码整理，最后更新：2026-06-23*
