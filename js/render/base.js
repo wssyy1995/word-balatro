@@ -1351,7 +1351,8 @@ class Renderer {
 
     // === 8. 通关/对战模式斜光扫过 ===
     if (sweepColor) {
-      this._drawCardSweep(ctx, w, h, s, sweepColor, card.id ? card.id * 0.1 : 0);
+      const sweepOffset = (card.letter ? card.letter.charCodeAt(0) : 0) * 0.05;
+      this._drawCardSweep(ctx, w, h, s, sweepColor, sweepOffset);
     }
 
     ctx.restore();

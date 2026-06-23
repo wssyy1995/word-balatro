@@ -830,30 +830,32 @@ module.exports = function extendEffects(Renderer) {
       this._roundedRectPath(ctx, -w / 2, -h / 2, w, h, r);
       ctx.clip();
 
-      const t = (Date.now() / 1000 + timeOffset) % 2.8 / 2.8;
-      const sweepLen = (w + h) * 1.4;
-      const d = -Math.max(w, h) * 0.8 + t * sweepLen;
+      const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
+      const t = ((Date.now() / 1000 + to) % 2.8) / 2.8;
+      const sweepLen = (w + h) * 1.6;
+      const d = -Math.max(w, h) + t * sweepLen;
       const dx = d;
       const dy = d;
 
       let centerColor, edgeColor;
       if (color === 'green') {
-        centerColor = 'rgba(80, 255, 150,';
-        edgeColor = 'rgba(80, 255, 150,';
+        centerColor = 'rgba(60, 255, 140,';
+        edgeColor = 'rgba(60, 255, 140,';
       } else {
         // 默认紫色
-        centerColor = 'rgba(180, 120, 255,';
-        edgeColor = 'rgba(180, 120, 255,';
+        centerColor = 'rgba(200, 100, 255,';
+        edgeColor = 'rgba(200, 100, 255,';
       }
 
-      const grad = ctx.createLinearGradient(dx - 60 * s, dy - 60 * s, dx + 60 * s, dy + 60 * s);
+      const beamW = 40 * s;
+      const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
       grad.addColorStop(0, `${edgeColor}0)`);
-      grad.addColorStop(0.45, `${edgeColor}0.05)`);
-      grad.addColorStop(0.5, `${centerColor}0.55)`);
-      grad.addColorStop(0.55, `${edgeColor}0.05)`);
+      grad.addColorStop(0.42, `${edgeColor}0.08)`);
+      grad.addColorStop(0.5, `${centerColor}0.85)`);
+      grad.addColorStop(0.58, `${edgeColor}0.08)`);
       grad.addColorStop(1, `${edgeColor}0)`);
       ctx.fillStyle = grad;
-      ctx.fillRect(-w * 1.5, -h * 1.5, w * 3, h * 3);
+      ctx.fillRect(-w * 2, -h * 2, w * 4, h * 4);
       ctx.restore();
     }
 
