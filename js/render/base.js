@@ -969,7 +969,7 @@ class Renderer {
       this._homepageBigBtnSoundPlayed = false;
     }
     if (bigBtnElapsed >= 150 && !this._homepageBigBtnSoundPlayed && game && game.audioManager) {
-      game.audioManager.play('homepage_big_button');
+      game.audioManager.play('homepage_big_button', 1500);
       this._homepageBigBtnSoundPlayed = true;
     }
 

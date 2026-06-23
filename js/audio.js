@@ -28,7 +28,8 @@ class AudioManager {
   }
 
   // 播放音效（支持懒加载：真机上预加载失败时，播放时重新尝试加载）
-  play(name) {
+  // durationMs: 可选，指定播放时长（毫秒），到达后自动停止；0 表示播放完整音频
+  play(name, durationMs = 0) {
     if (!this.enabled || !this.soundEnabled) return;
 
     // 真机兼容：首次用户交互标记（用于后续启动 BGM）
@@ -47,6 +48,15 @@ class AudioManager {
 
     audio.stop();
     audio.play();
+
+    // 如果指定了播放时长，到达后自动停止
+    if (durationMs > 0) {
+      setTimeout(() => {
+        try {
+          audio.stop();
+        } catch (e) {}
+      }, durationMs);
+    }
   }
 
   // 循环播放音效（用于引导对话框打字机等需要持续循环的场景）
