@@ -2388,28 +2388,63 @@ class MysteryDiscountRenderer {
     const gap = 14 * s;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
-    const couponY = 130 * s;
+    const baseCenterY = H * 0.5;
+    const targetCenterX = W * 0.5;
+    const targetCenterY = H * 0.5;
+
+    // 选择动画进度
+    const SELECT_ANIM_DURATION = 400;
+    if (md.selectedIdx !== null && !md.selectStartTime) {
+      md.selectStartTime = Date.now();
+    }
+    const selectElapsed = md.selectStartTime ? Date.now() - md.selectStartTime : 0;
+    const selectProgress = Math.min(selectElapsed / SELECT_ANIM_DURATION, 1);
+    const selectEase = Easing.easeOutBack(selectProgress);
 
     this.couponRects = [];
 
+    let selectedSX, selectedSY, selectedSW, selectedSH;
+
     for (let i = 0; i < 3; i++) {
-      const cx = startX + i * (couponW + gap);
-      const cy = couponY;
+      const originalCenterX = startX + i * (couponW + gap) + couponW / 2;
+      const originalCenterY = baseCenterY;
       const isSelected = md.selectedIdx === i;
       const isOther = md.selectedIdx !== null && md.selectedIdx !== i;
 
-      // 其他卡片淡出
-      if (isOther) {
-        ctx.save();
-        ctx.globalAlpha = 0.3;
+      let centerX, centerY, scale, alpha;
+
+      if (md.selectedIdx === null) {
+        centerX = originalCenterX;
+        centerY = originalCenterY;
+        scale = 1;
+        alpha = 1;
+      } else if (isSelected) {
+        centerX = originalCenterX + (targetCenterX - originalCenterX) * selectEase;
+        centerY = originalCenterY + (targetCenterY - originalCenterY) * selectEase;
+        scale = 1 + 0.5 * selectEase;
+        alpha = 1;
+      } else {
+        const disappearEase = Easing.easeOutCubic(selectProgress);
+        centerX = originalCenterX;
+        centerY = originalCenterY;
+        scale = 1 - disappearEase;
+        alpha = 1 - disappearEase;
       }
 
-      // 选中放大
-      const scale = isSelected ? 1.08 : 1;
       const sw = couponW * scale;
       const sh = couponH * scale;
-      const sx = cx + (couponW - sw) / 2;
-      const sy = cy + (couponH - sh) / 2;
+      const sx = centerX - sw / 2;
+      const sy = centerY - sh / 2;
+
+      if (isSelected) {
+        selectedSX = sx;
+        selectedSY = sy;
+        selectedSW = sw;
+        selectedSH = sh;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = alpha * enterEase;
 
       // 优惠券图片（优先使用云存储 cupon.png）
       const cuponData = this.parent.shopCardImages['cupon'];
@@ -2445,25 +2480,20 @@ class MysteryDiscountRenderer {
         ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
       }
 
-      if (isOther) {
-        ctx.restore();
-      }
+      ctx.restore();
 
       // 存储点击区域
       if (md.selectedIdx === null) {
-        this.couponRects.push({ x: cx, y: cy, w: couponW, h: couponH, index: i });
+        this.couponRects.push({ x: centerX - couponW / 2, y: centerY - couponH / 2, w: couponW, h: couponH, index: i });
       }
     }
 
-    // === 刮奖区（选中后显示）===
+    // === 刮奖区（选中后显示，跟随被选中的优惠券位置）===
     if (md.selectedIdx !== null && md.scratched) {
-      const i = md.selectedIdx;
-      const cx = startX + i * (couponW + gap);
-      const cy = couponY;
       const scratchW = couponW * 1.08;
       const scratchH = 50 * s;
-      const scratchX = cx + (couponW - scratchW) / 2;
-      const scratchY = cy + 20 * s;
+      const scratchX = selectedSX + (selectedSW - scratchW) / 2;
+      const scratchY = selectedSY + 20 * s;
 
       // 刮奖区背景
       this.parent.roundRect(scratchX, scratchY, scratchW, scratchH, 8 * s, '#e8e0d4', '#c4a35a');
@@ -2502,7 +2532,7 @@ class MysteryDiscountRenderer {
         const collectBtnW = 160 * s;
         const collectBtnH = 44 * s;
         const collectBtnX = (W - collectBtnW) / 2;
-        const collectBtnY = couponY + couponH + 40 * s;
+        const collectBtnY = selectedSY + selectedSH + 40 * s;
 
         const btnScale = revealEase;
         const bw = collectBtnW * btnScale;
