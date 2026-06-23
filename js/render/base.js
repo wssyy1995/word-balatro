@@ -878,13 +878,13 @@ class Renderer {
       const ringW = w * 1.2;
       const ringH = h * 1.2;
       const grad = ctx.createRadialGradient(
-        0, 0, Math.min(ringW, ringH) * 0.5,
+        0, 0, Math.min(ringW, ringH) * 0.45,
         0, 0, Math.max(ringW, ringH) / 2
       );
-      grad.addColorStop(0, 'rgba(255, 215, 0, 0)');
-      grad.addColorStop(0.55, 'rgba(255, 215, 0, 0.22)');
-      grad.addColorStop(0.8, 'rgba(255, 215, 0, 0.5)');
-      grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      grad.addColorStop(0, 'rgba(255, 245, 150, 0)');
+      grad.addColorStop(0.55, 'rgba(255, 245, 150, 0.28)');
+      grad.addColorStop(0.75, 'rgba(255, 250, 190, 0.55)');
+      grad.addColorStop(1, 'rgba(255, 245, 150, 0)');
 
       ctx.fillStyle = grad;
       ctx.beginPath();
