@@ -2518,6 +2518,12 @@ class MysteryDiscountRenderer {
         this.collectBtnRect = null;
       } else {
         // 已刮开：显示随机折扣（6~9折）
+        // 播放中奖音效（只播放一次）
+        if (!md.winSoundPlayed) {
+          md.winSoundPlayed = true;
+          if (game.audioManager) game.audioManager.play('win_success');
+        }
+
         const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
         const revealProgress = Math.min(revealElapsed / 300, 1);
         const revealEase = Easing.easeOutBack(revealProgress);
