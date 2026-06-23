@@ -2487,11 +2487,13 @@ class MysteryDiscountRenderer {
       }
 
       // 优惠券标题（金棕色，与游戏标题一致）
-      ctx.font = `bold ${Math.floor(12 * s * scale)}px sans-serif`;
+      // 标题随优惠券 base→target 缩放，但不跟随呼吸脉冲
+      const titleScale = md.selectedIdx === null ? scale / pulse : scale;
+      ctx.font = `bold ${Math.floor(12 * s * titleScale)}px sans-serif`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 15 * s * scale);
+      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 15 * s * titleScale);
 
       ctx.restore();
 
@@ -2519,9 +2521,9 @@ class MysteryDiscountRenderer {
       const revealProgress = md.revealed ? Math.min(revealElapsed / 300, 1) : 0;
       const revealEase = md.revealed ? Easing.easeOutBack(revealProgress) : 0;
 
-      // 折扣数字（底层，随涂抹逐渐显露）
+      // 折扣数字（底层，完整显示，被覆盖层遮挡）
       ctx.save();
-      ctx.globalAlpha = md.revealed ? revealEase : 0.25;
+      ctx.globalAlpha = md.revealed ? revealEase : 1;
       if (md.revealed) {
         ctx.translate(scratchX + scratchW / 2, scratchY + scratchH / 2);
         ctx.scale(revealEase, revealEase);
@@ -2549,14 +2551,19 @@ class MysteryDiscountRenderer {
         ctx.textBaseline = 'middle';
         ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
 
-        // 根据涂抹轨迹擦除覆盖层
+        // 根据涂抹轨迹擦除覆盖层（连续笔迹，模拟真实刮卡）
         ctx.globalCompositeOperation = 'destination-out';
         const points = md.scratchPoints || [];
-        const radius = 12 * s;
-        for (const p of points) {
+        if (points.length > 0) {
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = 28 * s;
           ctx.beginPath();
-          ctx.arc(scratchX + p.x * scratchW, scratchY + p.y * scratchH, radius, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.moveTo(scratchX + points[0].x * scratchW, scratchY + points[0].y * scratchH);
+          for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(scratchX + points[i].x * scratchW, scratchY + points[i].y * scratchH);
+          }
+          ctx.stroke();
         }
         ctx.restore();
 
