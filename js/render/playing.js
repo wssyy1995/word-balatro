@@ -711,6 +711,10 @@ module.exports = function extendPlaying(Renderer) {
               if (isAllJumped) {
                 jokers.forEach(j => { if (j) { j._jumpOffsetY = 0; j._triggered = false; } });
               }
+
+              // 记录当前步骤进度（0~1），供数字滚动动画与字母跳跃同步
+              const rawStepProgress = isAllJumped ? 1 : (jumpElapsed >= 0 ? (jumpElapsed % letterInterval) / letterInterval : 0);
+              pc._stepProgress = Math.max(0, Math.min(rawStepProgress, 1));
   
               // 检测阶段1完成 → 进入阶段2
               if (isAllJumped && phase < 2) {
@@ -1025,31 +1029,29 @@ module.exports = function extendPlaying(Renderer) {
         }
         // 绘制滚动数字或静止数字
         if (this.scoreRoll) {
-          const rollElapsed = Date.now() - this.scoreRoll.startTime;
-          const rollProgress = Math.min(rollElapsed / this.scoreRoll.duration, 1);
+          // 数字滚动进度与字母跳跃同步，避免两个独立计时器漂移
+          const rollProgress = pc._stepProgress !== undefined
+            ? pc._stepProgress
+            : Math.min((Date.now() - this.scoreRoll.startTime) / this.scoreRoll.duration, 1);
           const ease = Easing.easeOutCubic(rollProgress);
           const cx = leftBoxX + boxSize / 2;
           const cy = boxY + boxSize / 2;
           const offset = boxSize * 0.5;
 
-          // 旧数字向上淡出
           ctx.save();
-          ctx.globalAlpha = 1 - ease;
           ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
           ctx.fillStyle = '#f5f0e8';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(String(this.scoreRoll.from), cx, cy - ease * offset);
-          ctx.restore();
+
+          // 旧数字向上淡出
+          ctx.globalAlpha = 1 - ease;
+          ctx.fillText(String(this.scoreRoll.from), cx, cy - Math.round(ease * offset));
 
           // 新数字从下方进入
-          ctx.save();
           ctx.globalAlpha = ease;
-          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-          ctx.fillStyle = '#f5f0e8';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(String(this.scoreRoll.to), cx, cy + (1 - ease) * offset);
+          ctx.fillText(String(this.scoreRoll.to), cx, cy + Math.round((1 - ease) * offset));
+
           ctx.restore();
 
           if (rollProgress >= 1) {
