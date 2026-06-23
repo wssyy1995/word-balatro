@@ -496,6 +496,43 @@ class Renderer {
       this.targetScoreIconLoaded = false;
     }
 
+    // homepage 页面图片（本地加载，不依赖云存储）
+    this.homepageBg = null;
+    this.homepageBgLoaded = false;
+    this.homepageRound = null;
+    this.homepageRoundLoaded = false;
+    this.homepageBattle = null;
+    this.homepageBattleLoaded = false;
+    this.homepageSetting = null;
+    this.homepageSettingLoaded = false;
+    this.homepageRanking = null;
+    this.homepageRankingLoaded = false;
+    this.homepageDaily = null;
+    this.homepageDailyLoaded = false;
+    this.homepageStudy = null;
+    this.homepageStudyLoaded = false;
+    const homepageImages = [
+      { key: 'homepageBg', src: 'images/bg_icon/homepage_bg.png' },
+      { key: 'homepageRound', src: 'images/bg_icon/homepage_round.png' },
+      { key: 'homepageBattle', src: 'images/bg_icon/homepage_battle.png' },
+      { key: 'homepageSetting', src: 'images/bg_icon/homepage_setting.png' },
+      { key: 'homepageRanking', src: 'images/bg_icon/homepage_ranking.png' },
+      { key: 'homepageDaily', src: 'images/bg_icon/homepage_daily.png' },
+      { key: 'homepageStudy', src: 'images/bg_icon/homepage_study.png' },
+    ];
+    homepageImages.forEach(({ key, src }) => {
+      try {
+        const img = wx.createImage();
+        img.src = src;
+        img.onload = () => { this[`${key}Loaded`] = true; };
+        img.onerror = () => { this[`${key}Loaded`] = false; };
+        this[key] = img;
+      } catch (e) {
+        this[`${key}Loaded`] = false;
+      }
+    });
+    this.homepageBtnRects = [];
+
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
     this.cardTemplateLoaded = false;
@@ -796,6 +833,81 @@ class Renderer {
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+  }
+
+  drawHomepage() {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    // 背景图
+    if (this.homepageBg && this.homepageBgLoaded) {
+      ctx.drawImage(this.homepageBg, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#0a1628';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    this.homepageBtnRects = [];
+
+    // 辅助函数：按宽度适配绘制图片按钮
+    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key) => {
+      if (!loaded || !img || img.width <= 0 || img.height <= 0) {
+        // fallback：圆角矩形占位
+        const fw = maxW;
+        const fh = maxH;
+        const fx = cx - fw / 2;
+        const fy = cy - fh / 2;
+        this.roundRect(fx, fy, fw, fh, 8 * s, 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 1 * s);
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(key.replace('homepage', ''), cx, cy);
+        this.homepageBtnRects.push({ x: fx, y: fy, w: fw, h: fh, key });
+        return;
+      }
+      const aspect = img.width / img.height;
+      let drawW = maxW;
+      let drawH = drawW / aspect;
+      if (drawH > maxH) {
+        drawH = maxH;
+        drawW = drawH * aspect;
+      }
+      const drawX = cx - drawW / 2;
+      const drawY = cy - drawH / 2;
+      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+      this.homepageBtnRects.push({ x: drawX, y: drawY, w: drawW, h: drawH, key });
+    };
+
+    // 中间 50% 区域：左右两个大按钮
+    const bigBtnMaxW = W * 0.42;
+    const bigBtnMaxH = H * 0.18;
+    const bigBtnY = H * 0.48;
+    const gap = W * 0.04;
+    const bigLeftX = W / 2 - gap / 2 - bigBtnMaxW / 2;
+    const bigRightX = W / 2 + gap / 2 + bigBtnMaxW / 2;
+    drawImgBtn(this.homepageRound, this.homepageRoundLoaded, bigLeftX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'round');
+    drawImgBtn(this.homepageBattle, this.homepageBattleLoaded, bigRightX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'battle');
+
+    // 下方 4 个小按钮
+    const smallBtnMaxW = W * 0.20;
+    const smallBtnMaxH = H * 0.10;
+    const smallBtnY = H * 0.72;
+    const smallGap = W * 0.03;
+    const smallTotalW = smallBtnMaxW * 4 + smallGap * 3;
+    let smallStartX = (W - smallTotalW) / 2 + smallBtnMaxW / 2;
+    const smallKeys = [
+      { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
+      { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
+      { img: this.homepageDaily, loaded: this.homepageDailyLoaded, key: 'daily' },
+      { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
+    ];
+    smallKeys.forEach(({ img, loaded, key }) => {
+      drawImgBtn(img, loaded, smallStartX, smallBtnY, smallBtnMaxW, smallBtnMaxH, key);
+      smallStartX += smallBtnMaxW + smallGap;
+    });
   }
 
   resetState() {

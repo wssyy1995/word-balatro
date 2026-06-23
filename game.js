@@ -464,6 +464,9 @@ cloudStorage.init();
 let preloadProgress = 0;
 let preloadComplete = false;
 
+// homepage 展示开关（测试阶段始终展示，点击按钮后进入预加载/游戏）
+let showHomepage = true;
+
 // 过渡状态（预加载页 → 游戏页）
 let transitionAlpha = 0;
 let transitionStartTime = null;
@@ -713,13 +716,29 @@ function getInputY(x, y) {
 
 // 触摸事件处理
 wx.onTouchStart((e) => {
+  const touch = e.touches[0];
+  const x = touch.clientX;
+  const y = touch.clientY;
+
+  // homepage 触摸优先处理（测试阶段常驻展示）
+  if (showHomepage && renderer.homepageBtnRects) {
+    const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
+    if (hit) {
+      console.log('[Homepage] clicked:', hit.key);
+      // 测试阶段：点击任意 homepage 按钮后隐藏 homepage，进入预加载/游戏流程
+      showHomepage = false;
+      if (preloadComplete && game) {
+        transitionStartTime = Date.now();
+      }
+      return;
+    }
+    return;
+  }
+
   // 预加载阶段不响应触摸
   if (!preloadComplete) return;
   if (!game) return;
 
-  const touch = e.touches[0];
-  const x = touch.clientX;
-  const y = touch.clientY;
   const inputY = getInputY(x, y);
   touchStartPos = { x, y };
 
@@ -3349,7 +3368,10 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
-  if (!preloadComplete) {
+  if (showHomepage) {
+    // 测试阶段：优先展示 homepage
+    renderer.drawHomepage();
+  } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
   } else if (transitionStartTime !== null) {
