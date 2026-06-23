@@ -532,6 +532,7 @@ class Renderer {
       }
     });
     this.homepageBtnRects = [];
+    this.homepageAnimStartTime = Date.now();
 
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
@@ -859,48 +860,88 @@ class Renderer {
     ctx.restore();
 
     this.homepageBtnRects = [];
+    const elapsed = Date.now() - this.homepageAnimStartTime;
 
-    // 辅助函数：按宽度适配绘制图片按钮
-    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key) => {
-      if (!loaded || !img || img.width <= 0 || img.height <= 0) {
-        // fallback：圆角矩形占位
-        const fw = maxW;
-        const fh = maxH;
-        const fx = cx - fw / 2;
-        const fy = cy - fh / 2;
-        this.roundRect(fx, fy, fw, fh, 8 * s, 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 1 * s);
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(key.replace('homepage', ''), cx, cy);
-        this.homepageBtnRects.push({ x: fx, y: fy, w: fw, h: fh, key });
-        return;
-      }
-      const aspect = img.width / img.height;
-      let drawW = maxW;
-      let drawH = drawW / aspect;
-      if (drawH > maxH) {
-        drawH = maxH;
-        drawW = drawH * aspect;
-      }
-      const drawX = cx - drawW / 2;
-      const drawY = cy - drawH / 2;
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
-      this.homepageBtnRects.push({ x: drawX, y: drawY, w: drawW, h: drawH, key });
+    // 按钮入场缩放（果冻感）
+    const getBtnScale = (delay, duration) => {
+      const e = elapsed - delay;
+      if (e <= 0) return 0;
+      const progress = Math.min(e / duration, 1);
+      return Easing.easeOutBackStrong(progress);
     };
 
-    // 中间 45% 高度：左右两个大按钮
+    // 小按钮弹出瞬间：椭圆形金色边框爆发
+    const drawBurstRing = (cx, cy, w, h, progress) => {
+      const burstScale = 1.4 - 0.4 * Easing.easeOutCubic(progress);
+      const alpha = 0.9 * (1 - progress);
+      const lineW = Math.max(1, (3 - 2 * progress) * s);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(burstScale, burstScale);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+      ctx.lineWidth = lineW;
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // 辅助函数：按宽度适配绘制图片按钮，支持缩放与爆发
+    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, burstProgress = -1) => {
+      let recordW = maxW;
+      let recordH = maxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        let drawW = maxW;
+        let drawH = drawW / aspect;
+        if (drawH > maxH) {
+          drawH = maxH;
+          drawW = drawH * aspect;
+        }
+        recordW = drawW;
+        recordH = drawH;
+      }
+
+      if (animScale > 0) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(animScale, animScale);
+        ctx.translate(-cx, -cy);
+
+        if (!loaded || !img || img.width <= 0 || img.height <= 0) {
+          const fx = cx - maxW / 2;
+          const fy = cy - maxH / 2;
+          this.roundRect(fx, fy, maxW, maxH, 8 * s, 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 1 * s);
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(key.replace('homepage', ''), cx, cy);
+        } else {
+          const drawX = cx - recordW / 2;
+          const drawY = cy - recordH / 2;
+          ctx.drawImage(img, drawX, drawY, recordW, recordH);
+        }
+        ctx.restore();
+
+        if (burstProgress >= 0 && burstProgress < 1) {
+          drawBurstRing(cx, cy, recordW, recordH, burstProgress);
+        }
+      }
+
+      this.homepageBtnRects.push({ x: cx - recordW / 2, y: cy - recordH / 2, w: recordW, h: recordH, key });
+    };
+
+    // 中间 45% 高度：左右两个大按钮先缩放弹出
     const bigBtnMaxW = W * 0.65;
     const bigBtnMaxH = H * 0.22;
     const bigBtnY = H * 0.48;
     const bigGap = W * 0.09;
 
-    // 先计算两个大按钮实际绘制尺寸，再按实际宽度 + 固定间距布局
     const bigBtnInfos = [
-      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round' },
-      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle' },
-    ].map(({ img, loaded, key }) => {
+      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
+      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 350 },
+    ].map(({ img, loaded, key, delay }) => {
       let drawW = bigBtnMaxW;
       let drawH = bigBtnMaxH;
       if (loaded && img && img.width > 0 && img.height > 0) {
@@ -912,14 +953,15 @@ class Renderer {
           drawW = drawH * aspect;
         }
       }
-      return { img, loaded, key, drawW, drawH };
+      return { img, loaded, key, drawW, drawH, delay };
     });
 
     const bigTotalW = bigBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + bigGap;
     let bigX = (W - bigTotalW) / 2;
-    bigBtnInfos.forEach(({ img, loaded, key, drawW, drawH }) => {
+    bigBtnInfos.forEach(({ img, loaded, key, drawW, drawH, delay }) => {
       const cx = bigX + drawW / 2;
-      drawImgBtn(img, loaded, cx, bigBtnY, drawW, drawH, key);
+      const scale = getBtnScale(delay, 550);
+      drawImgBtn(img, loaded, cx, bigBtnY, drawW, drawH, key, scale);
       bigX += drawW + bigGap;
     });
 
@@ -931,7 +973,7 @@ class Renderer {
       this._drawRectSweep(ctx, battleRect.x, battleRect.y, battleRect.w, battleRect.h, s, 'green', 0.5);
     }
 
-    // 下方 65% 高度：4 个小按钮，间距按实际绘制宽度计算
+    // 下方 65% 高度：4 个小按钮依次从左往右缩放弹出
     const smallBtnMaxW = W * 0.24;
     const smallBtnMaxH = H * 0.12;
     const smallBtnY = H * 0.68;
@@ -943,7 +985,6 @@ class Renderer {
       { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
     ];
 
-    // 先计算每个按钮实际绘制尺寸
     const smallBtnInfos = smallKeys.map(({ img, loaded, key }) => {
       let drawW = smallBtnMaxW;
       let drawH = smallBtnMaxH;
@@ -961,9 +1002,14 @@ class Renderer {
 
     const smallTotalW = smallBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + smallGap * 3;
     let smallX = (W - smallTotalW) / 2;
-    smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }) => {
+    smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
-      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key);
+      const delay = 800 + i * 150;
+      const scale = getBtnScale(delay, 450);
+      const burstElapsed = elapsed - delay;
+      const burstDuration = 220;
+      const burstProgress = burstElapsed >= 0 && burstElapsed < burstDuration ? burstElapsed / burstDuration : -1;
+      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, burstProgress);
       smallX += drawW + smallGap;
     });
   }
