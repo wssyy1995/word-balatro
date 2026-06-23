@@ -1150,7 +1150,7 @@ class ShopRenderer {
         // 竖向卡牌（cover 模式绘制图标，金色边框，无额外深色背景）
         const cardX = unitX + 1 * s;
         // 非常轻微的上下飘动（1px 幅度），相邻卡牌错开相位
-        const floatY = Math.sin(Date.now() / 900 + itemIdx * 1.3) * 1 * s;
+        const floatY = Math.sin(Date.now() / 650 + itemIdx * 1.3) * 1 * s;
         const cardY = unitY + (unitH - cardH) / 2 + floatY;
         const cardR = 6 * s;
 
