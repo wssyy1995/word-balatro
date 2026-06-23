@@ -2385,7 +2385,8 @@ class MysteryDiscountRenderer {
     // === 3张优惠券 ===
     const couponW = 90 * s;
     const couponH = 130 * s;
-    const gap = 14 * s;
+    const gap = 14 * s + 2;
+    const baseScale = 1.1;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
     const baseCenterY = H * 0.5;
@@ -2413,21 +2414,25 @@ class MysteryDiscountRenderer {
 
       let centerX, centerY, scale, alpha;
 
+      // 呼吸缩放动画（复用女巫奖励礼盒效果）
+      const breath = Math.sin(Date.now() / 800 + i * 0.5) * 0.05;
+      const pulse = 1 + breath;
+
       if (md.selectedIdx === null) {
         centerX = originalCenterX;
         centerY = originalCenterY;
-        scale = 1;
+        scale = baseScale * pulse;
         alpha = 1;
       } else if (isSelected) {
         centerX = originalCenterX + (targetCenterX - originalCenterX) * selectEase;
         centerY = originalCenterY + (targetCenterY - originalCenterY) * selectEase;
-        scale = 1 + 0.5 * selectEase;
+        scale = baseScale + (1.5 - baseScale) * selectEase;
         alpha = 1;
       } else {
         const disappearEase = Easing.easeOutCubic(selectProgress);
         centerX = originalCenterX;
         centerY = originalCenterY;
-        scale = 1 - disappearEase;
+        scale = baseScale * (1 - disappearEase);
         alpha = 1 - disappearEase;
       }
 
@@ -2482,9 +2487,11 @@ class MysteryDiscountRenderer {
 
       ctx.restore();
 
-      // 存储点击区域
+      // 存储点击区域（按当前缩放后的尺寸）
       if (md.selectedIdx === null) {
-        this.couponRects.push({ x: centerX - couponW / 2, y: centerY - couponH / 2, w: couponW, h: couponH, index: i });
+        const hitW = couponW * scale;
+        const hitH = couponH * scale;
+        this.couponRects.push({ x: centerX - hitW / 2, y: centerY - hitH / 2, w: hitW, h: hitH, index: i });
       }
     }
 
