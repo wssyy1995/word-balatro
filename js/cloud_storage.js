@@ -121,7 +121,8 @@ class CloudStorageManager {
       'homepageSetting': c('/bg_icon/hompage_setting.png'),
       'homepageRanking': c('/bg_icon/hompage_ranking.png'),
       'homepageDaily': c('/bg_icon/hompage_daily.png'),
-      'homepageStudy': c('/bg_icon/hompage_study.png')
+      'homepageStudy': c('/bg_icon/hompage_study.png'),
+      'topHome': c('/bg_icon/top_home.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -1603,6 +1604,16 @@ class CloudStorageManager {
         this.log('bg_icon ' + name + ' 未加载，跳过注入');
       }
     });
+
+    // 游戏页返回主页图标从 bg_icon 云存储注入
+    const topHomeData = this.bgIconImages['topHome'];
+    if (topHomeData && topHomeData.loaded && topHomeData.img) {
+      renderer.topIcon = topHomeData.img;
+      renderer.topIconLoaded = true;
+      this.log('已注入 bg_icon renderer: topHome');
+    } else {
+      this.log('bg_icon topHome 未加载，跳过注入');
+    }
   }
 
   // ===== music 文件管理 =====

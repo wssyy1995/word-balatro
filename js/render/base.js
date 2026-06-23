@@ -164,18 +164,9 @@ class Renderer {
     };
     // witch_1~4 均使用精灵图，无需预分配帧槽位
 
-    // 加载 top bar 图标
+    // top bar 图标（由 cloudStorage.injectBgIconToRenderer 从云存储注入）
     this.topIcon = null;
     this.topIconLoaded = false;
-    try {
-      const icon = wx.createImage();
-      icon.src = 'images/top_icon.png';
-      icon.onload = () => { this.topIconLoaded = true; };
-      icon.onerror = () => { this.topIconLoaded = false; };
-      this.topIcon = icon;
-    } catch (e) {
-      this.topIconLoaded = false;
-    }
 
     // 加载提示按钮图标
     this.helpIcon = null;

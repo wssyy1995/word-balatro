@@ -767,7 +767,7 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 检测 top_icon：单击打开设置，长按打开调试菜单
+  // 检测 top_icon：短按返回主页，长按打开调试菜单
   if (renderer.topIconRect) {
     const iconHit = renderer.hitTest(x, inputY, [renderer.topIconRect]);
     if (iconHit) {
@@ -1359,7 +1359,9 @@ wx.onTouchEnd(() => {
     const stillHit = showHomepage && renderer.homepageBtnRects &&
       renderer.hitTest(touchStartPos.x, touchStartPos.y, renderer.homepageBtnRects.filter(r => r.key === btnKey));
     if (stillHit) {
-      if (!game) startGame();
+      if (!game) {
+        startGame();
+      }
       if (game && game.audioManager) game.audioManager.play('tap');
       if (btnKey === 'round') {
         showHomepage = false;
@@ -1372,6 +1374,9 @@ wx.onTouchEnd(() => {
           game._closingSettings = false;
           game._closeSettingsStartTime = null;
         }
+      } else if (btnKey === 'ranking') {
+        showHomepage = false;
+        showRankPopup('friend');
       }
     }
     renderer._homepagePressedBtn = null;
@@ -1379,24 +1384,14 @@ wx.onTouchEnd(() => {
 
   if (!game) return;
 
-  // top_icon 短按：打开设置弹窗（长按未触发时）
+  // top_icon 短按：返回主页（长按未触发时）
   if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
     const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
-      // 点击设置按钮埋点
-      reportEvent("top_icon", {
-        "userid": game.userid || ''
-      });
-      if (game._settingsPopup) {
-        game._closingSettings = true;
-        game._closeSettingsStartTime = Date.now();
-      } else {
-        game._settingsPopup = { startTime: Date.now() };
-        game._closingSettings = false;
-        game._closeSettingsStartTime = null;
-        if (game.audioManager) game.audioManager.play('tap');
-      }
+      showHomepage = true;
+      renderer.homepageAnimStartTime = Date.now();
+      if (game && game.audioManager) game.audioManager.play('tap');
     }
   }
   longPressTriggered = false;
