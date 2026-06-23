@@ -580,6 +580,8 @@ class Renderer {
     shopCardNames.forEach(name => {
       this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
+    // 迷之优惠优惠券图片（非 SHOP_POOL 商品，单独初始化占位）
+    this.shopCardImages['cupon'] = { img: null, loaded: false, width: 0, height: 0 };
     
     // 加载游戏结束弹窗小女巫图
     this.failWitchImg = null;
