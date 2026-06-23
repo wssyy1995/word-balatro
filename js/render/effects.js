@@ -831,13 +831,13 @@ module.exports = function extendEffects(Renderer) {
       ctx.clip();
 
       const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
-      const t = ((Date.now() / 1000 + to) % 2.8) / 2.8;
-      const sweepLen = (w + h) * 1.6;
+      const t = ((Date.now() / 1000 + to) % 4.0) / 4.0;
+      const sweepLen = (w + h) * 1.25;
       const cx = x + w / 2;
       const cy = y + h / 2;
-      const d = -Math.max(w, h) + t * sweepLen;
-      const dx = cx + d - h * 0.3;
-      const dy = cy + d - w * 0.3;
+      const d = -Math.max(w, h) * 0.85 + t * sweepLen;
+      const dx = cx + d - h * 0.25;
+      const dy = cy + d - w * 0.25;
 
       let centerColor, edgeColor;
       if (color === 'green') {
@@ -848,12 +848,12 @@ module.exports = function extendEffects(Renderer) {
         edgeColor = 'rgba(200, 100, 255,';
       }
 
-      const beamW = Math.min(w, h) * 0.35;
+      const beamW = Math.min(w, h) * 0.18;
       const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
       grad.addColorStop(0, `${edgeColor}0)`);
-      grad.addColorStop(0.42, `${edgeColor}0.08)`);
-      grad.addColorStop(0.5, `${centerColor}0.85)`);
-      grad.addColorStop(0.58, `${edgeColor}0.08)`);
+      grad.addColorStop(0.42, `${edgeColor}0.03)`);
+      grad.addColorStop(0.5, `${centerColor}0.45)`);
+      grad.addColorStop(0.58, `${edgeColor}0.03)`);
       grad.addColorStop(1, `${edgeColor}0)`);
       ctx.fillStyle = grad;
       ctx.fillRect(x - w, y - h, w * 3, h * 3);
