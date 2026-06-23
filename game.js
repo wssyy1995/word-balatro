@@ -464,8 +464,8 @@ cloudStorage.init();
 let preloadProgress = 0;
 let preloadComplete = false;
 
-// homepage 展示开关（测试阶段始终展示，点击按钮后进入预加载/游戏）
-let showHomepage = true;
+// homepage 展示开关（预加载完成后展示，点击通关模式后进入游戏）
+let showHomepage = false;
 
 // 过渡状态（预加载页 → 游戏页）
 let transitionAlpha = 0;
@@ -547,7 +547,8 @@ async function startPreload() {
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
     preloadComplete = true;
-    startGame();
+    showHomepage = true;
+    renderer.homepageAnimStartTime = Date.now();
     return;
   }
 
@@ -584,8 +585,9 @@ async function startPreload() {
     cloudStorage.injectGuideToRenderer(renderer);
   }
   preloadComplete = true;
-  startGame();
-  console.log('[Game] 云图片预加载完成，进入游戏');
+  showHomepage = true;
+  renderer.homepageAnimStartTime = Date.now();
+  console.log('[Game] 云图片预加载完成，进入主页');
 }
 
 function startGame() {
@@ -720,15 +722,15 @@ wx.onTouchStart((e) => {
   const x = touch.clientX;
   const y = touch.clientY;
 
-  // homepage 触摸优先处理（测试阶段常驻展示）
+  // homepage 触摸处理（预加载完成后展示）
   if (showHomepage && renderer.homepageBtnRects) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] clicked:', hit.key);
-      // 测试阶段：点击任意 homepage 按钮后隐藏 homepage，进入预加载/游戏流程
-      showHomepage = false;
-      if (preloadComplete && game) {
-        transitionStartTime = Date.now();
+      if (hit.key === 'round') {
+        // 点击通关模式：开始新游戏或从存档恢复
+        showHomepage = false;
+        startGame();
       }
       return;
     }

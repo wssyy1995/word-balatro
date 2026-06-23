@@ -1252,7 +1252,7 @@ module.exports = function extendPlaying(Renderer) {
         if (game._letterGodAnim && card._originalScore !== undefined && !game._letterGodAnim.hitCardIds?.[card.id]) {
           displayScore = card._originalScore;
         }
-        this.drawCard(card, x, y, card.newCard, displayScore, 'purple');
+        this.drawCard(card, x, y, card.newCard, displayScore);
         this.cardRects.push({ x, y, w: this.cardW, h: this.cardH, cardId: card.id });
   
         // 清除 newCard 标记（下一帧不再显示 NEW）

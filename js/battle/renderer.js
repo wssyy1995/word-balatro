@@ -1160,7 +1160,7 @@ class BattleRenderer {
 
       // 选中态向上偏移（与游戏页一致）
       card.selectOffset = card.selected ? -8 * s : 0;
-      this.parent.drawCard(card, x, y, false, null, 'green');
+      this.parent.drawCard(card, x, y, false, null);
 
       this.battleCardRects.push({
         index: i,
