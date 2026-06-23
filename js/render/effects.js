@@ -492,6 +492,20 @@ module.exports = function extendEffects(Renderer) {
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
 
+      // 纯白色菱形背景（衬托紫色文字）
+      const labelW = pW + gap + nW;
+      const diamondSize = Math.max(labelW + 16 * s, fontSize * 1.4);
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(0, -diamondSize / 2);
+      ctx.lineTo(diamondSize / 2, 0);
+      ctx.lineTo(0, diamondSize / 2);
+      ctx.lineTo(-diamondSize / 2, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
       const drawLayer = (styleFn, drawFn) => {
         styleFn();
         if (prefix) {
