@@ -1019,7 +1019,7 @@ class Renderer {
     let smallX = (W - smallTotalW) / 2;
     smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
-      const delay = 900 + i * 200;
+      const delay = 900 + i * 150;
       const duration = 550;
       const scale = getBtnScale(delay, duration);
       const glowProgress = (elapsed - delay) / duration;
