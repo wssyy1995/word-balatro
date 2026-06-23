@@ -870,41 +870,31 @@ class Renderer {
       return Easing.easeOutBackStrong(progress);
     };
 
-    // 小按钮弹出瞬间：椭圆形金色光晕 + 边框爆发
-    const drawBurstRing = (cx, cy, w, h, progress) => {
-      // 外层填充光晕：从四周向内收缩并淡出
-      const haloScale = 1.55 - 0.55 * Easing.easeOutCubic(progress);
-      const haloAlpha = 0.55 * (1 - progress);
+    // 小按钮发光金圈（位于按钮下方，跟随按钮一起缩放）
+    const drawGlowRing = (cx, cy, w, h) => {
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.scale(haloScale, haloScale);
-      ctx.beginPath();
-      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
-      const haloGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, Math.max(w, h) / 2);
-      haloGrad.addColorStop(0, `rgba(255, 215, 0, ${haloAlpha})`);
-      haloGrad.addColorStop(0.7, `rgba(255, 215, 0, ${haloAlpha * 0.35})`);
-      haloGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
-      ctx.fillStyle = haloGrad;
-      ctx.fill();
-      ctx.restore();
 
-      // 金色边框
-      const burstScale = 1.35 - 0.35 * Easing.easeOutCubic(progress);
-      const alpha = 0.85 * (1 - progress);
-      const lineW = Math.max(1, (2.5 - 1.5 * progress) * s);
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(burstScale, burstScale);
+      const ringW = w * 1.2;
+      const ringH = h * 1.2;
+      const grad = ctx.createRadialGradient(
+        0, 0, Math.min(ringW, ringH) * 0.5,
+        0, 0, Math.max(ringW, ringH) / 2
+      );
+      grad.addColorStop(0, 'rgba(255, 215, 0, 0)');
+      grad.addColorStop(0.55, 'rgba(255, 215, 0, 0.22)');
+      grad.addColorStop(0.8, 'rgba(255, 215, 0, 0.5)');
+      grad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
-      ctx.lineWidth = lineW;
-      ctx.stroke();
+      ctx.ellipse(0, 0, ringW / 2, ringH / 2, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     };
 
-    // 辅助函数：按宽度适配绘制图片按钮，支持缩放与爆发
-    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, burstProgress = -1) => {
+    // 辅助函数：按宽度适配绘制图片按钮，支持缩放与发光金圈
+    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, showGlow = false) => {
       let recordW = maxW;
       let recordH = maxH;
       if (loaded && img && img.width > 0 && img.height > 0) {
@@ -920,15 +910,15 @@ class Renderer {
       }
 
       if (animScale > 0) {
-        // 先绘制金色光晕爆发（在按钮图层下方）
-        if (burstProgress >= 0 && burstProgress < 1) {
-          drawBurstRing(cx, cy, recordW, recordH, burstProgress);
-        }
-
         ctx.save();
         ctx.translate(cx, cy);
         ctx.scale(animScale, animScale);
         ctx.translate(-cx, -cy);
+
+        // 发光金圈在按钮图层下方，跟随按钮一起缩放
+        if (showGlow) {
+          drawGlowRing(cx, cy, recordW, recordH);
+        }
 
         if (!loaded || !img || img.width <= 0 || img.height <= 0) {
           const fx = cx - maxW / 2;
@@ -1025,11 +1015,9 @@ class Renderer {
       const delay = 900 + i * 200;
       const duration = 550;
       const scale = getBtnScale(delay, duration);
-      const burstDuration = 220;
-      const burstStart = delay + duration - burstDuration;
-      const burstElapsed = elapsed - burstStart;
-      const burstProgress = burstElapsed >= 0 && burstElapsed < burstDuration ? burstElapsed / burstDuration : -1;
-      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, burstProgress);
+      const glowProgress = (elapsed - delay) / duration;
+      const showGlow = glowProgress > 0 && glowProgress < 1.05;
+      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, showGlow);
       smallX += drawW + smallGap;
     });
   }
