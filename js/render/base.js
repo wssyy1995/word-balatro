@@ -957,7 +957,7 @@ class Renderer {
 
     const bigBtnInfos = [
       { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
-      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 750 },
+      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 150 },
     ].map(({ img, loaded, key, delay }) => {
       let drawW = bigBtnMaxW;
       let drawH = bigBtnMaxH;
