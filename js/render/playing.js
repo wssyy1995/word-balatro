@@ -35,7 +35,7 @@ module.exports = function extendPlaying(Renderer) {
       // 把 extraHeight 分配给顶部偏移和底部间距；最小间距限制为 4*s，避免卡牌与按钮重叠
       const cardGap = Math.max(4 * s, 50 * s + extraHeight * 0.25 - 10); // 卡牌底部到按钮间距
       const cardBottom = btnTop - cardGap + 3 * s + 5;              // 卡牌底部（统一下移 5px）
-      const cardAreaY = cardBottom - cardGridH + 5;             // 卡牌顶部（计分/预览/卡牌区整体下移 5px）
+      const cardAreaY = cardBottom - cardGridH + 10;            // 卡牌顶部（计分/预览/卡牌区整体下移 10px）
       const wordAreaY = cardAreaY - 35 * s - maskHalfH + 2 * s + 2 * s + 3 * s; // 预览区中心
       this.wordAreaY = wordAreaY;
       const scoreAreaY = wordAreaY - maskHalfH - 20 * s - boxSize + 2 * s; // 分数方块顶部
