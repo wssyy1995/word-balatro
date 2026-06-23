@@ -1522,11 +1522,13 @@ class CloudStorageManager {
       this.log('bg_icon battle_vs 未加载，跳过注入');
     }
 
-    // 对战单词预览区装饰线
+    // 对战单词预览区装饰线 / 主玩法计分方块装饰线
     const scoreLineData = this.bgIconImages['score_line'];
     if (scoreLineData && scoreLineData.loaded && scoreLineData.img) {
       renderer.scoreLine = scoreLineData.img;
       renderer.scoreLineLoaded = true;
+      renderer.scoreLineImg = scoreLineData.img;
+      renderer.scoreLineImgLoaded = true;
       this.log('已注入 bg_icon renderer: score_line');
     } else {
       this.log('bg_icon score_line 未加载，跳过注入');

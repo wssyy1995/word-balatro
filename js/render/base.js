@@ -247,19 +247,6 @@ class Renderer {
         this.scoreBoxImages[name] = { img: null, loaded: false };
       }
     });
-    
-    // 加载计分方块装饰线（已移至 bg_icon 目录，统一走云存储或本地 bg_icon 路径）
-    this.scoreLineImg = null;
-    this.scoreLineLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/bg_icon/score_line.png';
-      img.onload = () => { this.scoreLineLoaded = true; };
-      img.onerror = () => { this.scoreLineLoaded = false; };
-      this.scoreLineImg = img;
-    } catch (e) {
-      this.scoreLineLoaded = false;
-    }
 
     // 加载游戏结束弹窗按钮图片
     this.gameOverBtnImages = {};
@@ -301,9 +288,11 @@ class Renderer {
     this.battleVS = null;
     this.battleVSLoaded = false;
 
-    // 对战单词预览区装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    // 对战单词预览区装饰线 / 主玩法计分方块装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
     this.scoreLine = null;
     this.scoreLineLoaded = false;
+    this.scoreLineImg = null;
+    this.scoreLineImgLoaded = false;
 
     // 加载商店图标
     // 加载商店图标
@@ -489,18 +478,10 @@ class Renderer {
       this.discountIconLoaded = false;
     }
 
-    // 加载 discount 标签雪碧图（迷之优惠6~9折，每帧100x100）
+    // discount 标签雪碧图（迷之优惠6~9折，每帧100x100）强制从云存储注入
+    // 不再尝试加载本地 images/bg_icon/discount_spritesheet.png，避免文件缺失报错
     this.discountSpritesheet = null;
     this.discountSpritesheetLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/bg_icon/discount_spritesheet.png';
-      img.onload = () => { this.discountSpritesheetLoaded = true; };
-      img.onerror = () => { this.discountSpritesheetLoaded = false; };
-      this.discountSpritesheet = img;
-    } catch (e) {
-      this.discountSpritesheetLoaded = false;
-    }
 
     // 加载目标分数图标
     this.targetScoreIcon = null;
