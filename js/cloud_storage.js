@@ -156,6 +156,7 @@ class CloudStorageManager {
       'win_success': c('/music/sound_effect/win_success.mp3'),
       'bubble': c('/music/sound_effect/bubble.mp3'),
       'homepage_round_tap': c('/music/sound_effect/homepage_round_tap.mp3'),
+      'homepage_big_button': c('/music/sound_effect/homepage_big_button.mp3'),
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）

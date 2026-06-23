@@ -507,6 +507,7 @@ class Renderer {
     this.homepageAnimStartTime = Date.now();
     this._homepageBubbleStarted = false;
     this._homepageBubbleCount = 0;
+    this._homepageBigBtnSoundPlayed = false;
     this._homepageEntryAnim = null;
     this._homepageEntryBGMStarted = false;
 
@@ -960,6 +961,16 @@ class Renderer {
         this._homepageBubbleCount++;
         this._homepageBubbleNextTime = Date.now() + 180;
       }
+    }
+
+    // 两个大按钮开始弹出时播放 homepage_big_button 音效（每次展示 homepage 仅一次）
+    const bigBtnElapsed = elapsed - entryOffset;
+    if (bigBtnElapsed < 100) {
+      this._homepageBigBtnSoundPlayed = false;
+    }
+    if (bigBtnElapsed >= 150 && !this._homepageBigBtnSoundPlayed && game && game.audioManager) {
+      game.audioManager.play('homepage_big_button');
+      this._homepageBigBtnSoundPlayed = true;
     }
 
     // 按钮入场缩放（果冻感）
