@@ -513,12 +513,12 @@ class Renderer {
     this.homepageStudyLoaded = false;
     const homepageImages = [
       { key: 'homepageBg', src: 'images/bg_icon/homepage_bg.png' },
-      { key: 'homepageRound', src: 'images/bg_icon/homepage_round.png' },
-      { key: 'homepageBattle', src: 'images/bg_icon/homepage_battle.png' },
-      { key: 'homepageSetting', src: 'images/bg_icon/homepage_setting.png' },
-      { key: 'homepageRanking', src: 'images/bg_icon/homepage_ranking.png' },
-      { key: 'homepageDaily', src: 'images/bg_icon/homepage_daily.png' },
-      { key: 'homepageStudy', src: 'images/bg_icon/homepage_study.png' },
+      { key: 'homepageRound', src: 'images/bg_icon/hompage_round.png' },
+      { key: 'homepageBattle', src: 'images/bg_icon/hompage_battle.png' },
+      { key: 'homepageSetting', src: 'images/bg_icon/hompage_setting.png' },
+      { key: 'homepageRanking', src: 'images/bg_icon/hompage_ranking.png' },
+      { key: 'homepageDaily', src: 'images/bg_icon/hompage_daily.png' },
+      { key: 'homepageStudy', src: 'images/bg_icon/hompage_study.png' },
     ];
     homepageImages.forEach(({ key, src }) => {
       try {
