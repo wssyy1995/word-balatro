@@ -2385,8 +2385,8 @@ class MysteryDiscountRenderer {
     // === 3张优惠券 ===
     const couponW = 90 * s;
     const couponH = 130 * s;
-    const gap = 14 * s + 6;
-    const baseScale = 1.15;
+    const gap = 24 * s;
+    const baseScale = 1.2;
     const targetScale = 1.6;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
@@ -2416,7 +2416,7 @@ class MysteryDiscountRenderer {
       let centerX, centerY, scale, alpha;
 
       // 呼吸缩放动画（复用女巫奖励礼盒效果）
-      const breath = Math.sin(Date.now() / 800 + i * 0.5) * 0.05;
+      const breath = Math.sin(Date.now() / 600 + i * 0.5) * 0.02;
       const pulse = 1 + breath;
 
       if (md.selectedIdx === null) {
@@ -2487,11 +2487,11 @@ class MysteryDiscountRenderer {
       }
 
       // 优惠券标题（金棕色，与游戏标题一致）
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.font = `bold ${Math.floor(12 * s * scale)}px sans-serif`;
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 10 * s);
+      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 15 * s * scale);
 
       ctx.restore();
 
@@ -2506,46 +2506,69 @@ class MysteryDiscountRenderer {
     // === 刮奖区（选中后显示，跟随被选中的优惠券位置）===
     if (md.selectedIdx !== null && md.scratched) {
       const scratchW = couponW * 1.08;
-      const scratchH = 50 * s;
+      const scratchH = 56 * s;
       const scratchX = selectedSX + (selectedSW - scratchW) / 2;
-      const scratchY = selectedSY + 20 * s;
+      const scratchY = selectedSY + (selectedSH - scratchH) / 2 - 2 * s;
 
       // 刮奖区背景
       this.parent.roundRect(scratchX, scratchY, scratchW, scratchH, 8 * s, '#e8e0d4', '#c4a35a');
 
+      const rate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
+      const discountText = `${Math.round(rate * 10)}折`;
+      const revealElapsed = md.revealed ? Date.now() - (md.revealStartTime || Date.now()) : 0;
+      const revealProgress = md.revealed ? Math.min(revealElapsed / 300, 1) : 0;
+      const revealEase = md.revealed ? Easing.easeOutBack(revealProgress) : 0;
+
+      // 折扣数字（底层，随涂抹逐渐显露）
+      ctx.save();
+      ctx.globalAlpha = md.revealed ? revealEase : 0.25;
+      if (md.revealed) {
+        ctx.translate(scratchX + scratchW / 2, scratchY + scratchH / 2);
+        ctx.scale(revealEase, revealEase);
+        ctx.translate(-(scratchX + scratchW / 2), -(scratchY + scratchH / 2));
+      }
+      ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+      ctx.fillStyle = '#d9534f';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
+      ctx.restore();
+
       if (!md.revealed) {
-        // 未刮开：显示"刮开看看"提示
+        // 涂抹刮开覆盖层
+        ctx.save();
+        this.parent._roundedRectPath(ctx, scratchX, scratchY, scratchW, scratchH, 8 * s);
+        ctx.clip();
+
+        ctx.fillStyle = '#c8c0b4';
+        ctx.fillRect(scratchX, scratchY, scratchW, scratchH);
+
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#888';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('点击刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+
+        // 根据涂抹轨迹擦除覆盖层
+        ctx.globalCompositeOperation = 'destination-out';
+        const points = md.scratchPoints || [];
+        const radius = 12 * s;
+        for (const p of points) {
+          ctx.beginPath();
+          ctx.arc(scratchX + p.x * scratchW, scratchY + p.y * scratchH, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
 
         // 存储刮奖区点击区域
         this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
         this.collectBtnRect = null;
       } else {
-        // 已刮开：显示随机折扣（6~9折）
-        // 播放中奖音效（只播放一次）
+        // 已刮开：播放中奖音效（只播放一次）
         if (!md.winSoundPlayed) {
           md.winSoundPlayed = true;
           if (game.audioManager) game.audioManager.play('win_success');
         }
-
-        const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
-        const revealProgress = Math.min(revealElapsed / 300, 1);
-        const revealEase = Easing.easeOutBack(revealProgress);
-        const rate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
-        const discountText = `${Math.round(rate * 10)}折`;
-
-        ctx.save();
-        ctx.globalAlpha = revealEase;
-        ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-        ctx.fillStyle = '#d9534f';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
-        ctx.restore();
 
         this.scratchZoneRect = null;
 

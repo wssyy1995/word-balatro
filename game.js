@@ -1274,6 +1274,21 @@ wx.onTouchMove((e) => {
     game._jokerSortState.insertSlot = insertSlot;
   }
 
+  // 迷之优惠涂抹刮开（移动时记录轨迹）
+  if (game.state === 'mystery_discount' && game._mysteryDiscountState) {
+    const md = game._mysteryDiscountState;
+    if (md._scratching && md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
+      if (rect) {
+        const x = touch.clientX;
+        const y = inputY;
+        if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+          addScratchPoint(md, rect, x, y);
+        }
+      }
+    }
+  }
+
   if (!renderer.cloudLogDragging) return;
   const y = touch.clientY;
   const deltaY = renderer.cloudLogDragStartY - y;
@@ -1287,6 +1302,11 @@ wx.onTouchEnd(() => {
   game._cardBookIconPressed = false;
   game._cardBookEquipBtnPressed = false;
   game._newWitchCardCollectBtnPressed = false;
+
+  // 迷之优惠涂抹刮开结束
+  if (game._mysteryDiscountState) {
+    game._mysteryDiscountState._scratching = false;
+  }
 
   // 取消未触发的长按定时器
   if (longPressTimer) {
@@ -1655,6 +1675,69 @@ wx.onTouchEnd(() => {
 
   touchStartPos = null;
 });
+
+// === 迷之优惠涂抹刮开辅助函数 ===
+function initScratchGrid(md) {
+  if (md.scratchGrid) return;
+  const cols = 12;
+  const rows = 8;
+  md.scratchGrid = [];
+  for (let r = 0; r < rows; r++) {
+    md.scratchGrid[r] = new Array(cols).fill(false);
+  }
+  md.scratchCols = cols;
+  md.scratchRows = rows;
+  md.scratchPoints = [];
+}
+
+function addScratchPoint(md, rect, x, y) {
+  initScratchGrid(md);
+  const cols = md.scratchCols;
+  const rows = md.scratchRows;
+  const localX = Math.max(0, Math.min(1, (x - rect.x) / rect.w));
+  const localY = Math.max(0, Math.min(1, (y - rect.y) / rect.h));
+
+  const last = md.scratchPoints[md.scratchPoints.length - 1];
+  if (last) {
+    const dx = localX - last.x;
+    const dy = localY - last.y;
+    if (dx * dx + dy * dy < 0.0003) return;
+  }
+  md.scratchPoints.push({ x: localX, y: localY });
+
+  const col = Math.min(cols - 1, Math.floor(localX * cols));
+  const row = Math.min(rows - 1, Math.floor(localY * rows));
+  md.scratchGrid[row][col] = true;
+
+  if (last) {
+    const dx = localX - last.x;
+    const dy = localY - last.y;
+    const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) * Math.max(cols, rows) * 2));
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const ix = last.x + dx * t;
+      const iy = last.y + dy * t;
+      const icol = Math.min(cols - 1, Math.floor(ix * cols));
+      const irow = Math.min(rows - 1, Math.floor(iy * rows));
+      md.scratchGrid[irow][icol] = true;
+    }
+  }
+
+  let scratchedCount = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (md.scratchGrid[r][c]) scratchedCount++;
+    }
+  }
+  md.scratchProgress = scratchedCount / (rows * cols);
+
+  if (md.scratchProgress >= 0.4 && !md.revealed) {
+    md.revealed = true;
+    md.revealStartTime = Date.now();
+    vibrate();
+    if (game.audioManager) game.audioManager.play('tap');
+  }
+}
 
 function handleInput(x, inputY) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
@@ -2469,16 +2552,15 @@ function handleInput(x, inputY) {
       return;
     }
 
-    // 刮开优惠券（点击刮奖区）
+    // 刮开优惠券（涂抹刮奖区）
     if (md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
       const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
       if (rect) {
         const hit = renderer.hitTest(x, inputY, [rect]);
         if (hit) {
-          vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
-          md.revealed = true;
-          md.revealStartTime = Date.now();
+          md._scratching = true;
+          initScratchGrid(md);
+          addScratchPoint(md, rect, x, inputY);
           return;
         }
       }
