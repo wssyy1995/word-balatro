@@ -170,7 +170,7 @@ module.exports = function extendHomepageEntry(Renderer) {
       if (sweep > 0.05) {
         this._homepageEntryDrawRingLayer(
           ctx, ringCX, ringCY, rx, ry,
-          0.5, 2.4 * s, '#fff8d0', 8 * s, 'rgba(255,240,180,0.5)',
+          0.5, 1.8 * s, '#fff8d0', 8 * s, 'rgba(255,240,180,0.5)',
           startA, -sweep
         );
       }
