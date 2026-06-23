@@ -481,7 +481,7 @@ module.exports = function extendEffects(Renderer) {
 
       const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
       const numStr = prefix ? text.slice(1) : text;
-      const pSize = fontSize;
+      const pSize = prefix ? Math.floor(fontSize * 0.85) : fontSize;
       const pYOff = 0;
 
       ctx.font = `900 ${pSize}px sans-serif`;
