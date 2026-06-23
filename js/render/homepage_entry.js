@@ -10,7 +10,7 @@ module.exports = function extendHomepageEntry(Renderer) {
       const a = -Math.PI / 2 - (Math.PI * 2 / N) * i;
       this._homepageEntryTrailStars.push({
         angle: a,
-        size: 1.2 + Math.random() * 2.5,
+        size: (1.2 + Math.random() * 2.5) * 2,
         twinklePhase: Math.random() * Math.PI * 2,
         twinkleSpd: 3 + Math.random() * 4,
       });
@@ -134,8 +134,8 @@ module.exports = function extendHomepageEntry(Renderer) {
     const inBurst = elapsed >= DRAW && elapsed < TOTAL;
     const burstT = (elapsed - DRAW) / 1000; // 爆发阶段经过的秒数
 
-    const rx = 72 * s;
-    const ry = 62 * s;
+    const rx = 144 * s;
+    const ry = 124 * s;
     const ringCX = cx;
     const ringCY = cy;
 
@@ -159,18 +159,18 @@ module.exports = function extendHomepageEntry(Renderer) {
         const pt = this._homepageEntryEllipsePt(ringCX, ringCY, rx, ry, st.angle);
         const fresh = Math.min(1, Math.max(0, 1 + dist / 0.5));
         const twinkle = 0.5 + 0.5 * Math.sin(t * st.twinkleSpd + st.twinklePhase);
-        this._drawHomepageEntryStar(ctx, pt.x, pt.y, st.size * twinkle * s, 0.5 + fresh * 0.4);
+        this._drawHomepageEntryStar(ctx, pt.x, pt.y, st.size * twinkle * s, 0.7 + fresh * 0.3);
       });
 
       // 领先的写法之星
       const tip = this._homepageEntryEllipsePt(ringCX, ringCY, rx, ry, drawnAngle);
-      this._drawHomepageEntryStar(ctx, tip.x, tip.y, 3.5 * s, 0.95);
+      this._drawHomepageEntryStar(ctx, tip.x, tip.y, 7 * s, 1);
 
       //  subtle connecting line
       if (sweep > 0.05) {
         this._homepageEntryDrawRingLayer(
           ctx, ringCX, ringCY, rx, ry,
-          0.3, 1.2 * s, '#fff8d0', 4 * s, 'rgba(255,240,180,0.3)',
+          0.5, 2.4 * s, '#fff8d0', 8 * s, 'rgba(255,240,180,0.5)',
           startA, -sweep
         );
       }
@@ -184,17 +184,17 @@ module.exports = function extendHomepageEntry(Renderer) {
       this._homepageEntryTrailStars.forEach(st => {
         const pt = this._homepageEntryEllipsePt(ringCX, ringCY, rx, ry, st.angle);
         const outward = fadeP;
-        const px = pt.x + (pt.x - ringCX) * outward * 2;
-        const py = pt.y + (pt.y - ringCY) * outward * 2;
+        const px = pt.x + (pt.x - ringCX) * outward * 4;
+        const py = pt.y + (pt.y - ringCY) * outward * 4;
         const twinkle = 0.5 + 0.5 * Math.sin(t * st.twinkleSpd + st.twinklePhase);
         const alpha = Math.max(0, 1 - outward * 1.2) * twinkle;
-        this._drawHomepageEntryStar(ctx, px, py, st.size * twinkle * s, alpha);
+        this._drawHomepageEntryStar(ctx, px, py, st.size * twinkle * s, Math.min(1, alpha * 1.5));
       });
 
       if (ringA > 0.01) {
         this._homepageEntryDrawRingLayer(
           ctx, ringCX, ringCY, rx, ry,
-          ringA * 0.3, 1.5 * s, '#fff8d0', 3 * s, 'rgba(255,240,180,0.2)',
+          ringA * 0.5, 3 * s, '#fff8d0', 6 * s, 'rgba(255,240,180,0.35)',
           0, -Math.PI * 2
         );
       }
@@ -202,17 +202,17 @@ module.exports = function extendHomepageEntry(Renderer) {
       // 中心新星爆发
       for (let j = 0; j < 50; j++) {
         const a = Math.random() * Math.PI * 2;
-        const dist = burstT * (50 + Math.random() * 130) * s;
+        const dist = burstT * (100 + Math.random() * 260) * s;
         const px = ringCX + Math.cos(a) * dist;
         const py = ringCY + Math.sin(a) * dist * (ry / rx);
         const alpha = Math.max(0, 1 - burstT / 1.8);
-        this._drawHomepageEntryStar(ctx, px, py, (0.8 + Math.random() * 1.5) * s, alpha * 0.7);
+        this._drawHomepageEntryStar(ctx, px, py, (1.6 + Math.random() * 3.0) * s, alpha);
       }
 
       // 中心闪光
       const flash = burstT < 0.2 ? burstT / 0.2 : Math.max(0, 1 - (burstT - 0.2) / 0.4);
       if (flash > 0) {
-        this._drawHomepageEntryStar(ctx, ringCX, ringCY, 5 * s, flash * 0.85);
+        this._drawHomepageEntryStar(ctx, ringCX, ringCY, 10 * s, flash);
       }
     }
 
