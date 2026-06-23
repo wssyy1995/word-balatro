@@ -722,24 +722,16 @@ wx.onTouchStart((e) => {
   const x = touch.clientX;
   const y = touch.clientY;
 
-  // homepage 触摸处理（预加载完成后展示）
-  if (showHomepage && renderer.homepageBtnRects) {
+  // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮）
+  const settingsPopupOpen = game && game._settingsPopup && !game._closingSettings;
+  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
-      console.log('[Homepage] clicked:', hit.key);
-      // 所有主页按钮都需要 game 存在才能播放音效/打开弹窗
-      if (!game) {
-        startGame();
-      }
-      if (game && game.audioManager) {
-        game.audioManager.play('tap');
-      }
-      if (hit.key === 'round') {
-        // 点击通关模式：开始新游戏或从存档恢复
-        showHomepage = false;
-      } else if (hit.key === 'setting') {
+      console.log('[Homepage] pressed:', hit.key);
+      renderer._homepagePressedBtn = hit.key;
+      longPressTriggered = false;
+      if (hit.key === 'setting') {
         // 复用 top_icon 的按下行为（短按打开设置，长按打开调试面板）
-        longPressTriggered = false;
         renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
         touchStartPos = { x, y };
         longPressTimer = setTimeout(() => {
@@ -1337,15 +1329,16 @@ wx.onTouchMove((e) => {
 });
 
 wx.onTouchEnd(() => {
-  if (!game) return;
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
-  game._cardBookIconPressed = false;
-  game._cardBookEquipBtnPressed = false;
-  game._newWitchCardCollectBtnPressed = false;
+  if (game) {
+    game._cardBookIconPressed = false;
+    game._cardBookEquipBtnPressed = false;
+    game._newWitchCardCollectBtnPressed = false;
+  }
 
   // 迷之优惠涂抹刮开结束
-  if (game._mysteryDiscountState) {
+  if (game && game._mysteryDiscountState) {
     game._mysteryDiscountState._scratching = false;
   }
 
@@ -1360,20 +1353,41 @@ wx.onTouchEnd(() => {
     renderer._topIconPressAnim = { pressing: false, startTime: Date.now() };
   }
 
+  // homepage 按钮松开：统一在这里播放音效并执行操作，避免 TouchStart 重复播放
+  if (!longPressTriggered && touchStartPos && renderer._homepagePressedBtn) {
+    const btnKey = renderer._homepagePressedBtn;
+    const stillHit = showHomepage && renderer.homepageBtnRects &&
+      renderer.hitTest(touchStartPos.x, touchStartPos.y, renderer.homepageBtnRects.filter(r => r.key === btnKey));
+    if (stillHit) {
+      if (!game) startGame();
+      if (game && game.audioManager) game.audioManager.play('tap');
+      if (btnKey === 'round') {
+        showHomepage = false;
+      } else if (btnKey === 'setting') {
+        if (game._settingsPopup) {
+          game._closingSettings = true;
+          game._closeSettingsStartTime = Date.now();
+        } else {
+          game._settingsPopup = { startTime: Date.now() };
+          game._closingSettings = false;
+          game._closeSettingsStartTime = null;
+        }
+      }
+    }
+    renderer._homepagePressedBtn = null;
+  }
+
+  if (!game) return;
+
   // top_icon 短按：打开设置弹窗（长按未触发时）
-  // 同时兼容主页 setting 按钮复用该行为
-  if (!longPressTriggered && touchStartPos) {
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
-    const iconHit = renderer.topIconRect && renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
-    const settingHit = showHomepage && renderer.homepageBtnRects &&
-      renderer.hitTest(touchStartPos.x, touchStartPos.y, renderer.homepageBtnRects.filter(r => r.key === 'setting'));
+    const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
       // 点击设置按钮埋点
       reportEvent("top_icon", {
         "userid": game.userid || ''
       });
-    }
-    if (iconHit || settingHit) {
       if (game._settingsPopup) {
         game._closingSettings = true;
         game._closeSettingsStartTime = Date.now();
@@ -3398,6 +3412,10 @@ function gameLoop(timestamp) {
   if (showHomepage) {
     // 测试阶段：优先展示 homepage
     renderer.drawHomepage();
+    // 主页 setting 按钮复用 top_icon 行为，设置弹窗打开时叠加在主页上绘制
+    if (game && game._settingsPopup) {
+      renderer.drawSettingsPopup(game);
+    }
   } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
