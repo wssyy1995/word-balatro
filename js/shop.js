@@ -2385,8 +2385,8 @@ class MysteryDiscountRenderer {
     // === 3张优惠券 ===
     const couponW = 90 * s;
     const couponH = 130 * s;
-    const gap = 14 * s + 2;
-    const baseScale = 1.1;
+    const gap = 14 * s + 4;
+    const baseScale = 1.15;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
     const baseCenterY = H * 0.5;
