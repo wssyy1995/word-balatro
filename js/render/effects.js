@@ -436,7 +436,7 @@ module.exports = function extendEffects(Renderer) {
       ctx.save();
       ctx.translate(cx, cy);
 
-      const fontSize = Math.floor(22 * s);
+      const fontSize = Math.floor(24 * s);
       const t = elapsed * 0.001;
 
       // ============ 方案B · 光晕呼吸（受 scale 脉冲影响） ============
@@ -483,6 +483,7 @@ module.exports = function extendEffects(Renderer) {
       const numStr = prefix ? text.slice(1) : text;
       const pSize = fontSize;
       const pYOff = 0;
+      const textYOff = 1; // 文字整体下移 1px
 
       ctx.font = `900 ${pSize}px sans-serif`;
       const pW = prefix ? ctx.measureText(prefix).width : 0;
@@ -497,10 +498,10 @@ module.exports = function extendEffects(Renderer) {
       const drawLayer = (styleFn, drawFn) => {
         styleFn();
         if (prefix) {
-          ctx.font = `900 ${pSize}px sans-serif`; drawFn(prefix, pX, pYOff);
-          ctx.font = `900 ${fontSize}px sans-serif`; drawFn(numStr, nX, 0);
+          ctx.font = `900 ${pSize}px sans-serif`; drawFn(prefix, pX, pYOff + textYOff);
+          ctx.font = `900 ${fontSize}px sans-serif`; drawFn(numStr, nX, textYOff);
         } else {
-          ctx.font = `900 ${fontSize}px sans-serif`; drawFn(text, 0, 0);
+          ctx.font = `900 ${fontSize}px sans-serif`; drawFn(text, 0, textYOff);
         }
       };
 
