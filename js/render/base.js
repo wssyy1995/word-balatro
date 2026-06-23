@@ -838,8 +838,26 @@ class Renderer {
     this.homepageBtnRects = [];
     const elapsed = Date.now() - this.homepageAnimStartTime;
 
-    // 4 个小按钮开始弹出时播放 bubble 音效（重复 2 次）
+    // 主页入场动画：预加载页 → 主页时，在两个大按钮位置播放
+    const ENTRY_ANIM_DURATION = 3200;
+    const ENTRY_BGM_DURATION = 1200;
+    const entryOffset = this._homepageEntryAnim ? ENTRY_ANIM_DURATION : 0;
     const game = wx.game;
+    if (this._homepageEntryAnim) {
+      const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
+      if (entryElapsed < ENTRY_ANIM_DURATION) {
+        const animCX = W / 2;
+        const animCY = H * 0.49;
+        this._drawHomepageEntryAnim(ctx, animCX, animCY, s, entryElapsed);
+        // 金色圆环动画开始时播放 witch_guide_1_bg 音效
+        if (entryElapsed < ENTRY_BGM_DURATION && !this._homepageEntryBGMStarted && game && game.audioManager) {
+          this._homepageEntryBGMStarted = true;
+          game.audioManager.play('witch_guide_1_bg');
+        }
+      }
+    }
+
+    // 4 个小按钮开始弹出时播放 bubble 音效（重复 2 次）
     const bubbleElapsed = elapsed - entryOffset;
     if (bubbleElapsed < 800) {
       this._homepageBubbleStarted = false;
@@ -857,12 +875,6 @@ class Renderer {
         this._homepageBubbleNextTime = Date.now() + 180;
       }
     }
-
-    // 主页入场动画：预加载页 → 主页时，在两个大按钮位置播放
-    const ENTRY_ANIM_DURATION = 3200;
-    const ENTRY_BGM_DURATION = 1200;
-    const entryOffset = this._homepageEntryAnim ? ENTRY_ANIM_DURATION : 0;
-    if (this._homepageEntryAnim) {
       const entryElapsed = Date.now() - this._homepageEntryAnim.startTime;
       if (entryElapsed < ENTRY_ANIM_DURATION) {
         const animCX = W / 2;
