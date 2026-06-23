@@ -926,8 +926,8 @@ class Renderer {
     };
 
     // 中间 45% 高度：左右两个大按钮先缩放弹出
-    const bigBtnMaxW = W * 0.70;
-    const bigBtnMaxH = H * 0.24;
+    const bigBtnMaxW = W * 0.75;
+    const bigBtnMaxH = H * 0.26;
     const bigBtnY = H * 0.47;
     const bigGap = W * 0.11;
 

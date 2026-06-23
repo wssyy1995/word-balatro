@@ -727,10 +727,30 @@ wx.onTouchStart((e) => {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] clicked:', hit.key);
+      // 所有主页按钮都需要 game 存在才能播放音效/打开弹窗
+      if (!game) {
+        startGame();
+      }
+      if (game && game.audioManager) {
+        game.audioManager.play('tap');
+      }
       if (hit.key === 'round') {
         // 点击通关模式：开始新游戏或从存档恢复
         showHomepage = false;
-        startGame();
+      } else if (hit.key === 'setting') {
+        // 复用 top_icon 的按下行为（短按打开设置，长按打开调试面板）
+        longPressTriggered = false;
+        renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
+        touchStartPos = { x, y };
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressTriggered = true;
+          // 仅在开发版或体验版开放调试菜单
+          const env = wx.getAccountInfoSync ? wx.getAccountInfoSync().miniProgram.envVersion : 'release';
+          if (env === 'develop' || env === 'trial') {
+            renderer.debugMenuOpen = !renderer.debugMenuOpen;
+          }
+        }, LONG_PRESS_DURATION);
       }
       return;
     }
@@ -1341,14 +1361,19 @@ wx.onTouchEnd(() => {
   }
 
   // top_icon 短按：打开设置弹窗（长按未触发时）
-  if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
+  // 同时兼容主页 setting 按钮复用该行为
+  if (!longPressTriggered && touchStartPos) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
-    const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
+    const iconHit = renderer.topIconRect && renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
+    const settingHit = showHomepage && renderer.homepageBtnRects &&
+      renderer.hitTest(touchStartPos.x, touchStartPos.y, renderer.homepageBtnRects.filter(r => r.key === 'setting'));
     if (iconHit) {
       // 点击设置按钮埋点
       reportEvent("top_icon", {
         "userid": game.userid || ''
       });
+    }
+    if (iconHit || settingHit) {
       if (game._settingsPopup) {
         game._closingSettings = true;
         game._closeSettingsStartTime = Date.now();
