@@ -23,7 +23,7 @@ class BattleRenderer {
     this.battlePlayBtnRect = null;
     this.battleClearBtnRect = null;
     this.battleCardRects = [];
-    this.battleBackBtnRect = null;
+    this.battleTopHomeRect = null;
     this.battleMenuBtnRect = null;
     this.battlePanelLeft = null;
     this.battlePanelRight = null;
@@ -157,34 +157,49 @@ class BattleRenderer {
     }
   }
 
-  // ===== 顶部栏：返回 =====
+  // ===== 顶部栏：top_home 返回主页 =====
   _drawTopBar(ctx, game, W, topY, s) {
     const btnSize = 34 * s;
-    const cx = 15 * s + btnSize / 2;
-    const cy = topY + btnSize / 2;
+    const iconX = 15 * s + 5 * s;
+    const iconY = topY + 5 * s;
 
-    // 返回按钮（圆形 + 左箭头）
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, btnSize / 2, 0, Math.PI * 2);
-    ctx.fillStyle = COLORS.panelBg;
-    ctx.fill();
-    ctx.lineWidth = 1.5 * s;
-    ctx.strokeStyle = COLORS.gold;
-    ctx.stroke();
+    // top_home 主页图标（从云存储 bg_icon/top_home.png 注入到 parent.topIcon）
+    if (this.parent.topIcon && this.parent.topIconLoaded) {
+      ctx.drawImage(this.parent.topIcon, iconX, iconY, btnSize, btnSize);
+    } else {
+      // 兜底：圆形 + 房子图标
+      const cx = iconX + btnSize / 2;
+      const cy = iconY + btnSize / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, btnSize / 2, 0, Math.PI * 2);
+      ctx.fillStyle = COLORS.panelBg;
+      ctx.fill();
+      ctx.lineWidth = 1.5 * s;
+      ctx.strokeStyle = COLORS.gold;
+      ctx.stroke();
 
-    ctx.beginPath();
-    ctx.moveTo(cx + 4 * s, cy - 6 * s);
-    ctx.lineTo(cx - 4 * s, cy);
-    ctx.lineTo(cx + 4 * s, cy + 6 * s);
-    ctx.lineWidth = 2.5 * s;
-    ctx.strokeStyle = COLORS.text;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.stroke();
-    ctx.restore();
+      ctx.beginPath();
+      ctx.moveTo(cx - 7 * s, cy + 2 * s);
+      ctx.lineTo(cx, cy - 6 * s);
+      ctx.lineTo(cx + 7 * s, cy + 2 * s);
+      ctx.lineWidth = 2 * s;
+      ctx.strokeStyle = COLORS.text;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
 
-    this.battleBackBtnRect = { x: cx - btnSize / 2, y: cy - btnSize / 2, w: btnSize, h: btnSize };
+      ctx.beginPath();
+      ctx.moveTo(cx - 4 * s, cy + 2 * s);
+      ctx.lineTo(cx - 4 * s, cy + 7 * s);
+      ctx.lineTo(cx + 4 * s, cy + 7 * s);
+      ctx.lineTo(cx + 4 * s, cy + 2 * s);
+      ctx.lineWidth = 2 * s;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    this.battleTopHomeRect = { x: iconX, y: iconY, w: btnSize, h: btnSize };
   }
 
   // ===== 页面标题 =====

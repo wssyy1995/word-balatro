@@ -3422,6 +3422,14 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
+  // 统一处理返回主页请求（如对战页 top_home 按钮）
+  if (game && game._returnToHomepage) {
+    game._returnToHomepage = false;
+    showHomepage = true;
+    renderer.homepageAnimStartTime = Date.now();
+    renderer._homepageEntryAnim = null;
+  }
+
   if (pageFlipState) {
     // 主页 → 游戏翻页过渡
     renderer.drawPageFlip(game, pageFlipState);

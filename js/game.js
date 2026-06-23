@@ -3685,6 +3685,14 @@ class Game {
     }
   }
 
+  // 返回主页：对战/其他场景统一调用，由外层 gameLoop 响应 _returnToHomepage 标志切回 homepage
+  returnToHomepage() {
+    if (this.state === 'battle' && this.battleManager) {
+      this.battleManager.exitBattle();
+    }
+    this._returnToHomepage = true;
+  }
+
   nextRound() {
     if (this.audioManager) this.audioManager.play('levelup');
     

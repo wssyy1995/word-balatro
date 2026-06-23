@@ -8,12 +8,13 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
   // 设置弹窗打开时，不处理对战底层交互
   if (game._settingsPopup && !game._closingSettings) return false;
 
-  // 左上角返回按钮
-  if (battle.battleBackBtnRect) {
-    const backHit = renderer.hitTest(x, inputY, [battle.battleBackBtnRect]);
-    if (backHit) {
+  // 左上角 top_home 返回主页按钮
+  if (battle.battleTopHomeRect) {
+    const homeHit = renderer.hitTest(x, inputY, [battle.battleTopHomeRect]);
+    if (homeHit) {
       vibrate();
-      game.battleManager.exitBattle();
+      if (game.audioManager) game.audioManager.play('tap');
+      game.returnToHomepage();
       return true;
     }
   }
