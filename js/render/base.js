@@ -247,19 +247,6 @@ class Renderer {
         this.scoreBoxImages[name] = { img: null, loaded: false };
       }
     });
-    
-    // 加载计分方块装饰线（已移至 bg_icon 目录，统一走云存储或本地 bg_icon 路径）
-    this.scoreLineImg = null;
-    this.scoreLineLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/bg_icon/score_line.png';
-      img.onload = () => { this.scoreLineLoaded = true; };
-      img.onerror = () => { this.scoreLineLoaded = false; };
-      this.scoreLineImg = img;
-    } catch (e) {
-      this.scoreLineLoaded = false;
-    }
 
     // 加载游戏结束弹窗按钮图片
     this.gameOverBtnImages = {};
@@ -301,9 +288,11 @@ class Renderer {
     this.battleVS = null;
     this.battleVSLoaded = false;
 
-    // 对战单词预览区装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    // 对战单词预览区装饰线 / 主玩法计分方块装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
     this.scoreLine = null;
     this.scoreLineLoaded = false;
+    this.scoreLineImg = null;
+    this.scoreLineImgLoaded = false;
 
     // 加载商店图标
     // 加载商店图标
@@ -489,18 +478,10 @@ class Renderer {
       this.discountIconLoaded = false;
     }
 
-    // 加载 discount 标签雪碧图（迷之优惠6~9折，每帧100x100）
+    // discount 标签雪碧图（迷之优惠6~9折，每帧100x100）强制从云存储注入
+    // 不再尝试加载本地 images/bg_icon/discount_spritesheet.png，避免文件缺失报错
     this.discountSpritesheet = null;
     this.discountSpritesheetLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/bg_icon/discount_spritesheet.png';
-      img.onload = () => { this.discountSpritesheetLoaded = true; };
-      img.onerror = () => { this.discountSpritesheetLoaded = false; };
-      this.discountSpritesheet = img;
-    } catch (e) {
-      this.discountSpritesheetLoaded = false;
-    }
 
     // 加载目标分数图标
     this.targetScoreIcon = null;
@@ -514,6 +495,44 @@ class Renderer {
     } catch (e) {
       this.targetScoreIconLoaded = false;
     }
+
+    // homepage 页面图片（本地加载，不依赖云存储）
+    this.homepageBg = null;
+    this.homepageBgLoaded = false;
+    this.homepageRound = null;
+    this.homepageRoundLoaded = false;
+    this.homepageBattle = null;
+    this.homepageBattleLoaded = false;
+    this.homepageSetting = null;
+    this.homepageSettingLoaded = false;
+    this.homepageRanking = null;
+    this.homepageRankingLoaded = false;
+    this.homepageDaily = null;
+    this.homepageDailyLoaded = false;
+    this.homepageStudy = null;
+    this.homepageStudyLoaded = false;
+    const homepageImages = [
+      { key: 'homepageBg', src: 'images/bg_icon/homepage_bg.png' },
+      { key: 'homepageRound', src: 'images/bg_icon/hompage_round.png' },
+      { key: 'homepageBattle', src: 'images/bg_icon/hompage_battle.png' },
+      { key: 'homepageSetting', src: 'images/bg_icon/hompage_setting.png' },
+      { key: 'homepageRanking', src: 'images/bg_icon/hompage_ranking.png' },
+      { key: 'homepageDaily', src: 'images/bg_icon/hompage_daily.png' },
+      { key: 'homepageStudy', src: 'images/bg_icon/hompage_study.png' },
+    ];
+    homepageImages.forEach(({ key, src }) => {
+      try {
+        const img = wx.createImage();
+        img.src = src;
+        img.onload = () => { this[`${key}Loaded`] = true; };
+        img.onerror = () => { this[`${key}Loaded`] = false; };
+        this[key] = img;
+      } catch (e) {
+        this[`${key}Loaded`] = false;
+      }
+    });
+    this.homepageBtnRects = [];
+    this.homepageAnimStartTime = Date.now();
 
     // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.cardTemplate = null;
@@ -599,6 +618,8 @@ class Renderer {
     shopCardNames.forEach(name => {
       this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
     });
+    // 迷之优惠优惠券图片（非 SHOP_POOL 商品，单独初始化占位）
+    this.shopCardImages['cupon'] = { img: null, loaded: false, width: 0, height: 0 };
     
     // 加载游戏结束弹窗小女巫图
     this.failWitchImg = null;
@@ -815,6 +836,184 @@ class Renderer {
     ctx.restore();
   }
 
+  drawHomepage() {
+    const ctx = this.ctx;
+    const W = this.W;
+    const H = this.H;
+    const s = this.scale;
+
+    // 背景图
+    if (this.homepageBg && this.homepageBgLoaded) {
+      ctx.drawImage(this.homepageBg, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = '#0a1628';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // 游戏标题（与预加载页保持一致）
+    ctx.save();
+    ctx.font = `${Math.floor(30 * s)}px ${this.titleFontFamily}`;
+    ctx.fillStyle = '#8b6914';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('女巫的词牌', W / 2, H * 0.16);
+    ctx.restore();
+
+    this.homepageBtnRects = [];
+    const elapsed = Date.now() - this.homepageAnimStartTime;
+
+    // 按钮入场缩放（果冻感）
+    const getBtnScale = (delay, duration) => {
+      const e = elapsed - delay;
+      if (e <= 0) return 0;
+      const progress = Math.min(e / duration, 1);
+      return Easing.easeOutBackStrong(progress);
+    };
+
+    // 小按钮弹出瞬间：椭圆形金色边框爆发
+    const drawBurstRing = (cx, cy, w, h, progress) => {
+      const burstScale = 1.4 - 0.4 * Easing.easeOutCubic(progress);
+      const alpha = 0.9 * (1 - progress);
+      const lineW = Math.max(1, (3 - 2 * progress) * s);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(burstScale, burstScale);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w / 2, h / 2, 0, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 215, 0, ${alpha})`;
+      ctx.lineWidth = lineW;
+      ctx.stroke();
+      ctx.restore();
+    };
+
+    // 辅助函数：按宽度适配绘制图片按钮，支持缩放与爆发
+    const drawImgBtn = (img, loaded, cx, cy, maxW, maxH, key, animScale = 1, burstProgress = -1) => {
+      let recordW = maxW;
+      let recordH = maxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        let drawW = maxW;
+        let drawH = drawW / aspect;
+        if (drawH > maxH) {
+          drawH = maxH;
+          drawW = drawH * aspect;
+        }
+        recordW = drawW;
+        recordH = drawH;
+      }
+
+      if (animScale > 0) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(animScale, animScale);
+        ctx.translate(-cx, -cy);
+
+        if (!loaded || !img || img.width <= 0 || img.height <= 0) {
+          const fx = cx - maxW / 2;
+          const fy = cy - maxH / 2;
+          this.roundRect(fx, fy, maxW, maxH, 8 * s, 'rgba(255,255,255,0.15)', 'rgba(255,255,255,0.35)', 1 * s);
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(key.replace('homepage', ''), cx, cy);
+        } else {
+          const drawX = cx - recordW / 2;
+          const drawY = cy - recordH / 2;
+          ctx.drawImage(img, drawX, drawY, recordW, recordH);
+        }
+        ctx.restore();
+
+        if (burstProgress >= 0 && burstProgress < 1) {
+          drawBurstRing(cx, cy, recordW, recordH, burstProgress);
+        }
+      }
+
+      this.homepageBtnRects.push({ x: cx - recordW / 2, y: cy - recordH / 2, w: recordW, h: recordH, key });
+    };
+
+    // 中间 45% 高度：左右两个大按钮先缩放弹出
+    const bigBtnMaxW = W * 0.65;
+    const bigBtnMaxH = H * 0.22;
+    const bigBtnY = H * 0.48;
+    const bigGap = W * 0.09;
+
+    const bigBtnInfos = [
+      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
+      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 350 },
+    ].map(({ img, loaded, key, delay }) => {
+      let drawW = bigBtnMaxW;
+      let drawH = bigBtnMaxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        drawW = bigBtnMaxW;
+        drawH = drawW / aspect;
+        if (drawH > bigBtnMaxH) {
+          drawH = bigBtnMaxH;
+          drawW = drawH * aspect;
+        }
+      }
+      return { img, loaded, key, drawW, drawH, delay };
+    });
+
+    const bigTotalW = bigBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + bigGap;
+    let bigX = (W - bigTotalW) / 2;
+    bigBtnInfos.forEach(({ img, loaded, key, drawW, drawH, delay }) => {
+      const cx = bigX + drawW / 2;
+      const scale = getBtnScale(delay, 550);
+      drawImgBtn(img, loaded, cx, bigBtnY, drawW, drawH, key, scale);
+      bigX += drawW + bigGap;
+    });
+
+    // 两个大按钮斜光扫过（round=紫色，battle=绿色）
+    if (this.homepageBtnRects.length >= 2) {
+      const roundRect = this.homepageBtnRects[0];
+      const battleRect = this.homepageBtnRects[1];
+      this._drawRectSweep(ctx, roundRect.x, roundRect.y, roundRect.w, roundRect.h, s, 'purple', 0);
+      this._drawRectSweep(ctx, battleRect.x, battleRect.y, battleRect.w, battleRect.h, s, 'green', 0.5);
+    }
+
+    // 下方 65% 高度：4 个小按钮依次从左往右缩放弹出
+    const smallBtnMaxW = W * 0.24;
+    const smallBtnMaxH = H * 0.12;
+    const smallBtnY = H * 0.68;
+    const smallGap = 14 * s;
+    const smallKeys = [
+      { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
+      { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
+      { img: this.homepageDaily, loaded: this.homepageDailyLoaded, key: 'daily' },
+      { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
+    ];
+
+    const smallBtnInfos = smallKeys.map(({ img, loaded, key }) => {
+      let drawW = smallBtnMaxW;
+      let drawH = smallBtnMaxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        drawW = smallBtnMaxW;
+        drawH = drawW / aspect;
+        if (drawH > smallBtnMaxH) {
+          drawH = smallBtnMaxH;
+          drawW = drawH * aspect;
+        }
+      }
+      return { img, loaded, key, drawW, drawH };
+    });
+
+    const smallTotalW = smallBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + smallGap * 3;
+    let smallX = (W - smallTotalW) / 2;
+    smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
+      const cx = smallX + drawW / 2;
+      const delay = 800 + i * 150;
+      const scale = getBtnScale(delay, 450);
+      const burstElapsed = elapsed - delay;
+      const burstDuration = 220;
+      const burstProgress = burstElapsed >= 0 && burstElapsed < burstDuration ? burstElapsed / burstDuration : -1;
+      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, burstProgress);
+      smallX += drawW + smallGap;
+    });
+  }
+
   resetState() {
     this.sparkles = [];
     this.flyingScore = null;
@@ -1029,7 +1228,7 @@ class Renderer {
     }
   }
 
-  drawCard(card, x, y, isNew = false, displayScoreOverride = null) {
+  drawCard(card, x, y, isNew = false, displayScoreOverride = null, sweepColor = null) {
     const ctx = this.ctx;
     const w = this.cardW;
     const h = this.cardH;
@@ -1202,6 +1401,12 @@ class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('★', hw - 10 * s, hh - 10 * s);
+    }
+
+    // === 8. 通关/对战模式斜光扫过 ===
+    if (sweepColor) {
+      const sweepOffset = (card.letter ? card.letter.charCodeAt(0) : 0) * 0.05;
+      this._drawCardSweep(ctx, w, h, s, sweepColor, sweepOffset);
     }
 
     ctx.restore();

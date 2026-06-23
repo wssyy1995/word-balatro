@@ -68,7 +68,9 @@ class CloudStorageManager {
       'chaos_orb':c('/shop_card/chaos_orb.png'),
       'left_right_open':c('/shop_card/left_right_open.png'),
       'is_new_word':c('/shop_card/is_new_word.png'),
-      'replicate_letter':c('/shop_card/replicate_letter.png')
+      'replicate_letter':c('/shop_card/replicate_letter.png'),
+      'mystery_discount':c('/shop_card/mystery_discount.png'),
+      'cupon':c('/shop_card/cupon.png')
     };
 
     // 默认 witch 图片云文件映射
@@ -143,6 +145,7 @@ class CloudStorageManager {
       'spin_wheel': c('/music/sound_effect/spin_whell.mp3'),
       'guide_type': c('/music/sound_effect/type_2.mp3'),
       'witch_guide_1_bg': c('/music/sound_effect/witch_guide_1_bg.mp3'),
+      'win_success': c('/music/sound_effect/win_success.mp3'),
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
@@ -1522,11 +1525,13 @@ class CloudStorageManager {
       this.log('bg_icon battle_vs 未加载，跳过注入');
     }
 
-    // 对战单词预览区装饰线
+    // 对战单词预览区装饰线 / 主玩法计分方块装饰线
     const scoreLineData = this.bgIconImages['score_line'];
     if (scoreLineData && scoreLineData.loaded && scoreLineData.img) {
       renderer.scoreLine = scoreLineData.img;
       renderer.scoreLineLoaded = true;
+      renderer.scoreLineImg = scoreLineData.img;
+      renderer.scoreLineImgLoaded = true;
       this.log('已注入 bg_icon renderer: score_line');
     } else {
       this.log('bg_icon score_line 未加载，跳过注入');

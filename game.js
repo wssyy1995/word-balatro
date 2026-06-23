@@ -464,6 +464,9 @@ cloudStorage.init();
 let preloadProgress = 0;
 let preloadComplete = false;
 
+// homepage 展示开关（测试阶段始终展示，点击按钮后进入预加载/游戏）
+let showHomepage = true;
+
 // 过渡状态（预加载页 → 游戏页）
 let transitionAlpha = 0;
 let transitionStartTime = null;
@@ -713,13 +716,29 @@ function getInputY(x, y) {
 
 // 触摸事件处理
 wx.onTouchStart((e) => {
+  const touch = e.touches[0];
+  const x = touch.clientX;
+  const y = touch.clientY;
+
+  // homepage 触摸优先处理（测试阶段常驻展示）
+  if (showHomepage && renderer.homepageBtnRects) {
+    const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
+    if (hit) {
+      console.log('[Homepage] clicked:', hit.key);
+      // 测试阶段：点击任意 homepage 按钮后隐藏 homepage，进入预加载/游戏流程
+      showHomepage = false;
+      if (preloadComplete && game) {
+        transitionStartTime = Date.now();
+      }
+      return;
+    }
+    return;
+  }
+
   // 预加载阶段不响应触摸
   if (!preloadComplete) return;
   if (!game) return;
 
-  const touch = e.touches[0];
-  const x = touch.clientX;
-  const y = touch.clientY;
   const inputY = getInputY(x, y);
   touchStartPos = { x, y };
 
@@ -1274,6 +1293,21 @@ wx.onTouchMove((e) => {
     game._jokerSortState.insertSlot = insertSlot;
   }
 
+  // 迷之优惠涂抹刮开（移动时记录轨迹）
+  if (game.state === 'mystery_discount' && game._mysteryDiscountState) {
+    const md = game._mysteryDiscountState;
+    if (md._scratching && md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
+      const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
+      if (rect) {
+        const x = touch.clientX;
+        const y = inputY;
+        if (x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h) {
+          addScratchPoint(md, rect, x, y);
+        }
+      }
+    }
+  }
+
   if (!renderer.cloudLogDragging) return;
   const y = touch.clientY;
   const deltaY = renderer.cloudLogDragStartY - y;
@@ -1287,6 +1321,11 @@ wx.onTouchEnd(() => {
   game._cardBookIconPressed = false;
   game._cardBookEquipBtnPressed = false;
   game._newWitchCardCollectBtnPressed = false;
+
+  // 迷之优惠涂抹刮开结束
+  if (game._mysteryDiscountState) {
+    game._mysteryDiscountState._scratching = false;
+  }
 
   // 取消未触发的长按定时器
   if (longPressTimer) {
@@ -1655,6 +1694,82 @@ wx.onTouchEnd(() => {
 
   touchStartPos = null;
 });
+
+// === 迷之优惠涂抹刮开辅助函数 ===
+function initScratchGrid(md) {
+  if (md.scratchGrid) return;
+  const cols = 24;
+  const rows = 16;
+  md.scratchGrid = [];
+  for (let r = 0; r < rows; r++) {
+    md.scratchGrid[r] = new Array(cols).fill(false);
+  }
+  md.scratchCols = cols;
+  md.scratchRows = rows;
+  md.scratchPoints = [];
+}
+
+function markScratchCell(md, localX, localY) {
+  const cols = md.scratchCols;
+  const rows = md.scratchRows;
+  const col = Math.min(cols - 1, Math.max(0, Math.floor(localX * cols)));
+  const row = Math.min(rows - 1, Math.max(0, Math.floor(localY * rows)));
+  // 5x5 笔刷，模拟涂抹半径（比之前稍粗）
+  for (let dr = -2; dr <= 2; dr++) {
+    for (let dc = -2; dc <= 2; dc++) {
+      const r = row + dr;
+      const c = col + dc;
+      if (r >= 0 && r < rows && c >= 0 && c < cols) {
+        md.scratchGrid[r][c] = true;
+      }
+    }
+  }
+}
+
+function addScratchPoint(md, rect, x, y) {
+  initScratchGrid(md);
+  const cols = md.scratchCols;
+  const rows = md.scratchRows;
+  const localX = Math.max(0, Math.min(1, (x - rect.x) / rect.w));
+  const localY = Math.max(0, Math.min(1, (y - rect.y) / rect.h));
+
+  const last = md.scratchPoints[md.scratchPoints.length - 1];
+  if (last) {
+    const dx = localX - last.x;
+    const dy = localY - last.y;
+    if (dx * dx + dy * dy < 0.0002) return;
+  }
+  md.scratchPoints.push({ x: localX, y: localY });
+
+  markScratchCell(md, localX, localY);
+
+  if (last) {
+    const dx = localX - last.x;
+    const dy = localY - last.y;
+    const steps = Math.max(1, Math.ceil(Math.sqrt(dx * dx + dy * dy) * Math.max(cols, rows) * 2));
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      const ix = last.x + dx * t;
+      const iy = last.y + dy * t;
+      markScratchCell(md, ix, iy);
+    }
+  }
+
+  let scratchedCount = 0;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if (md.scratchGrid[r][c]) scratchedCount++;
+    }
+  }
+  md.scratchProgress = scratchedCount / (rows * cols);
+
+  if (md.scratchProgress >= 0.5 && !md.revealed) {
+    md.revealed = true;
+    md.revealStartTime = Date.now();
+    vibrate();
+    if (game.audioManager) game.audioManager.play('tap');
+  }
+}
 
 function handleInput(x, inputY) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
@@ -2469,16 +2584,15 @@ function handleInput(x, inputY) {
       return;
     }
 
-    // 刮开优惠券（点击刮奖区）
+    // 刮开优惠券（涂抹刮奖区）
     if (md.selectedIdx !== null && md.scratched && !md.revealed && renderer.mysteryDiscountRenderer) {
       const rect = renderer.mysteryDiscountRenderer.scratchZoneRect;
       if (rect) {
         const hit = renderer.hitTest(x, inputY, [rect]);
         if (hit) {
-          vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
-          md.revealed = true;
-          md.revealStartTime = Date.now();
+          md._scratching = true;
+          initScratchGrid(md);
+          addScratchPoint(md, rect, x, inputY);
           return;
         }
       }
@@ -2493,9 +2607,10 @@ function handleInput(x, inputY) {
         if (hit) {
           vibrate();
           if (game.audioManager) game.audioManager.play('tap');
-          // 应用随机折扣（5~9折）
+          // 应用随机折扣（6~9折）
           game._shopDiscountActive = true;
           game._shopDiscountRate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
+          console.log('[MysteryDiscount] applied rate:', game._shopDiscountRate, 'selectedIdx:', md.selectedIdx, 'rates:', md.rates);
           game._mysteryDiscountState = null;
           game.state = 'shop';
           if (game.storageManager) game.storageManager.saveProgress();
@@ -2694,6 +2809,7 @@ function handleInput(x, inputY) {
                 // 3张优惠券预生成6~9折随机折扣
                 rates: Array.from({ length: 3 }, () => 0.6 + Math.random() * 0.3)
               };
+              console.log('[MysteryDiscount] generated rates:', game._mysteryDiscountState.rates);
               game.state = 'mystery_discount';
               game._closingConfirmBuy = true;
               game._closeConfirmBuyStartTime = Date.now();
@@ -3252,7 +3368,10 @@ function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
-  if (!preloadComplete) {
+  if (showHomepage) {
+    // 测试阶段：优先展示 homepage
+    renderer.drawHomepage();
+  } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
   } else if (transitionStartTime !== null) {

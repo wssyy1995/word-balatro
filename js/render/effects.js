@@ -436,29 +436,30 @@ module.exports = function extendEffects(Renderer) {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(scale, scale);
-  
+
       const fontSize = Math.floor(28 * s);
       const t = elapsed * 0.001;
-  
+
       // ============ 方案B · 光晕呼吸 ============
-  
+
       // 1. 底层大光晕（呼吸）—— 透明度适度、半径缩小
       const breathe = 0.5 + 0.5 * Math.cos(t * 3); // cos(0)=1，弹出瞬间光晕最大
-      for (let i = 3; i >= 1; i--) {
-        const r = (6 + i * 3 + breathe * 2) * s;
+      for (let i = 2; i >= 1; i--) {
+        const r = (9 + i * 3 + breathe * 2) * s;
         const g = ctx.createRadialGradient(0, 0, 4 * s, 0, 0, r);
-        g.addColorStop(0, `rgba(255,255,255,${0.35 - i * 0.06})`);
-        g.addColorStop(0.5, `rgba(255,255,255,${0.30 - i * 0.035})`);
-        g.addColorStop(1, `rgba(255,255,255,${0.25 - i * 0.02})`);
+        g.addColorStop(0, `rgba(255,255,255,${0.30 - i * 0.08})`);
+        g.addColorStop(0.55, `rgba(255,255,255,${0.22 - i * 0.04})`);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
         ctx.beginPath();
         ctx.arc(0, 0, r, 0, Math.PI * 2);
         ctx.fillStyle = g;
         ctx.fill();
       }
-  
-      // 3. 金色粒子（12个）
-      for (let i = 0; i < 12; i++) {
-        const a = (Math.PI * 2 / 12) * i + t * 0.35;
+
+      // 3. 金色粒子（6个，降低性能开销）
+      const particleCount = 6;
+      for (let i = 0; i < particleCount; i++) {
+        const a = (Math.PI * 2 / particleCount) * i + t * 0.35;
         const dist = (24 + Math.sin(t * 2 + i) * 7) * s;
         const px = Math.cos(a) * dist;
         const py = Math.sin(a) * dist;
@@ -468,26 +469,29 @@ module.exports = function extendEffects(Renderer) {
         ctx.fillStyle = `rgba(255,220,100,${alpha})`;
         ctx.fill();
       }
-  
+
       // 4. 文字（深紫描边 + 紫色主体 + 金色外发光，x/+ 前缀小一点）
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-  
+
       const prefix = (text.length >= 2 && /[x+\-×]/.test(text[0])) ? text[0] : '';
       const numStr = prefix ? text.slice(1) : text;
       const pSize = prefix ? Math.floor(fontSize * 0.78) : fontSize;
       const pYOff = prefix ? (fontSize - pSize) / 2 - 1 * s : 0;
-  
-      ctx.font = `900 ${pSize}px sans-serif`;
-      const pW = prefix ? ctx.measureText(prefix).width : 0;
-      ctx.font = `900 ${fontSize}px sans-serif`;
-      const nW = ctx.measureText(numStr).width;
+
+      // 缓存文本宽度，避免每帧 measureText
+      if (!this._fancyLabelTextCache) this._fancyLabelTextCache = {};
+      const pW = prefix ? (this._fancyLabelTextCache[prefix + '|' + pSize] ||
+        (this._fancyLabelTextCache[prefix + '|' + pSize] = ctx.measureText(prefix).width)) : 0;
+      const nW = this._fancyLabelTextCache[numStr + '|' + fontSize] ||
+        (this._fancyLabelTextCache[numStr + '|' + fontSize] = ctx.measureText(numStr).width);
+
       const gap = 1 * s;
       const startX = -(pW + gap + nW) / 2;
       const pX = startX + pW / 2;
       const nX = startX + pW + gap + nW / 2;
-  
+
       const drawLayer = (styleFn, drawFn) => {
         styleFn();
         if (prefix) {
@@ -497,13 +501,13 @@ module.exports = function extendEffects(Renderer) {
           ctx.font = `900 ${fontSize}px sans-serif`; drawFn(text, 0, 0);
         }
       };
-  
+
       // 深紫描边
       drawLayer(
         () => { ctx.lineWidth = 1.5 * s; ctx.strokeStyle = '#2a0850'; },
         (t, x, y) => ctx.strokeText(t, x, y)
       );
-  
+
       // 紫色主体 + 金色外发光
       drawLayer(
         () => {
@@ -514,7 +518,7 @@ module.exports = function extendEffects(Renderer) {
         },
         (t, x, y) => ctx.fillText(t, x, y)
       );
-  
+
       // 白色高光（向上偏移）
       drawLayer(
         () => {
@@ -524,7 +528,7 @@ module.exports = function extendEffects(Renderer) {
         },
         (t, x, y) => ctx.fillText(t, x, y - fontSize * 0.025)
       );
-  
+
       ctx.restore();
       ctx.restore();
     }
@@ -818,6 +822,96 @@ module.exports = function extendEffects(Renderer) {
       ctx.restore();
     }
 
+    // 通用矩形斜光扫过（屏幕坐标）
+    // color: 'purple' | 'green' | 其他，默认紫色
+    Renderer.prototype._drawRectSweep = function(ctx, x, y, w, h, s, color, timeOffset = 0) {
+      ctx.save();
+      const r = 10 * s;
+      this._roundedRectPath(ctx, x, y, w, h, r);
+      ctx.clip();
+
+      const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
+      const t = ((Date.now() / 1000 + to) % 7.0) / 7.0;
+      const sweepLen = (w + h) * 0.9;
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      const d = -Math.max(w, h) * 0.55 + t * sweepLen;
+      const dx = cx + d - h * 0.2;
+      const dy = cy + d - w * 0.2;
+
+      let tintCenter, tintEdge;
+      if (color === 'green') {
+        tintCenter = 'rgba(200, 255, 220,';
+        tintEdge = 'rgba(180, 255, 210,';
+      } else {
+        tintCenter = 'rgba(255, 220, 255,';
+        tintEdge = 'rgba(255, 200, 255,';
+      }
+
+      // 主光带：宽大、柔和、低饱和
+      const beamW = Math.min(w, h) * 0.55;
+      const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
+      grad.addColorStop(0, 'rgba(255,255,255,0)');
+      grad.addColorStop(0.42, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(0.5, `${tintCenter}0.18)`);
+      grad.addColorStop(0.58, 'rgba(255,255,255,0.02)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+
+      // 第二层更淡的反相微光，增加朦胧层次
+      const t2 = ((Date.now() / 1000 + to + 3.5) % 7.0) / 7.0;
+      const d2 = -Math.max(w, h) * 0.55 + t2 * sweepLen;
+      const dx2 = cx + d2 - h * 0.2;
+      const dy2 = cy + d2 - w * 0.2;
+      const grad2 = ctx.createLinearGradient(dx2 - beamW * 0.8, dy2 - beamW * 0.8, dx2 + beamW * 0.8, dy2 + beamW * 0.8);
+      grad2.addColorStop(0, 'rgba(255,255,255,0)');
+      grad2.addColorStop(0.45, `${tintEdge}0.015)`);
+      grad2.addColorStop(0.5, `${tintCenter}0.08)`);
+      grad2.addColorStop(0.55, `${tintEdge}0.015)`);
+      grad2.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = grad2;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+      ctx.restore();
+    }
+
+    // 卡牌斜光扫过（通关模式紫色 / 对战模式绿色）
+    // 在 drawCard 的变换坐标系中调用：卡牌中心为 (0,0)，范围为 (-w/2, -h/2) 到 (w/2, h/2)
+    Renderer.prototype._drawCardSweep = function(ctx, w, h, s, color, timeOffset = 0) {
+      ctx.save();
+      const r = 10 * s;
+      this._roundedRectPath(ctx, -w / 2, -h / 2, w, h, r);
+      ctx.clip();
+
+      const to = typeof timeOffset === 'number' && !isNaN(timeOffset) ? timeOffset : 0;
+      const t = ((Date.now() / 1000 + to) % 2.8) / 2.8;
+      const sweepLen = (w + h) * 1.6;
+      const d = -Math.max(w, h) + t * sweepLen;
+      const dx = d;
+      const dy = d;
+
+      let centerColor, edgeColor;
+      if (color === 'green') {
+        centerColor = 'rgba(60, 255, 140,';
+        edgeColor = 'rgba(60, 255, 140,';
+      } else {
+        // 默认紫色
+        centerColor = 'rgba(200, 100, 255,';
+        edgeColor = 'rgba(200, 100, 255,';
+      }
+
+      const beamW = 40 * s;
+      const grad = ctx.createLinearGradient(dx - beamW, dy - beamW, dx + beamW, dy + beamW);
+      grad.addColorStop(0, `${edgeColor}0)`);
+      grad.addColorStop(0.42, `${edgeColor}0.08)`);
+      grad.addColorStop(0.5, `${centerColor}0.85)`);
+      grad.addColorStop(0.58, `${edgeColor}0.08)`);
+      grad.addColorStop(1, `${edgeColor}0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(-w * 2, -h * 2, w * 4, h * 4);
+      ctx.restore();
+    }
+
     // 卡牌选中态闪烁小星星（菱形星心 + 十字光芒）
     // 原实现位于 card_book 的 cell 选中态，抽成通用方法供新词牌弹窗等复用
     // randomArea=false 时沿卡牌边缘分布，randomArea=true 时在卡牌区域内随机分布
@@ -977,6 +1071,44 @@ module.exports = function extendEffects(Renderer) {
   
       ctx.restore();
     }
+
+    // 彩虹箔光：沿对角线扫过的彩虹渐变流光，用于商店卡牌
+    // 未命中现有通用动画方案（自定义渐变位移动画）
+    Renderer.prototype._drawRainbowFoil = function(ctx, x, y, w, h, r, s) {
+      ctx.save();
+      // 圆角裁切，确保流光不溢出卡牌
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.clip();
+
+      const t = Date.now() / 1000;
+      const cycle = 3.2;
+      const p = (t % cycle) / cycle;
+      const dx = x - w * 0.5 + p * (w + h) * 1.4;
+      const dy = y - h * 0.3 + p * (w + h) * 0.7;
+      const gradSize = 70 * s;
+      const grad = ctx.createLinearGradient(dx - gradSize, dy - gradSize, dx + gradSize, dy + gradSize);
+      grad.addColorStop(0, 'rgba(255,100,150,0)');
+      grad.addColorStop(0.3, 'rgba(255,180,100,0.08)');
+      grad.addColorStop(0.45, 'rgba(255,255,150,0.18)');
+      grad.addColorStop(0.5, 'rgba(200,255,200,0.22)');
+      grad.addColorStop(0.55, 'rgba(150,200,255,0.18)');
+      grad.addColorStop(0.7, 'rgba(200,150,255,0.08)');
+      grad.addColorStop(1, 'rgba(255,100,150,0)');
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(x - w, y - h, w * 3, h * 3);
+      ctx.restore();
+    };
 
     Renderer.prototype._calcPulseScale = function(animState, maxScale = 0.3) {
       if (!animState || !animState.startTime) return { scale: 1, progress: 1 };

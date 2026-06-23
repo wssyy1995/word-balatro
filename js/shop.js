@@ -1149,7 +1149,9 @@ class ShopRenderer {
 
         // 竖向卡牌（cover 模式绘制图标，金色边框，无额外深色背景）
         const cardX = unitX + 1 * s;
-        const cardY = unitY + (unitH - cardH) / 2;
+        // 非常轻微的上下飘动（1px 幅度），相邻卡牌错开相位
+        const floatY = Math.sin(Date.now() / 650 + itemIdx * 1.3) * 1 * s;
+        const cardY = unitY + (unitH - cardH) / 2 + floatY;
         const cardR = 6 * s;
 
         // 圆角 clip 后 cover 绘制图标
@@ -1197,6 +1199,8 @@ class ShopRenderer {
           ctx.lineWidth = 1 * s;
           ctx.stroke();
         }
+        // 彩虹箔光：商店商品卡牌统一添加对角线彩虹渐变流光
+        this.parent._drawRainbowFoil(ctx, cardX, cardY, cardW, cardH, cardR, s);
         ctx.restore();
 
         // 文字区域（卡牌右侧，淡色行背景上 → 深色文字）
@@ -2381,117 +2385,212 @@ class MysteryDiscountRenderer {
     // === 3张优惠券 ===
     const couponW = 90 * s;
     const couponH = 130 * s;
-    const gap = 14 * s;
+    const gap = 24 * s;
+    const baseScale = 1.2;
+    const targetScale = 1.6;
     const totalW = couponW * 3 + gap * 2;
     const startX = (W - totalW) / 2;
-    const couponY = 130 * s;
+    const baseCenterY = H * 0.5;
+    const targetCenterX = W * 0.5;
+    const targetCenterY = H * 0.5;
+
+    // 选择动画进度
+    const SELECT_ANIM_DURATION = 400;
+    if (md.selectedIdx !== null && !md.selectStartTime) {
+      md.selectStartTime = Date.now();
+    }
+    const selectElapsed = md.selectStartTime ? Date.now() - md.selectStartTime : 0;
+    const selectProgress = Math.min(selectElapsed / SELECT_ANIM_DURATION, 1);
+    const selectEase = Easing.easeOutBack(selectProgress);
 
     this.couponRects = [];
 
+    let selectedSX, selectedSY, selectedSW, selectedSH;
+
     for (let i = 0; i < 3; i++) {
-      const cx = startX + i * (couponW + gap);
-      const cy = couponY;
+      const originalCenterX = startX + i * (couponW + gap) + couponW / 2;
+      const originalCenterY = baseCenterY;
       const isSelected = md.selectedIdx === i;
       const isOther = md.selectedIdx !== null && md.selectedIdx !== i;
 
-      // 其他卡片淡出
-      if (isOther) {
-        ctx.save();
-        ctx.globalAlpha = 0.3;
+      let centerX, centerY, scale, alpha;
+
+      // 呼吸缩放动画（复用女巫奖励礼盒效果）
+      const breath = Math.sin(Date.now() / 600 + i * 0.5) * 0.02;
+      const pulse = 1 + breath;
+
+      if (md.selectedIdx === null) {
+        centerX = originalCenterX;
+        centerY = originalCenterY;
+        scale = baseScale * pulse;
+        alpha = 1;
+      } else if (isSelected) {
+        centerX = originalCenterX + (targetCenterX - originalCenterX) * selectEase;
+        centerY = originalCenterY + (targetCenterY - originalCenterY) * selectEase;
+        scale = baseScale + (targetScale - baseScale) * selectEase;
+        alpha = 1;
+      } else {
+        const disappearEase = Easing.easeOutCubic(selectProgress);
+        centerX = originalCenterX;
+        centerY = originalCenterY;
+        scale = baseScale * (1 - disappearEase);
+        alpha = 1 - disappearEase;
       }
 
-      // 选中放大
-      const scale = isSelected ? 1.08 : 1;
       const sw = couponW * scale;
       const sh = couponH * scale;
-      const sx = cx + (couponW - sw) / 2;
-      const sy = cy + (couponH - sh) / 2;
+      const sx = centerX - sw / 2;
+      const sy = centerY - sh / 2;
 
-      // 优惠券背景（金色边框圆角卡片）
-      this.parent.roundRect(sx, sy, sw, sh, 10 * s, '#fff9f0', gold);
-
-      // 优惠券顶部装饰条
-      ctx.fillStyle = gold;
-      ctx.beginPath();
-      ctx.moveTo(sx + 10 * s, sy);
-      ctx.quadraticCurveTo(sx + sw / 2, sy + 12 * s, sx + sw - 10 * s, sy);
-      ctx.lineTo(sx + sw - 10 * s, sy + 18 * s);
-      ctx.quadraticCurveTo(sx + sw / 2, sy + 30 * s, sx + 10 * s, sy + 18 * s);
-      ctx.closePath();
-      ctx.fill();
-
-      // 优惠券图标（问号）
-      ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-      ctx.fillStyle = darkBlue;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
-
-      // 优惠券名称
-      ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
-      ctx.fillStyle = '#5a4a2a';
-      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + sh * 0.72);
-
-      // 虚线分隔（模拟优惠券撕口）
-      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
-      ctx.lineWidth = 1 * s;
-      ctx.setLineDash([4 * s, 4 * s]);
-      ctx.beginPath();
-      ctx.moveTo(sx + 8 * s, sy + sh * 0.58);
-      ctx.lineTo(sx + sw - 8 * s, sy + sh * 0.58);
-      ctx.stroke();
-      ctx.setLineDash([]);
-
-      if (isOther) {
-        ctx.restore();
+      if (isSelected) {
+        selectedSX = sx;
+        selectedSY = sy;
+        selectedSW = sw;
+        selectedSH = sh;
       }
 
-      // 存储点击区域
+      ctx.save();
+      ctx.globalAlpha = alpha * enterEase;
+
+      // 优惠券图片（优先使用云存储 cupon.png）
+      const cuponData = this.parent.shopCardImages['cupon'];
+      if (cuponData && cuponData.loaded && cuponData.img) {
+        ctx.save();
+        this.parent._roundedRectPath(ctx, sx, sy, sw, sh, 10 * s);
+        ctx.clip();
+        const aspect = (cuponData.width > 0 && cuponData.height > 0)
+          ? cuponData.width / cuponData.height
+          : sw / sh;
+        let drawW, drawH, imgX, imgY;
+        const cardAspect = sw / sh;
+        if (aspect > cardAspect) {
+          drawW = sw;
+          drawH = drawW / aspect;
+          imgX = sx;
+          imgY = sy + (sh - drawH) / 2;
+        } else {
+          drawH = sh;
+          drawW = drawH * aspect;
+          imgX = sx + (sw - drawW) / 2;
+          imgY = sy;
+        }
+        ctx.drawImage(cuponData.img, imgX, imgY, drawW, drawH);
+        ctx.restore();
+      } else {
+        // fallback：简洁优惠券占位
+        this.parent.roundRect(sx, sy, sw, sh, 10 * s, '#fff9f0', gold);
+        ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+        ctx.fillStyle = darkBlue;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
+      }
+
+      // 优惠券标题（金棕色，与游戏标题一致）
+      // 标题随优惠券 base→target 缩放，但不跟随呼吸脉冲
+      const titleScale = md.selectedIdx === null ? scale / pulse : scale;
+      ctx.font = `bold ${Math.floor(12 * s * titleScale)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 15 * s * titleScale);
+
+      ctx.restore();
+
+      // 存储点击区域（按当前缩放后的尺寸）
       if (md.selectedIdx === null) {
-        this.couponRects.push({ x: cx, y: cy, w: couponW, h: couponH, index: i });
+        const hitW = couponW * scale;
+        const hitH = couponH * scale;
+        this.couponRects.push({ x: centerX - hitW / 2, y: centerY - hitH / 2, w: hitW, h: hitH, index: i });
       }
     }
 
-    // === 刮奖区（选中后显示）===
+    // === 刮奖区（选中后显示，跟随被选中的优惠券位置）===
     if (md.selectedIdx !== null && md.scratched) {
-      const i = md.selectedIdx;
-      const cx = startX + i * (couponW + gap);
-      const cy = couponY;
-      const scratchW = couponW * 1.08;
-      const scratchH = 50 * s;
-      const scratchX = cx + (couponW - scratchW) / 2;
-      const scratchY = cy + 20 * s;
+      const scratchW = couponW * 1.08 - 2 * s;
+      const scratchH = 58 * s;
+      const scratchX = selectedSX + (selectedSW - scratchW) / 2;
+      const scratchY = selectedSY + (selectedSH - scratchH) / 2 - 3 * s;
 
       // 刮奖区背景
       this.parent.roundRect(scratchX, scratchY, scratchW, scratchH, 8 * s, '#e8e0d4', '#c4a35a');
 
-      if (!md.revealed) {
-        // 未刮开：显示"刮开看看"提示
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-        ctx.fillStyle = '#888';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('点击刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+      const rate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
+      const discountText = `${Math.round(rate * 10)}折`;
+      const revealElapsed = md.revealed ? Date.now() - (md.revealStartTime || Date.now()) : 0;
+      const revealProgress = md.revealed ? Math.min(revealElapsed / 300, 1) : 0;
+      const revealEase = md.revealed ? Easing.easeOutBack(revealProgress) : 0;
 
-        // 存储刮奖区点击区域
-        this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
-        this.collectBtnRect = null;
+      // 折扣标签（优先使用精灵图 6~9折，每帧100x100）
+      const sheet = this.parent.discountSpritesheet;
+      const sheetLoaded = this.parent.discountSpritesheetLoaded;
+      const frameIdx = Math.max(0, Math.min(3, Math.round(rate * 10) - 6));
+      const iconSize = Math.min(scratchW, scratchH) * 0.85;
+      const iconX = scratchX + (scratchW - iconSize) / 2;
+      const iconY = scratchY + (scratchH - iconSize) / 2;
+
+      ctx.save();
+      ctx.globalAlpha = md.revealed ? revealEase : 1;
+      if (md.revealed) {
+        ctx.translate(scratchX + scratchW / 2, scratchY + scratchH / 2);
+        ctx.scale(revealEase, revealEase);
+        ctx.translate(-(scratchX + scratchW / 2), -(scratchY + scratchH / 2));
+      }
+      if (sheetLoaded && sheet) {
+        ctx.drawImage(sheet, frameIdx * 100, 0, 100, 100, iconX, iconY, iconSize, iconSize);
       } else {
-        // 已刮开：显示随机折扣（5~9折）
-        const revealElapsed = Date.now() - (md.revealStartTime || Date.now());
-        const revealProgress = Math.min(revealElapsed / 300, 1);
-        const revealEase = Easing.easeOutBack(revealProgress);
-        const rate = (md.rates && md.rates[md.selectedIdx]) || 0.8;
-        const discountText = `${Math.round(rate * 10)}折`;
-
-        ctx.save();
-        ctx.globalAlpha = revealEase;
         ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
         ctx.fillStyle = '#d9534f';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(discountText, scratchX + scratchW / 2, scratchY + scratchH / 2);
+      }
+      ctx.restore();
+
+      if (!md.revealed) {
+        // 涂抹刮开覆盖层：按网格绘制未刮开单元格，刮开处直接露出底层折扣
+        ctx.save();
+        this.parent._roundedRectPath(ctx, scratchX, scratchY, scratchW, scratchH, 8 * s);
+        ctx.clip();
+
+        const cols = md.scratchCols || 24;
+        const rows = md.scratchRows || 16;
+        const grid = md.scratchGrid;
+        const cellW = scratchW / cols;
+        const cellH = scratchH / rows;
+        ctx.fillStyle = '#c8c0b4';
+        if (!grid) {
+          // 尚未开始涂抹：完整覆盖
+          ctx.fillRect(scratchX, scratchY, scratchW, scratchH);
+        } else {
+          for (let r = 0; r < rows; r++) {
+            if (!grid[r]) continue;
+            for (let c = 0; c < cols; c++) {
+              if (!grid[r][c]) {
+                ctx.fillRect(scratchX + c * cellW, scratchY + r * cellH, cellW + 1, cellH + 1);
+              }
+            }
+          }
+        }
+
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (!md.scratchPoints || md.scratchPoints.length === 0) {
+          ctx.fillText('涂抹刮开', scratchX + scratchW / 2, scratchY + scratchH / 2);
+        }
         ctx.restore();
+
+        // 存储刮奖区点击区域
+        this.scratchZoneRect = { x: scratchX, y: scratchY, w: scratchW, h: scratchH };
+        this.collectBtnRect = null;
+      } else {
+        // 已刮开：播放中奖音效（只播放一次）
+        if (!md.winSoundPlayed) {
+          md.winSoundPlayed = true;
+          if (game.audioManager) game.audioManager.play('win_success');
+        }
 
         this.scratchZoneRect = null;
 
@@ -2499,7 +2598,7 @@ class MysteryDiscountRenderer {
         const collectBtnW = 160 * s;
         const collectBtnH = 44 * s;
         const collectBtnX = (W - collectBtnW) / 2;
-        const collectBtnY = couponY + couponH + 40 * s;
+        const collectBtnY = selectedSY + selectedSH + 40 * s;
 
         const btnScale = revealEase;
         const bw = collectBtnW * btnScale;
