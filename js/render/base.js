@@ -881,32 +881,50 @@ class Renderer {
       this.homepageBtnRects.push({ x: drawX, y: drawY, w: drawW, h: drawH, key });
     };
 
-    // 中间 50% 区域：左右两个大按钮
+    // 中间 45% 高度：左右两个大按钮
     const bigBtnMaxW = W * 0.42;
     const bigBtnMaxH = H * 0.18;
-    const bigBtnY = H * 0.48;
+    const bigBtnY = H * 0.45;
     const gap = W * 0.04;
     const bigLeftX = W / 2 - gap / 2 - bigBtnMaxW / 2;
     const bigRightX = W / 2 + gap / 2 + bigBtnMaxW / 2;
     drawImgBtn(this.homepageRound, this.homepageRoundLoaded, bigLeftX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'round');
     drawImgBtn(this.homepageBattle, this.homepageBattleLoaded, bigRightX, bigBtnY, bigBtnMaxW, bigBtnMaxH, 'battle');
 
-    // 下方 4 个小按钮
-    const smallBtnMaxW = W * 0.20;
-    const smallBtnMaxH = H * 0.10;
-    const smallBtnY = H * 0.72;
-    const smallGap = W * 0.03;
-    const smallTotalW = smallBtnMaxW * 4 + smallGap * 3;
-    let smallStartX = (W - smallTotalW) / 2 + smallBtnMaxW / 2;
+    // 下方 65% 高度：4 个小按钮，间距按实际绘制宽度计算
+    const smallBtnMaxW = W * 0.23;
+    const smallBtnMaxH = H * 0.12;
+    const smallBtnY = H * 0.65;
+    const smallGap = 8 * s;
     const smallKeys = [
       { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
       { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
       { img: this.homepageDaily, loaded: this.homepageDailyLoaded, key: 'daily' },
       { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
     ];
-    smallKeys.forEach(({ img, loaded, key }) => {
-      drawImgBtn(img, loaded, smallStartX, smallBtnY, smallBtnMaxW, smallBtnMaxH, key);
-      smallStartX += smallBtnMaxW + smallGap;
+
+    // 先计算每个按钮实际绘制尺寸
+    const smallBtnInfos = smallKeys.map(({ img, loaded, key }) => {
+      let drawW = smallBtnMaxW;
+      let drawH = smallBtnMaxH;
+      if (loaded && img && img.width > 0 && img.height > 0) {
+        const aspect = img.width / img.height;
+        drawW = smallBtnMaxW;
+        drawH = drawW / aspect;
+        if (drawH > smallBtnMaxH) {
+          drawH = smallBtnMaxH;
+          drawW = drawH * aspect;
+        }
+      }
+      return { img, loaded, key, drawW, drawH };
+    });
+
+    const smallTotalW = smallBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + smallGap * 3;
+    let smallX = (W - smallTotalW) / 2;
+    smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }) => {
+      const cx = smallX + drawW / 2;
+      drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key);
+      smallX += drawW + smallGap;
     });
   }
 
