@@ -1023,9 +1023,11 @@ class Renderer {
     smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
       const delay = 900 + i * 200;
-      const scale = getBtnScale(delay, 550);
-      const burstElapsed = elapsed - delay;
-      const burstDuration = 260;
+      const duration = 550;
+      const scale = getBtnScale(delay, duration);
+      const burstDuration = 220;
+      const burstStart = delay + duration - burstDuration;
+      const burstElapsed = elapsed - burstStart;
       const burstProgress = burstElapsed >= 0 && burstElapsed < burstDuration ? burstElapsed / burstDuration : -1;
       drawImgBtn(img, loaded, cx, smallBtnY, drawW, drawH, key, scale, burstProgress);
       smallX += drawW + smallGap;
