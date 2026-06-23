@@ -2485,6 +2485,13 @@ class MysteryDiscountRenderer {
         ctx.fillText('?', sx + sw / 2, sy + sh * 0.42);
       }
 
+      // 优惠券标题
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = darkBlue;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`优惠券 ${i + 1}`, sx + sw / 2, sy + 10 * s);
+
       ctx.restore();
 
       // 存储点击区域（按当前缩放后的尺寸）
