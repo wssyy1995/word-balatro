@@ -193,6 +193,16 @@ function showRankPopup(tab = 'friend') {
   game._showingRankPopup = true;
   game._rankTab = tab;
   switchRankTab(tab);
+
+  // 阶段2优化：打开排行榜时后台预加载 rank_avatar
+  if (game.cloudStorage && !game._rankAvatarPreloaded) {
+    game._rankAvatarPreloaded = true;
+    game.cloudStorage.preloadRankAvatarImages().then(() => {
+      console.log('[Preload] rank_avatar 加载完成');
+    }).catch(err => {
+      console.error('[Preload] rank_avatar 预加载失败:', err);
+    });
+  }
 }
 
 function resetGlobalRankScroll() {
@@ -1379,6 +1389,15 @@ wx.onTouchEnd(() => {
           game.battleManager.startBattle('easy');
         }
         pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
+
+        // 阶段2优化：页面翻转期间后台加载游戏场景资源
+        if (game && game.cloudStorage && !game._gameBgIconsPreloaded) {
+          game._gameBgIconsPreloaded = true;
+          game.cloudStorage.preloadGameBgIcons().catch(err => {
+            console.error('[Preload] 游戏场景 bg_icon 预加载失败:', err);
+          });
+        }
+
         // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
         if (btnKey === 'round' && game && game.guidePhase === 1) {
           game._guideOverlayStartTime = Date.now();
@@ -2465,6 +2484,16 @@ function handleInput(x, inputY) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
+
+        // 阶段2优化：打开图鉴时按需预加载已收集 witch_card
+        if (game.cloudStorage && game.collectedWitchCards && game.collectedWitchCards.length > 0) {
+          game.collectedWitchCards.forEach(level => {
+            game.cloudStorage.preloadWitchCardForLevel(level).catch(err => {
+              console.error('[Preload] witch_card 预加载失败:', err);
+            });
+          });
+        }
+
         // 如果有新收集的卡牌，自动翻到对应页码
         if (game._newWitchCardThisShop) {
           const allLevels = WITCH_SKILLS.map(s => s.level);

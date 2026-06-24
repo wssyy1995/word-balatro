@@ -3041,6 +3041,14 @@ class Game {
       round: this.round,
       witchSkill: hasWitchReward ? witchSkill : null,
     };
+    // 阶段2优化：结算弹窗出现时后台预加载商店卡牌
+    if (this.cloudStorage && !this._shopCardsPreloaded) {
+      this._shopCardsPreloaded = true;
+      this.cloudStorage.preloadShopCardImages().catch(err => {
+        console.error('[Preload] shop_card 预加载失败:', err);
+      });
+    }
+
     this.state = 'settlement';
 
     // 上报最高通关回合数（fire-and-forget）

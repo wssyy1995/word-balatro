@@ -768,30 +768,14 @@ class CloudStorageManager {
     return this.rankAvatarImages[name] || null;
   }
 
-  // 将云缓存图片注入到 renderer 的 shopCardImages
+  // 将云缓存图片注入到 renderer 的 shopCardImages（阶段2后废弃，保留日志用于调试）
   injectToRenderer(renderer) {
-    let count = 0;
-    Object.keys(this.shopCardImages).forEach(name => {
-      const data = this.shopCardImages[name];
-      if (data && data.loaded && renderer.shopCardImages[name]) {
-        renderer.shopCardImages[name] = data;
-        count++;
-      }
-    });
-    this.log('已注入 renderer: ' + count + '张');
+    this.log('[Deprecated] injectToRenderer 已废弃，renderer 通过 getter 读取');
   }
 
-  // 将云缓存 witch 图片注入到 renderer 的 witchAvatars
+  // 将云缓存 witch 图片注入到 renderer 的 witchAvatars（阶段2后废弃）
   injectWitchToRenderer(renderer) {
-    let count = 0;
-    Object.keys(this.witchImages).forEach(name => {
-      const data = this.witchImages[name];
-      if (data && data.loaded && renderer.witchAvatars[name]) {
-        renderer.witchAvatars[name] = data;
-        count++;
-      }
-    });
-    this.log('已注入 witch renderer: ' + count + '张');
+    this.log('[Deprecated] injectWitchToRenderer 已废弃，renderer 通过 getter 读取');
   }
 
   // 按需下载并注入指定 level 的女巫头像（当前回合进行时，后台预加载下一回合头像）
@@ -918,17 +902,9 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 witch_card 图片注入到 renderer
+  // 将云缓存 witch_card 图片注入到 renderer（阶段2后废弃）
   injectWitchCardToRenderer(renderer) {
-    let count = 0;
-    Object.keys(this.witchCardImages).forEach(name => {
-      const data = this.witchCardImages[name];
-      if (data && data.loaded && renderer.witchCardImages[name]) {
-        renderer.witchCardImages[name] = data;
-        count++;
-      }
-    });
-    this.log('已注入 witch_card renderer: ' + count + '张');
+    this.log('[Deprecated] injectWitchCardToRenderer 已废弃，renderer 通过 getter 读取');
   }
 
   // 从云存储下载并缓存所有 guide 帧序列图片
@@ -1567,132 +1543,14 @@ class CloudStorageManager {
     });
   }
 
-  // 将云缓存 rank_avatar 图片注入到 renderer（全国榜默认头像使用）
+  // 将云缓存 rank_avatar 图片注入到 renderer（阶段2后废弃）
   injectRankAvatarToRenderer(renderer) {
-    renderer.rankAvatarImages = this.rankAvatarImages;
+    this.log('[Deprecated] injectRankAvatarToRenderer 已废弃，renderer 通过 getter 读取');
   }
 
-  // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板 + 对战模块）
+  // 将云缓存 bg_icon 图片注入到 renderer（阶段2后废弃）
   injectBgIconToRenderer(renderer) {
-    const bgData = this.bgIconImages['bg'];
-    if (bgData && bgData.loaded && bgData.img) {
-      renderer.bgImage = bgData.img;
-      renderer.bgLoaded = true;
-      this.log('已注入 bg_icon renderer: bg');
-    } else {
-      this.log('bg_icon bg 未加载，跳过注入');
-    }
-
-    // 对战模块背景图
-    const battlePlayerData = this.bgIconImages['battle_player'];
-    if (battlePlayerData && battlePlayerData.loaded && battlePlayerData.img) {
-      renderer.battlePlayer = battlePlayerData.img;
-      renderer.battlePlayerLoaded = true;
-      this.log('已注入 bg_icon renderer: battle_player');
-    } else {
-      this.log('bg_icon battle_player 未加载，跳过注入');
-    }
-
-    const battleRoundBadgeData = this.bgIconImages['battle_round_badge'];
-    if (battleRoundBadgeData && battleRoundBadgeData.loaded && battleRoundBadgeData.img) {
-      renderer.battleRoundBadge = battleRoundBadgeData.img;
-      renderer.battleRoundBadgeLoaded = true;
-      this.log('已注入 bg_icon renderer: battle_round_badge');
-    } else {
-      this.log('bg_icon battle_round_badge 未加载，跳过注入');
-    }
-
-    // 对战 VS 徽章图
-    const battleVSData = this.bgIconImages['battle_vs'];
-    if (battleVSData && battleVSData.loaded && battleVSData.img) {
-      renderer.battleVS = battleVSData.img;
-      renderer.battleVSLoaded = true;
-      this.log('已注入 bg_icon renderer: battle_vs');
-    } else {
-      this.log('bg_icon battle_vs 未加载，跳过注入');
-    }
-
-    // 对战单词预览区装饰线 / 主玩法计分方块装饰线
-    const scoreLineData = this.bgIconImages['score_line'];
-    if (scoreLineData && scoreLineData.loaded && scoreLineData.img) {
-      renderer.scoreLine = scoreLineData.img;
-      renderer.scoreLineLoaded = true;
-      renderer.scoreLineImg = scoreLineData.img;
-      renderer.scoreLineImgLoaded = true;
-      this.log('已注入 bg_icon renderer: score_line');
-    } else {
-      this.log('bg_icon score_line 未加载，跳过注入');
-    }
-
-    const cardBookData = this.bgIconImages['card_book'];
-    if (cardBookData && cardBookData.loaded && cardBookData.img) {
-      renderer.cardBookImage = cardBookData.img;
-      renderer.cardBookImageLoaded = true;
-      this.log('已注入 bg_icon renderer: card_book');
-    } else {
-      this.log('bg_icon card_book 未加载，跳过注入');
-    }
-
-    // 商店分类栏背景图
-    const shopCardBarNames = ['shop_card_bar_witch', 'shop_card_bar_crystal', 'shop_card_bar_potion'];
-    if (!renderer.shopCardBarImages) renderer.shopCardBarImages = {};
-    shopCardBarNames.forEach(name => {
-      const data = this.bgIconImages[name];
-      if (data && data.loaded && data.img) {
-        renderer.shopCardBarImages[name] = data.img;
-        this.log('已注入 bg_icon renderer: ' + name);
-      } else {
-        this.log('bg_icon ' + name + ' 未加载，跳过注入');
-      }
-    });
-
-    // 卡牌模板从 bg_icon 云存储注入
-    const templateNames = ['card_template', 'card_template_selected', 'card_template_upgrade', 'card_template_upgrade_selected'];
-    const templateFields = ['cardTemplate', 'cardTemplateSelected', 'cardTemplateUpgrade', 'cardTemplateUpgradeSelected'];
-    const loadedFlags = ['cardTemplateLoaded', 'cardTemplateSelectedLoaded', 'cardTemplateUpgradeLoaded', 'cardTemplateUpgradeSelectedLoaded'];
-    templateNames.forEach((name, i) => {
-      const data = this.bgIconImages[name];
-      if (data && data.loaded && data.img) {
-        renderer[templateFields[i]] = data.img;
-        renderer[loadedFlags[i]] = true;
-        this.log('已注入 bg_icon renderer: ' + name);
-      } else {
-        this.log('bg_icon ' + name + ' 未加载，跳过注入');
-      }
-    });
-
-    // 迷之优惠折扣标签雪碧图（6~9折，每帧100x100）
-    const discountSheetData = this.bgIconImages['discount_spritesheet'];
-    if (discountSheetData && discountSheetData.loaded && discountSheetData.img) {
-      renderer.discountSpritesheet = discountSheetData.img;
-      renderer.discountSpritesheetLoaded = true;
-      this.log('已注入 bg_icon renderer: discount_spritesheet');
-    } else {
-      this.log('bg_icon discount_spritesheet 未加载，跳过注入');
-    }
-
-    // 主页图片从 bg_icon 云存储注入
-    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy'];
-    homepageNames.forEach(name => {
-      const data = this.bgIconImages[name];
-      if (data && data.loaded && data.img) {
-        renderer[name] = data.img;
-        renderer[`${name}Loaded`] = true;
-        this.log('已注入 bg_icon renderer: ' + name);
-      } else {
-        this.log('bg_icon ' + name + ' 未加载，跳过注入');
-      }
-    });
-
-    // 游戏页返回主页图标从 bg_icon 云存储注入
-    const topHomeData = this.bgIconImages['topHome'];
-    if (topHomeData && topHomeData.loaded && topHomeData.img) {
-      renderer.topIcon = topHomeData.img;
-      renderer.topIconLoaded = true;
-      this.log('已注入 bg_icon renderer: topHome');
-    } else {
-      this.log('bg_icon topHome 未加载，跳过注入');
-    }
+    this.log('[Deprecated] injectBgIconToRenderer 已废弃，renderer 通过 getter 读取');
   }
 
   // ===== music 文件管理 =====
