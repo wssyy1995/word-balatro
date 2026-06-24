@@ -924,7 +924,7 @@ class Renderer {
       const titleY = H * 0.08;
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
 
-      // 标题左上角十字星芒（呼吸缩放 + 闪烁，参考 6种十字星.html 金芒十字）
+      // 标题左上角星星（复用主页入场动画的八角星，呼吸缩放 + 闪烁）
       // 通过 starOffsetX / starOffsetY 调整星星相对标题左上角的位置
       const starOffsetX = 55;
       const starOffsetY = 140;
@@ -932,10 +932,7 @@ class Renderer {
       const starCY = titleY + starOffsetY;
       const breath = 0.85 + 0.15 * Math.sin(Date.now() / 300);
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      this._drawCrossStar(ctx, starCX, starCY, 8 * s * breath, 0.85 + 0.15 * twinkle);
-      ctx.restore();
+      this._drawHomepageEntryStar(ctx, starCX, starCY, 6 * s * breath, 0.85 + 0.15 * twinkle);
     }
 
     this.homepageBtnRects = [];
@@ -1255,75 +1252,6 @@ class Renderer {
     }
     ctx.closePath();
     ctx.fill();
-  }
-
-  // 高级亮金十字星芒（参考 6种十字星.html 金芒十字）
-  _drawCrossStar(ctx, cx, cy, size, alpha = 1) {
-    const goldArmGrad = (len, aMul) => {
-      const g = ctx.createLinearGradient(0, 0, 0, len);
-      g.addColorStop(0, `rgba(255,255,255,${1 * aMul})`);
-      g.addColorStop(0.03, `rgba(255,252,235,${0.98 * aMul})`);
-      g.addColorStop(0.08, `rgba(255,235,170,${0.92 * aMul})`);
-      g.addColorStop(0.18, `rgba(255,210,100,${0.78 * aMul})`);
-      g.addColorStop(0.35, `rgba(240,170,55,${0.5 * aMul})`);
-      g.addColorStop(0.55, `rgba(200,120,30,${0.2 * aMul})`);
-      g.addColorStop(0.78, `rgba(140,70,15,${0.05 * aMul})`);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      return g;
-    };
-    const goldCoreGrad = (radius, aMul) => {
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
-      g.addColorStop(0, `rgba(255,255,255,${1 * aMul})`);
-      g.addColorStop(0.08, `rgba(255,252,240,${0.95 * aMul})`);
-      g.addColorStop(0.22, `rgba(255,235,175,${0.8 * aMul})`);
-      g.addColorStop(0.45, `rgba(255,200,90,${0.4 * aMul})`);
-      g.addColorStop(0.7, `rgba(200,130,40,${0.1 * aMul})`);
-      g.addColorStop(1, 'rgba(0,0,0,0)');
-      return g;
-    };
-
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // 外层柔光晕
-    const glow = ctx.createRadialGradient(0, 0, size * 0.3, 0, 0, size * 0.9);
-    glow.addColorStop(0, `rgba(255,220,120,${alpha * 0.12})`);
-    glow.addColorStop(0.5, `rgba(255,180,60,${alpha * 0.04})`);
-    glow.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath();
-    ctx.arc(0, 0, size * 0.9, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 四芒
-    ctx.globalAlpha = alpha;
-    for (let i = 0; i < 4; i++) {
-      ctx.save();
-      ctx.rotate(i * Math.PI / 2);
-      ctx.fillStyle = goldArmGrad(size * 0.72, 1);
-      ctx.beginPath();
-      ctx.moveTo(-size * 0.045, 0);
-      ctx.lineTo(-size * 0.012, -size * 0.72);
-      ctx.lineTo(size * 0.012, -size * 0.72);
-      ctx.lineTo(size * 0.045, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 核心
-    ctx.fillStyle = goldCoreGrad(size * 0.14, 1);
-    ctx.beginPath();
-    ctx.arc(0, 0, size * 0.14, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 炽白针点
-    ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
-    ctx.beginPath();
-    ctx.arc(0, 0, size * 0.04, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
   }
 
   // 绘制虚线空位
