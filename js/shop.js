@@ -2094,20 +2094,21 @@ class ConfirmBuyRenderer {
     const cpe = game._successBtnPressed ? Date.now() - (game._successBtnPressTime || 0) : 0;
 
     const isPotion = item.type === 'potion';
-    const isChangeLetter = isPotion && item.effect === 'change_letter';
+    // 字母置换 / 吸星大法：只能在游戏中使用，购买时只提供"暂存"
+    const isGameUsePotion = isPotion && ['change_letter', 'absorb_stars'].includes(item.effect);
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;
 
-    if (isPotion && !isChangeLetter) {
+    if (isPotion && !isGameUsePotion) {
       // 普通药水牌：两个按钮（立即使用 + 暂存）
       const btnW = 120 * s;
       const btnGap = 12 * s;
       const totalW = btnW * 2 + btnGap;
       const startX = (W - totalW) / 2;
 
-      // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade / replicate_letter / absorb_stars 且药水槽满）
+      // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade / replicate_letter / equal_split / starlight_wash 且药水槽满）
       const potionFull = (game.potions || []).length >= 2;
-      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'absorb_stars', 'equal_split', 'starlight_wash'].includes(item.effect);
+      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(item.effect);
       const stashDisabled = isAlwaysBuyable && potionFull;
 
       // 独立按下缩放
@@ -2151,8 +2152,8 @@ class ConfirmBuyRenderer {
       const finalY = collectBtnY;
       this.successBtnRect = { x: b1x, y: finalY, w: btnW, h: collectBtnH, action: 'usePotionNow' };
       this.successBtn2Rect = stashDisabled ? null : { x: b2x, y: finalY, w: btnW, h: collectBtnH, action: 'stashPotion' };
-    } else if (isChangeLetter) {
-      // 字母置换药水：只有暂存按钮（游戏中使用）
+    } else if (isGameUsePotion) {
+      // 字母置换 / 吸星大法：只有暂存按钮（游戏中使用）
       const collectBtnW = 160 * s;
       const collectBtnX = (W - collectBtnW) / 2;
       const singleScale = (game._successPressedBtn === 'stashPotion' && cpe > 0 && cpe < 150) ? 0.95 : 1;
