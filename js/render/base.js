@@ -62,9 +62,6 @@ class Renderer {
     // 统一资源池引用（阶段1：CloudStorageManager 成为唯一资源池）
     this.cloudStorage = null;
     
-    // 统一资源池引用（阶段1：CloudStorageManager 成为唯一资源池）
-    this.cloudStorage = null;
-    
     // 背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.bgImage = null;
     this.bgLoaded = false;
