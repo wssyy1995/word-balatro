@@ -118,7 +118,7 @@ module.exports = function extendCardbook(Renderer) {
       // 左侧图片区域
       const imgMaxH = innerH;
       const cardName = `witch_card_${level}`;
-      const cardData = this.witchCardImages[cardName];
+      const cardData = this.cloudStorage ? this.cloudStorage.getWitchCardImage(cardName) : null;
       let imgDrawW = 0;
       let imgDrawH = 0;
       let imgDrawX = innerX;

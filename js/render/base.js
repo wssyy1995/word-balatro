@@ -29,12 +29,7 @@ class Renderer {
       this.hasDynamicIsland = false;
     }
 
-    setCloudStorage(cs) {
-    this.cloudStorage = cs;
-  }
-
-  // 响应式基准计算
-    // 使用 min(width/375, height/667) 确保在任何屏幕上都适配
+    // 计算卡牌尺寸（支持最多4列）
     const baseScale = Math.min(width / 375, height / 667);
     // 限制最大缩放，避免在 iPad 上元素过大
     this.scale = Math.min(baseScale, 1.4);
@@ -62,12 +57,7 @@ class Renderer {
     // 统一资源池引用（阶段1：CloudStorageManager 成为唯一资源池）
     this.cloudStorage = null;
     
-    // 背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
-    this.bgImage = null;
-    this.bgLoaded = false;
 
-    // 商店分类栏背景图（由 cloudStorage 在预加载时注入）
-    this.shopCardBarImages = {};
     
     // 新手引导（由 cloudStorage 在预加载时注入，不再使用本地图片）
     // witch_1~4 均使用精灵图（单张大图 + 坐标）
@@ -275,23 +265,7 @@ class Renderer {
       this.errorIconLoaded = false;
     }
 
-    // 对战轮次徽章背景图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    this.battleRoundBadge = null;
-    this.battleRoundBadgeLoaded = false;
 
-    // 对战玩家 VS 条背景图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    this.battlePlayer = null;
-    this.battlePlayerLoaded = false;
-
-    // 对战 VS 徽章图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    this.battleVS = null;
-    this.battleVSLoaded = false;
-
-    // 对战单词预览区装饰线 / 主玩法计分方块装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    this.scoreLine = null;
-    this.scoreLineLoaded = false;
-    this.scoreLineImg = null;
-    this.scoreLineImgLoaded = false;
 
     // 加载商店图标
     // 加载商店图标
@@ -330,10 +304,6 @@ class Renderer {
     } catch (e) {
       this.newBadgeIconLoaded = false;
     }
-    this.cardBookImage = null;
-    this.cardBookImageLoaded = false;
-    // card_book.png 强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    // 不再尝试加载本地 images/bg_icon/card_book.png，避免文件缺失报错
 
     // 加载卡牌图鉴翻页按钮
     this.cardBookLeftBtn = null;
@@ -410,21 +380,6 @@ class Renderer {
     } catch (e) {
       this.witchHatIconLoaded = false;
     }
-    // 女巫头像占位（由 CloudStorageManager 从云端注入，此处只初始化占位）
-    this.witchAvatars = {};
-    const witchLevels = [...new Set(WITCH_SKILLS.map(s => s.level))];
-    witchLevels.forEach(level => {
-      const name = `witch_${level}`;
-      this.witchAvatars[name] = { img: null, loaded: false, width: 0, height: 0 };
-    });
-
-    // 女巫卡牌占位（由 CloudStorageManager 从云端注入）
-    this.witchCardImages = {};
-    witchLevels.forEach(level => {
-      const name = `witch_card_${level}`;
-      this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-    });
-
     // 加载金币图标
     this.coinIcon = null;
     this.coinIconLoaded = false;
@@ -477,10 +432,6 @@ class Renderer {
       this.discountIconLoaded = false;
     }
 
-    // discount 标签雪碧图（迷之优惠6~9折，每帧100x100）强制从云存储注入
-    // 不再尝试加载本地 images/bg_icon/discount_spritesheet.png，避免文件缺失报错
-    this.discountSpritesheet = null;
-    this.discountSpritesheetLoaded = false;
 
     // 加载目标分数图标
     this.targetScoreIcon = null;
@@ -495,9 +446,6 @@ class Renderer {
       this.targetScoreIconLoaded = false;
     }
 
-    // 主页图片（由 cloudStorage.injectBgIconToRenderer 从云存储注入）
-    this.homepageBg = null;
-    this.homepageBgLoaded = false;
     this.homepageTitle = null;
     this.homepageTitleLoaded = false;
     this.homepageRound = null;
@@ -520,15 +468,6 @@ class Renderer {
     this._homepageEntryAnim = null;
     this._homepageEntryBGMStarted = false;
 
-    // 卡牌背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
-    this.cardTemplate = null;
-    this.cardTemplateLoaded = false;
-    this.cardTemplateSelected = null;
-    this.cardTemplateSelectedLoaded = false;
-    this.cardTemplateUpgrade = null;
-    this.cardTemplateUpgradeLoaded = false;
-    this.cardTemplateUpgradeSelected = null;
-    this.cardTemplateUpgradeSelectedLoaded = false;
     // 加载游戏进度栏背景图
     this.gameProgressImage = null;
     this.gameProgressLoaded = false;
@@ -592,21 +531,6 @@ class Renderer {
       this.toastIcon = { img: null, loaded: false, width: 0, height: 0 };
     }
 
-    // 道具卡牌图标（由 CloudStorageManager 从云端注入，此处只初始化占位）
-    this.shopCardImages = {};
-    const shopCardNames = new Set();
-    Object.values(SHOP_POOL).forEach(pool => {
-      pool.forEach(item => {
-        const iconName = item.trigger || item.effect;
-        if (iconName) shopCardNames.add(iconName);
-      });
-    });
-    shopCardNames.forEach(name => {
-      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-    });
-    // 迷之优惠优惠券图片（非 SHOP_POOL 商品，单独初始化占位）
-    this.shopCardImages['cupon'] = { img: null, loaded: false, width: 0, height: 0 };
-    
     // 加载游戏结束弹窗小女巫图
     this.failWitchImg = null;
     this.failWitchLoaded = false;
@@ -620,38 +544,6 @@ class Renderer {
       this.failWitchLoaded = false;
     }
 
-    // 加载空位替代图片
-    ['empty_witch_card', 'empty_potion_card'].forEach((name) => {
-      try {
-        const img = wx.createImage();
-        img.src = `images/${name}.png`;
-        img.onload = () => {
-          const data = this.shopCardImages[name];
-          if (data) {
-            data.loaded = true;
-            data.width = img.width || 0;
-            data.height = img.height || 0;
-          }
-        };
-        img.onerror = () => { this.shopCardImages[name] = { img: null, loaded: false }; };
-        try {
-          wx.getImageInfo({
-            src: `/images/${name}.png`,
-            success: (res) => {
-              const data = this.shopCardImages[name];
-              if (data) {
-                data.width = res.width;
-                data.height = res.height;
-              }
-            }
-          });
-        } catch (e) {}
-        this.shopCardImages[name] = { img, loaded: false, width: 0, height: 0 };
-      } catch (e) {
-        this.shopCardImages[name] = { img: null, loaded: false };
-      }
-    });
-    
     // 动画粒子与飞行状态
     this.sparkles = [];
     this.flyingScore = null;
@@ -914,8 +806,9 @@ class Renderer {
     const s = this.scale;
 
     // 背景图
-    if (this.homepageBg && this.homepageBgLoaded) {
-      ctx.drawImage(this.homepageBg, 0, 0, W, H);
+    const homepageBgData = this.cloudStorage ? this.cloudStorage.getBgIconImage('homepageBg') : null;
+    if (homepageBgData && homepageBgData.loaded) {
+      ctx.drawImage(homepageBgData.img, 0, 0, W, H);
     } else {
       ctx.fillStyle = '#0a1628';
       ctx.fillRect(0, 0, W, H);
@@ -1204,7 +1097,7 @@ class Renderer {
 
   drawShopCardIcon(x, y, size, name) {
     const ctx = this.ctx;
-    const data = this.shopCardImages[name];
+    const data = this.cloudStorage ? this.cloudStorage.getImage(name) : null;
     if (data && data.loaded && data.img) {
       ctx.drawImage(data.img, x, y, size, size);
     } else {
@@ -1256,7 +1149,7 @@ class Renderer {
     // 如果有对应的空位图片，优先使用（cover 模式裁剪到圆角矩形）
     if (type) {
       const imgName = type === 'witch' ? 'empty_witch_card' : 'empty_potion_card';
-      const data = this.shopCardImages[imgName];
+      const data = this.cloudStorage ? this.cloudStorage.getImage(imgName) : null;
       if (data && data.loaded && data.img) {
         const r = 9 * s;
         ctx.save();
@@ -1498,14 +1391,18 @@ class Renderer {
 
     // === 1. 背景图（普通 / 选中态 / 升级态 / 升级选中态） ===
     const isUpgradeLetter = this._equippedLetters && this._equippedLetters.has((card.letter || '').toUpperCase());
-    if (card.selected && isUpgradeLetter && this.cardTemplateUpgradeSelected && this.cardTemplateUpgradeSelectedLoaded) {
-      ctx.drawImage(this.cardTemplateUpgradeSelected, -hw, -hh, w, h);
-    } else if (card.selected && this.cardTemplateSelected && this.cardTemplateSelectedLoaded) {
-      ctx.drawImage(this.cardTemplateSelected, -hw, -hh, w, h);
-    } else if (isUpgradeLetter && this.cardTemplateUpgrade && this.cardTemplateUpgradeLoaded) {
-      ctx.drawImage(this.cardTemplateUpgrade, -hw, -hh, w, h);
-    } else if (this.cardTemplate && this.cardTemplateLoaded) {
-      ctx.drawImage(this.cardTemplate, -hw, -hh, w, h);
+    const cardTemplateUpgradeSelectedData = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_template_upgrade_selected') : null;
+    const cardTemplateSelectedData = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_template_selected') : null;
+    const cardTemplateUpgradeData = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_template_upgrade') : null;
+    const cardTemplateData = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_template') : null;
+    if (card.selected && isUpgradeLetter && cardTemplateUpgradeSelectedData && cardTemplateUpgradeSelectedData.loaded) {
+      ctx.drawImage(cardTemplateUpgradeSelectedData.img, -hw, -hh, w, h);
+    } else if (card.selected && cardTemplateSelectedData && cardTemplateSelectedData.loaded) {
+      ctx.drawImage(cardTemplateSelectedData.img, -hw, -hh, w, h);
+    } else if (isUpgradeLetter && cardTemplateUpgradeData && cardTemplateUpgradeData.loaded) {
+      ctx.drawImage(cardTemplateUpgradeData.img, -hw, -hh, w, h);
+    } else if (cardTemplateData && cardTemplateData.loaded) {
+      ctx.drawImage(cardTemplateData.img, -hw, -hh, w, h);
     } else {
       // 兜底：暖白色圆角矩形
       this.roundRect(-hw, -hh, w, h, 10 * s, '#faf6ee', '#c4a35a');
@@ -1619,5 +1516,7 @@ class Renderer {
   }
 
 }
+
+Renderer.prototype.setCloudStorage = function(cs) { this.cloudStorage = cs; };
 
 module.exports = { Renderer };

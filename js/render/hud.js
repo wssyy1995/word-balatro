@@ -153,7 +153,7 @@ module.exports = function extendHud(Renderer) {
           }
         }
   
-        const witchAvatar = this.witchAvatars[`witch_${witchSkill.level}`];
+        const witchAvatar = this.cloudStorage ? this.cloudStorage.getWitchImage(`witch_${witchSkill.level}`) : null;
   
         // 女巫呼吸缩放
         const now = Date.now();

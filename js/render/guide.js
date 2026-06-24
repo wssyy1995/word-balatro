@@ -255,7 +255,7 @@ module.exports = function extendGuide(Renderer) {
         const cardX = targetX;
         const cardY = targetY - curH / 2; // 中心对齐
   
-        const hasVowelData = this.shopCardImages['has_vowel'];
+        const hasVowelData = this.cloudStorage ? this.cloudStorage.getImage('has_vowel') : null;
         if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {
           ctx.save();
           ctx.globalAlpha = progress === 0 ? 0 : Math.min(scale, 1);

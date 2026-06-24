@@ -24,8 +24,10 @@ Renderer.prototype.render = function(game) {
 
     // 绘制背景
     ctx.clearRect(0, 0, W, H);
-    if (this.bgImage && this.bgLoaded) {
-      ctx.drawImage(this.bgImage, 0, 0, W, H);
+    // 背景图（阶段1优化：通过 cloudStorage getter 读取）
+    const bgData = this.cloudStorage ? this.cloudStorage.getBgIconImage('bg') : null;
+    if (bgData && bgData.loaded && bgData.img) {
+      ctx.drawImage(bgData.img, 0, 0, W, H);
     } else {
       ctx.fillStyle = '#0a1628';
       ctx.fillRect(0, 0, W, H);
@@ -293,10 +295,11 @@ Renderer.prototype.render = function(game) {
       // 根据图片比例计算面板尺寸
       let panelW = 320;
       let panelH = 440;
-      if (this.cardBookImage && this.cardBookImageLoaded) {
+      const cardBookData = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_book') : null;
+      if (cardBookData && cardBookData.loaded && cardBookData.img) {
         const maxBookW = W * 0.88;
         const maxBookH = H * 0.75;
-        const imgAspect = this.cardBookImage.width / this.cardBookImage.height;
+        const imgAspect = cardBookData.width / cardBookData.height;
         let bookW = maxBookW;
         let bookH = bookW / imgAspect;
         if (bookH > maxBookH) {
@@ -434,8 +437,9 @@ Renderer.prototype.render = function(game) {
 
       // 绘制 card_book.png 背景（顶部留出 70dp 给标题/计数器）
       let cbDrawX = px, cbDrawY = py, cbDrawW = pw, cbDrawH = ph;
-      if (this.cardBookImage && this.cardBookImageLoaded) {
-        const imgAspect = this.cardBookImage.width / this.cardBookImage.height;
+      const cardBookData2 = this.cloudStorage ? this.cloudStorage.getBgIconImage('card_book') : null;
+      if (cardBookData2 && cardBookData2.loaded && cardBookData2.img) {
+        const imgAspect = cardBookData2.width / cardBookData2.height;
         const panelAspect = pw / ph;
         if (imgAspect > panelAspect) {
           cbDrawW = pw;
@@ -448,7 +452,7 @@ Renderer.prototype.render = function(game) {
           cbDrawX = px + (pw - cbDrawW) / 2;
           cbDrawY = py + 70 * s;
         }
-        ctx.drawImage(this.cardBookImage, cbDrawX, cbDrawY, cbDrawW, cbDrawH);
+        ctx.drawImage(cardBookData2.img, cbDrawX, cbDrawY, cbDrawW, cbDrawH);
       }
 
       // === 标题：词牌图鉴（完整参考女巫奖励样式）===
@@ -618,7 +622,7 @@ Renderer.prototype.render = function(game) {
         const isUnlocked = game.collectedWitchCards.includes(level);
         const isPressed = game._cardBookCellPressed === level;
         const cardName = `witch_card_${level}`;
-        const cardData = this.witchCardImages[cardName];
+        const cardData = this.cloudStorage ? this.cloudStorage.getWitchCardImage(cardName) : null;
 
         ctx.save();
         // 圆角裁剪
@@ -901,7 +905,7 @@ Renderer.prototype.render = function(game) {
     // 当前回合女巫卡牌大图
     const level = data.level;
     const iconName = level ? `witch_card_${level}` : null;
-    const iconData = iconName ? this.witchCardImages[iconName] : null;
+    const iconData = iconName ? (this.cloudStorage ? this.cloudStorage.getWitchCardImage(iconName) : null) : null;
     const cardMaxW = 220 * s;
     const cardMaxH = 240 * s;
     let cardW = cardMaxW;
@@ -1367,8 +1371,7 @@ Renderer.prototype.render = function(game) {
       const innerIdx = idx % 25;
       const row = Math.floor(innerIdx / 5);
       const col = innerIdx % 5;
-      const cloudImages = this.rankAvatarImages;
-      const cloudSheet = cloudImages && cloudImages[`rank_avatar_${sheetIdx + 1}`];
+      const cloudSheet = this.cloudStorage ? this.cloudStorage.getRankAvatarImage(`rank_avatar_${sheetIdx + 1}`) : null;
       if (cloudSheet && cloudSheet.loaded && cloudSheet.img) {
         defaultAvatar = {
           img: cloudSheet.img,

@@ -3,7 +3,7 @@ const { Easing } = require('../animation');
 module.exports = function extendEffects(Renderer) {
     Renderer.prototype._drawPropCard = function(ctx, prop, x, y, w, h, s, showDisabled = true, showPredicted = true) {
       const iconName = prop.trigger || prop.effect;
-      const iconData = this.shopCardImages[iconName];
+      const iconData = this.cloudStorage ? this.cloudStorage.getImage(iconName) : null;
       let offsetY = prop._jumpOffsetY || 0;
   
       // shield_illegal 触发动画（非法单词时的跳跃+光晕，跳2次每次200ms）
