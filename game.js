@@ -460,6 +460,9 @@ let shareTipHelpState = null; // { startTime: number, resolving: boolean }
 const cloudStorage = new CloudStorageManager('cloud1-d3gecbtu10e4035de');
 cloudStorage.init();
 
+// 阶段1优化：Renderer 通过统一资源池读取
+renderer.setCloudStorage(cloudStorage);
+
 // 预加载状态
 let preloadProgress = 0;
 let preloadComplete = false;
@@ -546,7 +549,10 @@ async function startPreload() {
   const musicFiles = cloudStorage._scanMusicDir(fs, 'music');
   const musicCount = musicFiles.length > 0 ? musicFiles.length : Object.keys(cloudStorage.musicFileMap).length;
 
-  const total = shopNames.length + bgIconNames.length + guideStepCount + musicCount;
+  // 阶段2优化：只预加载 homepage 必需的 bg_icon + music + guide
+  const homepageBgIconNames = ['homepageBg', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'topHome'];
+  const homepageBgIconCount = homepageBgIconNames.filter(name => cloudStorage.bgIconFileMap[name]).length;
+  const total = homepageBgIconCount + guideStepCount + musicCount;
 
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -565,8 +571,9 @@ async function startPreload() {
     preloadProgress = Math.floor((loaded / total) * 100);
   }
 
-  await cloudStorage.preloadShopCardImages(onProgress);
-  await cloudStorage.preloadBgIconImages(onProgress);
+  // 阶段2优化：只加载 homepage 必需资源
+  await cloudStorage.preloadHomepageBgIcons(onProgress);
+  await cloudStorage.preloadMusicFiles(onProgress);
   if (needGuide) {
     await cloudStorage.preloadGuideGroup(1, renderer);
     onProgress();
@@ -574,20 +581,17 @@ async function startPreload() {
     onProgress();
   }
 
-  // 预加载 music 文件到本地缓存
-  await cloudStorage.preloadMusicFiles(onProgress);
+  // 不再预加载 shop_card、rank_avatar、witch_card
+  // 这些资源移到对应事件点加载
 
-  // 存档恢复时：并行预加载所有已解锁的 witch_card
+  // 存档恢复时：不再预加载 witch_card，改为图鉴打开时按需加载
   if (collectedWitchCards.length > 0) {
-    console.log('[Preload] 存档恢复，预加载已解锁 witch_card:', collectedWitchCards);
-    await Promise.all(collectedWitchCards.map(level =>
-      cloudStorage.preloadWitchCardForLevel(level, renderer)
-    ));
-    console.log('[Preload] 已解锁 witch_card 预加载完成');
+    console.log('[Preload] 阶段2优化：witch_card 不再启动期预加载，改为图鉴打开时按需加载');
   }
 
-  cloudStorage.injectToRenderer(renderer);
-  cloudStorage.injectBgIconToRenderer(renderer);
+  // 阶段2优化：不再注入到 renderer，renderer 通过 getter 读取
+  // cloudStorage.injectToRenderer(renderer);
+  // cloudStorage.injectBgIconToRenderer(renderer);
   if (needGuide) {
     cloudStorage.injectGuideToRenderer(renderer);
   }

@@ -1341,6 +1341,51 @@ class CloudStorageManager {
   }
 
   // 从云存储下载并缓存所有 bg_icon 图片（后台静默加载）
+  // 预加载 homepage 必需的 bg_icon（阶段2优化：按需加载）
+  async preloadHomepageBgIcons(onProgress = null) {
+    const homepageNames = ['homepageBg', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'topHome'];
+    const names = homepageNames.filter(name => this.bgIconFileMap[name]);
+    if (names.length === 0) {
+      this.log('没有 homepage bg_icon 映射，跳过');
+      return;
+    }
+
+    this.log('开始下载 homepage bg_icon，共' + names.length + '张');
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadBgIconImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const loaded = names.filter(n => this.bgIconImages[n] && this.bgIconImages[n].loaded);
+    this.log('homepage bg_icon ' + loaded.length + '/' + names.length + ' 下载完成');
+  }
+
+  // 预加载游戏场景需要的 bg_icon（阶段2优化：按需加载）
+  async preloadGameBgIcons(onProgress = null) {
+    const gameNames = ['bg', 'card_book', 'card_template', 'card_template_selected', 'card_template_upgrade', 'card_template_upgrade_selected', 'score_line', 'shop_card_bar_witch', 'shop_card_bar_crystal', 'shop_card_bar_potion', 'battle_player', 'battle_round_badge', 'battle_vs', 'discount_spritesheet', 'buy_tip', 'share_tip', 'share_tip_limit', 'card_bar'];
+    const names = gameNames.filter(name => this.bgIconFileMap[name]);
+    if (names.length === 0) {
+      this.log('没有游戏场景 bg_icon 映射，跳过');
+      return;
+    }
+
+    this.log('开始下载游戏场景 bg_icon，共' + names.length + '张');
+    const batchSize = 5;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadBgIconImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const loaded = names.filter(n => this.bgIconImages[n] && this.bgIconImages[n].loaded);
+    this.log('游戏场景 bg_icon ' + loaded.length + '/' + names.length + ' 下载完成');
+  }
+
+  // 预加载 bg_icon 图片（全量加载，阶段2后仅用于调试或特殊场景）
   async preloadBgIconImages(onProgress = null) {
     const names = Object.keys(this.bgIconFileMap);
     if (names.length === 0) {
