@@ -815,8 +815,9 @@ class Renderer {
     }
 
     // 标题图：屏幕高度 20% 处居中
-    if (this.homepageTitle && this.homepageTitleLoaded) {
-      const titleImg = this.homepageTitle;
+    const homepageTitleData = this.cloudStorage ? this.cloudStorage.getBgIconImage('homepageTitle') : null;
+    if (homepageTitleData && homepageTitleData.loaded && homepageTitleData.img) {
+      const titleImg = homepageTitleData.img;
       const maxTitleW = W * 0.8;
       const titleW = Math.min(maxTitleW, titleImg.width * s);
       const titleH = titleW * (titleImg.height / titleImg.width);
@@ -987,9 +988,12 @@ class Renderer {
     const bigGap = W * 0.08;
 
     const bigBtnInfos = [
-      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
-      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 150 },
-    ].map(({ img, loaded, key, delay }) => {
+      { imgKey: 'homepageRound', loadedKey: 'homepageRoundLoaded', key: 'round', delay: 150 },
+      { imgKey: 'homepageBattle', loadedKey: 'homepageBattleLoaded', key: 'battle', delay: 150 },
+    ].map(({ imgKey, loadedKey, key, delay }) => {
+      const imgData = this.cloudStorage ? this.cloudStorage.getBgIconImage(imgKey) : null;
+      const img = imgData ? imgData.img : null;
+      const loaded = imgData ? imgData.loaded : false;
       let drawW = bigBtnMaxW;
       let drawH = bigBtnMaxH;
       if (loaded && img && img.width > 0 && img.height > 0) {
@@ -1028,11 +1032,14 @@ class Renderer {
     const smallBtnY = H * 0.74 + 30 * s;
     const smallGap = 14 * s;
     const smallKeys = [
-      { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
-      { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
-      { img: this.homepageDaily, loaded: this.homepageDailyLoaded, key: 'daily' },
-      { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
-    ];
+      { imgKey: 'homepageSetting', loadedKey: 'homepageSettingLoaded', key: 'setting' },
+      { imgKey: 'homepageRanking', loadedKey: 'homepageRankingLoaded', key: 'ranking' },
+      { imgKey: 'homepageDaily', loadedKey: 'homepageDailyLoaded', key: 'daily' },
+      { imgKey: 'homepageStudy', loadedKey: 'homepageStudyLoaded', key: 'study' },
+    ].map(({ imgKey, loadedKey, key }) => {
+      const imgData = this.cloudStorage ? this.cloudStorage.getBgIconImage(imgKey) : null;
+      return { img: imgData ? imgData.img : null, loaded: imgData ? imgData.loaded : false, key };
+    });
 
     const smallBtnInfos = smallKeys.map(({ img, loaded, key }) => {
       let drawW = smallBtnMaxW;

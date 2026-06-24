@@ -1173,7 +1173,7 @@ class ShopRenderer {
         ctx.clip();
 
         const iconName = item.trigger || item.effect;
-        const iconData = this.parent.shopCardImages[iconName];
+        const iconData = this.parent.cloudStorage ? this.parent.cloudStorage.getImage(iconName) : null;
         if (iconData && iconData.loaded && iconData.img) {
           const cardAspect = cardW / cardH;
           const aspect = (iconData.width > 0 && iconData.height > 0)
@@ -1940,7 +1940,7 @@ class ConfirmBuyRenderer {
     const contentYShift = contentFade.yShift;
 
     const iconName = item.trigger || item.effect;
-    const iconData = this.parent.shopCardImages[iconName];
+    const iconData = this.parent.cloudStorage ? this.parent.cloudStorage.getImage(iconName) : null;
 
     if (isSuccess) {
       this._drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha);
@@ -2456,7 +2456,7 @@ class MysteryDiscountRenderer {
       ctx.globalAlpha = alpha * enterEase;
 
       // 优惠券图片（优先使用云存储 cupon.png）
-      const cuponData = this.parent.shopCardImages['cupon'];
+      const cuponData = this.parent.cloudStorage ? this.parent.cloudStorage.getImage('cupon') : null;
       if (cuponData && cuponData.loaded && cuponData.img) {
         ctx.save();
         this.parent._roundedRectPath(ctx, sx, sy, sw, sh, 10 * s);

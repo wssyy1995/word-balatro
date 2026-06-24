@@ -457,7 +457,7 @@ class WitchRewardRenderer {
           const cardMaxH = 110 * s;
           let cardW = cardMaxW, cardH = cardMaxH;
           const iconName = data.rewardItem.effect;
-          const iconData = this.parent.shopCardImages[iconName];
+          const iconData = this.parent.cloudStorage ? this.parent.cloudStorage.getImage(iconName) : null;
           if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
             const containerAspect = cardMaxW / cardMaxH;
             const aspect = iconData.width / iconData.height;

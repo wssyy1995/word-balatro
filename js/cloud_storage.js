@@ -1319,7 +1319,7 @@ class CloudStorageManager {
   // 从云存储下载并缓存所有 bg_icon 图片（后台静默加载）
   // 预加载 homepage 必需的 bg_icon（阶段2优化：按需加载）
   async preloadHomepageBgIcons(onProgress = null) {
-    const homepageNames = ['homepageBg', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'topHome'];
+    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'topHome'];
     const names = homepageNames.filter(name => this.bgIconFileMap[name]);
     if (names.length === 0) {
       this.log('没有 homepage bg_icon 映射，跳过');
