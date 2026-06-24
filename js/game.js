@@ -4092,8 +4092,8 @@ class Game {
       }
     });
 
-    // 获得当前分数 1/10 的金币（向下取整）
-    const goldReward = Math.floor(oldScore / 10);
+    // 获得当前分数 1/5 的金币（向下取整）
+    const goldReward = Math.floor(oldScore / 5);
     this.gold += goldReward;
 
     this._starlightWashAnim = {
