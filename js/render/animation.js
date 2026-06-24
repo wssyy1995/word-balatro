@@ -1464,6 +1464,29 @@ module.exports = function extendAnimation(Renderer) {
       }
     }
 
+    Renderer.prototype._completeAbsorbStarsAnim = function(game) {
+      const anim = game._absorbStarsAnim;
+      if (!anim) return;
+      const targetCard = (game.hand || []).find(c => c && c.id === anim.targetCardId);
+      if (targetCard) {
+        targetCard.absorbBonus = (targetCard.absorbBonus || 0) + anim.absorbTotal;
+      }
+      if (anim.potionIndex !== undefined && anim.potionIndex >= 0 && game.potions) {
+        game.potions.splice(anim.potionIndex, 1);
+      }
+      game.hintToast = {
+        text: `吸星大法！${targetCard ? targetCard.letter : ''} 吸收 ${anim.absorbTotal} 分`,
+        expireAt: Date.now() + 2000,
+        startTime: Date.now(),
+      };
+      if (game.storageManager) game.storageManager.saveProgress();
+      game._absorbStarsAnim = null;
+      game._absorbStarsSelectedCardId = null;
+      game.potionMode = null;
+      game.state = anim.prePotionState || 'playing';
+      game._prePotionState = null;
+    };
+
     Renderer.prototype._drawAbsorbStarsSelect = function(game) {
       const ctx = this.ctx;
       const W = this.W;
@@ -1472,6 +1495,19 @@ module.exports = function extendAnimation(Renderer) {
       const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
       const selectedId = game._absorbStarsSelectedCardId;
       const hand = (game.hand || []).filter(c => c);
+      const anim = game._absorbStarsAnim;
+
+      // 动画总时长：晃动 1000ms + 飞行 600ms + 滚动 500ms
+      const SHAKE_DURATION = 1000;
+      const FLY_DURATION = 600;
+      const ROLL_DURATION = 500;
+      const TOTAL_DURATION = SHAKE_DURATION + FLY_DURATION + ROLL_DURATION;
+
+      // 动画完成，应用 absorbBonus 并返回
+      if (anim && Date.now() - anim.startTime >= TOTAL_DURATION) {
+        this._completeAbsorbStarsAnim(game);
+        return;
+      }
 
       // === 标题 ===
       const titleY = top - 10 * s;
@@ -1533,12 +1569,14 @@ module.exports = function extendAnimation(Renderer) {
       const gridStartY = (H - totalGridH) / 2 - 10 * s;
 
       this.absorbStarsCardRects = [];
+      const cardCenters = {};
       hand.forEach((card, i) => {
         const col = i % cols;
         const row = Math.floor(i / cols);
         const x = gridStartX + col * (cardW + gap);
         const y = gridStartY + row * (cardH + gap);
         const isSelected = card.id === selectedId;
+        const isSource = anim && anim.sourceCardIds.includes(card.id);
 
         if (isSelected) {
           this.roundRect(x - 3 * s, y - 3 * s, cardW + 6 * s, cardH + 6 * s, 10 * s, null, '#c4a35a', 3 * s);
@@ -1546,24 +1584,95 @@ module.exports = function extendAnimation(Renderer) {
 
         this.drawCard(card, x, y, false, null);
         this.absorbStarsCardRects.push({ x, y, w: cardW, h: cardH, card });
+        cardCenters[card.id] = { x: x + cardW / 2, y: y + cardH / 2 };
+
+        // 阶段1：其他卡牌分数轻微晃动
+        if (isSource && anim) {
+          const elapsed = Date.now() - anim.startTime;
+          if (elapsed < SHAKE_DURATION) {
+            const shakeOffset = Math.sin(elapsed / 40) * 1.5 * s;
+            ctx.save();
+            ctx.fillStyle = '#faf6ee';
+            ctx.fillRect(x + cardW / 2 - 18 * s, y + cardH * 0.74 - 8 * s + shakeOffset, 36 * s, 16 * s);
+            ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
+            ctx.fillStyle = '#1a2f4a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${card.score}分`, x + cardW / 2, y + cardH * 0.74 + shakeOffset);
+            ctx.restore();
+          }
+        }
       });
 
+      // 动画层：飞行星星 + 目标分数滚动
+      if (anim) {
+        const elapsed = Date.now() - anim.startTime;
+
+        // 阶段2：金色八角星从其他卡牌飞向目标卡牌
+        if (elapsed >= SHAKE_DURATION && elapsed < SHAKE_DURATION + FLY_DURATION) {
+          const flyProgress = (elapsed - SHAKE_DURATION) / FLY_DURATION;
+          const ease = Easing.easeOutCubic(flyProgress);
+          const targetCenter = cardCenters[anim.targetCardId];
+          if (targetCenter) {
+            anim.sourceCardIds.forEach((sourceId, idx) => {
+              const sourceCenter = cardCenters[sourceId];
+              if (!sourceCenter) return;
+              const stagger = idx * 0.05;
+              const localProgress = Math.min(1, Math.max(0, ease * 1.15 - stagger));
+              const starX = sourceCenter.x + (targetCenter.x - sourceCenter.x) * localProgress;
+              const starY = sourceCenter.y + (targetCenter.y - sourceCenter.y) * localProgress;
+              const starSize = 6 * s + 2 * s * (1 - localProgress);
+              const alpha = localProgress < 0.92 ? 1 : (1 - localProgress) / 0.08;
+              this._drawOctStar(ctx, starX, starY, starSize, alpha);
+            });
+          }
+        }
+
+        // 阶段3：目标卡牌分数快速滚动更新
+        if (elapsed >= SHAKE_DURATION + FLY_DURATION) {
+          const rollProgress = Math.min((elapsed - SHAKE_DURATION - FLY_DURATION) / ROLL_DURATION, 1);
+          const rollEase = Easing.easeOutCubic(rollProgress);
+          const targetCenter = cardCenters[anim.targetCardId];
+          if (targetCenter) {
+            const cx = targetCenter.x;
+            const cy = targetCenter.y + cardH * 0.24;
+            const coverW = 36 * s;
+            const coverH = 14 * s;
+            ctx.save();
+            ctx.fillStyle = '#faf6ee';
+            ctx.fillRect(cx - coverW / 2, cy - coverH / 2, coverW, coverH);
+            ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const offset = 8 * s;
+            ctx.globalAlpha = 1 - rollEase;
+            ctx.fillStyle = '#1a2f4a';
+            ctx.fillText(`${anim.oldScore}分`, cx, cy - rollEase * offset);
+            ctx.globalAlpha = rollEase;
+            ctx.fillText(`${anim.newScore}分`, cx, cy + (1 - rollEase) * offset);
+            ctx.restore();
+          }
+        }
+      }
+
       // === 确定按钮 ===
-      const btnAreaY = H - 75 * s;
-      const btnW = 160 * s;
-      const btnH = 46 * s;
-      const btnX = (W - btnW) / 2;
-      const btnEnabled = !!selectedId;
-      this.roundRect(btnX, btnAreaY, btnW, btnH, 10 * s,
-        btnEnabled ? '#c4a35a' : '#d4c9a8',
-        btnEnabled ? null : '#bbb', btnEnabled ? 0 : 1.5 * s);
-      ctx.save();
-      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('确定', btnX + btnW / 2, btnAreaY + btnH / 2);
-      ctx.restore();
-      this.absorbStarsConfirmBtnRect = { x: btnX, y: btnAreaY, w: btnW, h: btnH, enabled: btnEnabled };
+      if (!anim) {
+        const btnAreaY = H - 75 * s;
+        const btnW = 160 * s;
+        const btnH = 46 * s;
+        const btnX = (W - btnW) / 2;
+        const btnEnabled = !!selectedId;
+        this.roundRect(btnX, btnAreaY, btnW, btnH, 10 * s,
+          btnEnabled ? '#c4a35a' : '#d4c9a8',
+          btnEnabled ? null : '#bbb', btnEnabled ? 0 : 1.5 * s);
+        ctx.save();
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('确定', btnX + btnW / 2, btnAreaY + btnH / 2);
+        ctx.restore();
+        this.absorbStarsConfirmBtnRect = { x: btnX, y: btnAreaY, w: btnW, h: btnH, enabled: btnEnabled };
+      }
     }
 };

@@ -3195,6 +3195,8 @@ function handleInput(x, inputY) {
   if (game.state === 'potion') {
     // === 吸星大法：选择阶段 ===
     if (game.potionMode && game.potionMode.effect === 'absorb_stars') {
+      // 动画播放期间忽略输入
+      if (game._absorbStarsAnim) return;
       // 检测手牌点击
       if (renderer.absorbStarsCardRects) {
         const cardHit = renderer.hitTest(x, inputY, renderer.absorbStarsCardRects);
@@ -3214,28 +3216,25 @@ function handleInput(x, inputY) {
           const targetCard = game.hand.find(c => c && c.id === targetId);
           if (targetCard) {
             let absorbTotal = 0;
+            const sourceCardIds = [];
             for (const c of game.hand) {
               if (c && c.id !== targetId) {
                 absorbTotal += c.score;
+                sourceCardIds.push(c.id);
               }
             }
-            targetCard.absorbBonus = (targetCard.absorbBonus || 0) + absorbTotal;
-            // 消耗药水
-            const potionIndex = game.potionMode._potionIndex;
-            if (potionIndex !== undefined && potionIndex >= 0 && game.potions) {
-              game.potions.splice(potionIndex, 1);
-            }
-            game.hintToast = {
-              text: `吸星大法！${targetCard.letter} 吸收 ${absorbTotal} 分`,
-              expireAt: Date.now() + 2000,
+            // 启动吸星大法动画，动画结束后再应用 absorbBonus
+            game._absorbStarsAnim = {
               startTime: Date.now(),
+              targetCardId: targetId,
+              sourceCardIds: sourceCardIds,
+              oldScore: targetCard.score + (targetCard.absorbBonus || 0),
+              newScore: targetCard.score + (targetCard.absorbBonus || 0) + absorbTotal,
+              absorbTotal: absorbTotal,
+              potionIndex: game.potionMode._potionIndex,
+              prePotionState: game._prePotionState,
             };
-            if (game.storageManager) game.storageManager.saveProgress();
           }
-          game._absorbStarsSelectedCardId = null;
-          game.potionMode = null;
-          game.state = game._prePotionState || 'playing';
-          game._prePotionState = null;
           return;
         }
       }
