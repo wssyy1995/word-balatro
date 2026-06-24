@@ -986,20 +986,39 @@ module.exports = function extendAnimation(Renderer) {
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
 
-        // 两张字母牌：旋转动画
+        // 两张字母牌：心跳动画（与复刻水一致）
         const gap = 20 * s;
         const cardW = this.cardW * baseCardScale;
         const totalW = cardW * 2 + gap;
         const startX = (W - totalW) / 2;
         const baseY = H / 2;
 
-        // 旋转动画：1秒内从 0 到 360 度
-        const rotation = progress * Math.PI * 2;
+        // 最后 200ms 心跳幅度衰减到 0
+        const FADE_DURATION = 200;
+        let fadeOut = 1;
+        if (progress > (1000 - FADE_DURATION) / 1000) {
+          fadeOut = 1 - (progress - (1000 - FADE_DURATION) / 1000) / (FADE_DURATION / 1000);
+          fadeOut = Math.max(0, fadeOut);
+        }
+
+        const period = 800;
+        const omega = (2 * Math.PI) / period;
+        function heartbeat(phaseOffset) {
+          const biphasic = Math.abs(Math.sin(omega * elapsed * 1.3 + phaseOffset));
+          const pulse = Math.pow(biphasic, 3);
+          const beat = 0.12 * pulse + 0.03 * Math.sin(omega * elapsed * 0.5 + phaseOffset);
+          return beat;
+        }
+        const hb1 = heartbeat(0);
+        const hb2 = heartbeat(Math.PI * 0.7);
+        const beats = [hb1, hb2];
 
         anim.letters.forEach((letter, i) => {
+          const hb = beats[i] * fadeOut;
           const cx = startX + i * (cardW + gap) + cardW / 2;
-          const cy = baseY;
-          const cardScale = baseCardScale * (1 + 0.1 * Math.sin(progress * Math.PI));
+          const cy = baseY - 18 * s * hb * 3;
+          const cardScale = baseCardScale * (1 + hb);
+          const glowAlpha = 0.7 * hb * 3;
 
           const base = LETTER_SCORE[letter];
           const up = letterUpgrades.get(letter) || {};
@@ -1014,9 +1033,36 @@ module.exports = function extendAnimation(Renderer) {
             animOffset: { scale: 1, opacity: 1 }
           };
 
+          // 发光边框
+          if (glowAlpha > 0.01) {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.scale(cardScale, cardScale);
+            ctx.shadowColor = `rgba(180,140,210,${glowAlpha})`;
+            ctx.shadowBlur = 22 * s;
+            ctx.strokeStyle = `rgba(200,160,230,${glowAlpha * 0.6})`;
+            ctx.lineWidth = 3 * s;
+            const hw = this.cardW / 2;
+            const hh = this.cardH / 2;
+            const r = 10 * s;
+            ctx.beginPath();
+            ctx.moveTo(-hw + r, -hh);
+            ctx.lineTo(hw - r, -hh);
+            ctx.quadraticCurveTo(hw, -hh, hw, -hh + r);
+            ctx.lineTo(hw, hh - r);
+            ctx.quadraticCurveTo(hw, hh, hw - r, hh);
+            ctx.lineTo(-hw + r, hh);
+            ctx.quadraticCurveTo(-hw, hh, -hw, hh - r);
+            ctx.lineTo(-hw, -hh + r);
+            ctx.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.restore();
+          }
+
           ctx.save();
+          ctx.globalAlpha = 1;
           ctx.translate(cx, cy);
-          ctx.rotate(rotation * (i === 0 ? 1 : -1));
           ctx.scale(cardScale, cardScale);
           this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
           ctx.restore();
