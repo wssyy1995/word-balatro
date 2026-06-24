@@ -923,6 +923,18 @@ class Renderer {
       const titleX = (W - titleW) / 2;
       const titleY = H * 0.08;
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
+
+      // 标题左上角金色闪烁小星星
+      const starOuterR = 5 * s;
+      const starInnerR = 2.5 * s;
+      const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
+      ctx.save();
+      ctx.globalAlpha = 0.6 + 0.4 * twinkle;
+      ctx.fillStyle = '#c4a35a';
+      ctx.shadowColor = 'rgba(196,163,90,0.8)';
+      ctx.shadowBlur = 4 * s;
+      this._drawStar(ctx, titleX, titleY, starOuterR, starInnerR, 5, Date.now() / 1000);
+      ctx.restore();
     }
 
     this.homepageBtnRects = [];
