@@ -908,7 +908,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
   let baseScore = 0;
   for (let i = 0; i < cards.length; i++) {
     const cardScore = letterGod ? maxBaseScore : cards[i].score;
-    baseScore += cardScore * cardMults[i] + cardAddScores[i];
+    // 吸星大法：加上 absorbBonus
+    const absorbBonus = cards[i].absorbBonus || 0;
+    baseScore += (cardScore + absorbBonus) * cardMults[i] + cardAddScores[i];
   }
 
   // === 装备卡牌：德莱薇尔 - 最后一个字母分数算多次（含 per_card 女巫牌加成，多张叠加） ===
@@ -917,8 +919,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
   if (doubleCount > 0 && cards.length > 0) {
     const lastIdx = cards.length - 1;
     const lastCardScore = letterGod ? maxBaseScore : cards[lastIdx].score;
+    const lastAbsorbBonus = cards[lastIdx].absorbBonus || 0;
     for (let i = 0; i < doubleCount; i++) {
-      const extra = lastCardScore * cardMults[lastIdx] + cardAddScores[lastIdx];
+      const extra = (lastCardScore + lastAbsorbBonus) * cardMults[lastIdx] + cardAddScores[lastIdx];
       lastLetterDoubleExtra += extra;
       baseScore += extra;
     }
@@ -933,7 +936,8 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         for (let i = 0; i < cards.length; i++) {
           if (cards[i].letter.toUpperCase() === targetLetter) {
             const cardScore = letterGod ? maxBaseScore : cards[i].score;
-            const extra = cardScore * cardMults[i] + cardAddScores[i];
+            const absorbBonus = cards[i].absorbBonus || 0;
+            const extra = (cardScore + absorbBonus) * cardMults[i] + cardAddScores[i];
             letterTriggerTwiceExtra += extra;
             baseScore += extra;
           }
@@ -1250,6 +1254,7 @@ class Game {
     this.hintToast = null;
     this._changeLetterPopup = null;
     this._changeLetterHint = null;
+    this._absorbStarsState = null;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     this._witchAngryTip = null;
@@ -1488,6 +1493,7 @@ class Game {
     this.maxJokerSlots = p.maxJokerSlots || 4;
     this.potions = p.potions || [];
     this.potionMode = p.potionMode || null;
+    this._absorbStarsState = p._absorbStarsState || null;
     this._prePotionState = p._prePotionState || null;
     this._potionSelectedLetter = p._potionSelectedLetter || null;
     this._replicateSelectedLetters = p._replicateSelectedLetters || [];
@@ -2197,6 +2203,33 @@ class Game {
     // 清除字母置换提示
     if (this._changeLetterHint) {
       this._changeLetterHint = null;
+    }
+    // 吸星大法：选择目标牌
+    if (this._absorbStarsState && this._absorbStarsState.selecting) {
+      const targetCard = this.hand.find(c => c && c.id === cardId);
+      if (!targetCard) return;
+      // 计算其他手牌分数之和
+      let absorbTotal = 0;
+      for (const c of this.hand) {
+        if (c && c.id !== cardId) {
+          absorbTotal += c.score;
+        }
+      }
+      targetCard.absorbBonus = (targetCard.absorbBonus || 0) + absorbTotal;
+      // 消耗药水（从 potions 栏点击时才需要移除）
+      if (this.potions && this._absorbStarsState.potionIndex !== undefined && this._absorbStarsState.potionIndex >= 0) {
+        this.potions.splice(this._absorbStarsState.potionIndex, 1);
+      }
+      this._absorbStarsState = null;
+      if (this.audioManager) this.audioManager.play('card_placement');
+      // 吸星成功提示
+      this.hintToast = {
+        text: `吸星大法！${targetCard.letter} 吸收 ${absorbTotal} 分`,
+        expireAt: Date.now() + 2000,
+        startTime: Date.now(),
+      };
+      if (this.storageManager) this.storageManager.saveProgress();
+      return;
     }
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
@@ -3262,6 +3295,10 @@ class Game {
     discardedCards.forEach((card, i) => {
       card._flyIndex = removedIndices[i];
       card.selected = false;
+      // 清理吸星大法的 absorbBonus
+      if (card.absorbBonus) {
+        card.absorbBonus = 0;
+      }
       this.animManager.flyOut(card, 'left', () => {
         const fi = this.flyingCards.indexOf(card);
         if (fi >= 0) this.flyingCards.splice(fi, 1);

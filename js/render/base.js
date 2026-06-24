@@ -1491,6 +1491,34 @@ class Renderer {
       this.roundRect(-hw, -hh, w, h, 10 * s, '#faf6ee', '#c4a35a');
     }
 
+    // === 吸星大法：紫色发光边框 ===
+    if (card.absorbBonus && card.absorbBonus > 0) {
+      const pulse = Math.sin(Date.now() / 300) * 0.15 + 0.25;
+      ctx.save();
+      ctx.shadowColor = `rgba(155, 89, 182, ${pulse})`;
+      ctx.shadowBlur = 12 * s;
+      ctx.strokeStyle = `rgba(155, 89, 182, ${pulse + 0.3})`;
+      ctx.lineWidth = 2.5 * s;
+      const rx = -hw + 2 * s;
+      const ry = -hh + 2 * s;
+      const rw = w - 4 * s;
+      const rh = h - 4 * s;
+      const rr = 8 * s;
+      ctx.beginPath();
+      ctx.moveTo(rx + rr, ry);
+      ctx.lineTo(rx + rw - rr, ry);
+      ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + rr);
+      ctx.lineTo(rx + rw, ry + rh - rr);
+      ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - rr, ry + rh);
+      ctx.lineTo(rx + rr, ry + rh);
+      ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - rr);
+      ctx.lineTo(rx, ry + rr);
+      ctx.quadraticCurveTo(rx, ry, rx + rr, ry);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // === 2. 大写字母 ===
     ctx.font = `bold ${Math.floor(32 * s)}px Georgia, 'Times New Roman', serif`;
     ctx.fillStyle = darkBlue;
@@ -1519,6 +1547,10 @@ class Renderer {
     ctx.scale(scoreScale, scoreScale);
 
     let displayScore = displayScoreOverride !== null ? displayScoreOverride : card.score;
+    // 吸星大法：显示包含 absorbBonus 的总分
+    if (card.absorbBonus && card.absorbBonus > 0) {
+      displayScore += card.absorbBonus;
+    }
 
     ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
     ctx.fillStyle = darkBlue;

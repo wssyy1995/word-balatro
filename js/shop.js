@@ -66,7 +66,8 @@ const SHOP_POOL = {
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:6, desc:'随机强化1个字母，分数乘以1.2~3倍'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:5, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
-    {name:'复刻水', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，60%概率低分变高分，40%概率相反'}
+    {name:'复刻水', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，60%概率低分变高分，40%概率相反'},
+    {name:'吸星大法', type:'potion', effect:'absorb_stars', scope:'game', cost:8, desc:'游戏中，选择一张手牌，将其他手牌分数临时加给它'}
   ]
 };
 
@@ -2102,9 +2103,9 @@ class ConfirmBuyRenderer {
       const totalW = btnW * 2 + btnGap;
       const startX = (W - totalW) / 2;
 
-      // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade 且药水槽满）
+      // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade / replicate_letter / absorb_stars 且药水槽满）
       const potionFull = (game.potions || []).length >= 2;
-      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter'].includes(item.effect);
+      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'absorb_stars'].includes(item.effect);
       const stashDisabled = isAlwaysBuyable && potionFull;
 
       // 独立按下缩放

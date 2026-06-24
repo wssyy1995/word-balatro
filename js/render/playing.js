@@ -945,6 +945,17 @@ module.exports = function extendPlaying(Renderer) {
         ctx.restore();
       }
 
+      // 吸星大法：提示玩家选择目标牌
+      if (game._absorbStarsState && game._absorbStarsState.selecting) {
+        ctx.save();
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('✦ 点击一张手牌作为吸星目标 ✦', W / 2, wordAreaY - 30 * s);
+        ctx.restore();
+      }
+
       // 单词求助提示：在单次预览下方显示中文释义
       if (!game.pendingCheck && game.state === 'playing' && game._seedWordHint) {
         if (game._seedWordHint.meaning) {

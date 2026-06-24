@@ -79,6 +79,7 @@ class StorageManager {
       crystalEffects: game.crystalEffects || [],
       shopItems: game.shopItems,
       state: game.state === 'potion' ? (game._prePotionState || 'shop') : game.state,
+      _absorbStarsState: game._absorbStarsState || null,
       _shuffledSkills: game._shuffledSkills,
       discardsLeft: game.discardsLeft,
       handsLeft: game.handsLeft,

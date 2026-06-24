@@ -2506,6 +2506,16 @@ function handleInput(x, inputY) {
           };
           return;
         }
+        // 吸星大法：游戏中直接使用，进入选牌状态
+        if (potion.effect === 'absorb_stars') {
+          game._absorbStarsState = { potionIndex: potionHit.potionIndex, selecting: true };
+          game.hintToast = {
+            text: '选择一张手牌作为吸星目标',
+            expireAt: Date.now() + 3000,
+            startTime: Date.now(),
+          };
+          return;
+        }
         // 其他药水：从道具栏移除后进入 potion 状态
         game.potions.splice(potionHit.potionIndex, 1);
         game.potionMode = {...potion};
@@ -2830,9 +2840,19 @@ function handleInput(x, inputY) {
             // 药水牌且点击"立即使用"
             if (btnHit.action === 'usePotionNow' && game._confirmBuyItemData) {
               const item = game._confirmBuyItemData;
-              game.potionMode = {...item};
-              game._prePotionState = 'shop';
-              game.state = 'potion';
+              // 吸星大法：直接设置选择状态（不进入 potion 状态）
+              if (item.effect === 'absorb_stars') {
+                game._absorbStarsState = { potionIndex: -1, selecting: true };
+                game.hintToast = {
+                  text: '选择一张手牌作为吸星目标',
+                  expireAt: Date.now() + 3000,
+                  startTime: Date.now(),
+                };
+              } else {
+                game.potionMode = {...item};
+                game._prePotionState = 'shop';
+                game.state = 'potion';
+              }
             }
             // 水晶球点击"生效"
             if (btnHit.action === 'applyCrystal' && game._confirmBuyItemData) {
