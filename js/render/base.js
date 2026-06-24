@@ -934,7 +934,7 @@ class Renderer {
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
-      this._drawCrossStar(ctx, starCX, starCY, 5 * s * breath, 0.85 + 0.15 * twinkle);
+      this._drawCrossStar(ctx, starCX, starCY, 8 * s * breath, 0.85 + 0.15 * twinkle);
       ctx.restore();
     }
 
@@ -1287,8 +1287,8 @@ class Renderer {
 
     // 外层柔光晕
     const glow = ctx.createRadialGradient(0, 0, size * 0.3, 0, 0, size * 0.9);
-    glow.addColorStop(0, `rgba(255,220,120,${alpha * 0.25})`);
-    glow.addColorStop(0.5, `rgba(255,180,60,${alpha * 0.08})`);
+    glow.addColorStop(0, `rgba(255,220,120,${alpha * 0.12})`);
+    glow.addColorStop(0.5, `rgba(255,180,60,${alpha * 0.04})`);
     glow.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
