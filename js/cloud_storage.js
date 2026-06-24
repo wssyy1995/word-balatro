@@ -738,6 +738,36 @@ class CloudStorageManager {
     return this.witchImages[name] || null;
   }
 
+  // ===== 统一资源读取接口（阶段1：统一资源池）=====
+  getImage(name) {
+    return this.shopCardImages[name] || null;
+  }
+
+  getWitchImage(name) {
+    return this.witchImages[name] || null;
+  }
+
+  getWitchCardImage(name) {
+    return this.witchCardImages[name] || null;
+  }
+
+  getBgIconImage(name) {
+    return this.bgIconImages[name] || null;
+  }
+
+  getGuideSpritesheet(groupKey) {
+    return this.guideSpritesheets[groupKey] || null;
+  }
+
+  getGuideFrames(groupKey) {
+    const group = this.guideImages[groupKey];
+    return group ? group.frames : null;
+  }
+
+  getRankAvatarImage(name) {
+    return this.rankAvatarImages[name] || null;
+  }
+
   // 将云缓存图片注入到 renderer 的 shopCardImages
   injectToRenderer(renderer) {
     let count = 0;

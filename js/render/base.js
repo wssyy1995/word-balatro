@@ -29,7 +29,11 @@ class Renderer {
       this.hasDynamicIsland = false;
     }
 
-    // 响应式基准计算
+    setCloudStorage(cs) {
+    this.cloudStorage = cs;
+  }
+
+  // 响应式基准计算
     // 使用 min(width/375, height/667) 确保在任何屏幕上都适配
     const baseScale = Math.min(width / 375, height / 667);
     // 限制最大缩放，避免在 iPad 上元素过大
@@ -54,6 +58,12 @@ class Renderer {
     this.gap = Math.floor(8 * this.scale);
     
     this.animations = [];
+    
+    // 统一资源池引用（阶段1：CloudStorageManager 成为唯一资源池）
+    this.cloudStorage = null;
+    
+    // 统一资源池引用（阶段1：CloudStorageManager 成为唯一资源池）
+    this.cloudStorage = null;
     
     // 背景图强制从云存储加载（云端下载成功后通过 injectBgIconToRenderer 注入）
     this.bgImage = null;
