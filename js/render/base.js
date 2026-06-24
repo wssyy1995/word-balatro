@@ -925,6 +925,11 @@ class Renderer {
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
 
       // 标题左上角菱形空心星星（呼吸缩放 + 闪烁）
+      // 通过 starOffsetX / starOffsetY 调整星星相对标题左上角的位置
+      const starOffsetX = 0;
+      const starOffsetY = 0;
+      const starCX = titleX + starOffsetX;
+      const starCY = titleY + starOffsetY;
       const breath = 0.85 + 0.15 * Math.sin(Date.now() / 300);
       const starR = 5 * s * breath;
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
@@ -936,10 +941,10 @@ class Renderer {
       ctx.shadowColor = '#ffd700';
       ctx.shadowBlur = 10 * s;
       ctx.beginPath();
-      ctx.moveTo(titleX, titleY - starR);
-      ctx.lineTo(titleX + starR, titleY);
-      ctx.lineTo(titleX, titleY + starR);
-      ctx.lineTo(titleX - starR, titleY);
+      ctx.moveTo(starCX, starCY - starR);
+      ctx.lineTo(starCX + starR, starCY);
+      ctx.lineTo(starCX, starCY + starR);
+      ctx.lineTo(starCX - starR, starCY);
       ctx.closePath();
       ctx.stroke();
       ctx.restore();
