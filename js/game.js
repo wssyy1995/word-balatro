@@ -1148,7 +1148,9 @@ class Game {
   constructor(savedProgress = null) {
     this.storageManager = new StorageManager();
     this.audioManager = new AudioManager();
-    this.audioManager.preloadAll();
+    // 2026-06-24 优化：homepage 阶段不预加载全部音效
+    // 避免创建 30 个 InnerAudioContext 实例占用内存
+    // 音效会在玩家点击「开始游戏」后通过 initAudio() 统一加载
     this.battleManager = new BattleManager(this);
 
     // 全局开关：game.json 中的 enableGuide 优先级最高，关闭时强制跳过引导
@@ -1838,6 +1840,14 @@ class Game {
     }
     if (this.animManager) {
       this.animManager.clear();
+    }
+  }
+
+  // 2026-06-24 优化：延迟加载音效，避免 homepage 阶段占用大量内存
+  initAudio() {
+    if (this.audioManager && !this.audioManager.initialized) {
+      this.audioManager.preloadAll(this.cloudStorage);
+      console.log('[Audio] 音效延迟加载完成');
     }
   }
 

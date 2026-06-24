@@ -150,12 +150,26 @@ function showRankList(panelRect) {
   isRankShowing = true;
   if (game) game._showingRankList = true;
 
+  // 2026-06-24 优化：sharedCanvas 不再默认全屏，按实际展示区域设置
+  // 减少开放域 offscreen canvas 的内存占用
+  let sharedW = canvas.width;
+  let sharedH = canvas.height;
+  if (panelRect) {
+    // panelRect 是逻辑点，转为物理像素
+    sharedW = Math.max(1, Math.floor(panelRect.w * scaleDpr));
+    sharedH = Math.max(1, Math.floor(panelRect.h * scaleDpr));
+  } else {
+    // 全屏排行榜也限制上限，避免高分屏下过大
+    sharedW = Math.min(sharedW, 960);
+    sharedH = Math.min(sharedH, 1920);
+  }
+
   // OffScreenCanvas 模式：主域设置 sharedCanvas 的宽高（开放域不能设）
   const sharedCanvas = odc.canvas;
   if (sharedCanvas) {
     try {
-      sharedCanvas.width = canvas.width;
-      sharedCanvas.height = canvas.height;
+      sharedCanvas.width = sharedW;
+      sharedCanvas.height = sharedH;
     } catch (e) {
       console.warn('sharedCanvas set failed', e.message);
     }
@@ -166,16 +180,16 @@ function showRankList(panelRect) {
     odc.postMessage({
       action: 'showPanel',
       scaleDpr,
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
+      canvasWidth: sharedW,
+      canvasHeight: sharedH,
       rect: panelRect,
     });
   } else {
     odc.postMessage({
       action: 'show',
       scaleDpr,
-      canvasWidth: canvas.width,
-      canvasHeight: canvas.height,
+      canvasWidth: sharedW,
+      canvasHeight: sharedH,
     });
   }
 }
@@ -185,7 +199,19 @@ function hideRankList() {
   if (!odc) return;
   isRankShowing = false;
   if (game) game._showingRankList = false;
+  // 2026-06-24 优化：隐藏排行榜时通知开放域释放 sharedCanvas 内存
   odc.postMessage({ action: 'hide' });
+
+  // 主域侧也把 sharedCanvas 尺寸降到最小，双保险
+  const sharedCanvas = odc.canvas;
+  if (sharedCanvas) {
+    try {
+      sharedCanvas.width = 1;
+      sharedCanvas.height = 1;
+    } catch (e) {
+      console.warn('sharedCanvas reset failed', e.message);
+    }
+  }
 }
 
 function showRankPopup(tab = 'friend') {
@@ -437,13 +463,36 @@ const HEIGHT = info.windowHeight;
 const dpr = info.pixelRatio || 1;
 
 // 限制 Canvas 物理像素上限，防止高分屏内存爆炸
-const MAX_CANVAS_WIDTH = 1280;
-const MAX_CANVAS_HEIGHT = 2560;
+// 2026-06-24 优化：从 1280×2560 下调到 960×1920
+// 在 DPR=3 的 iPhone 上 scaleDpr 从 ~2.75 降到 ~2.0，单帧缓冲减少约 45%
+// 对 UI/图片清晰度影响轻微，但能显著降低显存/GPU 内存压力
+const MAX_CANVAS_WIDTH = 960;
+const MAX_CANVAS_HEIGHT = 1920;
 const scaleDpr = Math.min(dpr, MAX_CANVAS_WIDTH / WIDTH, MAX_CANVAS_HEIGHT / HEIGHT);
 
 canvas.width = Math.floor(WIDTH * scaleDpr);
 canvas.height = Math.floor(HEIGHT * scaleDpr);
 ctx.scale(scaleDpr, scaleDpr);
+
+// 2026-06-24 优化：增加内存监控，便于观察优化效果
+// 收到微信内存告警时立即打印
+wx.onMemoryWarning && wx.onMemoryWarning((res) => {
+  console.warn('[MemoryWarning] level=', res && res.level, 'time=', Date.now());
+  if (wx.getPerformance) {
+    const mem = wx.getPerformance().getMemoryInfo();
+    console.warn('[MemoryWarning] used=', mem.used, 'total=', mem.total, 'limit=', mem.limit);
+  }
+});
+
+// 每 10 秒采样一次内存（真机调试阶段使用，上线后可关闭或降低频率）
+const MEMORY_LOG_INTERVAL = 10000;
+setInterval(() => {
+  if (!wx.getPerformance) return;
+  try {
+    const mem = wx.getPerformance().getMemoryInfo();
+    console.log('[MemorySample] used=', mem.used, 'total=', mem.total, 'limit=', mem.limit, 'time=', Date.now());
+  } catch (e) {}
+}, MEMORY_LOG_INTERVAL);
 
 // 游戏全局状态
 let game = null;
@@ -632,6 +681,9 @@ function startGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+
+  // 2026-06-24 优化：进入游戏后再加载音效，homepage 阶段不占用音频实例
+  game.initAudio();
 
   // 存档恢复时：补充按需下载可能遗漏的引导精灵图（witch_guide_3/4）
   if (game.round === 2 && game.shopGuidePhase === 0) {
@@ -3515,6 +3567,9 @@ function restartGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+
+  // 2026-06-24 优化：restart 后也需要加载音效
+  game.initAudio();
 
   // 加载 cloudStorage 缓存的音频
   if (game.audioManager) game.audioManager.loadFromCloud(game.cloudStorage);

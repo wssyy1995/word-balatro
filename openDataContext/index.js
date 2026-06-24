@@ -573,6 +573,13 @@ wx.onMessage((msg) => {
       listRect = null;
       const size = getCanvasSize();
       ctx.clearRect(0, 0, size.W, size.H);
+      // 2026-06-24 优化：隐藏排行榜后释放 sharedCanvas 内存
+      try {
+        sharedCanvas.width = 1;
+        sharedCanvas.height = 1;
+        canvasWidth = 1;
+        canvasHeight = 1;
+      } catch (e) {}
       break;
     case 'resize':
       if (!isVisible) return;

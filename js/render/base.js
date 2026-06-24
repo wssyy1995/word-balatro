@@ -917,11 +917,11 @@ class Renderer {
     // 标题图：屏幕高度 20% 处居中
     if (this.homepageTitle && this.homepageTitleLoaded) {
       const titleImg = this.homepageTitle;
-      const maxTitleW = W * 0.8;
+      const maxTitleW = W * 0.95;
       const titleW = Math.min(maxTitleW, titleImg.width * s);
       const titleH = titleW * (titleImg.height / titleImg.width);
       const titleX = (W - titleW) / 2;
-      const titleY = H * 0.2;
+      const titleY = H * 0.08;
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
     }
 
