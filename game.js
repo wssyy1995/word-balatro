@@ -562,7 +562,7 @@ async function startPreload() {
   // 阶段2优化：只预加载 homepage 必需的 bg_icon + music + guide
   const homepageBgIconNames = ['homepageBg', 'homepageRound', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'topHome'];
   const homepageBgIconCount = homepageBgIconNames.filter(name => cloudStorage.bgIconFileMap[name]).length;
-  const total = homepageBgIconCount + guideStepCount + musicCount;
+  const total = homepageBgIconCount + shopNames.length + bgIconNames.length + guideStepCount + musicCount;
 
   if (total === 0 && collectedWitchCards.length === 0) {
     console.log('[Game] 没有云存储映射，跳过预加载');
@@ -581,8 +581,10 @@ async function startPreload() {
     preloadProgress = Math.floor((loaded / total) * 100);
   }
 
-  // 阶段2优化：只加载 homepage 必需资源
+  // 阶段2优化：只加载 homepage 必需资源 + 所有shop_card + 所有游戏背景图
   await cloudStorage.preloadHomepageBgIcons(onProgress);
+  await cloudStorage.preloadShopCardImages(onProgress);
+  await cloudStorage.preloadGameBgIcons(onProgress);
   await cloudStorage.preloadMusicFiles(onProgress);
   if (needGuide) {
     await cloudStorage.preloadGuideGroup(1, renderer);
