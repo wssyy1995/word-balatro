@@ -115,7 +115,7 @@ class CloudStorageManager {
       'battle_vs': c('/bg_icon/battle_vs.png'),
       'score_line': c('/bg_icon/score_line.png'),
       'discount_spritesheet': c('/bg_icon/discount_spritesheet.png'),
-      'homepageBg': c('/bg_icon/homepage_bg2.png'),
+      'homepageBg': c('/bg_icon/homepage_bg.png'),
       'homepageRound': c('/bg_icon/hompage_round.png'),
       'homepageBattle': c('/bg_icon/hompage_battle.png'),
       'homepageSetting': c('/bg_icon/hompage_setting.png'),
