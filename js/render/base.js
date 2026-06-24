@@ -924,17 +924,24 @@ class Renderer {
       const titleY = H * 0.08;
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
 
-      // 标题左上角金色闪烁小星星（更亮 + 呼吸缩放）
+      // 标题左上角菱形空心星星（呼吸缩放 + 闪烁）
       const breath = 0.85 + 0.15 * Math.sin(Date.now() / 300);
-      const starOuterR = 5 * s * breath;
-      const starInnerR = 2.5 * s * breath;
+      const starR = 5 * s * breath;
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
       ctx.save();
       ctx.globalAlpha = 0.85 + 0.15 * twinkle;
-      ctx.fillStyle = '#fff5c4';
+      ctx.strokeStyle = '#fff5c4';
+      ctx.lineWidth = 1.5 * s;
+      ctx.lineJoin = 'round';
       ctx.shadowColor = '#ffd700';
       ctx.shadowBlur = 10 * s;
-      this._drawStar(ctx, titleX, titleY, starOuterR, starInnerR, 5, 0);
+      ctx.beginPath();
+      ctx.moveTo(titleX, titleY - starR);
+      ctx.lineTo(titleX + starR, titleY);
+      ctx.lineTo(titleX, titleY + starR);
+      ctx.lineTo(titleX - starR, titleY);
+      ctx.closePath();
+      ctx.stroke();
       ctx.restore();
     }
 
