@@ -457,6 +457,18 @@ module.exports = function extendPopup(Renderer) {
     }
 
     Renderer.prototype.drawPotion = function(game) {
+      // 星辉洗涤：动画/结果阶段优先
+      if (game._starlightWashAnim) {
+        this._drawStarlightWashAnim(game);
+        return;
+      }
+
+      // 星辉洗涤：选择阶段
+      if (game.potionMode && game.potionMode.effect === 'starlight_wash') {
+        this._drawStarlightWashSelect(game);
+        return;
+      }
+
       // 复刻水：动画/结果阶段优先
       if (game._replicateAnim) {
         this._drawReplicateAnim(game);

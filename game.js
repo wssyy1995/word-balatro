@@ -3211,6 +3211,53 @@ function handleInput(x, inputY) {
       return;
     }
 
+    // === 星辉洗涤：选择阶段 ===
+    if (game.potionMode && game.potionMode.effect === 'starlight_wash') {
+      // 动画结束阶段点击 → 关闭
+      if (game._starlightWashAnim && game._starlightWashAnim.phase === 'result') {
+        vibrate();
+        game._starlightWashAnim = null;
+        game.potionMode = null;
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+        return;
+      }
+      // 检测字母点击
+      if (renderer.potionLetterRects) {
+        const letterHit = renderer.hitTest(x, inputY, renderer.potionLetterRects);
+        if (letterHit) {
+          vibrate();
+          const selected = game._starlightWashSelectedLetter;
+          if (selected === letterHit.letter) {
+            game._starlightWashSelectedLetter = null;
+          } else {
+            game._starlightWashSelectedLetter = letterHit.letter;
+          }
+          return;
+        }
+      }
+      // 检测开始按钮
+      if (renderer.starlightWashStartBtnRect && renderer.starlightWashStartBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.starlightWashStartBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game.startStarlightWash();
+          return;
+        }
+      }
+      // 检测重选按钮
+      if (renderer.starlightWashResetBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.starlightWashResetBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._starlightWashSelectedLetter = null;
+          return;
+        }
+      }
+      return;
+    }
+
     // === 复刻水：选择阶段 ===
     if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
       // 检测字母点击

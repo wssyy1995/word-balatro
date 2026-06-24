@@ -1212,6 +1212,8 @@ class Game {
       this._replicateAnim = null;
       this._equalSplitSelectedLetters = [];
       this._equalSplitAnim = null;
+      this._starlightWashSelectedLetter = null;
+      this._starlightWashAnim = null;
       this.state = 'playing';
       this.shopItems = null;
       this.safetyRounds = 3;
@@ -1502,6 +1504,8 @@ class Game {
     this._replicateAnim = p._replicateAnim || null;
     this._equalSplitSelectedLetters = p._equalSplitSelectedLetters || [];
     this._equalSplitAnim = p._equalSplitAnim || null;
+    this._starlightWashSelectedLetter = p._starlightWashSelectedLetter || null;
+    this._starlightWashAnim = p._starlightWashAnim || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
     this.settlementData = p.settlementData || null;
@@ -3897,6 +3901,18 @@ class Game {
         }
       }
     }
+
+    // 星辉洗涤：动画1秒后进入结果阶段
+    if (this._starlightWashAnim && this._starlightWashAnim.phase === 'spinning') {
+      const elapsed = Date.now() - this._starlightWashAnim.startTime;
+      if (elapsed >= 1000) {
+        this._starlightWashAnim.phase = 'result';
+        this._starlightWashAnim.resultStartTime = Date.now();
+        if (this.audioManager) {
+          this.audioManager.play('card_valid');
+        }
+      }
+    }
   }
 
   startReplicate() {
@@ -4039,6 +4055,44 @@ class Game {
       newScores: [newScoreA, newScoreB]
     };
     this._equalSplitSelectedLetters = [];
+    if (this.audioManager) this.audioManager.play('tap');
+  }
+
+  startStarlightWash() {
+    if (!this.potionMode || this.potionMode.effect !== 'starlight_wash') return;
+    if (!this._starlightWashSelectedLetter) return;
+
+    const letter = this._starlightWashSelectedLetter;
+    const base = LETTER_SCORE[letter];
+    const up = letterUpgrades.get(letter) || {};
+    const oldScore = Math.floor(base * (up.mult || 1)) + (up.add || 0);
+
+    // 删除 letterUpgrades 中该字母的强化记录
+    letterUpgrades.delete(letter);
+
+    // 同步更新当前手牌
+    this.hand.forEach(card => {
+      if (card && card.letter === letter) {
+        card.baseScore = base;
+        card.score = base;
+        card.upgraded = false;
+        card.upgradeMult = 1;
+        card.upgradeAdd = 0;
+      }
+    });
+
+    // 获得当前分数 1/10 的金币（向下取整）
+    const goldReward = Math.floor(oldScore / 10);
+    this.gold += goldReward;
+
+    this._starlightWashAnim = {
+      phase: 'spinning',
+      startTime: Date.now(),
+      letter,
+      oldScore,
+      goldReward
+    };
+    this._starlightWashSelectedLetter = null;
     if (this.audioManager) this.audioManager.play('tap');
   }
 

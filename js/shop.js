@@ -68,7 +68,8 @@ const SHOP_POOL = {
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
     {name:'复刻水', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，60%概率低分变高分，40%概率相反'},
     {name:'平分秋色', type:'potion', effect:'equal_split', cost:8, desc:'选择两个字母，将分数相加后平分，永久生效'},
-    {name:'吸星大法', type:'potion', effect:'absorb_stars', scope:'game', cost:8, desc:'游戏中，选择一张手牌，将其他手牌分数临时加给它'}
+    {name:'吸星大法', type:'potion', effect:'absorb_stars', scope:'game', cost:8, desc:'游戏中，选择一张手牌，将其他手牌分数临时加给它'},
+    {name:'星辉洗涤', type:'potion', effect:'starlight_wash', cost:5, desc:'选择一个字母，重置强化恢复基础分，获得当前分数1/10的金币'}
   ]
 };
 
@@ -134,7 +135,7 @@ function buyItem(game, idx) {
 
   // 上限检查（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
   if (item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots) return false;
-  const isAlwaysBuyablePotion = item.type === 'potion' && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split'].includes(item.effect);
+  const isAlwaysBuyablePotion = item.type === 'potion' && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(item.effect);
   if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return false;
 
   game.gold -= finalCost;
@@ -697,7 +698,7 @@ class ShopRenderer {
           appearOffsetY = -(1 - ease) * 8 * s;
         }
 
-        const canUse = ['random_upgrade', 'upgrade_letter', 'replicate_letter', 'equal_split'].includes(potion.effect);
+        const canUse = ['random_upgrade', 'upgrade_letter', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(potion.effect);
 
         if (canUse) {
           // 两个按钮并排，宽度保持 slotW 不变，整体以卡牌中心为基准偏移
@@ -1251,7 +1252,7 @@ class ShopRenderer {
         // 检查槽位上限（upgrade_letter 和 random_upgrade 药水不受药水槽位限制）
         const isWitch = item.type === 'witch';
         const isPotion = item.type === 'potion';
-        const isAlwaysBuyablePotion = isPotion && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split'].includes(item.effect);
+        const isAlwaysBuyablePotion = isPotion && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(item.effect);
         const witchFull = (game.jokers || []).length >= game.maxJokerSlots;
         const potionFull = (game.potions || []).length >= 2;
         const isWitchFull = isWitch && witchFull;
@@ -2106,7 +2107,7 @@ class ConfirmBuyRenderer {
 
       // 判断暂存按钮是否禁用（upgrade_letter / random_upgrade / replicate_letter / absorb_stars 且药水槽满）
       const potionFull = (game.potions || []).length >= 2;
-      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'absorb_stars', 'equal_split'].includes(item.effect);
+      const isAlwaysBuyable = ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'absorb_stars', 'equal_split', 'starlight_wash'].includes(item.effect);
       const stashDisabled = isAlwaysBuyable && potionFull;
 
       // 独立按下缩放
