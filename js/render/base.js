@@ -931,8 +931,8 @@ class Renderer {
       const starAlpha = 0.85 + 0.15 * twinkle;
       const titleStars = [
         { x: 55, y: 136, size: 6 },
-        { x: titleW - 55, y: 136, size: 5 },
-        { x: titleW / 2, y: titleH + 40, size: 7 }
+        { x: titleW - 25, y: 136, size: 7 },
+        { x: titleW / 2+15, y: titleH/2-30 , size: 7 }
       ];
       titleStars.forEach(star => {
         this._drawOctStar(ctx, titleX + star.x, titleY + star.y, star.size * s * breath, starAlpha);
