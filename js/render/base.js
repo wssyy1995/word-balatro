@@ -491,6 +491,8 @@ class Renderer {
     // 主页图片（由 cloudStorage.injectBgIconToRenderer 从云存储注入）
     this.homepageBg = null;
     this.homepageBgLoaded = false;
+    this.homepageTitle = null;
+    this.homepageTitleLoaded = false;
     this.homepageRound = null;
     this.homepageRoundLoaded = false;
     this.homepageBattle = null;
@@ -910,6 +912,17 @@ class Renderer {
     } else {
       ctx.fillStyle = '#0a1628';
       ctx.fillRect(0, 0, W, H);
+    }
+
+    // 标题图：屏幕高度 20% 处居中
+    if (this.homepageTitle && this.homepageTitleLoaded) {
+      const titleImg = this.homepageTitle;
+      const maxTitleW = W * 0.8;
+      const titleW = Math.min(maxTitleW, titleImg.width * s);
+      const titleH = titleW * (titleImg.height / titleImg.width);
+      const titleX = (W - titleW) / 2;
+      const titleY = H * 0.2;
+      ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
     }
 
     this.homepageBtnRects = [];
