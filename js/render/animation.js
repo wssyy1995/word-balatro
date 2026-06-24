@@ -917,20 +917,15 @@ module.exports = function extendAnimation(Renderer) {
           newScoreA += 1; // 预览时显示一种情况（奇数时+1给第一个）
         }
 
-        const line1 = `${letterA}=${scoreA} + ${letterB}=${scoreB} = ${totalScore}`;
-        const line2 = `平分后: ${letterA}=${newScoreA}, ${letterB}=${newScoreB}`;
+        const tipText = `平分后: ${letterA}=${newScoreA}, ${letterB}=${newScoreB}`;
         const tipY = gridBottomY + 18 * s;
-        const lineGap = 18 * s;
 
         ctx.save();
         ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
-        ctx.textAlign = 'left';
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const maxTipW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
-        const tipX = W / 2 - maxTipW / 2;
-        ctx.fillText(line1, tipX, tipY);
-        ctx.fillText(line2, tipX, tipY + lineGap);
+        ctx.fillText(tipText, W / 2, tipY);
         ctx.restore();
       }
 
