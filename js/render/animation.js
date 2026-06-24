@@ -1463,4 +1463,107 @@ module.exports = function extendAnimation(Renderer) {
         ctx.restore();
       }
     }
+
+    Renderer.prototype._drawAbsorbStarsSelect = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      const selectedId = game._absorbStarsSelectedCardId;
+      const hand = (game.hand || []).filter(c => c);
+
+      // === 标题 ===
+      const titleY = top - 10 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('吸星大法', W / 2, titleY);
+      ctx.restore();
+
+      // === 副标题 ===
+      const subTitleY = titleY + 52 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('选择一张手牌，吸收其他手牌分数', W / 2, subTitleY);
+      ctx.restore();
+
+      // === 分隔线 ===
+      const dividerY = subTitleY + 22 * s;
+      const lineW = 80 * s;
+      const lineGap = 8 * s;
+      const lineColor = '#c4a35a';
+      const centerX = W / 2;
+      ctx.save();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(centerX - lineGap - lineW, dividerY);
+      ctx.lineTo(centerX - lineGap, dividerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(centerX + lineGap, dividerY);
+      ctx.lineTo(centerX + lineGap + lineW, dividerY);
+      ctx.stroke();
+      const diamondSize = 5 * s;
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.moveTo(centerX, dividerY - diamondSize);
+      ctx.lineTo(centerX + diamondSize, dividerY);
+      ctx.lineTo(centerX, dividerY + diamondSize);
+      ctx.lineTo(centerX - diamondSize, dividerY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // === 手牌网格 ===
+      const cardW = this.cardW;
+      const cardH = this.cardH;
+      const gap = 8 * s;
+      const cols = hand.length <= 4 ? hand.length : (hand.length > 9 ? 4 : 3);
+      const rows = Math.ceil(hand.length / cols);
+      const totalGridW = cols * cardW + (cols - 1) * gap;
+      const totalGridH = rows * cardH + (rows - 1) * gap;
+      const gridStartX = (W - totalGridW) / 2;
+      const gridStartY = (H - totalGridH) / 2 - 10 * s;
+
+      this.absorbStarsCardRects = [];
+      hand.forEach((card, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = gridStartX + col * (cardW + gap);
+        const y = gridStartY + row * (cardH + gap);
+        const isSelected = card.id === selectedId;
+
+        if (isSelected) {
+          this.roundRect(x - 3 * s, y - 3 * s, cardW + 6 * s, cardH + 6 * s, 10 * s, null, '#c4a35a', 3 * s);
+        }
+
+        this.drawCard(card, x, y, false, null);
+        this.absorbStarsCardRects.push({ x, y, w: cardW, h: cardH, card });
+      });
+
+      // === 确定按钮 ===
+      const btnAreaY = H - 75 * s;
+      const btnW = 160 * s;
+      const btnH = 46 * s;
+      const btnX = (W - btnW) / 2;
+      const btnEnabled = !!selectedId;
+      this.roundRect(btnX, btnAreaY, btnW, btnH, 10 * s,
+        btnEnabled ? '#c4a35a' : '#d4c9a8',
+        btnEnabled ? null : '#bbb', btnEnabled ? 0 : 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('确定', btnX + btnW / 2, btnAreaY + btnH / 2);
+      ctx.restore();
+      this.absorbStarsConfirmBtnRect = { x: btnX, y: btnAreaY, w: btnW, h: btnH, enabled: btnEnabled };
+    }
 };

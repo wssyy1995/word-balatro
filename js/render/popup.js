@@ -457,6 +457,12 @@ module.exports = function extendPopup(Renderer) {
     }
 
     Renderer.prototype.drawPotion = function(game) {
+      // 吸星大法：选择阶段
+      if (game.potionMode && game.potionMode.effect === 'absorb_stars') {
+        this._drawAbsorbStarsSelect(game);
+        return;
+      }
+
       // 星辉洗涤：动画/结果阶段优先
       if (game._starlightWashAnim) {
         this._drawStarlightWashAnim(game);

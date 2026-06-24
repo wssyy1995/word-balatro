@@ -2558,14 +2558,13 @@ function handleInput(x, inputY) {
           };
           return;
         }
-        // 吸星大法：游戏中直接使用，进入选牌状态
+        // 吸星大法：进入专属选择页，挑选目标手牌后点击确定
         if (potion.effect === 'absorb_stars') {
-          game._absorbStarsState = { potionIndex: potionHit.potionIndex, selecting: true };
-          game.hintToast = {
-            text: '选择一张手牌作为吸星目标',
-            expireAt: Date.now() + 3000,
-            startTime: Date.now(),
-          };
+          game.potionMode = { ...potion, _potionIndex: potionHit.potionIndex };
+          game._prePotionState = 'playing';
+          game._absorbStarsSelectedCardId = game.selected && game.selected[0] ? game.selected[0] : null;
+          game.state = 'potion';
+          if (game.storageManager) game.storageManager.saveProgress();
           return;
         }
         // 其他药水：从道具栏移除后进入 potion 状态
@@ -3194,6 +3193,55 @@ function handleInput(x, inputY) {
   }
 
   if (game.state === 'potion') {
+    // === 吸星大法：选择阶段 ===
+    if (game.potionMode && game.potionMode.effect === 'absorb_stars') {
+      // 检测手牌点击
+      if (renderer.absorbStarsCardRects) {
+        const cardHit = renderer.hitTest(x, inputY, renderer.absorbStarsCardRects);
+        if (cardHit) {
+          vibrate();
+          game._absorbStarsSelectedCardId = cardHit.card.id;
+          return;
+        }
+      }
+      // 检测确定按钮
+      if (renderer.absorbStarsConfirmBtnRect && renderer.absorbStarsConfirmBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.absorbStarsConfirmBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          const targetId = game._absorbStarsSelectedCardId;
+          const targetCard = game.hand.find(c => c && c.id === targetId);
+          if (targetCard) {
+            let absorbTotal = 0;
+            for (const c of game.hand) {
+              if (c && c.id !== targetId) {
+                absorbTotal += c.score;
+              }
+            }
+            targetCard.absorbBonus = (targetCard.absorbBonus || 0) + absorbTotal;
+            // 消耗药水
+            const potionIndex = game.potionMode._potionIndex;
+            if (potionIndex !== undefined && potionIndex >= 0 && game.potions) {
+              game.potions.splice(potionIndex, 1);
+            }
+            game.hintToast = {
+              text: `吸星大法！${targetCard.letter} 吸收 ${absorbTotal} 分`,
+              expireAt: Date.now() + 2000,
+              startTime: Date.now(),
+            };
+            if (game.storageManager) game.storageManager.saveProgress();
+          }
+          game._absorbStarsSelectedCardId = null;
+          game.potionMode = null;
+          game.state = game._prePotionState || 'playing';
+          game._prePotionState = null;
+          return;
+        }
+      }
+      return;
+    }
+
     // === 复刻水：动画/结果阶段 ===
     if (game._replicateAnim) {
       if (game._replicateAnim.phase === 'result') {
