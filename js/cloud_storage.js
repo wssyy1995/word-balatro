@@ -70,7 +70,10 @@ class CloudStorageManager {
       'is_new_word':c('/shop_card/is_new_word.png'),
       'replicate_letter':c('/shop_card/replicate_letter.png'),
       'mystery_discount':c('/shop_card/mystery_discount.png'),
-      'cupon':c('/shop_card/cupon.png')
+      'cupon':c('/shop_card/cupon.png'),
+      'absorb_stars':c('/shop_card/absorb_stars.png'),
+      'starlight_wash':c('/shop_card/starlight_wash.png'),
+      'equal_split':c('/shop_card/equal_split.png'),
     };
 
     // 默认 witch 图片云文件映射
