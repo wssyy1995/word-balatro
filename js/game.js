@@ -3900,13 +3900,14 @@ class Game {
       }
     }
 
-    // 平分秋色：动画1秒后进入结果阶段
+    // 平分秋色：心跳动画2秒后进入结果阶段
     if (this._equalSplitAnim && this._equalSplitAnim.phase === 'spinning') {
       const elapsed = Date.now() - this._equalSplitAnim.startTime;
-      if (elapsed >= 1000) {
+      if (elapsed >= 2000) {
         this._equalSplitAnim.phase = 'result';
         this._equalSplitAnim.resultStartTime = Date.now();
         if (this.audioManager) {
+          this.audioManager.stopSound('heart_beat');
           this.audioManager.play('card_valid');
         }
       }
@@ -4065,7 +4066,7 @@ class Game {
       newScores: [newScoreA, newScoreB]
     };
     this._equalSplitSelectedLetters = [];
-    if (this.audioManager) this.audioManager.play('tap');
+    if (this.audioManager) this.audioManager.playLoop('heart_beat');
   }
 
   startStarlightWash() {

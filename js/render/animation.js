@@ -978,7 +978,7 @@ module.exports = function extendAnimation(Renderer) {
 
       if (anim.phase === 'spinning') {
         const elapsed = now - anim.startTime;
-        const progress = Math.min(elapsed / 1000, 1);
+        const progress = Math.min(elapsed / 2000, 1);
 
         // 遮罩
         ctx.save();
@@ -993,15 +993,15 @@ module.exports = function extendAnimation(Renderer) {
         const startX = (W - totalW) / 2;
         const baseY = H / 2;
 
-        // 最后 200ms 心跳幅度衰减到 0
-        const FADE_DURATION = 200;
+        // 最后 400ms 心跳幅度衰减到 0
+        const FADE_DURATION = 400;
         let fadeOut = 1;
-        if (progress > (1000 - FADE_DURATION) / 1000) {
-          fadeOut = 1 - (progress - (1000 - FADE_DURATION) / 1000) / (FADE_DURATION / 1000);
+        if (progress > (2000 - FADE_DURATION) / 2000) {
+          fadeOut = 1 - (progress - (2000 - FADE_DURATION) / 2000) / (FADE_DURATION / 2000);
           fadeOut = Math.max(0, fadeOut);
         }
 
-        const period = 800;
+        const period = 1600;
         const omega = (2 * Math.PI) / period;
         function heartbeat(phaseOffset) {
           const biphasic = Math.abs(Math.sin(omega * elapsed * 1.3 + phaseOffset));
@@ -1068,12 +1068,12 @@ module.exports = function extendAnimation(Renderer) {
           ctx.restore();
         });
       } else if (anim.phase === 'result') {
-        const resultElapsed = now - (anim.resultStartTime || anim.startTime + 1000);
+        const resultElapsed = now - (anim.resultStartTime || anim.startTime + 2000);
         const fadeIn = Math.min(resultElapsed / 300, 1);
 
         // 分数缩放脉冲动画
         const SCORE_CHANGE_DURATION = 600;
-        const scorePulseStart = anim.resultStartTime || anim.startTime + 1000;
+        const scorePulseStart = anim.resultStartTime || anim.startTime + 2000;
 
         // 遮罩
         ctx.save();
