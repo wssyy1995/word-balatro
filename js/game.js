@@ -1210,6 +1210,8 @@ class Game {
       this._randomUpgradePopup = null;
       this._replicateSelectedLetters = [];
       this._replicateAnim = null;
+      this._equalSplitSelectedLetters = [];
+      this._equalSplitAnim = null;
       this.state = 'playing';
       this.shopItems = null;
       this.safetyRounds = 3;
@@ -1498,6 +1500,8 @@ class Game {
     this._potionSelectedLetter = p._potionSelectedLetter || null;
     this._replicateSelectedLetters = p._replicateSelectedLetters || [];
     this._replicateAnim = p._replicateAnim || null;
+    this._equalSplitSelectedLetters = p._equalSplitSelectedLetters || [];
+    this._equalSplitAnim = p._equalSplitAnim || null;
     this.crystalEffects = p.crystalEffects || [];
     this.shopItems = p.shopItems || null;
     this.settlementData = p.settlementData || null;
@@ -3881,6 +3885,18 @@ class Game {
         }
       }
     }
+
+    // 平分秋色：动画1秒后进入结果阶段
+    if (this._equalSplitAnim && this._equalSplitAnim.phase === 'spinning') {
+      const elapsed = Date.now() - this._equalSplitAnim.startTime;
+      if (elapsed >= 1000) {
+        this._equalSplitAnim.phase = 'result';
+        this._equalSplitAnim.resultStartTime = Date.now();
+        if (this.audioManager) {
+          this.audioManager.play('card_valid');
+        }
+      }
+    }
   }
 
   startReplicate() {
@@ -3968,6 +3984,62 @@ class Game {
     };
     this._replicateSelectedLetters = [];
     if (this.audioManager) this.audioManager.playLoop('heart_beat');
+  }
+
+  startEqualSplit() {
+    if (!this.potionMode || this.potionMode.effect !== 'equal_split') return;
+    if (!this._equalSplitSelectedLetters || this._equalSplitSelectedLetters.length !== 2) return;
+
+    const [letterA, letterB] = this._equalSplitSelectedLetters;
+    const baseA = LETTER_SCORE[letterA];
+    const baseB = LETTER_SCORE[letterB];
+    const upA = letterUpgrades.get(letterA) || {};
+    const upB = letterUpgrades.get(letterB) || {};
+    const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
+    const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
+
+    const totalScore = scoreA + scoreB;
+    let newScoreA = Math.floor(totalScore / 2);
+    let newScoreB = Math.floor(totalScore / 2);
+
+    // 如果总和不是偶数，多余的1分随机加给其中一张
+    if (totalScore % 2 !== 0) {
+      if (Math.random() < 0.5) {
+        newScoreA += 1;
+      } else {
+        newScoreB += 1;
+      }
+    }
+
+    // 更新 letterUpgrades（永久修改）
+    const updateLetter = (letter, newScore) => {
+      const base = LETTER_SCORE[letter];
+      const add = newScore - base;
+      letterUpgrades.set(letter, { mult: 1, add: Math.max(0, add) });
+      // 同步更新当前手牌
+      this.hand.forEach(card => {
+        if (card && card.letter === letter) {
+          card.baseScore = base;
+          card.score = newScore;
+          card.upgraded = true;
+          card.upgradeMult = 1;
+          card.upgradeAdd = Math.max(0, add);
+        }
+      });
+    };
+
+    updateLetter(letterA, newScoreA);
+    updateLetter(letterB, newScoreB);
+
+    this._equalSplitAnim = {
+      phase: 'spinning',
+      startTime: Date.now(),
+      letters: [letterA, letterB],
+      scores: [scoreA, scoreB],
+      newScores: [newScoreA, newScoreB]
+    };
+    this._equalSplitSelectedLetters = [];
+    if (this.audioManager) this.audioManager.play('tap');
   }
 
   startRandomSpin() {

@@ -3162,6 +3162,55 @@ function handleInput(x, inputY) {
       return;
     }
 
+    // === 平分秋色：选择阶段 ===
+    if (game.potionMode && game.potionMode.effect === 'equal_split') {
+      // 动画结束阶段点击 → 关闭
+      if (game._equalSplitAnim && game._equalSplitAnim.phase === 'result') {
+        vibrate();
+        game._equalSplitAnim = null;
+        game.potionMode = null;
+        game.state = game._prePotionState || 'shop';
+        game._prePotionState = null;
+        return;
+      }
+      // 检测字母点击
+      if (renderer.potionLetterRects) {
+        const letterHit = renderer.hitTest(x, inputY, renderer.potionLetterRects);
+        if (letterHit) {
+          vibrate();
+          const selected = game._equalSplitSelectedLetters || [];
+          const idx = selected.indexOf(letterHit.letter);
+          if (idx >= 0) {
+            selected.splice(idx, 1);
+          } else if (selected.length < 2) {
+            selected.push(letterHit.letter);
+          }
+          game._equalSplitSelectedLetters = selected;
+          return;
+        }
+      }
+      // 检测开始按钮
+      if (renderer.equalSplitStartBtnRect && renderer.equalSplitStartBtnRect.enabled) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.equalSplitStartBtnRect]);
+        if (btnHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          game.startEqualSplit();
+          return;
+        }
+      }
+      // 检测重选按钮
+      if (renderer.equalSplitResetBtnRect) {
+        const btnHit = renderer.hitTest(x, inputY, [renderer.equalSplitResetBtnRect]);
+        if (btnHit) {
+          vibrate();
+          game._equalSplitSelectedLetters = [];
+          return;
+        }
+      }
+      return;
+    }
+
     // === 复刻水：选择阶段 ===
     if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
       // 检测字母点击

@@ -764,4 +764,353 @@ module.exports = function extendAnimation(Renderer) {
         ctx.restore();
       }
     }
+
+    Renderer.prototype._drawEqualSplitSelect = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      const selected = game._equalSplitSelectedLetters || [];
+
+      // === 标题 ===
+      const titleY = top - 10 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('平分秋色', W / 2, titleY);
+      ctx.restore();
+
+      // === 副标题 ===
+      const subTitleY = titleY + 52 * s;
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('选择两个字母，分数相加后平分', W / 2, subTitleY);
+      ctx.restore();
+
+      // === 分隔线 ===
+      const dividerY = subTitleY + 22 * s;
+      const lineW = 80 * s;
+      const lineGap = 8 * s;
+      const lineColor = '#c4a35a';
+      const centerX = W / 2;
+      ctx.save();
+      ctx.strokeStyle = lineColor;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(centerX - lineGap - lineW, dividerY);
+      ctx.lineTo(centerX - lineGap, dividerY);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(centerX + lineGap, dividerY);
+      ctx.lineTo(centerX + lineGap + lineW, dividerY);
+      ctx.stroke();
+      const diamondSize = 5 * s;
+      ctx.fillStyle = lineColor;
+      ctx.beginPath();
+      ctx.moveTo(centerX, dividerY - diamondSize);
+      ctx.lineTo(centerX + diamondSize, dividerY);
+      ctx.lineTo(centerX, dividerY + diamondSize);
+      ctx.lineTo(centerX - diamondSize, dividerY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // === A-Z 字母网格 ===
+      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+      const cols = 4;
+      const btnSize = 54 * s;
+      const btnGap = 13 * s;
+      const totalGridW = cols * btnSize + (cols - 1) * btnGap;
+      const gridStartX = (W - totalGridW) / 2;
+      const gridStartY = dividerY + 30 * s;
+
+      this.potionLetterRects = [];
+      letters.forEach((letter, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = gridStartX + col * (btnSize + btnGap);
+        const y = gridStartY + row * (btnSize + btnGap);
+
+        const isSelected = selected.includes(letter);
+        const canSelect = selected.length < 2 || isSelected;
+
+        const br = 8 * s;
+        ctx.save();
+        if (isSelected) {
+          ctx.shadowColor = 'rgba(196,163,90,0.35)';
+          ctx.shadowBlur = 6 * s;
+          ctx.shadowOffsetY = 3 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#fdf5e0', '#c4a35a', 2.5 * s);
+        } else if (!canSelect) {
+          ctx.shadowColor = 'rgba(0,0,0,0.06)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#e8e4dc', null, 0);
+        } else {
+          ctx.shadowColor = 'rgba(0,0,0,0.08)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(x, y, btnSize, btnSize, br, '#f5f0e6', '#d4c9a8', 1.5 * s);
+        }
+        ctx.restore();
+
+        const up = letterUpgrades.get(letter) || {};
+        const letterScore = Math.floor(LETTER_SCORE[letter] * (up.mult || 1)) + (up.add || 0);
+        const centerX = x + btnSize / 2;
+        const centerY = y + btnSize / 2;
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        if (isSelected) {
+          ctx.fillStyle = '#8b6914';
+        } else if (!canSelect) {
+          ctx.fillStyle = '#b0a898';
+        } else {
+          ctx.fillStyle = '#5a4a2a';
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, centerX, centerY - 7 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+        if (isSelected) {
+          ctx.fillStyle = '#c4a35a';
+        } else if (!canSelect) {
+          ctx.fillStyle = '#c0b8a8';
+        } else {
+          ctx.fillStyle = '#9a7b3d';
+        }
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letterScore, centerX, centerY + 11 * s);
+        ctx.restore();
+
+        if (canSelect) {
+          this.potionLetterRects.push({ x, y, w: btnSize, h: btnSize, letter });
+        }
+      });
+
+      const gridBottomY = gridStartY + Math.ceil(letters.length / cols) * (btnSize + btnGap);
+
+      // === 已选字母结果预览 ===
+      if (selected.length === 2) {
+        const [letterA, letterB] = selected;
+        const baseA = LETTER_SCORE[letterA];
+        const baseB = LETTER_SCORE[letterB];
+        const upA = letterUpgrades.get(letterA) || {};
+        const upB = letterUpgrades.get(letterB) || {};
+        const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
+        const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
+
+        const totalScore = scoreA + scoreB;
+        let newScoreA = Math.floor(totalScore / 2);
+        let newScoreB = Math.floor(totalScore / 2);
+        if (totalScore % 2 !== 0) {
+          newScoreA += 1; // 预览时显示一种情况（奇数时+1给第一个）
+        }
+
+        const line1 = `${letterA}=${scoreA} + ${letterB}=${scoreB} = ${totalScore}`;
+        const line2 = `平分后: ${letterA}=${newScoreA}, ${letterB}=${newScoreB}`;
+        const tipY = gridBottomY + 18 * s;
+        const lineGap = 18 * s;
+
+        ctx.save();
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const maxTipW = Math.max(ctx.measureText(line1).width, ctx.measureText(line2).width);
+        const tipX = W / 2 - maxTipW / 2;
+        ctx.fillText(line1, tipX, tipY);
+        ctx.fillText(line2, tipX, tipY + lineGap);
+        ctx.restore();
+      }
+
+      // === 底部按钮区域 ===
+      const btnAreaY = H - 75 * s;
+      const potionBtnW = 130 * s;
+      const potionBtnH = 46 * s;
+      const potionBtnGap = 16 * s;
+      const totalBtnW = potionBtnW * 2 + potionBtnGap;
+      const btnStartX = (W - totalBtnW) / 2;
+
+      // 开始按钮（需要选中两个字母）
+      const startBtnX = btnStartX;
+      const startBtnY = btnAreaY;
+      const startEnabled = selected.length === 2;
+      this.roundRect(startBtnX, startBtnY, potionBtnW, potionBtnH, 10 * s,
+        startEnabled ? '#c4a35a' : '#d4c9a8',
+        startEnabled ? null : '#bbb', startEnabled ? 0 : 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('开始', startBtnX + potionBtnW / 2, startBtnY + potionBtnH / 2);
+      ctx.restore();
+      this.equalSplitStartBtnRect = { x: startBtnX, y: startBtnY, w: potionBtnW, h: potionBtnH, enabled: startEnabled };
+
+      // 重选按钮
+      const resetBtnX = btnStartX + potionBtnW + potionBtnGap;
+      const resetBtnY = btnAreaY;
+      this.roundRect(resetBtnX, resetBtnY, potionBtnW, potionBtnH, 10 * s, '#f5f0e6', '#c4a35a', 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('重选', resetBtnX + potionBtnW / 2, resetBtnY + potionBtnH / 2);
+      ctx.restore();
+      this.equalSplitResetBtnRect = { x: resetBtnX, y: resetBtnY, w: potionBtnW, h: potionBtnH, enabled: true };
+    }
+
+    Renderer.prototype._drawEqualSplitAnim = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const anim = game._equalSplitAnim;
+      const now = Date.now();
+      const baseCardScale = 1.8;
+
+      if (anim.phase === 'spinning') {
+        const elapsed = now - anim.startTime;
+        const progress = Math.min(elapsed / 1000, 1);
+
+        // 遮罩
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        // 两张字母牌：旋转动画
+        const gap = 20 * s;
+        const cardW = this.cardW * baseCardScale;
+        const totalW = cardW * 2 + gap;
+        const startX = (W - totalW) / 2;
+        const baseY = H / 2;
+
+        // 旋转动画：1秒内从 0 到 360 度
+        const rotation = progress * Math.PI * 2;
+
+        anim.letters.forEach((letter, i) => {
+          const cx = startX + i * (cardW + gap) + cardW / 2;
+          const cy = baseY;
+          const cardScale = baseCardScale * (1 + 0.1 * Math.sin(progress * Math.PI));
+
+          const base = LETTER_SCORE[letter];
+          const up = letterUpgrades.get(letter) || {};
+          const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
+
+          const tempCard = {
+            letter,
+            score,
+            baseScore: base,
+            upgraded: !!(up.mult || up.add),
+            upgradeMult: up.mult || 1,
+            animOffset: { scale: 1, opacity: 1 }
+          };
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rotation * (i === 0 ? 1 : -1));
+          ctx.scale(cardScale, cardScale);
+          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
+          ctx.restore();
+        });
+      } else if (anim.phase === 'result') {
+        const resultElapsed = now - (anim.resultStartTime || anim.startTime + 1000);
+        const fadeIn = Math.min(resultElapsed / 300, 1);
+
+        // 分数缩放脉冲动画
+        const SCORE_CHANGE_DURATION = 600;
+        const scorePulseStart = anim.resultStartTime || anim.startTime + 1000;
+
+        // 遮罩
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        // 结果标题
+        const titleY = H * 0.25 + 10 * s;
+
+        // 放烟花
+        if (!anim._sparklesSpawned) {
+          anim._sparklesSpawned = true;
+          this._spawnSparkles(W / 2 - 60 * s, titleY, 12);
+          this._spawnSparkles(W / 2 + 60 * s, titleY, 12);
+        }
+
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+        ctx.font = `bold ${Math.floor(30 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('平分完成！', W / 2, titleY);
+        ctx.restore();
+
+        // 标题下分隔线
+        const decoLineY = titleY + 22 * s;
+        const decoLineW = 160 * s;
+        const decoLineX = (W - decoLineW) / 2;
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+        this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+        ctx.restore();
+
+        // 两张字母牌（显示新分数）
+        const targetCardScale = 1.6;
+        const resultScale = baseCardScale - (baseCardScale - targetCardScale) * fadeIn;
+        const gap = 20 * s;
+        const cardW = this.cardW * resultScale;
+        const cardH = this.cardH * resultScale;
+        const totalW = cardW * 2 + gap;
+        const startX = (W - totalW) / 2;
+        const cardY = (H - cardH) / 2;
+
+        anim.letters.forEach((letter, i) => {
+          const x = startX + i * (cardW + gap);
+          const score = anim.newScores[i];
+          const base = LETTER_SCORE[letter];
+
+          ctx.save();
+          ctx.globalAlpha = 1;
+
+          const tempCard = {
+            letter,
+            score,
+            baseScore: base,
+            upgraded: true,
+            upgradeMult: 1,
+            animOffset: { scale: 1, opacity: 1 },
+            _scorePulseAnim: { startTime: scorePulseStart, duration: SCORE_CHANGE_DURATION }
+          };
+          ctx.translate(x + cardW / 2, cardY + cardH / 2);
+          ctx.scale(resultScale, resultScale);
+          this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, score);
+          ctx.restore();
+        });
+
+        // 提示文字
+        const tipY = cardY + cardH + 40 * s;
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('点击任意位置继续', W / 2, tipY);
+        ctx.restore();
+      }
+    }
 };

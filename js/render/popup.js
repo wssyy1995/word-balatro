@@ -463,6 +463,18 @@ module.exports = function extendPopup(Renderer) {
         return;
       }
 
+      // 平分秋色：动画/结果阶段优先
+      if (game._equalSplitAnim) {
+        this._drawEqualSplitAnim(game);
+        return;
+      }
+
+      // 平分秋色：选择阶段
+      if (game.potionMode && game.potionMode.effect === 'equal_split') {
+        this._drawEqualSplitSelect(game);
+        return;
+      }
+
       // 复刻水：选择阶段
       if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
         this._drawReplicateSelect(game);
