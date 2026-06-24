@@ -144,7 +144,6 @@ word-balatro/
 | `cardBookPage` | number | 图鉴当前页码 |
 | `_reduceTargetAnim` | Object | 目标分数减免动画状态 |
 | `_changeLetterPopup` | Object | 字母置换弹窗状态 |
-| `_absorbStarsState` | Object | 吸星大法选择目标状态 |
 | `_equalSplitSelectedLetters` | Array | 平分秋色已选字母（选择阶段） |
 | `_equalSplitAnim` | Object | 平分秋色旋转/结果动画状态 |
 | `_starlightWashSelectedLetter` | string | 星辉洗涤已选字母（选择阶段） |

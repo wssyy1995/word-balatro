@@ -1260,7 +1260,6 @@ class Game {
     this.hintToast = null;
     this._changeLetterPopup = null;
     this._changeLetterHint = null;
-    this._absorbStarsState = null;
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     this._witchAngryTip = null;
@@ -1499,7 +1498,6 @@ class Game {
     this.maxJokerSlots = p.maxJokerSlots || 4;
     this.potions = p.potions || [];
     this.potionMode = p.potionMode || null;
-    this._absorbStarsState = p._absorbStarsState || null;
     this._prePotionState = p._prePotionState || null;
     this._potionSelectedLetter = p._potionSelectedLetter || null;
     this._replicateSelectedLetters = p._replicateSelectedLetters || [];
@@ -2221,33 +2219,6 @@ class Game {
     // 清除字母置换提示
     if (this._changeLetterHint) {
       this._changeLetterHint = null;
-    }
-    // 吸星大法：选择目标牌
-    if (this._absorbStarsState && this._absorbStarsState.selecting) {
-      const targetCard = this.hand.find(c => c && c.id === cardId);
-      if (!targetCard) return;
-      // 计算其他手牌分数之和
-      let absorbTotal = 0;
-      for (const c of this.hand) {
-        if (c && c.id !== cardId) {
-          absorbTotal += c.score;
-        }
-      }
-      targetCard.absorbBonus = (targetCard.absorbBonus || 0) + absorbTotal;
-      // 消耗药水（从 potions 栏点击时才需要移除）
-      if (this.potions && this._absorbStarsState.potionIndex !== undefined && this._absorbStarsState.potionIndex >= 0) {
-        this.potions.splice(this._absorbStarsState.potionIndex, 1);
-      }
-      this._absorbStarsState = null;
-      if (this.audioManager) this.audioManager.play('card_placement');
-      // 吸星成功提示
-      this.hintToast = {
-        text: `吸星大法！${targetCard.letter} 吸收 ${absorbTotal} 分`,
-        expireAt: Date.now() + 2000,
-        startTime: Date.now(),
-      };
-      if (this.storageManager) this.storageManager.saveProgress();
-      return;
     }
     // 清除字母跳跃偏移
     this.hand.forEach(c => { if (c) c.jumpOffsetY = 0; });
