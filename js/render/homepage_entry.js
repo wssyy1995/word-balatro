@@ -37,86 +37,9 @@ module.exports = function extendHomepageEntry(Renderer) {
     ctx.restore();
   };
 
-  // 绘制八角星（含对角星芒）
+  // 绘制八角星（含对角星芒），复用 base.js 抽离的通用方法
   Renderer.prototype._drawHomepageEntryStar = function(ctx, x, y, r, alpha) {
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    // 外层光晕
-    const go = ctx.createRadialGradient(x, y, 0, x, y, r * 3.5);
-    go.addColorStop(0, 'rgba(255,250,225,0.3)');
-    go.addColorStop(0.4, 'rgba(255,210,130,0.1)');
-    go.addColorStop(1, 'rgba(255,160,40,0)');
-    ctx.fillStyle = go;
-    ctx.beginPath();
-    ctx.arc(x, y, r * 3.5, 0, Math.PI * 2);
-    ctx.fill();
-
-    // 垂直星芒
-    const gv = ctx.createLinearGradient(x, y - r * 2, x, y + r * 2);
-    gv.addColorStop(0, 'rgba(255,245,200,0)');
-    gv.addColorStop(0.35, 'rgba(255,255,240,0.7)');
-    gv.addColorStop(0.5, 'rgba(255,255,255,1)');
-    gv.addColorStop(0.65, 'rgba(255,255,240,0.7)');
-    gv.addColorStop(1, 'rgba(255,245,200,0)');
-    ctx.fillStyle = gv;
-    ctx.beginPath();
-    ctx.moveTo(x, y - r * 2);
-    ctx.lineTo(x + r * 0.22, y);
-    ctx.lineTo(x, y + r * 2);
-    ctx.lineTo(x - r * 0.22, y);
-    ctx.closePath();
-    ctx.fill();
-
-    // 水平星芒
-    const gh = ctx.createLinearGradient(x - r * 2, y, x + r * 2, y);
-    gh.addColorStop(0, 'rgba(255,245,200,0)');
-    gh.addColorStop(0.35, 'rgba(255,255,240,0.7)');
-    gh.addColorStop(0.5, 'rgba(255,255,255,1)');
-    gh.addColorStop(0.65, 'rgba(255,255,240,0.7)');
-    gh.addColorStop(1, 'rgba(255,245,200,0)');
-    ctx.fillStyle = gh;
-    ctx.beginPath();
-    ctx.moveTo(x - r * 2, y);
-    ctx.lineTo(x, y - r * 0.22);
-    ctx.lineTo(x + r * 2, y);
-    ctx.lineTo(x, y + r * 0.22);
-    ctx.closePath();
-    ctx.fill();
-
-    // 对角星芒
-    for (const rot of [0.785, -0.785]) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(rot);
-      const gd = ctx.createLinearGradient(0, -r * 1.2, 0, r * 1.2);
-      gd.addColorStop(0, 'rgba(255,245,200,0)');
-      gd.addColorStop(0.4, 'rgba(255,255,245,0.45)');
-      gd.addColorStop(0.5, 'rgba(255,255,255,0.55)');
-      gd.addColorStop(0.6, 'rgba(255,255,245,0.45)');
-      gd.addColorStop(1, 'rgba(255,245,200,0)');
-      ctx.fillStyle = gd;
-      ctx.beginPath();
-      ctx.moveTo(0, -r * 1.2);
-      ctx.lineTo(r * 0.12, 0);
-      ctx.lineTo(0, r * 1.2);
-      ctx.lineTo(-r * 0.12, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // 中心点
-    const gc = ctx.createRadialGradient(x, y, 0, x, y, r * 0.4);
-    gc.addColorStop(0, 'rgba(255,255,255,1)');
-    gc.addColorStop(0.5, 'rgba(255,255,240,0.6)');
-    gc.addColorStop(1, 'rgba(255,200,100,0)');
-    ctx.fillStyle = gc;
-    ctx.beginPath();
-    ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+    this._drawOctStar(ctx, x, y, r, alpha);
   };
 
   // 绘制入场动画

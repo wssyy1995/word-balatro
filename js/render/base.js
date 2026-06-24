@@ -924,15 +924,19 @@ class Renderer {
       const titleY = H * 0.08;
       ctx.drawImage(titleImg, titleX, titleY, titleW, titleH);
 
-      // 标题左上角星星（复用主页入场动画的八角星，呼吸缩放 + 闪烁）
-      // 通过 starOffsetX / starOffsetY 调整星星相对标题左上角的位置
-      const starOffsetX = 55;
-      const starOffsetY = 140;
-      const starCX = titleX + starOffsetX;
-      const starCY = titleY + starOffsetY;
+      // 标题附近星星（复用主页入场动画的八角星，呼吸缩放 + 闪烁）
+      // 每个对象可独立调整相对标题左上角的位置、大小、相位
       const breath = 0.85 + 0.15 * Math.sin(Date.now() / 300);
       const twinkle = 0.5 + 0.5 * Math.sin(Date.now() / 200);
-      this._drawHomepageEntryStar(ctx, starCX, starCY, 6 * s * breath, 0.85 + 0.15 * twinkle);
+      const starAlpha = 0.85 + 0.15 * twinkle;
+      const titleStars = [
+        { x: 55, y: 136, size: 6 },
+        { x: titleW - 55, y: 136, size: 5 },
+        { x: titleW / 2, y: titleH + 40, size: 7 }
+      ];
+      titleStars.forEach(star => {
+        this._drawOctStar(ctx, titleX + star.x, titleY + star.y, star.size * s * breath, starAlpha);
+      });
     }
 
     this.homepageBtnRects = [];
@@ -1252,6 +1256,88 @@ class Renderer {
     }
     ctx.closePath();
     ctx.fill();
+  }
+
+  // 通用八角星（垂直/水平/对角星芒 + 中心点 + 外层光晕）
+  _drawOctStar(ctx, x, y, r, alpha = 1) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // 外层光晕
+    const go = ctx.createRadialGradient(x, y, 0, x, y, r * 3.5);
+    go.addColorStop(0, 'rgba(255,250,225,0.3)');
+    go.addColorStop(0.4, 'rgba(255,210,130,0.1)');
+    go.addColorStop(1, 'rgba(255,160,40,0)');
+    ctx.fillStyle = go;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 垂直星芒
+    const gv = ctx.createLinearGradient(x, y - r * 2, x, y + r * 2);
+    gv.addColorStop(0, 'rgba(255,245,200,0)');
+    gv.addColorStop(0.35, 'rgba(255,255,240,0.7)');
+    gv.addColorStop(0.5, 'rgba(255,255,255,1)');
+    gv.addColorStop(0.65, 'rgba(255,255,240,0.7)');
+    gv.addColorStop(1, 'rgba(255,245,200,0)');
+    ctx.fillStyle = gv;
+    ctx.beginPath();
+    ctx.moveTo(x, y - r * 2);
+    ctx.lineTo(x + r * 0.22, y);
+    ctx.lineTo(x, y + r * 2);
+    ctx.lineTo(x - r * 0.22, y);
+    ctx.closePath();
+    ctx.fill();
+
+    // 水平星芒
+    const gh = ctx.createLinearGradient(x - r * 2, y, x + r * 2, y);
+    gh.addColorStop(0, 'rgba(255,245,200,0)');
+    gh.addColorStop(0.35, 'rgba(255,255,240,0.7)');
+    gh.addColorStop(0.5, 'rgba(255,255,255,1)');
+    gh.addColorStop(0.65, 'rgba(255,255,240,0.7)');
+    gh.addColorStop(1, 'rgba(255,245,200,0)');
+    ctx.fillStyle = gh;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 2, y);
+    ctx.lineTo(x, y - r * 0.22);
+    ctx.lineTo(x + r * 2, y);
+    ctx.lineTo(x, y + r * 0.22);
+    ctx.closePath();
+    ctx.fill();
+
+    // 对角星芒
+    for (const rot of [0.785, -0.785]) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      const gd = ctx.createLinearGradient(0, -r * 1.2, 0, r * 1.2);
+      gd.addColorStop(0, 'rgba(255,245,200,0)');
+      gd.addColorStop(0.4, 'rgba(255,255,245,0.45)');
+      gd.addColorStop(0.5, 'rgba(255,255,255,0.55)');
+      gd.addColorStop(0.6, 'rgba(255,255,245,0.45)');
+      gd.addColorStop(1, 'rgba(255,245,200,0)');
+      ctx.fillStyle = gd;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.2);
+      ctx.lineTo(r * 0.12, 0);
+      ctx.lineTo(0, r * 1.2);
+      ctx.lineTo(-r * 0.12, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 中心点
+    const gc = ctx.createRadialGradient(x, y, 0, x, y, r * 0.4);
+    gc.addColorStop(0, 'rgba(255,255,255,1)');
+    gc.addColorStop(0.5, 'rgba(255,255,240,0.6)');
+    gc.addColorStop(1, 'rgba(255,200,100,0)');
+    ctx.fillStyle = gc;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 
   // 绘制虚线空位
