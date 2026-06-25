@@ -58,7 +58,7 @@ class BattleManager {
     g.battleHand = deckCopy.splice(0, HAND_SIZE);
     g.battleBotHand = [...g.battleHand];
     g._battleDeck = deckCopy;
-    if (g.audioManager) g.audioManager.play('card_shuffle');
+    if (g.battleRound > 1 && g.audioManager) g.audioManager.play('card_shuffle');
     g.battleSelected = [];
     g.battlePlayerWord = null;
     g.battlePlayerCards = null;
