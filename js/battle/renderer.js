@@ -226,6 +226,8 @@ class BattleRenderer {
       anim.opponent = this._generateRandomOpponent();
       game._battleOpponent = anim.opponent;
       elapsed = 0;
+      // 匹配成功音效
+      if (game.audioManager) game.audioManager.play('battle_match_sccess');
     }
 
     const DISAPPEAR_DURATION = 250;
@@ -391,13 +393,22 @@ class BattleRenderer {
       ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('匹配成功！', 0, 0);
+      ctx.fillText('匹配成功', 0, 0);
       ctx.restore();
 
-      // 对手头像
+      // 对手头像和名字整体缩放弹出
       const avatarR = 32 * s;
       const avatarY = matchY + matchH * 0.48;
       const opponent = anim.opponent;
+      const introElapsed = now - anim.matchedTime;
+      const introScale = introElapsed < 300
+        ? Easing.easeOutBackStrong(Math.min(1, introElapsed / 300))
+        : 1;
+
+      ctx.save();
+      ctx.translate(cx, avatarY);
+      ctx.scale(introScale, introScale);
+      ctx.translate(-cx, -avatarY);
 
       ctx.save();
       ctx.beginPath();
@@ -437,6 +448,8 @@ class BattleRenderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
+      ctx.restore();
+
       ctx.restore();
     }
 
