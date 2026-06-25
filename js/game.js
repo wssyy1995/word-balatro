@@ -1366,7 +1366,6 @@ class Game {
     this._closeSettingsStartTime = null;
     this._settingsCloseBtnPressed = false;
     this._settingsSoundPressed = false;
-    this._settingsRankPressed = false;
     this._settingsFeedbackPressed = false;
 
     // 单词本弹窗

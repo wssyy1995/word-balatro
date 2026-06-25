@@ -956,7 +956,6 @@ wx.onTouchStart((e) => {
     // 主页按钮
     const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
     const dailyChallengeHit = renderer.settingsDailyChallengeRect && renderer.hitTest(x, y, [renderer.settingsDailyChallengeRect]);
-    const rankHit = renderer.settingsRankRect && renderer.hitTest(x, y, [renderer.settingsRankRect]);
     const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
 
     // 反馈页按钮
@@ -972,18 +971,6 @@ wx.onTouchStart((e) => {
       // 打开今日新词弹窗
       game._dailyWordsPopup = { startTime: Date.now() };
       if (game.audioManager) game.audioManager.play('tap');
-      return;
-    }
-    if (renderer.settingsWordBookRect && renderer.hitTest(x, y, [renderer.settingsWordBookRect])) {
-      // 打开单词本弹窗
-      game._wordBookPopup = { startTime: Date.now() };
-      game._wordBookScrollY = 0;
-      game._wordBookScrollState = null;
-      if (game.audioManager) game.audioManager.play('tap');
-      return;
-    }
-    if (rankHit) {
-      game._settingsRankPressed = true;
       return;
     }
     if (feedbackHit) {
@@ -1696,13 +1683,6 @@ wx.onTouchEnd(() => {
       if (game.audioManager) game.audioManager.play('tap');
     }
 
-    if (game._settingsRankPressed) {
-      game._settingsRankPressed = false;
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
-      showRankPopup('friend');
-    }
     if (game._settingsFeedbackPressed) {
       game._settingsFeedbackPressed = false;
       game._feedbackPage = 'feedback';

@@ -1600,8 +1600,6 @@ module.exports = function extendPopup(Renderer) {
       // 重置点击区域
       this.settingsSoundRect = null;
       this.settingsDailyChallengeRect = null;
-      this.settingsWordBookRect = null;
-      this.settingsRankRect = null;
       this.settingsFeedbackRect = null;
       this.feedbackBackRect = null;
       this.feedbackInputRect = null;
@@ -1782,20 +1780,6 @@ module.exports = function extendPopup(Renderer) {
             value: game.settings && game.settings.soundEnabled !== false
           },
           {
-            key: 'wordBook',
-            iconKey: 'wordbook',
-            title: '单词本',
-            subtitle: '查看历史打出单词',
-            type: 'arrow'
-          },
-          {
-            key: 'rank',
-            iconKey: 'rank',
-            title: '排行榜',
-            subtitle: '查看好友排行',
-            type: 'arrow'
-          },
-          {
             key: 'feedback',
             iconKey: 'feedback',
             title: '问题反馈',
@@ -1940,10 +1924,8 @@ module.exports = function extendPopup(Renderer) {
 
             // 记录整行点击区域
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
-            if (item.key === 'rank') this.settingsRankRect = rect;
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
             if (item.key === 'dailyChallenge') this.settingsDailyChallengeRect = rect;
-            if (item.key === 'wordBook') this.settingsWordBookRect = rect;
           }
 
           // 分隔线(非最后一项)
