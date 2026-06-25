@@ -283,7 +283,7 @@ class BattleRenderer {
     ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
 
     // 标题区域
-    const titleY = matchY + 59 * s;
+    const titleY = matchY + 60 * s;
     const titleFont = this.parent.titleFontFamily || 'sans-serif';
 
     if (anim.phase === 'matching') {
