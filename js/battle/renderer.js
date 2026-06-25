@@ -178,23 +178,36 @@ class BattleRenderer {
     this._drawBattleMatchPopup(ctx, game, W, H, s);
   }
 
-  // ===== 随机生成对手（头像 + 昵称）=====
+  // ===== 随机生成对手（头像 + 昵称），与全国榜默认头像/昵称分配逻辑一致 =====
   _generateRandomOpponent() {
     const names = this._opponentNames;
-    const name = names[Math.floor(Math.random() * names.length)];
+    // 随机选取一个 0~99 的默认头像索引，昵称与头像使用同一索引
+    const defaultAvatarIndex = Math.floor(Math.random() * 100);
+    const name = names[defaultAvatarIndex % names.length];
 
-    // 优先使用 rank_avatar 预置头像
+    // 按全国榜做法：从 4 张 5×5 rank_avatar 图集中裁剪单头像（每张 200×200，单头像 40×40）
+    const idx = defaultAvatarIndex % 100;
+    const sheetIdx = Math.floor(idx / 25);
+    const innerIdx = idx % 25;
+    const row = Math.floor(innerIdx / 5);
+    const col = innerIdx % 5;
+
     const rankAvatars = this.parent.rankAvatarImages || {};
-    const avatarKeys = Object.keys(rankAvatars).filter(k => rankAvatars[k] && rankAvatars[k].loaded && rankAvatars[k].img);
-    let avatarImg = null;
-    let avatarLoaded = false;
-    if (avatarKeys.length > 0) {
-      const key = avatarKeys[Math.floor(Math.random() * avatarKeys.length)];
-      avatarImg = rankAvatars[key].img;
-      avatarLoaded = true;
+    const cloudSheet = rankAvatars[`rank_avatar_${sheetIdx + 1}`];
+    let avatar = null;
+    if (cloudSheet && cloudSheet.loaded && cloudSheet.img) {
+      avatar = {
+        type: 'sheet',
+        img: cloudSheet.img,
+        sx: col * 40,
+        sy: row * 40,
+        sw: 40,
+        sh: 40,
+        loaded: true
+      };
     }
 
-    return { name, avatarImg, avatarLoaded };
+    return { name, avatar, defaultAvatarIndex };
   }
 
   // ===== 对战匹配弹窗：果冻感弹出 + 匹配流程 =====
@@ -304,19 +317,33 @@ class BattleRenderer {
         const swordX = cx - swordW / 2;
         const swordY = matchY + matchH * 0.5;
 
-        // 金色呼吸光圈
-        const breath = 0.5 + 0.5 * Math.sin(now / 400);
-        const glowR = Math.max(swordW, swordH) * 0.7;
-        ctx.save();
-        ctx.globalAlpha = 0.35 + breath * 0.25;
-        const glowGrad = ctx.createRadialGradient(cx, swordY + swordH / 2, glowR * 0.3, cx, swordY + swordH / 2, glowR);
-        glowGrad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
-        glowGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(cx, swordY + swordH / 2, glowR, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
+        // === 3 个水波纹呼吸金圈（温和梦幻感）===
+        const swordCX = cx;
+        const swordCY = swordY + swordH / 2;
+        const baseR = Math.max(swordW, swordH) * 0.45;
+        const ringConfigs = [
+          { rOffset: 0.0, phase: 0 },
+          { rOffset: 0.35, phase: (Math.PI * 2) / 3 },
+          { rOffset: 0.7, phase: (Math.PI * 4) / 3 }
+        ];
+
+        ringConfigs.forEach((cfg, i) => {
+          const ringR = baseR * (1 + cfg.rOffset);
+          const breath = 0.5 + 0.5 * Math.sin(now / 900 + cfg.phase);
+          const alpha = 0.12 + breath * 0.18;
+          const lineW = (1.2 - i * 0.15) * s;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = lineW;
+          ctx.shadowColor = 'rgba(255, 215, 0, 0.55)';
+          ctx.shadowBlur = 10 * s;
+          ctx.beginPath();
+          ctx.arc(swordCX, swordCY, ringR, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        });
 
         // 剑图标
         ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
@@ -352,12 +379,17 @@ class BattleRenderer {
       ctx.strokeStyle = '#c4a35a';
       ctx.stroke();
 
-      if (opponent.avatarLoaded && opponent.avatarImg) {
+      if (opponent.avatar && opponent.avatar.loaded) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, avatarY, avatarR - 2 * s, 0, Math.PI * 2);
         ctx.clip();
-        ctx.drawImage(opponent.avatarImg, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+        const a = opponent.avatar;
+        if (a.type === 'sheet') {
+          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+        } else {
+          ctx.drawImage(a.img, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+        }
         ctx.restore();
       }
       ctx.restore();
@@ -560,12 +592,17 @@ class BattleRenderer {
     const leftAvatarCX = x + 37 * s;
     const leftAvatarCY = cy + 5 * s;
     const opponent = game._battleOpponent;
-    if (opponent && opponent.avatarLoaded && opponent.avatarImg) {
+    if (opponent && opponent.avatar && opponent.avatar.loaded) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(leftAvatarCX, leftAvatarCY, avatarR, 0, Math.PI * 2);
       ctx.clip();
-      ctx.drawImage(opponent.avatarImg, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+      const a = opponent.avatar;
+      if (a.type === 'sheet') {
+        ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+      } else {
+        ctx.drawImage(a.img, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+      }
       ctx.restore();
     } else {
       this._drawAvatar(ctx, leftAvatarCX, leftAvatarCY, avatarR, s, COLORS.blueHeader);
