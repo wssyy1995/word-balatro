@@ -529,6 +529,32 @@ const TRANSITION_DURATION = 600;
 
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
+  // 小游戏版本更新检查（有新版时主动提示重启）
+  try {
+    const updateManager = wx.getUpdateManager();
+    updateManager.onCheckForUpdate((res) => {
+      console.log('[Update] 检查新版本:', res.hasUpdate);
+    });
+    updateManager.onUpdateReady(() => {
+      wx.showModal({
+        title: '更新提示',
+        content: '新版本已准备好，是否立即重启更新？',
+        confirmText: '重启',
+        cancelText: '稍后再说',
+        success: (res) => {
+          if (res.confirm) {
+            updateManager.applyUpdate();
+          }
+        }
+      });
+    });
+    updateManager.onUpdateFailed(() => {
+      console.error('[Update] 新版本下载失败');
+    });
+  } catch (e) {
+    console.error('[Update] 更新管理器初始化失败:', e);
+  }
+
   // 上报用户登录信息（fire-and-forget，不阻塞预加载）
   try {
     wx.cloud.callFunction({
