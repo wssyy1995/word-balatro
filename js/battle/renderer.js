@@ -317,22 +317,42 @@ class BattleRenderer {
         const swordX = cx - swordW / 2;
         const swordY = matchY + matchH * 0.5 - 20 * s;
 
-        // 单个金色呼吸光圈（边缘柔化发光）
+        // 经典脉动金色呼吸光圈（参考金光之环方案一）
         const swordCX = cx;
         const swordCY = swordY + swordH / 2;
-        const ringR = Math.max(swordW, swordH) * 0.65;
-        const breath = 0.5 + 0.5 * Math.sin(now / 700);
-        const alpha = 0.25 + breath * 0.35;
+        const t = now / 1000;
+        const baseR = Math.max(swordW, swordH) * 0.65;
+        const breath = 1 + 0.08 * Math.sin(t * 2.0);
+        const alpha = 0.55 + 0.35 * Math.sin(t * 2.0);
 
         ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.strokeStyle = '#ffdf80';
-        ctx.lineWidth = 2.5 * s;
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
-        ctx.shadowBlur = 18 * s;
+
+        // 外扩散光晕（4 层）
+        for (let i = 3; i >= 0; i--) {
+          const spread = 1 + i * 0.1;
+          const rr = baseR * breath * spread;
+          const a = alpha * 0.12 * (1 - i * 0.2);
+          ctx.beginPath();
+          ctx.arc(swordCX, swordCY, rr, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(255, 180, 40, ${a})`;
+          ctx.lineWidth = (14 - i * 3) * s;
+          ctx.stroke();
+        }
+
+        // 主环
         ctx.beginPath();
-        ctx.arc(swordCX, swordCY, ringR, 0, Math.PI * 2);
+        ctx.arc(swordCX, swordCY, baseR * breath, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(swordCX, swordCY, baseR * 0.8, swordCX, swordCY, baseR * 1.2);
+        grad.addColorStop(0, `rgba(255,200,60,${alpha * 0.7})`);
+        grad.addColorStop(0.5, `rgba(255,160,20,${alpha})`);
+        grad.addColorStop(1, `rgba(255,200,60,${alpha * 0.3})`);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 4 * s;
+        ctx.shadowColor = 'rgba(255,170,30,0.7)';
+        ctx.shadowBlur = 24 * breath * s;
         ctx.stroke();
+        ctx.shadowBlur = 0;
+
         ctx.restore();
 
         // 剑图标
