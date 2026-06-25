@@ -787,10 +787,11 @@ wx.onTouchStart((e) => {
   const y = touch.clientY;
 
   // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮；入场动画播放时不响应）
+  // 排行榜弹窗打开时，homepage 不拦截触摸，让后续排行榜输入处理生效
   const settingsPopupOpen = game && game._settingsPopup && !game._closingSettings;
   const entryAnimPlaying = renderer._homepageEntryAnim &&
     (Date.now() - renderer._homepageEntryAnim.startTime) < 1200; // 按钮开始弹出后允许交互
-  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying) {
+  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
@@ -1446,7 +1447,6 @@ wx.onTouchEnd(() => {
           game._closeSettingsStartTime = null;
         }
       } else if (btnKey === 'ranking') {
-        showHomepage = false;
         showRankPopup('friend');
       }
     }
@@ -3657,6 +3657,10 @@ function gameLoop(timestamp) {
     // 主页 setting 按钮复用 top_icon 行为，设置弹窗打开时叠加在主页上绘制
     if (game && game._settingsPopup) {
       renderer.drawSettingsPopup(game);
+    }
+    // 排行榜弹窗在主页上叠加绘制
+    if (game && game._showingRankPopup && renderer._drawRankPopup) {
+      renderer._drawRankPopup(game);
     }
   } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
