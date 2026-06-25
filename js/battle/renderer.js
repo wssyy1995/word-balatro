@@ -283,7 +283,7 @@ class BattleRenderer {
     ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
 
     // 标题区域
-    const titleY = matchY + 44 * s;
+    const titleY = matchY + 54 * s;
     const titleFont = this.parent.titleFontFamily || 'sans-serif';
 
     if (anim.phase === 'matching') {
@@ -307,9 +307,9 @@ class BattleRenderer {
 
       // 剑图标与呼吸光圈
       if (swordLoaded && swordImg) {
-        let swordW = matchW * 0.4;
+        let swordW = matchW * 0.35;
         let swordH = swordW * (swordImg.height / swordImg.width);
-        const maxSwordH = matchH * 0.36;
+        const maxSwordH = matchH * 0.315;
         if (swordH > maxSwordH) {
           swordH = maxSwordH;
           swordW = swordH * (swordImg.width / swordImg.height);
@@ -321,7 +321,7 @@ class BattleRenderer {
         const swordCX = cx;
         const swordCY = swordY + swordH / 2;
         const t = now / 1000;
-        const baseR = Math.max(swordW, swordH) * 0.65;
+        const baseR = Math.max(swordW, swordH) * 0.58;
         const breath = 1 + 0.08 * Math.sin(t * 2.0);
         const alpha = 0.55 + 0.35 * Math.sin(t * 2.0);
 
@@ -727,6 +727,8 @@ class BattleRenderer {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     const opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
+    const leftNameFontSize = opponentName.length >= 6 ? Math.floor(12 * s) : Math.floor(15 * s);
+    ctx.font = `bold ${leftNameFontSize}px ${this.parent.titleFontFamily}`;
     ctx.fillText(opponentName, leftTextX, nameY);
 
     ctx.save();
