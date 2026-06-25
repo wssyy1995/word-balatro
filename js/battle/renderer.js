@@ -307,15 +307,15 @@ class BattleRenderer {
 
       // 剑图标与呼吸光圈
       if (swordLoaded && swordImg) {
-        let swordW = matchW * 0.5;
+        let swordW = matchW * 0.4;
         let swordH = swordW * (swordImg.height / swordImg.width);
-        const maxSwordH = matchH * 0.45;
+        const maxSwordH = matchH * 0.36;
         if (swordH > maxSwordH) {
           swordH = maxSwordH;
           swordW = swordH * (swordImg.width / swordImg.height);
         }
         const swordX = cx - swordW / 2;
-        const swordY = matchY + matchH * 0.5;
+        const swordY = matchY + matchH * 0.5 - 20 * s;
 
         // 单个金色呼吸光圈（边缘柔化发光）
         const swordCX = cx;
@@ -370,15 +370,16 @@ class BattleRenderer {
       ctx.stroke();
 
       if (opponent.avatar && opponent.avatar.loaded) {
+        const displayAvatarR = (avatarR - 2 * s) * 0.9;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(cx, avatarY, avatarR - 2 * s, 0, Math.PI * 2);
+        ctx.arc(cx, avatarY, displayAvatarR, 0, Math.PI * 2);
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         } else {
-          ctx.drawImage(a.img, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+          ctx.drawImage(a.img, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         }
         ctx.restore();
       }
