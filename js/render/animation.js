@@ -1474,11 +1474,6 @@ module.exports = function extendAnimation(Renderer) {
       if (anim.potionIndex !== undefined && anim.potionIndex >= 0 && game.potions) {
         game.potions.splice(anim.potionIndex, 1);
       }
-      game.hintToast = {
-        text: `吸星大法！${targetCard ? targetCard.letter : ''} 吸收 ${anim.absorbTotal} 分`,
-        expireAt: Date.now() + 2000,
-        startTime: Date.now(),
-      };
       if (game.storageManager) game.storageManager.saveProgress();
       game._absorbStarsAnim = null;
       game._absorbStarsSelectedCardId = null;
