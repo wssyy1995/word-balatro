@@ -317,33 +317,23 @@ class BattleRenderer {
         const swordX = cx - swordW / 2;
         const swordY = matchY + matchH * 0.5;
 
-        // === 3 个水波纹呼吸金圈（温和梦幻感）===
+        // 单个金色呼吸光圈（边缘柔化发光）
         const swordCX = cx;
         const swordCY = swordY + swordH / 2;
-        const baseR = Math.max(swordW, swordH) * 0.45;
-        const ringConfigs = [
-          { rOffset: 0.0, phase: 0 },
-          { rOffset: 0.35, phase: (Math.PI * 2) / 3 },
-          { rOffset: 0.7, phase: (Math.PI * 4) / 3 }
-        ];
+        const ringR = Math.max(swordW, swordH) * 0.65;
+        const breath = 0.5 + 0.5 * Math.sin(now / 700);
+        const alpha = 0.25 + breath * 0.35;
 
-        ringConfigs.forEach((cfg, i) => {
-          const ringR = baseR * (1 + cfg.rOffset);
-          const breath = 0.5 + 0.5 * Math.sin(now / 900 + cfg.phase);
-          const alpha = 0.12 + breath * 0.18;
-          const lineW = (1.2 - i * 0.15) * s;
-
-          ctx.save();
-          ctx.globalAlpha = alpha;
-          ctx.strokeStyle = '#ffd700';
-          ctx.lineWidth = lineW;
-          ctx.shadowColor = 'rgba(255, 215, 0, 0.55)';
-          ctx.shadowBlur = 10 * s;
-          ctx.beginPath();
-          ctx.arc(swordCX, swordCY, ringR, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.restore();
-        });
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#ffdf80';
+        ctx.lineWidth = 2.5 * s;
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+        ctx.shadowBlur = 18 * s;
+        ctx.beginPath();
+        ctx.arc(swordCX, swordCY, ringR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
 
         // 剑图标
         ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
