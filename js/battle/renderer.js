@@ -414,7 +414,7 @@ class BattleRenderer {
       // 对手名字
       ctx.save();
       ctx.font = `bold ${Math.floor(15 * s)}px ${titleFont}`;
-      ctx.fillStyle = '#3a2e1e';
+      ctx.fillStyle = '#d7c28a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
