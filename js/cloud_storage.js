@@ -383,6 +383,147 @@ class CloudStorageManager {
     return results;
   }
 
+  // ===== 图片本地文件缓存基础设施 =====
+  _getImageCacheDir() {
+    return `${wx.env.USER_DATA_PATH}/image_cache`;
+  }
+
+  _getImageCachePath(name) {
+    return `${this._getImageCacheDir()}/${name}.png`;
+  }
+
+  _ensureImageCacheDir() {
+    const fs = wx.getFileSystemManager();
+    const dir = this._getImageCacheDir();
+    try {
+      fs.accessSync(dir);
+    } catch (e) {
+      try {
+        fs.mkdirSync(dir, true);
+      } catch (err) {
+        this.log('创建图片缓存目录失败: ' + (err && err.message ? err.message : String(err)));
+      }
+    }
+  }
+
+  _isImageCached(name) {
+    const fs = wx.getFileSystemManager();
+    try {
+      fs.accessSync(this._getImageCachePath(name));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  async _getTempFileURL(fileID) {
+    let urlData = null;
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.cloud.getTempFileURL({
+            fileList: [fileID],
+            success: resolve,
+            fail: reject,
+          });
+        });
+        const data = res.fileList[0];
+        if (data && data.status === 0 && data.tempFileURL) {
+          urlData = data.tempFileURL;
+          break;
+        }
+        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
+      } catch (e) {
+        lastError = e;
+      }
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    if (!urlData && lastError) {
+      this.log('获取临时URL失败: ' + (lastError.message || String(lastError)));
+    }
+    return urlData;
+  }
+
+  async _downloadImageToCache(url, cachePath) {
+    return new Promise((resolve) => {
+      wx.downloadFile({
+        url,
+        success: (res) => {
+          if (res.statusCode === 200) {
+            try {
+              const fs = wx.getFileSystemManager();
+              fs.saveFileSync(res.tempFilePath, cachePath);
+              resolve(cachePath);
+            } catch (e) {
+              this.log('保存图片缓存失败: ' + (e && e.message ? e.message : String(e)));
+              resolve(null);
+            }
+          } else {
+            this.log('下载图片失败 status=' + res.statusCode);
+            resolve(null);
+          }
+        },
+        fail: (e) => {
+          this.log('下载图片失败: ' + (e && e.message ? e.message : String(e)));
+          resolve(null);
+        }
+      });
+    });
+  }
+
+  async _createImage(src) {
+    return new Promise((resolve) => {
+      const img = wx.createImage();
+      img.onload = () => resolve(img);
+      img.onerror = (e) => {
+        this.log('图片加载失败: src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
+        resolve(null);
+      };
+      img.src = src;
+    });
+  }
+
+  // 加载单张图片源（优先本地缓存，否则下载到本地再加载，失败则回退临时 URL），返回 img 或 null
+  async _loadCachedImageSource(name, fileID, tempURL = null) {
+    this._ensureImageCacheDir();
+    const cachePath = this._getImageCachePath(name);
+
+    // 本地已缓存：直接加载本地文件
+    if (this._isImageCached(name)) {
+      return this._createImage(cachePath);
+    }
+
+    // 没有缓存：获取 URL 并下载
+    let finalURL = tempURL;
+    if (!finalURL && fileID) {
+      finalURL = await this._getTempFileURL(fileID);
+    }
+    if (!finalURL) return null;
+
+    const downloadedPath = await this._downloadImageToCache(finalURL, cachePath);
+    if (downloadedPath) {
+      return this._createImage(downloadedPath);
+    }
+    // 下载失败回退：直接加载临时 URL
+    return this._createImage(finalURL);
+  }
+
+  // 通用图片加载：优先本地缓存，否则下载到本地再加载，失败则回退临时 URL
+  async _loadImageWithCache(name, fileID, targetMap, tempURL = null) {
+    const existing = targetMap[name];
+    if (existing && existing.loaded && existing.img) return;
+
+    const img = await this._loadCachedImageSource(name, fileID, tempURL);
+    if (img) {
+      targetMap[name] = { img, loaded: true, width: img.width || 0, height: img.height || 0 };
+    } else {
+      targetMap[name] = { img: null, loaded: false, width: 0, height: 0 };
+    }
+  }
+
   // 从云存储下载并缓存所有 shop_card 图片（后台静默加载）
   async preloadShopCardImages(onProgress = null) {
     const names = Object.keys(this.cloudFileMap);
@@ -580,158 +721,13 @@ class CloudStorageManager {
   }
 
   async _loadCloudImage(name, tempURL = null) {
-    // 重复加载防护：已加载成功则直接跳过
-    const existing = this.shopCardImages[name];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
-    let finalURL = tempURL;
-
-    // 未传入 URL 时，自行获取临时 URL
-    if (!finalURL) {
-      const fileID = this.cloudFileMap[name];
-      if (!fileID) return;
-
-      let urlData = null;
-      let lastError = null;
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const res = await new Promise((resolve, reject) => {
-            wx.cloud.getTempFileURL({
-              fileList: [fileID],
-              success: resolve,
-              fail: reject,
-            });
-          });
-          const data = res.fileList[0];
-          if (data && data.status === 0 && data.tempFileURL) {
-            urlData = data;
-            break;
-          }
-          lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-        } catch (e) {
-          lastError = e;
-        }
-        if (attempt < 3) {
-          this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-          await new Promise(r => setTimeout(r, 1000));
-        }
-      }
-
-      if (!urlData) {
-        const detail = lastError ? lastError.message : 'unknown';
-        this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-        this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        return;
-      }
-      finalURL = urlData.tempFileURL;
-    }
-
-    // 释放旧 Image 像素数据，防止 Native 层 ArrayBuffer 堆积
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    // wx.createImage 加载图片（带重试）
-    let loadSuccess = false;
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      const img = wx.createImage();
-      loadSuccess = await new Promise((resolve) => {
-        img.onload = () => {
-          this.shopCardImages[name] = {
-            img,
-            loaded: true,
-            width: img.width || 0,
-            height: img.height || 0,
-          };
-          resolve(true);
-        };
-        img.onerror = (e) => {
-          this.log('图片加载失败(' + attempt + '/2): ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-          resolve(false);
-        };
-        img.src = finalURL;
-      });
-      if (loadSuccess) break;
-      if (attempt < 2) {
-        this.log('图片加载重试: ' + name);
-        await new Promise(r => setTimeout(r, 500));
-      }
-    }
-    if (!loadSuccess) {
-      this.shopCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-    }
+    const fileID = this.cloudFileMap[name];
+    await this._loadImageWithCache(name, fileID, this.shopCardImages, tempURL);
   }
 
   async _loadWitchImage(name) {
-    // 重复加载防护：已加载成功则直接跳过
-    const existing = this.witchImages[name];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
     const fileID = this.witchFileMap[name];
-    if (!fileID) return;
-
-    // getTempFileURL 重试3次
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.witchImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-      return;
-    }
-
-    // 释放旧 Image 像素数据，防止 Native 层 ArrayBuffer 堆积
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    // wx.createImage 加载图片
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.witchImages[name] = {
-          img,
-          loaded: true,
-          width: img.width || 0,
-          height: img.height || 0,
-        };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('witch 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.witchImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        resolve();
-      };
-    });
+    await this._loadImageWithCache(name, fileID, this.witchImages);
   }
 
   // 获取已缓存的云图片
@@ -836,61 +832,8 @@ class CloudStorageManager {
   }
 
   async _loadWitchCardImage(name) {
-    const existing = this.witchCardImages[name];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
     const fileID = this.witchCardFileMap[name];
-    if (!fileID) return;
-
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-      return;
-    }
-
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.witchCardImages[name] = { img, loaded: true, width: img.width || 0, height: img.height || 0 };
-        resolve();
-      };
-      img.onerror = () => {
-        this.witchCardImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        resolve();
-      };
-    });
+    await this._loadImageWithCache(name, fileID, this.witchCardImages);
   }
 
   // 将云缓存 witch_card 图片注入到 renderer
@@ -969,57 +912,14 @@ class CloudStorageManager {
       return;
     }
 
-    // getTempFileURL 重试3次
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.guideImages[groupKey].frames[frameIdx] = { img: null, loaded: false };
-      return;
-    }
-
     if (existing && existing.img) {
       existing.img.src = '';
     }
 
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.guideImages[groupKey].frames[frameIdx] = { img, loaded: true };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('guide 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.guideImages[groupKey].frames[frameIdx] = { img: null, loaded: false };
-        resolve();
-      };
-    });
+    const img = await this._loadCachedImageSource(name, fileID);
+    this.guideImages[groupKey].frames[frameIdx] = img
+      ? { img, loaded: true }
+      : { img: null, loaded: false };
   }
 
   // 下载 guide 精灵图（单张大图）
@@ -1038,57 +938,14 @@ class CloudStorageManager {
       return;
     }
 
-    // getTempFileURL 重试3次
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.guideSpritesheets[groupKey] = { img: null, loaded: false };
-      return;
-    }
-
     if (existing && existing.img) {
       existing.img.src = '';
     }
 
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.guideSpritesheets[groupKey] = { img, loaded: true };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('guide 精灵图加载失败: ' + name + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.guideSpritesheets[groupKey] = { img: null, loaded: false };
-        resolve();
-      };
-    });
+    const img = await this._loadCachedImageSource(name, fileID);
+    this.guideSpritesheets[groupKey] = img
+      ? { img, loaded: true }
+      : { img: null, loaded: false };
   }
 
   // 按需下载指定 guide 组（如 witch_guide_3），并注入 renderer
@@ -1341,69 +1198,8 @@ class CloudStorageManager {
   }
 
   async _loadBgIconImage(name) {
-    const existing = this.bgIconImages[name];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
     const fileID = this.bgIconFileMap[name];
-    if (!fileID) return;
-
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.bgIconImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-      return;
-    }
-
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.bgIconImages[name] = {
-          img,
-          loaded: true,
-          width: img.width || 0,
-          height: img.height || 0,
-        };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('bg_icon 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.bgIconImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        resolve();
-      };
-    });
+    await this._loadImageWithCache(name, fileID, this.bgIconImages);
   }
 
   // 从云存储下载并缓存所有 rank_avatar 图片（不在预加载页加载，预加载完成后进入游戏页面时调用）
@@ -1432,69 +1228,8 @@ class CloudStorageManager {
   }
 
   async _loadRankAvatarImage(name) {
-    const existing = this.rankAvatarImages[name];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
     const fileID = this.rankAvatarFileMap[name];
-    if (!fileID) return;
-
-    let urlData = null;
-    let lastError = null;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.cloud.getTempFileURL({
-            fileList: [fileID],
-            success: resolve,
-            fail: reject,
-          });
-        });
-        const data = res.fileList[0];
-        if (data && data.status === 0 && data.tempFileURL) {
-          urlData = data;
-          break;
-        }
-        lastError = new Error(data ? (data.errMsg || 'status=' + data.status) : 'urlData=null');
-      } catch (e) {
-        lastError = e;
-      }
-      if (attempt < 3) {
-        this.log('获取临时URL失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
-        await new Promise(r => setTimeout(r, 1000));
-      }
-    }
-
-    if (!urlData) {
-      const detail = lastError ? lastError.message : 'unknown';
-      this.log('获取临时URL失败: ' + name + ' detail=' + detail);
-      this.rankAvatarImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-      return;
-    }
-
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    const img = wx.createImage();
-    img.src = urlData.tempFileURL;
-    await new Promise((resolve) => {
-      img.onload = () => {
-        this.rankAvatarImages[name] = {
-          img,
-          loaded: true,
-          width: img.width || 0,
-          height: img.height || 0,
-        };
-        resolve();
-      };
-      img.onerror = (e) => {
-        this.log('rank_avatar 图片加载失败: ' + name + ' src=' + (img.src || '').slice(0, 80) + ' err=' + (e && e.message ? e.message : 'unknown'));
-        this.rankAvatarImages[name] = { img: null, loaded: false, width: 0, height: 0 };
-        resolve();
-      };
-    });
+    await this._loadImageWithCache(name, fileID, this.rankAvatarImages);
   }
 
   // 将云缓存 rank_avatar 图片注入到 renderer（全国榜默认头像使用）
