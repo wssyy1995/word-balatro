@@ -232,8 +232,8 @@ class BattleRenderer {
 
     const DISAPPEAR_DURATION = 250;
 
-    // 阶段转换：matched -> disappearing
-    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 1000) {
+    // 阶段转换：matched -> disappearing（匹配成功后显示 1.5 秒）
+    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 1500) {
       anim.phase = 'disappearing';
       anim.disappearStartTime = now;
     }
