@@ -370,14 +370,20 @@ class BattleRenderer {
       ctx.stroke();
 
       if (opponent.avatar && opponent.avatar.loaded) {
-        const displayAvatarR = (avatarR - 2 * s) * 0.9;
+        const displayAvatarR = avatarR - 2 * s;
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, avatarY, displayAvatarR, 0, Math.PI * 2);
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
+          // 源头像区域向内裁剪 10% 直径（去掉边缘留白），再拉伸铺满显示圆
+          const srcMargin = a.sw * 0.05;
+          const srcX = a.sx + srcMargin;
+          const srcY = a.sy + srcMargin;
+          const srcW = a.sw * 0.9;
+          const srcH = a.sh * 0.9;
+          ctx.drawImage(a.img, srcX, srcY, srcW, srcH, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         } else {
           ctx.drawImage(a.img, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         }
@@ -590,7 +596,13 @@ class BattleRenderer {
       ctx.clip();
       const a = opponent.avatar;
       if (a.type === 'sheet') {
-        ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+        // 源头像区域向内裁剪 10% 直径，铺满显示圆
+        const srcMargin = a.sw * 0.05;
+        const srcX = a.sx + srcMargin;
+        const srcY = a.sy + srcMargin;
+        const srcW = a.sw * 0.9;
+        const srcH = a.sh * 0.9;
+        ctx.drawImage(a.img, srcX, srcY, srcW, srcH, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       } else {
         ctx.drawImage(a.img, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       }
