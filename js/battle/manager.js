@@ -35,6 +35,7 @@ class BattleManager {
     g._battleDeck = createBattleDeck();
     g._battlePlayedWords = new Set();
     g.battlePendingCheck = null;
+    g._battleMatchAnim = null;
     this._startRound();
   }
 

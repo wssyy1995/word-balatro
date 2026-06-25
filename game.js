@@ -3634,6 +3634,10 @@ function gameLoop(timestamp) {
       pageFlipState = null;
       showHomepage = false;
       // 双人对战已在点击时初始化，这里只需切到对应状态
+      // 翻页完成后启动对战匹配弹窗果冻动画
+      if (targetState === 'battle' && game) {
+        game._battleMatchAnim = { startTime: Date.now(), duration: 2000 };
+      }
     }
   } else if (showHomepage) {
     // 测试阶段：优先展示 homepage

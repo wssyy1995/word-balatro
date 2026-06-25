@@ -155,6 +155,87 @@ class BattleRenderer {
     if (game.battlePhase === 'battle_end') {
       this._drawEndPopup(ctx, game, W, H, s);
     }
+
+    // === 对战匹配弹窗 ===
+    this._drawBattleMatchPopup(ctx, game, W, H, s);
+  }
+
+  // ===== 对战匹配弹窗：果冻感弹出 =====
+  _drawBattleMatchPopup(ctx, game, W, H, s) {
+    const anim = game._battleMatchAnim;
+    if (!anim) return;
+
+    const elapsed = Date.now() - anim.startTime;
+    const duration = anim.duration || 2000;
+    if (elapsed >= duration) {
+      game._battleMatchAnim = null;
+      return;
+    }
+
+    const POP_DURATION = 600;
+    const HOLD_DURATION = 800;
+    const FADE_DURATION = 600;
+
+    let scale = 1;
+    let alpha = 1;
+    if (elapsed < POP_DURATION) {
+      const t = elapsed / POP_DURATION;
+      scale = Easing.easeOutBackStrong(t);
+    } else if (elapsed < POP_DURATION + HOLD_DURATION) {
+      scale = 1;
+    } else {
+      const t = (elapsed - POP_DURATION - HOLD_DURATION) / FADE_DURATION;
+      scale = 1;
+      alpha = Math.max(0, 1 - t);
+    }
+
+    const matchImg = this.parent.battleMatch;
+    const swordImg = this.parent.battleMatchSword;
+    const matchLoaded = this.parent.battleMatchLoaded;
+    const swordLoaded = this.parent.battleMatchSwordLoaded;
+    if (!matchLoaded || !matchImg) return;
+
+    // battle_match 图片尺寸：宽度占屏幕 70%，高度按原图比例
+    const maxMatchW = W * 0.7;
+    const maxMatchH = H * 0.45;
+    let matchW = maxMatchW;
+    let matchH = maxMatchW * (matchImg.height / matchImg.width);
+    if (matchH > maxMatchH) {
+      matchH = maxMatchH;
+      matchW = matchH * (matchImg.width / matchImg.height);
+    }
+
+    const cx = W / 2;
+    const cy = H / 2;
+    const matchX = cx - matchW / 2;
+    const matchY = cy - matchH / 2;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+
+    // 绘制底图
+    ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
+
+    // 绘制剑图标：位于底图中央偏下
+    if (swordLoaded && swordImg) {
+      const swordScale = 0.55;
+      let swordW = matchW * swordScale;
+      let swordH = swordW * (swordImg.height / swordImg.width);
+      // 如果剑图标高度过大，按高度限制
+      const maxSwordH = matchH * 0.5;
+      if (swordH > maxSwordH) {
+        swordH = maxSwordH;
+        swordW = swordH * (swordImg.width / swordImg.height);
+      }
+      const swordX = cx - swordW / 2;
+      const swordY = matchY + matchH * 0.52;
+      ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
+    }
+
+    ctx.restore();
   }
 
   // ===== 顶部栏：top_home 返回主页 =====
