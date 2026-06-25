@@ -2068,8 +2068,12 @@ class ConfirmBuyRenderer {
     const descH = drawWrappedText(ctx, item.desc, W / 2, descY, descMaxW, descLineHeight);
     ctx.restore();
 
+    // === 按钮 ===
+    const collectBtnH = 44 * s;
+    const collectBtnY = py + ph - collectBtnH - 22 * s;
+
     // === 底部分隔线 ===
-    const bottomLineY = descY + descH + 10 * s;
+    const bottomLineY = collectBtnY - 2 * s;
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
@@ -2087,10 +2091,6 @@ class ConfirmBuyRenderer {
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
     ctx.restore();
     ctx.restore();
-
-    // === 按钮 ===
-    const collectBtnH = 44 * s;
-    const collectBtnY = py + ph - collectBtnH - 22 * s;
     const cpe = game._successBtnPressed ? Date.now() - (game._successBtnPressTime || 0) : 0;
 
     const isPotion = item.type === 'potion';
