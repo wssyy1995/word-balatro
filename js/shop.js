@@ -2073,7 +2073,7 @@ class ConfirmBuyRenderer {
     const collectBtnY = py + ph - collectBtnH - 22 * s;
 
     // === 底部分隔线 ===
-    const bottomLineY = collectBtnY - 2 * s;
+    const bottomLineY = collectBtnY - 4 * s;
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';
