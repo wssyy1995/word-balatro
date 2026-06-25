@@ -36,6 +36,16 @@ class BattleManager {
     g._battlePlayedWords = new Set();
     g.battlePendingCheck = null;
     g._battleMatchAnim = null;
+    g._battleMatchFinished = false;
+    g._battleOpponent = null;
+    // 匹配弹窗结束后再调用 _startRound，延迟开始正式对局
+  }
+
+  // 匹配弹窗结束后真正开始第一回合
+  finishMatchSetup() {
+    const g = this.game;
+    if (g._battleMatchFinished) return;
+    g._battleMatchFinished = true;
     this._startRound();
   }
 

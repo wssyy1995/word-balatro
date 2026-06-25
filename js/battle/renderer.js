@@ -42,6 +42,24 @@ class BattleRenderer {
     this.selfAvatarImg = null;
     this.selfAvatarLoaded = false;
     this._loadSelfAvatar();
+
+    // 预制对手昵称列表（与全国榜默认昵称保持一致）
+    this._opponentNames = [
+      '不开会员', '休眠中-', '4AM', 'Puppy°', '芒种', '悠悠Y²', '已读不认', '空気', 'Zznull.',
+      '离线模式', '透明人_', 'ω猫', '彬_victor', '暂不营业', '假装在_', '一弄0.o', '电量1%', '=懒=',
+      '晚风·Free', '算了.r', '请于风', '关闭通话a.iris', '早睡失败户', '帅云微', '已黑化☾',
+      'herry_78', 'ctrl+z', '云朵偷喝我酒', '耶耶荷花', '信号丢失中...', '野猪炖蘑菇',
+      '草莓味的', '双子星', '娜塔N', 'mango冰淇淋', 'Emma_ju', '星星不亮了',
+      '不想上班星球', '苦苦k.', '关闭免打扰', '假冷静', '丽云熙', '麦苗', 'Vike_陈',
+      'Atom', '反卷战士', '王逗逗', '程一', '咸鱼翻身中', '数据迷雾', 'Jmx',
+      '山间慢邮', '萝卜头', '低像素人类', '自动回复中', '打嗝的河豚', '算法诗人', '选择性清醒',
+      '桃気𓆡', '苔痕上阶', '欧米茄ω', '甜甜圈洞', '延迟响应', '才厚楠', '李橙子', '不失眠星球',
+      '云端漫步☁', '小辣鸡', '五行缺觉', 'luna♪', '石榴树', 'Ly小林', '此人404', 'love yourself',
+      'momo·', '加载中99%', '电量低于50%', '深夜网抑云', '栖木·', '暂无灵感', '樱桃小丸犊子',
+      '面包大人', '萤火岛屿', 'echo~', 'Jajaja', '指令未完', '困困鱼', '精神内耗重症区', '四月涧',
+      '无聊有限公司CEO', '快乐水omega', '肥宅快乐水', '电量耗尽请投币', 'Lifeiwen', '维度旅行者',
+      '老丈人', '精神现状存疑', '反方向的钟·'
+    ];
   }
 
   _loadBattleProgressIcon() {
@@ -160,34 +178,67 @@ class BattleRenderer {
     this._drawBattleMatchPopup(ctx, game, W, H, s);
   }
 
-  // ===== 对战匹配弹窗：果冻感弹出 =====
+  // ===== 随机生成对手（头像 + 昵称）=====
+  _generateRandomOpponent() {
+    const names = this._opponentNames;
+    const name = names[Math.floor(Math.random() * names.length)];
+
+    // 优先使用 rank_avatar 预置头像
+    const rankAvatars = this.parent.rankAvatarImages || {};
+    const avatarKeys = Object.keys(rankAvatars).filter(k => rankAvatars[k] && rankAvatars[k].loaded && rankAvatars[k].img);
+    let avatarImg = null;
+    let avatarLoaded = false;
+    if (avatarKeys.length > 0) {
+      const key = avatarKeys[Math.floor(Math.random() * avatarKeys.length)];
+      avatarImg = rankAvatars[key].img;
+      avatarLoaded = true;
+    }
+
+    return { name, avatarImg, avatarLoaded };
+  }
+
+  // ===== 对战匹配弹窗：果冻感弹出 + 匹配流程 =====
   _drawBattleMatchPopup(ctx, game, W, H, s) {
-    const anim = game._battleMatchAnim;
+    let anim = game._battleMatchAnim;
     if (!anim) return;
 
-    const elapsed = Date.now() - anim.startTime;
-    const duration = anim.duration || 2000;
-    if (elapsed >= duration) {
+    const now = Date.now();
+    let elapsed = now - anim.startTime;
+    const POP_DURATION = 600;
+
+    // 阶段转换：matching -> matched
+    if (anim.phase === 'matching' && elapsed >= anim.matchDuration) {
+      anim.phase = 'matched';
+      anim.matchedTime = now;
+      anim.opponent = this._generateRandomOpponent();
+      game._battleOpponent = anim.opponent;
+      elapsed = 0;
+    }
+
+    // 阶段转换：matched -> 结束，开始正式对局
+    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 500) {
       game._battleMatchAnim = null;
+      if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
     }
 
-    const POP_DURATION = 600;
-    const HOLD_DURATION = 800;
-    const FADE_DURATION = 600;
-
-    let scale = 1;
-    let alpha = 1;
-    if (elapsed < POP_DURATION) {
-      const t = elapsed / POP_DURATION;
-      scale = Easing.easeOutBackStrong(t);
-    } else if (elapsed < POP_DURATION + HOLD_DURATION) {
-      scale = 1;
-    } else {
-      const t = (elapsed - POP_DURATION - HOLD_DURATION) / FADE_DURATION;
-      scale = 1;
-      alpha = Math.max(0, 1 - t);
+    // 计算弹窗整体缩放（仅匹配中阶段有果冻弹出，匹配成功后保持）
+    let panelScale = 1;
+    if (anim.phase === 'matching') {
+      if (elapsed < POP_DURATION) {
+        panelScale = Easing.easeOutBackStrong(elapsed / POP_DURATION);
+      }
     }
+
+    // 黑色背景蒙层（前 400ms 从 0 淡入到 0.65）
+    const overlayAlpha = anim.phase === 'matching'
+      ? Math.min(0.65, elapsed / 400 * 0.65)
+      : 0.65;
+    ctx.save();
+    ctx.globalAlpha = overlayAlpha;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
 
     const matchImg = this.parent.battleMatch;
     const swordImg = this.parent.battleMatchSword;
@@ -195,9 +246,9 @@ class BattleRenderer {
     const swordLoaded = this.parent.battleMatchSwordLoaded;
     if (!matchLoaded || !matchImg) return;
 
-    // battle_match 图片尺寸：宽度占屏幕 70%，高度按原图比例
-    const maxMatchW = W * 0.7;
-    const maxMatchH = H * 0.45;
+    // battle_match 底图尺寸
+    const maxMatchW = W * 0.72;
+    const maxMatchH = H * 0.42;
     let matchW = maxMatchW;
     let matchH = maxMatchW * (matchImg.height / matchImg.width);
     if (matchH > maxMatchH) {
@@ -206,33 +257,119 @@ class BattleRenderer {
     }
 
     const cx = W / 2;
-    const cy = H / 2;
+    const cy = H * 0.52;
     const matchX = cx - matchW / 2;
     const matchY = cy - matchH / 2;
 
     ctx.save();
-    ctx.globalAlpha = alpha;
     ctx.translate(cx, cy);
-    ctx.scale(scale, scale);
+    ctx.scale(panelScale, panelScale);
     ctx.translate(-cx, -cy);
 
     // 绘制底图
     ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
 
-    // 绘制剑图标：位于底图中央偏下
-    if (swordLoaded && swordImg) {
-      const swordScale = 0.55;
-      let swordW = matchW * swordScale;
-      let swordH = swordW * (swordImg.height / swordImg.width);
-      // 如果剑图标高度过大，按高度限制
-      const maxSwordH = matchH * 0.5;
-      if (swordH > maxSwordH) {
-        swordH = maxSwordH;
-        swordW = swordH * (swordImg.width / swordImg.height);
+    // 标题区域
+    const titleY = matchY + 34 * s;
+    const titleFont = this.parent.titleFontFamily || 'sans-serif';
+
+    if (anim.phase === 'matching') {
+      // 主标题：对手匹配中
+      ctx.save();
+      ctx.font = `bold ${Math.floor(18 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#3a2e1e';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('对手匹配中', cx, titleY);
+      ctx.restore();
+
+      // 副标题
+      ctx.save();
+      ctx.font = `${Math.floor(12 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#8a7a6a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('正在为你寻找实力相当的对手...', cx, titleY + 22 * s);
+      ctx.restore();
+
+      // 剑图标与呼吸光圈
+      if (swordLoaded && swordImg) {
+        let swordW = matchW * 0.5;
+        let swordH = swordW * (swordImg.height / swordImg.width);
+        const maxSwordH = matchH * 0.45;
+        if (swordH > maxSwordH) {
+          swordH = maxSwordH;
+          swordW = swordH * (swordImg.width / swordImg.height);
+        }
+        const swordX = cx - swordW / 2;
+        const swordY = matchY + matchH * 0.5;
+
+        // 金色呼吸光圈
+        const breath = 0.5 + 0.5 * Math.sin(now / 400);
+        const glowR = Math.max(swordW, swordH) * 0.7;
+        ctx.save();
+        ctx.globalAlpha = 0.35 + breath * 0.25;
+        const glowGrad = ctx.createRadialGradient(cx, swordY + swordH / 2, glowR * 0.3, cx, swordY + swordH / 2, glowR);
+        glowGrad.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+        glowGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(cx, swordY + swordH / 2, glowR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 剑图标
+        ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
       }
-      const swordX = cx - swordW / 2;
-      const swordY = matchY + matchH * 0.52;
-      ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
+    } else if (anim.phase === 'matched' && anim.opponent) {
+      // 匹配成功标题（带缩放脉冲）
+      const matchedElapsed = now - anim.matchedTime;
+      const titleScale = matchedElapsed < 250
+        ? Easing.easeOutBackStrong(Math.min(1, matchedElapsed / 250))
+        : 1;
+
+      ctx.save();
+      ctx.translate(cx, titleY);
+      ctx.scale(titleScale, titleScale);
+      ctx.font = `bold ${Math.floor(20 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#8b6914';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('匹配成功！', 0, 0);
+      ctx.restore();
+
+      // 对手头像
+      const avatarR = 32 * s;
+      const avatarY = matchY + matchH * 0.48;
+      const opponent = anim.opponent;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = '#e0d4c0';
+      ctx.fill();
+      ctx.lineWidth = 2 * s;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.stroke();
+
+      if (opponent.avatarLoaded && opponent.avatarImg) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, avatarY, avatarR - 2 * s, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(opponent.avatarImg, cx - avatarR + 2 * s, avatarY - avatarR + 2 * s, (avatarR - 2 * s) * 2, (avatarR - 2 * s) * 2);
+        ctx.restore();
+      }
+      ctx.restore();
+
+      // 对手名字
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#3a2e1e';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
+      ctx.restore();
     }
 
     ctx.restore();
@@ -419,10 +556,20 @@ class BattleRenderer {
     // 头像半径（双方统一）
     const avatarR = 26 * s;
 
-    // 左侧默认头像（覆盖图片默认头像）
+    // 左侧对手头像（覆盖图片默认头像）
     const leftAvatarCX = x + 37 * s;
     const leftAvatarCY = cy + 5 * s;
-    this._drawAvatar(ctx, leftAvatarCX, leftAvatarCY, avatarR, s, COLORS.blueHeader);
+    const opponent = game._battleOpponent;
+    if (opponent && opponent.avatarLoaded && opponent.avatarImg) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(leftAvatarCX, leftAvatarCY, avatarR, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(opponent.avatarImg, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+      ctx.restore();
+    } else {
+      this._drawAvatar(ctx, leftAvatarCX, leftAvatarCY, avatarR, s, COLORS.blueHeader);
+    }
 
     // 右侧用户头像（覆盖图片默认头像）
     const rightAvatarCX = x + w - 37 * s;
@@ -519,7 +666,8 @@ class BattleRenderer {
     ctx.fillStyle = COLORS.blueHeader;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('玩家A', leftTextX, nameY);
+    const opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
+    ctx.fillText(opponentName, leftTextX, nameY);
 
     ctx.save();
     ctx.translate(leftTextX, scoreY);

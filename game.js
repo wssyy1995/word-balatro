@@ -2310,8 +2310,8 @@ function handleInput(x, inputY) {
     return;
   }
 
-  // 对战模式输入处理
-  if (game.state === 'battle' && handleBattleInput(game, renderer, x, inputY, vibrate)) {
+  // 对战模式输入处理（匹配弹窗显示期间禁用对战交互）
+  if (game.state === 'battle' && !game._battleMatchAnim && handleBattleInput(game, renderer, x, inputY, vibrate)) {
     return;
   }
 
@@ -3634,9 +3634,15 @@ function gameLoop(timestamp) {
       pageFlipState = null;
       showHomepage = false;
       // 双人对战已在点击时初始化，这里只需切到对应状态
-      // 翻页完成后启动对战匹配弹窗果冻动画
+      // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
       if (targetState === 'battle' && game) {
-        game._battleMatchAnim = { startTime: Date.now(), duration: 2000 };
+        game._battleMatchAnim = {
+          phase: 'matching',
+          startTime: Date.now(),
+          matchDuration: 3000 + Math.floor(Math.random() * 3000),
+          matchedTime: null,
+          opponent: null
+        };
       }
     }
   } else if (showHomepage) {
@@ -3662,8 +3668,8 @@ function gameLoop(timestamp) {
     renderer.render(game);
     transitionStartTime = null;
   } else {
-    // 对战模式状态更新
-    if (game && game.state === 'battle' && game.battleManager) {
+    // 对战模式状态更新（匹配弹窗显示期间暂停 bot 思考与 reveal 检查）
+    if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim) {
       game.battleManager.updateBotThinking();
       game.battleManager.checkReveal();
     }
