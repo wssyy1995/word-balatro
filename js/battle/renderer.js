@@ -290,7 +290,7 @@ class BattleRenderer {
       // 主标题：对手匹配中
       ctx.save();
       ctx.font = `bold ${Math.floor(18 * s)}px ${titleFont}`;
-      ctx.fillStyle = '#3a2e1e';
+      ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('对手匹配中', cx, titleY);
@@ -299,7 +299,7 @@ class BattleRenderer {
       // 副标题
       ctx.save();
       ctx.font = `${Math.floor(12 * s)}px ${titleFont}`;
-      ctx.fillStyle = '#8a7a6a';
+      ctx.fillStyle = '#d7c28a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('正在为你寻找实力相当的对手...', cx, titleY + 22 * s);
