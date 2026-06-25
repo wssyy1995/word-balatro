@@ -228,8 +228,8 @@ class BattleRenderer {
       elapsed = 0;
     }
 
-    // 阶段转换：matched -> 结束，开始正式对局
-    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 500) {
+    // 阶段转换：matched -> 结束，开始正式对局（匹配成功后显示 1 秒）
+    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 1000) {
       game._battleMatchAnim = null;
       if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
