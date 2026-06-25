@@ -256,12 +256,14 @@ function switchRankTab(tab) {
 
   if (tab === 'friend') {
     // 切换到好友榜：使用开放域 panel 模式
+    // sharedCanvas 尺寸已按 content 区域设置，开放域内部从 (0,0) 绘制，
+    // 主域再把 sharedCanvas 贴到 content 区域，避免坐标和尺寸错乱
     destroyGlobalAuthButton();
     game._showingGlobalAuthButton = false;
     const rect = calcRankPanelRect();
     showRankList({
-      x: rect.contentX,
-      y: rect.contentY,
+      x: 0,
+      y: 0,
       w: rect.contentW,
       h: rect.contentH,
     });

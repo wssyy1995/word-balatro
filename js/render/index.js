@@ -1127,12 +1127,13 @@ Renderer.prototype.render = function(game) {
     const contentH = panelH - headerH - contentPaddingB;
 
     // 7. 好友榜：绘制开放域内容
+    // sharedCanvas 尺寸与 content 区域一致，直接贴到 content 区域
     if (activeTab === 'friend') {
       const odc = wx.getOpenDataContext ? wx.getOpenDataContext() : null;
       if (odc && odc.canvas) {
         ctx.save();
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(odc.canvas, 0, 0, W, H);
+        ctx.drawImage(odc.canvas, contentX, contentY, contentW, contentH);
         ctx.restore();
       }
       return;
