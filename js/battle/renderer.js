@@ -228,25 +228,42 @@ class BattleRenderer {
       elapsed = 0;
     }
 
-    // 阶段转换：matched -> 结束，开始正式对局（匹配成功后显示 1 秒）
+    const DISAPPEAR_DURATION = 250;
+
+    // 阶段转换：matched -> disappearing
     if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 1000) {
+      anim.phase = 'disappearing';
+      anim.disappearStartTime = now;
+    }
+
+    // 阶段转换：disappearing -> 结束，开始正式对局
+    if (anim.phase === 'disappearing' && anim.disappearStartTime && now - anim.disappearStartTime >= DISAPPEAR_DURATION) {
       game._battleMatchAnim = null;
       if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
     }
 
-    // 计算弹窗整体缩放（仅匹配中阶段有果冻弹出，匹配成功后保持）
+    // 计算弹窗整体缩放与透明度
     let panelScale = 1;
+    let contentAlpha = 1;
     if (anim.phase === 'matching') {
       if (elapsed < POP_DURATION) {
         panelScale = Easing.easeOutBackStrong(elapsed / POP_DURATION);
       }
+    } else if (anim.phase === 'disappearing') {
+      const disappearProgress = Math.min(1, (now - anim.disappearStartTime) / DISAPPEAR_DURATION);
+      panelScale = 1 - disappearProgress;
+      contentAlpha = 1 - disappearProgress;
     }
 
-    // 黑色背景蒙层（前 400ms 从 0 淡入到 0.65）
-    const overlayAlpha = anim.phase === 'matching'
-      ? Math.min(0.65, elapsed / 400 * 0.65)
-      : 0.65;
+    // 黑色背景蒙层（前 400ms 从 0 淡入到 0.65，消失阶段淡出）
+    let overlayAlpha = 0.65;
+    if (anim.phase === 'matching') {
+      overlayAlpha = Math.min(0.65, elapsed / 400 * 0.65);
+    } else if (anim.phase === 'disappearing') {
+      const disappearProgress = Math.min(1, (now - anim.disappearStartTime) / DISAPPEAR_DURATION);
+      overlayAlpha = 0.65 * (1 - disappearProgress);
+    }
     ctx.save();
     ctx.globalAlpha = overlayAlpha;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
@@ -275,6 +292,7 @@ class BattleRenderer {
     const matchY = cy - matchH / 2;
 
     ctx.save();
+    ctx.globalAlpha = contentAlpha;
     ctx.translate(cx, cy);
     ctx.scale(panelScale, panelScale);
     ctx.translate(-cx, -cy);
@@ -359,7 +377,7 @@ class BattleRenderer {
         // 剑图标
         ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
       }
-    } else if (anim.phase === 'matched' && anim.opponent) {
+    } else if ((anim.phase === 'matched' || anim.phase === 'disappearing') && anim.opponent) {
       // 匹配成功标题（带缩放脉冲）
       const matchedElapsed = now - anim.matchedTime;
       const titleScale = matchedElapsed < 250
