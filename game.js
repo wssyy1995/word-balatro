@@ -3669,6 +3669,7 @@ function gameLoop(timestamp) {
           matchedTime: null,
           opponent: null
         };
+        if (game.audioManager) game.audioManager.play('cloth_flap');
       }
     }
   } else if (showHomepage) {
