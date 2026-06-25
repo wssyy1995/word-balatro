@@ -285,11 +285,12 @@ class BattleRenderer {
     // 标题区域
     const titleY = matchY + 60 * s;
     const titleFont = this.parent.titleFontFamily || 'sans-serif';
+    const mainTitleFont = '"Source Han Serif SC", "Noto Serif SC", "SimSun", serif';
 
     if (anim.phase === 'matching') {
       // 主标题：对手匹配中
       ctx.save();
-      ctx.font = `bold ${Math.floor(18 * s)}px ${titleFont}`;
+      ctx.font = `bold ${Math.floor(18 * s)}px ${mainTitleFont}`;
       ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -368,7 +369,7 @@ class BattleRenderer {
       ctx.save();
       ctx.translate(cx, titleY);
       ctx.scale(titleScale, titleScale);
-      ctx.font = `bold ${Math.floor(20 * s)}px ${titleFont}`;
+      ctx.font = `bold ${Math.floor(20 * s)}px ${mainTitleFont}`;
       ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
