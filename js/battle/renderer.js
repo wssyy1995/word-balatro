@@ -369,7 +369,7 @@ class BattleRenderer {
       ctx.translate(cx, titleY);
       ctx.scale(titleScale, titleScale);
       ctx.font = `bold ${Math.floor(20 * s)}px ${titleFont}`;
-      ctx.fillStyle = '#8b6914';
+      ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('匹配成功！', 0, 0);
