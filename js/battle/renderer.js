@@ -343,8 +343,8 @@ class BattleRenderer {
         const swordCY = swordY + swordH / 2;
         const t = now / 1000;
         const baseR = Math.max(swordW, swordH) * 0.58;
-        const breath = 1 + 0.08 * Math.sin(t * 2.0);
-        const alpha = 0.55 + 0.35 * Math.sin(t * 2.0);
+        const breath = 1 + 0.08 * Math.sin(t * 2.8);
+        const alpha = 0.55 + 0.35 * Math.sin(t * 2.8);
 
         ctx.save();
 
