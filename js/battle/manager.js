@@ -38,15 +38,18 @@ class BattleManager {
     g._battleMatchAnim = null;
     g._battleMatchFinished = false;
     g._battleOpponent = null;
-    // 匹配弹窗结束后再调用 _startRound，延迟开始正式对局
+    // 立即初始化第一回合手牌，匹配弹窗弹出时背景已能看到字母卡牌
+    this._startRound();
   }
 
-  // 匹配弹窗结束后真正开始第一回合
+  // 匹配弹窗结束后清理状态，玩家可立即开始操作
   finishMatchSetup() {
     const g = this.game;
     if (g._battleMatchFinished) return;
     g._battleMatchFinished = true;
-    this._startRound();
+    // 匹配弹窗结束后 bot 才真正开始思考，避免弹窗等待期间计入思考时间
+    g.battleBotThinkingStartTime = Date.now();
+    g._battleBotThinkDuration = BOT_THINK_MIN_MS + Math.floor(Math.random() * (BOT_THINK_MAX_MS - BOT_THINK_MIN_MS));
   }
 
   _startRound() {
