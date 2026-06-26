@@ -713,12 +713,14 @@ class BattleRenderer {
       const leftImg = this.parent.battlePlayerLeft;
       const rightImg = this.parent.battlePlayerRight;
       const halfW = w / 2;
-      const leftH = halfW / (leftImg.width / leftImg.height);
-      const rightH = halfW / (rightImg.width / rightImg.height);
+      const pieceScale = 0.95;
+      const pieceW = halfW * pieceScale;
+      const leftH = pieceW / (leftImg.width / leftImg.height);
+      const rightH = pieceW / (rightImg.width / rightImg.height);
       const drawH = Math.max(leftH, rightH);
       const drawY = y + (h - drawH) / 2 + 5 * s;
-      ctx.drawImage(leftImg, x - 2 * s, drawY, halfW, drawH);
-      ctx.drawImage(rightImg, x + halfW + 2 * s, drawY, halfW, drawH);
+      ctx.drawImage(leftImg, x - 2 * s, drawY, pieceW, drawH);
+      ctx.drawImage(rightImg, x + halfW + 2 * s, drawY, pieceW, drawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
