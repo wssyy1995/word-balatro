@@ -864,14 +864,14 @@ class BattleRenderer {
 
     ctx.textAlign = 'right';
     ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = COLORS.greenHeader;
+    ctx.fillStyle = '#993E2D';
     ctx.fillText('我', rightTextX, nameY);
 
     ctx.save();
     ctx.translate(rightTextX, scoreY);
     ctx.scale(scoreScale, scoreScale);
     ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = COLORS.greenHeader;
+    ctx.fillStyle = '#993E2D';
     ctx.fillText(`${rightScore}分`, 0, 0);
     ctx.restore();
 
