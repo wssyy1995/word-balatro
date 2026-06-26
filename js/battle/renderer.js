@@ -717,8 +717,8 @@ class BattleRenderer {
       const pieceW = halfW * pieceScale;
       const leftH = pieceW / (leftImg.width / leftImg.height);
       const rightH = pieceW / (rightImg.width / rightImg.height);
-      const leftDrawH = leftH - 2 * s;
-      const rightDrawH = rightH - 2 * s;
+      const leftDrawH = Math.max(leftH - 2 * s, 1);
+      const rightDrawH = Math.max(rightH - 2 * s, 1);
       const leftDrawY = y + (h - leftDrawH) / 2 + 5 * s;
       const rightDrawY = y + (h - rightDrawH) / 2 + 5 * s;
       ctx.drawImage(leftImg, x - 6 * s, leftDrawY, pieceW, leftDrawH);
