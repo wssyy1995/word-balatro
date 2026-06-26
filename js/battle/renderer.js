@@ -1099,16 +1099,23 @@ class BattleRenderer {
     this.parent.roundRect(x1, y, totalW, panelH, corner, null, '#e8c87a', 1 * s);
     ctx.restore();
 
-    // 中间竖直分隔线
+    // 中间竖直分隔线（参考游戏页 HUD 进度条分隔线样式：细金线 + 中间旋转菱形）
     const dividerX = x1 + panelW;
+    const lineTop = y + 12 * s;
+    const lineBot = y + panelH - 12 * s;
     ctx.save();
-    ctx.strokeStyle = '#c4a35a';
-    ctx.lineWidth = 1.5 * s;
-    const dividerMargin = 12 * s;
+    ctx.strokeStyle = '#c5a059';
+    ctx.lineWidth = 0.8 * s;
     ctx.beginPath();
-    ctx.moveTo(dividerX, y + dividerMargin);
-    ctx.lineTo(dividerX, y + panelH - dividerMargin);
+    ctx.moveTo(dividerX, lineTop);
+    ctx.lineTo(dividerX, lineBot);
     ctx.stroke();
+
+    // 中间菱形
+    ctx.translate(dividerX, y + panelH / 2);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = '#c5a059';
+    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
     ctx.restore();
 
     this._drawPlayerPanel(ctx, game, x1, y, panelW, panelH, s, 'left');
