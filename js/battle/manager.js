@@ -5,8 +5,10 @@ const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache } = require('
 
 const HAND_SIZE = 12;
 const DEFAULT_TOTAL_ROUNDS = 10;
-const BOT_THINK_MIN_MS = 2000;
-const BOT_THINK_MAX_MS = 4000;
+const BOT_FAST_MIN_MS = 3000;
+const BOT_FAST_MAX_MS = 6000;
+const BOT_WAIT_PLAYER_MS = 2000;
+const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
 
 // 模块加载时预缓存 3 字母和 4 字母种子词，避免每轮遍历整个词库
@@ -150,8 +152,35 @@ class BattleManager {
     if (g._battleMatchFinished) return;
     g._battleMatchFinished = true;
     // 匹配弹窗结束后 bot 才真正开始思考，避免弹窗等待期间计入思考时间
-    g.battleBotThinkingStartTime = Date.now();
-    g._battleBotThinkDuration = BOT_THINK_MIN_MS + Math.floor(Math.random() * (BOT_THINK_MAX_MS - BOT_THINK_MIN_MS));
+    this._startBotTimer();
+  }
+
+  // 每回合随机选择 Bot 出牌策略
+  _initBotStrategy() {
+    const g = this.game;
+    if (Math.random() < BOT_FAST_PROBABILITY) {
+      // 70%：Bot 在 3~6 秒内自行出牌
+      g._battleBotStrategy = 'fast';
+      g._battleBotThinkDuration = BOT_FAST_MIN_MS + Math.floor(Math.random() * (BOT_FAST_MAX_MS - BOT_FAST_MIN_MS));
+    } else {
+      // 30%：等玩家出完后，再等 2 秒出牌
+      g._battleBotStrategy = 'wait_player';
+      g._battleBotThinkDuration = BOT_WAIT_PLAYER_MS;
+    }
+  }
+
+  // 根据当前策略启动 Bot 思考计时器
+  _startBotTimer() {
+    const g = this.game;
+    if (g._battleBotStrategy === 'wait_player') {
+      // 等玩家出完后再开始计时
+      g.battleBotThinkingStartTime = null;
+    } else {
+      // fast 模式立即开始计时
+      g.battleBotThinkingStartTime = Date.now();
+    }
+    g.battleBotThinking = true;
+    g.battleBotReady = false;
   }
 
   _startRound() {
@@ -191,10 +220,8 @@ class BattleManager {
     g.battlePlayerWordMeaning = '';
     g.battleBotWordMeaning = '';
     g.battlePhase = 'selecting';
-    g.battleBotThinking = true;
-    g.battleBotReady = false;
-    g.battleBotThinkingStartTime = Date.now();
-    g._battleBotThinkDuration = BOT_THINK_MIN_MS + Math.floor(Math.random() * (BOT_THINK_MAX_MS - BOT_THINK_MIN_MS));
+    this._initBotStrategy();
+    this._startBotTimer();
     g._battleBotReadyAnimStart = null;
     g._battlePlayerReadyAnimStart = null;
     g.battlePendingCheck = null;
@@ -299,6 +326,9 @@ class BattleManager {
     // 如果对方已经就绪，直接进入揭晓阶段
     if (g.battleBotReady) {
       this.startReveal();
+    } else if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
+      // 30% 策略：玩家出完后，Bot 再等 2 秒
+      g.battleBotThinkingStartTime = Date.now();
     }
 
     return { valid: true, score };
@@ -375,7 +405,10 @@ class BattleManager {
   updateBotThinking() {
     const g = this.game;
     if (!g.battleBotThinking || g.battleBotReady) return;
-    if (g.battleBotThinkingStartTime && Date.now() - g.battleBotThinkingStartTime >= g._battleBotThinkDuration) {
+    // 30% 策略：玩家未出牌前 Bot 一直等待
+    if (g._battleBotStrategy === 'wait_player' && g.battlePhase !== 'player_played') return;
+    if (!g.battleBotThinkingStartTime) return;
+    if (Date.now() - g.battleBotThinkingStartTime >= g._battleBotThinkDuration) {
       g.battleBotThinking = false;
       g.battleBotReady = true;
       g._battleBotReadyAnimStart = Date.now();
@@ -469,6 +502,7 @@ class BattleManager {
     g._battleFlyingScores = [];
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
+    g._battleBotStrategy = null;
   }
 }
 
