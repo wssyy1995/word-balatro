@@ -311,7 +311,7 @@ class BattleRenderer {
     ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
 
     // 标题区域
-    const titleY = matchY + 60 * s;
+    const titleY = matchY + 61 * s;
     const titleFont = this.parent.titleFontFamily || 'sans-serif';
     const mainTitleFont = '"Source Han Serif SC", "Noto Serif SC", "SimSun", serif';
 
