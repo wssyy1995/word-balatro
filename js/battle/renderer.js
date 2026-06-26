@@ -1144,10 +1144,10 @@ class BattleRenderer {
       const local = Math.max(0, Math.min((t - windowStart) / 0.22, 1));
       const glow = Math.sin(local * Math.PI);
       ctx.beginPath();
-      ctx.lineWidth = 9 * s;
+      ctx.lineWidth = 6 * s;
       ctx.lineCap = 'round';
       ctx.strokeStyle = `rgba(255,${200 + Math.floor(glow * 45)},${90 + Math.floor(glow * 110)},${0.18 + glow * 0.82})`;
-      ctx.shadowBlur = (10 + glow * 18) * s;
+      ctx.shadowBlur = (8 + glow * 14) * s;
       ctx.shadowColor = 'rgba(255,225,140,0.85)';
       ctx.arc(cx, cy, r, start, end);
       ctx.stroke();
