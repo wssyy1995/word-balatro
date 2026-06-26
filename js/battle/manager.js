@@ -154,6 +154,11 @@ class BattleManager {
     g.battlePlayerRoundScore = score;
     g.battlePhase = 'revealing';
 
+    // 对方已选择时播放出牌音效
+    if (g._pendingBotChoice && g.audioManager) {
+      g.audioManager.play('battle_play_card');
+    }
+
     const botChoice = g._pendingBotChoice;
     if (botChoice) {
       g.battleBotWord = botChoice.word;
