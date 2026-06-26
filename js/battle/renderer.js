@@ -1776,14 +1776,16 @@ class BattleRenderer {
             toRatio: timeline.toRatio,
             duration: FLASH_DURATION
           };
-          // 根据进度条移动方向，给对方/我方头像加呼吸金边
-          const toBot = timeline.toRatio;
-          const fromBot = timeline.fromRatio;
-          game._battleAvatarGlowAnim = {
-            startTime: now,
-            duration: 1000,
-            side: toBot > fromBot ? 'bot' : 'player'
-          };
+          // 本轮计分分数高的头像触发切割钻环动画
+          const botRound = game.battleBotRoundScore || 0;
+          const playerRound = game.battlePlayerRoundScore || 0;
+          if (botRound !== playerRound) {
+            game._battleAvatarGlowAnim = {
+              startTime: now,
+              duration: 1000,
+              side: botRound > playerRound ? 'bot' : 'player'
+            };
+          }
           timeline.step = 'done';
           timeline.stepStartTime = now;
         }
