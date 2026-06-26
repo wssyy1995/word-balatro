@@ -841,8 +841,8 @@ class BattleRenderer {
     // 名称 + 分数（保留在原位置）
     const leftScore = game.battleBotScore || 0;
     const rightScore = game.battlePlayerScore || 0;
-    const leftTextX = x + 70 * s ;
-    const rightTextX = x + w - 70 * s;
+    const leftTextX = x + 71 * s;
+    const rightTextX = x + w - 71 * s;
     const nameY = cy - 6 * s;
     const scoreY = cy + 14 * s;
 
