@@ -154,11 +154,6 @@ class BattleManager {
     g.battlePlayerRoundScore = score;
     g.battlePhase = 'revealing';
 
-    // 对方已选择时播放出牌音效
-    if (g._pendingBotChoice && g.audioManager) {
-      g.audioManager.play('battle_play_card');
-    }
-
     const botChoice = g._pendingBotChoice;
     if (botChoice) {
       g.battleBotWord = botChoice.word;
@@ -244,6 +239,8 @@ class BattleManager {
       g.battleBotThinking = false;
       g.battleBotReady = true;
       g._battleBotReadyAnimStart = Date.now();
+      // 对方从“选择中”变为“已选择”时播放出牌音效
+      if (g.audioManager) g.audioManager.play('battle_play_card');
     }
   }
 

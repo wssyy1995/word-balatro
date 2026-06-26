@@ -288,6 +288,14 @@ class Renderer {
     this.battleTagMe = null;
     this.battleTagMeLoaded = false;
 
+    // 对战单词背景图 / 占位图强制从云存储注入，见 cloud_storage.injectBattleToRenderer
+    this.battle_me_word_bg = null;
+    this.battle_me_word_bgLoaded = false;
+    this.battle_rival_place = null;
+    this.battle_rival_placeLoaded = false;
+    this.battle_rival_word_bg = null;
+    this.battle_rival_word_bgLoaded = false;
+
     // 对战单词预览区装饰线 / 主玩法计分方块装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
     this.scoreLine = null;
     this.scoreLineLoaded = false;
@@ -717,9 +725,13 @@ class Renderer {
     // 加载自定义标题字体（香萃灯粗宋 — 子集化后仅 4.4KB）
     this.titleFontFamily = '"PingFang SC", "Noto Sans SC", sans-serif';
     try {
-      const fontFamily = wx.loadFont('images/fonts/XiangcuiDengcusong_subset.ttf');
-      if (fontFamily) {
-        this.titleFontFamily = fontFamily + ', sans-serif';
+      // 开发者工具模拟器加载本地字体偶发 ENOENT，真机正常；devtools 下直接回退系统字体避免报错
+      const sysInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
+      if (sysInfo.platform !== 'devtools') {
+        const fontFamily = wx.loadFont('images/fonts/XiangcuiDengcusong_subset.ttf');
+        if (fontFamily) {
+          this.titleFontFamily = fontFamily + ', sans-serif';
+        }
       }
     } catch (e) {
       console.warn('loadFont 失败，使用系统字体:', e);

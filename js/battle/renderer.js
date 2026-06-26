@@ -1318,19 +1318,21 @@ class BattleRenderer {
 
     if (wordText && wordText.length > 0) {
       if (botRevealProgress >= 0) {
-        this._drawWordTilesReveal(ctx, centerX, tilesY, wordText, botRevealProgress, w - 16 * s, s);
+        this._drawWordTilesReveal(ctx, centerX, tilesY, wordText, botRevealProgress, w - 16 * s, s, side);
       } else {
         const popProgress = (isLeft && hidden && game._battleBotReadyAnimStart)
           ? Math.min((Date.now() - game._battleBotReadyAnimStart) / 400, 1)
           : -1;
-        this._drawWordTiles(ctx, centerX, tilesY, wordText, hidden, w - 16 * s, s, popProgress);
+        this._drawWordTiles(ctx, centerX, tilesY, wordText, hidden, w - 16 * s, s, side, popProgress);
       }
     }
   }
 
   // ===== 单词字母块（面板内） =====
   // popProgress: 仅对 hidden 方块有效，0~1 时执行从下往上果冻弹出动画
-  _drawWordTiles(ctx, centerX, y, text, hidden, maxW, s, popProgress = -1) {
+  // side: 'left' 为对方，'right' 为我方
+  _drawWordTiles(ctx, centerX, y, text, hidden, maxW, s, side, popProgress = -1) {
+    const isLeft = side === 'left';
     const count = text.length;
     const gap = 4 * s;
     const maxTile = 26 * s;
@@ -1354,10 +1356,20 @@ class BattleRenderer {
       ctx.scale(scale, scale);
 
       if (hidden) {
-        // 对手隐藏方块：浅蓝半透明填充 + 蓝色边框
-        this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.hiddenTileBlue, COLORS.hiddenTileBlueBorder, 1.5 * s);
+        if (isLeft && this.parent.battle_rival_place && this.parent.battle_rival_placeLoaded) {
+          ctx.drawImage(this.parent.battle_rival_place, -tileW / 2, -tileW / 2, tileW, tileW);
+        } else {
+          // 对手隐藏方块：浅蓝半透明填充 + 蓝色边框
+          this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.hiddenTileBlue, COLORS.hiddenTileBlueBorder, 1.5 * s);
+        }
       } else {
-        this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+        const bgImg = isLeft ? this.parent.battle_rival_word_bg : this.parent.battle_me_word_bg;
+        const bgLoaded = isLeft ? this.parent.battle_rival_word_bgLoaded : this.parent.battle_me_word_bgLoaded;
+        if (bgImg && bgLoaded) {
+          ctx.drawImage(bgImg, -tileW / 2, -tileW / 2, tileW, tileW);
+        } else {
+          this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+        }
       }
 
       if (!hidden) {
@@ -1373,7 +1385,9 @@ class BattleRenderer {
   }
 
   // ===== 单词字母块从下往上果冻感弹出动画 =====
-  _drawWordTilesReveal(ctx, centerX, y, word, progress, maxW, s) {
+  // side: 'left' 为对方，'right' 为我方
+  _drawWordTilesReveal(ctx, centerX, y, word, progress, maxW, s, side) {
+    const isLeft = side === 'left';
     const count = word.length;
     const gap = 4 * s;
     const maxTile = 26 * s;
@@ -1394,7 +1408,15 @@ class BattleRenderer {
       ctx.save();
       ctx.translate(cx, cy + offsetY);
       ctx.scale(scale, scale);
-      this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+
+      const bgImg = isLeft ? this.parent.battle_rival_word_bg : this.parent.battle_me_word_bg;
+      const bgLoaded = isLeft ? this.parent.battle_rival_word_bgLoaded : this.parent.battle_me_word_bgLoaded;
+      if (bgImg && bgLoaded) {
+        ctx.drawImage(bgImg, -tileW / 2, -tileW / 2, tileW, tileW);
+      } else {
+        this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+      }
+
       ctx.font = `bold ${Math.floor(tileW * 0.55)}px Georgia, serif`;
       ctx.fillStyle = COLORS.text;
       ctx.textAlign = 'center';
