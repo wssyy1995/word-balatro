@@ -230,10 +230,18 @@ class BattleRenderer {
       if (game.audioManager) game.audioManager.play('battle_match_sccess');
     }
 
+    const MATCHED_DURATION = 1500;
+    const COUNTDOWN_DURATION = 3000;
     const DISAPPEAR_DURATION = 250;
 
-    // 阶段转换：matched -> disappearing（匹配成功后显示 1.5 秒）
-    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= 1500) {
+    // 阶段转换：matched -> countdown（匹配成功信息显示 1.5 秒）
+    if (anim.phase === 'matched' && anim.matchedTime && now - anim.matchedTime >= MATCHED_DURATION) {
+      anim.phase = 'countdown';
+      anim.countdownStartTime = now;
+    }
+
+    // 阶段转换：countdown -> disappearing（3 秒倒计时后）
+    if (anim.phase === 'countdown' && anim.countdownStartTime && now - anim.countdownStartTime >= COUNTDOWN_DURATION) {
       anim.phase = 'disappearing';
       anim.disappearStartTime = now;
     }
@@ -379,7 +387,7 @@ class BattleRenderer {
         // 剑图标
         ctx.drawImage(swordImg, swordX, swordY, swordW, swordH);
       }
-    } else if ((anim.phase === 'matched' || anim.phase === 'disappearing') && anim.opponent) {
+    } else if (anim.phase === 'matched' && anim.opponent) {
       // 匹配成功标题（带缩放脉冲）
       const matchedElapsed = now - anim.matchedTime;
       const titleScale = matchedElapsed < 250
@@ -393,7 +401,7 @@ class BattleRenderer {
       ctx.fillStyle = '#d7b162';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('匹配成功', 0, 0);
+      ctx.fillText('匹配成功！', 0, 0);
       ctx.restore();
 
       // 对手头像和名字整体缩放弹出
@@ -450,6 +458,36 @@ class BattleRenderer {
       ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
       ctx.restore();
 
+      ctx.restore();
+    } else if (anim.phase === 'countdown' || anim.phase === 'disappearing') {
+      // 对战即将开始（带缩放进入）
+      const countdownElapsed = anim.phase === 'countdown'
+        ? now - anim.countdownStartTime
+        : COUNTDOWN_DURATION + (now - anim.disappearStartTime);
+      const titleScale = countdownElapsed < 250
+        ? Easing.easeOutBackStrong(Math.min(1, countdownElapsed / 250))
+        : 1;
+
+      ctx.save();
+      ctx.translate(cx, titleY);
+      ctx.scale(titleScale, titleScale);
+      ctx.font = `bold ${Math.floor(18 * s)}px ${mainTitleFont}`;
+      ctx.fillStyle = '#d7b162';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('对战即将开始', 0, 0);
+      ctx.restore();
+
+      // 倒计时数字（3, 2, 1）
+      const secondsLeft = Math.max(1, 3 - Math.floor(countdownElapsed / 1000));
+      const countdownText = String(secondsLeft);
+
+      ctx.save();
+      ctx.font = `bold ${Math.floor(28 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#d7c28a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(countdownText, cx, titleY + 28 * s);
       ctx.restore();
     }
 
