@@ -899,8 +899,8 @@ class BattleRenderer {
 
     ctx.save();
 
-    // 外框背景
-    this.parent.roundRect(x, progressY, w, progressH, progressR, '#e8dcc0', '#c4a35a', 1.5 * s);
+    // 外框背景（带金棕色边框）
+    this.parent.roundRect(x, progressY, w, progressH, progressR, '#e8dcc0', '#c4a35a', 2.5 * s);
 
     // 用外框路径 clip，确保蓝绿填充只在圆角矩形内
     this.parent._roundedRectPath(ctx, x, progressY, w, progressH, progressR);
