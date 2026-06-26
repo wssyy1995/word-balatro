@@ -1257,9 +1257,11 @@ class BattleRenderer {
       ctx.fillText(restText, startX + checkWidth + spaceWidth, drawY);
     } else {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
-      ctx.font = isGrayStatus
-        ? `${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`
-        : `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
+      // 请出牌 与 对手已选择 使用相同粗体样式，仅颜色保持灰色提示
+      const isBoldStatus = statusText === '请出牌' || statusText.startsWith('✓ ');
+      ctx.font = isBoldStatus
+        ? `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`
+        : `${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
       ctx.textAlign = 'center';
       ctx.fillText(statusText, centerX, drawY);
     }
