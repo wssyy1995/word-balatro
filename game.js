@@ -2048,6 +2048,14 @@ function handleInput(x, inputY) {
           console.error('bg_icon 上传失败:', err);
         });
       }
+      if (debugHit.action === 'debug_upload_battle') {
+        cloudStorage.uploadBattleImages().then(res => {
+          game.hintToast = { text: `battle 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };
+        }).catch(err => {
+          game.hintToast = { text: 'battle 上传失败', expireAt: Date.now() + 2000 };
+          console.error('battle 上传失败:', err);
+        });
+      }
       if (debugHit.action === 'debug_upload_rank_avatar') {
         cloudStorage.uploadRankAvatarImages().then(res => {
           game.hintToast = { text: `rank_avatar 上传完成：${res.success.length} 张成功`, expireAt: Date.now() + 2000 };

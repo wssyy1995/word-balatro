@@ -17,10 +17,12 @@ class CloudStorageManager {
     this.guideImages = {};    // { witch_1: { frames: [...], loaded: false }, witch_2: ... }
     this.guideSpritesheets = {}; // { witch_4: { img, loaded } } 精灵图缓存
     this.rankAvatarImages = {}; // { name: { img, loaded, width, height } }
+    this.battleImages = {};   // { name: { img, loaded, width, height } }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
     this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
+    this.battleFileMap = {};  // { name: fileID }
     this.guideFileMap = {};   // { 'witch_guide_1_spritesheet': fileID, ... }
     this.musicFileMap = {};   // { name: fileID }
     this.rankAvatarFileMap = {}; // { name: fileID }
@@ -1241,6 +1243,72 @@ class CloudStorageManager {
   // 将云缓存 rank_avatar 图片注入到 renderer（全国榜默认头像使用）
   injectRankAvatarToRenderer(renderer) {
     renderer.rankAvatarImages = this.rankAvatarImages;
+  }
+
+  // 上传 images/battle 目录下所有 .png 到云存储
+  async uploadBattleImages() {
+    if (this.uploading) return { success: false, message: '正在上传中...' };
+    this.uploading = true;
+
+    const results = { success: [], failed: [] };
+    const fs = wx.getFileSystemManager();
+
+    let files = [];
+    try {
+      files = fs.readdirSync('images/battle/');
+    } catch (e) {
+      this.log('读取 battle 目录失败: ' + (e && e.message ? e.message : String(e)));
+      this.uploading = false;
+      return { success: false, message: '读取目录失败', error: e };
+    }
+
+    const pngFiles = files.filter(f => f.endsWith('.png'));
+    this.log('扫描 images/battle/ 目录下');
+    this.log('扫描到 ' + pngFiles.length + ' 张本地 battle 图片');
+
+    for (const fileName of pngFiles) {
+      const name = fileName.replace(/\.png$/i, '');
+      const localPath = `images/battle/${fileName}`;
+      const cloudPath = `battle/${fileName}`;
+
+      this.log('开始上传 battle/' + name);
+
+      let uploadRes = null;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: localPath,
+          });
+          break;
+        } catch (e) {
+          lastError = e;
+          if (attempt < 3) {
+            this.log('上传失败，1秒后第' + (attempt + 1) + '次重试: ' + name);
+            await new Promise(r => setTimeout(r, 1000));
+          }
+        }
+      }
+
+      if (uploadRes) {
+        this.battleFileMap[name] = uploadRes.fileID;
+        results.success.push({ name, fileID: uploadRes.fileID });
+        this.log('上传成功 battle/' + name);
+      } else {
+        console.error('上传失败:', name, lastError);
+        this.log('上传失败 battle/' + name + ' ' + (lastError && lastError.message ? lastError.message : String(lastError)));
+        results.failed.push({ name, error: lastError });
+      }
+    }
+
+    // 保存映射到本地缓存
+    try {
+      wx.setStorageSync('cloud_battle_map', JSON.stringify(this.battleFileMap));
+    } catch (e) {}
+
+    this.uploading = false;
+    return results;
   }
 
   // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板 + 对战模块）
