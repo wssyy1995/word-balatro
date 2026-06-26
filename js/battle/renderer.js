@@ -775,7 +775,7 @@ class BattleRenderer {
     // 中间 VS 徽章
     if (this.parent.battleVS && this.parent.battleVSLoaded) {
       const vsImg = this.parent.battleVS;
-      const vsSize = 46 * s;
+      const vsSize = 52 * s;
       const vsX = cx - vsSize / 2;
       const vsY = cy + 5 * s - vsSize / 2;
       ctx.drawImage(vsImg, vsX, vsY, vsSize, vsSize);
