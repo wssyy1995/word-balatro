@@ -717,7 +717,7 @@ class BattleRenderer {
       const pieceW = halfW * pieceScale;
       const leftH = pieceW / (leftImg.width / leftImg.height);
       const rightH = pieceW / (rightImg.width / rightImg.height);
-      const leftDrawH = Math.max(leftH, rightH);
+      const leftDrawH = leftH - 2 * s;
       const rightDrawH = rightH - 2 * s;
       const leftDrawY = y + (h - leftDrawH) / 2 + 5 * s;
       const rightDrawY = y + (h - rightDrawH) / 2 + 5 * s;
