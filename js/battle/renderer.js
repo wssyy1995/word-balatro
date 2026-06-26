@@ -482,6 +482,12 @@ class BattleRenderer {
       const secondsLeft = Math.max(1, 3 - Math.floor(countdownElapsed / 1000));
       const countdownText = String(secondsLeft);
 
+      // 倒计时数字变化时播放音效
+      if (game.audioManager && anim._lastCountdown !== secondsLeft) {
+        game.audioManager.play('battle_countdown');
+        anim._lastCountdown = secondsLeft;
+      }
+
       ctx.save();
       ctx.font = `bold ${Math.floor(24 * s)}px ${titleFont}`;
       ctx.fillStyle = '#d7c28a';
