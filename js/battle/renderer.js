@@ -435,8 +435,8 @@ class BattleRenderer {
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          // 源头像区域向内裁剪 10% 直径（去掉边缘留白），再拉伸铺满显示圆
-          const srcMargin = a.sw * 0.05;
+          // 源头像区域向内裁剪 20% 直径（去掉边缘留白），再拉伸铺满显示圆
+          const srcMargin = a.sw * 0.10;
           const srcX = a.sx + srcMargin;
           const srcY = a.sy + srcMargin;
           const srcW = a.sw * 0.9;
@@ -518,7 +518,7 @@ class BattleRenderer {
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          const srcMargin = a.sw * 0.05;
+          const srcMargin = a.sw * 0.10;
           const srcX = a.sx + srcMargin;
           const srcY = a.sy + srcMargin;
           const srcW = a.sw * 0.9;
@@ -730,11 +730,11 @@ class BattleRenderer {
     ctx.restore();
 
     // 头像半径（双方统一）
-    const avatarR = 22 * s;
+    const avatarR = 24 * s;
 
     // 左侧对手头像（覆盖图片默认头像）
-    const leftAvatarCX = x + 35 * s;
-    const leftAvatarCY = cy + 3 * s;
+    const leftAvatarCX = x + 33 * s;
+    const leftAvatarCY = cy + 1 * s;
     const opponent = game._battleOpponent;
     if (opponent && opponent.avatar && opponent.avatar.loaded) {
       ctx.save();
@@ -743,8 +743,8 @@ class BattleRenderer {
       ctx.clip();
       const a = opponent.avatar;
       if (a.type === 'sheet') {
-        // 源头像区域向内裁剪 10% 直径，铺满显示圆
-        const srcMargin = a.sw * 0.05;
+        // 源头像区域向内裁剪 20% 直径，铺满显示圆
+        const srcMargin = a.sw * 0.10;
         const srcX = a.sx + srcMargin;
         const srcY = a.sy + srcMargin;
         const srcW = a.sw * 0.9;
@@ -759,8 +759,8 @@ class BattleRenderer {
     }
 
     // 右侧用户头像（覆盖图片默认头像）
-    const rightAvatarCX = x + w - 35 * s;
-    const rightAvatarCY = cy + 3 * s;
+    const rightAvatarCX = x + w - 33 * s;
+    const rightAvatarCY = cy + 1 * s;
     if (this.selfAvatarImg && this.selfAvatarLoaded) {
       ctx.save();
       ctx.beginPath();
