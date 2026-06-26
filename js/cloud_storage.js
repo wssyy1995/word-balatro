@@ -113,7 +113,8 @@ class CloudStorageManager {
       'card_template_selected': c('/bg_icon/card_template_selected_new.png'),
       'card_template_upgrade': c('/bg_icon/card_template_upgrade9.png'),
       'card_template_upgrade_selected': c('/bg_icon/card_template_upgrade_selected2.png'),
-      'battle_player': c('/bg_icon/battle_player.png'),
+      'battle_player_left': c('/bg_icon/battle_player_left.png'),
+      'battle_player_right': c('/bg_icon/battle_player_right.png'),
       'battle_round_badge': c('/bg_icon/battle_round_badge.png'),
       'battle_vs': c('/bg_icon/battle_vs.png'),
       'battle_match': c('/bg_icon/battle_match.png'),
@@ -163,6 +164,8 @@ class CloudStorageManager {
       'bubble': c('/music/sound_effect/bubble.mp3'),
       'homepage_round_tap': c('/music/sound_effect/homepage_round_tap.mp3'),
       'homepage_big_button': c('/music/sound_effect/homepage_big_button.mp3'),
+      'battle_match_sccess': c('/music/sound_effect/battle_match_sccess.mp3'),
+      'cloth_flap': c('/music/sound_effect/cloth_flap.mp3')
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
@@ -1248,14 +1251,23 @@ class CloudStorageManager {
       this.log('bg_icon bg 未加载，跳过注入');
     }
 
-    // 对战模块背景图
-    const battlePlayerData = this.bgIconImages['battle_player'];
-    if (battlePlayerData && battlePlayerData.loaded && battlePlayerData.img) {
-      renderer.battlePlayer = battlePlayerData.img;
-      renderer.battlePlayerLoaded = true;
-      this.log('已注入 bg_icon renderer: battle_player');
+    // 对战模块背景图（左右分开）
+    const battlePlayerLeftData = this.bgIconImages['battle_player_left'];
+    if (battlePlayerLeftData && battlePlayerLeftData.loaded && battlePlayerLeftData.img) {
+      renderer.battlePlayerLeft = battlePlayerLeftData.img;
+      renderer.battlePlayerLeftLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_player_left');
     } else {
-      this.log('bg_icon battle_player 未加载，跳过注入');
+      this.log('bg_icon battle_player_left 未加载，跳过注入');
+    }
+
+    const battlePlayerRightData = this.bgIconImages['battle_player_right'];
+    if (battlePlayerRightData && battlePlayerRightData.loaded && battlePlayerRightData.img) {
+      renderer.battlePlayerRight = battlePlayerRightData.img;
+      renderer.battlePlayerRightLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_player_right');
+    } else {
+      this.log('bg_icon battle_player_right 未加载，跳过注入');
     }
 
     const battleRoundBadgeData = this.bgIconImages['battle_round_badge'];

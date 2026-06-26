@@ -272,9 +272,11 @@ class Renderer {
     this.battleRoundBadge = null;
     this.battleRoundBadgeLoaded = false;
 
-    // 对战玩家 VS 条背景图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
-    this.battlePlayer = null;
-    this.battlePlayerLoaded = false;
+    // 对战玩家 VS 条背景图（左右分开）强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.battlePlayerLeft = null;
+    this.battlePlayerLeftLoaded = false;
+    this.battlePlayerRight = null;
+    this.battlePlayerRightLoaded = false;
 
     // 对战 VS 徽章图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
     this.battleVS = null;

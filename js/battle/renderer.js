@@ -701,15 +701,18 @@ class BattleRenderer {
     const cy = y + h / 2;
 
     ctx.save();
-    if (this.parent.battlePlayer && this.parent.battlePlayerLoaded) {
-      // 使用 battle_player.png 作为对战条背景，宽度占满 95%，高度按比例，向下移动 2*s
-      const img = this.parent.battlePlayer;
-      const imgAspect = img.width / img.height;
-      const drawW = w;
-      const drawH = drawW / imgAspect;
-      const drawX = x;
+    if (this.parent.battlePlayerLeft && this.parent.battlePlayerLeftLoaded &&
+        this.parent.battlePlayerRight && this.parent.battlePlayerRightLoaded) {
+      // 使用 battle_player_left.png + battle_player_right.png 拼接作为对战条背景
+      const leftImg = this.parent.battlePlayerLeft;
+      const rightImg = this.parent.battlePlayerRight;
+      const halfW = w / 2;
+      const leftH = halfW / (leftImg.width / leftImg.height);
+      const rightH = halfW / (rightImg.width / rightImg.height);
+      const drawH = Math.max(leftH, rightH);
       const drawY = y + (h - drawH) / 2 + 5 * s;
-      ctx.drawImage(img, drawX, drawY, drawW, drawH);
+      ctx.drawImage(leftImg, x, drawY, halfW, drawH);
+      ctx.drawImage(rightImg, x + halfW, drawY, halfW, drawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
