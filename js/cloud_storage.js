@@ -119,6 +119,8 @@ class CloudStorageManager {
       'battle_vs': c('/bg_icon/battle_vs.png'),
       'battle_match': c('/bg_icon/battle_match.png'),
       'battle_match_sword': c('/bg_icon/battle_match_sword.png'),
+      'battle_tag_me': c('/bg_icon/battle_tag_me.png'),
+      'battle_tag_rival': c('/bg_icon/battle_tag_rival.png'),
       'score_line': c('/bg_icon/score_line.png'),
       'discount_spritesheet': c('/bg_icon/discount_spritesheet.png'),
       'homepageBg': c('/bg_icon/homepage_bg.png'),
@@ -1307,6 +1309,25 @@ class CloudStorageManager {
       this.log('已注入 bg_icon renderer: battle_match_sword');
     } else {
       this.log('bg_icon battle_match_sword 未加载，跳过注入');
+    }
+
+    // 对战玩家标签图（对方 / 我）
+    const battleTagRivalData = this.bgIconImages['battle_tag_rival'];
+    if (battleTagRivalData && battleTagRivalData.loaded && battleTagRivalData.img) {
+      renderer.battleTagRival = battleTagRivalData.img;
+      renderer.battleTagRivalLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_tag_rival');
+    } else {
+      this.log('bg_icon battle_tag_rival 未加载，跳过注入');
+    }
+
+    const battleTagMeData = this.bgIconImages['battle_tag_me'];
+    if (battleTagMeData && battleTagMeData.loaded && battleTagMeData.img) {
+      renderer.battleTagMe = battleTagMeData.img;
+      renderer.battleTagMeLoaded = true;
+      this.log('已注入 bg_icon renderer: battle_tag_me');
+    } else {
+      this.log('bg_icon battle_tag_me 未加载，跳过注入');
     }
 
     // 对战单词预览区装饰线 / 主玩法计分方块装饰线

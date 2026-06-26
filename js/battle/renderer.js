@@ -1116,28 +1116,39 @@ class BattleRenderer {
     ctx.strokeStyle = '#e8c87a';
     ctx.stroke();
 
-    // 顶部名称标签
-    ctx.beginPath();
-    ctx.moveTo(tabX + 8 * s, tabY);
-    ctx.lineTo(tabX + tabW - 8 * s, tabY);
-    ctx.quadraticCurveTo(tabX + tabW, tabY, tabX + tabW, tabY + 8 * s);
-    ctx.lineTo(tabX + tabW, tabY + tabH);
-    ctx.lineTo(tabX, tabY + tabH);
-    ctx.lineTo(tabX, tabY + 8 * s);
-    ctx.quadraticCurveTo(tabX, tabY, tabX + 8 * s, tabY);
-    ctx.closePath();
-    ctx.fillStyle = headerColor;
-    ctx.fill();
-    ctx.lineWidth = 1 * s;
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.stroke();
+    // 顶部名称标签：优先使用图片资源，否则回退到颜色形状 + 文字
+    const tagImg = isLeft ? this.parent.battleTagRival : this.parent.battleTagMe;
+    const tagImgLoaded = isLeft ? this.parent.battleTagRivalLoaded : this.parent.battleTagMeLoaded;
+    if (tagImg && tagImgLoaded) {
+      // 按图片原始比例缩放，在标签区域内居中显示
+      const imgAspect = tagImg.width / tagImg.height;
+      const drawH = tabH;
+      const drawW = drawH * imgAspect;
+      const drawX = tabX + (tabW - drawW) / 2;
+      ctx.drawImage(tagImg, drawX, tabY, drawW, drawH);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(tabX + 8 * s, tabY);
+      ctx.lineTo(tabX + tabW - 8 * s, tabY);
+      ctx.quadraticCurveTo(tabX + tabW, tabY, tabX + tabW, tabY + 8 * s);
+      ctx.lineTo(tabX + tabW, tabY + tabH);
+      ctx.lineTo(tabX, tabY + tabH);
+      ctx.lineTo(tabX, tabY + 8 * s);
+      ctx.quadraticCurveTo(tabX, tabY, tabX + 8 * s, tabY);
+      ctx.closePath();
+      ctx.fillStyle = headerColor;
+      ctx.fill();
+      ctx.lineWidth = 1 * s;
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+      ctx.stroke();
 
-    // 标签文字
-    ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = '#fff';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(isLeft ? '玩家A' : '玩家B', tabX + tabW / 2, tabY + tabH / 2 + 1 * s);
+      // 标签文字
+      ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(isLeft ? '对方' : '我', tabX + tabW / 2, tabY + tabH / 2 + 1 * s);
+    }
     ctx.restore();
 
     // 状态文本 / 单词牌

@@ -282,6 +282,12 @@ class Renderer {
     this.battleVS = null;
     this.battleVSLoaded = false;
 
+    // 对战玩家标签图强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
+    this.battleTagRival = null;
+    this.battleTagRivalLoaded = false;
+    this.battleTagMe = null;
+    this.battleTagMeLoaded = false;
+
     // 对战单词预览区装饰线 / 主玩法计分方块装饰线强制从云存储注入，见 cloud_storage.injectBgIconToRenderer
     this.scoreLine = null;
     this.scoreLineLoaded = false;
