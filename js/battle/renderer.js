@@ -482,10 +482,10 @@ class BattleRenderer {
       const secondsLeft = Math.max(1, 3 - Math.floor(countdownElapsed / 1000));
       const countdownText = String(secondsLeft);
 
-      // 倒计时数字变化时播放音效
-      if (game.audioManager && anim._lastCountdown !== secondsLeft) {
+      // 倒计时音效是完整音频，进入倒计时阶段只播放一次
+      if (game.audioManager && !anim._countdownSoundPlayed) {
         game.audioManager.play('battle_countdown');
-        anim._lastCountdown = secondsLeft;
+        anim._countdownSoundPlayed = true;
       }
 
       ctx.save();
