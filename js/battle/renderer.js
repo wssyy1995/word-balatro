@@ -713,14 +713,14 @@ class BattleRenderer {
       const leftImg = this.parent.battlePlayerLeft;
       const rightImg = this.parent.battlePlayerRight;
       const halfW = w / 2;
-      const pieceScale = 0.95;
+      const pieceScale = 0.9;
       const pieceW = halfW * pieceScale;
       const leftH = pieceW / (leftImg.width / leftImg.height);
       const rightH = pieceW / (rightImg.width / rightImg.height);
       const drawH = Math.max(leftH, rightH);
       const drawY = y + (h - drawH) / 2 + 5 * s;
-      ctx.drawImage(leftImg, x - 2 * s, drawY, pieceW, drawH);
-      ctx.drawImage(rightImg, x + halfW + 2 * s, drawY, pieceW, drawH);
+      ctx.drawImage(leftImg, x - 6 * s, drawY, pieceW, drawH);
+      ctx.drawImage(rightImg, x + halfW + 22 * s, drawY, pieceW, drawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
@@ -731,8 +731,8 @@ class BattleRenderer {
     const avatarR = 26 * s;
 
     // 左侧对手头像（覆盖图片默认头像）
-    const leftAvatarCX = x + 37 * s;
-    const leftAvatarCY = cy + 5 * s;
+    const leftAvatarCX = x + 35 * s;
+    const leftAvatarCY = cy + 3 * s;
     const opponent = game._battleOpponent;
     if (opponent && opponent.avatar && opponent.avatar.loaded) {
       ctx.save();
@@ -757,8 +757,8 @@ class BattleRenderer {
     }
 
     // 右侧用户头像（覆盖图片默认头像）
-    const rightAvatarCX = x + w - 37 * s;
-    const rightAvatarCY = cy + 5 * s;
+    const rightAvatarCX = x + w - 35 * s;
+    const rightAvatarCY = cy + 3 * s;
     if (this.selfAvatarImg && this.selfAvatarLoaded) {
       ctx.save();
       ctx.beginPath();
@@ -775,7 +775,7 @@ class BattleRenderer {
     // 中间 VS 徽章
     if (this.parent.battleVS && this.parent.battleVSLoaded) {
       const vsImg = this.parent.battleVS;
-      const vsSize = 52 * s;
+      const vsSize = 54 * s;
       const vsX = cx - vsSize / 2;
       const vsY = cy + 5 * s - vsSize / 2;
       ctx.drawImage(vsImg, vsX, vsY, vsSize, vsSize);
