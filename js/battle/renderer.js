@@ -1120,7 +1120,7 @@ class BattleRenderer {
 
     // 中间竖直分隔线（参考游戏页 HUD 进度条分隔线样式：细金线 + 中间旋转菱形）
     const dividerX = x1 + panelW;
-    const lineTop = y + 12 * s;
+    const lineTop = y + 34 * s;
     const lineBot = y + panelH - 12 * s;
     ctx.save();
     ctx.strokeStyle = '#c5a059';
@@ -1135,6 +1135,23 @@ class BattleRenderer {
     ctx.rotate(Math.PI / 4);
     ctx.fillStyle = '#c5a059';
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+    ctx.restore();
+
+    // 中间竖直分隔线上方小标题
+    ctx.save();
+    const titleFontSize = Math.floor(17 * s);
+    ctx.font = `bold ${titleFontSize}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#8a6d3b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    const titleY = lineTop - 8 * s;
+    const titleCY = titleY - titleFontSize / 2;
+    const textWidth = ctx.measureText('出牌区').width;
+    const textHalf = textWidth / 2;
+    ctx.fillText('出牌区', dividerX, titleY);
+    // 左右装饰（参考轮次徽章）
+    this._drawBadgeSideDecoration(ctx, dividerX - textHalf + 3 * s, titleCY, s, 'left', 12 * s);
+    this._drawBadgeSideDecoration(ctx, dividerX + textHalf - 3 * s, titleCY, s, 'right', 12 * s);
     ctx.restore();
 
     this._drawPlayerPanel(ctx, game, x1, y, panelW, panelH, s, 'left');
@@ -1193,8 +1210,8 @@ class BattleRenderer {
 
     // 状态文本 / 单词牌
     const centerX = x + w / 2;
-    const statusY = y + 46 * s;
-    const tilesY = y + 70 * s - 7 * s;
+    const statusY = y + 38 * s;
+    const tilesY = y + 60 * s - 7 * s;
 
     let statusText = '';
     let wordText = null;
@@ -1298,15 +1315,17 @@ class BattleRenderer {
     } else {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
       const isBoldStatus = statusText.startsWith('✓ ');
+      const isPleasePlay = statusText === '请出牌';
+      const statusFontSize = isPleasePlay ? Math.floor(16 * s) : Math.floor(13 * s);
       ctx.font = isBoldStatus
-        ? `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`
-        : `${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
+        ? `bold ${statusFontSize}px ${this.parent.titleFontFamily}`
+        : `${statusFontSize}px ${this.parent.titleFontFamily}`;
 
-      if (statusText === '请出牌' && this.battleCardIcon && this.battleCardIconLoaded) {
+      if (isPleasePlay && this.battleCardIcon && this.battleCardIconLoaded) {
         // 请出牌：图标 + 文字横向居中，保持灰色非粗体
         const text = '请出牌';
-        const iconSize = 16 * s;
-        const gap = 4 * s;
+        const iconSize = 20 * s;
+        const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
         const totalWidth = iconSize + gap + textWidth;
         const startX = centerX - totalWidth / 2;
