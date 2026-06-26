@@ -914,20 +914,20 @@ class BattleRenderer {
     ctx.fillStyle = bgGrad;
     ctx.fillRect(x, progressY, w, progressH);
 
-    // 左侧蓝色渐变（对手）
+    // 左侧渐变（对手）
     const blueGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
-    blueGrad.addColorStop(0, '#4f6fa5');
-    blueGrad.addColorStop(0.5, '#4a6aa0');
-    blueGrad.addColorStop(1, '#426090');
+    blueGrad.addColorStop(0, '#4a7a9f');
+    blueGrad.addColorStop(0.5, '#395E85');
+    blueGrad.addColorStop(1, '#2e4c6b');
     ctx.fillStyle = blueGrad;
     ctx.fillRect(x, progressY, botWidth, progressH);
 
-    // 右侧绿色渐变（我）
-    const greenGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
-    greenGrad.addColorStop(0, '#5f8f5f');
-    greenGrad.addColorStop(0.5, '#5a8a5a');
-    greenGrad.addColorStop(1, '#528052');
-    ctx.fillStyle = greenGrad;
+    // 右侧渐变（我）
+    const redGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    redGrad.addColorStop(0, '#b34d3a');
+    redGrad.addColorStop(0.5, '#993E2D');
+    redGrad.addColorStop(1, '#7f3224');
+    ctx.fillStyle = redGrad;
     ctx.fillRect(x + botWidth, progressY, w - botWidth, progressH);
 
     // 顶部高光：自然 3D 立体感
