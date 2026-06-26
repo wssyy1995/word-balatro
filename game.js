@@ -3712,6 +3712,10 @@ function gameLoop(timestamp) {
     if (game && game._wordBookPopup && renderer.drawWordBookPopup) {
       renderer.drawWordBookPopup(game);
     }
+    // 学习模式（今日新词）弹窗在主页上叠加绘制
+    if (game && game._dailyWordsPopup && renderer._drawDailyWordsPopup) {
+      renderer._drawDailyWordsPopup(game);
+    }
   } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
