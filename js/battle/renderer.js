@@ -1154,13 +1154,13 @@ class BattleRenderer {
     const tagImg = isLeft ? this.parent.battleTagRival : this.parent.battleTagMe;
     const tagImgLoaded = isLeft ? this.parent.battleTagRivalLoaded : this.parent.battleTagMeLoaded;
     if (tagImg && tagImgLoaded) {
-      // 按图片原始比例等比放大 10%，在标签区域内居中显示（不再额外下移）
+      // 按图片原始比例等比放大 10%，并整体上移 1px（设计稿像素，按 s 缩放）
       const imgAspect = tagImg.width / tagImg.height;
       const scale = 1.1;
       const drawH = tabH * scale;
       const drawW = drawH * imgAspect;
       const drawX = tabX + (tabW - drawW) / 2;
-      const drawY = tabY;
+      const drawY = tabY - 1 * s;
       ctx.drawImage(tagImg, drawX, drawY, drawW, drawH);
     } else {
       ctx.beginPath();
