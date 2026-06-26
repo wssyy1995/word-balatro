@@ -899,20 +899,44 @@ class BattleRenderer {
 
     ctx.save();
 
-    // 外框背景（带金棕色边框）
-    this.parent.roundRect(x, progressY, w, progressH, progressR, '#e8dcc0', '#c4a35a', 2.5 * s);
+    // 外框背景 + 加粗金棕色边框
+    this.parent.roundRect(x, progressY, w, progressH, progressR, '#e8dcc0', '#c4a35a', 4 * s);
 
-    // 用外框路径 clip，确保蓝绿填充只在圆角矩形内
+    // 用外框路径 clip，确保填充只在圆角矩形内
     this.parent._roundedRectPath(ctx, x, progressY, w, progressH, progressR);
     ctx.clip();
 
-    // 左侧蓝色（对手）
-    ctx.fillStyle = '#4a6aa0';
+    // 背景渐变：顶部亮、底部暗，营造 3D 圆柱感
+    const bgGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    bgGrad.addColorStop(0, '#f5f0e6');
+    bgGrad.addColorStop(0.5, '#e8dcc0');
+    bgGrad.addColorStop(1, '#d4c8a8');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(x, progressY, w, progressH);
+
+    // 左侧蓝色渐变（对手）
+    const blueGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    blueGrad.addColorStop(0, '#5a7ab0');
+    blueGrad.addColorStop(0.5, '#4a6aa0');
+    blueGrad.addColorStop(1, '#3a5585');
+    ctx.fillStyle = blueGrad;
     ctx.fillRect(x, progressY, botWidth, progressH);
 
-    // 右侧绿色（我）
-    ctx.fillStyle = '#5a8a5a';
+    // 右侧绿色渐变（我）
+    const greenGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    greenGrad.addColorStop(0, '#6a9a6a');
+    greenGrad.addColorStop(0.5, '#5a8a5a');
+    greenGrad.addColorStop(1, '#4a754a');
+    ctx.fillStyle = greenGrad;
     ctx.fillRect(x + botWidth, progressY, w - botWidth, progressH);
+
+    // 顶部高光：增强 3D 立体感
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillRect(x, progressY, w, progressH * 0.25);
+
+    // 底部阴影：增强 3D 立体感
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(x, progressY + progressH * 0.75, w, progressH * 0.25);
 
     ctx.restore();
 
