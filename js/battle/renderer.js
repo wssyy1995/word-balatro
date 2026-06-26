@@ -1238,6 +1238,9 @@ class BattleRenderer {
     const timeline = game._battleAnimTimeline;
     const now = Date.now();
 
+    let flipSide = null;
+    let flipElapsed = -1;
+
     if (isLeft) {
       // 对手
       if (game.battlePhase === 'selecting') {
@@ -1249,23 +1252,30 @@ class BattleRenderer {
         } else {
           statusText = '对手选择中...';
         }
-      } else {
-        // revealing 阶段不再显示固定 +x 分文字，只保留飞行计分
+      } else if (game.battlePhase === 'player_played') {
         statusText = '';
-        if (timeline && !timeline.botWordTriggered) {
-          // 单词动画尚未开始，仍显示 ? 方块
+        if (game.battleBotReady) {
           const len = game.battleBotWordLength || 0;
           wordText = '?'.repeat(len);
           hidden = true;
-        } else if (timeline) {
-          // 单词正在揭示或已揭示
-          wordText = game.battleBotWord;
-          hidden = false;
-          const elapsed = now - timeline.botWordStart;
-          botRevealProgress = Math.min(elapsed / 500, 1);
         } else {
-          // 无动画时间线兜底：直接显示单词
-          wordText = game.battleBotWord;
+          statusText = '对手选择中...';
+        }
+      } else if (game.battlePhase === 'revealing') {
+        // revealing 阶段不再显示固定 +x 分文字，只保留飞行计分
+        statusText = '';
+        const step = timeline ? timeline.step : null;
+        if (step === 'placeholders' || step === 'player_flip' || step === 'player_score') {
+          const len = game.battleBotWordLength || 0;
+          wordText = '?'.repeat(len);
+          hidden = true;
+        } else if (step === 'bot_flip') {
+          wordText = game.battleBotWord || '';
+          flipSide = 'left';
+          flipElapsed = timeline && timeline.botFlipStartTime ? now - timeline.botFlipStartTime : 0;
+        } else {
+          // bot_score / done：直接显示单词
+          wordText = game.battleBotWord || '';
           hidden = false;
         }
       }
@@ -1273,11 +1283,27 @@ class BattleRenderer {
       // 我
       if (game.battlePhase === 'selecting') {
         statusText = '请出牌';
-      } else {
-        // revealing 阶段不再显示固定 +x 分文字，只保留飞行计分
+      } else if (game.battlePhase === 'player_played') {
         statusText = '';
-        wordText = game.battlePlayerWord;
-        hidden = false;
+        const len = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
+        wordText = '?'.repeat(len);
+        hidden = true;
+      } else if (game.battlePhase === 'revealing') {
+        statusText = '';
+        const step = timeline ? timeline.step : null;
+        if (step === 'placeholders') {
+          const len = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
+          wordText = '?'.repeat(len);
+          hidden = true;
+        } else if (step === 'player_flip') {
+          wordText = game.battlePlayerWord || '';
+          flipSide = 'right';
+          flipElapsed = timeline && timeline.playerFlipStartTime ? now - timeline.playerFlipStartTime : 0;
+        } else {
+          // player_score / bot_flip / bot_score / done：直接显示单词
+          wordText = game.battlePlayerWord || '';
+          hidden = false;
+        }
       }
     }
 
@@ -1369,7 +1395,9 @@ class BattleRenderer {
     ctx.restore();
 
     if (wordText && wordText.length > 0) {
-      if (botRevealProgress >= 0) {
+      if (flipSide === side && flipElapsed >= 0) {
+        this._drawWordTilesFlip(ctx, centerX, tilesY, wordText, w - 16 * s, s, side, flipElapsed);
+      } else if (botRevealProgress >= 0) {
         this._drawWordTilesReveal(ctx, centerX, tilesY, wordText, botRevealProgress, w - 16 * s, s, side);
       } else {
         const popProgress = (isLeft && hidden && game._battleBotReadyAnimStart)
@@ -1410,8 +1438,10 @@ class BattleRenderer {
       if (hidden) {
         if (isLeft && this.parent.battle_rival_place && this.parent.battle_rival_placeLoaded) {
           ctx.drawImage(this.parent.battle_rival_place, -tileW / 2, -tileW / 2, tileW, tileW);
+        } else if (!isLeft && this.parent.battle_me_place && this.parent.battle_me_placeLoaded) {
+          ctx.drawImage(this.parent.battle_me_place, -tileW / 2, -tileW / 2, tileW, tileW);
         } else {
-          // 对手隐藏方块：浅蓝半透明填充 + 蓝色边框
+          // 隐藏方块兜底：浅蓝半透明填充 + 蓝色边框
           this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.hiddenTileBlue, COLORS.hiddenTileBlueBorder, 1.5 * s);
         }
       } else {
@@ -1478,6 +1508,89 @@ class BattleRenderer {
     }
   }
 
+  // ===== 单词字母块逐张翻转动画（placeholder -> word_bg）=====
+  // elapsed: 从开始翻转起的毫秒数
+  // side: 'left' 为对方，'right' 为我方
+  _drawWordTilesFlip(ctx, centerX, y, word, maxW, s, side, elapsed) {
+    const isLeft = side === 'left';
+    const count = word.length;
+    const gap = 4 * s;
+    const maxTile = 26 * s;
+    let tileW = (maxW - gap * (count - 1)) / count;
+    tileW = Math.min(tileW, maxTile);
+    const totalW = count * tileW + (count - 1) * gap;
+    const startX = centerX - totalW / 2;
+
+    const FLIP_DURATION = 400;
+    const FLIP_GAP = 150;
+
+    const placeImg = isLeft ? this.parent.battle_rival_place : this.parent.battle_me_place;
+    const placeLoaded = isLeft ? this.parent.battle_rival_placeLoaded : this.parent.battle_me_placeLoaded;
+    const wordImg = isLeft ? this.parent.battle_rival_word_bg : this.parent.battle_me_word_bg;
+    const wordLoaded = isLeft ? this.parent.battle_rival_word_bgLoaded : this.parent.battle_me_word_bgLoaded;
+
+    for (let i = 0; i < count; i++) {
+      const tx = startX + i * (tileW + gap);
+      const cx = tx + tileW / 2;
+      const cy = y + tileW / 2;
+
+      const tileStart = i * (FLIP_DURATION + FLIP_GAP);
+      const tileProgress = Math.min(1, Math.max(0, (elapsed - tileStart) / FLIP_DURATION));
+
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      if (tileProgress <= 0) {
+        // 尚未翻转：占位图
+        if (placeImg && placeLoaded) {
+          ctx.drawImage(placeImg, -tileW / 2, -tileW / 2, tileW, tileW);
+        } else {
+          this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.hiddenTileBlue, COLORS.hiddenTileBlueBorder, 1.5 * s);
+        }
+      } else if (tileProgress >= 1) {
+        // 翻转完成：单词背景 + 字母
+        if (wordImg && wordLoaded) {
+          ctx.drawImage(wordImg, -tileW / 2, -tileW / 2, tileW, tileW);
+        } else {
+          this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+        }
+        ctx.font = `bold ${Math.floor(tileW * 0.55)}px Georgia, serif`;
+        ctx.fillStyle = COLORS.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(word[i].toUpperCase(), 0, 0);
+      } else {
+        // 翻转中
+        if (tileProgress < 0.5) {
+          // 前半段：占位图翻走
+          const scaleX = 1 - tileProgress * 2;
+          ctx.scale(scaleX, 1);
+          if (placeImg && placeLoaded) {
+            ctx.drawImage(placeImg, -tileW / 2, -tileW / 2, tileW, tileW);
+          } else {
+            this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.hiddenTileBlue, COLORS.hiddenTileBlueBorder, 1.5 * s);
+          }
+        } else {
+          // 后半段：单词背景翻入
+          const scaleX = (tileProgress - 0.5) * 2;
+          ctx.scale(scaleX, 1);
+          if (wordImg && wordLoaded) {
+            ctx.drawImage(wordImg, -tileW / 2, -tileW / 2, tileW, tileW);
+          } else {
+            this.parent.roundRect(-tileW / 2, -tileW / 2, tileW, tileW, 4 * s, COLORS.panelBg, COLORS.tileStroke, 1.5 * s);
+          }
+          ctx.font = `bold ${Math.floor(tileW * 0.55)}px Georgia, serif`;
+          ctx.fillStyle = COLORS.text;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(word[i].toUpperCase(), 0, 0);
+        }
+      }
+
+      ctx.restore();
+    }
+  }
+
   // ===== 中间提示语 =====
   _drawCenterPrompt(ctx, W, y, s) {
     this._drawDecoratedText(ctx, W, y, s, '请选择字母，组成单词并提交');
@@ -1491,41 +1604,90 @@ class BattleRenderer {
     const now = Date.now();
     if (!game._battleFlyingScores) game._battleFlyingScores = [];
 
-    // 触发玩家B（我）的分数飞行动画
-    if (!timeline.playerScoreTriggered && now >= timeline.playerScoreStart) {
-      timeline.playerScoreTriggered = true;
-      const panel = this.battlePanelRight;
-      if (panel) {
-        game._battleFlyingScores.push({
-          value: game.battlePlayerRoundScore || 0,
-          side: 'player',
-          startX: panel.centerX,
-          startY: panel.tilesY - 12 * s - 9 * s,
-          startTime: now,
-        });
-        if (game.audioManager) game.audioManager.play('word_score');
-      }
-    }
+    const FLIP_DURATION = 400;
+    const FLIP_GAP = 150;
+    const PLACEHOLDER_DURATION = 500;
+    const SCORE_FLY_DURATION = 800;
+    const FLASH_DURATION = 800;
 
-    // 触发玩家A（对手）单词揭示
-    if (!timeline.botWordTriggered && now >= timeline.botWordStart) {
-      timeline.botWordTriggered = true;
-    }
+    const playerWordLen = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
+    const botWordLen = game.battleBotWord ? game.battleBotWord.length : 0;
 
-    // 触发玩家A（对手）的分数飞行动画
-    if (!timeline.botScoreTriggered && now >= timeline.botScoreStart) {
-      timeline.botScoreTriggered = true;
-      const panel = this.battlePanelLeft;
-      if (panel) {
-        game._battleFlyingScores.push({
-          value: game.battleBotRoundScore || 0,
-          side: 'bot',
-          startX: panel.centerX,
-          startY: panel.tilesY - 12 * s - 9 * s,
-          startTime: now,
-        });
-        if (game.audioManager) game.audioManager.play('word_score');
+    switch (timeline.step) {
+      case 'placeholders':
+        if (now - timeline.stepStartTime >= PLACEHOLDER_DURATION) {
+          timeline.step = 'player_flip';
+          timeline.stepStartTime = now;
+          timeline.playerFlipStartTime = now;
+        }
+        break;
+      case 'player_flip': {
+        const totalFlipTime = playerWordLen * FLIP_DURATION + (playerWordLen - 1) * FLIP_GAP;
+        if (now - timeline.playerFlipStartTime >= totalFlipTime) {
+          timeline.step = 'player_score';
+          timeline.stepStartTime = now;
+        }
+        break;
       }
+      case 'player_score':
+        if (!timeline.playerScoreTriggered) {
+          timeline.playerScoreTriggered = true;
+          const panel = this.battlePanelRight;
+          if (panel) {
+            game._battleFlyingScores.push({
+              value: game.battlePlayerRoundScore || 0,
+              side: 'player',
+              startX: panel.centerX,
+              startY: panel.tilesY - 12 * s - 9 * s,
+              startTime: now,
+            });
+            if (game.audioManager) game.audioManager.play('word_score');
+          }
+        }
+        if (now - timeline.stepStartTime >= SCORE_FLY_DURATION) {
+          timeline.step = 'bot_flip';
+          timeline.stepStartTime = now;
+          timeline.botFlipStartTime = now;
+        }
+        break;
+      case 'bot_flip': {
+        const totalFlipTime = botWordLen * FLIP_DURATION + (botWordLen - 1) * FLIP_GAP;
+        if (now - timeline.botFlipStartTime >= totalFlipTime) {
+          timeline.step = 'bot_score';
+          timeline.stepStartTime = now;
+        }
+        break;
+      }
+      case 'bot_score':
+        if (!timeline.botScoreTriggered) {
+          timeline.botScoreTriggered = true;
+          const panel = this.battlePanelLeft;
+          if (panel) {
+            game._battleFlyingScores.push({
+              value: game.battleBotRoundScore || 0,
+              side: 'bot',
+              startX: panel.centerX,
+              startY: panel.tilesY - 12 * s - 9 * s,
+              startTime: now,
+            });
+            if (game.audioManager) game.audioManager.play('word_score');
+          }
+        }
+        if (now - timeline.stepStartTime >= SCORE_FLY_DURATION) {
+          timeline.step = 'done';
+          timeline.stepStartTime = now;
+          // 分数进度条金光闪烁
+          game._battleScoreBarAnim = {
+            startTime: now,
+            fromRatio: timeline.fromRatio,
+            toRatio: timeline.toRatio,
+            duration: FLASH_DURATION
+          };
+        }
+        break;
+      case 'done':
+        // 等待 checkReveal 进入下一回合
+        break;
     }
   }
 

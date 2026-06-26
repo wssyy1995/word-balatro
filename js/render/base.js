@@ -289,6 +289,8 @@ class Renderer {
     this.battleTagMeLoaded = false;
 
     // 对战单词背景图 / 占位图强制从云存储注入，见 cloud_storage.injectBattleToRenderer
+    this.battle_me_place = null;
+    this.battle_me_placeLoaded = false;
     this.battle_me_word_bg = null;
     this.battle_me_word_bgLoaded = false;
     this.battle_rival_place = null;

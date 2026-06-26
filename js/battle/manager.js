@@ -79,6 +79,7 @@ class BattleManager {
     g._battleAnimTimeline = null;
     g._battleFlyingScores = [];
     g._battleScoreBarAnim = null;
+    g._battlePlayerPlayed = false;
 
     g._battleBot = new BattleBot(g.battleDifficulty);
     const botChoice = g._battleBot.chooseWord(g.battleBotHand, WORD_DATA, EXPAND_WORD_DATA);
@@ -152,6 +153,23 @@ class BattleManager {
     g.battlePlayerWord = word;
     g.battlePlayerCards = selected;
     g.battlePlayerRoundScore = score;
+    g.battlePhase = 'player_played';
+    g._battlePlayerPlayed = true;
+    g._battleFlyingScores = [];
+    g._battleScoreBarAnim = null;
+
+    // 如果对方已经就绪，直接进入揭晓阶段
+    if (g.battleBotReady) {
+      this.startReveal();
+    }
+
+    return { valid: true, score };
+  }
+
+  // 双方都已出牌，进入揭晓动画
+  startReveal() {
+    const g = this.game;
+    if (g.battlePhase !== 'player_played') return;
     g.battlePhase = 'revealing';
 
     const botChoice = g._pendingBotChoice;
@@ -165,50 +183,33 @@ class BattleManager {
       g.battleBotRoundScore = 0;
     }
 
-    // 记录更新前的分数比例，用于进度条滑动动画
-    const prevBotScore = g.battleBotScore || 0;
-    const prevPlayerScore = g.battlePlayerScore || 0;
-    const prevTotal = prevBotScore + prevPlayerScore;
-    const fromRatio = prevTotal > 0 ? prevBotScore / prevTotal : 0.5;
-
     g.battlePlayerRoundScores.push(g.battlePlayerRoundScore);
     g.battleBotRoundScores.push(g.battleBotRoundScore);
     g.battlePlayerScore += g.battlePlayerRoundScore;
     g.battleBotScore += g.battleBotRoundScore;
 
-    // 设置 reveal 动画时间线
-    const now = Date.now();
-    g._battleRevealStartTime = now;
-    g._battleAnimTimeline = {
-      playerScoreStart: now + 500,
-      playerScoreTriggered: false,
-      botWordStart: now + 1000,
-      botWordTriggered: false,
-      botScoreStart: now + 1500,
-      botScoreTriggered: false,
-    };
-    g._battleFlyingScores = [];
+    // 记录更新前的分数比例，用于进度条滑动动画
+    const prevBotScore = (g.battleBotScore || 0) - (g.battleBotRoundScore || 0);
+    const prevPlayerScore = (g.battlePlayerScore || 0) - (g.battlePlayerRoundScore || 0);
+    const prevTotal = prevBotScore + prevPlayerScore;
+    const fromRatio = prevTotal > 0 ? prevBotScore / prevTotal : 0.5;
 
-    // 分数进度条动画：金光闪烁开始时启动，与闪烁同时结束
     const botScore = g.battleBotScore;
     const playerScore = g.battlePlayerScore;
     const total = botScore + playerScore;
     const toRatio = total > 0 ? botScore / total : 0.5;
-    const appearDuration = 300;
-    const delayAfterBoth = 500;
-    const scoreDuration = 500;
-    const flashDuration = 800;
-    const lastScoreStart = Math.max(now + 500, now + 1500);
-    const scoreScaleStart = lastScoreStart + appearDuration + delayAfterBoth;
-    const flashStart = scoreScaleStart + scoreDuration;
-    g._battleScoreBarAnim = {
-      startTime: flashStart,
+
+    // 设置 reveal 动画时间线
+    const now = Date.now();
+    g._battleRevealStartTime = now;
+    g._battleAnimTimeline = {
+      step: 'placeholders',
+      stepStartTime: now,
       fromRatio,
       toRatio,
-      duration: flashDuration
+      playerScoreTriggered: false,
+      botScoreTriggered: false,
     };
-
-    return { valid: true, score };
   }
 
   _calcWordScore(cards) {
@@ -241,14 +242,17 @@ class BattleManager {
       g._battleBotReadyAnimStart = Date.now();
       // 对方从“选择中”变为“已选择”时播放出牌音效
       if (g.audioManager) g.audioManager.play('battle_play_card');
+      // 如果玩家已经出牌，双方就绪，进入揭晓
+      if (g.battlePhase === 'player_played') {
+        this.startReveal();
+      }
     }
   }
 
   checkReveal() {
     const g = this.game;
-    if (g.battlePhase === 'revealing' && g._battleScoreBarAnim) {
-      const animEnd = g._battleScoreBarAnim.startTime + g._battleScoreBarAnim.duration;
-      if (Date.now() >= animEnd + 800) {
+    if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done') {
+      if (Date.now() - g._battleAnimTimeline.stepStartTime >= 800) {
         if (g.battleRound >= g.battleTotalRounds) {
           g.battlePhase = 'battle_end';
         } else {
@@ -319,6 +323,7 @@ class BattleManager {
     }
     g._battleAnimTimeline = null;
     g._battleFlyingScores = [];
+    g._battlePlayerPlayed = false;
   }
 }
 
