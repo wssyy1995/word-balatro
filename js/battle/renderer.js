@@ -728,7 +728,7 @@ class BattleRenderer {
     ctx.restore();
 
     // 头像半径（双方统一）
-    const avatarR = 26 * s;
+    const avatarR = 25 * s;
 
     // 左侧对手头像（覆盖图片默认头像）
     const leftAvatarCX = x + 35 * s;
