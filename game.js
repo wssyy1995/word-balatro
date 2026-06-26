@@ -1439,14 +1439,30 @@ wx.onTouchEnd(() => {
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
         const targetState = btnKey === 'battle' ? 'battle' : 'playing';
-        // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
-        if (targetState === 'battle' && game && game.battleManager) {
-          game.battleManager.startBattle('easy');
-        }
-        pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
-        // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
-        if (btnKey === 'round' && game && game.guidePhase === 1) {
-          game._guideOverlayStartTime = Date.now();
+
+        const enterGame = () => {
+          // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
+          if (targetState === 'battle' && game && game.battleManager) {
+            game.battleManager.startBattle('easy');
+          }
+          pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
+          // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
+          if (btnKey === 'round' && game && game.guidePhase === 1) {
+            game._guideOverlayStartTime = Date.now();
+          }
+        };
+
+        // 双人对战：先预加载 battle 云图片，再进入对战
+        if (targetState === 'battle' && game && game.cloudStorage) {
+          game.cloudStorage.preloadBattleImages().then(() => {
+            game.cloudStorage.injectBattleToRenderer(renderer);
+            enterGame();
+          }).catch(err => {
+            console.error('battle 图片预加载失败:', err);
+            enterGame();
+          });
+        } else {
+          enterGame();
         }
       } else {
         if (game && game.audioManager) game.audioManager.play('tap');

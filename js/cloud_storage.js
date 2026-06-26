@@ -136,6 +136,14 @@ class CloudStorageManager {
       'topHome': c('/bg_icon/top_home.png')
     };
 
+    // 默认 battle 图片云文件映射（images/battle 目录）
+    this.defaultBattleFileMap = {
+      'battle_me_place': c('/battle/battle_me_place.png'),
+      'battle_me_word_bg': c('/battle/battle_me_word_bg.png'),
+      'battle_rival_place': c('/battle/battle_rival_place.png'),
+      'battle_rival_word_bg': c('/battle/battle_rival_word_bg.png')
+    };
+
     // 默认 rank_avatar 图片云文件映射
     this.defaultRankAvatarFileMap = {};
     const rankAvatarBase = c('/rank_avatar');
@@ -257,6 +265,23 @@ class CloudStorageManager {
       }
     } catch (e) {
       this.log('bg_icon 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
+    }
+
+    // 先用默认 battle 映射兜底
+    this.battleFileMap = { ...this.defaultBattleFileMap };
+
+    // 加载 battle 图片的本地缓存映射
+    try {
+      const battleStored = wx.getStorageSync('cloud_battle_map');
+      if (battleStored) {
+        const battleLocalMap = JSON.parse(battleStored);
+        this.battleFileMap = { ...this.battleFileMap, ...battleLocalMap };
+        this.log('battle 本地缓存映射已加载，共' + Object.keys(battleLocalMap).length + '张');
+      } else {
+        this.log('无 battle 本地缓存，使用默认云映射，共' + Object.keys(this.defaultBattleFileMap).length + '张');
+      }
+    } catch (e) {
+      this.log('battle 本地缓存读取失败: ' + (e && e.message ? e.message : String(e)));
     }
 
     // 先用默认 guide 映射兜底
@@ -1309,6 +1334,50 @@ class CloudStorageManager {
 
     this.uploading = false;
     return results;
+  }
+
+  // 预加载 battle 图片（homepage_battle 点击时触发）
+  async preloadBattleImages(onProgress = null) {
+    const names = Object.keys(this.battleFileMap);
+    if (names.length === 0) {
+      this.log('无 battle 图片需要预加载');
+      return;
+    }
+    this.log('开始预加载 battle 图片，共 ' + names.length + ' 张');
+
+    const batchSize = 4;
+    for (let i = 0; i < names.length; i += batchSize) {
+      const batch = names.slice(i, i + batchSize);
+      await Promise.all(batch.map(async name => {
+        await this._loadBattleImage(name);
+        if (onProgress) onProgress();
+      }));
+    }
+    const loaded = Object.keys(this.battleImages).filter(n => this.battleImages[n].loaded);
+    const failed = names.filter(n => !this.battleImages[n] || !this.battleImages[n].loaded);
+    this.log('battle 目录下 ' + loaded.length + '/' + names.length + ' 张图片下载完成');
+    if (failed.length > 0) {
+      this.log('battle 失败：' + failed.join(', '));
+    }
+  }
+
+  async _loadBattleImage(name) {
+    const fileID = this.battleFileMap[name];
+    await this._loadImageWithCache(name, fileID, this.battleImages);
+  }
+
+  // 将云缓存 battle 图片注入到 renderer（对战模块占位/单词背景）
+  injectBattleToRenderer(renderer) {
+    Object.keys(this.battleImages).forEach(name => {
+      const data = this.battleImages[name];
+      if (data && data.loaded && data.img) {
+        renderer[name] = data.img;
+        renderer[name + 'Loaded'] = true;
+        this.log('已注入 battle renderer: ' + name);
+      } else {
+        this.log('battle ' + name + ' 未加载，跳过注入');
+      }
+    });
   }
 
   // 将云缓存 bg_icon 图片注入到 renderer（bg 背景 + card_book 图鉴背景 + 卡牌模板 + 对战模块）
