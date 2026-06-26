@@ -1087,16 +1087,35 @@ class BattleRenderer {
     this.battlePanelLeft = { x: x1, y, w: panelW, h: panelH, centerX: x1 + panelW / 2, tilesY };
     this.battlePanelRight = { x: x2, y, w: panelW, h: panelH, centerX: x2 + panelW / 2, tilesY };
 
-    // 绘制合并的大长方形面板背景
+    // 绘制合并的大长方形面板背景（保持原来小面板时的切角八边形样式）
     const corner = 10 * s;
     ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x1 + corner, y);
+    ctx.lineTo(x1 + totalW - corner, y);
+    ctx.lineTo(x1 + totalW, y + corner);
+    ctx.lineTo(x1 + totalW, y + panelH - corner);
+    ctx.lineTo(x1 + totalW - corner, y + panelH);
+    ctx.lineTo(x1 + corner, y + panelH);
+    ctx.lineTo(x1, y + panelH - corner);
+    ctx.lineTo(x1, y + corner);
+    ctx.closePath();
+
+    // 填充 + 内投影（增加立体感）
+    ctx.fillStyle = COLORS.panelBg;
     ctx.shadowColor = 'rgba(90, 62, 31, 0.15)';
     ctx.shadowBlur = 10 * s;
     ctx.shadowOffsetY = 3 * s;
-    this.parent.roundRect(x1, y, totalW, panelH, corner, COLORS.panelBg, '#8a6d3b', 2.5 * s);
+    ctx.fill();
     ctx.shadowColor = 'transparent';
-    // 内层亮金边框
-    this.parent.roundRect(x1, y, totalW, panelH, corner, null, '#e8c87a', 1 * s);
+
+    // 双层边框：外层深棕 + 内层亮金
+    ctx.lineWidth = 2.5 * s;
+    ctx.strokeStyle = '#8a6d3b';
+    ctx.stroke();
+    ctx.lineWidth = 1 * s;
+    ctx.strokeStyle = '#e8c87a';
+    ctx.stroke();
     ctx.restore();
 
     // 中间竖直分隔线（参考游戏页 HUD 进度条分隔线样式：细金线 + 中间旋转菱形）
