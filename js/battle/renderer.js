@@ -717,10 +717,12 @@ class BattleRenderer {
       const pieceW = halfW * pieceScale;
       const leftH = pieceW / (leftImg.width / leftImg.height);
       const rightH = pieceW / (rightImg.width / rightImg.height);
-      const drawH = Math.max(leftH, rightH);
-      const drawY = y + (h - drawH) / 2 + 5 * s;
-      ctx.drawImage(leftImg, x - 6 * s, drawY, pieceW, drawH);
-      ctx.drawImage(rightImg, x + halfW + 22 * s, drawY, pieceW, drawH);
+      const leftDrawH = Math.max(leftH, rightH);
+      const rightDrawH = rightH - 2 * s;
+      const leftDrawY = y + (h - leftDrawH) / 2 + 5 * s;
+      const rightDrawY = y + (h - rightDrawH) / 2 + 5 * s;
+      ctx.drawImage(leftImg, x - 6 * s, leftDrawY, pieceW, leftDrawH);
+      ctx.drawImage(rightImg, x + halfW + 22 * s, rightDrawY, pieceW, rightDrawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
@@ -728,7 +730,7 @@ class BattleRenderer {
     ctx.restore();
 
     // 头像半径（双方统一）
-    const avatarR = 25 * s;
+    const avatarR = 22 * s;
 
     // 左侧对手头像（覆盖图片默认头像）
     const leftAvatarCX = x + 35 * s;
