@@ -717,8 +717,8 @@ class BattleRenderer {
       const rightH = halfW / (rightImg.width / rightImg.height);
       const drawH = Math.max(leftH, rightH);
       const drawY = y + (h - drawH) / 2 + 5 * s;
-      ctx.drawImage(leftImg, x, drawY, halfW, drawH);
-      ctx.drawImage(rightImg, x + halfW, drawY, halfW, drawH);
+      ctx.drawImage(leftImg, x - 2 * s, drawY, halfW, drawH);
+      ctx.drawImage(rightImg, x + halfW + 2 * s, drawY, halfW, drawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
