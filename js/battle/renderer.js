@@ -1166,9 +1166,9 @@ class BattleRenderer {
     const textWidth = ctx.measureText('出牌区').width;
     const textHalf = textWidth / 2;
     ctx.fillText('出牌区', dividerX, titleY);
-    // 左右装饰（参考轮次徽章）
-    this._drawBadgeSideDecoration(ctx, dividerX - textHalf + 3 * s, titleCY, s, 'left', 12 * s);
-    this._drawBadgeSideDecoration(ctx, dividerX + textHalf - 3 * s, titleCY, s, 'right', 12 * s);
+    // 左右装饰（参考轮次徽章），与文字间距加大 2*s
+    this._drawBadgeSideDecoration(ctx, dividerX - textHalf + 1 * s, titleCY, s, 'left', 12 * s);
+    this._drawBadgeSideDecoration(ctx, dividerX + textHalf - 1 * s, titleCY, s, 'right', 12 * s);
     ctx.restore();
 
     this._drawPlayerPanel(ctx, game, x1, y, panelW, panelH, s, 'left');
@@ -1227,8 +1227,8 @@ class BattleRenderer {
 
     // 状态文本 / 单词牌
     const centerX = x + w / 2;
-    const statusY = y + 38 * s;
-    const tilesY = y + 60 * s - 7 * s;
+    const statusY = y + 42 * s;
+    const tilesY = y + 64 * s - 7 * s;
 
     let statusText = '';
     let wordText = null;
@@ -1242,7 +1242,7 @@ class BattleRenderer {
       // 对手
       if (game.battlePhase === 'selecting') {
         if (game.battleBotReady) {
-          statusText = '✓ 对手已选择';
+          statusText = ''; // 对手已选择：不显示文字，只保留 ? 方块
           const len = game.battleBotWordLength || 0;
           wordText = '?'.repeat(len);
           hidden = true;
@@ -1333,7 +1333,8 @@ class BattleRenderer {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
       const isBoldStatus = statusText.startsWith('✓ ');
       const isPleasePlay = statusText === '请出牌';
-      const statusFontSize = isPleasePlay ? Math.floor(16 * s) : Math.floor(13 * s);
+      const isOpponentThinking = statusText === '对手选择中...';
+      const statusFontSize = (isPleasePlay || isOpponentThinking) ? Math.floor(16 * s) : Math.floor(13 * s);
       ctx.font = isBoldStatus
         ? `bold ${statusFontSize}px ${this.parent.titleFontFamily}`
         : `${statusFontSize}px ${this.parent.titleFontFamily}`;
@@ -1349,11 +1350,11 @@ class BattleRenderer {
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
         ctx.fillText(text, startX + iconSize + gap, drawY);
-      } else if (statusText === '对手选择中...' && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
+      } else if (isOpponentThinking && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
         // 对手选择中：rival 图标 + 文字横向居中
         const text = '对手选择中...';
-        const iconSize = 16 * s;
-        const gap = 4 * s;
+        const iconSize = 20 * s;
+        const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
         const totalWidth = iconSize + gap + textWidth;
         const startX = centerX - totalWidth / 2;
