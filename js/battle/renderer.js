@@ -42,6 +42,11 @@ class BattleRenderer {
     this.battleCardIconLoaded = false;
     this._loadBattleCardIcon();
 
+    // 加载"对手选择中"提示图标（本地资源，不走云存储）
+    this.battleCardIconRival = null;
+    this.battleCardIconRivalLoaded = false;
+    this._loadBattleCardIconRival();
+
     // 加载当前用户头像
     this.selfAvatarUrl = null;
     this.selfAvatarImg = null;
@@ -88,6 +93,18 @@ class BattleRenderer {
       this.battleCardIcon = img;
     } catch (e) {
       this.battleCardIconLoaded = false;
+    }
+  }
+
+  _loadBattleCardIconRival() {
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_card_icon_rival.png';
+      img.onload = () => { this.battleCardIconRivalLoaded = true; };
+      img.onerror = () => { this.battleCardIconRivalLoaded = false; };
+      this.battleCardIconRival = img;
+    } catch (e) {
+      this.battleCardIconRivalLoaded = false;
     }
   }
 
@@ -1331,6 +1348,17 @@ class BattleRenderer {
         const startX = centerX - totalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
+        ctx.fillText(text, startX + iconSize + gap, drawY);
+      } else if (statusText === '对手选择中...' && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
+        // 对手选择中：rival 图标 + 文字横向居中
+        const text = '对手选择中...';
+        const iconSize = 16 * s;
+        const gap = 4 * s;
+        const textWidth = ctx.measureText(text).width;
+        const totalWidth = iconSize + gap + textWidth;
+        const startX = centerX - totalWidth / 2;
+        ctx.textAlign = 'left';
+        ctx.drawImage(this.battleCardIconRival, startX, drawY - iconSize / 2, iconSize, iconSize);
         ctx.fillText(text, startX + iconSize + gap, drawY);
       } else {
         ctx.textAlign = 'center';
