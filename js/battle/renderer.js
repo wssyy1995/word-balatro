@@ -167,7 +167,7 @@ class BattleRenderer {
 
     // === 对战面板（只显示状态和本轮单词） ===
     const panelsY = promptY + 24 * s;
-    const panelH = 96 * s;
+    const panelH = 94 * s;
     this._drawPlayerPanels(ctx, game, W, panelsY, panelH, s);
 
     // === 单词预览区 ===
@@ -1076,7 +1076,7 @@ class BattleRenderer {
 
   // ===== 左右玩家面板（合并为一个大的长方形，中间用竖分隔线分开） =====
   _drawPlayerPanels(ctx, game, W, y, panelH, s) {
-    const margin = 14 * s;
+    const margin = 11 * s;
     const totalW = W - margin * 2;
     const panelW = totalW / 2;
     const x1 = margin;
@@ -1154,13 +1154,13 @@ class BattleRenderer {
     const tagImg = isLeft ? this.parent.battleTagRival : this.parent.battleTagMe;
     const tagImgLoaded = isLeft ? this.parent.battleTagRivalLoaded : this.parent.battleTagMeLoaded;
     if (tagImg && tagImgLoaded) {
-      // 按图片原始比例等比放大 10%，并整体上移 1px（设计稿像素，按 s 缩放）
+      // 按图片原始比例等比放大 10%，并整体上移 2px（合并历次微调后的最终位置）
       const imgAspect = tagImg.width / tagImg.height;
       const scale = 1.1;
       const drawH = tabH * scale;
       const drawW = drawH * imgAspect;
       const drawX = tabX + (tabW - drawW) / 2;
-      const drawY = tabY - 1 * s;
+      const drawY = tabY - 2 * s;
       ctx.drawImage(tagImg, drawX, drawY, drawW, drawH);
     } else {
       ctx.beginPath();
