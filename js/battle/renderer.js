@@ -32,6 +32,10 @@ class BattleRenderer {
     this._lastPlayerStatusText = null;
     this._lastPlayerStatusTextOffset = 0;
 
+    // 轮次徽章数字缩放脉冲动画
+    this._lastBattleRound = 0;
+    this._battleRoundPulseAnim = null;
+
     // 加载分数进度条闪电图标（本地资源，不走云存储）
     this.battleProgressIcon = null;
     this.battleProgressIconLoaded = false;
@@ -183,7 +187,7 @@ class BattleRenderer {
     // this._drawCenterPrompt(ctx, W, promptY, s);
 
     // === 对战面板（只显示状态和本轮单词） ===
-    const panelsY = promptY + 24 * s;
+    const panelsY = promptY + 24 * s + 4 * s;
     const panelH = 94 * s;
     this._drawPlayerPanels(ctx, game, W, panelsY, panelH, s);
 
@@ -531,16 +535,16 @@ class BattleRenderer {
       }
 
       ctx.save();
-      ctx.font = `bold ${Math.floor(24 * s)}px ${titleFont}`;
+      ctx.font = `bold ${Math.floor(26 * s)}px ${titleFont}`;
       ctx.fillStyle = '#d7c28a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(countdownText, cx, titleY + 28 * s);
+      ctx.fillText(countdownText, cx, titleY + 35 * s);
       ctx.restore();
 
-      // 倒计时阶段保留显示对手头像和昵称
+      // 倒计时阶段保留显示对手头像和昵称（往上移动 4*s）
       const avatarR = 32 * s;
-      const avatarY = matchY + matchH * 0.58;
+      const avatarY = matchY + matchH * 0.58 - 4 * s;
       const opponent = anim.opponent;
 
       ctx.save();
@@ -682,11 +686,33 @@ class BattleRenderer {
     this._drawBadgeSideDecoration(ctx, badgeCX, badgeCY, s, 'left', badgeW / 2);
     this._drawBadgeSideDecoration(ctx, badgeCX, badgeCY, s, 'right', badgeW / 2);
 
+    const currentRound = game.battleRound || 1;
+    if (currentRound !== this._lastBattleRound) {
+      this._lastBattleRound = currentRound;
+      this._battleRoundPulseAnim = { startTime: Date.now() };
+    }
+
+    let roundScale = 1;
+    if (this._battleRoundPulseAnim) {
+      const pulseElapsed = Date.now() - this._battleRoundPulseAnim.startTime;
+      const pulseDuration = 500;
+      if (pulseElapsed < pulseDuration) {
+        const pulseProgress = pulseElapsed / pulseDuration;
+        roundScale = 1 + 0.25 * Math.sin(pulseProgress * Math.PI);
+      } else {
+        this._battleRoundPulseAnim = null;
+      }
+    }
+
     ctx.font = `bold ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
     ctx.fillStyle = COLORS.text;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`第 ${game.battleRound} / ${game.battleTotalRounds} 轮`, badgeCX, badgeCY);
+    ctx.save();
+    ctx.translate(badgeCX, badgeCY);
+    ctx.scale(roundScale, roundScale);
+    ctx.fillText(`第 ${currentRound} / ${game.battleTotalRounds} 轮`, 0, 0);
+    ctx.restore();
     ctx.restore();
   }
 
@@ -814,6 +840,10 @@ class BattleRenderer {
       this._drawAvatar(ctx, rightAvatarCX, rightAvatarCY, avatarR, s, COLORS.greenHeader);
     }
 
+    // 进度条移动方向对应的头像呼吸金边
+    this._drawAvatarGlow(ctx, game, leftAvatarCX, leftAvatarCY, avatarR, s, 'bot');
+    this._drawAvatarGlow(ctx, game, rightAvatarCX, rightAvatarCY, avatarR, s, 'player');
+
     const now = Date.now();
 
     // 中间 VS 徽章
@@ -824,43 +854,45 @@ class BattleRenderer {
       const vsY = cy + 5 * s - vsSize / 2;
       ctx.drawImage(vsImg, vsX, vsY, vsSize, vsSize);
 
-      // 分数缩放结束后的金光闪烁
-      const flashState = this._getVSFlashState(game, now);
-      if (flashState.alpha > 0) {
+      // 对战期间 VS 图标持续柔和光晕
+      if (game.state === 'battle') {
         const centerX = cx;
         const centerY = cy + 5 * s;
         const glowR = vsSize / 2 + 4 * s;
         const ringR = vsSize / 2 + 2 * s;
 
-        // 外圈光晕
+        // 柔和呼吸 alpha：0.1 ~ 0.36，周期约 8.8 秒
+        const breathAlpha = 0.23 + 0.13 * Math.sin(now / 1400);
+
+        // 外圈光晕（更大、更深的金色）
         ctx.save();
-        ctx.globalAlpha = flashState.alpha * 0.5;
+        ctx.globalAlpha = breathAlpha * 0.55;
         const glowGrad = ctx.createRadialGradient(
           centerX, centerY, vsSize / 2,
-          centerX, centerY, glowR + 6 * s
+          centerX, centerY, glowR + 10 * s
         );
-        glowGrad.addColorStop(0, 'rgba(255, 215, 0, 0.6)');
-        glowGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+        glowGrad.addColorStop(0, 'rgba(255, 170, 0, 0.55)');
+        glowGrad.addColorStop(0.6, 'rgba(220, 140, 0, 0.22)');
+        glowGrad.addColorStop(1, 'rgba(255, 170, 0, 0)');
         ctx.fillStyle = glowGrad;
         ctx.beginPath();
-        ctx.arc(centerX, centerY, glowR + 6 * s, 0, Math.PI * 2);
+        ctx.arc(centerX, centerY, glowR + 10 * s, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
 
-        // 金色圆环
+        // 金色圆环（更深的金色）
         ctx.save();
-        ctx.globalAlpha = flashState.alpha;
-        ctx.strokeStyle = '#fff5b3';
-        ctx.lineWidth = 2.5 * s;
+        ctx.globalAlpha = breathAlpha * 0.75;
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 1.5 * s;
         ctx.beginPath();
         ctx.arc(centerX, centerY, ringR, 0, Math.PI * 2);
         ctx.stroke();
         ctx.restore();
 
-        // 金色小星星闪烁
-        const starRadius = vsSize / 2 + 12 * s;
-        const starSize = 4 * s;
-        const elapsed = flashState.elapsed;
+        // 金色小星星柔和闪烁（更深的金色）
+        const starRadius = vsSize / 2 + 14 * s;
+        const starSize = 3 * s;
         const starPositions = [
           { angle: Math.PI / 4, phase: 0 },
           { angle: Math.PI * 3 / 4, phase: Math.PI / 3 },
@@ -870,10 +902,10 @@ class BattleRenderer {
         starPositions.forEach(pos => {
           const sx = centerX + Math.cos(pos.angle) * starRadius;
           const sy = centerY + Math.sin(pos.angle) * starRadius;
-          const twinkle = 0.5 + 0.5 * Math.sin(elapsed * 0.012 + pos.phase);
+          const twinkle = 0.35 + 0.35 * Math.sin(now / 1600 + pos.phase);
           ctx.save();
-          ctx.globalAlpha = flashState.alpha * twinkle;
-          ctx.fillStyle = '#fff5b3';
+          ctx.globalAlpha = breathAlpha * twinkle;
+          ctx.fillStyle = '#ffd700';
           this._drawSparkle(ctx, sx, sy, starSize);
           ctx.restore();
         });
@@ -895,8 +927,10 @@ class BattleRenderer {
     ctx.fillStyle = COLORS.blueHeader;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    const opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
-    const leftNameFontSize = opponentName.length >= 6 ? Math.floor(12 * s) : Math.floor(15 * s);
+    let opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
+    const nameChars = Array.from(opponentName);
+    if (nameChars.length > 5) opponentName = nameChars.slice(0, 5).join('') + '...';
+    const leftNameFontSize = nameChars.length >= 6 ? Math.floor(12 * s) : Math.floor(15 * s);
     ctx.font = `bold ${leftNameFontSize}px ${this.parent.titleFontFamily}`;
     ctx.fillText(opponentName, leftTextX, nameY);
 
@@ -930,7 +964,7 @@ class BattleRenderer {
   // ===== 分数对比进度条（VS 模块下方） =====
   _drawScoreProgressBar(ctx, game, x, y, w, s) {
     const progressH = 12 * s;
-    const progressY = y + 17 * s ;
+    const progressY = y + 17 * s + 3 * s;
     const progressR = progressH / 2;
     const anim = game._battleScoreBarAnim;
     let botRatio = 0.5;
@@ -1091,6 +1125,27 @@ class BattleRenderer {
     ctx.restore();
   }
 
+  // ===== 头像呼吸金边（根据进度条移动方向触发 1 秒） =====
+  _drawAvatarGlow(ctx, game, cx, cy, r, s, side) {
+    const anim = game._battleAvatarGlowAnim;
+    if (!anim || anim.side !== side) return;
+    const elapsed = Date.now() - anim.startTime;
+    if (elapsed < 0 || elapsed > anim.duration) return;
+    const progress = elapsed / anim.duration;
+    const alpha = 0.25 + 0.45 * Math.sin(progress * Math.PI);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2.5 * s;
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.55)';
+    ctx.shadowBlur = 12 * s;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r + 1.5 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   // ===== 左右玩家面板（合并为一个大的长方形，中间用竖分隔线分开） =====
   _drawPlayerPanels(ctx, game, W, y, panelH, s) {
     const margin = 11 * s;
@@ -1099,10 +1154,11 @@ class BattleRenderer {
     const x1 = margin;
     const x2 = margin + panelW;
 
-    // 记录面板位置，供飞行动画使用
-    const tilesY = y + 70 * s;
-    this.battlePanelLeft = { x: x1, y, w: panelW, h: panelH, centerX: x1 + panelW / 2, tilesY };
-    this.battlePanelRight = { x: x2, y, w: panelW, h: panelH, centerX: x2 + panelW / 2, tilesY };
+    // 记录面板位置：tilesY 控制字母方块，flyScoreY 控制飞行分数，可独立调整
+    const tilesY = y + 42 * s;
+    const flyScoreY = y + 56 * s;
+    this.battlePanelLeft = { x: x1, y, w: panelW, h: panelH, centerX: x1 + panelW / 2, tilesY, flyScoreY };
+    this.battlePanelRight = { x: x2, y, w: panelW, h: panelH, centerX: x2 + panelW / 2, tilesY, flyScoreY };
 
     // 绘制合并的大长方形面板背景（保持原来小面板时的切角八边形样式）
     const corner = 10 * s;
@@ -1147,8 +1203,8 @@ class BattleRenderer {
     ctx.lineTo(dividerX, lineBot);
     ctx.stroke();
 
-    // 中间菱形
-    ctx.translate(dividerX, y + panelH / 2);
+    // 中间菱形（向下移动 7*s：之前 5*s + 继续 2*s）
+    ctx.translate(dividerX, y + panelH / 2 + 7 * s);
     ctx.rotate(Math.PI / 4);
     ctx.fillStyle = '#c5a059';
     ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
@@ -1166,9 +1222,9 @@ class BattleRenderer {
     const textWidth = ctx.measureText('出牌区').width;
     const textHalf = textWidth / 2;
     ctx.fillText('出牌区', dividerX, titleY);
-    // 左右装饰（参考轮次徽章），与文字间距加大 2*s
-    this._drawBadgeSideDecoration(ctx, dividerX - textHalf + 1 * s, titleCY, s, 'left', 12 * s);
-    this._drawBadgeSideDecoration(ctx, dividerX + textHalf - 1 * s, titleCY, s, 'right', 12 * s);
+    // 左右装饰（参考轮次徽章），与文字间距再加大 2*s
+    this._drawBadgeSideDecoration(ctx, dividerX - textHalf - 2 * s, titleCY, s, 'left', 12 * s);
+    this._drawBadgeSideDecoration(ctx, dividerX + textHalf + 2 * s, titleCY, s, 'right', 12 * s);
     ctx.restore();
 
     this._drawPlayerPanel(ctx, game, x1, y, panelW, panelH, s, 'left');
@@ -1227,8 +1283,9 @@ class BattleRenderer {
 
     // 状态文本 / 单词牌
     const centerX = x + w / 2;
-    const statusY = y + 42 * s;
-    const tilesY = y + 64 * s - 7 * s;
+    const statusY = y + 42 * s + 2 * s;
+    const panel = isLeft ? this.battlePanelLeft : this.battlePanelRight;
+    const tilesY = panel ? panel.tilesY : y + 50 * s;
 
     let statusText = '';
     let wordText = null;
@@ -1360,7 +1417,7 @@ class BattleRenderer {
       const isBoldStatus = statusText.startsWith('✓ ');
       const isPleasePlay = statusText === '请出牌';
       const isOpponentThinking = statusText === '对手选择中...';
-      const statusFontSize = (isPleasePlay || isOpponentThinking) ? Math.floor(16 * s) : Math.floor(13 * s);
+      const statusFontSize = (isPleasePlay || isOpponentThinking) ? Math.floor(15 * s) : Math.floor(13 * s);
       ctx.font = isBoldStatus
         ? `bold ${statusFontSize}px ${this.parent.titleFontFamily}`
         : `${statusFontSize}px ${this.parent.titleFontFamily}`;
@@ -1377,9 +1434,9 @@ class BattleRenderer {
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
         ctx.fillText(text, startX + iconSize + gap, drawY);
       } else if (isOpponentThinking && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
-        // 对手选择中：rival 图标 + 文字横向居中
+        // 对手选择中：rival 图标 + 文字横向居中（图标再变大点）
         const text = '对手选择中...';
-        const iconSize = 20 * s;
+        const iconSize = 26 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
         const totalWidth = iconSize + gap + textWidth;
@@ -1400,10 +1457,23 @@ class BattleRenderer {
       } else if (botRevealProgress >= 0) {
         this._drawWordTilesReveal(ctx, centerX, tilesY, wordText, botRevealProgress, w - 16 * s, s, side);
       } else {
-        const popProgress = (isLeft && hidden && game._battleBotReadyAnimStart)
-          ? Math.min((Date.now() - game._battleBotReadyAnimStart) / 400, 1)
-          : -1;
+        let popProgress = -1;
+        if (hidden) {
+          if (isLeft && game._battleBotReadyAnimStart) {
+            popProgress = Math.min((Date.now() - game._battleBotReadyAnimStart) / 400, 1);
+          } else if (!isLeft && game._battlePlayerReadyAnimStart) {
+            popProgress = Math.min((Date.now() - game._battlePlayerReadyAnimStart) / 400, 1);
+          }
+        }
         this._drawWordTiles(ctx, centerX, tilesY, wordText, hidden, w - 16 * s, s, side, popProgress);
+      }
+    }
+
+    // 揭晓阶段在正方形下方显示单词中文释义
+    if (game.battlePhase === 'revealing' && wordText && !wordText.includes('?')) {
+      const meaning = isLeft ? game.battleBotWordMeaning : game.battlePlayerWordMeaning;
+      if (meaning) {
+        this._drawWordMeaning(ctx, centerX, tilesY + 32 * s, meaning, w - 16 * s, s);
       }
     }
   }
@@ -1466,6 +1536,20 @@ class BattleRenderer {
     }
   }
 
+  // ===== 在字母方块下方绘制单词中文释义（超过 10 字符用 ...） =====
+  _drawWordMeaning(ctx, centerX, y, meaning, maxW, s) {
+    if (!meaning) return;
+    let text = meaning.trim();
+    if (text.length > 10) text = text.substring(0, 10) + '...';
+    ctx.save();
+    ctx.font = `bold ${Math.floor(10 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = COLORS.text;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(text, centerX, y);
+    ctx.restore();
+  }
+
   // ===== 单词字母块从下往上果冻感弹出动画 =====
   // side: 'left' 为对方，'right' 为我方
   _drawWordTilesReveal(ctx, centerX, y, word, progress, maxW, s, side) {
@@ -1521,8 +1605,8 @@ class BattleRenderer {
     const totalW = count * tileW + (count - 1) * gap;
     const startX = centerX - totalW / 2;
 
-    const FLIP_DURATION = 400;
-    const FLIP_GAP = 150;
+    const FLIP_DURATION = 200;
+    const FLIP_GAP = 120; // 相邻字母开始翻转的时间间隔，小于 FLIP_DURATION 即有重叠
 
     const placeImg = isLeft ? this.parent.battle_rival_place : this.parent.battle_me_place;
     const placeLoaded = isLeft ? this.parent.battle_rival_placeLoaded : this.parent.battle_me_placeLoaded;
@@ -1534,7 +1618,7 @@ class BattleRenderer {
       const cx = tx + tileW / 2;
       const cy = y + tileW / 2;
 
-      const tileStart = i * (FLIP_DURATION + FLIP_GAP);
+      const tileStart = i * FLIP_GAP;
       const tileProgress = Math.min(1, Math.max(0, (elapsed - tileStart) / FLIP_DURATION));
 
       ctx.save();
@@ -1604,11 +1688,11 @@ class BattleRenderer {
     const now = Date.now();
     if (!game._battleFlyingScores) game._battleFlyingScores = [];
 
-    const FLIP_DURATION = 400;
-    const FLIP_GAP = 150;
+    const FLIP_DURATION = 200;
+    const FLIP_GAP = 120; // 相邻字母开始翻转的时间间隔，小于 FLIP_DURATION 即有重叠
     const PLACEHOLDER_DURATION = 500;
     const SCORE_FLY_DURATION = 800;
-    const FLASH_DURATION = 800;
+    const FLASH_DURATION = 1000;
 
     const playerWordLen = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
     const botWordLen = game.battleBotWord ? game.battleBotWord.length : 0;
@@ -1622,7 +1706,7 @@ class BattleRenderer {
         }
         break;
       case 'player_flip': {
-        const totalFlipTime = playerWordLen * FLIP_DURATION + (playerWordLen - 1) * FLIP_GAP;
+        const totalFlipTime = (playerWordLen - 1) * FLIP_GAP + FLIP_DURATION;
         if (now - timeline.playerFlipStartTime >= totalFlipTime) {
           timeline.step = 'player_score';
           timeline.stepStartTime = now;
@@ -1637,8 +1721,8 @@ class BattleRenderer {
             game._battleFlyingScores.push({
               value: game.battlePlayerRoundScore || 0,
               side: 'player',
-              startX: panel.centerX,
-              startY: panel.tilesY - 12 * s - 9 * s,
+              startX: panel.centerX + 10 * s,
+              startY: panel.flyScoreY - 32 * s,
               startTime: now,
             });
             if (game.audioManager) game.audioManager.play('word_score');
@@ -1651,7 +1735,7 @@ class BattleRenderer {
         }
         break;
       case 'bot_flip': {
-        const totalFlipTime = botWordLen * FLIP_DURATION + (botWordLen - 1) * FLIP_GAP;
+        const totalFlipTime = (botWordLen - 1) * FLIP_GAP + FLIP_DURATION;
         if (now - timeline.botFlipStartTime >= totalFlipTime) {
           timeline.step = 'bot_score';
           timeline.stepStartTime = now;
@@ -1666,23 +1750,33 @@ class BattleRenderer {
             game._battleFlyingScores.push({
               value: game.battleBotRoundScore || 0,
               side: 'bot',
-              startX: panel.centerX,
-              startY: panel.tilesY - 12 * s - 9 * s,
+              startX: panel.centerX - 10 * s,
+              startY: panel.flyScoreY - 32 * s,
               startTime: now,
             });
             if (game.audioManager) game.audioManager.play('word_score');
           }
         }
         if (now - timeline.stepStartTime >= SCORE_FLY_DURATION) {
-          timeline.step = 'done';
-          timeline.stepStartTime = now;
-          // 分数进度条金光闪烁
+          // 计分动画结束：更新总分并启动进度条动画
+          game.battlePlayerScore += game.battlePlayerRoundScore || 0;
+          game.battleBotScore += game.battleBotRoundScore || 0;
           game._battleScoreBarAnim = {
             startTime: now,
             fromRatio: timeline.fromRatio,
             toRatio: timeline.toRatio,
             duration: FLASH_DURATION
           };
+          // 根据进度条移动方向，给对方/我方头像加呼吸金边
+          const toBot = timeline.toRatio;
+          const fromBot = timeline.fromRatio;
+          game._battleAvatarGlowAnim = {
+            startTime: now,
+            duration: 1000,
+            side: toBot > fromBot ? 'bot' : 'player'
+          };
+          timeline.step = 'done';
+          timeline.stepStartTime = now;
         }
         break;
       case 'done':

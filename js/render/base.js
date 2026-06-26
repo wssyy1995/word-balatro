@@ -726,18 +726,22 @@ class Renderer {
 
     // 加载自定义标题字体（香萃灯粗宋 — 子集化后仅 4.4KB）
     this.titleFontFamily = '"PingFang SC", "Noto Sans SC", sans-serif';
+    this._titleFontLoadResult = '未加载';
     try {
-      // 开发者工具模拟器加载本地字体偶发 ENOENT，真机正常；devtools 下直接回退系统字体避免报错
       const sysInfo = wx.getSystemInfoSync ? wx.getSystemInfoSync() : {};
-      if (sysInfo.platform !== 'devtools') {
-        const fontFamily = wx.loadFont('images/fonts/XiangcuiDengcusong_subset.ttf');
-        if (fontFamily) {
-          this.titleFontFamily = fontFamily + ', sans-serif';
-        }
+      console.log('[Font] platform=', sysInfo.platform, 'fontPath=', 'images/fonts/XiangcuiDengcusong_subset.ttf');
+      // 开发工具和真机都尝试加载自定义字体
+      const fontFamily = wx.loadFont('images/fonts/XiangcuiDengcusong_subset.ttf');
+      console.log('[Font] wx.loadFont 返回值:', fontFamily);
+      this._titleFontLoadResult = fontFamily || '返回空/null';
+      if (fontFamily) {
+        this.titleFontFamily = fontFamily + ', sans-serif';
       }
     } catch (e) {
       console.warn('loadFont 失败，使用系统字体:', e);
+      this._titleFontLoadResult = '异常: ' + (e && e.message ? e.message : String(e));
     }
+    console.log('[Font] 最终 titleFontFamily:', this.titleFontFamily);
   }
 
   drawPreviewLoad(progress) {
@@ -745,6 +749,11 @@ class Renderer {
     const W = this.W;
     const H = this.H;
     const s = this.scale;
+
+    if (!this._fontLogPrinted) {
+      this._fontLogPrinted = true;
+      console.log('[Font] drawPreviewLoad 使用字体:', this.titleFontFamily, '加载结果:', this._titleFontLoadResult);
+    }
 
     // 背景图
     if (this.previewLoadBg && this.previewLoadBgLoaded) {
