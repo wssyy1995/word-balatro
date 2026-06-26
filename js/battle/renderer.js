@@ -483,11 +483,55 @@ class BattleRenderer {
       const countdownText = String(secondsLeft);
 
       ctx.save();
-      ctx.font = `bold ${Math.floor(28 * s)}px ${titleFont}`;
+      ctx.font = `bold ${Math.floor(24 * s)}px ${titleFont}`;
       ctx.fillStyle = '#d7c28a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(countdownText, cx, titleY + 28 * s);
+      ctx.restore();
+
+      // 倒计时阶段保留显示对手头像和昵称
+      const avatarR = 32 * s;
+      const avatarY = matchY + matchH * 0.58;
+      const opponent = anim.opponent;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, avatarY, avatarR, 0, Math.PI * 2);
+      ctx.fillStyle = '#e0d4c0';
+      ctx.fill();
+      ctx.lineWidth = 2 * s;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.stroke();
+
+      if (opponent.avatar && opponent.avatar.loaded) {
+        const displayAvatarR = avatarR - 2 * s;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, avatarY, displayAvatarR, 0, Math.PI * 2);
+        ctx.clip();
+        const a = opponent.avatar;
+        if (a.type === 'sheet') {
+          const srcMargin = a.sw * 0.05;
+          const srcX = a.sx + srcMargin;
+          const srcY = a.sy + srcMargin;
+          const srcW = a.sw * 0.9;
+          const srcH = a.sh * 0.9;
+          ctx.drawImage(a.img, srcX, srcY, srcW, srcH, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
+        } else {
+          ctx.drawImage(a.img, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+
+      // 对手名字
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px ${titleFont}`;
+      ctx.fillStyle = '#d7c28a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
       ctx.restore();
     }
 
