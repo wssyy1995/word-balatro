@@ -1074,18 +1074,42 @@ class BattleRenderer {
     ctx.restore();
   }
 
-  // ===== 左右玩家面板（仅显示状态和本轮单词） =====
+  // ===== 左右玩家面板（合并为一个大的长方形，中间用竖分隔线分开） =====
   _drawPlayerPanels(ctx, game, W, y, panelH, s) {
     const margin = 14 * s;
-    const gap = 12 * s;
-    const panelW = (W - margin * 2 - gap) / 2;
+    const totalW = W - margin * 2;
+    const panelW = totalW / 2;
     const x1 = margin;
-    const x2 = margin + panelW + gap;
+    const x2 = margin + panelW;
 
     // 记录面板位置，供飞行动画使用
     const tilesY = y + 70 * s;
     this.battlePanelLeft = { x: x1, y, w: panelW, h: panelH, centerX: x1 + panelW / 2, tilesY };
     this.battlePanelRight = { x: x2, y, w: panelW, h: panelH, centerX: x2 + panelW / 2, tilesY };
+
+    // 绘制合并的大长方形面板背景
+    const corner = 10 * s;
+    ctx.save();
+    ctx.shadowColor = 'rgba(90, 62, 31, 0.15)';
+    ctx.shadowBlur = 10 * s;
+    ctx.shadowOffsetY = 3 * s;
+    this.parent.roundRect(x1, y, totalW, panelH, corner, COLORS.panelBg, '#8a6d3b', 2.5 * s);
+    ctx.shadowColor = 'transparent';
+    // 内层亮金边框
+    this.parent.roundRect(x1, y, totalW, panelH, corner, null, '#e8c87a', 1 * s);
+    ctx.restore();
+
+    // 中间竖直分隔线
+    const dividerX = x1 + panelW;
+    ctx.save();
+    ctx.strokeStyle = '#c4a35a';
+    ctx.lineWidth = 1.5 * s;
+    const dividerMargin = 12 * s;
+    ctx.beginPath();
+    ctx.moveTo(dividerX, y + dividerMargin);
+    ctx.lineTo(dividerX, y + panelH - dividerMargin);
+    ctx.stroke();
+    ctx.restore();
 
     this._drawPlayerPanel(ctx, game, x1, y, panelW, panelH, s, 'left');
     this._drawPlayerPanel(ctx, game, x2, y, panelW, panelH, s, 'right');
@@ -1099,41 +1123,8 @@ class BattleRenderer {
     const tabY = y;
     const headerColor = isLeft ? COLORS.blueHeader : COLORS.greenHeader;
 
-    // 面板主体
-    ctx.save();
-    const bodyY = tabY + tabH - 4 * s;
-    const bodyH = h - tabH + 4 * s;
-    const corner = 10 * s;
-
-    // 切角多边形路径
-    ctx.beginPath();
-    ctx.moveTo(x + corner, bodyY);
-    ctx.lineTo(x + w - corner, bodyY);
-    ctx.lineTo(x + w, bodyY + corner);
-    ctx.lineTo(x + w, bodyY + bodyH - corner);
-    ctx.lineTo(x + w - corner, bodyY + bodyH);
-    ctx.lineTo(x + corner, bodyY + bodyH);
-    ctx.lineTo(x, bodyY + bodyH - corner);
-    ctx.lineTo(x, bodyY + corner);
-    ctx.closePath();
-
-    // 填充 + 内投影（增加立体感）
-    ctx.fillStyle = COLORS.panelBg;
-    ctx.shadowColor = 'rgba(90, 62, 31, 0.15)';
-    ctx.shadowBlur = 10 * s;
-    ctx.shadowOffsetY = 3 * s;
-    ctx.fill();
-    ctx.shadowColor = 'transparent';
-
-    // 双层边框：外层深棕 + 内层亮金
-    ctx.lineWidth = 2.5 * s;
-    ctx.strokeStyle = '#8a6d3b';
-    ctx.stroke();
-    ctx.lineWidth = 1 * s;
-    ctx.strokeStyle = '#e8c87a';
-    ctx.stroke();
-
     // 顶部名称标签：优先使用图片资源，否则回退到颜色形状 + 文字
+    ctx.save();
     const tagImg = isLeft ? this.parent.battleTagRival : this.parent.battleTagMe;
     const tagImgLoaded = isLeft ? this.parent.battleTagRivalLoaded : this.parent.battleTagMeLoaded;
     if (tagImg && tagImgLoaded) {
