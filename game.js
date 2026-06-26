@@ -817,7 +817,8 @@ wx.onTouchStart((e) => {
   const settingsPopupOpen = game && game._settingsPopup && !game._closingSettings;
   const entryAnimPlaying = renderer._homepageEntryAnim &&
     (Date.now() - renderer._homepageEntryAnim.startTime) < 1200; // 按钮开始弹出后允许交互
-  if (showHomepage && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup)) {
+  // 对战状态下 homepage 不应拦截触摸（防止翻页/匹配弹窗后 showHomepage 残留导致全屏无响应）
+  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
@@ -1472,8 +1473,8 @@ wx.onTouchEnd(() => {
 
   if (!game) return;
 
-  // top_icon 短按：返回主页（长按未触发时）
-  if (!longPressTriggered && touchStartPos && renderer.topIconRect) {
+  // top_icon 短按：返回主页（长按未触发时；对战状态由 battleTopHomeRect 处理，这里不触发）
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect && !(game && game.state === 'battle')) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
     const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
@@ -1937,8 +1938,8 @@ function handleInput(x, inputY) {
     game.audioManager.tryStartBGM();
   }
 
-  // 新手引导阶段：优先处理引导点击，禁用其他交互
-  if (game.guidePhase >= 1 && game.guidePhase <= 4) {
+  // 新手引导阶段：优先处理引导点击，禁用其他交互（对战模式不受引导阶段限制）
+  if (game.state !== 'battle' && game.guidePhase >= 1 && game.guidePhase <= 4) {
     if (renderer.guideDialogRect) {
       const btnHit = renderer.hitTest(x, inputY, [renderer.guideDialogRect]);
       if (btnHit) {

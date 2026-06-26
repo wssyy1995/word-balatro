@@ -247,7 +247,15 @@ class BattleRenderer {
     }
 
     // 阶段转换：disappearing -> 结束，开始正式对局
-    if (anim.phase === 'disappearing' && anim.disappearStartTime && now - anim.disappearStartTime >= DISAPPEAR_DURATION) {
+    const disappearElapsed = anim.disappearStartTime ? now - anim.disappearStartTime : 0;
+    const disappearProgress = anim.disappearStartTime ? Math.min(1, disappearElapsed / DISAPPEAR_DURATION) : 0;
+    if (anim.phase === 'disappearing' && anim.disappearStartTime && disappearElapsed >= DISAPPEAR_DURATION) {
+      game._battleMatchAnim = null;
+      if (game.battleManager) game.battleManager.finishMatchSetup();
+      return;
+    }
+    // 安全兜底：即使计时器有微小偏差，只要完全淡出就清理
+    if (anim.phase === 'disappearing' && disappearProgress >= 1) {
       game._battleMatchAnim = null;
       if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
