@@ -1125,24 +1125,33 @@ class BattleRenderer {
     ctx.restore();
   }
 
-  // ===== 头像呼吸金边（根据进度条移动方向触发 1 秒） =====
+  // ===== 头像切割钻环（根据进度条移动方向触发 1 秒） =====
   _drawAvatarGlow(ctx, game, cx, cy, r, s, side) {
     const anim = game._battleAvatarGlowAnim;
     if (!anim || anim.side !== side) return;
     const elapsed = Date.now() - anim.startTime;
     if (elapsed < 0 || elapsed > anim.duration) return;
-    const progress = elapsed / anim.duration;
-    const alpha = 0.25 + 0.45 * Math.sin(progress * Math.PI);
+    const t = elapsed / anim.duration;
 
+    // 源自 金圈边框动画8种方案.html 的 03 切割钻环
     ctx.save();
-    ctx.globalAlpha = alpha;
-    ctx.strokeStyle = '#ffd700';
-    ctx.lineWidth = 2.5 * s;
-    ctx.shadowColor = 'rgba(255, 215, 0, 0.55)';
-    ctx.shadowBlur = 12 * s;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 1.5 * s, 0, Math.PI * 2);
-    ctx.stroke();
+    const segs = 18;
+    const TAU = Math.PI * 2;
+    for (let i = 0; i < segs; i++) {
+      const start = -Math.PI / 2 + i * TAU / segs + 0.03;
+      const end = start + TAU / segs - 0.07;
+      const windowStart = i / segs * 0.72;
+      const local = Math.max(0, Math.min((t - windowStart) / 0.22, 1));
+      const glow = Math.sin(local * Math.PI);
+      ctx.beginPath();
+      ctx.lineWidth = 9 * s;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = `rgba(255,${200 + Math.floor(glow * 45)},${90 + Math.floor(glow * 110)},${0.18 + glow * 0.82})`;
+      ctx.shadowBlur = (10 + glow * 18) * s;
+      ctx.shadowColor = 'rgba(255,225,140,0.85)';
+      ctx.arc(cx, cy, r, start, end);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
