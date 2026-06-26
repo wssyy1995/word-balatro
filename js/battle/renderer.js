@@ -37,6 +37,11 @@ class BattleRenderer {
     this.battleProgressIconLoaded = false;
     this._loadBattleProgressIcon();
 
+    // 加载"请出牌"提示图标（本地资源，不走云存储）
+    this.battleCardIcon = null;
+    this.battleCardIconLoaded = false;
+    this._loadBattleCardIcon();
+
     // 加载当前用户头像
     this.selfAvatarUrl = null;
     this.selfAvatarImg = null;
@@ -71,6 +76,18 @@ class BattleRenderer {
       this.battleProgressIcon = img;
     } catch (e) {
       this.battleProgressIconLoaded = false;
+    }
+  }
+
+  _loadBattleCardIcon() {
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_card_icon.png';
+      img.onload = () => { this.battleCardIconLoaded = true; };
+      img.onerror = () => { this.battleCardIconLoaded = false; };
+      this.battleCardIcon = img;
+    } catch (e) {
+      this.battleCardIconLoaded = false;
     }
   }
 
@@ -1257,13 +1274,26 @@ class BattleRenderer {
       ctx.fillText(restText, startX + checkWidth + spaceWidth, drawY);
     } else {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
-      // 请出牌 与 对手已选择 使用相同粗体样式，仅颜色保持灰色提示
-      const isBoldStatus = statusText === '请出牌' || statusText.startsWith('✓ ');
+      const isBoldStatus = statusText.startsWith('✓ ');
       ctx.font = isBoldStatus
         ? `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`
         : `${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-      ctx.textAlign = 'center';
-      ctx.fillText(statusText, centerX, drawY);
+
+      if (statusText === '请出牌' && this.battleCardIcon && this.battleCardIconLoaded) {
+        // 请出牌：图标 + 文字横向居中，保持灰色非粗体
+        const text = '请出牌';
+        const iconSize = 16 * s;
+        const gap = 4 * s;
+        const textWidth = ctx.measureText(text).width;
+        const totalWidth = iconSize + gap + textWidth;
+        const startX = centerX - totalWidth / 2;
+        ctx.textAlign = 'left';
+        ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
+        ctx.fillText(text, startX + iconSize + gap, drawY);
+      } else {
+        ctx.textAlign = 'center';
+        ctx.fillText(statusText, centerX, drawY);
+      }
     }
     ctx.restore();
 
