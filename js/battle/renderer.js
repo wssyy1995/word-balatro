@@ -906,37 +906,37 @@ class BattleRenderer {
     this.parent._roundedRectPath(ctx, x, progressY, w, progressH, progressR);
     ctx.clip();
 
-    // 背景渐变：顶部亮、底部暗，营造 3D 圆柱感
+    // 背景渐变：顶部微亮、底部微暗，营造自然 3D 圆柱感
     const bgGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
-    bgGrad.addColorStop(0, '#f5f0e6');
+    bgGrad.addColorStop(0, '#f0e8d8');
     bgGrad.addColorStop(0.5, '#e8dcc0');
-    bgGrad.addColorStop(1, '#d4c8a8');
+    bgGrad.addColorStop(1, '#ddd0b0');
     ctx.fillStyle = bgGrad;
     ctx.fillRect(x, progressY, w, progressH);
 
     // 左侧蓝色渐变（对手）
     const blueGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
-    blueGrad.addColorStop(0, '#5a7ab0');
+    blueGrad.addColorStop(0, '#4f6fa5');
     blueGrad.addColorStop(0.5, '#4a6aa0');
-    blueGrad.addColorStop(1, '#3a5585');
+    blueGrad.addColorStop(1, '#426090');
     ctx.fillStyle = blueGrad;
     ctx.fillRect(x, progressY, botWidth, progressH);
 
     // 右侧绿色渐变（我）
     const greenGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
-    greenGrad.addColorStop(0, '#6a9a6a');
+    greenGrad.addColorStop(0, '#5f8f5f');
     greenGrad.addColorStop(0.5, '#5a8a5a');
-    greenGrad.addColorStop(1, '#4a754a');
+    greenGrad.addColorStop(1, '#528052');
     ctx.fillStyle = greenGrad;
     ctx.fillRect(x + botWidth, progressY, w - botWidth, progressH);
 
-    // 顶部高光：增强 3D 立体感
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillRect(x, progressY, w, progressH * 0.25);
+    // 顶部高光：自然 3D 立体感
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(x, progressY, w, progressH * 0.2);
 
-    // 底部阴影：增强 3D 立体感
-    ctx.fillStyle = 'rgba(0,0,0,0.18)';
-    ctx.fillRect(x, progressY + progressH * 0.75, w, progressH * 0.25);
+    // 底部阴影：自然 3D 立体感
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(x, progressY + progressH * 0.8, w, progressH * 0.2);
 
     ctx.restore();
 
