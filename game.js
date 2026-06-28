@@ -3716,12 +3716,6 @@ function gameLoop(timestamp) {
     if (game && game._dailyWordsPopup && renderer._drawDailyWordsPopup) {
       renderer._drawDailyWordsPopup(game);
     }
-    // 主页上打开的弹窗滚动物理也需要更新
-    if (game) {
-      game._updateDailyWordsScroll(deltaTime);
-      game._updateWordBookScroll(deltaTime);
-      game._updateGlobalRankScroll(deltaTime);
-    }
   } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
