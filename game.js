@@ -1702,14 +1702,13 @@ wx.onTouchEnd(() => {
           }
         };
 
-        // 双人对战：先预加载 battle 云图片，再进入对战
+        // 双人对战：先启动翻页动画，翻页过程中并行下载 battle 云图片
         if (targetState === 'battle' && game && game.cloudStorage) {
+          enterGame();
           game.cloudStorage.preloadBattleImages().then(() => {
             game.cloudStorage.injectBattleToRenderer(renderer);
-            enterGame();
           }).catch(err => {
             console.error('battle 图片预加载失败:', err);
-            enterGame();
           });
         } else {
           enterGame();
