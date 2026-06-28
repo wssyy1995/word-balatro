@@ -1176,6 +1176,18 @@ wx.onTouchMove((e) => {
     if (!hit) game._wordBookClosePressed = false;
   }
 
+  // 移出对战 top_home 区域时取消长按
+  if (game._battleTopHomePressed && renderer.battleRenderer && renderer.battleRenderer.battleTopHomeRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.battleRenderer.battleTopHomeRect]);
+    if (!hit) {
+      game._battleTopHomePressed = false;
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    }
+  }
+
   // 今日新词弹窗滚动
   if (game._dailyWordsPopup && game._dailyWordsScrollState === 'dragging') {
     const now = Date.now();
@@ -1499,6 +1511,21 @@ wx.onTouchEnd(() => {
       renderer._homepageEntryAnim = null;
       if (game && game.audioManager) game.audioManager.play('tap');
     }
+  }
+
+  // 对战模式 top_home 短按返回主页（长按未触发时）
+  if (!longPressTriggered && game && game._battleTopHomePressed && renderer.battleRenderer && renderer.battleRenderer.battleTopHomeRect) {
+    const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
+    const homeHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.battleRenderer.battleTopHomeRect]);
+    if (homeHit) {
+      if (game.audioManager) game.audioManager.play('tap');
+      game.returnToHomepage();
+    }
+  }
+  if (game) game._battleTopHomePressed = false;
+  if (longPressTimer) {
+    clearTimeout(longPressTimer);
+    longPressTimer = null;
   }
   longPressTriggered = false;
 
@@ -1991,6 +2018,28 @@ function handleInput(x, inputY) {
         game.battleManager.startBattle('easy');
         return;
       }
+      if (debugHit.action === 'debug_battleWin') {
+        renderer.debugMenuOpen = false;
+        if (game.state === 'battle') {
+          game.battlePlayerScore = 100;
+          game.battleBotScore = 50;
+          game.battlePlayerRoundScores = [20, 30, 50];
+          game.battleBotRoundScores = [10, 20, 20];
+          game.battlePhase = 'battle_end';
+        }
+        return;
+      }
+      if (debugHit.action === 'debug_battleLose') {
+        renderer.debugMenuOpen = false;
+        if (game.state === 'battle') {
+          game.battlePlayerScore = 50;
+          game.battleBotScore = 100;
+          game.battlePlayerRoundScores = [10, 20, 20];
+          game.battleBotRoundScores = [20, 30, 50];
+          game.battlePhase = 'battle_end';
+        }
+        return;
+      }
       if (debugHit.action === 'debug_resetHands') game.resetHands();
       if (debugHit.action === 'debug_addScore') game.addScore(1000);
       if (debugHit.action === 'debug_addGold') {
@@ -2359,6 +2408,22 @@ function handleInput(x, inputY) {
     game._closingCardBookDetail = false;
     game._cardBookCellPressed = null;
     return;
+  }
+
+  // 对战模式 top_home 长按打开调试面板（短按返回主页在 touchEnd 处理）
+  if (game.state === 'battle' && renderer.battleRenderer && renderer.battleRenderer.battleTopHomeRect) {
+    const battle = renderer.battleRenderer;
+    const homeHit = renderer.hitTest(x, inputY, [battle.battleTopHomeRect]);
+    if (homeHit) {
+      longPressTriggered = false;
+      game._battleTopHomePressed = true;
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        longPressTriggered = true;
+        renderer.debugMenuOpen = !renderer.debugMenuOpen;
+      }, LONG_PRESS_DURATION);
+      return;
+    }
   }
 
   // 对战模式输入处理（匹配弹窗显示期间禁用对战交互）

@@ -71,6 +71,8 @@ module.exports = function extendDebug(Renderer) {
     Renderer.prototype._drawDebugMenu = function(ctx, game, x, y, s) {
       const items = [
         { label: '⚔️ 对战模式', action: 'debug_startBattle' },
+        { label: '对战-成功', action: 'debug_battleWin' },
+        { label: '对战-失败', action: 'debug_battleLose' },
         { label: '重置出牌次数', action: 'debug_resetHands' },
         { label: '当前分+1000', action: 'debug_addScore' },
         { label: '💰 增加100金币', action: 'debug_addGold' },

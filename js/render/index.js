@@ -856,8 +856,18 @@ Renderer.prototype.render = function(game) {
     }
 
     // 调试菜单（最后绘制，确保在最上层）
-    if (this.debugMenuOpen && this.topIconRect) {
-      this._drawDebugMenu(ctx, game, this.topIconRect.x, this.topIconRect.y + this.topIconRect.h + 4 * s, s);
+    if (this.debugMenuOpen) {
+      let menuX, menuY;
+      if (this.topIconRect) {
+        menuX = this.topIconRect.x;
+        menuY = this.topIconRect.y + this.topIconRect.h + 4 * s;
+      } else if (game.state === 'battle' && this.battleRenderer && this.battleRenderer.battleTopHomeRect) {
+        menuX = this.battleRenderer.battleTopHomeRect.x;
+        menuY = this.battleRenderer.battleTopHomeRect.y + this.battleRenderer.battleTopHomeRect.h + 4 * s;
+      }
+      if (menuX !== undefined) {
+        this._drawDebugMenu(ctx, game, menuX, menuY, s);
+      }
     }
 
     // 绘制排行榜弹窗（好友榜 + 全国榜 Tab）

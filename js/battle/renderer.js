@@ -611,14 +611,15 @@ class BattleRenderer {
     const btnSize = 34 * s;
     const iconX = 15 * s + 5 * s;
     const iconY = topY + 5 * s;
+    const pressOffset = game._battleTopHomePressed ? 2 * s : 0;
 
     // top_home 主页图标（从云存储 bg_icon/top_home.png 注入到 parent.topIcon）
     if (this.parent.topIcon && this.parent.topIconLoaded) {
-      ctx.drawImage(this.parent.topIcon, iconX, iconY, btnSize, btnSize);
+      ctx.drawImage(this.parent.topIcon, iconX, iconY + pressOffset, btnSize, btnSize);
     } else {
       // 兜底：圆形 + 房子图标
       const cx = iconX + btnSize / 2;
-      const cy = iconY + btnSize / 2;
+      const cy = iconY + pressOffset + btnSize / 2;
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, btnSize / 2, 0, Math.PI * 2);

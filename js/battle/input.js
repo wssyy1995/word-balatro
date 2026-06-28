@@ -8,16 +8,7 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
   // 设置弹窗打开时，不处理对战底层交互
   if (game._settingsPopup && !game._closingSettings) return false;
 
-  // 左上角 top_home 返回主页按钮
-  if (battle.battleTopHomeRect) {
-    const homeHit = renderer.hitTest(x, inputY, [battle.battleTopHomeRect]);
-    if (homeHit) {
-      vibrate();
-      if (game.audioManager) game.audioManager.play('tap');
-      game.returnToHomepage();
-      return true;
-    }
-  }
+  // 左上角 top_home 返回主页按钮：已移至 game.js 统一处理（支持长按调试面板）
 
   if (game.battlePhase === 'selecting') {
     // 选择新卡牌时清除之前的失败校验提示
