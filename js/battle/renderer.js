@@ -256,9 +256,10 @@ class BattleRenderer {
     const now = Date.now();
     let elapsed = now - anim.startTime;
     const POP_DURATION = 600;
+    const MATCH_SOUND_DELAY = 200; // 匹配弹窗弹出后 200ms 再启动音效/光圈呼吸
 
-    // 匹配中循环音效（仅进入 matching 阶段时启动一次）
-    if (anim.phase === 'matching' && !anim._matchingSoundStarted) {
+    // 匹配中循环音效（延迟 MATCH_SOUND_DELAY 后启动一次）
+    if (anim.phase === 'matching' && !anim._matchingSoundStarted && now >= anim.startTime + MATCH_SOUND_DELAY) {
       if (game.audioManager) game.audioManager.playLoop('battle_matching');
       anim._matchingSoundStarted = true;
     }
@@ -405,14 +406,15 @@ class BattleRenderer {
 
         // 经典脉动金色呼吸光圈（参考金光之环方案一）
         // 呼吸频率与 battle_matching 循环音效时长保持一致：一个音频循环 = 一次完整呼吸
+        // 同时与音效一起延迟 MATCH_SOUND_DELAY 启动
         const swordCX = cx;
         const swordCY = swordY + swordH / 2;
-        const t = now / 1000;
+        const breathT = Math.max(0, now - anim.startTime - MATCH_SOUND_DELAY) / 1000;
         const baseR = Math.max(swordW, swordH) * 0.58;
         const loopDuration = game.audioManager && game.audioManager._loopDurations && game.audioManager._loopDurations['battle_matching'];
         const breathFreq = loopDuration ? (2 * Math.PI / loopDuration) : 2.8;
-        const breath = 1 + 0.08 * Math.sin(t * breathFreq);
-        const alpha = 0.55 + 0.35 * Math.sin(t * breathFreq);
+        const breath = 1 + 0.08 * Math.sin(breathT * breathFreq);
+        const alpha = 0.55 + 0.35 * Math.sin(breathT * breathFreq);
 
         ctx.save();
 
