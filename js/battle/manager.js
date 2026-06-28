@@ -503,6 +503,7 @@ class BattleManager {
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
     g._battleBotStrategy = null;
+    if (g.audioManager) g.audioManager.stopSound('battle_matching');
   }
 }
 

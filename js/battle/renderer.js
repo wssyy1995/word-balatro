@@ -257,6 +257,12 @@ class BattleRenderer {
     let elapsed = now - anim.startTime;
     const POP_DURATION = 600;
 
+    // 匹配中循环音效（仅进入 matching 阶段时启动一次）
+    if (anim.phase === 'matching' && !anim._matchingSoundStarted) {
+      if (game.audioManager) game.audioManager.playLoop('battle_matching');
+      anim._matchingSoundStarted = true;
+    }
+
     // 阶段转换：matching -> matched
     if (anim.phase === 'matching' && elapsed >= anim.matchDuration) {
       anim.phase = 'matched';
@@ -264,8 +270,11 @@ class BattleRenderer {
       anim.opponent = this._generateRandomOpponent();
       game._battleOpponent = anim.opponent;
       elapsed = 0;
-      // 匹配成功音效
-      if (game.audioManager) game.audioManager.play('battle_match_sccess');
+      // 停止匹配循环音效并播放匹配成功音效
+      if (game.audioManager) {
+        game.audioManager.stopSound('battle_matching');
+        game.audioManager.play('battle_match_sccess');
+      }
     }
 
     const MATCHED_DURATION = 1500;
@@ -288,12 +297,14 @@ class BattleRenderer {
     const disappearElapsed = anim.disappearStartTime ? now - anim.disappearStartTime : 0;
     const disappearProgress = anim.disappearStartTime ? Math.min(1, disappearElapsed / DISAPPEAR_DURATION) : 0;
     if (anim.phase === 'disappearing' && anim.disappearStartTime && disappearElapsed >= DISAPPEAR_DURATION) {
+      if (game.audioManager) game.audioManager.stopSound('battle_matching');
       game._battleMatchAnim = null;
       if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
     }
     // 安全兜底：即使计时器有微小偏差，只要完全淡出就清理
     if (anim.phase === 'disappearing' && disappearProgress >= 1) {
+      if (game.audioManager) game.audioManager.stopSound('battle_matching');
       game._battleMatchAnim = null;
       if (game.battleManager) game.battleManager.finishMatchSetup();
       return;
