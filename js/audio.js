@@ -61,20 +61,28 @@ class AudioManager {
 
   // 循环播放音效（用于引导对话框打字机等需要持续循环的场景）
   playLoop(name) {
-    if (!this.enabled || !this.soundEnabled) return;
+    if (!this.enabled || !this.soundEnabled) {
+      console.log('[Audio] playLoop skipped, enabled:', this.enabled, 'soundEnabled:', this.soundEnabled);
+      return;
+    }
 
     this._firstInteraction = true;
 
     let audio = this.sounds[name];
     if (!audio) {
       const lazySrc = this._findSrcByName(name);
+      console.log('[Audio] playLoop lazy load:', name, lazySrc);
       if (lazySrc) {
         this.load(name, lazySrc);
         audio = this.sounds[name];
       }
     }
-    if (!audio) return;
+    if (!audio) {
+      console.warn('[Audio] playLoop no audio:', name, 'sounds keys:', Object.keys(this.sounds));
+      return;
+    }
 
+    console.log('[Audio] playLoop playing:', name, 'src:', audio.src);
     audio.loop = true;
     audio.stop();
     audio.play();
@@ -174,8 +182,10 @@ class AudioManager {
   // 从 cloudStorage 的 musicCache 加载缓存的音频
   loadFromCloud(cloudStorage) {
     if (!cloudStorage || !cloudStorage.musicCache) return;
+    console.log('[Audio] loadFromCloud musicCache keys:', Object.keys(cloudStorage.musicCache));
     Object.entries(cloudStorage.musicCache).forEach(([name, path]) => {
       if (!this.sounds[name]) {
+        console.log('[Audio] loadFromCloud loading:', name, path);
         this.load(name, path);
       }
     });

@@ -177,6 +177,7 @@ class CloudStorageManager {
       'homepage_round_tap': c('/music/sound_effect/homepage_round_tap.mp3'),
       'homepage_big_button': c('/music/sound_effect/homepage_big_button.mp3'),
       'battle_match_sccess': c('/music/sound_effect/battle_match_sccess.mp3'),
+      'battle_matching': c('/music/sound_effect/battle/battle_matching.mp3'),
       'cloth_flap': c('/music/sound_effect/cloth_flap.mp3'),
       'battle_countdown': c('/music/sound_effect/battle_countdown.mp3'),
       'battle_play_card': c('/music/sound_effect/battle_play_card.mp3')

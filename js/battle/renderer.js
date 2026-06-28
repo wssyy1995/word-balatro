@@ -259,6 +259,7 @@ class BattleRenderer {
 
     // 匹配中循环音效（仅进入 matching 阶段时启动一次）
     if (anim.phase === 'matching' && !anim._matchingSoundStarted) {
+      console.log('[BattleMatch] 启动 battle_matching 循环音效，audioManager:', !!game.audioManager);
       if (game.audioManager) game.audioManager.playLoop('battle_matching');
       anim._matchingSoundStarted = true;
     }
