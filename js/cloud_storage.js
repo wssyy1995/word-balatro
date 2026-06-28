@@ -141,7 +141,10 @@ class CloudStorageManager {
       'battle_me_place': c('/battle/battle_me_place.png'),
       'battle_me_word_bg': c('/battle/battle_me_word_bg.png'),
       'battle_rival_place': c('/battle/battle_rival_place.png'),
-      'battle_rival_word_bg': c('/battle/battle_rival_word_bg.png')
+      'battle_rival_word_bg': c('/battle/battle_rival_word_bg.png'),
+      'battle_pop_share': c('/battle/battle_pop_share.png'),
+      'battle_pop_restart': c('/battle/battle_pop_restart.png'),
+      'battle_pop_backto_homepage': c('/battle/battle_pop_backto_homepage.png')
     };
 
     // 默认 rank_avatar 图片云文件映射

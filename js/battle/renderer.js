@@ -2156,7 +2156,7 @@ class BattleRenderer {
     ctx.restore();
 
     const panelW = 300 * s;
-    const panelH = 320 * s;
+    const panelH = 380 * s;
     const px = (W - panelW) / 2;
     const py = (H - panelH) / 2;
 
@@ -2168,39 +2168,91 @@ class BattleRenderer {
     const botScore = game.battleBotScore || 0;
     const isWin = playerScore > botScore;
     const isDraw = playerScore === botScore;
-    const resultText = isWin ? '胜利!' : (isDraw ? '平局!' : '失败!');
-    const resultColor = isWin ? '#4ade80' : (isDraw ? COLORS.gold : '#f87171');
 
-    ctx.font = `bold ${Math.floor(26 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = resultColor;
+    // === 顶部 VS 模块：上边框往下 20*s ===
+    const vsModuleY = py + 20 * s;
+    ctx.save();
+    ctx.translate(px + 10 * s, vsModuleY);
+    this._drawAvatarRow(ctx, game, panelW - 20 * s, 0, 60 * s, s);
+    ctx.restore();
+    const vsModuleH = 90 * s; // 头像行 60*s + 进度条约 30*s
+
+    // === 激励文案：VS 模块往下 10*s ===
+    const promptY = vsModuleY + vsModuleH + 10 * s;
+    let promptText = '旗鼓相当,不分胜负!';
+    let promptColor = COLORS.gold;
+    if (isWin) {
+      promptText = '太棒了,你赢得了本轮对战!';
+      promptColor = '#4ade80';
+    } else if (!isDraw) {
+      promptText = '很遗憾,你未能击败对手,再接再厉!';
+      promptColor = '#f87171';
+    }
+    ctx.save();
+    ctx.font = `bold ${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = promptColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText(resultText, W / 2, py + 24 * s);
+    ctx.fillText(promptText, W / 2, promptY);
+    ctx.restore();
 
-    ctx.font = `bold ${Math.floor(32 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = COLORS.text;
-    ctx.fillText(`${playerScore} : ${botScore}`, W / 2, py + 70 * s);
+    // === 底部按钮：下边框往上 10*s ===
+    const btnSize = 64 * s;
+    const btnGap = 16 * s;
+    const btnY = py + panelH - 10 * s - btnSize;
 
-    ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = 'rgba(90,62,31,0.5)';
-    ctx.fillText('各轮得分', W / 2, py + 120 * s);
-
-    let detailY = py + 144 * s;
-    for (let i = 0; i < game.battleTotalRounds; i++) {
-      const pScore = game.battlePlayerRoundScores[i] || 0;
-      const bScore = game.battleBotRoundScores[i] || 0;
-      ctx.font = `bold ${Math.floor(11 * s)}px ${this.parent.titleFontFamily}`;
-      ctx.fillStyle = 'rgba(90,62,31,0.6)';
-      ctx.fillText(`第${i + 1}轮: 我${pScore} - 对手${bScore}`, W / 2, detailY);
-      detailY += 18 * s;
+    // 胜利时显示 3 个按钮（含分享），失败/平局只显示重新挑战 + 回到主页
+    const buttons = [];
+    if (isWin) {
+      buttons.push({
+        key: 'Share',
+        imgKey: 'battle_pop_share',
+        label: '分享'
+      });
     }
+    buttons.push(
+      { key: 'Restart', imgKey: 'battle_pop_restart', label: '重新挑战' },
+      { key: 'Home', imgKey: 'battle_pop_backto_homepage', label: '回到主页' }
+    );
 
-    const btnW = 140 * s;
-    const btnH = 44 * s;
-    const btnX = (W - btnW) / 2;
-    const btnY = py + panelH - btnH - 24 * s;
-    this._drawBtn(ctx, '返回菜单', btnX, btnY, btnW, btnH, s, game._battleMenuBtnPressed || false, COLORS.gold, COLORS.text);
-    this.battleMenuBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+    const totalBtnW = buttons.length * btnSize + (buttons.length - 1) * btnGap;
+    let btnX = px + (panelW - totalBtnW) / 2;
+
+    // 清除旧按钮区域
+    this.battleMenuBtnRect = null;
+    this.battleShareBtnRect = null;
+    this.battleRestartBtnRect = null;
+    this.battleHomeBtnRect = null;
+
+    buttons.forEach((btn, i) => {
+      const bx = btnX + i * (btnSize + btnGap);
+      const img = this.parent[btn.imgKey];
+      const loaded = this.parent[btn.imgKey + 'Loaded'];
+      const pressed = game[`_battle${btn.key}BtnPressed`] || false;
+      const pressOffset = pressed ? 2 * s : 0;
+
+      if (loaded && img) {
+        ctx.drawImage(img, bx, btnY + pressOffset, btnSize, btnSize);
+      } else {
+        // 兜底：圆形按钮 + 文字
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(bx + btnSize / 2, btnY + pressOffset + btnSize / 2, btnSize / 2 - 2 * s, 0, Math.PI * 2);
+        ctx.fillStyle = COLORS.panelBg;
+        ctx.fill();
+        ctx.lineWidth = 1.5 * s;
+        ctx.strokeStyle = COLORS.gold;
+        ctx.stroke();
+        ctx.font = `${Math.floor(11 * s)}px ${this.parent.titleFontFamily}`;
+        ctx.fillStyle = COLORS.text;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(btn.label, bx + btnSize / 2, btnY + pressOffset + btnSize / 2);
+        ctx.restore();
+      }
+
+      this[`battle${btn.key}BtnRect`] = { x: bx, y: btnY, w: btnSize, h: btnSize };
+    });
   }
 }
 

@@ -51,14 +51,46 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
       }
     }
   } else if (game.battlePhase === 'battle_end') {
-    // 检测返回菜单按钮
-    if (battle.battleMenuBtnRect) {
-      const btnHit = renderer.hitTest(x, inputY, [battle.battleMenuBtnRect]);
+    // 检测分享战绩按钮（仅胜利时存在）
+    if (battle.battleShareBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [battle.battleShareBtnRect]);
       if (btnHit) {
         vibrate();
-        game._battleMenuBtnPressed = true;
-        setTimeout(() => { game._battleMenuBtnPressed = false; }, 150);
-        game.battleManager.exitBattle();
+        game._battleShareBtnPressed = true;
+        setTimeout(() => { game._battleShareBtnPressed = false; }, 150);
+        if (game.audioManager) game.audioManager.play('tap');
+        const playerScore = game.battlePlayerScore || 0;
+        const botScore = game.battleBotScore || 0;
+        wx.shareAppMessage({
+          title: `我在单词对战中以 ${playerScore}:${botScore} 获胜!`,
+          imageUrl: ''
+        });
+        return true;
+      }
+    }
+
+    // 检测重新挑战按钮
+    if (battle.battleRestartBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [battle.battleRestartBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game._battleRestartBtnPressed = true;
+        setTimeout(() => { game._battleRestartBtnPressed = false; }, 150);
+        if (game.audioManager) game.audioManager.play('tap');
+        game.battleManager.startBattle('easy');
+        return true;
+      }
+    }
+
+    // 检测回到主页按钮
+    if (battle.battleHomeBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [battle.battleHomeBtnRect]);
+      if (btnHit) {
+        vibrate();
+        game._battleHomeBtnPressed = true;
+        setTimeout(() => { game._battleHomeBtnPressed = false; }, 150);
+        if (game.audioManager) game.audioManager.play('tap');
+        game.returnToHomepage();
         return true;
       }
     }
