@@ -1,6 +1,7 @@
 // ===== 对战模式渲染器 =====
 const { LETTER_SCORE } = require('../data');
 const { Easing } = require('../animation');
+const { DailyAchievements } = require('../daily_achievements');
 
 const COLORS = {
   bg: '#f5e6c8',
@@ -24,6 +25,7 @@ class BattleRenderer {
     this.battleClearBtnRect = null;
     this.battleCardRects = [];
     this.battleTopHomeRect = null;
+    this.battleHomeConfirmBtnRect = null;
     this.battleMenuBtnRect = null;
     this.battlePanelLeft = null;
     this.battlePanelRight = null;
@@ -35,6 +37,20 @@ class BattleRenderer {
     // 轮次徽章数字缩放脉冲动画
     this._lastBattleRound = 0;
     this._battleRoundPulseAnim = null;
+
+    // 对战结束弹窗动画状态
+    this.battleEndAnimStartTime = null;
+    this.lastBattlePhase = null;
+    this._battleEndSoundPlayed = false;
+    this._btnPressAnims = {};
+    this._victoryStars = Array.from({ length: 20 }, () => ({
+      x: (Math.random() * 2 - 1) * 0.9,
+      y: (Math.random() * 2 - 1) * 0.55,
+      r: 1.5 + Math.random() * 3,
+      phase: Math.random() * Math.PI * 2,
+      speed: 1 + Math.random() * 2.5,
+      alpha: 0.3 + Math.random() * 0.7
+    }));
 
     // 加载分数进度条闪电图标（本地资源，不走云存储）
     this.battleProgressIcon = null;
@@ -210,10 +226,18 @@ class BattleRenderer {
     // === 对战结束弹窗 ===
     if (game.battlePhase === 'battle_end') {
       this._drawEndPopup(ctx, game, W, H, s);
+    } else {
+      this.lastBattlePhase = game.battlePhase;
+      this._battleEndSoundPlayed = false;
     }
 
     // === 对战匹配弹窗 ===
     this._drawBattleMatchPopup(ctx, game, W, H, s);
+
+    // === 回到首页确认弹窗 ===
+    if (game._battleHomeConfirmPopup) {
+      this._drawHomeConfirmPopup(ctx, game, W, H, s);
+    }
   }
 
   // ===== 随机生成对手（头像 + 昵称），与全国榜默认头像/昵称分配逻辑一致 =====
@@ -610,7 +634,8 @@ class BattleRenderer {
   _drawTopBar(ctx, game, W, topY, s) {
     const btnSize = 34 * s;
     const iconX = 15 * s + 5 * s;
-    const iconY = topY + 5 * s;
+    const headerOffset = (this.parent.hasDynamicIsland ? 13 * s : 0);
+    const iconY = 15 * s + headerOffset;
     const pressOffset = game._battleTopHomePressed ? 2 * s : 0;
 
     // top_home 主页图标（从云存储 bg_icon/top_home.png 注入到 parent.topIcon）
@@ -783,7 +808,7 @@ class BattleRenderer {
   }
 
   // ===== 顶部 VS 模块（使用 battle_player.png 背景） =====
-  _drawAvatarRow(ctx, game, W, y, rowH, s) {
+  _drawAvatarRow(ctx, game, W, y, rowH, s, hideProgressBar = false, vsScale = 1, bgStretchV = 1, bgWidthExtra = 0, bgXOffset = 0) {
     const margin = W * 0.025;
     const x = margin;
     const w = W - margin * 2;  // 占屏幕宽度 95%
@@ -799,15 +824,15 @@ class BattleRenderer {
       const rightImg = this.parent.battlePlayerRight;
       const halfW = w / 2;
       const pieceScale = 0.9;
-      const pieceW = halfW * pieceScale;
+      const pieceW = halfW * pieceScale + bgWidthExtra;
       const leftH = pieceW / (leftImg.width / leftImg.height);
       const rightH = pieceW / (rightImg.width / rightImg.height);
-      const leftDrawH = Math.max(leftH - 2 * s, 1);
-      const rightDrawH = Math.max(rightH - 2 * s, 1);
+      const leftDrawH = Math.max(leftH * bgStretchV - 2 * s, 1);
+      const rightDrawH = Math.max(rightH * bgStretchV - 2 * s, 1);
       const leftDrawY = y + (h - leftDrawH) / 2 + 5 * s;
       const rightDrawY = y + (h - rightDrawH) / 2 + 5 * s;
-      ctx.drawImage(leftImg, x - 6 * s, leftDrawY, pieceW, leftDrawH);
-      ctx.drawImage(rightImg, x + halfW + 22 * s, rightDrawY, pieceW, rightDrawH);
+      ctx.drawImage(leftImg, x - 6 * s - bgXOffset, leftDrawY, pieceW, leftDrawH);
+      ctx.drawImage(rightImg, x + halfW + 22 * s + bgXOffset, rightDrawY, pieceW, rightDrawH);
     } else {
       // 兜底：简单背景条
       this.parent.roundRect(x, y + 5 * s, w, h, 10 * s, '#e0d4c0', COLORS.gold, 1.5 * s);
@@ -815,7 +840,7 @@ class BattleRenderer {
     ctx.restore();
 
     // 头像半径（双方统一）
-    const avatarR = 24 * s;
+    const avatarR = 26 * s;
 
     // 左侧对手头像（覆盖图片默认头像）
     const leftAvatarCX = x + 33 * s;
@@ -853,8 +878,16 @@ class BattleRenderer {
       ctx.clip();
       ctx.drawImage(this.selfAvatarImg, rightAvatarCX - avatarR, rightAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       ctx.restore();
+      // 我方头像红色边框
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(rightAvatarCX, rightAvatarCY, avatarR, 0, Math.PI * 2);
+      ctx.lineWidth = 2.5 * s;
+      ctx.strokeStyle = '#c0392b';
+      ctx.stroke();
+      ctx.restore();
     } else {
-      this._drawAvatar(ctx, rightAvatarCX, rightAvatarCY, avatarR, s, COLORS.greenHeader);
+      this._drawAvatar(ctx, rightAvatarCX, rightAvatarCY, avatarR, s, '#c0392b');
     }
 
     // 进度条移动方向对应的头像呼吸金边
@@ -866,7 +899,7 @@ class BattleRenderer {
     // 中间 VS 徽章
     if (this.parent.battleVS && this.parent.battleVSLoaded) {
       const vsImg = this.parent.battleVS;
-      const vsSize = 54 * s;
+      const vsSize = 54 * s * vsScale;
       const vsX = cx - vsSize / 2;
       const vsY = cy + 5 * s - vsSize / 2;
       ctx.drawImage(vsImg, vsX, vsY, vsSize, vsSize);
@@ -974,8 +1007,10 @@ class BattleRenderer {
 
     ctx.restore();
 
-    // 分数对比进度条
-    this._drawScoreProgressBar(ctx, game, x, y + h, w, s);
+    // 分数对比进度条（结束弹窗中隐藏）
+    if (!hideProgressBar) {
+      this._drawScoreProgressBar(ctx, game, x, y + h, w, s);
+    }
   }
 
   // ===== 分数对比进度条（VS 模块下方） =====
@@ -1706,6 +1741,148 @@ class BattleRenderer {
     this._drawDecoratedText(ctx, W, y, s, '请选择字母，组成单词并提交');
   }
 
+  // ===== 简化版 VS 模块（对战结束弹窗用） =====
+  _drawSimpleVSModule(ctx, game, W, y, h, s) {
+    const x = 0;
+    const moduleW = W;
+    const moduleH = h;
+    const centerX = x + moduleW / 2;
+    const centerY = y + moduleH / 2;
+    const corner = 10 * s;
+
+    // 切角八边形背景 + 内投影 + 双层边框（参考对战面板）
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(x + corner, y);
+    ctx.lineTo(x + moduleW - corner, y);
+    ctx.lineTo(x + moduleW, y + corner);
+    ctx.lineTo(x + moduleW, y + moduleH - corner);
+    ctx.lineTo(x + moduleW - corner, y + moduleH);
+    ctx.lineTo(x + corner, y + moduleH);
+    ctx.lineTo(x, y + moduleH - corner);
+    ctx.lineTo(x, y + corner);
+    ctx.closePath();
+
+    ctx.fillStyle = '#f7ecd8';
+    ctx.shadowColor = 'rgba(90, 62, 31, 0.15)';
+    ctx.shadowBlur = 10 * s;
+    ctx.shadowOffsetY = 3 * s;
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+
+    ctx.lineWidth = 2.5 * s;
+    ctx.strokeStyle = '#8a6d3b';
+    ctx.stroke();
+    ctx.lineWidth = 1 * s;
+    ctx.strokeStyle = '#e8c87a';
+    ctx.stroke();
+    ctx.restore();
+
+    // 左右虚线分隔线（与 VS 间距加大）
+    const dividerGap = 32 * s;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(196, 163, 90, 0.6)';
+    ctx.lineWidth = 1 * s;
+    ctx.setLineDash([3 * s, 3 * s]);
+    ctx.beginPath();
+    ctx.moveTo(centerX - dividerGap, y + 16 * s);
+    ctx.lineTo(centerX - dividerGap, y + moduleH - 16 * s);
+    ctx.moveTo(centerX + dividerGap, y + 16 * s);
+    ctx.lineTo(centerX + dividerGap, y + moduleH - 16 * s);
+    ctx.stroke();
+    ctx.restore();
+
+    // 中间 VS 字样
+    ctx.save();
+    ctx.font = `bold ${Math.floor(26 * s)}px Georgia, 'Times New Roman', serif`;
+    ctx.fillStyle = '#5a3e1f';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('VS', centerX, centerY);
+    ctx.restore();
+
+    // 左侧对手信息（蓝色）
+    const leftScore = game.battleBotScore || 0;
+    let opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
+    const nameChars = Array.from(opponentName);
+    if (nameChars.length > 5) opponentName = nameChars.slice(0, 5).join('') + '...';
+    const leftNameSize = nameChars.length >= 6 ? Math.floor(14 * s) : Math.floor(18 * s);
+    const leftCenterX = (x + centerX - dividerGap) / 2;
+
+    ctx.save();
+    ctx.font = `bold ${leftNameSize}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#3b5998';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(opponentName, leftCenterX, centerY - 12 * s);
+    ctx.font = `bold ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillText(`${leftScore}分`, leftCenterX, centerY + 16 * s);
+    ctx.restore();
+
+    // 右侧玩家信息（红棕色）
+    const rightScore = game.battlePlayerScore || 0;
+    const rightCenterX = (centerX + dividerGap + x + moduleW) / 2;
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(18 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#993e2d';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('我', rightCenterX, centerY - 12 * s);
+    ctx.font = `bold ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillText(`${rightScore}分`, rightCenterX, centerY + 16 * s);
+    ctx.restore();
+  }
+
+  // ===== 挑战成功标题图背后的光芒和星星效果 =====
+  _drawVictoryEffect(ctx, cx, cy, titleW, titleH, s, elapsed, closeAlpha) {
+    const maxLen = Math.max(titleW, titleH) * 1.15;
+    const rayCount = 14;
+    const time = elapsed;
+
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    ctx.globalCompositeOperation = 'lighter';
+
+    // 光芒射线
+    for (let i = 0; i < rayCount; i++) {
+      const angle = -Math.PI * 0.95 + (Math.PI * 1.9 / rayCount) * i;
+      const width = 0.08 + 0.04 * Math.sin(time * 0.004 + i);
+      const pulse = 0.35 + 0.25 * Math.sin(time * 0.006 + i * 0.9);
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(angle - width) * maxLen, cy + Math.sin(angle - width) * maxLen);
+      ctx.lineTo(cx + Math.cos(angle + width) * maxLen, cy + Math.sin(angle + width) * maxLen);
+      ctx.closePath();
+
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
+      grad.addColorStop(0, `rgba(255, 200, 80, ${0.12 * pulse})`);
+      grad.addColorStop(0.4, `rgba(255, 170, 50, ${0.05 * pulse})`);
+      grad.addColorStop(1, 'rgba(255, 150, 0, 0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // 中心光晕
+    const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
+    halo.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
+    halo.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
+    halo.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
+    halo.addColorStop(1, 'rgba(255, 130, 20, 0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(cx, cy, maxLen * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+
+    // 闪烁星星（复用通用方法）
+    this._victoryStars = this.parent._drawSparkleStars(
+      ctx, cx, cy, titleW * 1.2, titleH * 1.4, s, elapsed, 20, this._victoryStars, closeAlpha
+    );
+  }
+
   // ===== Reveal 阶段动画触发 =====
   _updateBattleRevealAnimation(game, s) {
     const timeline = game._battleAnimTimeline;
@@ -2150,58 +2327,79 @@ class BattleRenderer {
 
   // ===== 对战结束弹窗 =====
   _drawEndPopup(ctx, game, W, H, s) {
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(0, 0, W, H);
-    ctx.restore();
+    // 新弹窗出现时重置动画，并清除按钮锁避免上次遗留导致无响应
+    if (this.lastBattlePhase !== 'battle_end') {
+      this.battleEndAnimStartTime = Date.now();
+      game._battleShareBtnLocked = false;
+      game._battleRestartBtnLocked = false;
+      game._battleHomeBtnLocked = false;
+      // 更新每日成就：完成对战 + 对战胜利
+      const daily = new DailyAchievements(game);
+      daily.addProgress('gamesCompleted');
+      if ((game.battlePlayerScore || 0) > (game.battleBotScore || 0)) {
+        daily.addProgress('battleWins');
+      }
+    }
+    this.lastBattlePhase = 'battle_end';
 
-    const panelW = 300 * s;
-    const panelH = 380 * s;
-    const px = (W - panelW) / 2;
-    const py = (H - panelH) / 2;
-
-    ctx.save();
-    this.parent.roundRect(px, py, panelW, panelH, 12 * s, COLORS.panelBg, COLORS.gold, 2 * s);
-    ctx.restore();
+    const elapsed = Date.now() - this.battleEndAnimStartTime;
+    const panel = this.parent._drawModalPanel(ctx, W, H, s, {
+      isClosing: false,
+      closeStartTime: null,
+      width: 332, height: 270, enterOffset: 25,
+      elapsed,
+      onCloseComplete: () => {}
+    });
+    if (!panel) return;
+    const { px, py, pw, ph, closeAlpha } = panel;
 
     const playerScore = game.battlePlayerScore || 0;
     const botScore = game.battleBotScore || 0;
     const isWin = playerScore > botScore;
     const isDraw = playerScore === botScore;
 
-    // === 顶部 VS 模块：上边框往下 20*s ===
-    const vsModuleY = py + 20 * s;
-    ctx.save();
-    ctx.translate(px + 10 * s, vsModuleY);
-    this._drawAvatarRow(ctx, game, panelW - 20 * s, 0, 60 * s, s);
-    ctx.restore();
-    const vsModuleH = 90 * s; // 头像行 60*s + 进度条约 30*s
-
-    // === 激励文案：VS 模块往下 10*s ===
-    const promptY = vsModuleY + vsModuleH + 10 * s;
-    let promptText = '旗鼓相当,不分胜负!';
-    let promptColor = COLORS.gold;
-    if (isWin) {
-      promptText = '太棒了,你赢得了本轮对战!';
-      promptColor = '#4ade80';
-    } else if (!isDraw) {
-      promptText = '很遗憾,你未能击败对手,再接再厉!';
-      promptColor = '#f87171';
+    // 对战结束弹窗音效（成功/失败各播放一次）
+    if (!this._battleEndSoundPlayed && game.audioManager) {
+      if (isWin) {
+        game.audioManager.play('battle_pop_success');
+      } else if (!isDraw) {
+        game.audioManager.play('game_over');
+      }
+      this._battleEndSoundPlayed = true;
     }
+
+    // === 简化版 VS 模块：手绘面板，左右分数 + 中间 VS ===
+    const vsModuleY = py + 80 * s;
+    const vsAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
     ctx.save();
-    ctx.font = `bold ${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = promptColor;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(promptText, W / 2, promptY);
+    ctx.globalAlpha = vsAnim.alpha * closeAlpha;
+    ctx.translate(px + 10 * s, vsModuleY + vsAnim.yShift);
+    this._drawSimpleVSModule(ctx, game, pw - 26 * s, 0, 72 * s, s);
     ctx.restore();
 
-    // === 底部按钮：下边框往上 10*s ===
-    const btnSize = 64 * s;
-    const btnGap = 16 * s;
-    const btnY = py + panelH - 10 * s - btnSize;
+    // === 成功/失败标题图：再放大 0.5 倍，相对上次位置下移 10px ===
+    const resultImgKey = isWin ? 'battle_pop_success' : 'battle_pop_fail';
+    const resultImg = this.parent[resultImgKey];
+    const resultImgLoaded = this.parent[resultImgKey + 'Loaded'];
+    const titleAnim = Easing.fadeIn(elapsed, 60, 250, 6 * s);
+    if (resultImgLoaded && resultImg) {
+      const titleH = isWin ? 110 * s : 115 * s;
+      const titleW = titleH * (resultImg.width / resultImg.height);
+      const titleX = W / 2 - titleW / 2;
+      const titleY = vsModuleY - 10 * s - titleH - 30 * s + 10 * s + (isWin ? 10 * s : 0) + 10 * s + (!isWin ? -3 * s : 0) + titleAnim.yShift;
 
-    // 胜利时显示 3 个按钮（含分享），失败/平局只显示重新挑战 + 回到主页
+      // 仅挑战成功时，在标题图背后绘制光芒和闪烁星星
+      if (isWin) {
+        this._drawVictoryEffect(ctx, W / 2, titleY + titleH / 2, titleW, titleH, s, elapsed, titleAnim.alpha * closeAlpha);
+      }
+
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * closeAlpha;
+      ctx.drawImage(resultImg, titleX, titleY, titleW, titleH);
+      ctx.restore();
+    }
+
+    // 胜利时显示 3 个按钮（含分享），失败/平局只显示重新挑战 + 回到首页
     const buttons = [];
     if (isWin) {
       buttons.push({
@@ -2212,11 +2410,29 @@ class BattleRenderer {
     }
     buttons.push(
       { key: 'Restart', imgKey: 'battle_pop_restart', label: '重新挑战' },
-      { key: 'Home', imgKey: 'battle_pop_backto_homepage', label: '回到主页' }
+      { key: 'Home', imgKey: 'battle_pop_backto_homepage', label: '回到首页' }
     );
 
-    const totalBtnW = buttons.length * btnSize + (buttons.length - 1) * btnGap;
-    let btnX = px + (panelW - totalBtnW) / 2;
+    // === 底部按钮：宽度 +1px；成功时高度累计 +6px，失败/平局 +4px；整体再上移 3px；失败/平局时间距 +10px ===
+    const baseBtnH = 64 * 0.8 * 0.8 * s;  // 原高度，用于计算宽度
+    const btnH = baseBtnH + (isWin ? 6 : 4) * s;  // 成功弹窗按钮再高 2px
+    const btnGap = buttons.length === 2 ? 27 * s : 7 * s;
+    const btnY = py + ph - 10 * s - btnH - 5 * s - 3 * s;
+
+    // 按图片原始宽高比计算宽度，基于原高度 baseBtnH，宽度额外 +1px
+    let totalBtnW = 0;
+    const buttonMetrics = buttons.map((btn) => {
+      const img = this.parent[btn.imgKey];
+      const loaded = this.parent[btn.imgKey + 'Loaded'];
+      let btnW = baseBtnH + 1 * s;
+      if (loaded && img && img.height > 0) {
+        btnW = baseBtnH * (img.width / img.height) + 1 * s;
+      }
+      totalBtnW += btnW;
+      return { ...btn, btnW };
+    });
+    totalBtnW += (buttons.length - 1) * btnGap;
+    let currentX = px + (pw - totalBtnW) / 2;
 
     // 清除旧按钮区域
     this.battleMenuBtnRect = null;
@@ -2224,20 +2440,39 @@ class BattleRenderer {
     this.battleRestartBtnRect = null;
     this.battleHomeBtnRect = null;
 
-    buttons.forEach((btn, i) => {
-      const bx = btnX + i * (btnSize + btnGap);
+    const btnAnim = Easing.fadeIn(elapsed, 180, 250, 10 * s);
+    ctx.save();
+    ctx.globalAlpha = btnAnim.alpha * closeAlpha;
+
+    const pressSpeed = 0.4;
+
+    buttonMetrics.forEach((btn) => {
+      const bx = currentX;
       const img = this.parent[btn.imgKey];
       const loaded = this.parent[btn.imgKey + 'Loaded'];
       const pressed = game[`_battle${btn.key}BtnPressed`] || false;
-      const pressOffset = pressed ? 2 * s : 0;
+
+      // 按钮按下动画：按下时向下偏移，松开后平滑恢复
+      if (!this._btnPressAnims[btn.key]) this._btnPressAnims[btn.key] = { offset: 0 };
+      const target = pressed ? 2 * s : 0;
+      this._btnPressAnims[btn.key].offset += (target - this._btnPressAnims[btn.key].offset) * pressSpeed;
+      if (Math.abs(this._btnPressAnims[btn.key].offset) < 0.1 * s) {
+        this._btnPressAnims[btn.key].offset = 0;
+      }
+      const pressOffset = this._btnPressAnims[btn.key].offset;
+
+      const btnW = btn.btnW;
 
       if (loaded && img) {
-        ctx.drawImage(img, bx, btnY + pressOffset, btnSize, btnSize);
+        ctx.drawImage(img, bx, btnY + pressOffset + btnAnim.yShift, btnW, btnH);
       } else {
         // 兜底：圆形按钮 + 文字
         ctx.save();
+        const r = Math.min(btnW, btnH) / 2 - 2 * s;
+        const cx = bx + btnW / 2;
+        const cy = btnY + pressOffset + btnH / 2 + btnAnim.yShift;
         ctx.beginPath();
-        ctx.arc(bx + btnSize / 2, btnY + pressOffset + btnSize / 2, btnSize / 2 - 2 * s, 0, Math.PI * 2);
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
         ctx.fillStyle = COLORS.panelBg;
         ctx.fill();
         ctx.lineWidth = 1.5 * s;
@@ -2247,12 +2482,188 @@ class BattleRenderer {
         ctx.fillStyle = COLORS.text;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(btn.label, bx + btnSize / 2, btnY + pressOffset + btnSize / 2);
+        ctx.fillText(btn.label, cx, cy);
         ctx.restore();
       }
 
-      this[`battle${btn.key}BtnRect`] = { x: bx, y: btnY, w: btnSize, h: btnSize };
+      this[`battle${btn.key}BtnRect`] = { x: bx, y: btnY + btnAnim.yShift, w: btnW, h: btnH };
+      currentX += btnW + btnGap;
     });
+    ctx.restore();
+
+    // === 激励文案：固定在底部按钮上方 23px ===
+    const promptY = btnY - 23 * s;
+    let promptText = '旗鼓相当,不分胜负!';
+    if (isWin) {
+      promptText = '太棒了,你赢得了本轮对战!';
+    } else if (!isDraw) {
+      promptText = '很遗憾,你未能击败对手,再接再厉!';
+    }
+
+    const promptAnim = Easing.fadeIn(elapsed, 120, 250, 8 * s);
+    ctx.save();
+    ctx.globalAlpha = promptAnim.alpha * closeAlpha;
+    ctx.font = `${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = COLORS.text;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 小字左右装饰（参考单词预览区 score_line.png）
+    if (this.parent.scoreLine && this.parent.scoreLineLoaded) {
+      const scoreLineImg = this.parent.scoreLine;
+      const lineH = 16 * s;
+      const lineW = lineH * (scoreLineImg.width / scoreLineImg.height);
+      const lineGap = 8 * s;
+      const promptTextWidth = ctx.measureText(promptText).width;
+      const lineY = promptY + promptAnim.yShift;
+      ctx.drawImage(scoreLineImg, W / 2 - promptTextWidth / 2 - lineGap - lineW, lineY - lineH / 2, lineW, lineH);
+      ctx.save();
+      ctx.translate(W / 2 + promptTextWidth / 2 + lineGap + lineW, lineY - lineH / 2);
+      ctx.scale(-1, 1);
+      ctx.drawImage(scoreLineImg, 0, 0, lineW, lineH);
+      ctx.restore();
+    }
+
+    ctx.fillText(promptText, W / 2, promptY + promptAnim.yShift);
+    ctx.restore();
+  }
+
+  // ===== 回到首页确认弹窗 =====
+  _drawHomeConfirmPopup(ctx, game, W, H, s) {
+    const pw = 260 * s;
+    const ph = 230 * s;
+    const px = (W - pw) / 2;
+    const py = (H - ph) / 2;
+    const r = 14 * s;
+    const gold = '#c4a35a';
+
+    if (!game._battleHomeConfirmAnimStart) {
+      game._battleHomeConfirmAnimStart = Date.now();
+    }
+    const elapsed = Date.now() - game._battleHomeConfirmAnimStart;
+    const enterProgress = Math.min(elapsed / 300, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+    const drawPy = py + (1 - enterEase) * 25 * s;
+
+    // 遮罩
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${0.65 * enterEase})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // 背景 + 金色边框
+    this.parent.roundRect(px, drawPy, pw, ph, r, '#faf6ee', gold);
+
+    // 内层细边框
+    ctx.save();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    const inset = 4 * s;
+    const ix = px + inset, iy = drawPy + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = r - inset;
+    ctx.moveTo(ix + ir, iy);
+    ctx.lineTo(ix + iw - ir, iy);
+    ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+    ctx.lineTo(ix + iw, iy + ih - ir);
+    ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+    ctx.lineTo(ix + ir, iy + ih);
+    ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+    ctx.lineTo(ix, iy + ir);
+    ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+
+    // 标题
+    ctx.save();
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('回到首页', W / 2, drawPy + 42 * s);
+    ctx.restore();
+
+    // 标题下装饰线
+    const decoLineY = drawPy + 58 * s;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+    ctx.lineWidth = 1 * s;
+    const dlW = pw * 0.45;
+    const dlX = px + (pw - dlW) / 2;
+    ctx.beginPath();
+    ctx.moveTo(dlX, decoLineY);
+    ctx.lineTo(dlX + dlW, decoLineY);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(W / 2, decoLineY);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = gold;
+    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+    ctx.restore();
+    ctx.restore();
+
+    // 中间文字
+    const text = '对战模式下，回到首页将会立刻结束对战。';
+    ctx.save();
+    ctx.font = `${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const maxW = pw - 48 * s;
+    const lineHeight = 20 * s;
+    const lines = [];
+    let line = '';
+    for (let i = 0; i < text.length; i++) {
+      const testLine = line + text[i];
+      if (ctx.measureText(testLine).width > maxW && line !== '') {
+        lines.push(line);
+        line = text[i];
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+    const startY = drawPy + 100 * s - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((l, i) => {
+      ctx.fillText(l, W / 2, startY + i * lineHeight);
+    });
+    ctx.restore();
+
+    // 底部两个按钮：取消 / 确认
+    const btnW = 108 * s;
+    const btnH = 42 * s;
+    const btnGap = 18 * s;
+    const totalW = btnW * 2 + btnGap;
+    const btnY = drawPy + ph - btnH - 30 * s;
+    const cancelX = (W - totalW) / 2;
+    const confirmX = cancelX + btnW + btnGap;
+
+    // 取消按钮（灰色）
+    const cancelPressed = game._battleHomeConfirmCancelPressed || false;
+    const cancelOffset = cancelPressed ? 2 * s : 0;
+    this.parent.roundRect(cancelX, btnY + cancelOffset, btnW, btnH, 8 * s, '#9e9e9e', '#7a7a7a', 1.5 * s);
+    ctx.save();
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('取消', cancelX + btnW / 2, btnY + cancelOffset + btnH / 2);
+    ctx.restore();
+
+    // 确认按钮
+    const confirmPressed = game._battleHomeConfirmOkPressed || false;
+    const confirmOffset = confirmPressed ? 2 * s : 0;
+    this.parent.roundRect(confirmX, btnY + confirmOffset, btnW, btnH, 8 * s, '#c4a35a');
+    ctx.save();
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('确认', confirmX + btnW / 2, btnY + confirmOffset + btnH / 2);
+    ctx.restore();
+
+    this.battleHomeConfirmCancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
+    this.battleHomeConfirmOkRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
+    ctx.restore();
   }
 }
 

@@ -10,6 +10,7 @@ const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
 const { reportEvent } = require('./js/report');
 const { handleBattleInput } = require('./js/battle/input');
+const { DailyAchievements } = require('./js/daily_achievements');
 
 // 获取 Canvas 上下文
 wx.onShow(() => {
@@ -710,6 +711,9 @@ function startGame() {
   game.renderer = renderer;
   wx.game = game;
 
+  // 恢复每日成就（只恢复今天的，非今天的自动清理）
+  new DailyAchievements(game, true);
+
   // 2026-06-24 优化：进入游戏后再加载音效，homepage 阶段不占用音频实例
   game.initAudio();
 
@@ -818,7 +822,7 @@ wx.onTouchStart((e) => {
   const entryAnimPlaying = renderer._homepageEntryAnim &&
     (Date.now() - renderer._homepageEntryAnim.startTime) < 1200; // 按钮开始弹出后允许交互
   // 对战状态下 homepage 不应拦截触摸（防止翻页/匹配弹窗后 showHomepage 残留导致全屏无响应）
-  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup)) {
+  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
@@ -912,6 +916,47 @@ wx.onTouchStart((e) => {
       game._dailyWordsPopup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
     }
+    return;
+  }
+
+  // 每日成就弹窗交互（优先处理）
+  if (game._dailyAchievementPopup && !game._dailyAchievementPopup.closing) {
+    const daCloseHit = renderer.dailyAchievementCloseRect && renderer.hitTest(x, y, [renderer.dailyAchievementCloseRect]);
+    const daContentHit = renderer.dailyAchievementContentRect && renderer.hitTest(x, y, [renderer.dailyAchievementContentRect]);
+    const giftHit = renderer.dailyAchievementGiftRects && renderer.hitTest(x, y, renderer.dailyAchievementGiftRects);
+    if (giftHit) {
+      const daily = new DailyAchievements(game);
+      const reward = daily.claim(giftHit.index);
+      if (reward !== null) {
+        game.gold = (game.gold || 0) + reward;
+        game._dailyAchievementClaimAnim = { index: giftHit.index, startTime: Date.now() };
+        if (game.audioManager) game.audioManager.play('round_win');
+
+        // 首次领取奖励提示（每个用户只弹一次）
+        if (game.storageManager && !game.storageManager.get('daily_first_claim_toast_shown', false)) {
+          game._dailyAchievementFirstClaimToast = { startTime: Date.now() };
+          game.storageManager.set('daily_first_claim_toast_shown', true);
+        }
+      }
+      return;
+    }
+    if (daCloseHit) {
+      game._dailyAchievementClosePressed = true;
+      return;
+    }
+    if (daContentHit) {
+      game._dailyAchievementScrollState = 'dragging';
+      game._dailyAchievementScrollVelocity = 0;
+      game._dailyAchievementScrollDragStartY = game._dailyAchievementScrollY || 0;
+      game._dailyAchievementScrollTouchStartY = y;
+      game._dailyAchievementScrollLastTouchY = y;
+      game._dailyAchievementScrollLastTime = Date.now();
+      return;
+    }
+    // 点击弹窗外部关闭弹窗
+    game._dailyAchievementPopup.closing = true;
+    game._dailyAchievementPopup.closeStartTime = Date.now();
+    if (game.audioManager) game.audioManager.play('tap');
     return;
   }
 
@@ -1186,6 +1231,36 @@ wx.onTouchMove((e) => {
         longPressTimer = null;
       }
     }
+  }
+
+  // 每日成就弹窗滚动
+  if (game._dailyAchievementPopup && game._dailyAchievementScrollState === 'dragging') {
+    const now = Date.now();
+    const y = touch.clientY;
+    const frameDelta = game._dailyAchievementScrollLastTouchY - y;
+    const totalDelta = game._dailyAchievementScrollTouchStartY - y;
+    const dt = now - game._dailyAchievementScrollLastTime;
+
+    let targetY = game._dailyAchievementScrollDragStartY + totalDelta;
+
+    const maxScroll = game._dailyAchievementMaxScroll || 0;
+    const contentH = 300;
+    if (targetY < 0) {
+      const over = -targetY;
+      targetY = -over * 0.55 * Math.pow(over / contentH, 0.35);
+    } else if (maxScroll > 0 && targetY > maxScroll) {
+      const over = targetY - maxScroll;
+      targetY = maxScroll + over * 0.55 * Math.pow(over / contentH, 0.35);
+    }
+
+    game._dailyAchievementScrollY = targetY;
+
+    if (dt > 0) {
+      game._dailyAchievementScrollVelocity = frameDelta / dt;
+    }
+
+    game._dailyAchievementScrollLastTouchY = y;
+    game._dailyAchievementScrollLastTime = now;
   }
 
   // 今日新词弹窗滚动
@@ -1490,6 +1565,10 @@ wx.onTouchEnd(() => {
         }
       } else if (btnKey === 'ranking') {
         showRankPopup('friend');
+      } else if (btnKey === 'daily') {
+        game._dailyAchievementPopup = { startTime: Date.now() };
+        game._dailyAchievementScrollY = 0;
+        game._dailyAchievementScrollState = null;
       } else if (btnKey === 'study') {
         game._wordBookPopup = { startTime: Date.now() };
         game._wordBookScrollY = 0;
@@ -1513,13 +1592,14 @@ wx.onTouchEnd(() => {
     }
   }
 
-  // 对战模式 top_home 短按返回主页（长按未触发时）
+  // 对战模式 top_home 短按弹出确认弹窗（长按未触发时）
   if (!longPressTriggered && game && game._battleTopHomePressed && renderer.battleRenderer && renderer.battleRenderer.battleTopHomeRect) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
     const homeHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.battleRenderer.battleTopHomeRect]);
     if (homeHit) {
       if (game.audioManager) game.audioManager.play('tap');
-      game.returnToHomepage();
+      game._battleHomeConfirmPopup = true;
+      game._battleHomeConfirmAnimStart = Date.now();
     }
   }
   if (game) game._battleTopHomePressed = false;
@@ -1528,6 +1608,29 @@ wx.onTouchEnd(() => {
     longPressTimer = null;
   }
   longPressTriggered = false;
+
+  // 每日成就弹窗交互处理（松开时）
+  if (game._dailyAchievementPopup) {
+    if (game._dailyAchievementScrollState === 'dragging') {
+      game._dailyAchievementScrollState = 'idle';
+      const maxScroll = game._dailyAchievementMaxScroll || 0;
+      if (game._dailyAchievementScrollY < 0) {
+        game._dailyAchievementScrollState = 'bounce';
+        game._dailyAchievementScrollBounceTarget = 0;
+        game._dailyAchievementScrollBounceStartY = game._dailyAchievementScrollY;
+        game._dailyAchievementScrollBounceStartTime = Date.now();
+      } else if (maxScroll > 0 && game._dailyAchievementScrollY > maxScroll) {
+        game._dailyAchievementScrollState = 'bounce';
+        game._dailyAchievementScrollBounceTarget = maxScroll;
+        game._dailyAchievementScrollBounceStartY = game._dailyAchievementScrollY;
+        game._dailyAchievementScrollBounceStartTime = Date.now();
+      } else if (Math.abs(game._dailyAchievementScrollVelocity) > 0.5) {
+        game._dailyAchievementScrollState = 'inertia';
+      } else {
+        game._dailyAchievementScrollVelocity = 0;
+      }
+    }
+  }
 
   // 今日新词弹窗交互处理（松开时）
   if (game._dailyWordsPopup) {
@@ -1608,6 +1711,17 @@ wx.onTouchEnd(() => {
           query: `from=daily_words&round=${game.round || 1}&score=${game.totalScore || 0}`
         });
       }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
+
+  // 每日成就弹窗关闭
+  if (game._dailyAchievementClosePressed) {
+    game._dailyAchievementClosePressed = false;
+    const hit = renderer.dailyAchievementCloseRect && renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.dailyAchievementCloseRect]);
+    if (hit && game._dailyAchievementPopup) {
+      game._dailyAchievementPopup.closing = true;
+      game._dailyAchievementPopup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
     }
   }
@@ -3750,16 +3864,9 @@ function gameLoop(timestamp) {
       pageFlipState = null;
       showHomepage = false;
       // 双人对战已在点击时初始化，这里只需切到对应状态
-      // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
-      if (targetState === 'battle' && game) {
-        game._battleMatchAnim = {
-          phase: 'matching',
-          startTime: Date.now(),
-          matchDuration: 3000 + Math.floor(Math.random() * 3000),
-          matchedTime: null,
-          opponent: null
-        };
-        if (game.audioManager) game.audioManager.play('cloth_flap');
+      // 临时：跳过对战匹配弹窗，直接开始对战
+      if (targetState === 'battle' && game && game.battleManager) {
+        game.battleManager.finishMatchSetup();
       }
     }
   } else if (showHomepage) {
@@ -3781,8 +3888,13 @@ function gameLoop(timestamp) {
     if (game && game._dailyWordsPopup && renderer._drawDailyWordsPopup) {
       renderer._drawDailyWordsPopup(game);
     }
+    // 每日成就弹窗在主页上叠加绘制
+    if (game && game._dailyAchievementPopup && renderer._drawDailyAchievementPopup) {
+      renderer._drawDailyAchievementPopup(game);
+    }
     // 主页上打开的弹窗滚动物理也需要更新
     if (game) {
+      game._updateDailyAchievementScroll(deltaTime);
       game._updateDailyWordsScroll(deltaTime);
       game._updateWordBookScroll(deltaTime);
       game._updateGlobalRankScroll(deltaTime);

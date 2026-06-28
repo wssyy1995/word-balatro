@@ -275,6 +275,8 @@ class ShopRenderer {
     this.rerollBtnPressed = null; // { pressTime }
     this.challengeBtnPressed = false;
     this.challengeBtnPressTime = 0;
+    this._buySuccessLeftStars = null;
+    this._buySuccessRightStars = null;
   }
 
   draw(ctx, game, W, H, s) {
@@ -1943,7 +1945,7 @@ class ConfirmBuyRenderer {
     const iconData = this.parent.shopCardImages[iconName];
 
     if (isSuccess) {
-      this._drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha);
+      this._drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha, elapsed);
     } else {
       this._drawConfirmPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha);
     }
@@ -1951,7 +1953,7 @@ class ConfirmBuyRenderer {
     ctx.restore();
   }
 
-  _drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha) {
+  _drawSuccessPanel(ctx, game, W, H, s, px, py, pw, ph, item, iconData, contentAlpha, contentYShift, isClosing, closeAlpha, elapsed) {
     const gold = '#c4a35a';
     const darkBlue = '#1a2f4a';
 
@@ -2031,6 +2033,21 @@ class ConfirmBuyRenderer {
     this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
     ctx.restore();
 
+    // === 卡牌左右闪烁星星 ===
+    ctx.save();
+    ctx.globalAlpha = contentAlpha * closeAlpha;
+    const starW = 36 * s;
+    const starH = cardH * 1.1;
+    const leftCX = cardX - 22 * s;
+    const rightCX = cardX + cardW + 22 * s;
+    this._buySuccessLeftStars = this.parent._drawSparkleStars(
+      ctx, leftCX, cardCY, starW, starH, s, elapsed, 6, this._buySuccessLeftStars, 1, 0.75
+    );
+    this._buySuccessRightStars = this.parent._drawSparkleStars(
+      ctx, rightCX, cardCY, starW, starH, s, elapsed, 6, this._buySuccessRightStars, 1, 0.75
+    );
+    ctx.restore();
+
     // === 底部飘带图片 ===
     let bandH = 0;
     if (this.parent.buySuccessBandImg && this.parent.buySuccessBandLoaded) {
@@ -2073,7 +2090,7 @@ class ConfirmBuyRenderer {
     const collectBtnY = py + ph - collectBtnH - 22 * s;
 
     // === 底部分隔线 ===
-    const bottomLineY = collectBtnY - 4 * s;
+    const bottomLineY = collectBtnY - 5 * s;
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;
     ctx.strokeStyle = 'rgba(196,163,90,0.4)';

@@ -142,6 +142,15 @@ class BattleManager {
     g._battleMatchFinished = false;
     g._battleOpponent = null;
     g._battleSeedWords = [];
+    // 清除对战结束弹窗按钮锁，避免重开后按钮无响应
+    g._battleShareBtnLocked = false;
+    g._battleRestartBtnLocked = false;
+    g._battleHomeBtnLocked = false;
+    // 清除回到首页确认弹窗状态
+    g._battleHomeConfirmPopup = false;
+    g._battleHomeConfirmAnimStart = null;
+    g._battleHomeConfirmCancelPressed = false;
+    g._battleHomeConfirmOkPressed = false;
     // 立即初始化第一回合手牌，匹配弹窗弹出时背景已能看到字母卡牌
     this._startRound();
   }
@@ -471,6 +480,8 @@ class BattleManager {
     const g = this.game;
     g.battleMode = false;
     g.state = 'playing';
+    g._battleHomeConfirmPopup = false;
+    g._battleHomeConfirmAnimStart = null;
     this._resetToSinglePlayer();
   }
 

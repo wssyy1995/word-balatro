@@ -6,6 +6,7 @@ const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills
 const { Easing } = require('../animation');
 const { GameOverRenderer } = require('./gameover');
 const { BattleRenderer } = require('../battle/renderer');
+const { DailyAchievements } = require('../daily_achievements');
 
 class Renderer {
   constructor(ctx, width, height) {
@@ -449,6 +450,19 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
+    // 加载对战进度图标（每日成就用）
+    this.battleProgressIcon = null;
+    this.battleProgressIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_progress_icon.png';
+      img.onload = () => { this.battleProgressIconLoaded = true; };
+      img.onerror = () => { this.battleProgressIconLoaded = false; };
+      this.battleProgressIcon = img;
+    } catch (e) {
+      this.battleProgressIconLoaded = false;
+    }
+
     // 加载禁用锁图标
     this.cardDisableIcon = null;
     this.cardDisableIconLoaded = false;
@@ -568,7 +582,7 @@ class Renderer {
     
     // 设置弹窗图标
     this.settingIcons = {};
-    const settingIconNames = ['sound', 'study', 'wordbook', 'rank', 'feedback', 'right'];
+    const settingIconNames = ['sound', 'study', 'feedback', 'right'];
     settingIconNames.forEach(name => {
       try {
         const img = wx.createImage();
@@ -1196,6 +1210,15 @@ class Renderer {
 
     const smallTotalW = smallBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + smallGap * 3;
     let smallX = (W - smallTotalW) / 2;
+
+    // daily 按钮红点：有已完成未领取的每日成就奖励时显示
+    const hasDailyUnclaimed = game && new DailyAchievements(game).hasUnclaimedReward();
+    // daily 是第 3 个小按钮（i=2），等它弹出动画结束后再显示红点
+    const dailyIndex = 2;
+    const dailyDelay = 900 + dailyIndex * 150;
+    const dailyDuration = 550;
+    const dailyBtnReady = elapsed >= entryOffset + dailyDelay + dailyDuration;
+
     smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
       const delay = 900 + i * 150;
@@ -1210,6 +1233,23 @@ class Renderer {
       }
       const floatOffset = Math.sin((Date.now() / 1000) * 1.6) * 1 * s;
       drawImgBtn(img, loaded, cx, smallBtnY + floatOffset, drawW, drawH, key, scale, showGlow, glowAlpha, true);
+
+      // daily 按钮右上角红点（按钮弹出完成后显示）
+      if (key === 'daily' && hasDailyUnclaimed && dailyBtnReady) {
+        const dotR = 6 * s;
+        const dotX = cx + drawW / 2 - dotR - 2 * s;
+        const dotY = smallBtnY + floatOffset - drawH / 2 + dotR + 2 * s;
+        ctx.save();
+        ctx.fillStyle = '#e74c3c';
+        ctx.beginPath();
+        ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5 * s;
+        ctx.stroke();
+        ctx.restore();
+      }
+
       smallX += drawW + smallGap;
     });
   }

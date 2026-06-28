@@ -2,6 +2,7 @@ const { Easing } = require('../animation');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { SHOP_POOL } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
+const { DailyAchievements } = require('../daily_achievements');
 
 module.exports = function extendPopup(Renderer) {
     Renderer.prototype._drawWitchDetailPopup = function(ctx, game, s) {
@@ -2413,6 +2414,335 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillRect(barX - 2 * s, barY + 2 * s, 4 * s, barH - 4 * s);
         ctx.restore();
       }
+    };
+
+    // ===== 每日成就大弹窗 =====
+    Renderer.prototype._drawDailyAchievementPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._dailyAchievementPopup;
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: popup.closing || false,
+        closeStartTime: popup.closeStartTime,
+        width: 340, height: 560, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        onCloseComplete: () => { game._dailyAchievementPopup = null; }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+      const ca = closeAlpha;
+
+      // 标题
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleY = py + 30 * s + titleAnim.yShift;
+      ctx.fillText('每日成就', W / 2, titleY);
+      // 标题左右小菱形装饰
+      const titleWidth = ctx.measureText('每日成就').width;
+      ctx.font = `${Math.floor(10 * s)}px sans-serif`;
+      ctx.fillStyle = '#a09070';
+      const dw = ctx.measureText('✦').width;
+      const diamondGap = 15 * s;
+      ctx.fillText('✦', W / 2 - titleWidth / 2 - diamondGap - dw / 2, titleY);
+      ctx.fillText('✦', W / 2 + titleWidth / 2 + diamondGap + dw / 2, titleY);
+      ctx.restore();
+
+      // 首次领取奖励提示 toast
+      if (game._dailyAchievementFirstClaimToast) {
+        const toastElapsed = Date.now() - game._dailyAchievementFirstClaimToast.startTime;
+        const toastDuration = 2500;
+        if (toastElapsed >= toastDuration) {
+          game._dailyAchievementFirstClaimToast = null;
+        } else {
+          let toastAlpha = 1;
+          let toastOffsetY = 0;
+          if (toastElapsed < 200) {
+            const t = toastElapsed / 200;
+            toastAlpha = t;
+            toastOffsetY = (1 - t) * 8 * s;
+          } else if (toastElapsed > 2200) {
+            const t = (toastElapsed - 2200) / 300;
+            toastAlpha = 1 - t;
+          }
+          const toastText = '金币奖励已到账，前往通关模式查看';
+          ctx.font = `${Math.floor(12 * s)}px ${this.titleFontFamily}`;
+          const textW = ctx.measureText(toastText).width;
+          const toastPadX = 12 * s;
+          const toastPadY = 6 * s;
+          const toastW = textW + toastPadX * 2;
+          const toastH = 22 * s;
+          const toastX = (W - toastW) / 2;
+          const toastY = titleY + 20 * s + toastOffsetY;
+          ctx.save();
+          ctx.globalAlpha = toastAlpha * ca;
+          this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, '#4a7c4a', '#3a633a', 1 * s);
+          ctx.font = `${Math.floor(12 * s)}px ${this.titleFontFamily}`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(toastText, W / 2, toastY + toastH / 2);
+          ctx.restore();
+        }
+      }
+
+      // 成就任务数据
+      const dailyAchievements = new DailyAchievements(game);
+      const tasks = dailyAchievements.getTasks();
+
+      // 内容区域
+      const contentTop = py + 62 * s;
+      const contentBottom = py + ph - 24 * s;
+      const contentH = contentBottom - contentTop;
+      const rowH = 76 * s;
+      const rowGap = 10 * s;
+      const totalRowsH = tasks.length * rowH + (tasks.length - 1) * rowGap;
+
+      // 滚动
+      let scrollY = game._dailyAchievementScrollY || 0;
+      const maxScroll = Math.max(0, totalRowsH - contentH);
+      scrollY = Math.max(0, Math.min(scrollY, maxScroll));
+      game._dailyAchievementScrollY = scrollY;
+
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.beginPath();
+      ctx.rect(px + 10 * s, contentTop, pw - 20 * s, contentH);
+      ctx.clip();
+
+      const rowW = pw - 32 * s;
+      const rowX = px + 16 * s;
+
+      this.dailyAchievementGiftRects = [];
+
+      // 领取按钮弹出动画
+      const claimAnim = game._dailyAchievementClaimAnim;
+      let claimAnimScale = 1;
+      if (claimAnim) {
+        const claimElapsed = Date.now() - claimAnim.startTime;
+        if (claimElapsed >= 350) {
+          game._dailyAchievementClaimAnim = null;
+        } else {
+          claimAnimScale = Easing.easeOutBack(Math.min(claimElapsed / 300, 1));
+        }
+      }
+
+      tasks.forEach((task, i) => {
+        const rowY = contentTop + i * (rowH + rowGap) - scrollY;
+        if (rowY + rowH < contentTop || rowY > contentBottom) return;
+
+        // 行背景（切角八角形，参考对战面板）
+        const corner = 8 * s;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(rowX + corner, rowY);
+        ctx.lineTo(rowX + rowW - corner, rowY);
+        ctx.lineTo(rowX + rowW, rowY + corner);
+        ctx.lineTo(rowX + rowW, rowY + rowH - corner);
+        ctx.lineTo(rowX + rowW - corner, rowY + rowH);
+        ctx.lineTo(rowX + corner, rowY + rowH);
+        ctx.lineTo(rowX, rowY + rowH - corner);
+        ctx.lineTo(rowX, rowY + corner);
+        ctx.closePath();
+        ctx.fillStyle = '#f5f0e6';
+        ctx.fill();
+        ctx.strokeStyle = '#e8e0d0';
+        ctx.lineWidth = 1 * s;
+        ctx.stroke();
+        ctx.restore();
+
+        // 左侧图标
+        let iconSize = 28 * s;
+        if (task.imgKey === 'battle_progress_icon') {
+          iconSize = 32 * s;
+        }
+        const iconX = rowX + 30 * s - iconSize / 2;
+        const iconY = rowY + rowH / 2 - iconSize / 2;
+        ctx.save();
+        let iconImg = null;
+        if (task.imgKey === 'battle_progress_icon' && this.battleProgressIcon && this.battleProgressIconLoaded) {
+          iconImg = this.battleProgressIcon;
+        } else if (task.imgKey === 'battle_match_sword' && this.battleMatchSword && this.battleMatchSwordLoaded) {
+          iconImg = this.battleMatchSword;
+        } else if (task.imgKey === 'study_toast_star' && this.toastStarIcon && this.toastStarIcon.loaded) {
+          iconImg = this.toastStarIcon.img;
+        }
+        if (iconImg && iconImg.width > 0) {
+          ctx.drawImage(iconImg, iconX, iconY, iconSize, iconSize);
+        } else {
+          ctx.font = `${Math.floor(28 * s)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(task.icon, rowX + 30 * s, rowY + rowH / 2);
+        }
+        ctx.restore();
+
+        // 任务名称
+        ctx.save();
+        ctx.font = `bold ${Math.floor(15 * s)}px ${this.titleFontFamily}`;
+        ctx.fillStyle = '#4a3420';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(task.name, rowX + 60 * s, rowY + 24 * s);
+        ctx.restore();
+
+        // 进度条
+        const barW = rowW - 170 * s;
+        const barH = 12 * s;
+        const barX = rowX + 60 * s;
+        const barY = rowY + 46 * s;
+        const ratio = Math.min(task.current / task.target, 1);
+        this.roundRect(barX, barY, barW, barH, barH / 2, '#6b4a2a', '#523820', 1 * s);
+        if (ratio > 0) {
+          const filledW = barW * ratio;
+          this.roundRect(barX, barY, filledW, barH, barH / 2, '#b5c93a', null, 0);
+
+          // 顶部高光，营造凸起立体感
+          ctx.save();
+          const highlightH = barH * 0.5;
+          const grad = ctx.createLinearGradient(barX, barY, barX, barY + highlightH);
+          grad.addColorStop(0, 'rgba(255,255,255,0.5)');
+          grad.addColorStop(0.6, 'rgba(255,255,255,0.15)');
+          grad.addColorStop(1, 'rgba(255,255,255,0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(barX, barY + barH / 2);
+          ctx.arcTo(barX, barY, barX + filledW, barY, barH / 2);
+          ctx.arcTo(barX + filledW, barY, barX + filledW, barY + barH, barH / 2);
+          ctx.lineTo(barX + filledW, barY + highlightH);
+          ctx.lineTo(barX, barY + highlightH);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // 进度文字
+        ctx.save();
+        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`${task.current}/${task.target}`, barX + barW / 2, barY + barH / 2);
+        ctx.restore();
+
+        // 金币奖励 / 礼盒 / 已领取
+        const isCompleted = task.isCompleted;
+        const isClaimed = task.isClaimed;
+        const rewardRight = rowX + rowW - 14 * s;
+
+        if (isCompleted && !isClaimed) {
+          // 已完成未领取：显示居中大礼盒（呼吸缩放）
+          const giftSize = 36 * s;
+          const giftX = rewardRight - giftSize;
+          const giftY = rowY + rowH / 2 - giftSize / 2;
+          const breath = 1 + 0.08 * Math.sin(Date.now() / 400);
+          ctx.save();
+          ctx.globalAlpha = ca;
+          ctx.translate(giftX + giftSize / 2, giftY + giftSize / 2);
+          ctx.scale(breath, breath);
+          if (this.witchGiftIcon && this.witchGiftIconLoaded && this.witchGiftIcon.width > 0) {
+            ctx.drawImage(this.witchGiftIcon, -giftSize / 2, -giftSize / 2, giftSize, giftSize);
+          } else {
+            ctx.fillStyle = '#c4a35a';
+            ctx.fillRect(-giftSize / 2, -giftSize / 2, giftSize, giftSize);
+          }
+          ctx.restore();
+          this.dailyAchievementGiftRects.push({ x: giftX, y: giftY, w: giftSize, h: giftSize, index: i, reward: task.reward });
+        } else if (isCompleted && isClaimed) {
+          // 已领取：显示灰色按钮（带弹出缩放动画）
+          const btnW = 66 * s;
+          const btnH = 28 * s;
+          const btnX = rewardRight - btnW;
+          const btnY = rowY + rowH / 2 - btnH / 2;
+          const btnScale = (claimAnim && claimAnim.index === i) ? claimAnimScale : 1;
+          ctx.save();
+          ctx.translate(btnX + btnW / 2, btnY + btnH / 2);
+          ctx.scale(btnScale, btnScale);
+          this.roundRect(-btnW / 2, -btnH / 2, btnW, btnH, 6 * s, '#b8b0a0', '#a09888', 1 * s);
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('已领取', 0, 0);
+          ctx.restore();
+        } else {
+          // 未完成：显示 coin + 数量
+          const coinSize = 20 * s;
+          const coinX = rewardRight - coinSize - 38 * s;
+          const coinY = rowY + rowH / 2 - coinSize / 2;
+          if (this.coinIcon && this.coinIconLoaded && this.coinIcon.width > 0) {
+            ctx.drawImage(this.coinIcon, coinX, coinY, coinSize, coinSize);
+          } else {
+            ctx.fillStyle = '#d4a017';
+            ctx.beginPath();
+            ctx.arc(coinX + coinSize / 2, coinY + coinSize / 2, coinSize / 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.save();
+          ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+          ctx.fillStyle = '#8a6d3b';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`×${task.reward}`, coinX + coinSize + 6 * s, coinY + coinSize / 2);
+          ctx.restore();
+        }
+      });
+
+      ctx.restore();
+
+      game._dailyAchievementMaxScroll = maxScroll;
+
+      // 滚动条
+      if (maxScroll > 0) {
+        const barH = Math.max(20 * s, contentH * contentH / (contentH + maxScroll));
+        const barY = contentTop + (contentH - barH) * (scrollY / maxScroll);
+        const barX = px + pw - 12 * s;
+        ctx.save();
+        ctx.globalAlpha = 0.5 * ca;
+        ctx.fillStyle = '#a88b5c';
+        this.roundRect(barX - 2 * s, barY, 4 * s, barH, 2 * s, '#a88b5c');
+        ctx.restore();
+      }
+
+      // 关闭按钮（棕色圆圈 + 白色 ×，与学习模式一致）
+      const closeSize = 26 * s;
+      const closeX = px + pw - closeSize - 12 * s;
+      const closeY = py + 12 * s;
+      const closePressOffset = game._dailyAchievementClosePressed ? 1 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.fillStyle = '#8b6914';
+      ctx.beginPath();
+      ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2 + closePressOffset, closeSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.floor(closeSize * 0.55)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s + closePressOffset);
+      ctx.restore();
+      this.dailyAchievementCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+      this.dailyAchievementContentRect = { x: px + 10 * s, y: contentTop, w: pw - 20 * s, h: contentH };
+
+      // 底部提示文字
+      ctx.save();
+      ctx.globalAlpha = 0.7 * ca;
+      ctx.font = `${Math.floor(12 * s)}px ${this.titleFontFamily}`;
+      ctx.fillStyle = '#8a8070';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('完成任务，每天积累成长！', W / 2, py + ph - 16 * s);
+      ctx.restore();
     };
 
 };

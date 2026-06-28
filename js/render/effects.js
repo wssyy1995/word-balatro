@@ -989,6 +989,64 @@ module.exports = function extendEffects(Renderer) {
       ctx.fill();
     }
 
+    // 通用闪烁星星组（可控制数量）
+    // stars: 调用方维护的状态数组，方法会在长度不符时重新生成并返回
+    Renderer.prototype._drawSparkleStars = function(ctx, cx, cy, width, height, s, elapsed, count, stars, closeAlpha = 1, scale = 1) {
+      if (!stars || stars.length !== count) {
+        stars = Array.from({ length: count }, () => ({
+          x: (Math.random() * 2 - 1) * 0.9,
+          y: (Math.random() * 2 - 1) * 0.9,
+          r: 1.5 + Math.random() * 3,
+          phase: Math.random() * Math.PI * 2,
+          speed: 1 + Math.random() * 2.5,
+          alpha: 0.3 + Math.random() * 0.7
+        }));
+      }
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      stars.forEach((star) => {
+        const sx = cx + star.x * width * 0.5;
+        const sy = cy + star.y * height * 0.5;
+        const twinkle = (Math.sin(elapsed * 0.003 * star.speed + star.phase) + 1) / 2;
+        const alpha = star.alpha * (0.25 + twinkle * 0.85) * closeAlpha;
+        const r = star.r * s * (0.65 + twinkle * 0.7) * scale;
+        const rotation = elapsed * 0.0005 + star.phase;
+
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(rotation);
+        ctx.strokeStyle = `rgba(255, 243, 177, ${alpha})`;
+        ctx.fillStyle = `rgba(255, 204, 67, ${alpha})`;
+        ctx.lineWidth = Math.max(1 * s, r * 0.15);
+        ctx.shadowColor = 'rgba(255, 190, 45, 0.7)';
+        ctx.shadowBlur = r * 1.6;
+
+        // 十字星主体
+        ctx.beginPath();
+        ctx.moveTo(0, -r * 1.8);
+        ctx.quadraticCurveTo(r * 0.22, -r * 0.22, r * 1.8, 0);
+        ctx.quadraticCurveTo(r * 0.22, r * 0.22, 0, r * 1.8);
+        ctx.quadraticCurveTo(-r * 0.22, r * 0.22, -r * 1.8, 0);
+        ctx.quadraticCurveTo(-r * 0.22, -r * 0.22, 0, -r * 1.8);
+        ctx.closePath();
+        ctx.fill();
+
+        // 十字线
+        ctx.beginPath();
+        ctx.moveTo(-r * 2.4, 0);
+        ctx.lineTo(r * 2.4, 0);
+        ctx.moveTo(0, -r * 2.4);
+        ctx.lineTo(0, r * 2.4);
+        ctx.stroke();
+        ctx.restore();
+      });
+
+      ctx.restore();
+      return stars;
+    }
+
     Renderer.prototype._drawGentleStars = function(cx, cy, size, s, globalAlpha = 1, glowMult = 1, theme = 'purple') {
       const ctx = this.ctx;
       const now = Date.now();

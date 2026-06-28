@@ -13,6 +13,7 @@ const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = req
 const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
 const { reportEvent } = require('./report');
 const { BattleManager } = require('./battle');
+const { DailyAchievements } = require('./daily_achievements');
 
 // 把 wx.request 包成标准 Promise（RequestTask 直接用 await 会挂住）
 function requestPromise(options) {
@@ -2434,6 +2435,10 @@ class Game {
         this._delay(() => {
           this.state = 'gameover';
           this.gameOverReason = 'forbidden_word';
+          if (this._dailyAchievements) {
+            this._dailyAchievements.currentConsecutiveRounds = 0;
+            new DailyAchievements(this).save();
+          }
           if (this.audioManager) this.audioManager.play('game_over');
           if (this.storageManager) {
             this._uploadRankData();
@@ -2473,6 +2478,10 @@ class Game {
           this._delay(() => {
             this.state = 'gameover';
             this.gameOverReason = 'out_of_hands';
+            if (this._dailyAchievements) {
+              this._dailyAchievements.currentConsecutiveRounds = 0;
+              new DailyAchievements(this).save();
+            }
             if (this.audioManager) this.audioManager.play('game_over');
             if (this.storageManager) {
               this._uploadRankData();
@@ -2522,6 +2531,10 @@ class Game {
             this._delay(() => {
               this.state = 'gameover';
               this.gameOverReason = 'out_of_hands';
+              if (this._dailyAchievements) {
+                this._dailyAchievements.currentConsecutiveRounds = 0;
+                new DailyAchievements(this).save();
+              }
               if (this.audioManager) this.audioManager.play('game_over');
               if (this.storageManager) {
                 this._uploadRankData();
@@ -2816,6 +2829,10 @@ class Game {
       if (!triggered) {
         this.state = 'gameover';
         this.gameOverReason = 'out_of_hands';
+        if (this._dailyAchievements) {
+          this._dailyAchievements.currentConsecutiveRounds = 0;
+          new DailyAchievements(this).save();
+        }
         if (this.audioManager) this.audioManager.play('game_over');
         if (this.storageManager) {
           this._uploadRankData();
@@ -2956,6 +2973,11 @@ class Game {
       "round": this.round,
       "userid": this.userid || ''
     });
+
+    // 更新每日成就：连续通关回合数
+    const dailyAchievements = new DailyAchievements(this);
+    dailyAchievements.addProgress('currentConsecutiveRounds');
+    dailyAchievements.setProgress('consecutiveRounds', dailyAchievements.game._dailyAchievements.currentConsecutiveRounds);
 
     if (this.audioManager) this.audioManager.play('round_win');
     let baseGold = 2;
@@ -3640,6 +3662,47 @@ class Game {
         this._wordBookScrollY = target;
         this._wordBookScrollState = 'idle';
         this._wordBookScrollVelocity = 0;
+      }
+    }
+  }
+
+  // 每日成就弹窗滚动物理更新（惯性滚动 + 边界回弹）
+  _updateDailyAchievementScroll(deltaTime) {
+    if (!this._dailyAchievementPopup) return;
+    if (this._dailyAchievementScrollState === 'dragging') return;
+
+    const maxScroll = this._dailyAchievementMaxScroll || 0;
+    const state = this._dailyAchievementScrollState;
+
+    // 惯性滚动
+    if (state === 'inertia') {
+      const dt = Math.min(deltaTime, 32);
+      this._dailyAchievementScrollY += this._dailyAchievementScrollVelocity * dt;
+      this._dailyAchievementScrollVelocity *= Math.pow(0.92, dt / 16);
+
+      if (this._dailyAchievementScrollY < 0 || this._dailyAchievementScrollY > maxScroll) {
+        this._dailyAchievementScrollState = 'bounce';
+        this._dailyAchievementScrollBounceTarget = this._dailyAchievementScrollY < 0 ? 0 : maxScroll;
+      } else if (Math.abs(this._dailyAchievementScrollVelocity) < 0.05) {
+        this._dailyAchievementScrollState = 'idle';
+        this._dailyAchievementScrollVelocity = 0;
+      }
+    }
+
+    // 边界回弹
+    if (state === 'bounce') {
+      const target = this._dailyAchievementScrollBounceTarget || 0;
+      const startY = this._dailyAchievementScrollBounceStartY || target;
+      const elapsed = Date.now() - (this._dailyAchievementScrollBounceStartTime || Date.now());
+      const duration = 450;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = Easing.easeOutBack(progress);
+      this._dailyAchievementScrollY = startY + (target - startY) * eased;
+
+      if (progress >= 1) {
+        this._dailyAchievementScrollY = target;
+        this._dailyAchievementScrollState = 'idle';
+        this._dailyAchievementScrollVelocity = 0;
       }
     }
   }

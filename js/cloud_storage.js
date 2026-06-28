@@ -144,7 +144,9 @@ class CloudStorageManager {
       'battle_rival_word_bg': c('/battle/battle_rival_word_bg.png'),
       'battle_pop_share': c('/battle/battle_pop_share.png'),
       'battle_pop_restart': c('/battle/battle_pop_restart.png'),
-      'battle_pop_backto_homepage': c('/battle/battle_pop_backto_homepage.png')
+      'battle_pop_backto_homepage': c('/battle/battle_pop_backto_homepage.png'),
+      'battle_pop_success': c('/battle/battle_pop_success.png'),
+      'battle_pop_fail': c('/battle/battle_pop_fail.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -181,6 +183,7 @@ class CloudStorageManager {
       'homepage_big_button': c('/music/sound_effect/homepage_big_button.mp3'),
       'battle_match_sccess': c('/music/sound_effect/battle_match_sccess.mp3'),
       'battle_matching': c('/music/sound_effect/battle/battle_matching.mp3'),
+      'battle_pop_success': c('/music/sound_effect/battle/battle_pop_success.mp3'),
       'cloth_flap': c('/music/sound_effect/cloth_flap.mp3'),
       'battle_countdown': c('/music/sound_effect/battle_countdown.mp3'),
       'battle_play_card': c('/music/sound_effect/battle_play_card.mp3')
