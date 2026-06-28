@@ -1,6 +1,7 @@
 // ===== Renderer 组装入口 =====
 const { Renderer } = require('./base');
 const { WITCH_SKILLS, getSkillForLevel } = require('../witch_skills');
+const { Easing } = require('../animation');
 
 require('./effects')(Renderer);
 require('./animation')(Renderer);
@@ -845,6 +846,11 @@ Renderer.prototype.render = function(game) {
     // hintToast 提示（绘制在所有弹窗之上，确保弹窗打开时也能看到）
     this._drawHintToast(game);
 
+    // 游戏启动时头像昵称授权底部弹窗背景（原生按钮在上层）
+    if (game._showingProfileAuthButton) {
+      this._drawProfileAuthPopup(ctx, game, W, H, s);
+    }
+
     // 今日新词弹窗
     if (game._dailyWordsPopup) {
       this._drawDailyWordsPopup(game);
@@ -1436,6 +1442,66 @@ Renderer.prototype.render = function(game) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(player.wordCount), rowX + rowW * 0.86, rowY + rowH / 2);
+    ctx.restore();
+  };
+
+  // ===== 游戏启动时头像昵称授权底部弹窗背景 =====
+  Renderer.prototype._drawProfileAuthPopup = function(ctx, game, W, H, s) {
+    const rect = {
+      panelW: Math.min(W * 0.88, 320 * s),
+      panelH: 210 * s,
+    };
+    rect.panelX = (W - rect.panelW) / 2;
+    rect.panelY = H - rect.panelH - 24 * s;
+    const { panelX, panelY, panelW, panelH } = rect;
+
+    // 进入动画：从底部滑入
+    let animOffsetY = 0;
+    let animAlpha = 1;
+    if (game._showingProfileAuthButton && game._showingProfileAuthButton.startTime) {
+      const elapsed = Date.now() - game._showingProfileAuthButton.startTime;
+      const duration = 350;
+      if (elapsed < duration) {
+        const t = Math.min(elapsed / duration, 1);
+        const eased = Easing.easeOutBack(t);
+        animOffsetY = (1 - eased) * panelH;
+        animAlpha = t * (2 - t);
+      }
+    }
+
+    ctx.save();
+    ctx.globalAlpha = animAlpha;
+    ctx.translate(0, animOffsetY);
+
+    // 黑色半透明蒙层
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, W, H);
+
+    // 弹窗背景
+    const r = 16 * s;
+    const grad = ctx.createLinearGradient(0, panelY, 0, panelY + panelH);
+    grad.addColorStop(0, '#fffdf8');
+    grad.addColorStop(1, '#f5efe3');
+    this.roundRect(panelX, panelY, panelW, panelH, r, grad, '#c4a35a', 1.5 * s);
+
+    // 标题
+    const titleY = panelY + 36 * s;
+    const titleFont = '"Source Han Serif SC", "Noto Serif SC", "SimSun", serif';
+    ctx.font = `bold ${Math.floor(18 * s)}px ${titleFont}`;
+    ctx.fillStyle = '#5a3e1f';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('授权头像昵称', panelX + panelW / 2, titleY);
+
+    // 说明文本
+    const descY = titleY + 32 * s;
+    ctx.font = `${Math.floor(13 * s)}px ${this.titleFontFamily || 'sans-serif'}`;
+    ctx.fillStyle = '#7a6a5a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('授权后可在排行榜和对战中展示你的头像', panelX + panelW / 2, descY);
+    ctx.fillText('点击下方按钮完成授权', panelX + panelW / 2, descY + 20 * s);
+
     ctx.restore();
   };
 

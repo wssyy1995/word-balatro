@@ -1588,6 +1588,8 @@ class Game {
     this._globalRankError = null;
     this._globalProfileRequested = false;
     this._showingGlobalAuthButton = false;
+    this._showingProfileAuthButton = false;
+    this._profileAuthCompleted = false;
     // 全国榜滚动状态
     this._globalRankScrollY = 0;
     this._globalRankMaxScroll = 0;
@@ -4125,8 +4127,9 @@ class Game {
       }
     });
 
-    // 获得当前分数 1/5 的金币（向下取整）
-    const goldReward = Math.floor(oldScore / 5);
+    // 获得（当前分数 - 基础分）差值 1/5 的金币（向下取整）
+    const diffScore = Math.max(0, oldScore - base);
+    const goldReward = Math.floor(diffScore / 5);
     this.gold += goldReward;
 
     this._starlightWashAnim = {

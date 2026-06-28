@@ -105,7 +105,8 @@ wx.onKeyboardConfirm(() => {
 // ===== 排行榜相关 =====
 let openDataContext = null;
 let isRankShowing = false;
-let globalAuthButton = null; // wx.createUserInfoButton 实例
+let globalAuthButton = null; // 全国榜授权按钮（wx.createUserInfoButton）
+let profileAuthButton = null; // 游戏启动时头像昵称授权按钮（wx.createUserInfoButton）
 
 function getOpenDataContext() {
   if (!openDataContext && wx.getOpenDataContext) {
@@ -143,6 +144,21 @@ function calcGlobalAuthButtonRect() {
   const btnX = rect.panelX + (rect.panelW - btnW) / 2;
   const btnY = rect.contentY + rect.contentH / 2 - btnH / 2;
   return { x: btnX, y: btnY, w: btnW, h: btnH };
+}
+
+function calcProfileAuthButtonRect() {
+  const s = renderer ? renderer.scale || 1 : 1;
+  const W = canvas ? canvas.width / scaleDpr : 375;
+  const H = canvas ? canvas.height / scaleDpr : 667;
+  const panelW = Math.min(W * 0.88, 320 * s);
+  const panelH = 210 * s;
+  const panelX = (W - panelW) / 2;
+  const panelY = H - panelH - 24 * s;
+  const btnW = 220 * s;
+  const btnH = 46 * s;
+  const btnX = panelX + (panelW - btnW) / 2;
+  const btnY = panelY + panelH - 28 * s - btnH;
+  return { x: btnX, y: btnY, w: btnW, h: btnH, panelX, panelY, panelW, panelH, s, W, H };
 }
 
 function showRankList(panelRect) {
@@ -400,6 +416,124 @@ function destroyGlobalAuthButton() {
   if (game) game._showingGlobalAuthButton = false;
 }
 
+function showProfileAuthButton() {
+  if (!game) return;
+  if (!wx.createUserInfoButton) {
+    console.warn('[ProfileAuth] 当前环境不支持 createUserInfoButton');
+    game._profileAuthCompleted = true;
+    return;
+  }
+
+  destroyProfileAuthButton();
+
+  const rect = calcProfileAuthButtonRect();
+  console.log('[ProfileAuth] 创建头像昵称授权按钮', rect);
+
+  game._showingProfileAuthButton = { startTime: Date.now() };
+  profileAuthButton = wx.createUserInfoButton({
+    type: 'text',
+    text: '授权头像昵称',
+    style: {
+      left: rect.x,
+      top: rect.y,
+      width: rect.w,
+      height: rect.h,
+      lineHeight: rect.h,
+      backgroundColor: '#c4a35a',
+      color: '#ffffff',
+      textAlign: 'center',
+      fontSize: 16,
+      borderRadius: Math.floor(rect.h / 2),
+    }
+  });
+
+  profileAuthButton.onTap((res) => {
+    console.log('[ProfileAuth] 授权按钮点击', res);
+    const userInfo = res.userInfo || {};
+    destroyProfileAuthButton();
+
+    if (userInfo.avatarUrl && userInfo.nickName) {
+      try {
+        wx.setStorageSync('userInfo', userInfo);
+      } catch (e) {}
+      // 通知对战渲染器刷新自身头像
+      if (renderer && renderer.battleRenderer) {
+        renderer.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
+      }
+      game.hintToast = { text: '授权成功', expireAt: Date.now() + 2000, startTime: Date.now() };
+    } else {
+      game.hintToast = { text: '授权失败，可在排行榜中再次授权', expireAt: Date.now() + 2500, startTime: Date.now() };
+    }
+    game._profileAuthCompleted = true;
+  });
+
+  profileAuthButton.show();
+}
+
+function destroyProfileAuthButton() {
+  if (profileAuthButton) {
+    try {
+      profileAuthButton.destroy();
+    } catch (e) {
+      console.warn('[ProfileAuth] 销毁授权按钮异常', e);
+    }
+    profileAuthButton = null;
+  }
+  if (game) game._showingProfileAuthButton = false;
+}
+
+async function requestPrivacyAndProfile() {
+  if (!game) return;
+  // 已经授权过头像昵称或已完成本次流程，直接跳过
+  if (game._profileAuthCompleted) return;
+
+  const isAuth = await checkUserInfoAuth();
+  if (isAuth) {
+    game._profileAuthCompleted = true;
+    return;
+  }
+
+  // 未授权：先处理隐私保护提示，再展示头像昵称授权弹窗
+  if (!wx.getPrivacySetting) {
+    // 不支持隐私设置 API，直接展示授权弹窗
+    showProfileAuthButton();
+    return;
+  }
+
+  wx.getPrivacySetting({
+    success: (res) => {
+      console.log('[ProfileAuth] 隐私设置', res);
+      if (!res.needAuthorization) {
+        // 不需要隐私授权，直接展示头像昵称授权弹窗
+        showProfileAuthButton();
+        return;
+      }
+
+      // 需要隐私授权：触发微信框架自带隐私保护提示，用户点击同意后展示头像昵称授权弹窗
+      if (wx.requirePrivacyAuthorize) {
+        wx.requirePrivacyAuthorize({
+          success: () => {
+            console.log('[ProfileAuth] 隐私授权成功，展示头像昵称授权弹窗');
+            // 用户在微信自带隐私弹窗中点击同意后，再弹出头像昵称授权
+            showProfileAuthButton();
+          },
+          fail: (err) => {
+            console.warn('[ProfileAuth] 隐私授权失败', err);
+            // 不标记完成，下次启动可再次尝试
+          }
+        });
+      } else {
+        // 不支持 requirePrivacyAuthorize，直接展示授权弹窗
+        showProfileAuthButton();
+      }
+    },
+    fail: (err) => {
+      console.warn('[ProfileAuth] getPrivacySetting 失败', err);
+      showProfileAuthButton();
+    }
+  });
+}
+
 async function loadGlobalRank(requestProfile = true) {
   if (!game) return;
 
@@ -556,6 +690,12 @@ async function startPreload() {
     console.error('[Update] 更新管理器初始化失败:', e);
   }
 
+  // 提前初始化 game 实例，使预加载页也能显示头像昵称授权弹窗
+  initGameInstance();
+
+  // 游戏启动后尽早触发隐私授权流程：预加载页即可展示头像昵称授权弹窗
+  requestPrivacyAndProfile();
+
   // 上报用户登录信息（fire-and-forget，不阻塞预加载）
   try {
     wx.cloud.callFunction({
@@ -678,7 +818,7 @@ async function startPreload() {
   console.log('[Game] 云图片预加载完成，进入主页');
 }
 
-function startGame() {
+function initGameInstance() {
   const storage = new StorageManager();
   const saved = storage.loadProgress();
 
@@ -710,6 +850,14 @@ function startGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+  return game;
+}
+
+function startGame() {
+  // 如果预加载阶段已提前创建 game，则复用；否则重新创建
+  if (!game) {
+    initGameInstance();
+  }
 
   // 恢复每日成就（只恢复今天的，非今天的自动清理）
   new DailyAchievements(game, true);
@@ -782,6 +930,9 @@ function startGame() {
       };
     }
   });
+
+  // 游戏启动后：隐私授权同意后，弹出底部头像昵称授权弹窗
+  requestPrivacyAndProfile();
 }
 
 // 长按检测状态
@@ -805,7 +956,8 @@ function getInputY(x, y) {
     (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) ||
     game._newWitchCardPopup ||
     (game._lifeExtensionAnim && Date.now() - game._lifeExtensionAnim.startTime >= 1000) ||
-    (renderer && renderer.debugMenuOpen)
+    (renderer && renderer.debugMenuOpen) ||
+    (game._showingProfileAuthButton && !game._profileAuthCompleted)
   );
   return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended')) ? y - 10 : y;
 }
@@ -822,7 +974,8 @@ wx.onTouchStart((e) => {
   const entryAnimPlaying = renderer._homepageEntryAnim &&
     (Date.now() - renderer._homepageEntryAnim.startTime) < 1200; // 按钮开始弹出后允许交互
   // 对战状态下 homepage 不应拦截触摸（防止翻页/匹配弹窗后 showHomepage 残留导致全屏无响应）
-  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup)) {
+  // 头像昵称授权弹窗打开时也不拦截，避免误触主页按钮
+  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup) && !(game && game._showingProfileAuthButton && !game._profileAuthCompleted)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
@@ -932,9 +1085,13 @@ wx.onTouchStart((e) => {
         game._dailyAchievementClaimAnim = { index: giftHit.index, startTime: Date.now() };
         if (game.audioManager) game.audioManager.play('round_win');
 
-        // 首次领取奖励提示（每个用户只弹一次）
+        // 首次领取奖励提示（每个用户只弹一次），使用通用 hintToast 模板
         if (game.storageManager && !game.storageManager.get('daily_first_claim_toast_shown', false)) {
-          game._dailyAchievementFirstClaimToast = { startTime: Date.now() };
+          game.hintToast = {
+            text: '金币奖励已到账，前往通关模式查看',
+            expireAt: Date.now() + 2500,
+            startTime: Date.now()
+          };
           game.storageManager.set('daily_first_claim_toast_shown', true);
         }
       }
@@ -3818,6 +3975,8 @@ function restartGame() {
     renderer.gameOverRenderer.lastGameOverReason = null;
     renderer.gameOverRenderer.animStartTime = null;
   }
+  // 清理启动时授权弹窗
+  destroyProfileAuthButton();
   game = new Game();
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
@@ -3864,9 +4023,16 @@ function gameLoop(timestamp) {
       pageFlipState = null;
       showHomepage = false;
       // 双人对战已在点击时初始化，这里只需切到对应状态
-      // 临时：跳过对战匹配弹窗，直接开始对战
-      if (targetState === 'battle' && game && game.battleManager) {
-        game.battleManager.finishMatchSetup();
+      // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
+      if (targetState === 'battle' && game) {
+        game._battleMatchAnim = {
+          phase: 'matching',
+          startTime: Date.now(),
+          matchDuration: 3000 + Math.floor(Math.random() * 3000),
+          matchedTime: null,
+          opponent: null
+        };
+        if (game.audioManager) game.audioManager.play('cloth_flap');
       }
     }
   } else if (showHomepage) {
@@ -3892,6 +4058,10 @@ function gameLoop(timestamp) {
     if (game && game._dailyAchievementPopup && renderer._drawDailyAchievementPopup) {
       renderer._drawDailyAchievementPopup(game);
     }
+    // 头像昵称授权底部弹窗背景在主页上叠加绘制（原生按钮在上层）
+    if (game && game._showingProfileAuthButton && renderer._drawProfileAuthPopup) {
+      renderer._drawProfileAuthPopup(renderer.ctx, game, renderer.W, renderer.H, renderer.scale);
+    }
     // 主页上打开的弹窗滚动物理也需要更新
     if (game) {
       game._updateDailyAchievementScroll(deltaTime);
@@ -3902,6 +4072,10 @@ function gameLoop(timestamp) {
   } else if (!preloadComplete) {
     // 预加载阶段：绘制预加载页
     renderer.drawPreviewLoad(preloadProgress);
+    // 预加载期间也可能显示头像昵称授权底部弹窗背景
+    if (game && game._showingProfileAuthButton && renderer._drawProfileAuthPopup) {
+      renderer._drawProfileAuthPopup(renderer.ctx, game, renderer.W, renderer.H, renderer.scale);
+    }
   } else if (transitionStartTime !== null) {
     // 过渡阶段：直接渲染游戏页面（去掉淡入淡出）
     renderer.render(game);

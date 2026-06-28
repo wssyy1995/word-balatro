@@ -69,7 +69,7 @@ const SHOP_POOL = {
     {name:'危险复制', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，60%概率低分变高分，40%概率相反'},
     {name:'平分秋色', type:'potion', effect:'equal_split', cost:8, desc:'选择两个字母，将分数相加后平分，永久生效'},
     {name:'吸星大法', type:'potion', effect:'absorb_stars', scope:'game', cost:8, desc:'游戏中，选择一张手牌，将其他手牌分数临时加给它'},
-    {name:'星辉洗涤', type:'potion', effect:'starlight_wash', cost:5, desc:'选择一个字母，重置强化恢复基础分，获得当前分数1/5的金币'}
+    {name:'星辉洗涤', type:'potion', effect:'starlight_wash', cost:5, desc:'选择一个字母，重置强化恢复基础分，获得差值分数1/5的金币'}
   ]
 };
 

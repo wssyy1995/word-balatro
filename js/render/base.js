@@ -195,6 +195,19 @@ class Renderer {
       this.shareIconLoaded = false;
     }
 
+    // 加载药水图标（每日成就用）
+    this.potionIcon = null;
+    this.potionIconLoaded = false;
+    try {
+      const potionImg = wx.createImage();
+      potionImg.src = 'images/potion.png';
+      potionImg.onload = () => { this.potionIconLoaded = true; };
+      potionImg.onerror = () => { this.potionIconLoaded = false; };
+      this.potionIcon = potionImg;
+    } catch (e) {
+      this.potionIconLoaded = false;
+    }
+
     // 加载求助弹窗资源（pop_close 本地加载，buy_tip/share_tip 由 cloudStorage 统一预加载）
     this.tipHelpImages = {};
     ['pop_close'].forEach(name => {

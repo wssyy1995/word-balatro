@@ -2457,44 +2457,6 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText('✦', W / 2 + titleWidth / 2 + diamondGap + dw / 2, titleY);
       ctx.restore();
 
-      // 首次领取奖励提示 toast
-      if (game._dailyAchievementFirstClaimToast) {
-        const toastElapsed = Date.now() - game._dailyAchievementFirstClaimToast.startTime;
-        const toastDuration = 2500;
-        if (toastElapsed >= toastDuration) {
-          game._dailyAchievementFirstClaimToast = null;
-        } else {
-          let toastAlpha = 1;
-          let toastOffsetY = 0;
-          if (toastElapsed < 200) {
-            const t = toastElapsed / 200;
-            toastAlpha = t;
-            toastOffsetY = (1 - t) * 8 * s;
-          } else if (toastElapsed > 2200) {
-            const t = (toastElapsed - 2200) / 300;
-            toastAlpha = 1 - t;
-          }
-          const toastText = '金币奖励已到账，前往通关模式查看';
-          ctx.font = `${Math.floor(12 * s)}px ${this.titleFontFamily}`;
-          const textW = ctx.measureText(toastText).width;
-          const toastPadX = 12 * s;
-          const toastPadY = 6 * s;
-          const toastW = textW + toastPadX * 2;
-          const toastH = 22 * s;
-          const toastX = (W - toastW) / 2;
-          const toastY = titleY + 20 * s + toastOffsetY;
-          ctx.save();
-          ctx.globalAlpha = toastAlpha * ca;
-          this.roundRect(toastX, toastY, toastW, toastH, toastH / 2, '#4a7c4a', '#3a633a', 1 * s);
-          ctx.font = `${Math.floor(12 * s)}px ${this.titleFontFamily}`;
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(toastText, W / 2, toastY + toastH / 2);
-          ctx.restore();
-        }
-      }
-
       // 成就任务数据
       const dailyAchievements = new DailyAchievements(game);
       const tasks = dailyAchievements.getTasks();
@@ -2575,6 +2537,10 @@ module.exports = function extendPopup(Renderer) {
           iconImg = this.battleMatchSword;
         } else if (task.imgKey === 'study_toast_star' && this.toastStarIcon && this.toastStarIcon.loaded) {
           iconImg = this.toastStarIcon.img;
+        } else if (task.imgKey === 'share' && this.shareIcon && this.shareIconLoaded) {
+          iconImg = this.shareIcon;
+        } else if (task.imgKey === 'potion' && this.potionIcon && this.potionIconLoaded) {
+          iconImg = this.potionIcon;
         }
         if (iconImg && iconImg.width > 0) {
           ctx.drawImage(iconImg, iconX, iconY, iconSize, iconSize);
@@ -2601,10 +2567,10 @@ module.exports = function extendPopup(Renderer) {
         const barX = rowX + 60 * s;
         const barY = rowY + 46 * s;
         const ratio = Math.min(task.current / task.target, 1);
-        this.roundRect(barX, barY, barW, barH, barH / 2, '#6b4a2a', '#523820', 1 * s);
+        this.roundRect(barX, barY, barW, barH, barH / 2, '#a89978', '#8b6914', 1 * s);
         if (ratio > 0) {
           const filledW = barW * ratio;
-          this.roundRect(barX, barY, filledW, barH, barH / 2, '#b5c93a', null, 0);
+          this.roundRect(barX, barY, filledW, barH, barH / 2, '#6cc21a', null, 0);
 
           // 顶部高光，营造凸起立体感
           ctx.save();
@@ -2741,7 +2707,17 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#8a8070';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('完成任务，每天积累成长！', W / 2, py + ph - 16 * s);
+      const tipText = '完成任务，每天积累成长！';
+      const tipY = py + ph - 16 * s;
+      ctx.fillText(tipText, W / 2, tipY);
+      // 左右小菱形装饰
+      const tipWidth = ctx.measureText(tipText).width;
+      ctx.font = `${Math.floor(9 * s)}px sans-serif`;
+      ctx.fillStyle = '#a09070';
+      const dotGap = 10 * s;
+      const dotW = ctx.measureText('✦').width;
+      ctx.fillText('✦', W / 2 - tipWidth / 2 - dotGap - dotW / 2, tipY);
+      ctx.fillText('✦', W / 2 + tipWidth / 2 + dotGap + dotW / 2, tipY);
       ctx.restore();
     };
 
