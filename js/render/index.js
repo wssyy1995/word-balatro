@@ -1455,27 +1455,60 @@ Renderer.prototype.render = function(game) {
     rect.panelY = H - rect.panelH - 24 * s;
     const { panelX, panelY, panelW, panelH } = rect;
 
-    // 进入动画：从底部滑入
+    const duration = 350;
     let animOffsetY = 0;
     let animAlpha = 1;
-    if (game._showingProfileAuthButton && game._showingProfileAuthButton.startTime) {
+
+    if (game._closingProfileAuth && game._closeProfileAuthStartTime) {
+      // 消失动画：向下加速退出 + 淡出
+      const elapsed = Date.now() - game._closeProfileAuthStartTime;
+      const t = Math.min(elapsed / duration, 1);
+      animOffsetY = Easing.easeInCubic(t) * panelH;
+      animAlpha = 1 - t;
+
+      if (t >= 1) {
+        // 动画结束：应用授权结果并清理状态
+        const result = game._profileAuthResult || {};
+        const userInfo = result.userInfo || {};
+        if (result.success) {
+          try {
+            wx.setStorageSync('userInfo', userInfo);
+          } catch (e) {}
+          if (this.battleRenderer) {
+            this.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
+          }
+          game.hintToast = { text: '授权成功', expireAt: Date.now() + 2000, startTime: Date.now() };
+        } else {
+          game.hintToast = { text: '授权失败，可在排行榜中再次授权', expireAt: Date.now() + 2500, startTime: Date.now() };
+        }
+        game._profileAuthCompleted = true;
+        game._closingProfileAuth = false;
+        game._closeProfileAuthStartTime = null;
+        game._showingProfileAuthButton = false;
+        game._profileAuthResult = null;
+        return;
+      }
+    } else if (game._showingProfileAuthButton && game._showingProfileAuthButton.startTime) {
+      // 进入动画：从底部滑入
       const elapsed = Date.now() - game._showingProfileAuthButton.startTime;
-      const duration = 350;
-      if (elapsed < duration) {
-        const t = Math.min(elapsed / duration, 1);
-        const eased = Easing.easeOutBack(t);
-        animOffsetY = (1 - eased) * panelH;
-        animAlpha = t * (2 - t);
+      const t = Math.min(elapsed / duration, 1);
+      if (t < 1) {
+        animOffsetY = (1 - Easing.easeOutBack(t)) * panelH;
+        animAlpha = Easing.easeInOutQuad(t);
       }
     }
 
+    // 黑色半透明蒙层：不跟随面板移动，只随整体透明度淡出
+    ctx.save();
+    ctx.globalAlpha = animAlpha;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    // 弹窗背景：跟随面板做上下位移动画
     ctx.save();
     ctx.globalAlpha = animAlpha;
     ctx.translate(0, animOffsetY);
-
-    // 黑色半透明蒙层
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.fillRect(0, 0, W, H);
 
     // 弹窗背景
     const r = 16 * s;

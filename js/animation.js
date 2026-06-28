@@ -2,7 +2,10 @@
 const Easing = {
   // easeOutCubic: 平滑减速
   easeOutCubic: (t) => 1 - Math.pow(1 - t, 3),
-  
+
+  // easeInCubic: 平滑加速（弹窗向下退出等场景）
+  easeInCubic: (t) => t * t * t,
+
   // easeOutBack: 弹性回弹（轻微过冲后回落）
   easeOutBack: (t) => {
     const c1 = 1.70158;

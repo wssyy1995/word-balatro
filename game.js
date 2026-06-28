@@ -107,6 +107,7 @@ let openDataContext = null;
 let isRankShowing = false;
 let globalAuthButton = null; // 全国榜授权按钮（wx.createUserInfoButton）
 let profileAuthButton = null; // 游戏启动时头像昵称授权按钮（wx.createUserInfoButton）
+let profileAuthShowTimer = null; // 控制授权按钮延迟显示，与 Canvas 弹窗动画同步
 
 function getOpenDataContext() {
   if (!openDataContext && wx.getOpenDataContext) {
@@ -450,27 +451,32 @@ function showProfileAuthButton() {
   profileAuthButton.onTap((res) => {
     console.log('[ProfileAuth] 授权按钮点击', res);
     const userInfo = res.userInfo || {};
-    destroyProfileAuthButton();
 
-    if (userInfo.avatarUrl && userInfo.nickName) {
-      try {
-        wx.setStorageSync('userInfo', userInfo);
-      } catch (e) {}
-      // 通知对战渲染器刷新自身头像
-      if (renderer && renderer.battleRenderer) {
-        renderer.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
-      }
-      game.hintToast = { text: '授权成功', expireAt: Date.now() + 2000, startTime: Date.now() };
-    } else {
-      game.hintToast = { text: '授权失败，可在排行榜中再次授权', expireAt: Date.now() + 2500, startTime: Date.now() };
-    }
-    game._profileAuthCompleted = true;
+    // 立即销毁原生按钮，但保留面板绘制状态，由 Canvas 面板执行向下退出动画
+    destroyProfileAuthButton(true);
+    game._closingProfileAuth = true;
+    game._closeProfileAuthStartTime = Date.now();
+    game._profileAuthResult = {
+      success: !!(userInfo.avatarUrl && userInfo.nickName),
+      userInfo: userInfo
+    };
   });
 
-  profileAuthButton.show();
+  // 延迟显示原生按钮，等 Canvas 面板从底部弹出的 easeOutBack 动画（350ms）完成后再出现，
+  // 避免面板还在滑动、按钮已经瞬间完整显示带来的割裂感。
+  profileAuthShowTimer = setTimeout(() => {
+    profileAuthShowTimer = null;
+    if (profileAuthButton) {
+      profileAuthButton.show();
+    }
+  }, 350);
 }
 
-function destroyProfileAuthButton() {
+function destroyProfileAuthButton(keepPanelState = false) {
+  if (profileAuthShowTimer) {
+    clearTimeout(profileAuthShowTimer);
+    profileAuthShowTimer = null;
+  }
   if (profileAuthButton) {
     try {
       profileAuthButton.destroy();
@@ -479,7 +485,7 @@ function destroyProfileAuthButton() {
     }
     profileAuthButton = null;
   }
-  if (game) game._showingProfileAuthButton = false;
+  if (game && !keepPanelState) game._showingProfileAuthButton = false;
 }
 
 async function requestPrivacyAndProfile() {
