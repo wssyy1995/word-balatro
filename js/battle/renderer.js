@@ -457,7 +457,7 @@ class BattleRenderer {
         : 1;
 
       ctx.save();
-      ctx.translate(cx, titleY);
+      ctx.translate(cx, titleY + 2 * s);
       ctx.scale(titleScale, titleScale);
       ctx.font = `bold ${Math.floor(20 * s)}px ${mainTitleFont}`;
       ctx.fillStyle = '#d7b162';
@@ -468,7 +468,7 @@ class BattleRenderer {
 
       // 对手头像和名字整体缩放弹出
       const avatarR = 32 * s;
-      const avatarY = matchY + matchH * 0.48;
+      const avatarY = matchY + matchH * 0.48 + 2 * s;
       const opponent = anim.opponent;
       const introElapsed = now - anim.matchedTime;
       const introScale = introElapsed < 300
@@ -531,7 +531,7 @@ class BattleRenderer {
         : 1;
 
       ctx.save();
-      ctx.translate(cx, titleY);
+      ctx.translate(cx, titleY + 2 * s);
       ctx.scale(titleScale, titleScale);
       ctx.font = `bold ${Math.floor(18 * s)}px ${mainTitleFont}`;
       ctx.fillStyle = '#d7b162';
@@ -555,7 +555,7 @@ class BattleRenderer {
       ctx.fillStyle = '#d7c28a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(countdownText, cx, titleY + 35 * s);
+      ctx.fillText(countdownText, cx, titleY + 35 * s + 2 * s);
       ctx.restore();
 
       // 倒计时阶段保留显示对手头像和昵称（往上移动 4*s）
