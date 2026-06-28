@@ -754,6 +754,9 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `levelup` | music/sound_effect/levelup.mp3 | 进入下一关 |
 | `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） |
 | `heart_beat` | music/sound_effect/heart_beat.mp3 | 危险复制心跳共振动画 |
+| `battle_matching` | music/sound_effect/battle/battle_matching.mp3 | 对战匹配弹窗循环音效 |
+| `battle_match_success` | music/sound_effect/battle/battle_match_sccess.mp3 | 对战匹配成功瞬间 |
+| `battle_play_card` | music/sound_effect/battle/battle_play_card.mp3 | 对战双方出牌后展示占位方块 |
 
 **音频管理**：
 - 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
@@ -1070,6 +1073,111 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 ---
 
+### 5.0.2 对战模式（Battle Mode）
+
+对战模式是独立于主玩法的状态机，文件位于 `js/battle/`：
+
+```
+js/battle/
+├── index.js     # 模块入口，导出 BattleManager / BattleRenderer / BattleBot 等
+├── manager.js   # 对战状态机与核心逻辑（出牌、计分、揭晓、回合推进）
+├── renderer.js  # 对战画面渲染（匹配弹窗、手牌、揭晓动画、结束弹窗）
+├── input.js     # 对战触摸输入处理
+├── bot.js       # 对战机器人行为
+└── deck.js      # 对战专用牌堆生成
+```
+
+#### 对战流程
+
+```
+[开始对战] → 匹配弹窗（matching → matched → countdown → disappearing）
+                ↓
+        每回合：selecting → player_played → revealing → round_end
+                ↓
+        10 回合后 → battle_end（对战结束弹窗）
+```
+
+1. **进入对战**：调试菜单点击「⚔️ 对战模式」或后续主页入口调用 `battleManager.startBattle('easy')`。
+2. **匹配弹窗**：弹出 `battle_match.png` 底图，显示「对手匹配中」， swords 图标伴随金色呼吸光圈；音效 `battle_matching` 延迟 200ms 启动，呼吸频率与该循环音效时长同步。
+3. **匹配成功**：随机生成对手（头像取自 `rank_avatar` 图集，昵称与头像索引绑定），进入 matched 阶段展示对手信息；1.5 秒后进入 countdown 3 秒倒计时；最后 disappearing 淡出并正式进入对战。
+4. **对战回合**：
+   - 每局共 **10 回合**（`DEFAULT_TOTAL_ROUNDS = 10`）。
+   - 每回合生成 **3 个种子词**：1 个 3 字母 + 2 个 4 字母，合并所需字母作为初始手牌，再从对战牌堆补至 **12 张**后洗牌。
+   - Bot 从 3 个种子词中随机选择一个作为本回合出牌。
+5. **Bot 策略**：
+   - **70% fast 模式**：Bot 在 3~6 秒内自行出牌。
+   - **30% wait_player 模式**：等玩家出牌后再等待 2 秒出牌。
+6. **玩家出牌**：
+   - 选中 ≥2 张卡牌，点击「出牌」。
+   - 校验顺序：长度检查 → 本地/在线词库校验（支持 `isValidWordOnline`）→ 本局是否已出过（`_battlePlayedWords` 去重）。
+   - 非法/重复提示不自动消失，需重新选择。
+7. **揭晓动画（revealing）**：双方均出牌后进入揭晓阶段，展示双方单词、中文释义、得分，进度条从旧比例滑动到新比例，总分在动画结束后累加。
+8. **回合结束**：揭晓动画完成后进入下一回合，10 回合后进入 `battle_end`。
+
+#### 对战计分规则
+
+与单人模式一致：
+
+```
+基础分 = Σ 每张卡牌 score
+倍率  = 卡牌数量（单词长度）
+回合得分 = ceil(基础分 × 倍率)
+```
+
+对战模式无女巫牌、药水、水晶球等 Roguelike 元素，牌堆使用简化分布（`js/battle/deck.js` 中独立 `LETTER_DISTRIBUTION`）。
+
+#### 对战结束弹窗
+
+10 回合结束后弹出结束面板（`panelH = 380*s`）：
+
+```
+┌─────────────────────────────────────┐
+│  [玩家头像/进度条/对手头像]  VS 模块   │
+│      太棒了,你赢得了本轮对战!          │  ← 胜利文案（绿色）
+│                                     │
+│  [分享] [重新挑战] [回到主页]          │  ← 底部图片按钮
+└─────────────────────────────────────┘
+```
+
+- **VS 模块**：顶部展示双方头像与总分进度条。
+- **激励文案**：
+  - 胜利：`太棒了,你赢得了本轮对战!`（绿色 `#4ade80`）
+  - 失败：`很遗憾,你未能击败对手,再接再厉!`（红色 `#f87171`）
+  - 平局：`旗鼓相当,不分胜负!`（金色）
+- **底部按钮**：
+  - 胜利时显示 3 个按钮：分享战绩、重新挑战、回到主页。
+  - 失败/平局只显示：重新挑战、回到主页。
+  - 按钮使用云存储图片 `battle_pop_share.png`、`battle_pop_restart.png`、`battle_pop_backto_homepage.png`，未加载时兜底为圆形文字按钮。
+- 点击「分享战绩」拉起 `wx.shareAppMessage`，标题为 `我在单词对战中以 X:Y 获胜!`。
+- 点击「重新挑战」调用 `startBattle('easy')` 立即开始新一局。
+- 点击「回到主页」调用 `game.returnToHomepage()` 退出对战。
+
+#### 对战模式 top_home 交互
+
+对战界面左上角 `top_home` 图标：
+- **短按**：返回主页（`returnToHomepage`）。
+- **长按 600ms**：打开调试面板，与主玩法长按 top_icon 逻辑一致。
+- 按下时图标下压 2*s。
+
+#### 对战模式音效
+
+| 音效名 | 文件 | 触发时机 |
+|--------|------|---------|
+| `battle_matching` | `music/sound_effect/battle/battle_matching.mp3` | 匹配弹窗弹出后循环播放，匹配成功/弹窗消失时停止 |
+| `battle_match_success` | 同目录（`battle_match_sccess.mp3`） | 匹配成功瞬间 |
+| `battle_play_card` | 同目录 | 玩家或 Bot 出牌后展示占位方块时 |
+
+#### 对战相关云存储资源
+
+`cloud_storage.js` 中为对战模式预置以下资源映射：
+
+- `battle_match.png` / `battle_match_sword.png`：匹配弹窗底图与剑图标
+- `battle_me_place.png` / `battle_me_word_bg.png` / `battle_rival_place.png` / `battle_rival_word_bg.png`：对战双方单词展示背景
+- `battle_pop_share.png` / `battle_pop_restart.png` / `battle_pop_backto_homepage.png`：对战结束弹窗按钮
+- `music/sound_effect/battle/battle_matching.mp3`：匹配循环音效
+
+---
+
 ## 5.1 新手引导（witch_guide）
 
 首次进入游戏的玩家会在第 1 回合触发新手引导，共 **5 个 Phase**：
@@ -1350,6 +1458,9 @@ letterUpgrades = Map {
 - 上传witch
 - 上传bg_icon
 - 上传music
+- ⚔️ 对战模式（进入对战）
+- 对战-成功（直接跳转对战结束弹窗，玩家获胜）
+- 对战-失败（直接跳转对战结束弹窗，玩家失败）
 - 触发新人引导
 - 触发商店引导
 - 触发图鉴引导
@@ -1426,7 +1537,8 @@ letterUpgrades = Map {
 | v1.11.1 | 2026-06-23 | 迷之优惠折扣从固定 8 折调整为随机 6~9 折，折扣价向下取整，价格按钮右上角使用雪碧图标签显示实际折扣；同步修正 README 中女巫牌数量、价格范围、危险复制概率、状态机与存储键等描述 |
 | v1.12.0 | 2026-06-24 | 新增 3 张魔法药水牌：吸星大法（临时吸收其他手牌分数）、平分秋色（两字母分数相加后平分并永久生效）、星辉洗涤（重置强化恢复基础分并获得金币）；同步更新 README 药水种类、购买流程与版本历史 |
 | v1.12.1 | 2026-06-25 | 修正 README 中药水名称与代码一致（复刻水 → 危险复制）；补充全国排行榜系统文档；好友榜 sharedCanvas 绘制坐标与主域 content 区域对齐 |
+| v1.12.2 | 2026-06-28 | 对战模式结束弹窗重构：胜利/失败分别展示 VS 模块、激励文案和底部图片按钮（分享/重新挑战/回到主页）；对战模式 top_home 长按打开调试面板，新增「对战-成功」「对战-失败」调试按钮；匹配成功/对战即将开始阶段主副标题整体下移 2*s；对战匹配音效与光圈呼吸延迟 200ms 启动并保持频率同步；补充对战模式完整文档 |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-25*
+*文档基于实际代码整理，最后更新：2026-06-28*
