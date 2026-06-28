@@ -9,6 +9,7 @@ class AudioManager {
     this.initialized = false;
     this.bgmStarted = false; // BGM 是否已启动（真机首次播放需用户交互）
     this._firstInteraction = false; // 是否有过用户交互
+    this._loopDurations = {}; // 记录循环音效的时长（秒），供视觉同步使用
   }
 
   // 加载音效
@@ -61,31 +62,39 @@ class AudioManager {
 
   // 循环播放音效（用于引导对话框打字机等需要持续循环的场景）
   playLoop(name) {
-    if (!this.enabled || !this.soundEnabled) {
-      console.log('[Audio] playLoop skipped, enabled:', this.enabled, 'soundEnabled:', this.soundEnabled);
-      return;
-    }
+    if (!this.enabled || !this.soundEnabled) return;
 
     this._firstInteraction = true;
 
     let audio = this.sounds[name];
     if (!audio) {
       const lazySrc = this._findSrcByName(name);
-      console.log('[Audio] playLoop lazy load:', name, lazySrc);
       if (lazySrc) {
         this.load(name, lazySrc);
         audio = this.sounds[name];
       }
     }
-    if (!audio) {
-      console.warn('[Audio] playLoop no audio:', name, 'sounds keys:', Object.keys(this.sounds));
-      return;
-    }
+    if (!audio) return;
 
-    console.log('[Audio] playLoop playing:', name, 'src:', audio.src);
     audio.loop = true;
     audio.stop();
     audio.play();
+
+    // 记录循环音效时长，供视觉呼吸动画同步
+    this._recordLoopDuration(name, audio);
+  }
+
+  // 记录循环音效时长（部分真机需要等 canplay 后才能拿到 duration）
+  _recordLoopDuration(name, audio) {
+    const save = () => {
+      if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+        this._loopDurations[name] = audio.duration;
+      }
+    };
+    save();
+    if (!this._loopDurations[name]) {
+      audio.onCanplay = save;
+    }
   }
 
   // 停止指定音效并取消循环
@@ -182,10 +191,8 @@ class AudioManager {
   // 从 cloudStorage 的 musicCache 加载缓存的音频
   loadFromCloud(cloudStorage) {
     if (!cloudStorage || !cloudStorage.musicCache) return;
-    console.log('[Audio] loadFromCloud musicCache keys:', Object.keys(cloudStorage.musicCache));
     Object.entries(cloudStorage.musicCache).forEach(([name, path]) => {
       if (!this.sounds[name]) {
-        console.log('[Audio] loadFromCloud loading:', name, path);
         this.load(name, path);
       }
     });

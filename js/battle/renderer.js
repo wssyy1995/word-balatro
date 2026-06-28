@@ -259,7 +259,6 @@ class BattleRenderer {
 
     // 匹配中循环音效（仅进入 matching 阶段时启动一次）
     if (anim.phase === 'matching' && !anim._matchingSoundStarted) {
-      console.log('[BattleMatch] 启动 battle_matching 循环音效，audioManager:', !!game.audioManager);
       if (game.audioManager) game.audioManager.playLoop('battle_matching');
       anim._matchingSoundStarted = true;
     }
@@ -405,12 +404,15 @@ class BattleRenderer {
         const swordY = matchY + matchH * 0.5 - 20 * s;
 
         // 经典脉动金色呼吸光圈（参考金光之环方案一）
+        // 呼吸频率与 battle_matching 循环音效时长保持一致：一个音频循环 = 一次完整呼吸
         const swordCX = cx;
         const swordCY = swordY + swordH / 2;
         const t = now / 1000;
         const baseR = Math.max(swordW, swordH) * 0.58;
-        const breath = 1 + 0.08 * Math.sin(t * 2.8);
-        const alpha = 0.55 + 0.35 * Math.sin(t * 2.8);
+        const loopDuration = game.audioManager && game.audioManager._loopDurations && game.audioManager._loopDurations['battle_matching'];
+        const breathFreq = loopDuration ? (2 * Math.PI / loopDuration) : 2.8;
+        const breath = 1 + 0.08 * Math.sin(t * breathFreq);
+        const alpha = 0.55 + 0.35 * Math.sin(t * breathFreq);
 
         ctx.save();
 
