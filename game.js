@@ -1595,6 +1595,10 @@ wx.onTouchMove((e) => {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackBackRect]);
     if (!hit) game._feedbackBackPressed = false;
   }
+  if (game._absorbStarsBackPressed && renderer.absorbStarsBackRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.absorbStarsBackRect]);
+    if (!hit) game._absorbStarsBackPressed = false;
+  }
   if (game._feedbackSubmitPressed && renderer.feedbackSubmitRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.feedbackSubmitRect]);
     if (!hit) game._feedbackSubmitPressed = false;
@@ -1807,6 +1811,16 @@ wx.onTouchEnd(() => {
       renderer._homepageEntryAnim = null;
       if (game && game.audioManager) game.audioManager.play('tap');
     }
+  }
+
+  // 吸星大法选择页：返回按钮 -> 回到游戏进行页，药水不消耗
+  if (game && game._absorbStarsBackPressed) {
+    game._absorbStarsBackPressed = false;
+    game.state = game._prePotionState || 'playing';
+    game._prePotionState = null;
+    game.potionMode = null;
+    game._absorbStarsSelectedCardId = null;
+    if (game.audioManager) game.audioManager.play('tap');
   }
 
   // 对战模式 top_home 短按弹出确认弹窗（长按未触发时）
@@ -3633,6 +3647,14 @@ function handleInput(x, inputY) {
     if (game.potionMode && game.potionMode.effect === 'absorb_stars') {
       // 动画播放期间忽略输入
       if (game._absorbStarsAnim) return;
+      // 检测返回按钮
+      if (renderer.absorbStarsBackRect) {
+        const backHit = renderer.hitTest(x, inputY, [renderer.absorbStarsBackRect]);
+        if (backHit) {
+          game._absorbStarsBackPressed = true;
+          return;
+        }
+      }
       // 检测手牌点击
       if (renderer.absorbStarsCardRects) {
         const cardHit = renderer.hitTest(x, inputY, renderer.absorbStarsCardRects);

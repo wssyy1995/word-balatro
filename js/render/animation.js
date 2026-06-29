@@ -1505,8 +1505,26 @@ module.exports = function extendAnimation(Renderer) {
         return;
       }
 
-      // === 标题 ===
+      // === 标题（左上角返回按钮） ===
       const titleY = top - 10 * s;
+      const backIconSize = 16 * s;
+      const backIconX = 14 * s;
+      const rightIcon = this.settingIcons && this.settingIcons.right;
+      ctx.save();
+      if (rightIcon && rightIcon.loaded && rightIcon.img) {
+        ctx.translate(backIconX + backIconSize / 2, titleY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('‹', backIconX, titleY);
+      }
+      ctx.restore();
+      this.absorbStarsBackRect = { x: backIconX - 14 * s, y: titleY - 18 * s, w: backIconSize + 28 * s, h: 36 * s };
+
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
