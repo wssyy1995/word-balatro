@@ -1400,6 +1400,13 @@ class Game {
     this._feedbackSubmitting = false;
     this._feedbackSubmitToast = null;
 
+    // 药水页面返回商店确认弹窗
+    this._potionBackBtnPressed = false;
+    this._potionBackConfirmPopup = false;
+    this._potionBackConfirmAnimStart = null;
+    this._potionBackConfirmCancelPressed = false;
+    this._potionBackConfirmOkPressed = false;
+
     // 加载用户设置
     this.settings = this.storageManager.getSettings();
     if (this.audioManager) {
@@ -3965,10 +3972,10 @@ class Game {
       }
     }
 
-    // 星辉洗涤：动画1秒后进入结果阶段
-    if (this._starlightWashAnim && this._starlightWashAnim.phase === 'spinning') {
+    // 星辉洗涤：泡沫动画2秒后进入结果阶段
+    if (this._starlightWashAnim && this._starlightWashAnim.phase === 'foam') {
       const elapsed = Date.now() - this._starlightWashAnim.startTime;
-      if (elapsed >= 1000) {
+      if (elapsed >= 2000) {
         this._starlightWashAnim.phase = 'result';
         this._starlightWashAnim.resultStartTime = Date.now();
         if (this.audioManager) {
@@ -4131,9 +4138,9 @@ class Game {
       }
     });
 
-    // 获得（当前分数 - 基础分）差值 1/5 的金币（向下取整）
+    // 获得（当前分数 - 基础分）差值 1/3 的金币（向下取整）
     const diffScore = Math.max(0, oldScore - base);
-    const goldReward = Math.floor(diffScore / 5);
+    const goldReward = Math.floor(diffScore / 3);
     this.gold += goldReward;
 
     this._starlightWashAnim = {
@@ -4145,7 +4152,7 @@ class Game {
       goldReward
     };
     this._starlightWashSelectedLetter = null;
-    if (this.audioManager) this.audioManager.play('tap');
+    if (this.audioManager) this.audioManager.play('bubble_wash');
   }
 
   startRandomSpin() {

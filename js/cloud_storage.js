@@ -179,6 +179,7 @@ class CloudStorageManager {
       'witch_guide_1_bg': c('/music/sound_effect/witch_guide_1_bg.mp3'),
       'win_success': c('/music/sound_effect/win_success.mp3'),
       'bubble': c('/music/sound_effect/bubble.mp3'),
+      'bubble_wash': c('/music/sound_effect/bubble_wash.mp3'),
       'homepage_round_tap': c('/music/sound_effect/homepage_round_tap.mp3'),
       'homepage_big_button': c('/music/sound_effect/homepage_big_button.mp3'),
       'battle_match_sccess': c('/music/sound_effect/battle_match_sccess.mp3'),

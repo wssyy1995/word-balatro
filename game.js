@@ -1380,6 +1380,32 @@ wx.onTouchStart((e) => {
     return;
   }
 
+  // 药水页面返回商店确认弹窗（优先拦截所有输入）
+  if (game._potionBackConfirmPopup) {
+    const cancelHit = renderer.potionBackConfirmCancelRect && renderer.hitTest(x, inputY, [renderer.potionBackConfirmCancelRect]);
+    const okHit = renderer.potionBackConfirmOkRect && renderer.hitTest(x, inputY, [renderer.potionBackConfirmOkRect]);
+    if (cancelHit) {
+      game._potionBackConfirmCancelPressed = true;
+      return;
+    }
+    if (okHit) {
+      game._potionBackConfirmOkPressed = true;
+      return;
+    }
+    // 点击弹窗外不关闭
+    return;
+  }
+
+  // 药水页面左上角返回按钮（动画播放期间不响应，避免中断升级/洗涤/复制动画）
+  const isPotionAnimating = !!(game._potionUpgrading || game._starlightWashAnim || game._replicateAnim || game._equalSplitAnim);
+  if (!isPotionAnimating && game.state === 'potion' && renderer.potionBackRect) {
+    const potionBackHit = renderer.hitTest(x, inputY, [renderer.potionBackRect]);
+    if (potionBackHit) {
+      game._potionBackBtnPressed = true;
+      return;
+    }
+  }
+
   handleInput(x, inputY);
 });
 
@@ -1449,6 +1475,22 @@ wx.onTouchMove((e) => {
         longPressTimer = null;
       }
     }
+  }
+
+  // 移出药水页面返回按钮区域时取消按下
+  if (game._potionBackBtnPressed && renderer.potionBackRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.potionBackRect]);
+    if (!hit) game._potionBackBtnPressed = false;
+  }
+
+  // 移出药水返回确认弹窗按钮区域时取消按下
+  if (game._potionBackConfirmCancelPressed && renderer.potionBackConfirmCancelRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.potionBackConfirmCancelRect]);
+    if (!hit) game._potionBackConfirmCancelPressed = false;
+  }
+  if (game._potionBackConfirmOkPressed && renderer.potionBackConfirmOkRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.potionBackConfirmOkRect]);
+    if (!hit) game._potionBackConfirmOkPressed = false;
   }
 
   // 每日成就弹窗滚动
@@ -1801,6 +1843,21 @@ wx.onTouchEnd(() => {
 
   if (!game) return;
 
+  // 辅助：药水页面返回商店，discard=true 表示槽位满时丢弃当前药水
+  function returnPotionToShop(discard) {
+    if (!discard && game.potionMode) {
+      game.potions.push({ ...game.potionMode });
+    }
+    game.potionMode = null;
+    game._randomUpgradePopup = null;
+    game._potionSelectedLetter = null;
+    game._starlightWashSelectedLetter = null;
+    game._replicateSelectedLetters = [];
+    game._equalSplitSelectedLetters = [];
+    game.state = 'shop';
+    if (game.storageManager) game.storageManager.saveProgress();
+  }
+
   // top_icon 短按：返回主页（长按未触发时；对战/药水状态不触发）
   if (!longPressTriggered && touchStartPos && renderer.topIconRect && !(game && (game.state === 'battle' || game.state === 'potion'))) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
@@ -1821,6 +1878,44 @@ wx.onTouchEnd(() => {
     game.potionMode = null;
     game._absorbStarsSelectedCardId = null;
     if (game.audioManager) game.audioManager.play('tap');
+  }
+
+  // 药水页面返回按钮：松开时若仍在按钮区域内，返回商店并暂存/丢弃药水
+  if (game && game._potionBackBtnPressed) {
+    game._potionBackBtnPressed = false;
+    if (renderer.potionBackRect && touchStartPos && renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.potionBackRect])) {
+      if (game.audioManager) game.audioManager.play('tap');
+      // 药水槽位满时弹出二次确认弹窗
+      if ((game.potions || []).length >= 2) {
+        game._potionBackConfirmPopup = true;
+        game._potionBackConfirmAnimStart = Date.now();
+      } else {
+        returnPotionToShop(false);
+      }
+    }
+  }
+
+  // 药水返回商店确认弹窗
+  if (game && game._potionBackConfirmPopup) {
+    if (game._potionBackConfirmCancelPressed) {
+      game._potionBackConfirmCancelPressed = false;
+      const hit = renderer.potionBackConfirmCancelRect && touchStartPos && renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.potionBackConfirmCancelRect]);
+      if (hit) {
+        game._potionBackConfirmPopup = false;
+        game._potionBackConfirmAnimStart = null;
+        if (game.audioManager) game.audioManager.play('tap');
+      }
+    }
+    if (game._potionBackConfirmOkPressed) {
+      game._potionBackConfirmOkPressed = false;
+      const hit = renderer.potionBackConfirmOkRect && touchStartPos && renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.potionBackConfirmOkRect]);
+      if (hit) {
+        game._potionBackConfirmPopup = false;
+        game._potionBackConfirmAnimStart = null;
+        if (game.audioManager) game.audioManager.play('tap');
+        returnPotionToShop(true); // 丢弃当前药水返回商店
+      }
+    }
   }
 
   // 对战模式 top_home 短按弹出确认弹窗（长按未触发时）
@@ -3604,7 +3699,7 @@ function handleInput(x, inputY) {
         if (!item) return;
         // 金币不足直接忽略
         if (game.gold < item.cost) return;
-        const isAlwaysBuyablePotion = item.type === 'potion' && (item.effect === 'upgrade_letter' || item.effect === 'random_upgrade');
+        const isAlwaysBuyablePotion = item.type === 'potion' && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(item.effect);
         if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return;
 
         const witchFull = item.type === 'witch' && (game.jokers || []).length >= game.maxJokerSlots;

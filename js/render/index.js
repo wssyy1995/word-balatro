@@ -219,6 +219,10 @@ Renderer.prototype.render = function(game) {
       }
     } else if (game.state === 'potion') {
       this.drawPotion(game);
+      // 返回商店确认弹窗（药水槽位满时提示丢弃）
+      if (game._potionBackConfirmPopup) {
+        this._drawPotionBackConfirmPopup(game);
+      }
     } else if (game.state === 'life_extended') {
       // 生命延续：先绘制游戏背景，再叠加闪烁/弹窗
       ctx.save();

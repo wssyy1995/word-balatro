@@ -457,6 +457,175 @@ module.exports = function extendPopup(Renderer) {
       this.changeLetterCloseRect = { x: closeX, y: closeY, w: closeSize, h: closeSize };
     }
 
+    // 药水页面通用左上角返回按钮（返回商店，并将药水暂存/丢弃）
+    Renderer.prototype._drawPotionBackButton = function(game) {
+      const ctx = this.ctx;
+      const s = this.scale;
+      const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
+      const titleY = top - 10 * s;
+      const backIconSize = 16 * s;
+      const backIconX = 14 * s;
+      const rightIcon = this.settingIcons && this.settingIcons.right;
+
+      ctx.save();
+      if (rightIcon && rightIcon.loaded && rightIcon.img) {
+        ctx.translate(backIconX + backIconSize / 2, titleY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+      } else {
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('‹', backIconX, titleY);
+      }
+      ctx.restore();
+
+      this.potionBackRect = { x: backIconX - 14 * s, y: titleY - 18 * s, w: backIconSize + 28 * s, h: 36 * s };
+    };
+
+    // 药水页面返回商店确认弹窗（药水槽位满时提示丢弃）
+    Renderer.prototype._drawPotionBackConfirmPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const pw = 260 * s;
+      const ph = 230 * s;
+      const px = (W - pw) / 2;
+      const py = (H - ph) / 2;
+      const r = 14 * s;
+      const gold = '#c4a35a';
+
+      if (!game._potionBackConfirmAnimStart) {
+        game._potionBackConfirmAnimStart = Date.now();
+      }
+      const elapsed = Date.now() - game._potionBackConfirmAnimStart;
+      const enterProgress = Math.min(elapsed / 300, 1);
+      const enterEase = Easing.easeOutBack(enterProgress);
+      const drawPy = py + (1 - enterEase) * 25 * s;
+
+      // 遮罩
+      ctx.save();
+      ctx.fillStyle = `rgba(0,0,0,${0.65 * enterEase})`;
+      ctx.fillRect(0, 0, W, H);
+
+      // 背景 + 金色边框
+      this.roundRect(px, drawPy, pw, ph, r, '#faf6ee', gold);
+
+      // 内层细边框
+      ctx.save();
+      ctx.strokeStyle = gold;
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      const inset = 4 * s;
+      const ix = px + inset, iy = drawPy + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = r - inset;
+      ctx.moveTo(ix + ir, iy);
+      ctx.lineTo(ix + iw - ir, iy);
+      ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+      ctx.lineTo(ix + iw, iy + ih - ir);
+      ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+      ctx.lineTo(ix + ir, iy + ih);
+      ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+      ctx.lineTo(ix, iy + ir);
+      ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // 标题
+      ctx.save();
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('返回商店', W / 2, drawPy + 42 * s);
+      ctx.restore();
+
+      // 标题下装饰线
+      const decoLineY = drawPy + 58 * s;
+      ctx.save();
+      ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+      ctx.lineWidth = 1 * s;
+      const dlW = pw * 0.45;
+      const dlX = px + (pw - dlW) / 2;
+      ctx.beginPath();
+      ctx.moveTo(dlX, decoLineY);
+      ctx.lineTo(dlX + dlW, decoLineY);
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(W / 2, decoLineY);
+      ctx.rotate(Math.PI / 4);
+      ctx.fillStyle = gold;
+      ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+      ctx.restore();
+      ctx.restore();
+
+      // 中间文字
+      const text = '药水卡牌槽位已满，返回商店等于自动丢弃该卡牌';
+      ctx.save();
+      ctx.font = `${Math.floor(14 * s)}px ${this.titleFontFamily || 'sans-serif'}`;
+      ctx.fillStyle = '#555';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const maxW = pw - 48 * s;
+      const lineHeight = 20 * s;
+      const lines = [];
+      let line = '';
+      for (let i = 0; i < text.length; i++) {
+        const testLine = line + text[i];
+        if (ctx.measureText(testLine).width > maxW && line !== '') {
+          lines.push(line);
+          line = text[i];
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      const startY = drawPy + 100 * s - (lines.length - 1) * lineHeight / 2;
+      lines.forEach((l, i) => {
+        ctx.fillText(l, W / 2, startY + i * lineHeight);
+      });
+      ctx.restore();
+
+      // 底部两个按钮：取消 / 确定
+      const btnW = 108 * s;
+      const btnH = 42 * s;
+      const btnGap = 18 * s;
+      const totalW = btnW * 2 + btnGap;
+      const btnY = drawPy + ph - btnH - 30 * s;
+      const cancelX = (W - totalW) / 2;
+      const confirmX = cancelX + btnW + btnGap;
+
+      // 取消按钮（灰色）
+      const cancelPressed = game._potionBackConfirmCancelPressed || false;
+      const cancelOffset = cancelPressed ? 2 * s : 0;
+      this.roundRect(cancelX, btnY + cancelOffset, btnW, btnH, 8 * s, '#9e9e9e', '#7a7a7a', 1.5 * s);
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('取消', cancelX + btnW / 2, btnY + cancelOffset + btnH / 2);
+      ctx.restore();
+
+      // 确定按钮
+      const confirmPressed = game._potionBackConfirmOkPressed || false;
+      const confirmOffset = confirmPressed ? 2 * s : 0;
+      this.roundRect(confirmX, btnY + confirmOffset, btnW, btnH, 8 * s, '#c4a35a');
+      ctx.save();
+      ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('确定', confirmX + btnW / 2, btnY + confirmOffset + btnH / 2);
+      ctx.restore();
+
+      this.potionBackConfirmCancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
+      this.potionBackConfirmOkRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
+      ctx.restore();
+    };
+
     Renderer.prototype.drawPotion = function(game) {
       // 吸星大法：选择阶段
       if (game.potionMode && game.potionMode.effect === 'absorb_stars') {
@@ -530,6 +699,9 @@ module.exports = function extendPopup(Renderer) {
 
       // 标题区域 Y 坐标(与商店页"商店"标题位置一致)
       const titleY = top - 10 * s;
+
+      // 左上角返回按钮
+      this._drawPotionBackButton(game);
 
       // 标题
       ctx.save();
@@ -750,6 +922,9 @@ module.exports = function extendPopup(Renderer) {
       // this.drawTopHeader(game);
 
       const titleY = top - 10 * s;
+
+      // 左上角返回按钮
+      this._drawPotionBackButton(game);
 
       // 标题
       ctx.save();

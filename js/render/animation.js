@@ -373,6 +373,10 @@ module.exports = function extendAnimation(Renderer) {
 
       // === 标题 ===
       const titleY = top - 10 * s;
+
+      // 左上角返回按钮
+      this._drawPotionBackButton(game);
+
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -1165,6 +1169,10 @@ module.exports = function extendAnimation(Renderer) {
 
       // === 标题 ===
       const titleY = top - 10 * s;
+
+      // 左上角返回按钮
+      this._drawPotionBackButton(game);
+
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';
@@ -1275,7 +1283,7 @@ module.exports = function extendAnimation(Renderer) {
         const base = LETTER_SCORE[selected];
         const up = letterUpgrades.get(selected) || {};
         const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
-        const goldReward = Math.floor(Math.max(0, score - base) / 5);
+        const goldReward = Math.floor(Math.max(0, score - base) / 3);
 
         const line1 = `${selected}: ${score}分 → 恢复为 ${base}分`;
         const line2 = `获得 ${goldReward} 金币`;
@@ -1377,14 +1385,8 @@ module.exports = function extendAnimation(Renderer) {
         // 泡沫动画（参考中央浓密泡团）
         if (!anim.bubbles) anim.bubbles = this._initStarlightFoam(cardRect);
         this._drawStarlightFoam(ctx, anim.bubbles, cardRect, elapsed / 1000, s);
-
-        if (progress >= 1) {
-          anim.phase = 'result';
-          anim.resultStartTime = now;
-          anim._sparklesSpawned = false;
-        }
       } else if (anim.phase === 'result') {
-        const resultElapsed = now - (anim.resultStartTime || anim.startTime + 1000);
+        const resultElapsed = now - (anim.resultStartTime || anim.startTime + 2000);
         const fadeIn = Math.min(resultElapsed / 300, 1);
 
         // 遮罩
@@ -1486,15 +1488,16 @@ module.exports = function extendAnimation(Renderer) {
 
     Renderer.prototype._initStarlightFoam = function(rect) {
       const bubbles = [];
-      for (let i = 0; i < 34; i++) {
+      const count = 38;
+      for (let i = 0; i < count; i++) {
         const a = Math.random() * Math.PI * 2;
         const rr = Math.sqrt(Math.random());
-        const x = rect.x + rect.w * 0.5 + Math.cos(a) * rr * rect.w * 0.35;
-        const y = rect.y + rect.h * 0.08 + Math.sin(a) * rr * rect.h * 0.15;
-        const r = 10 + Math.random() * 21;
+        const x = rect.x + rect.w * 0.5 + Math.cos(a) * rr * rect.w * 0.58;
+        const y = rect.y + rect.h * 0.74 + Math.sin(a) * rr * rect.h * 0.14;
+        const r = 2.5 + Math.random() * 6.5;
         const row = Math.floor(i / 8);
         const col = i;
-        const alpha = 0.58 + Math.random() * 0.32;
+        const alpha = 0.52 + Math.random() * 0.30;
         const phase = col * 0.52 + row * 0.78;
         bubbles.push({ x, y, r, row, col, alpha, phase });
       }
@@ -1502,29 +1505,14 @@ module.exports = function extendAnimation(Renderer) {
     };
 
     Renderer.prototype._drawStarlightFoam = function(ctx, bubbles, rect, t, s) {
-      // 底层光晕床垫
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-      const sway = Math.sin(t * 1.35) * 5 * s;
-      const cx = rect.x + rect.w / 2 + sway;
-      const cy = rect.y + rect.h * 0.07;
-      const grad = ctx.createRadialGradient(cx, cy, 10 * s, cx, cy, rect.w * 0.65);
-      grad.addColorStop(0, 'rgba(255,255,255,0.24)');
-      grad.addColorStop(0.55, 'rgba(230,250,255,0.12)');
-      grad.addColorStop(1, 'rgba(230,250,255,0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, rect.w * 0.48, rect.h * 0.16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
       // 浓密气泡
+      const speed = 2.8;
       bubbles.forEach(b => {
-        const rhythm = Math.sin(t * 1.55 + b.row * 0.72);
-        const x = b.x + rhythm * (5 + b.row * 1.5) * s + Math.sin(t * 1.55 + b.phase) * 1.5 * s;
-        const y = b.y + Math.cos(t * 1.55 + b.col * 0.38) * 3.5 * s;
-        const r = b.r * (1 + Math.sin(t * 1.55 + b.phase) * 0.045) * s;
-        const alpha = b.alpha * (0.9 + Math.sin(t * 1.55 + b.phase) * 0.08);
+        const rhythm = Math.sin(t * speed + b.row * 0.72);
+        const x = b.x + rhythm * (5 + b.row * 1.5) * s + Math.sin(t * speed + b.phase) * 1.5 * s;
+        const y = b.y + Math.cos(t * speed + b.col * 0.38) * 3.5 * s;
+        const r = b.r * (1 + Math.sin(t * speed + b.phase) * 0.045) * s;
+        const alpha = b.alpha * (0.9 + Math.sin(t * speed + b.phase) * 0.08);
         this._drawFoamBubble(ctx, x, y, r, alpha);
       });
     };
