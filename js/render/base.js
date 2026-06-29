@@ -986,11 +986,11 @@ class Renderer {
       ctx.fillStyle = 'rgba(255,252,235,0.55)';
       ctx.fillRect(glowX - 1 * s, 0, 2 * s, H);
 
-      // 金色粒子（更多、分布更广、略小）
-      for (let i = 0; i < 26; i++) {
+      // 金色粒子（分布范围更大）
+      for (let i = 0; i < 32; i++) {
         ctx.fillStyle = `rgba(255,225,140,${0.25 + 0.4 * Math.random()})`;
         ctx.beginPath();
-        ctx.arc(glowX + Math.random() * 48 * s - 24 * s, Math.random() * H, (1.2 + Math.random() * 2.2) * s, 0, Math.PI * 2);
+        ctx.arc(glowX + Math.random() * 140 * s - 70 * s, Math.random() * H, (0.8 + Math.random() * 2.0) * s, 0, Math.PI * 2);
         ctx.fill();
       }
     }
