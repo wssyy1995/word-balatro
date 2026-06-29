@@ -885,6 +885,8 @@ class Renderer {
     const t = Math.min(elapsed / duration, 1);
     const eased = Easing.easeInOutQuad(t);
 
+    const OVERLAY_ALPHA = 0.35;
+
     if (eased < 0.5) {
       // === 第一阶段：homepage 像古卷一样从右向左卷起 ===
       const roll = eased * 2;
@@ -892,7 +894,11 @@ class Renderer {
       // 1. 底层游戏页面（playing）
       this.render(game);
 
-      // 2. homepage 未卷起部分
+      // 2. 底层目标页面始终覆盖黑色透明蒙层
+      ctx.fillStyle = `rgba(0,0,0,${OVERLAY_ALPHA})`;
+      ctx.fillRect(0, 0, W, H);
+
+      // 3. homepage 未卷起部分
       ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, W * (1 - roll), H);
@@ -900,7 +906,7 @@ class Renderer {
       this.drawHomepage();
       ctx.restore();
 
-      // 3. 卷轴
+      // 4. 卷轴
       const rollX = W * (1 - roll);
       const rollR = (6 + roll * 10) * s;
 
@@ -936,6 +942,11 @@ class Renderer {
       const unroll = (eased - 0.5) * 2;
 
       this.render(game);
+
+      // 黑色蒙层随光效扫过逐渐褪去，光效结束蒙层也完全去除
+      const overlayAlpha = OVERLAY_ALPHA * (1 - unroll);
+      ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
+      ctx.fillRect(0, 0, W, H);
 
       const glowX = W * unroll;
       const g2 = ctx.createLinearGradient(glowX - 30 * s, 0, glowX + 10 * s, 0);
