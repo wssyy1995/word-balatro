@@ -1793,6 +1793,11 @@ wx.onTouchEnd(() => {
         startGame();
       }
       if (btnKey === 'round' || btnKey === 'battle') {
+        // 首次点击"开始"：仅先持久化标记（冷启动后即显示"继续"）；
+        // 本次会话的显示切换推迟到翻页完成、主页移出视野后再生效，避免点击瞬间主页大按钮突变
+        if (btnKey === 'round' && game && !game._roundEntered && game.storageManager) {
+          game.storageManager.saveRoundEntered(true);
+        }
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
         const targetState = btnKey === 'battle' ? 'battle' : 'playing';
@@ -4214,6 +4219,10 @@ function gameLoop(timestamp) {
       const targetState = pageFlipState.targetState || 'playing';
       pageFlipState = null;
       showHomepage = false;
+      // 翻页完成、主页已移出视野后再切换显示标记：下次回到主页时大按钮才显示"继续"
+      if (targetState === 'playing' && game) {
+        game._roundEntered = true;
+      }
       // 双人对战已在点击时初始化，这里只需切到对应状态
       // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
       if (targetState === 'battle' && game) {

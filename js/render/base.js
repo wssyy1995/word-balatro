@@ -885,7 +885,8 @@ class Renderer {
     const t = Math.min(elapsed / duration, 1);
     const eased = Easing.easeInOutQuad(t);
 
-    const OVERLAY_ALPHA = 0.35;
+    const OVERLAY_ALPHA = 0.2;
+    const OVERLAY_RGB = '120,90,55'; // 蒙层颜色：米棕色
 
     if (eased < 0.5) {
       // === 第一阶段：homepage 像古卷一样从右向左卷起 ===
@@ -894,8 +895,8 @@ class Renderer {
       // 1. 底层游戏页面（playing）
       this.render(game);
 
-      // 2. 底层目标页面始终覆盖黑色透明蒙层
-      ctx.fillStyle = `rgba(0,0,0,${OVERLAY_ALPHA})`;
+      // 2. 底层目标页面始终覆盖米棕色透明蒙层
+      ctx.fillStyle = `rgba(${OVERLAY_RGB},${OVERLAY_ALPHA})`;
       ctx.fillRect(0, 0, W, H);
 
       // 3. homepage 未卷起部分
@@ -956,9 +957,9 @@ class Renderer {
 
       this.render(game);
 
-      // 黑色蒙层随光效扫过逐渐褪去，光效结束蒙层也完全去除
+      // 米棕色蒙层随光效扫过逐渐褪去，光效结束蒙层也完全去除
       const overlayAlpha = OVERLAY_ALPHA * (1 - unroll);
-      ctx.fillStyle = `rgba(0,0,0,${overlayAlpha})`;
+      ctx.fillStyle = `rgba(${OVERLAY_RGB},${overlayAlpha})`;
       ctx.fillRect(0, 0, W, H);
 
       const glowX = W * unroll;
@@ -1198,10 +1199,15 @@ class Renderer {
     const bigBtnMaxW = W * 0.75;
     const bigBtnMaxH = H * 0.26;
     const bigBtnY = H * 0.49 + 30 * s;
-    const bigGap = W * 0.08;
+    const bigGap = W * 0.08 - 2 * s;
+
+    // 已点击过"开始"进入游戏的用户，大按钮换成"继续"图（继续图加载完成才切换，否则兜底用"开始"图）
+    const useRoundContinue = !!(game && game._roundEntered) && this.homepageRoundContinue && this.homepageRoundContinueLoaded;
+    const roundBtnImg = useRoundContinue ? this.homepageRoundContinue : this.homepageRound;
+    const roundBtnLoaded = useRoundContinue ? this.homepageRoundContinueLoaded : this.homepageRoundLoaded;
 
     const bigBtnInfos = [
-      { img: this.homepageRound, loaded: this.homepageRoundLoaded, key: 'round', delay: 150 },
+      { img: roundBtnImg, loaded: roundBtnLoaded, key: 'round', delay: 150 },
       { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 150 },
     ].map(({ img, loaded, key, delay }) => {
       let drawW = bigBtnMaxW;
@@ -1213,6 +1219,11 @@ class Renderer {
         if (drawH > bigBtnMaxH) {
           drawH = bigBtnMaxH;
           drawW = drawH * aspect;
+        }
+        // round 按钮（开始/继续图）在等比 fit 基础上微调尺寸：宽 +10px、高 +3px
+        if (key === 'round') {
+          drawW += 14 * s;
+          drawH += 5 * s;
         }
       }
       return { img, loaded, key, drawW, drawH, delay };

@@ -311,6 +311,16 @@ class StorageManager {
     return this.get('card_book_unlocked', false);
   }
 
+  // ===== 是否点击过"开始"进入过游戏（跨局永久保留，用于主页大按钮切换为"继续"）=====
+
+  saveRoundEntered(entered = true) {
+    return this.set('round_entered', entered);
+  }
+
+  loadRoundEntered() {
+    return this.get('round_entered', false);
+  }
+
   // ===== 已收集女巫卡牌（跨局永久保留）=====
 
   saveCollectedWitchCards(cards) {

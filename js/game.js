@@ -1148,6 +1148,8 @@ function formatMeaning(meaningObj) {
 class Game {
   constructor(savedProgress = null) {
     this.storageManager = new StorageManager();
+    // 是否已点击过"开始"进入过游戏（跨局永久保留，决定主页大按钮显示"开始"还是"继续"）
+    this._roundEntered = this.storageManager.loadRoundEntered() || false;
     this.audioManager = new AudioManager();
     // 2026-06-24 优化：homepage 阶段不预加载全部音效
     // 避免创建 30 个 InnerAudioContext 实例占用内存
