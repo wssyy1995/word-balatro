@@ -1105,11 +1105,16 @@ wx.onTouchStart((e) => {
         if (game.audioManager) game.audioManager.play('round_win');
 
         // 首次领取奖励提示（每个用户只弹一次），使用通用 hintToast 模板
+        // 定位在每日成就弹窗内部偏上位置，确保在弹窗里可见
         if (game.storageManager && !game.storageManager.get('daily_first_claim_toast_shown', false)) {
+          const s = renderer ? renderer.scale || 1 : 1;
+          const popupH = 560 * s;
+          const popupTop = (renderer ? renderer.H : 667) / 2 - popupH / 2;
           game.hintToast = {
             text: '金币奖励已到账，前往通关模式查看',
             expireAt: Date.now() + 2500,
-            startTime: Date.now()
+            startTime: Date.now(),
+            customY: popupTop + 70 * s
           };
           game.storageManager.set('daily_first_claim_toast_shown', true);
         }
@@ -4082,6 +4087,10 @@ function gameLoop(timestamp) {
     // 头像昵称授权底部弹窗背景在主页上叠加绘制（原生按钮在上层）
     if (game && game._showingProfileAuthButton && renderer._drawProfileAuthPopup) {
       renderer._drawProfileAuthPopup(renderer.ctx, game, renderer.W, renderer.H, renderer.scale);
+    }
+    // 主页弹窗上的通用 hintToast（领取奖励等提示需要在弹窗打开时也能看到）
+    if (game && game.hintToast && renderer._drawHintToast) {
+      renderer._drawHintToast(game);
     }
     // 主页上打开的弹窗滚动物理也需要更新
     if (game) {
