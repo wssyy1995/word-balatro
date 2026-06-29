@@ -1359,6 +1359,7 @@ class BattleRenderer {
 
     let statusText = '';
     let baseText = '';
+    let countdownSec = 0;
     let wordText = null;
     let hidden = false;
     let botRevealProgress = -1; // -1 表示不使用翻转动画
@@ -1399,10 +1400,20 @@ class BattleRenderer {
 
       // 一方出牌后给另一方 15 秒倒计时
       if (game._battleTurnDeadline && game._battleTurnCountdownSide === mySide) {
-        const remainSec = Math.max(0, Math.ceil((game._battleTurnDeadline - now) / 1000));
-        statusText = remainSec > 0 && baseText ? `${baseText} (${remainSec})` : baseText;
+        countdownSec = Math.max(0, Math.ceil((game._battleTurnDeadline - now) / 1000));
+        statusText = countdownSec > 0 && baseText ? `${baseText} (${countdownSec})` : baseText;
       } else {
         statusText = baseText;
+      }
+
+      // 倒计时秒数变化时触发脉冲动画
+      if (countdownSec > 0) {
+        const lastSecKey = isLeft ? '_lastBotCountdownSec' : '_lastPlayerCountdownSec';
+        const pulseStartKey = isLeft ? '_botCountdownPulseStart' : '_playerCountdownPulseStart';
+        if (this[lastSecKey] !== countdownSec) {
+          this[lastSecKey] = countdownSec;
+          this[pulseStartKey] = now;
+        }
       }
     } else if (game.battlePhase === 'revealing') {
       const step = timeline ? timeline.step : null;
@@ -1512,33 +1523,76 @@ class BattleRenderer {
         ? `bold ${statusFontSize}px ${this.parent.titleFontFamily}`
         : `${statusFontSize}px ${this.parent.titleFontFamily}`;
 
+      // 倒计时数字脉冲缩放（秒数变化时触发，幅度较小）
+      const getCountdownPulseScale = (sideKey) => {
+        const pulseStartKey = sideKey === 'left' ? '_botCountdownPulseStart' : '_playerCountdownPulseStart';
+        const start = this[pulseStartKey];
+        if (!start) return 1;
+        const elapsed = now - start;
+        if (elapsed >= 300) return 1;
+        const ease = Easing.easeOutBack(elapsed / 300);
+        return 1 + 0.12 * ease;
+      };
+
       if (isPleasePlay && this.battleCardIcon && this.battleCardIconLoaded) {
-        // 请出牌：图标 + 文字横向居中，保持灰色非粗体
+        // 请出牌：图标 + 文字 + 倒计时(鲜红色) 横向居中
         const text = baseText;
-        const displayText = statusText;
         const iconSize = 20 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
-        const totalWidth = iconSize + gap + textWidth;
+        let totalWidth = iconSize + gap + textWidth;
+        let countdownWidth = 0;
+        let countdownText = '';
+        if (countdownSec > 0) {
+          countdownText = `(${countdownSec})`;
+          countdownWidth = ctx.measureText(countdownText).width;
+          totalWidth += gap + countdownWidth;
+        }
         const startX = centerX - totalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
-        ctx.fillText(displayText, startX + iconSize + gap, drawY);
+        ctx.fillText(text, startX + iconSize + gap, drawY);
+        if (countdownText) {
+          const countdownX = startX + iconSize + gap + textWidth + gap + countdownWidth / 2;
+          ctx.save();
+          ctx.translate(countdownX, drawY);
+          ctx.scale(getCountdownPulseScale(side), getCountdownPulseScale(side));
+          ctx.fillStyle = '#ff1a1a';
+          ctx.textAlign = 'center';
+          ctx.fillText(countdownText, 0, 0);
+          ctx.restore();
+        }
       } else if (isOpponentThinking && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
-        // 对手选择中：rival 图标 + 文字横向居中（图标再变大点）
+        // 对手选择中：rival 图标 + 文字 + 倒计时(鲜红色) 横向居中
         const text = baseText;
-        const displayText = statusText;
         const iconSize = 26 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
-        const totalWidth = iconSize + gap + textWidth;
+        let totalWidth = iconSize + gap + textWidth;
+        let countdownWidth = 0;
+        let countdownText = '';
+        if (countdownSec > 0) {
+          countdownText = `(${countdownSec})`;
+          countdownWidth = ctx.measureText(countdownText).width;
+          totalWidth += gap + countdownWidth;
+        }
         const startX = centerX - totalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIconRival, startX, drawY - iconSize / 2, iconSize, iconSize);
-        ctx.fillText(displayText, startX + iconSize + gap, drawY);
+        ctx.fillText(text, startX + iconSize + gap, drawY);
+        if (countdownText) {
+          const countdownX = startX + iconSize + gap + textWidth + gap + countdownWidth / 2;
+          ctx.save();
+          ctx.translate(countdownX, drawY);
+          ctx.scale(getCountdownPulseScale(side), getCountdownPulseScale(side));
+          ctx.fillStyle = '#ff1a1a';
+          ctx.textAlign = 'center';
+          ctx.fillText(countdownText, 0, 0);
+          ctx.restore();
+        }
       } else if (baseText) {
         ctx.textAlign = 'center';
-        ctx.fillText(statusText, centerX, drawY);
+        ctx.fillText(baseText, centerX, drawY);
       }
     }
     ctx.restore();
