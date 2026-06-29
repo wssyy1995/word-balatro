@@ -1764,8 +1764,8 @@ class Renderer {
     ctx.textBaseline = 'middle';
     if (card.absorbBonus && card.absorbBonus > 0) {
       ctx.fillStyle = '#ffd700';
-      ctx.shadowColor = 'rgba(255, 215, 0, 0.85)';
-      ctx.shadowBlur = 8 * s;
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.45)';
+      ctx.shadowBlur = 4 * s;
     } else {
       ctx.fillStyle = darkBlue;
     }
