@@ -5,9 +5,10 @@ const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache } = require('
 
 const HAND_SIZE = 12;
 const DEFAULT_TOTAL_ROUNDS = 10;
-const BOT_FAST_MIN_MS = 3000;
-const BOT_FAST_MAX_MS = 6000;
-const BOT_WAIT_PLAYER_MS = 2000;
+const BOT_FAST_MIN_MS = 4000;
+const BOT_FAST_MAX_MS = 8000;
+const BOT_WAIT_PLAYER_MIN_MS = 2000;
+const BOT_WAIT_PLAYER_MAX_MS = 4000;
 const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
 const TURN_TIMEOUT_MS = 15000; // 单回合出牌倒计时 15 秒
@@ -169,13 +170,13 @@ class BattleManager {
   _initBotStrategy() {
     const g = this.game;
     if (Math.random() < BOT_FAST_PROBABILITY) {
-      // 70%：Bot 在 3~6 秒内自行出牌
+      // 70%：Bot 在 4~8 秒内自行出牌
       g._battleBotStrategy = 'fast';
       g._battleBotThinkDuration = BOT_FAST_MIN_MS + Math.floor(Math.random() * (BOT_FAST_MAX_MS - BOT_FAST_MIN_MS));
     } else {
-      // 30%：等玩家出完后，再等 2 秒出牌
+      // 30%：等玩家出完后，再等 2~4 秒出牌
       g._battleBotStrategy = 'wait_player';
-      g._battleBotThinkDuration = BOT_WAIT_PLAYER_MS;
+      g._battleBotThinkDuration = BOT_WAIT_PLAYER_MIN_MS + Math.floor(Math.random() * (BOT_WAIT_PLAYER_MAX_MS - BOT_WAIT_PLAYER_MIN_MS));
     }
   }
 
@@ -347,7 +348,7 @@ class BattleManager {
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
       g._battleTurnCountdownSide = 'bot';
       if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
-        // 30% 策略：玩家出完后，Bot 再等 2 秒
+        // 30% 策略：玩家出完后，Bot 再等 2~4 秒
         g.battleBotThinkingStartTime = Date.now();
       }
     }
