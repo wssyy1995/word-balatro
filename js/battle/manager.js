@@ -9,6 +9,7 @@ const BOT_FAST_MIN_MS = 4000;
 const BOT_FAST_MAX_MS = 8000;
 const BOT_WAIT_PLAYER_MIN_MS = 2000;
 const BOT_WAIT_PLAYER_MAX_MS = 4000;
+const BOT_WAIT_PLAYER_MAX_WAIT_MS = 30000; // wait_player 策略最多等玩家 30 秒
 const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
 const TURN_TIMEOUT_MS = 15000; // 单回合出牌倒计时 15 秒
@@ -174,7 +175,7 @@ class BattleManager {
       g._battleBotStrategy = 'fast';
       g._battleBotThinkDuration = BOT_FAST_MIN_MS + Math.floor(Math.random() * (BOT_FAST_MAX_MS - BOT_FAST_MIN_MS));
     } else {
-      // 30%：等玩家出完后，再等 2~4 秒出牌
+      // 30%：最多等玩家 30 秒；玩家出牌后再等 2~4 秒出牌
       g._battleBotStrategy = 'wait_player';
       g._battleBotThinkDuration = BOT_WAIT_PLAYER_MIN_MS + Math.floor(Math.random() * (BOT_WAIT_PLAYER_MAX_MS - BOT_WAIT_PLAYER_MIN_MS));
     }
@@ -183,13 +184,8 @@ class BattleManager {
   // 根据当前策略启动 Bot 思考计时器
   _startBotTimer() {
     const g = this.game;
-    if (g._battleBotStrategy === 'wait_player') {
-      // 等玩家出完后再开始计时
-      g.battleBotThinkingStartTime = null;
-    } else {
-      // fast 模式立即开始计时
-      g.battleBotThinkingStartTime = Date.now();
-    }
+    // 统一从回合开始计时；wait_player 会在 30 秒上限或玩家出牌后处理
+    g.battleBotThinkingStartTime = Date.now();
     g.battleBotThinking = true;
     g.battleBotReady = false;
   }
@@ -347,8 +343,8 @@ class BattleManager {
       // 玩家先出牌，给 Bot 启动 15 秒倒计时
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
       g._battleTurnCountdownSide = 'bot';
-      if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
-        // 30% 策略：玩家出完后，Bot 再等 2~4 秒
+      if (g._battleBotStrategy === 'wait_player') {
+        // 玩家已出，Bot 开始 2~4 秒 post-wait 计时
         g.battleBotThinkingStartTime = Date.now();
       }
     }
@@ -437,23 +433,38 @@ class BattleManager {
   updateBotThinking() {
     const g = this.game;
     if (!g.battleBotThinking || g.battleBotReady) return;
-    // 30% 策略：玩家未出牌前 Bot 一直等待
-    if (g._battleBotStrategy === 'wait_player' && g.battlePhase !== 'player_played') return;
     if (!g.battleBotThinkingStartTime) return;
-    if (Date.now() - g.battleBotThinkingStartTime >= g._battleBotThinkDuration) {
-      g.battleBotThinking = false;
-      g.battleBotReady = true;
-      g._battleBotReadyAnimStart = Date.now();
-      // 对方从“选择中”变为“已选择”时播放出牌音效
-      if (g.audioManager) g.audioManager.play('battle_play_card');
-      // 如果玩家已经出牌，双方就绪，进入揭晓
+
+    const elapsed = Date.now() - g.battleBotThinkingStartTime;
+    let shouldPlay = false;
+
+    if (g._battleBotStrategy === 'wait_player') {
       if (g.battlePhase === 'player_played') {
-        this.startReveal();
+        // 玩家已出，按 2~4 秒 post-wait 计时
+        if (elapsed >= g._battleBotThinkDuration) shouldPlay = true;
       } else {
-        // Bot 先出牌，给玩家启动 15 秒倒计时
-        g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
-        g._battleTurnCountdownSide = 'player';
+        // 玩家未出，最多等 30 秒；超过立即出牌
+        if (elapsed >= BOT_WAIT_PLAYER_MAX_WAIT_MS) shouldPlay = true;
       }
+    } else {
+      // fast 策略：4~8 秒
+      if (elapsed >= g._battleBotThinkDuration) shouldPlay = true;
+    }
+
+    if (!shouldPlay) return;
+
+    g.battleBotThinking = false;
+    g.battleBotReady = true;
+    g._battleBotReadyAnimStart = Date.now();
+    // 对方从“选择中”变为“已选择”时播放出牌音效
+    if (g.audioManager) g.audioManager.play('battle_play_card');
+    // 如果玩家已经出牌，双方就绪，进入揭晓
+    if (g.battlePhase === 'player_played') {
+      this.startReveal();
+    } else {
+      // Bot 先出牌，给玩家启动 15 秒倒计时
+      g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+      g._battleTurnCountdownSide = 'player';
     }
   }
 
