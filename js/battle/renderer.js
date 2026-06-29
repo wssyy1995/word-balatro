@@ -67,6 +67,11 @@ class BattleRenderer {
     this.battleCardIconRivalLoaded = false;
     this._loadBattleCardIconRival();
 
+    // 加载"超时未出牌"提示图标（本地资源，不走云存储）
+    this.battleOvertimeIcon = null;
+    this.battleOvertimeIconLoaded = false;
+    this._loadBattleOvertimeIcon();
+
     // 加载当前用户头像
     this.selfAvatarUrl = null;
     this.selfAvatarImg = null;
@@ -125,6 +130,18 @@ class BattleRenderer {
       this.battleCardIconRival = img;
     } catch (e) {
       this.battleCardIconRivalLoaded = false;
+    }
+  }
+
+  _loadBattleOvertimeIcon() {
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_overtime.png';
+      img.onload = () => { this.battleOvertimeIconLoaded = true; };
+      img.onerror = () => { this.battleOvertimeIconLoaded = false; };
+      this.battleOvertimeIcon = img;
+    } catch (e) {
+      this.battleOvertimeIconLoaded = false;
     }
   }
 
@@ -1580,6 +1597,17 @@ class BattleRenderer {
           ctx.fillText(countdownText, 0, 0);
           ctx.restore();
         }
+      } else if (isTimeoutStatus && this.battleOvertimeIcon && this.battleOvertimeIconLoaded) {
+        // 超时未出牌：小图标 + 文字 横向居中
+        const text = baseText;
+        const iconSize = 18 * s;
+        const gap = 5 * s;
+        const textWidth = ctx.measureText(text).width;
+        const totalWidth = iconSize + gap + textWidth;
+        const startX = centerX - totalWidth / 2;
+        ctx.textAlign = 'left';
+        ctx.drawImage(this.battleOvertimeIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
+        ctx.fillText(text, startX + iconSize + gap, drawY);
       } else if (baseText) {
         ctx.textAlign = 'center';
         ctx.fillText(baseText, centerX, drawY);
