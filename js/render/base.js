@@ -962,17 +962,35 @@ class Renderer {
       ctx.fillRect(0, 0, W, H);
 
       const glowX = W * unroll;
-      const g2 = ctx.createLinearGradient(glowX - 30 * s, 0, glowX + 10 * s, 0);
-      g2.addColorStop(0, 'rgba(255,240,200,0)');
-      g2.addColorStop(0.5, 'rgba(255,230,180,0.3)');
-      g2.addColorStop(1, 'rgba(255,240,200,0)');
-      ctx.fillStyle = g2;
-      ctx.fillRect(glowX - 30 * s, 0, 40 * s, H);
 
-      for (let i = 0; i < 8; i++) {
-        ctx.fillStyle = `rgba(220,170,80,${0.25 + 0.35 * Math.random()})`;
+      // 外层柔和金色光晕（更宽更淡）
+      const glowOuterW = 90 * s;
+      const gOuter = ctx.createLinearGradient(glowX - glowOuterW / 2, 0, glowX + glowOuterW / 2, 0);
+      gOuter.addColorStop(0, 'rgba(255,240,200,0)');
+      gOuter.addColorStop(0.5, 'rgba(255,230,180,0.22)');
+      gOuter.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = gOuter;
+      ctx.fillRect(glowX - glowOuterW / 2, 0, glowOuterW, H);
+
+      // 内层主光效（更亮更集中）
+      const glowInnerW = 46 * s;
+      const gInner = ctx.createLinearGradient(glowX - glowInnerW / 2, 0, glowX + glowInnerW / 2, 0);
+      gInner.addColorStop(0, 'rgba(255,245,210,0)');
+      gInner.addColorStop(0.45, 'rgba(255,235,180,0.55)');
+      gInner.addColorStop(0.55, 'rgba(255,250,220,0.65)');
+      gInner.addColorStop(1, 'rgba(255,245,210,0)');
+      ctx.fillStyle = gInner;
+      ctx.fillRect(glowX - glowInnerW / 2, 0, glowInnerW, H);
+
+      // 核心亮线
+      ctx.fillStyle = 'rgba(255,252,235,0.75)';
+      ctx.fillRect(glowX - 2 * s, 0, 4 * s, H);
+
+      // 金色粒子（更多、更亮、更大）
+      for (let i = 0; i < 14; i++) {
+        ctx.fillStyle = `rgba(255,220,120,${0.35 + 0.45 * Math.random()})`;
         ctx.beginPath();
-        ctx.arc(glowX + Math.random() * 20 * s - 10 * s, Math.random() * H, (1.3 + Math.random() * 2.5) * s, 0, Math.PI * 2);
+        ctx.arc(glowX + Math.random() * 36 * s - 18 * s, Math.random() * H, (1.8 + Math.random() * 3.2) * s, 0, Math.PI * 2);
         ctx.fill();
       }
     }
