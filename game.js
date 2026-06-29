@@ -3670,6 +3670,12 @@ function handleInput(x, inputY) {
               potionIndex: game.potionMode._potionIndex,
               prePotionState: game._prePotionState,
             };
+            // 数字晃动结束（1000ms）时播放 fantasy 音效
+            setTimeout(() => {
+              if (game._absorbStarsAnim && game.audioManager) {
+                game.audioManager.play('fantasy');
+              }
+            }, 1000);
           }
           return;
         }
