@@ -476,7 +476,7 @@ module.exports = function extendPopup(Renderer) {
         return;
       }
 
-      // 复刻水：动画/结果阶段优先
+      // 危险复制：动画/结果阶段优先
       if (game._replicateAnim) {
         this._drawReplicateAnim(game);
         return;
@@ -494,7 +494,7 @@ module.exports = function extendPopup(Renderer) {
         return;
       }
 
-      // 复刻水：选择阶段
+      // 危险复制：选择阶段
       if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
         this._drawReplicateSelect(game);
         return;

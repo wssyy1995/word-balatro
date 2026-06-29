@@ -3922,12 +3922,29 @@ class Game {
       }
     }
 
-    // 复刻水：旋转2秒后进入结果阶段
+    // 危险复制：旋转2秒后进入结果阶段，动画结束才应用分数修改
     if (this._replicateAnim && this._replicateAnim.phase === 'spinning') {
       const elapsed = Date.now() - this._replicateAnim.startTime;
       if (elapsed >= 2000) {
         this._replicateAnim.phase = 'result';
         this._replicateAnim.resultStartTime = Date.now();
+        // 心跳动画完成后才真正修改 letterUpgrades 和手牌
+        if (!this._replicateAnim.sameScore && this._replicateAnim.targetLetter) {
+          const targetLetter = this._replicateAnim.targetLetter;
+          const newScore = this._replicateAnim.newScore;
+          const baseTarget = LETTER_SCORE[targetLetter];
+          const add = newScore - baseTarget;
+          letterUpgrades.set(targetLetter, { mult: 1, add: Math.max(0, add) });
+          this.hand.forEach(card => {
+            if (card && card.letter === targetLetter) {
+              card.baseScore = baseTarget;
+              card.score = newScore;
+              card.upgraded = true;
+              card.upgradeMult = 1;
+              card.upgradeAdd = Math.max(0, add);
+            }
+          });
+        }
         if (this.audioManager) {
           this.audioManager.stopSound('heart_beat');
           this.audioManager.play(this._replicateAnim.success ? 'card_valid' : 'fail');
@@ -4016,22 +4033,7 @@ class Game {
       }
     }
 
-    // 计算新分数对应的多层结构（尽量保持mult=1，用add来凑）
-    const baseTarget = LETTER_SCORE[targetLetter];
-    const add = newScore - baseTarget;
-    letterUpgrades.set(targetLetter, { mult: 1, add: Math.max(0, add) });
-
-    // 同步更新当前手牌
-    this.hand.forEach(card => {
-      if (card && card.letter === targetLetter) {
-        card.baseScore = baseTarget;
-        card.score = newScore;
-        card.upgraded = true;
-        card.upgradeMult = 1;
-        card.upgradeAdd = Math.max(0, add);
-      }
-    });
-
+    // 动画阶段不立即修改 letterUpgrades 和手牌分数，等心跳动画结束后再应用
     this._replicateAnim = {
       phase: 'spinning',
       startTime: Date.now(),
@@ -4042,7 +4044,9 @@ class Game {
         targetLetter === letterB ? newScore : scoreB
       ],
       success,
-      targetLetter
+      targetLetter,
+      sourceLetter,
+      newScore
     };
     this._replicateSelectedLetters = [];
     if (this.audioManager) this.audioManager.playLoop('heart_beat');

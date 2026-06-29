@@ -3677,7 +3677,7 @@ function handleInput(x, inputY) {
       return;
     }
 
-    // === 复刻水：动画/结果阶段 ===
+    // === 危险复制：动画/结果阶段 ===
     if (game._replicateAnim) {
       if (game._replicateAnim.phase === 'result') {
         vibrate();
@@ -3785,7 +3785,7 @@ function handleInput(x, inputY) {
       return;
     }
 
-    // === 复刻水：选择阶段 ===
+    // === 危险复制：选择阶段 ===
     if (game.potionMode && game.potionMode.effect === 'replicate_letter') {
       // 检测字母点击
       if (renderer.potionLetterRects) {

@@ -378,7 +378,7 @@ module.exports = function extendAnimation(Renderer) {
       ctx.fillStyle = '#8b6914';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('复刻水', W / 2, titleY);
+      ctx.fillText('危险复制', W / 2, titleY);
       ctx.restore();
 
       // === 副标题 ===
@@ -706,7 +706,7 @@ module.exports = function extendAnimation(Renderer) {
         ctx.fillStyle = anim.success ? '#c4a35a' : '#a33a2b';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(anim.success ? '复刻成功！' : '复刻失败…', W / 2, titleY);
+        ctx.fillText(anim.success ? '复制成功！' : '复制失败…', W / 2, titleY);
         ctx.restore();
 
         // 标题下分隔线
