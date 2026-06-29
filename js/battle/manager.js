@@ -10,7 +10,7 @@ const BOT_FAST_MAX_MS = 6000;
 const BOT_WAIT_PLAYER_MS = 2000;
 const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
-const TURN_TIMEOUT_MS = 10000; // 单回合出牌倒计时 10 秒
+const TURN_TIMEOUT_MS = 15000; // 单回合出牌倒计时 15 秒
 
 // 模块加载时预缓存 3 字母和 4 字母种子词，避免每轮遍历整个词库
 const BATTLE_SEED_WORDS_3 = [];
@@ -246,7 +246,7 @@ class BattleManager {
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
 
-    // 出牌倒计时：一方出牌后给另一方 10 秒
+    // 出牌倒计时：一方出牌后给另一方 15 秒
     g._battleTurnDeadline = null;
     g._battleTurnCountdownSide = null;
     g._battlePlayerTimedOut = false;
@@ -343,7 +343,7 @@ class BattleManager {
     if (g.battleBotReady) {
       this.startReveal();
     } else {
-      // 玩家先出牌，给 Bot 启动 10 秒倒计时
+      // 玩家先出牌，给 Bot 启动 15 秒倒计时
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
       g._battleTurnCountdownSide = 'bot';
       if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
@@ -449,14 +449,14 @@ class BattleManager {
       if (g.battlePhase === 'player_played') {
         this.startReveal();
       } else {
-        // Bot 先出牌，给玩家启动 10 秒倒计时
+        // Bot 先出牌，给玩家启动 15 秒倒计时
         g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
         g._battleTurnCountdownSide = 'player';
       }
     }
   }
 
-  // 检查出牌倒计时：一方出牌后另一方必须在 10 秒内出牌，否则超时判 0 分
+  // 检查出牌倒计时：一方出牌后另一方必须在 15 秒内出牌，否则超时判 0 分
   updateTurnTimer() {
     const g = this.game;
     if (!g._battleTurnDeadline) return;

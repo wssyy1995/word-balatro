@@ -1397,7 +1397,7 @@ class BattleRenderer {
         }
       }
 
-      // 一方出牌后给另一方 10 秒倒计时
+      // 一方出牌后给另一方 15 秒倒计时
       if (game._battleTurnDeadline && game._battleTurnCountdownSide === mySide) {
         const remainSec = Math.max(0, Math.ceil((game._battleTurnDeadline - now) / 1000));
         statusText = remainSec > 0 && baseText ? `${baseText} (${remainSec})` : baseText;
