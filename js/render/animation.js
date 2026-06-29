@@ -1566,6 +1566,7 @@ module.exports = function extendAnimation(Renderer) {
 
       this.absorbStarsCardRects = [];
       const cardCenters = {};
+      const elapsed = anim ? Date.now() - anim.startTime : 0;
       hand.forEach((card, i) => {
         const col = i % cols;
         const row = Math.floor(i / cols);
@@ -1573,13 +1574,16 @@ module.exports = function extendAnimation(Renderer) {
         const y = gridStartY + row * (cardH + gap);
         const isSelected = card.id === selectedId;
         const isSource = anim && anim.sourceCardIds.includes(card.id);
+        const isTarget = anim && card.id === anim.targetCardId;
+        // 分数滚动阶段隐藏目标卡牌原本的分数，由下方动画层绘制滚动/停留分数
+        const hideScore = !!(isTarget && anim && elapsed >= SHAKE_DURATION + FLY_DURATION);
 
         // 使用卡牌自身的 selected_template 作为选中态，不额外绘制边框
         const wasSelected = card.selected;
         const wasSelectOffset = card.selectOffset;
         card.selected = isSelected;
         card.selectOffset = 0;
-        this.drawCard(card, x, y, false, null);
+        this.drawCard(card, x, y, false, null, null, hideScore);
         card.selected = wasSelected;
         card.selectOffset = wasSelectOffset;
         this.absorbStarsCardRects.push({ x, y, w: cardW, h: cardH, card });
@@ -1634,12 +1638,7 @@ module.exports = function extendAnimation(Renderer) {
           if (targetCenter) {
             const cx = targetCenter.x;
             const cy = targetCenter.y + cardH * 0.24;
-            const coverW = 36 * s;
-            const coverH = 14 * s;
             ctx.save();
-            // 用卡牌底色覆盖底层静态分数，保证滚动数字干净
-            ctx.fillStyle = '#faf6ee';
-            ctx.fillRect(cx - coverW / 2, cy - coverH / 2, coverW, coverH);
             ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';

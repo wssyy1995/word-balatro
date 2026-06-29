@@ -1605,7 +1605,7 @@ class Renderer {
     }
   }
 
-  drawCard(card, x, y, isNew = false, displayScoreOverride = null, sweepColor = null) {
+  drawCard(card, x, y, isNew = false, displayScoreOverride = null, sweepColor = null, hideScore = false) {
     const ctx = this.ctx;
     const w = this.cardW;
     const h = this.cardH;
@@ -1734,43 +1734,45 @@ class Renderer {
     ctx.fillText(card.letter, 0, -hh + h * 0.33 - 2 * s + 1 * s);
 
     // === 3. 分数（支持过渡动画 + 脉冲强调）===
-    ctx.save();
-    const scoreX = 0;
-    const scoreY = -hh + h * 0.74;
-    ctx.translate(scoreX, scoreY);
+    if (!hideScore) {
+      ctx.save();
+      const scoreX = 0;
+      const scoreY = -hh + h * 0.74;
+      ctx.translate(scoreX, scoreY);
 
-    // 字母之神分数脉冲动画（放大→回弹，与 HUD 分数更新一致）
-    let scoreScale = 1;
-    if (card._scorePulseAnim) {
-      const pulse = this._calcPulseScale(card._scorePulseAnim, 0.35);
-      scoreScale = pulse.scale;
-      if (pulse.progress >= 1) {
-        delete card._scorePulseAnim;
+      // 字母之神分数脉冲动画（放大→回弹，与 HUD 分数更新一致）
+      let scoreScale = 1;
+      if (card._scorePulseAnim) {
+        const pulse = this._calcPulseScale(card._scorePulseAnim, 0.35);
+        scoreScale = pulse.scale;
+        if (pulse.progress >= 1) {
+          delete card._scorePulseAnim;
+        }
       }
-    }
-    if (card._scoreScale) {
-      scoreScale = card._scoreScale;
-    }
-    ctx.scale(scoreScale, scoreScale);
+      if (card._scoreScale) {
+        scoreScale = card._scoreScale;
+      }
+      ctx.scale(scoreScale, scoreScale);
 
-    let displayScore = displayScoreOverride !== null ? displayScoreOverride : card.score;
-    // 吸星大法：显示包含 absorbBonus 的总分
-    if (card.absorbBonus && card.absorbBonus > 0) {
-      displayScore += card.absorbBonus;
-    }
+      let displayScore = displayScoreOverride !== null ? displayScoreOverride : card.score;
+      // 吸星大法：显示包含 absorbBonus 的总分
+      if (card.absorbBonus && card.absorbBonus > 0) {
+        displayScore += card.absorbBonus;
+      }
 
-    ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    if (card.absorbBonus && card.absorbBonus > 0) {
-      ctx.fillStyle = '#ffd700';
-      ctx.shadowColor = 'rgba(255, 215, 0, 0.45)';
-      ctx.shadowBlur = 4 * s;
-    } else {
-      ctx.fillStyle = darkBlue;
+      ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (card.absorbBonus && card.absorbBonus > 0) {
+        ctx.fillStyle = '#ffd700';
+        ctx.shadowColor = 'rgba(255, 215, 0, 0.45)';
+        ctx.shadowBlur = 4 * s;
+      } else {
+        ctx.fillStyle = darkBlue;
+      }
+      ctx.fillText(`${displayScore}分`, 0, 0);
+      ctx.restore();
     }
-    ctx.fillText(`${displayScore}分`, 0, 0);
-    ctx.restore();
 
     // === 6. 新牌标记 ===
     if (isNew) {
