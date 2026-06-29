@@ -1573,11 +1573,14 @@ module.exports = function extendAnimation(Renderer) {
         const isSelected = card.id === selectedId;
         const isSource = anim && anim.sourceCardIds.includes(card.id);
 
-        if (isSelected) {
-          this.roundRect(x - 3 * s, y - 3 * s, cardW + 6 * s, cardH + 6 * s, 10 * s, null, '#c4a35a', 3 * s);
-        }
-
+        // 使用卡牌自身的 selected_template 作为选中态，不额外绘制边框
+        const wasSelected = card.selected;
+        const wasSelectOffset = card.selectOffset;
+        card.selected = isSelected;
+        card.selectOffset = 0;
         this.drawCard(card, x, y, false, null);
+        card.selected = wasSelected;
+        card.selectOffset = wasSelectOffset;
         this.absorbStarsCardRects.push({ x, y, w: cardW, h: cardH, card });
         cardCenters[card.id] = { x: x + cardW / 2, y: y + cardH / 2 };
 
