@@ -1483,7 +1483,7 @@ Renderer.prototype.render = function(game) {
           if (this.battleRenderer) {
             this.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
           }
-          game.hintToast = { text: '授权成功', expireAt: Date.now() + 2000, startTime: Date.now() };
+          // 授权成功不再显示 toast
         } else {
           game.hintToast = { text: '授权失败，可在排行榜中再次授权', expireAt: Date.now() + 2500, startTime: Date.now() };
         }
