@@ -10,6 +10,7 @@ const BOT_FAST_MAX_MS = 6000;
 const BOT_WAIT_PLAYER_MS = 2000;
 const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
+const TURN_TIMEOUT_MS = 10000; // 单回合出牌倒计时 10 秒
 
 // 模块加载时预缓存 3 字母和 4 字母种子词，避免每轮遍历整个词库
 const BATTLE_SEED_WORDS_3 = [];
@@ -245,6 +246,12 @@ class BattleManager {
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
 
+    // 出牌倒计时：一方出牌后给另一方 10 秒
+    g._battleTurnDeadline = null;
+    g._battleTurnCountdownSide = null;
+    g._battlePlayerTimedOut = false;
+    g._battleBotTimedOut = false;
+
     // 预计算 Bot 出牌：它出的就是选中的种子词
     const botCards = findCardsForWord(botSeed.word, g.battleBotHand) || botSeed.word.toUpperCase().split('').map(letter => createBattleCard(letter));
     const botScore = this._calcWordScore(botCards);
@@ -335,31 +342,43 @@ class BattleManager {
     // 如果对方已经就绪，直接进入揭晓阶段
     if (g.battleBotReady) {
       this.startReveal();
-    } else if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
-      // 30% 策略：玩家出完后，Bot 再等 2 秒
-      g.battleBotThinkingStartTime = Date.now();
+    } else {
+      // 玩家先出牌，给 Bot 启动 10 秒倒计时
+      g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+      g._battleTurnCountdownSide = 'bot';
+      if (g._battleBotStrategy === 'wait_player' && !g.battleBotThinkingStartTime) {
+        // 30% 策略：玩家出完后，Bot 再等 2 秒
+        g.battleBotThinkingStartTime = Date.now();
+      }
     }
 
     return { valid: true, score };
   }
 
   // 双方都已出牌，进入揭晓动画
-  startReveal() {
+  startReveal(firstSide = 'player') {
     const g = this.game;
-    if (g.battlePhase !== 'player_played') return;
+    if (g.battlePhase !== 'player_played' && g.battlePhase !== 'selecting') return;
     g.battlePhase = 'revealing';
 
-    const botChoice = g._pendingBotChoice;
-    if (botChoice) {
-      g.battleBotWord = botChoice.word;
-      g.battleBotCards = botChoice.cards;
-      g.battleBotRoundScore = botChoice.score;
-      g.battleBotWordMeaning = botChoice.meaning || '';
-    } else {
-      g.battleBotWord = '';
-      g.battleBotCards = [];
-      g.battleBotRoundScore = 0;
-      g.battleBotWordMeaning = '';
+    // 揭晓阶段不再倒计时
+    g._battleTurnDeadline = null;
+    g._battleTurnCountdownSide = null;
+
+    // Bot 未超时时，使用预计算的 Bot 出牌；超时时已置为 0 分，不再覆盖
+    if (!g._battleBotTimedOut) {
+      const botChoice = g._pendingBotChoice;
+      if (botChoice) {
+        g.battleBotWord = botChoice.word;
+        g.battleBotCards = botChoice.cards;
+        g.battleBotRoundScore = botChoice.score;
+        g.battleBotWordMeaning = botChoice.meaning || '';
+      } else {
+        g.battleBotWord = '';
+        g.battleBotCards = [];
+        g.battleBotRoundScore = 0;
+        g.battleBotWordMeaning = '';
+      }
     }
 
     g.battlePlayerRoundScores.push(g.battlePlayerRoundScore);
@@ -378,6 +397,7 @@ class BattleManager {
     const toRatio = total > 0 ? botScore / total : 0.5;
 
     // 设置 reveal 动画时间线
+    // firstSide 为超时方时先展示 +0，未超时方后正常展示；正常情况保持玩家先 Bot 后
     const now = Date.now();
     g._battleRevealStartTime = now;
     g._battleAnimTimeline = {
@@ -385,8 +405,10 @@ class BattleManager {
       stepStartTime: now,
       fromRatio,
       toRatio,
-      playerScoreTriggered: false,
-      botScoreTriggered: false,
+      firstScoreTriggered: false,
+      secondScoreTriggered: false,
+      firstSide,
+      secondSide: firstSide === 'player' ? 'bot' : 'player'
     };
   }
 
@@ -426,7 +448,58 @@ class BattleManager {
       // 如果玩家已经出牌，双方就绪，进入揭晓
       if (g.battlePhase === 'player_played') {
         this.startReveal();
+      } else {
+        // Bot 先出牌，给玩家启动 10 秒倒计时
+        g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+        g._battleTurnCountdownSide = 'player';
       }
+    }
+  }
+
+  // 检查出牌倒计时：一方出牌后另一方必须在 10 秒内出牌，否则超时判 0 分
+  updateTurnTimer() {
+    const g = this.game;
+    if (!g._battleTurnDeadline) return;
+    if (g.battlePhase !== 'selecting' && g.battlePhase !== 'player_played') return;
+    if (Date.now() < g._battleTurnDeadline) return;
+
+    const side = g._battleTurnCountdownSide;
+    g._battleTurnDeadline = null;
+    g._battleTurnCountdownSide = null;
+    this.forceTimeout(side);
+  }
+
+  forceTimeout(side) {
+    const g = this.game;
+    if (side === 'player') {
+      g._battlePlayerTimedOut = true;
+      g.battlePlayerWord = '';
+      g.battlePlayerCards = [];
+      g.battleSelected = [];
+      if (g.battleHand) g.battleHand.forEach(c => { if (c) c.selected = false; });
+      g.battlePlayerRoundScore = 0;
+      g.battlePlayerWordMeaning = '';
+      g.battlePendingCheck = null;
+      g._battleCheckingWord = false;
+      if (g._battlePendingCheckTimer) {
+        clearTimeout(g._battlePendingCheckTimer);
+        g._battlePendingCheckTimer = null;
+      }
+      g._battlePlayerReadyAnimStart = Date.now();
+      // 玩家超时后直接揭晓，超时方（玩家）先展示 +0
+      this.startReveal('player');
+    } else if (side === 'bot') {
+      g._battleBotTimedOut = true;
+      g.battleBotWord = '';
+      g.battleBotCards = [];
+      g.battleBotRoundScore = 0;
+      g.battleBotWordMeaning = '';
+      g.battleBotWordLength = 0;
+      g.battleBotReady = true;
+      g.battleBotThinking = false;
+      g._battleBotReadyAnimStart = Date.now();
+      // Bot 超时后直接揭晓，超时方（Bot）先展示 +0
+      this.startReveal('bot');
     }
   }
 
@@ -514,6 +587,10 @@ class BattleManager {
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
     g._battleBotStrategy = null;
+    g._battleTurnDeadline = null;
+    g._battleTurnCountdownSide = null;
+    g._battlePlayerTimedOut = false;
+    g._battleBotTimedOut = false;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');
   }
 }

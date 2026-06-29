@@ -1358,6 +1358,7 @@ class BattleRenderer {
     const tilesY = panel ? panel.tilesY : y + 50 * s;
 
     let statusText = '';
+    let baseText = '';
     let wordText = null;
     let hidden = false;
     let botRevealProgress = -1; // -1 表示不使用翻转动画
@@ -1368,83 +1369,101 @@ class BattleRenderer {
     let flipSide = null;
     let flipElapsed = -1;
 
-    if (isLeft) {
-      // 对手
-      if (game.battlePhase === 'selecting') {
+    const mySide = isLeft ? 'bot' : 'player';
+    const isFirstSide = timeline && timeline.firstSide === mySide;
+    const isSecondSide = timeline && timeline.secondSide === mySide;
+    const timedOut = mySide === 'player' ? game._battlePlayerTimedOut : game._battleBotTimedOut;
+    const myWordLen = mySide === 'player'
+      ? (game.battlePlayerWord ? game.battlePlayerWord.length : 0)
+      : (game.battleBotWordLength || 0);
+    const myWord = mySide === 'player' ? (game.battlePlayerWord || '') : (game.battleBotWord || '');
+
+    if (game.battlePhase === 'selecting' || game.battlePhase === 'player_played') {
+      if (isLeft) {
         if (game.battleBotReady) {
-          statusText = ''; // 对手已选择：不显示文字，只保留 ? 方块
-          const len = game.battleBotWordLength || 0;
-          wordText = '?'.repeat(len);
+          baseText = ''; // 对手已选择：不显示文字，只保留 ? 方块
+          wordText = '?'.repeat(myWordLen);
           hidden = true;
         } else {
-          statusText = '对手选择中...';
+          baseText = '对手选择中...';
         }
-      } else if (game.battlePhase === 'player_played') {
-        statusText = '';
-        if (game.battleBotReady) {
-          const len = game.battleBotWordLength || 0;
-          wordText = '?'.repeat(len);
-          hidden = true;
+      } else {
+        if (game.battlePhase === 'selecting') {
+          baseText = '请出牌';
         } else {
-          statusText = '对手选择中...';
-        }
-      } else if (game.battlePhase === 'revealing') {
-        // revealing 阶段不再显示固定 +x 分文字，只保留飞行计分
-        statusText = '';
-        const step = timeline ? timeline.step : null;
-        if (step === 'placeholders' || step === 'player_flip' || step === 'player_score') {
-          const len = game.battleBotWordLength || 0;
-          wordText = '?'.repeat(len);
+          baseText = '';
+          wordText = '?'.repeat(myWordLen);
           hidden = true;
-        } else if (step === 'bot_flip') {
-          wordText = game.battleBotWord || '';
-          flipSide = 'left';
-          flipElapsed = timeline && timeline.botFlipStartTime ? now - timeline.botFlipStartTime : 0;
-        } else {
-          // bot_score / done：直接显示单词
-          wordText = game.battleBotWord || '';
-          hidden = false;
         }
       }
-    } else {
-      // 我
-      if (game.battlePhase === 'selecting') {
-        statusText = '请出牌';
-      } else if (game.battlePhase === 'player_played') {
-        statusText = '';
-        const len = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
-        wordText = '?'.repeat(len);
-        hidden = true;
-      } else if (game.battlePhase === 'revealing') {
-        statusText = '';
-        const step = timeline ? timeline.step : null;
-        if (step === 'placeholders') {
-          const len = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
-          wordText = '?'.repeat(len);
-          hidden = true;
-        } else if (step === 'player_flip') {
-          wordText = game.battlePlayerWord || '';
-          flipSide = 'right';
-          flipElapsed = timeline && timeline.playerFlipStartTime ? now - timeline.playerFlipStartTime : 0;
+
+      // 一方出牌后给另一方 10 秒倒计时
+      if (game._battleTurnDeadline && game._battleTurnCountdownSide === mySide) {
+        const remainSec = Math.max(0, Math.ceil((game._battleTurnDeadline - now) / 1000));
+        statusText = remainSec > 0 && baseText ? `${baseText} (${remainSec})` : baseText;
+      } else {
+        statusText = baseText;
+      }
+    } else if (game.battlePhase === 'revealing') {
+      const step = timeline ? timeline.step : null;
+      const showTimeoutText = isFirstSide && timedOut && (step === 'placeholders' || step === 'first_flip' || step === 'first_score');
+      if (showTimeoutText) {
+        baseText = '超时未出牌';
+      }
+      if (step === 'placeholders') {
+        if (isFirstSide && timedOut) {
+          wordText = null;
         } else {
-          // player_score / bot_flip / bot_score / done：直接显示单词
-          wordText = game.battlePlayerWord || '';
+          wordText = '?'.repeat(myWordLen);
+          hidden = true;
+        }
+      } else if (step === 'first_flip') {
+        if (isFirstSide) {
+          wordText = myWord;
+          flipSide = side;
+          flipElapsed = timeline && timeline.firstFlipStartTime ? now - timeline.firstFlipStartTime : 0;
+        } else {
+          wordText = '?'.repeat(myWordLen);
+          hidden = true;
+        }
+      } else if (step === 'first_score') {
+        if (isFirstSide) {
+          wordText = myWord;
+          hidden = false;
+        } else {
+          wordText = '?'.repeat(myWordLen);
+          hidden = true;
+        }
+      } else if (step === 'second_flip') {
+        baseText = '';
+        if (isSecondSide) {
+          wordText = myWord;
+          flipSide = side;
+          flipElapsed = timeline && timeline.secondFlipStartTime ? now - timeline.secondFlipStartTime : 0;
+        } else {
+          wordText = myWord;
           hidden = false;
         }
+      } else {
+        // second_score / done：双方均已揭晓
+        baseText = '';
+        wordText = myWord;
+        hidden = false;
       }
+      statusText = baseText;
     }
 
-    // 状态文本颜色与位移动画
-    const isGrayStatus = statusText === '对手选择中...' || statusText === '请出牌';
+    // 状态文本颜色与位移动画（以基础文案为准，避免倒计时数字变化触发弹跳）
+    const isGrayStatus = baseText === '对手选择中...' || baseText === '请出牌' || baseText === '超时未出牌';
     const targetOffsetY = isGrayStatus ? 9 * s : 0;
 
-    const lastKey = isLeft ? '_lastBotStatusText' : '_lastPlayerStatusText';
+    const lastKey = isLeft ? '_lastBotStatusBaseText' : '_lastPlayerStatusBaseText';
     const offsetKey = lastKey + 'Offset';
     const changeKey = isLeft ? '_battleBotStatusChange' : '_battlePlayerStatusChange';
-    const lastStatusText = this[lastKey];
+    const lastBaseText = this[lastKey];
 
-    if (statusText !== lastStatusText) {
-      this[lastKey] = statusText;
+    if (baseText !== lastBaseText) {
+      this[lastKey] = baseText;
       const lastOffset = this[offsetKey] || 0;
       game[changeKey] = { startTime: Date.now(), fromOffset: lastOffset };
     }
@@ -1484,17 +1503,19 @@ class BattleRenderer {
       ctx.fillText(restText, startX + checkWidth + spaceWidth, drawY);
     } else {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
-      const isBoldStatus = statusText.startsWith('✓ ');
-      const isPleasePlay = statusText === '请出牌';
-      const isOpponentThinking = statusText === '对手选择中...';
-      const statusFontSize = (isPleasePlay || isOpponentThinking) ? Math.floor(15 * s) : Math.floor(13 * s);
+      const isBoldStatus = baseText.startsWith('✓ ');
+      const isPleasePlay = baseText === '请出牌';
+      const isOpponentThinking = baseText === '对手选择中...';
+      const isTimeoutStatus = baseText === '超时未出牌';
+      const statusFontSize = (isPleasePlay || isOpponentThinking || isTimeoutStatus) ? Math.floor(15 * s) : Math.floor(13 * s);
       ctx.font = isBoldStatus
         ? `bold ${statusFontSize}px ${this.parent.titleFontFamily}`
         : `${statusFontSize}px ${this.parent.titleFontFamily}`;
 
       if (isPleasePlay && this.battleCardIcon && this.battleCardIconLoaded) {
         // 请出牌：图标 + 文字横向居中，保持灰色非粗体
-        const text = '请出牌';
+        const text = baseText;
+        const displayText = statusText;
         const iconSize = 20 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
@@ -1502,10 +1523,11 @@ class BattleRenderer {
         const startX = centerX - totalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
-        ctx.fillText(text, startX + iconSize + gap, drawY);
+        ctx.fillText(displayText, startX + iconSize + gap, drawY);
       } else if (isOpponentThinking && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
         // 对手选择中：rival 图标 + 文字横向居中（图标再变大点）
-        const text = '对手选择中...';
+        const text = baseText;
+        const displayText = statusText;
         const iconSize = 26 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
@@ -1513,8 +1535,8 @@ class BattleRenderer {
         const startX = centerX - totalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIconRival, startX, drawY - iconSize / 2, iconSize, iconSize);
-        ctx.fillText(text, startX + iconSize + gap, drawY);
-      } else {
+        ctx.fillText(displayText, startX + iconSize + gap, drawY);
+      } else if (baseText) {
         ctx.textAlign = 'center';
         ctx.fillText(statusText, centerX, drawY);
       }
@@ -1893,6 +1915,7 @@ class BattleRenderer {
   }
 
   // ===== Reveal 阶段动画触发 =====
+  // 支持 firstSide/secondSide：超时方先展示 +0，未超时方后正常翻牌计分
   _updateBattleRevealAnimation(game, s) {
     const timeline = game._battleAnimTimeline;
     if (!timeline || game.battlePhase !== 'revealing') return;
@@ -1906,34 +1929,48 @@ class BattleRenderer {
     const SCORE_FLY_DURATION = 800;
     const FLASH_DURATION = 1000;
 
-    const playerWordLen = game.battlePlayerWord ? game.battlePlayerWord.length : 0;
-    const botWordLen = game.battleBotWord ? game.battleBotWord.length : 0;
+    const firstSide = timeline.firstSide || 'player';
+    const secondSide = timeline.secondSide || 'bot';
+
+    const wordLenOf = (side) => {
+      const word = side === 'player' ? game.battlePlayerWord : game.battleBotWord;
+      return word ? word.length : 0;
+    };
+    const scoreOf = (side) => {
+      return side === 'player' ? (game.battlePlayerRoundScore || 0) : (game.battleBotRoundScore || 0);
+    };
+    const panelOf = (side) => {
+      return side === 'player' ? this.battlePanelRight : this.battlePanelLeft;
+    };
+
+    const firstWordLen = wordLenOf(firstSide);
+    const secondWordLen = wordLenOf(secondSide);
 
     switch (timeline.step) {
       case 'placeholders':
         if (now - timeline.stepStartTime >= PLACEHOLDER_DURATION) {
-          timeline.step = 'player_flip';
+          timeline.step = 'first_flip';
           timeline.stepStartTime = now;
-          timeline.playerFlipStartTime = now;
+          timeline.firstFlipStartTime = now;
         }
         break;
-      case 'player_flip': {
-        const totalFlipTime = (playerWordLen - 1) * FLIP_GAP + FLIP_DURATION;
-        if (now - timeline.playerFlipStartTime >= totalFlipTime) {
-          timeline.step = 'player_score';
+      case 'first_flip': {
+        const totalFlipTime = Math.max(0, (firstWordLen - 1) * FLIP_GAP + FLIP_DURATION);
+        if (now - timeline.firstFlipStartTime >= totalFlipTime) {
+          timeline.step = 'first_score';
           timeline.stepStartTime = now;
         }
         break;
       }
-      case 'player_score':
-        if (!timeline.playerScoreTriggered) {
-          timeline.playerScoreTriggered = true;
-          const panel = this.battlePanelRight;
+      case 'first_score':
+        if (!timeline.firstScoreTriggered) {
+          timeline.firstScoreTriggered = true;
+          const panel = panelOf(firstSide);
           if (panel) {
             game._battleFlyingScores.push({
-              value: game.battlePlayerRoundScore || 0,
-              side: 'player',
-              startX: panel.centerX + 10 * s,
+              value: scoreOf(firstSide),
+              side: firstSide,
+              startX: panel.centerX + (firstSide === 'player' ? 10 * s : -10 * s),
               startY: panel.flyScoreY - 32 * s,
               startTime: now,
             });
@@ -1941,28 +1978,28 @@ class BattleRenderer {
           }
         }
         if (now - timeline.stepStartTime >= SCORE_FLY_DURATION) {
-          timeline.step = 'bot_flip';
+          timeline.step = 'second_flip';
           timeline.stepStartTime = now;
-          timeline.botFlipStartTime = now;
+          timeline.secondFlipStartTime = now;
         }
         break;
-      case 'bot_flip': {
-        const totalFlipTime = (botWordLen - 1) * FLIP_GAP + FLIP_DURATION;
-        if (now - timeline.botFlipStartTime >= totalFlipTime) {
-          timeline.step = 'bot_score';
+      case 'second_flip': {
+        const totalFlipTime = Math.max(0, (secondWordLen - 1) * FLIP_GAP + FLIP_DURATION);
+        if (now - timeline.secondFlipStartTime >= totalFlipTime) {
+          timeline.step = 'second_score';
           timeline.stepStartTime = now;
         }
         break;
       }
-      case 'bot_score':
-        if (!timeline.botScoreTriggered) {
-          timeline.botScoreTriggered = true;
-          const panel = this.battlePanelLeft;
+      case 'second_score':
+        if (!timeline.secondScoreTriggered) {
+          timeline.secondScoreTriggered = true;
+          const panel = panelOf(secondSide);
           if (panel) {
             game._battleFlyingScores.push({
-              value: game.battleBotRoundScore || 0,
-              side: 'bot',
-              startX: panel.centerX - 10 * s,
+              value: scoreOf(secondSide),
+              side: secondSide,
+              startX: panel.centerX + (secondSide === 'player' ? 10 * s : -10 * s),
               startY: panel.flyScoreY - 32 * s,
               startTime: now,
             });

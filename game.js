@@ -4113,6 +4113,7 @@ function gameLoop(timestamp) {
   } else {
     // 对战模式状态更新（匹配弹窗显示期间暂停 bot 思考与 reveal 检查）
     if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim) {
+      game.battleManager.updateTurnTimer();
       game.battleManager.updateBotThinking();
       game.battleManager.checkReveal();
     }
