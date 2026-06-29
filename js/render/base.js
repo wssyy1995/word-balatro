@@ -908,33 +908,46 @@ class Renderer {
 
       // 4. 卷轴
       const rollX = W * (1 - roll);
-      const rollR = (6 + roll * 10) * s;
+      const rollR = (12 + roll * 22) * s;
 
-      // 卷轴阴影
-      ctx.fillStyle = 'rgba(80,50,20,0.5)';
-      ctx.fillRect(rollX - 2 * s, -2 * s, rollR + 4 * s, H + 4 * s);
+      // 卷轴阴影（更宽更深，增强立体感）
+      ctx.fillStyle = 'rgba(40,25,10,0.55)';
+      ctx.fillRect(rollX - 6 * s, -4 * s, rollR + 10 * s, H + 8 * s);
 
-      // 卷轴本体渐变
+      // 卷轴本体：圆柱感更强的渐变
       const g = ctx.createLinearGradient(rollX, 0, rollX + rollR, 0);
-      g.addColorStop(0, '#e8d5a0');
-      g.addColorStop(0.5, '#f5e8c0');
-      g.addColorStop(1, '#c4a86c');
+      g.addColorStop(0, '#b08d55');
+      g.addColorStop(0.22, '#e8d5a0');
+      g.addColorStop(0.48, '#fff8e0');
+      g.addColorStop(0.72, '#e8d5a0');
+      g.addColorStop(1, '#9e7d48');
       ctx.fillStyle = g;
-      ctx.fillRect(rollX, -1 * s, rollR, H + 2 * s);
+      ctx.fillRect(rollX, -2 * s, rollR, H + 4 * s);
 
-      // 卷轴上下木轴装饰
-      ctx.fillStyle = '#a08050';
-      ctx.fillRect(rollX - 2 * s, -4 * s, rollR + 4 * s, 8 * s);
-      ctx.fillRect(rollX - 2 * s, H - 4 * s, rollR + 4 * s, 8 * s);
-      ctx.fillStyle = '#d4af60';
-      ctx.fillRect(rollX, -3 * s, rollR, 6 * s);
-      ctx.fillRect(rollX, H - 3 * s, rollR, 6 * s);
+      // 卷轴左侧高光边线
+      ctx.fillStyle = 'rgba(255,250,230,0.55)';
+      ctx.fillRect(rollX + 2 * s, -2 * s, 2 * s, H + 4 * s);
+      // 卷轴右侧暗边
+      ctx.fillStyle = 'rgba(80,55,25,0.35)';
+      ctx.fillRect(rollX + rollR - 4 * s, -2 * s, 2 * s, H + 4 * s);
+
+      // 卷轴上下木轴装饰（加粗并增加层次）
+      ctx.fillStyle = '#7a5a35';
+      ctx.fillRect(rollX - 6 * s, -8 * s, rollR + 10 * s, 12 * s);
+      ctx.fillRect(rollX - 6 * s, H - 4 * s, rollR + 10 * s, 12 * s);
+      ctx.fillStyle = '#c49a5a';
+      ctx.fillRect(rollX - 2 * s, -6 * s, rollR + 4 * s, 8 * s);
+      ctx.fillRect(rollX - 2 * s, H - 2 * s, rollR + 4 * s, 8 * s);
+      // 木轴内侧金线
+      ctx.fillStyle = '#e6c885';
+      ctx.fillRect(rollX + 2 * s, -5 * s, rollR - 4 * s, 2 * s);
+      ctx.fillRect(rollX + 2 * s, H + 3 * s, rollR - 4 * s, 2 * s);
 
       // 卷轴边缘金色粒子
-      for (let i = 0; i < 5; i++) {
-        ctx.fillStyle = `rgba(255,220,140,${0.3 + 0.4 * Math.random()})`;
+      for (let i = 0; i < 7; i++) {
+        ctx.fillStyle = `rgba(255,235,160,${0.35 + 0.45 * Math.random()})`;
         ctx.beginPath();
-        ctx.arc(rollX - 4 * s + Math.random() * 12 * s, Math.random() * H, 1.5 * s, 0, Math.PI * 2);
+        ctx.arc(rollX - 6 * s + Math.random() * 18 * s, Math.random() * H, (1.5 + Math.random()) * s, 0, Math.PI * 2);
         ctx.fill();
       }
     } else {
