@@ -521,13 +521,8 @@ class BattleRenderer {
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          // 源头像区域向内裁剪 20% 直径（去掉边缘留白），再拉伸铺满显示圆
-          const srcMargin = a.sw * 0.10;
-          const srcX = a.sx + srcMargin;
-          const srcY = a.sy + srcMargin;
-          const srcW = a.sw * 0.9;
-          const srcH = a.sh * 0.9;
-          ctx.drawImage(a.img, srcX, srcY, srcW, srcH, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
+          // 与全国榜保持一致：直接绘制图集中 40x40 单头像，不做额外边距裁剪
+          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         } else {
           ctx.drawImage(a.img, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         }
@@ -604,12 +599,8 @@ class BattleRenderer {
         ctx.clip();
         const a = opponent.avatar;
         if (a.type === 'sheet') {
-          const srcMargin = a.sw * 0.10;
-          const srcX = a.sx + srcMargin;
-          const srcY = a.sy + srcMargin;
-          const srcW = a.sw * 0.9;
-          const srcH = a.sh * 0.9;
-          ctx.drawImage(a.img, srcX, srcY, srcW, srcH, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
+          // 与全国榜保持一致：直接绘制图集中 40x40 单头像，不做额外边距裁剪
+          ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         } else {
           ctx.drawImage(a.img, cx - displayAvatarR, avatarY - displayAvatarR, displayAvatarR * 2, displayAvatarR * 2);
         }
@@ -853,13 +844,8 @@ class BattleRenderer {
       ctx.clip();
       const a = opponent.avatar;
       if (a.type === 'sheet') {
-        // 源头像区域向内裁剪 20% 直径，铺满显示圆
-        const srcMargin = a.sw * 0.10;
-        const srcX = a.sx + srcMargin;
-        const srcY = a.sy + srcMargin;
-        const srcW = a.sw * 0.9;
-        const srcH = a.sh * 0.9;
-        ctx.drawImage(a.img, srcX, srcY, srcW, srcH, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
+        // 与全国榜保持一致：直接绘制图集中 40x40 单头像，不做额外边距裁剪
+        ctx.drawImage(a.img, a.sx, a.sy, a.sw, a.sh, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       } else {
         ctx.drawImage(a.img, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       }

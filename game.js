@@ -92,6 +92,19 @@ function vibrate() {
   }
 }
 
+// 版本判断：调试入口仅在非正式版本开放（开发版/体验版可用，正式版禁用）
+function isDebugVersion() {
+  if (!wx.getAccountInfoSync) return true; // 获取不到时默认开放，便于调试
+  try {
+    const accountInfo = wx.getAccountInfoSync();
+    const env = accountInfo && accountInfo.miniProgram && accountInfo.miniProgram.envVersion;
+    return env !== 'release';
+  } catch (e) {
+    console.warn('[Version] 获取账号信息失败', e);
+    return true;
+  }
+}
+
 // ===== 键盘输入监听（反馈文本框用）=====
 wx.onKeyboardInput((res) => {
   if (game && res.value !== undefined) {
@@ -2687,17 +2700,20 @@ function handleInput(x, inputY) {
   }
 
   // 对战模式 top_home 长按打开调试面板（短按返回主页在 touchEnd 处理）
+  // 仅在非正式版本（开发版/体验版）开放该调试入口，正式版禁用
   if (game.state === 'battle' && renderer.battleRenderer && renderer.battleRenderer.battleTopHomeRect) {
     const battle = renderer.battleRenderer;
     const homeHit = renderer.hitTest(x, inputY, [battle.battleTopHomeRect]);
     if (homeHit) {
       longPressTriggered = false;
       game._battleTopHomePressed = true;
-      longPressTimer = setTimeout(() => {
-        longPressTimer = null;
-        longPressTriggered = true;
-        renderer.debugMenuOpen = !renderer.debugMenuOpen;
-      }, LONG_PRESS_DURATION);
+      if (isDebugVersion()) {
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressTriggered = true;
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        }, LONG_PRESS_DURATION);
+      }
       return;
     }
   }
