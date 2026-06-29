@@ -4137,10 +4137,11 @@ class Game {
     this.gold += goldReward;
 
     this._starlightWashAnim = {
-      phase: 'spinning',
+      phase: 'foam',
       startTime: Date.now(),
       letter,
       oldScore,
+      newScore: base,
       goldReward
     };
     this._starlightWashSelectedLetter = null;

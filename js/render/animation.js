@@ -1341,9 +1341,9 @@ module.exports = function extendAnimation(Renderer) {
       const now = Date.now();
       const baseCardScale = 1.8;
 
-      if (anim.phase === 'spinning') {
+      if (anim.phase === 'foam') {
         const elapsed = now - anim.startTime;
-        const progress = Math.min(elapsed / 1000, 1);
+        const progress = Math.min(elapsed / 2000, 1);
 
         // 遮罩
         ctx.save();
@@ -1351,15 +1351,12 @@ module.exports = function extendAnimation(Renderer) {
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
 
-        // 字母牌：旋转动画
+        // 字母牌（显示原分数）
         const cardW = this.cardW * baseCardScale;
         const cardH = this.cardH * baseCardScale;
         const cx = W / 2;
         const cy = H / 2 - 18 * s;
-
-        // 旋转动画：1秒内从 0 到 360 度
-        const rotation = progress * Math.PI * 2;
-        const cardScale = baseCardScale * (1 + 0.1 * Math.sin(progress * Math.PI));
+        const cardRect = { x: cx - cardW / 2, y: cy - cardH / 2, w: cardW, h: cardH };
 
         const base = LETTER_SCORE[anim.letter];
         const tempCard = {
@@ -1373,10 +1370,19 @@ module.exports = function extendAnimation(Renderer) {
 
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(rotation);
-        ctx.scale(cardScale, cardScale);
+        ctx.scale(baseCardScale, baseCardScale);
         this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, anim.oldScore);
         ctx.restore();
+
+        // 泡沫动画（参考中央浓密泡团）
+        if (!anim.bubbles) anim.bubbles = this._initStarlightFoam(cardRect);
+        this._drawStarlightFoam(ctx, anim.bubbles, cardRect, elapsed / 1000, s);
+
+        if (progress >= 1) {
+          anim.phase = 'result';
+          anim.resultStartTime = now;
+          anim._sparklesSpawned = false;
+        }
       } else if (anim.phase === 'result') {
         const resultElapsed = now - (anim.resultStartTime || anim.startTime + 1000);
         const fadeIn = Math.min(resultElapsed / 300, 1);
@@ -1415,7 +1421,7 @@ module.exports = function extendAnimation(Renderer) {
         this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
         ctx.restore();
 
-        // 字母牌（显示基础分数）
+        // 字母牌（显示基础分数，隐藏默认分数以便做脉冲）
         const targetCardScale = 1.6;
         const resultScale = baseCardScale - (baseCardScale - targetCardScale) * fadeIn;
         const cardW = this.cardW * resultScale;
@@ -1437,7 +1443,21 @@ module.exports = function extendAnimation(Renderer) {
         ctx.globalAlpha = 1;
         ctx.translate(cardX + cardW / 2, cardY + cardH / 2);
         ctx.scale(resultScale, resultScale);
-        this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, base);
+        this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, base, null, true);
+
+        // 分数脉冲缩放更新
+        const pulseElapsed = Math.min(resultElapsed, 600);
+        const pulseProgress = pulseElapsed / 600;
+        const pulseScale = 1 + 0.55 * (1 - Easing.easeOutBack(pulseProgress));
+        ctx.save();
+        ctx.translate(0, this.cardH * 0.24);
+        ctx.scale(pulseScale, pulseScale);
+        ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#1a2f4a';
+        ctx.fillText(`${base}分`, 0, 0);
+        ctx.restore();
         ctx.restore();
 
         // 获得金币提示
@@ -1463,6 +1483,88 @@ module.exports = function extendAnimation(Renderer) {
         ctx.restore();
       }
     }
+
+    Renderer.prototype._initStarlightFoam = function(rect) {
+      const bubbles = [];
+      for (let i = 0; i < 34; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const rr = Math.sqrt(Math.random());
+        const x = rect.x + rect.w * 0.5 + Math.cos(a) * rr * rect.w * 0.35;
+        const y = rect.y + rect.h * 0.08 + Math.sin(a) * rr * rect.h * 0.15;
+        const r = 10 + Math.random() * 21;
+        const row = Math.floor(i / 8);
+        const col = i;
+        const alpha = 0.58 + Math.random() * 0.32;
+        const phase = col * 0.52 + row * 0.78;
+        bubbles.push({ x, y, r, row, col, alpha, phase });
+      }
+      return bubbles;
+    };
+
+    Renderer.prototype._drawStarlightFoam = function(ctx, bubbles, rect, t, s) {
+      // 底层光晕床垫
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      const sway = Math.sin(t * 1.35) * 5 * s;
+      const cx = rect.x + rect.w / 2 + sway;
+      const cy = rect.y + rect.h * 0.07;
+      const grad = ctx.createRadialGradient(cx, cy, 10 * s, cx, cy, rect.w * 0.65);
+      grad.addColorStop(0, 'rgba(255,255,255,0.24)');
+      grad.addColorStop(0.55, 'rgba(230,250,255,0.12)');
+      grad.addColorStop(1, 'rgba(230,250,255,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, rect.w * 0.48, rect.h * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 浓密气泡
+      bubbles.forEach(b => {
+        const rhythm = Math.sin(t * 1.55 + b.row * 0.72);
+        const x = b.x + rhythm * (5 + b.row * 1.5) * s + Math.sin(t * 1.55 + b.phase) * 1.5 * s;
+        const y = b.y + Math.cos(t * 1.55 + b.col * 0.38) * 3.5 * s;
+        const r = b.r * (1 + Math.sin(t * 1.55 + b.phase) * 0.045) * s;
+        const alpha = b.alpha * (0.9 + Math.sin(t * 1.55 + b.phase) * 0.08);
+        this._drawFoamBubble(ctx, x, y, r, alpha);
+      });
+    };
+
+    Renderer.prototype._drawFoamBubble = function(ctx, x, y, r, alpha) {
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+
+      const glow = ctx.createRadialGradient(x - r * 0.2, y - r * 0.25, 1, x, y, r * 1.45);
+      glow.addColorStop(0, `rgba(255,255,255,${alpha * 0.46})`);
+      glow.addColorStop(0.45, `rgba(235,250,255,${alpha * 0.22})`);
+      glow.addColorStop(1, 'rgba(235,250,255,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.45, 0, Math.PI * 2);
+      ctx.fill();
+
+      const body = ctx.createRadialGradient(x - r * 0.35, y - r * 0.42, 1, x, y, r);
+      body.addColorStop(0, `rgba(255,255,255,${alpha})`);
+      body.addColorStop(0.34, `rgba(255,255,255,${alpha * 0.44})`);
+      body.addColorStop(0.72, `rgba(224,246,255,${alpha * 0.18})`);
+      body.addColorStop(1, `rgba(255,255,255,${alpha * 0.08})`);
+      ctx.fillStyle = body;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.65})`;
+      ctx.lineWidth = Math.max(1, r * 0.04);
+      ctx.beginPath();
+      ctx.arc(x, y, r * 0.96, -0.25, Math.PI * 1.23);
+      ctx.stroke();
+
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.ellipse(x - r * 0.32, y - r * 0.38, r * 0.18, r * 0.1, -0.65, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    };
 
     Renderer.prototype._completeAbsorbStarsAnim = function(game) {
       const anim = game._absorbStarsAnim;
