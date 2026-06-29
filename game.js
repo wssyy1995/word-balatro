@@ -1040,12 +1040,15 @@ wx.onTouchStart((e) => {
       longPressTriggered = false;
       if (hit.key === 'setting') {
         // 复用 top_icon 的按下行为（短按打开设置，长按打开调试面板）
+        // 长按调试入口仅在非正式版本（开发版/体验版）开放，正式版禁用
         renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
-        longPressTimer = setTimeout(() => {
-          longPressTimer = null;
-          longPressTriggered = true;
-          renderer.debugMenuOpen = !renderer.debugMenuOpen;
-        }, LONG_PRESS_DURATION);
+        if (isDebugVersion()) {
+          longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            longPressTriggered = true;
+            renderer.debugMenuOpen = !renderer.debugMenuOpen;
+          }, LONG_PRESS_DURATION);
+        }
       }
       return;
     }
@@ -1071,17 +1074,20 @@ wx.onTouchStart((e) => {
   }
 
   // 检测 top_icon：短按返回主页，长按打开调试菜单（药水使用页面不响应）
+  // 长按调试入口仅在非正式版本（开发版/体验版）开放，正式版禁用
   if (renderer.topIconRect && !(game && game.state === 'potion')) {
     const iconHit = renderer.hitTest(x, inputY, [renderer.topIconRect]);
     if (iconHit) {
       longPressTriggered = false;
       renderer._topIconPressAnim = { pressing: true, startTime: Date.now() };
-      longPressTimer = setTimeout(() => {
-        longPressTimer = null;
-        longPressTriggered = true;
-        renderer.debugMenuOpen = !renderer.debugMenuOpen;
-      }, LONG_PRESS_DURATION);
-      return; // 长按期间不触发其他交互
+      if (isDebugVersion()) {
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressTriggered = true;
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        }, LONG_PRESS_DURATION);
+      }
+      return; // 长按期间不触发其他交互（短按返回主页在 touchEnd 处理）
     }
   }
 
