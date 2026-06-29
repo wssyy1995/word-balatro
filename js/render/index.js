@@ -1404,7 +1404,13 @@ Renderer.prototype.render = function(game) {
     ctx.fill();
     ctx.clip();
     if (defaultAvatar) {
-      ctx.drawImage(defaultAvatar.img, defaultAvatar.sx, defaultAvatar.sy, defaultAvatar.sw, defaultAvatar.sh, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
+      // 居中裁剪 20% 直径的边距（四周各 10%，取中间 32×32 区域），再拉伸铺满圆形显示区
+      const srcMargin = defaultAvatar.sw * 0.10;
+      const srcX = defaultAvatar.sx + srcMargin;
+      const srcY = defaultAvatar.sy + srcMargin;
+      const srcW = defaultAvatar.sw - srcMargin * 2;
+      const srcH = defaultAvatar.sh - srcMargin * 2;
+      ctx.drawImage(defaultAvatar.img, srcX, srcY, srcW, srcH, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
     } else if (avatarImg) {
       ctx.drawImage(avatarImg, avatarX - avatarR, avatarY - avatarR, avatarR * 2, avatarR * 2);
     }
