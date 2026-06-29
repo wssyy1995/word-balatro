@@ -1764,13 +1764,19 @@ class Renderer {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       if (card.absorbBonus && card.absorbBonus > 0) {
-        ctx.fillStyle = '#ffd700';
+        // 先画白色光晕底层，再画金色文字
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.55)';
+        ctx.shadowBlur = 7 * s;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`${displayScore}分`, 0, 0);
         ctx.shadowColor = 'rgba(255, 215, 0, 0.45)';
         ctx.shadowBlur = 4 * s;
+        ctx.fillStyle = '#ffd700';
+        ctx.fillText(`${displayScore}分`, 0, 0);
       } else {
         ctx.fillStyle = darkBlue;
+        ctx.fillText(`${displayScore}分`, 0, 0);
       }
-      ctx.fillText(`${displayScore}分`, 0, 0);
       ctx.restore();
     }
 
