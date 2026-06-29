@@ -1275,7 +1275,7 @@ module.exports = function extendAnimation(Renderer) {
         const base = LETTER_SCORE[selected];
         const up = letterUpgrades.get(selected) || {};
         const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
-        const goldReward = Math.floor(score / 5);
+        const goldReward = Math.floor(Math.max(0, score - base) / 5);
 
         const line1 = `${selected}: ${score}分 → 恢复为 ${base}分`;
         const line2 = `获得 ${goldReward} 金币`;
