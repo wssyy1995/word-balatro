@@ -865,6 +865,14 @@ class BattleRenderer {
         ctx.drawImage(a.img, leftAvatarCX - avatarR, leftAvatarCY - avatarR, avatarR * 2, avatarR * 2);
       }
       ctx.restore();
+      // 对手头像深蓝色边框
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(leftAvatarCX, leftAvatarCY, avatarR, 0, Math.PI * 2);
+      ctx.lineWidth = 2.5 * s;
+      ctx.strokeStyle = COLORS.blueHeader;
+      ctx.stroke();
+      ctx.restore();
     } else {
       this._drawAvatar(ctx, leftAvatarCX, leftAvatarCY, avatarR, s, COLORS.blueHeader);
     }
