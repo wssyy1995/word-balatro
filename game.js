@@ -347,6 +347,36 @@ function checkUserInfoAuth() {
   });
 }
 
+// 静默尝试获取用户信息：若用户已授权，可直接拿到头像昵称而不弹窗
+// 部分环境下 getSetting 的 scope.userInfo 不可靠，用此接口兜底
+function tryGetUserInfoSilently() {
+  if (!wx.getUserInfo) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    wx.getUserInfo({
+      withCredentials: false,
+      lang: 'zh_CN',
+      success: (res) => {
+        const userInfo = res.userInfo || {};
+        const ok = !!(userInfo.avatarUrl && userInfo.nickName);
+        if (ok) {
+          console.log('[ProfileAuth] 静默获取用户信息成功');
+          try {
+            wx.setStorageSync('userInfo', userInfo);
+          } catch (e) {}
+          if (renderer && renderer.battleRenderer && renderer.battleRenderer._setSelfAvatar) {
+            renderer.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
+          }
+        }
+        resolve(ok);
+      },
+      fail: (err) => {
+        console.log('[ProfileAuth] 静默获取用户信息失败', err);
+        resolve(false);
+      }
+    });
+  });
+}
+
 function showGlobalAuthButton() {
   if (!game) return;
   if (!wx.createUserInfoButton) {
@@ -508,6 +538,13 @@ async function requestPrivacyAndProfile() {
 
   const isAuth = await checkUserInfoAuth();
   if (isAuth) {
+    game._profileAuthCompleted = true;
+    return;
+  }
+
+  // getSetting 的 scope.userInfo 在某些环境下不可靠，再静默试一次 getUserInfo
+  const hasUserInfo = await tryGetUserInfoSilently();
+  if (hasUserInfo) {
     game._profileAuthCompleted = true;
     return;
   }
