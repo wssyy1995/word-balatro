@@ -1492,11 +1492,12 @@ module.exports = function extendAnimation(Renderer) {
       const hand = (game.hand || []).filter(c => c);
       const anim = game._absorbStarsAnim;
 
-      // 动画总时长：晃动 1000ms + 飞行 600ms + 滚动 500ms
+      // 动画总时长：晃动 1000ms + 飞行 800ms + 滚动 500ms + 停留 500ms
       const SHAKE_DURATION = 1000;
-      const FLY_DURATION = 600;
+      const FLY_DURATION = 800;
       const ROLL_DURATION = 500;
-      const TOTAL_DURATION = SHAKE_DURATION + FLY_DURATION + ROLL_DURATION;
+      const HOLD_DURATION = 500;
+      const TOTAL_DURATION = SHAKE_DURATION + FLY_DURATION + ROLL_DURATION + HOLD_DURATION;
 
       // 动画完成，应用 absorbBonus 并返回
       if (anim && Date.now() - anim.startTime >= TOTAL_DURATION) {
@@ -1626,10 +1627,9 @@ module.exports = function extendAnimation(Renderer) {
           }
         }
 
-        // 阶段3：目标卡牌分数快速滚动更新
+        // 阶段3：目标卡牌分数快速滚动更新，结束后停留 500ms
         if (elapsed >= SHAKE_DURATION + FLY_DURATION) {
-          const rollProgress = Math.min((elapsed - SHAKE_DURATION - FLY_DURATION) / ROLL_DURATION, 1);
-          const rollEase = Easing.easeOutCubic(rollProgress);
+          const rollElapsed = elapsed - SHAKE_DURATION - FLY_DURATION;
           const targetCenter = cardCenters[anim.targetCardId];
           if (targetCenter) {
             const cx = targetCenter.x;
@@ -1637,17 +1637,26 @@ module.exports = function extendAnimation(Renderer) {
             const coverW = 36 * s;
             const coverH = 14 * s;
             ctx.save();
+            // 用卡牌底色覆盖底层静态分数，保证滚动数字干净
             ctx.fillStyle = '#faf6ee';
             ctx.fillRect(cx - coverW / 2, cy - coverH / 2, coverW, coverH);
             ctx.font = `bold ${Math.floor(11 * s)}px Georgia, serif`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const offset = 8 * s;
-            ctx.globalAlpha = 1 - rollEase;
-            ctx.fillStyle = '#1a2f4a';
-            ctx.fillText(`${anim.oldScore}分`, cx, cy - rollEase * offset);
-            ctx.globalAlpha = rollEase;
-            ctx.fillText(`${anim.newScore}分`, cx, cy + (1 - rollEase) * offset);
+            if (rollElapsed < ROLL_DURATION) {
+              const rollProgress = rollElapsed / ROLL_DURATION;
+              const rollEase = Easing.easeOutCubic(rollProgress);
+              const offset = 8 * s;
+              ctx.globalAlpha = 1 - rollEase;
+              ctx.fillStyle = '#1a2f4a';
+              ctx.fillText(`${anim.oldScore}分`, cx, cy - rollEase * offset);
+              ctx.globalAlpha = rollEase;
+              ctx.fillText(`${anim.newScore}分`, cx, cy + (1 - rollEase) * offset);
+            } else {
+              // 停留阶段直接显示新分数
+              ctx.fillStyle = '#1a2f4a';
+              ctx.fillText(`${anim.newScore}分`, cx, cy);
+            }
             ctx.restore();
           }
         }
