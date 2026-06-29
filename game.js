@@ -1070,8 +1070,8 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 检测 top_icon：短按返回主页，长按打开调试菜单
-  if (renderer.topIconRect) {
+  // 检测 top_icon：短按返回主页，长按打开调试菜单（药水使用页面不响应）
+  if (renderer.topIconRect && !(game && game.state === 'potion')) {
     const iconHit = renderer.hitTest(x, inputY, [renderer.topIconRect]);
     if (iconHit) {
       longPressTriggered = false;
@@ -1797,8 +1797,8 @@ wx.onTouchEnd(() => {
 
   if (!game) return;
 
-  // top_icon 短按：返回主页（长按未触发时；对战状态由 battleTopHomeRect 处理，这里不触发）
-  if (!longPressTriggered && touchStartPos && renderer.topIconRect && !(game && game.state === 'battle')) {
+  // top_icon 短按：返回主页（长按未触发时；对战/药水状态不触发）
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect && !(game && (game.state === 'battle' || game.state === 'potion'))) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
     const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
