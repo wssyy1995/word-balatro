@@ -1535,24 +1535,19 @@ class BattleRenderer {
       };
 
       if (isPleasePlay && this.battleCardIcon && this.battleCardIconLoaded) {
-        // 请出牌：图标 + 文字 + 倒计时(鲜红色) 横向居中
+        // 请出牌：图标 + 文字 横向居中；倒计时独立绘制在文字右侧，不影响文字位置
         const text = baseText;
         const iconSize = 20 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
-        let totalWidth = iconSize + gap + textWidth;
-        let countdownWidth = 0;
-        let countdownText = '';
-        if (countdownSec > 0) {
-          countdownText = `(${countdownSec})`;
-          countdownWidth = ctx.measureText(countdownText).width;
-          totalWidth += gap + countdownWidth;
-        }
-        const startX = centerX - totalWidth / 2;
+        const baseTotalWidth = iconSize + gap + textWidth;
+        const startX = centerX - baseTotalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIcon, startX, drawY - iconSize / 2, iconSize, iconSize);
         ctx.fillText(text, startX + iconSize + gap, drawY);
-        if (countdownText) {
+        if (countdownSec > 0) {
+          const countdownText = `(${countdownSec})`;
+          const countdownWidth = ctx.measureText(countdownText).width;
           const countdownX = startX + iconSize + gap + textWidth + gap + countdownWidth / 2;
           ctx.save();
           ctx.translate(countdownX, drawY);
@@ -1563,24 +1558,19 @@ class BattleRenderer {
           ctx.restore();
         }
       } else if (isOpponentThinking && this.battleCardIconRival && this.battleCardIconRivalLoaded) {
-        // 对手选择中：rival 图标 + 文字 + 倒计时(鲜红色) 横向居中
+        // 对手选择中：rival 图标 + 文字 横向居中；倒计时独立绘制在文字右侧
         const text = baseText;
         const iconSize = 26 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
-        let totalWidth = iconSize + gap + textWidth;
-        let countdownWidth = 0;
-        let countdownText = '';
-        if (countdownSec > 0) {
-          countdownText = `(${countdownSec})`;
-          countdownWidth = ctx.measureText(countdownText).width;
-          totalWidth += gap + countdownWidth;
-        }
-        const startX = centerX - totalWidth / 2;
+        const baseTotalWidth = iconSize + gap + textWidth;
+        const startX = centerX - baseTotalWidth / 2;
         ctx.textAlign = 'left';
         ctx.drawImage(this.battleCardIconRival, startX, drawY - iconSize / 2, iconSize, iconSize);
         ctx.fillText(text, startX + iconSize + gap, drawY);
-        if (countdownText) {
+        if (countdownSec > 0) {
+          const countdownText = `(${countdownSec})`;
+          const countdownWidth = ctx.measureText(countdownText).width;
           const countdownX = startX + iconSize + gap + textWidth + gap + countdownWidth / 2;
           ctx.save();
           ctx.translate(countdownX, drawY);
