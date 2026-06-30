@@ -38,6 +38,7 @@ word-balatro/
 │   ├── updateBestRound/ # 排行榜 bestround 上传
 │   ├── updateUserProfile/  # 头像昵称授权后上传到云数据库
 │   ├── syncWordBook/       # 单词本增量同步到云数据库
+│   ├── updateHonorTrophy/  # 对战荣誉杯累计上传到云数据库
 │   └── login/              # 用户登录信息上报
 ├── scripts/             # 构建脚本（词库生成、精灵图打包等）
 └── js/
@@ -262,8 +263,8 @@ for each flat_bonus 女巫牌:
 | 元音强化 | `has_vowel` | per_card | 卡牌为元音 | 该卡 score ×3 |
 | 元音为首 | `initial_vowel` | per_card | 单词首字母为元音 | 该首字母 score +60 |
 | 左右开弓 | `left_right_open` | per_card | 单词首尾两张字母牌 | 首尾字母各 score +30 |
-| 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult +1 |
-| 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult +2 |
+| 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult +2 |
+| 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult +4 |
 | 珍稀之力 | `has_face` | whole_word | 单词含 J/Q/X/Y/Z | mult +4 |
 | 容错咒文 | `shield_illegal` | — | 打出非法单词 | 不扣除出牌次数 |
 | 字母之神 | `letter_god` | limit | 每次计分（限3次） | 本单词所有字母按最高分字母算分 |
@@ -285,7 +286,8 @@ for each flat_bonus 女巫牌:
 > `illegal_boost` 的 value 会随非法单词打出次数动态变化。
 > `length_4`（四字母连击）当前在 `SHOP_POOL` 中已注释掉，商店暂不投放；五/六字母连击正常投放。
 
-**目标分数公式**
+**目标分数公式**（`calcBaseTarget(round)` 定义在 `js/data.js`，由 `js/game.js` 引入并调用）
+
 采用分段系数累加：
 
 ```
@@ -759,8 +761,19 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） |
 | `heart_beat` | music/sound_effect/heart_beat.mp3 | 危险复制心跳共振动画 |
 | `battle_matching` | music/sound_effect/battle/battle_matching.mp3 | 对战匹配弹窗循环音效 |
-| `battle_match_success` | music/sound_effect/battle/battle_match_sccess.mp3 | 对战匹配成功瞬间 |
-| `battle_play_card` | music/sound_effect/battle/battle_play_card.mp3 | 对战双方出牌后展示占位方块 |
+| `battle_match_sccess` | music/sound_effect/battle_match_sccess.mp3 | 对战匹配成功瞬间（键名 `sccess` 为代码实际拼写） |
+| `battle_play_card` | music/sound_effect/battle_play_card.mp3 | 对战双方出牌后展示占位方块 |
+| `battle_countdown` | music/sound_effect/battle_countdown.mp3 | 对战匹配成功后 3 秒倒计时 |
+| `battle_pop_success` | music/sound_effect/battle/battle_pop_success.mp3 | 对战胜利结束弹窗 |
+| `cloth_flap` | music/sound_effect/cloth_flap.mp3 | 对战匹配弹窗启动（含结算「重新挑战」重走匹配流程） |
+| `bubble_wash` | music/sound_effect/bubble_wash.mp3 | 星辉洗涤泡沫动画阶段 |
+| `bubble` | music/sound_effect/bubble.mp3 | 主页入场气泡装饰音效（连播 2 次） |
+| `win_success` | music/sound_effect/win_success.mp3 | 迷之优惠刮奖刮开后的中奖音效 |
+| `homepage_round_tap` | music/sound_effect/homepage_round_tap.mp3 | 主页「开始闯关/继续」按钮点击 |
+| `homepage_big_button` | music/sound_effect/homepage_big_button.mp3 | 主页两个大按钮入场弹出 |
+| `guide_type` | music/sound_effect/type_2.mp3 | 新手/商店/图鉴引导打字机循环音效（3 秒循环） |
+| `witch_guide_1_bg` | music/sound_effect/witch_guide_1_bg.mp3 | 新手引导 Phase 1 背景音乐（播放一次） |
+| `fantasy` | music/sound_effect/fantasy.mp3 | 吸星大法分数飞行（已预加载，触发点待接入） |
 
 **音频管理**：
 - 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
@@ -788,6 +801,8 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_shop_guide_phase` | 商店女巫技能引导阶段（终身只显示一次） |
 | `word_balatro_cardbook_guide_phase` | 卡牌图鉴引导阶段（终身只显示一次） |
 | `word_balatro_joker_sort_hint_shown` | 女巫牌长按拖拽排序提示是否已展示 |
+| `word_balatro_honor_trophies` | 对战荣誉杯累计胜场数（跨局永久保留） |
+| `word_balatro_round_entered` | 是否已首次进入过单人玩法（主页大按钮「开始闯关」↔「继续」切换依据） |
 
 ### 3.7 cloud_storage.js — 微信云存储
 
@@ -1042,7 +1057,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 ```
 
 **主按钮**
-- **开始闯关**：点击后从主页翻页过渡到单人玩法（`state = 'playing'`）。
+- **开始闯关 / 继续**：点击后从主页翻页过渡到单人玩法（`state = 'playing'`）。首次进入游戏前大按钮显示「开始闯关」；玩家首次点击进入后通过 `storage.saveRoundEntered()` 记录 `_roundEntered`（存储键 `word_balatro_round_entered`），此后大按钮永久显示「继续」（云图 `homepageRoundContinue`）。
 - **双人对战**：点击后同样翻页过渡，并后台预加载对战云图片，随后进入匹配弹窗。
 
 **小按钮**
@@ -1065,11 +1080,11 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 | 任务 | 图标 | 目标 | 奖励金币 | 进度触发点 |
 |------|------|------|---------|-----------|
-| 完成 3 局对战模式 | ⚔️ | 3 | 15 | 对战结束弹窗弹出时 |
+| 连续闯关 10 回合 | 🔥 | 10 | 30 | 每回合结算时递增；游戏结束/新游戏时清零 |
 | 使用 5 张魔法药水牌 | 🧪 | 5 | 10 | 使用药水时（待接入完整触发） |
 | 分享给好友 | 🔗 | 1 | 10 | 分享成功时（待接入完整触发） |
+| 完成 3 局双人对战 | ⚔️ | 3 | 15 | 对战结束弹窗弹出时 |
 | 赢得 1 局对战模式 | 🏆 | 1 | 10 | 对战结束且玩家总分 > Bot 总分时 |
-| 连续通关 10 回合 | 🔥 | 10 | 30 | 每回合结算时递增；游戏结束/新游戏时清零 |
 
 > 注：药水使用和分享任务当前已在任务列表中定义，游戏内具体触发点将在后续版本中统一补齐。
 
@@ -1204,6 +1219,19 @@ js/battle/
 
 对战模式无女巫牌、药水、水晶球等 Roguelike 元素，牌堆使用简化分布（`js/battle/deck.js` 中独立 `LETTER_DISTRIBUTION`）。
 
+#### 对战荣誉杯系统（Honor Trophy）
+
+对战模式引入**荣誉杯**作为跨局累计的胜利凭证：
+
+- **获取**：每赢得一局对战荣誉杯 +1。对战结束弹窗弹出时，若 `battlePlayerScore > battleBotScore`，调用 `battleManager.awardHonorTrophy()`。
+- **本地存储**：`StorageManager.addHonorTrophy()` 累加并写入本地键 `word_balatro_honor_trophies`（跨局永久保留）；`game.honorTrophies` 在游戏初始化时由 `getHonorTrophies()` 读入。
+- **云端同步**：`awardHonorTrophy()` 调用云函数 `updateHonorTrophy`，上传本地累计总数到云数据库 `user_honor_trophy` 集合。云端取 `max(已有, 上传值)` 合并，保证幂等——重试或重复调用不会重复计数或回退。
+- **展示位置**（半透明白色圆角蒙层 + `battle_hornor_trophy.png` 图标 + 金棕色数字）：
+  - **VS 模块**（对战页顶部 `_drawTrophyBadge`）：左对手、右"我"各显示荣誉杯徽章。我方为真实值，对手为虚拟值（我方 +2~10，整局缓存，缓存在 `game._battleOpponent.trophies`）。
+  - **匹配弹窗 / 倒计时阶段**：展示对手荣誉杯数。
+  - **对战结束弹窗**：胜利时在激励文案上方显示荣誉杯图标 + `荣誉杯+1`（金棕 `#8B6914`）+ 左右 `score_line` 装饰线。
+- **图标资源**：`images/battle_hornor_trophy.png`，由 `Renderer`（`base.js`）与对战渲染器各自加载为 `battleHonorTrophyIcon`。
+
 #### 对战结束弹窗
 
 10 回合结束后弹出结束面板（`panelH = 380*s`）：
@@ -1227,7 +1255,7 @@ js/battle/
   - 失败/平局只显示：重新挑战、回到主页。
   - 按钮使用云存储图片 `battle_pop_share.png`、`battle_pop_restart.png`、`battle_pop_backto_homepage.png`，未加载时兜底为圆形文字按钮。
 - 点击「分享战绩」拉起 `wx.shareAppMessage`，标题为 `我在单词对战中以 X:Y 获胜!`。
-- 点击「重新挑战」调用 `startBattle('easy')` 立即开始新一局。
+- 点击「重新挑战」重走匹配弹窗流程（`startMatchAnim()` → 匹配中 → 匹配成功 → 倒计时 → 进入新一局），等同于重新进入对战页。
 - 点击「回到主页」调用 `game.returnToHomepage()` 退出对战。
 
 #### 对战模式 top_home 交互
@@ -1381,6 +1409,7 @@ letterUpgrades = Map {
 前端 → 云函数 getDailyWords → 返回今日 10 个目标单词
 前端 → 云函数 updateBestRound → 更新好友排行榜 bestround
 前端 → 云函数 syncWordBook → 同步历史打出单词到云数据库
+前端 → 云函数 updateHonorTrophy → 同步对战荣誉杯累计数到云数据库
 前端 → 云函数 login → 上报用户设备信息
 ```
 
@@ -1648,7 +1677,8 @@ letterUpgrades = Map {
 | v1.12.3 | 2026-06-29 | 恢复对战匹配弹窗；新增启动时隐私授权后头像昵称授权弹窗，支持向下消失动画与按钮延迟显示同步；优化每日成就样式与 toast；同步补充 README 中主页系统、每日成就系统、启动授权文档 |
 | v1.12.4 | 2026-06-29 | 对战模式 `top_home` 长按调试入口仅在非正式版本（开发版/体验版）开放，正式版本（`release`）禁用；同步更新 README |
 | v1.12.5 | 2026-06-29 | 修复每日成就首次领取奖励的 hintToast 不在弹窗内显示的问题：主页状态也绘制 hintToast，并定位到每日成就弹窗内部偏上位置 |
+| v1.12.6 | 2026-06-30 | 新增对战荣誉杯系统：胜利 +1，本地存储 `honor_trophies` + 云函数 `updateHonorTrophy`（云端取 max 幂等合并），对战页 VS 模块/匹配弹窗/结算弹窗展示荣誉杯徽章（白色蒙层+图标+金棕色数字）；主页大按钮首次进入游戏后永久显示「继续」（`_roundEntered` / `word_balatro_round_entered`）；对战「重新挑战」改为重走匹配弹窗流程（`startMatchAnim`）；Bot 出牌时间 4~8s 调整为 6~10s；每日成就任务表调整顺序与文案（连续闯关、完成 3 局双人对战等）；星辉洗涤新增卡牌弹出 popup 阶段与 `bubble_wash` 音效；修复迷之优惠按折后价判定可购买、平分秋色支持降分、字母置换用真实当前分等；同步更新 README（荣誉杯系统、存储键、云函数、音效表、五/六字母连击倍率 +2/+4、主页继续按钮、每日成就表） |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-29*
+*文档基于实际代码整理，最后更新：2026-06-30*
