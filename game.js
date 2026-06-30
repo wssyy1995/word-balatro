@@ -3831,6 +3831,7 @@ function handleInput(x, inputY) {
     if (game._replicateAnim) {
       if (game._replicateAnim.phase === 'result') {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._replicateAnim = null;
         game.potionMode = null;
         game.state = game._prePotionState || 'shop';
@@ -3844,6 +3845,7 @@ function handleInput(x, inputY) {
       // 动画结束阶段点击 → 关闭
       if (game._equalSplitAnim && game._equalSplitAnim.phase === 'result') {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._equalSplitAnim = null;
         game.potionMode = null;
         game.state = game._prePotionState || 'shop';
@@ -3893,6 +3895,7 @@ function handleInput(x, inputY) {
       // 动画结束阶段点击 → 关闭
       if (game._starlightWashAnim && game._starlightWashAnim.phase === 'result') {
         vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
         game._starlightWashAnim = null;
         game.potionMode = null;
         game.state = game._prePotionState || 'shop';

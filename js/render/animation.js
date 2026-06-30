@@ -1353,7 +1353,34 @@ module.exports = function extendAnimation(Renderer) {
       const now = Date.now();
       const baseCardScale = 1.8;
 
-      if (anim.phase === 'foam') {
+      if (anim.phase === 'popup') {
+        // 卡牌缩放弹出阶段（结束后由 game.update 切到 foam）
+        const elapsed = now - anim.startTime;
+        const p = Math.min(elapsed / 400, 1);
+        const popScale = baseCardScale * Easing.easeOutBack(p);
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+
+        const cx = W / 2;
+        const cy = H / 2 - 18 * s;
+        const base = LETTER_SCORE[anim.letter];
+        const tempCard = {
+          letter: anim.letter,
+          score: anim.oldScore,
+          baseScore: base,
+          upgraded: true,
+          upgradeMult: 1,
+          animOffset: { scale: 1, opacity: 1 }
+        };
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(popScale, popScale);
+        this.drawCard(tempCard, -this.cardW / 2, -this.cardH / 2, false, anim.oldScore);
+        ctx.restore();
+      } else if (anim.phase === 'foam') {
         const elapsed = now - anim.startTime;
         const progress = Math.min(elapsed / 2000, 1);
 
@@ -1415,7 +1442,7 @@ module.exports = function extendAnimation(Renderer) {
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('星辉洗涤完成！', W / 2, titleY);
+        ctx.fillText('洗涤完成！', W / 2, titleY);
         ctx.restore();
 
         // 标题下分隔线

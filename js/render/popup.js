@@ -1791,7 +1791,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 1.5 * s;
       ctx.beginPath();
-      const inset = 4 * s;
+      const inset = 3 * s;
       const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
       ctx.moveTo(ix + ir, iy);
       ctx.lineTo(ix + iw - ir, iy);
@@ -2314,7 +2314,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.strokeStyle = '#c4a35a';
       ctx.lineWidth = 1.5 * s;
       ctx.beginPath();
-      const inset = 4 * s;
+      const inset = 3 * s;
       const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
       ctx.moveTo(ix + ir, iy);
       ctx.lineTo(ix + iw - ir, iy);
@@ -2605,12 +2605,36 @@ module.exports = function extendPopup(Renderer) {
         isClosing: popup.closing || false,
         closeStartTime: popup.closeStartTime,
         width: 340, height: 560, enterOffset: 25, closeOffset: 40,
+        borderRadius: 16,
+        borderWidth: 1.5,
+        borderColor: '#c4a35a',
         elapsed,
         onCloseComplete: () => { game._dailyAchievementPopup = null; }
       });
       if (!panel) return;
       const { px, py, pw, ph, closeAlpha } = panel;
       const ca = closeAlpha;
+
+      // 内层细边框（双层边框，参考单词本）
+      ctx.save();
+      ctx.globalAlpha = ca;
+      ctx.strokeStyle = '#c4a35a';
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      const inset = 3 * s;
+      const ix = px + inset, iy = py + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = 16 * s - inset;
+      ctx.moveTo(ix + ir, iy);
+      ctx.lineTo(ix + iw - ir, iy);
+      ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+      ctx.lineTo(ix + iw, iy + ih - ir);
+      ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+      ctx.lineTo(ix + ir, iy + ih);
+      ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+      ctx.lineTo(ix, iy + ir);
+      ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
 
       // 标题
       const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
@@ -2698,18 +2722,18 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
 
         // 左侧图标
-        let iconSize = 28 * s;
-        if (task.imgKey === 'battle_progress_icon') {
-          iconSize = 32 * s;
+        let iconSize = 40 * s;
+        if (task.imgKey === 'battle_hornor_trophy') {
+          iconSize = 34 * s;
         }
         const iconX = rowX + 30 * s - iconSize / 2;
         const iconY = rowY + rowH / 2 - iconSize / 2;
         ctx.save();
         let iconImg = null;
-        if (task.imgKey === 'battle_progress_icon' && this.battleProgressIcon && this.battleProgressIconLoaded) {
-          iconImg = this.battleProgressIcon;
-        } else if (task.imgKey === 'battle_match_sword' && this.battleMatchSword && this.battleMatchSwordLoaded) {
-          iconImg = this.battleMatchSword;
+        if (task.imgKey === 'battle_hornor_trophy' && this.battleHonorTrophyIcon && this.battleHonorTrophyIconLoaded) {
+          iconImg = this.battleHonorTrophyIcon;
+        } else if (task.imgKey === 'battle_vs' && this.battleVS && this.battleVSLoaded) {
+          iconImg = this.battleVS;
         } else if (task.imgKey === 'study_toast_star' && this.toastStarIcon && this.toastStarIcon.loaded) {
           iconImg = this.toastStarIcon.img;
         } else if (task.imgKey === 'share' && this.shareIcon && this.shareIconLoaded) {
@@ -2718,7 +2742,12 @@ module.exports = function extendPopup(Renderer) {
           iconImg = this.potionIcon;
         }
         if (iconImg && iconImg.width > 0) {
-          ctx.drawImage(iconImg, iconX, iconY, iconSize, iconSize);
+          // 按原图比例 contain 进 iconSize 框并居中，不压缩长宽比
+          const aspect = iconImg.width / iconImg.height;
+          let dw = iconSize, dh = iconSize;
+          if (aspect > 1) dh = iconSize / aspect;
+          else if (aspect < 1) dw = iconSize * aspect;
+          ctx.drawImage(iconImg, iconX + (iconSize - dw) / 2, iconY + (iconSize - dh) / 2, dw, dh);
         } else {
           ctx.font = `${Math.floor(28 * s)}px sans-serif`;
           ctx.textAlign = 'center';
@@ -2855,22 +2884,32 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // 关闭按钮（棕色圆圈 + 白色 ×，与学习模式一致）
-      const closeSize = 26 * s;
-      const closeX = px + pw - closeSize - 12 * s;
-      const closeY = py + 12 * s;
-      const closePressOffset = game._dailyAchievementClosePressed ? 1 * s : 0;
+      // 右上角关闭按钮（完全参考设置弹窗：close 图标 + 兜底圆圈X）
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 3;
+      const closeY = py + 10 * s - 3;
+      const closePressOffset = game._dailyAchievementClosePressed ? 2 * s : 0;
       ctx.save();
       ctx.globalAlpha = ca;
-      ctx.fillStyle = '#8b6914';
-      ctx.beginPath();
-      ctx.arc(closeX + closeSize / 2, closeY + closeSize / 2 + closePressOffset, closeSize / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#fff';
-      ctx.font = `bold ${Math.floor(closeSize * 0.55)}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('×', closeX + closeSize / 2, closeY + closeSize / 2 - 1 * s + closePressOffset);
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + closePressOffset, closeSize, closeSize);
+      } else {
+        // 兜底：绘制 X
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + closePressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
       ctx.restore();
       this.dailyAchievementCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
       this.dailyAchievementContentRect = { x: px + 10 * s, y: contentTop, w: pw - 20 * s, h: contentH };

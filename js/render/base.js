@@ -476,6 +476,19 @@ class Renderer {
       this.battleProgressIconLoaded = false;
     }
 
+    // 加载荣誉杯图标（每日成就「赢得对战」用）
+    this.battleHonorTrophyIcon = null;
+    this.battleHonorTrophyIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_hornor_trophy.png';
+      img.onload = () => { this.battleHonorTrophyIconLoaded = true; };
+      img.onerror = () => { this.battleHonorTrophyIconLoaded = false; };
+      this.battleHonorTrophyIcon = img;
+    } catch (e) {
+      this.battleHonorTrophyIconLoaded = false;
+    }
+
     // 加载禁用锁图标
     this.cardDisableIcon = null;
     this.cardDisableIconLoaded = false;

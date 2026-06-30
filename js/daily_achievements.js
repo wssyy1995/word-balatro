@@ -1,11 +1,12 @@
 // ===== 每日成就系统 =====
 
 const DAILY_TASKS = [
-  { id: 'gamesCompleted', icon: '⚔️', imgKey: 'battle_match_sword', name: '完成 3 局对战模式', target: 3, reward: 15, progressKey: 'gamesCompleted' },
+  { id: 'consecutiveRounds', icon: '🔥', imgKey: 'study_toast_star', name: '连续闯关 10 回合', target: 10, reward: 30, progressKey: 'consecutiveRounds' },
   { id: 'potionsUsed', icon: '🧪', imgKey: 'potion', name: '使用 5 张魔法药水牌', target: 5, reward: 10, progressKey: 'potionsUsed' },
   { id: 'sharedToFriends', icon: '🔗', imgKey: 'share', name: '分享给好友', target: 1, reward: 10, progressKey: 'sharedToFriends' },
-  { id: 'battleWins', icon: '🏆', imgKey: 'battle_progress_icon', name: '赢得 1 局对战模式', target: 1, reward: 10, progressKey: 'battleWins' },
-  { id: 'consecutiveRounds', icon: '🔥', imgKey: 'study_toast_star', name: '连续通关10回合', target: 10, reward: 30, progressKey: 'consecutiveRounds' }
+  { id: 'gamesCompleted', icon: '⚔️', imgKey: 'battle_vs', name: '完成 3 局双人对战', target: 3, reward: 15, progressKey: 'gamesCompleted' },
+  { id: 'battleWins', icon: '🏆', imgKey: 'battle_hornor_trophy', name: '赢得 1 局对战模式', target: 1, reward: 10, progressKey: 'battleWins' }
+
 ];
 
 class DailyAchievements {

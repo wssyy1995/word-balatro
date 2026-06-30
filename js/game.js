@@ -3976,6 +3976,15 @@ class Game {
       }
     }
 
+    // 星辉洗涤：卡牌弹出动画（约 400ms）结束后进入泡沫阶段
+    if (this._starlightWashAnim && this._starlightWashAnim.phase === 'popup') {
+      if (Date.now() - this._starlightWashAnim.startTime >= 400) {
+        this._starlightWashAnim.phase = 'foam';
+        this._starlightWashAnim.startTime = Date.now();
+        if (this.audioManager) this.audioManager.play('bubble_wash');
+      }
+    }
+
     // 星辉洗涤：泡沫动画2秒后进入结果阶段
     if (this._starlightWashAnim && this._starlightWashAnim.phase === 'foam') {
       const elapsed = Date.now() - this._starlightWashAnim.startTime;
@@ -4149,7 +4158,7 @@ class Game {
     this.gold += goldReward;
 
     this._starlightWashAnim = {
-      phase: 'foam',
+      phase: 'popup',
       startTime: Date.now(),
       letter,
       oldScore,
@@ -4157,7 +4166,6 @@ class Game {
       goldReward
     };
     this._starlightWashSelectedLetter = null;
-    if (this.audioManager) this.audioManager.play('bubble_wash');
   }
 
   startRandomSpin() {
