@@ -1,0 +1,9 @@
+{
+  "name": "updateHonorTrophy",
+  "version": "1.0.0",
+  "description": "更新用户对战荣誉杯累计数",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

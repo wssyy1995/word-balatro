@@ -262,6 +262,19 @@ class StorageManager {
     return false;
   }
 
+  // ===== 荣誉杯（对战胜利累计，跨局永久保留）=====
+
+  getHonorTrophies() {
+    return this.get('honor_trophies', 0);
+  }
+
+  // 对战胜利一场 +1，返回累计总数
+  addHonorTrophy() {
+    const total = (this.getHonorTrophies() || 0) + 1;
+    this.set('honor_trophies', total);
+    return total;
+  }
+
   // ===== 每日复活次数 =====
 
   saveDailyRevive(dateStr, used = true) {

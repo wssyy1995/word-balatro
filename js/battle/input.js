@@ -119,6 +119,8 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
         if (game.audioManager) game.audioManager.play('tap');
         setTimeout(() => {
           game.battleManager.startBattle('easy');
+          // 重新走一遍匹配弹窗流程，等同于重新进入对战页
+          game.battleManager.startMatchAnim();
         }, 350);
         return true;
       }

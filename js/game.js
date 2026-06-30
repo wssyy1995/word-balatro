@@ -1150,6 +1150,8 @@ class Game {
     this.storageManager = new StorageManager();
     // 是否已点击过"开始"进入过游戏（跨局永久保留，决定主页大按钮显示"开始"还是"继续"）
     this._roundEntered = this.storageManager.loadRoundEntered() || false;
+    // 荣誉杯累计数（对战每胜一场 +1，跨局永久保留）
+    this.honorTrophies = this.storageManager.getHonorTrophies() || 0;
     this.audioManager = new AudioManager();
     // 2026-06-24 优化：homepage 阶段不预加载全部音效
     // 避免创建 30 个 InnerAudioContext 实例占用内存
@@ -4089,8 +4091,9 @@ class Game {
     // 更新 letterUpgrades（永久修改）
     const updateLetter = (letter, newScore) => {
       const base = LETTER_SCORE[letter];
+      // 平分可能使分数低于基础分，add 需允许为负，否则降分字母会被钳回基础分（重算手牌时复原 bug）
       const add = newScore - base;
-      letterUpgrades.set(letter, { mult: 1, add: Math.max(0, add) });
+      letterUpgrades.set(letter, { mult: 1, add });
       // 同步更新当前手牌
       this.hand.forEach(card => {
         if (card && card.letter === letter) {
@@ -4098,7 +4101,7 @@ class Game {
           card.score = newScore;
           card.upgraded = true;
           card.upgradeMult = 1;
-          card.upgradeAdd = Math.max(0, add);
+          card.upgradeAdd = add;
         }
       });
     };

@@ -57,6 +57,11 @@ class BattleRenderer {
     this.battleProgressIconLoaded = false;
     this._loadBattleProgressIcon();
 
+    // 加载荣誉杯图标（本地资源，不走云存储）
+    this.battleHonorTrophyIcon = null;
+    this.battleHonorTrophyIconLoaded = false;
+    this._loadBattleHonorTrophyIcon();
+
     // 加载"请出牌"提示图标（本地资源，不走云存储）
     this.battleCardIcon = null;
     this.battleCardIconLoaded = false;
@@ -106,6 +111,18 @@ class BattleRenderer {
       this.battleProgressIcon = img;
     } catch (e) {
       this.battleProgressIconLoaded = false;
+    }
+  }
+
+  _loadBattleHonorTrophyIcon() {
+    try {
+      const img = wx.createImage();
+      img.src = 'images/battle_hornor_trophy.png';
+      img.onload = () => { this.battleHonorTrophyIconLoaded = true; };
+      img.onerror = () => { this.battleHonorTrophyIconLoaded = false; };
+      this.battleHonorTrophyIcon = img;
+    } catch (e) {
+      this.battleHonorTrophyIconLoaded = false;
     }
   }
 
@@ -222,7 +239,8 @@ class BattleRenderer {
     // === 对战面板（只显示状态和本轮单词） ===
     const panelsY = promptY + 24 * s + 4 * s;
     const panelH = 94 * s;
-    this._drawPlayerPanels(ctx, game, W, panelsY, panelH, s);
+    // 出牌区模块单独下移 2px（下方预览区/手牌仍按原 panelsY 计算，不跟随）
+    this._drawPlayerPanels(ctx, game, W, panelsY + 2 * s, panelH, s);
 
     // === 单词预览区 ===
     const previewY = panelsY + panelH + 28 * s + 5 * s;
@@ -561,6 +579,10 @@ class BattleRenderer {
       ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
       ctx.restore();
 
+      // 对手荣誉杯（虚拟数量：我方 +2~10，整局稳定）
+      const matchTrophies = (opponent.trophies !== undefined) ? opponent.trophies : (game.honorTrophies || 0) + 2;
+      this._drawTrophyBadge(ctx, cx, avatarY + avatarR + 39 * s, matchTrophies, 'center', s, 0.7);
+
       ctx.restore();
     } else if (anim.phase === 'countdown' || anim.phase === 'disappearing') {
       // 对战即将开始（带缩放进入）
@@ -599,9 +621,9 @@ class BattleRenderer {
       ctx.fillText(countdownText, cx, titleY + 35 * s + 2 * s);
       ctx.restore();
 
-      // 倒计时阶段保留显示对手头像和昵称（往上移动 4*s）
+      // 倒计时阶段保留显示对手头像和昵称（往上移动 4*s，再上移 3*s）
       const avatarR = 32 * s;
-      const avatarY = matchY + matchH * 0.58 - 4 * s;
+      const avatarY = matchY + matchH * 0.58 - 7 * s;
       const opponent = anim.opponent;
 
       ctx.save();
@@ -643,6 +665,10 @@ class BattleRenderer {
       ctx.textBaseline = 'middle';
       ctx.fillText(opponent.name, cx, avatarY + avatarR + 16 * s);
       ctx.restore();
+
+      // 对手荣誉杯（虚拟数量：我方 +2~10，整局稳定）
+      const cdTrophies = (opponent.trophies !== undefined) ? opponent.trophies : (game.honorTrophies || 0) + 2;
+      this._drawTrophyBadge(ctx, cx, avatarY + avatarR + 39 * s, cdTrophies, 'center', s, 0.7);
     }
 
     ctx.restore();
@@ -925,7 +951,7 @@ class BattleRenderer {
     // 中间 VS 徽章
     if (this.parent.battleVS && this.parent.battleVSLoaded) {
       const vsImg = this.parent.battleVS;
-      const vsSize = 54 * s * vsScale;
+      const vsSize = 50 * s * vsScale;
       const vsX = cx - vsSize / 2;
       const vsY = cy + 5 * s - vsSize / 2;
       ctx.drawImage(vsImg, vsX, vsY, vsSize, vsSize);
@@ -935,35 +961,24 @@ class BattleRenderer {
         const centerX = cx;
         const centerY = cy + 5 * s;
         const glowR = vsSize / 2 + 4 * s;
-        const ringR = vsSize / 2 + 2 * s;
 
-        // 柔和呼吸 alpha：0.1 ~ 0.36，周期约 8.8 秒
-        const breathAlpha = 0.23 + 0.13 * Math.sin(now / 1400);
+        // 柔和呼吸 alpha：周期约 5.7 秒（更快）
+        const breathAlpha = 0.23 + 0.13 * Math.sin(now / 900);
 
-        // 外圈光晕（更大、更深的金色）
+        // 外圈光晕（中间深，向外扩散变淡）
         ctx.save();
         ctx.globalAlpha = breathAlpha * 0.55;
         const glowGrad = ctx.createRadialGradient(
-          centerX, centerY, vsSize / 2,
+          centerX, centerY, 0,
           centerX, centerY, glowR + 10 * s
         );
-        glowGrad.addColorStop(0, 'rgba(255, 170, 0, 0.55)');
-        glowGrad.addColorStop(0.6, 'rgba(220, 140, 0, 0.22)');
+        glowGrad.addColorStop(0, 'rgba(255, 170, 0, 0.6)');
+        glowGrad.addColorStop(0.5, 'rgba(230, 145, 0, 0.26)');
         glowGrad.addColorStop(1, 'rgba(255, 170, 0, 0)');
         ctx.fillStyle = glowGrad;
         ctx.beginPath();
         ctx.arc(centerX, centerY, glowR + 10 * s, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
-
-        // 金色圆环（更深的金色）
-        ctx.save();
-        ctx.globalAlpha = breathAlpha * 0.75;
-        ctx.strokeStyle = '#ffd700';
-        ctx.lineWidth = 1.5 * s;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, ringR, 0, Math.PI * 2);
-        ctx.stroke();
         ctx.restore();
 
         // 金色小星星柔和闪烁（更深的金色）
@@ -988,21 +1003,31 @@ class BattleRenderer {
       }
     }
 
-    // 名称 + 分数（保留在原位置）
-    const leftScore = game.battleBotScore || 0;
-    const rightScore = game.battlePlayerScore || 0;
+    // 名称 + 荣誉杯（分数移到进度条两端显示）
     const leftTextX = x + 71 * s;
     const rightTextX = x + w - 71 * s;
-    const nameY = cy - 6 * s;
-    const scoreY = cy + 14 * s;
+    const nameY = cy - 12 * s;      // 名字（左右同一行）
+    const trophyY = cy + 16 * s;    // 荣誉杯徽章（较名字下移）
 
-    const scoreScale = this._getBattleScoreScale(game, now);
+    // 荣誉杯数量：我方真实值；对方虚拟值（基于我方 +2~10，整局稳定缓存）
+    const myTrophies = game.honorTrophies || 0;
+    let oppTrophies;
+    if (game._battleOpponent) {
+      if (typeof game._battleOpponent.trophies !== 'number') {
+        game._battleOpponent.trophies = myTrophies + 2 + Math.floor(Math.random() * 9);
+      }
+      oppTrophies = game._battleOpponent.trophies;
+    } else {
+      oppTrophies = myTrophies + 2;
+    }
 
     ctx.save();
+    ctx.textBaseline = 'middle';
+
+    // 对手名字（左）
     ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
     ctx.fillStyle = COLORS.blueHeader;
     ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
     let opponentName = game._battleOpponent && game._battleOpponent.name ? game._battleOpponent.name : '玩家A';
     const nameChars = Array.from(opponentName);
     if (nameChars.length > 5) opponentName = nameChars.slice(0, 5).join('') + '...';
@@ -1010,26 +1035,18 @@ class BattleRenderer {
     ctx.font = `bold ${leftNameFontSize}px ${this.parent.titleFontFamily}`;
     ctx.fillText(opponentName, leftTextX, nameY);
 
-    ctx.save();
-    ctx.translate(leftTextX, scoreY);
-    ctx.scale(scoreScale, scoreScale);
-    ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = COLORS.blueHeader;
-    ctx.fillText(`${leftScore}分`, 0, 0);
-    ctx.restore();
-
+    // "我"名字（右）
     ctx.textAlign = 'right';
     ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
     ctx.fillStyle = '#993E2D';
     ctx.fillText('我', rightTextX, nameY);
 
-    ctx.save();
-    ctx.translate(rightTextX, scoreY);
-    ctx.scale(scoreScale, scoreScale);
-    ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
-    ctx.fillStyle = '#993E2D';
-    ctx.fillText(`${rightScore}分`, 0, 0);
-    ctx.restore();
+    // 双方荣誉杯徽章（半透明白色蒙层 + 图标 + 金棕色数字）
+    // 对手未确定前（翻页进入 / "对手匹配中"阶段，_battleOpponent 尚未生成）隐藏对方荣誉杯，避免一进页面闪现
+    if (game._battleOpponent) {
+      this._drawTrophyBadge(ctx, leftTextX, trophyY, oppTrophies, 'left', s);
+    }
+    this._drawTrophyBadge(ctx, rightTextX, trophyY, myTrophies, 'right', s);
 
     ctx.restore();
 
@@ -1039,11 +1056,60 @@ class BattleRenderer {
     }
   }
 
+  // 荣誉杯徽章：半透明白色圆角蒙层 + battle_hornor_trophy 图标 + 金棕色数字
+  // align='left' 从 anchorX 向右展开；align='right' 右缘对齐 anchorX；'center' 居中
+  // pillAlpha：白色蒙层不透明度（深色背景下调高，让数字读起来与浅底处一致）
+  _drawTrophyBadge(ctx, anchorX, cy, count, align, s, pillAlpha = 0.35) {
+    const hasIcon = this.battleHonorTrophyIcon && this.battleHonorTrophyIconLoaded;
+    const iconH = 18 * s;
+    const iconW = hasIcon ? iconH * (this.battleHonorTrophyIcon.width / this.battleHonorTrophyIcon.height) : 0;
+    const gap = hasIcon ? 4 * s : 0;
+    const numStr = String(count);
+
+    ctx.save();
+    ctx.font = `900 ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.textBaseline = 'middle';
+    const numW = ctx.measureText(numStr).width;
+
+    const padX = 7 * s;
+    const padY = 3 * s;
+    const badgeW = iconW + gap + numW + padX * 2;
+    const badgeH = Math.max(iconH, 16 * s) + padY * 2;
+    const badgeX = align === 'right' ? anchorX - badgeW
+      : align === 'center' ? anchorX - badgeW / 2
+      : anchorX;
+    const badgeY = cy - badgeH / 2;
+
+    // 半透明白色蒙层
+    this.parent.roundRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2, `rgba(255,255,255,${pillAlpha})`);
+
+    // 图标 + 金棕色数字
+    let contentX = badgeX + padX;
+    if (hasIcon) {
+      ctx.drawImage(this.battleHonorTrophyIcon, contentX, cy - iconH / 2, iconW, iconH);
+      contentX += iconW + gap;
+    }
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#B07C3A';
+    ctx.fillText(numStr, contentX, cy);
+
+    ctx.restore();
+  }
+
   // ===== 分数对比进度条（VS 模块下方） =====
   _drawScoreProgressBar(ctx, game, x, y, w, s) {
     const progressH = 12 * s;
-    const progressY = y + 17 * s + 3 * s;
+    const progressY = y + 17 * s + 3 * s + 1 * s;
     const progressR = progressH / 2;
+
+    // 进度条两端各留出空位显示双方当前分数（左=对手，右=我）
+    const scoreSlotW = 32 * s;
+    const barX = x + scoreSlotW;
+    const barW = w - scoreSlotW * 2;
+
+    const botScoreVal = game.battleBotScore || 0;
+    const playerScoreVal = game.battlePlayerScore || 0;
+
     const anim = game._battleScoreBarAnim;
     let botRatio = 0.5;
     if (anim) {
@@ -1057,53 +1123,51 @@ class BattleRenderer {
         botRatio = anim.fromRatio + (anim.toRatio - anim.fromRatio) * Easing.easeOutCubic(progress);
       }
     } else {
-      const botScore = game.battleBotScore || 0;
-      const playerScore = game.battlePlayerScore || 0;
-      const total = botScore + playerScore;
-      botRatio = total > 0 ? botScore / total : 0.5;
+      const total = botScoreVal + playerScoreVal;
+      botRatio = total > 0 ? botScoreVal / total : 0.5;
     }
-    const botWidth = w * botRatio;
+    const botWidth = barW * botRatio;
 
     ctx.save();
 
     // 外框背景 + 加粗金棕色边框
-    this.parent.roundRect(x, progressY, w, progressH, progressR, '#e8dcc0', '#c4a35a', 4 * s);
+    this.parent.roundRect(barX, progressY, barW, progressH, progressR, '#e8dcc0', '#c4a35a', 4 * s);
 
     // 用外框路径 clip，确保填充只在圆角矩形内
-    this.parent._roundedRectPath(ctx, x, progressY, w, progressH, progressR);
+    this.parent._roundedRectPath(ctx, barX, progressY, barW, progressH, progressR);
     ctx.clip();
 
     // 背景渐变：顶部微亮、底部微暗，营造自然 3D 圆柱感
-    const bgGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    const bgGrad = ctx.createLinearGradient(barX, progressY, barX, progressY + progressH);
     bgGrad.addColorStop(0, '#f0e8d8');
     bgGrad.addColorStop(0.5, '#e8dcc0');
     bgGrad.addColorStop(1, '#ddd0b0');
     ctx.fillStyle = bgGrad;
-    ctx.fillRect(x, progressY, w, progressH);
+    ctx.fillRect(barX, progressY, barW, progressH);
 
     // 左侧渐变（对手）
-    const blueGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    const blueGrad = ctx.createLinearGradient(barX, progressY, barX, progressY + progressH);
     blueGrad.addColorStop(0, '#4a7a9f');
     blueGrad.addColorStop(0.5, '#395E85');
     blueGrad.addColorStop(1, '#2e4c6b');
     ctx.fillStyle = blueGrad;
-    ctx.fillRect(x, progressY, botWidth, progressH);
+    ctx.fillRect(barX, progressY, botWidth, progressH);
 
     // 右侧渐变（我）
-    const redGrad = ctx.createLinearGradient(x, progressY, x, progressY + progressH);
+    const redGrad = ctx.createLinearGradient(barX, progressY, barX, progressY + progressH);
     redGrad.addColorStop(0, '#b34d3a');
     redGrad.addColorStop(0.5, '#993E2D');
     redGrad.addColorStop(1, '#7f3224');
     ctx.fillStyle = redGrad;
-    ctx.fillRect(x + botWidth, progressY, w - botWidth, progressH);
+    ctx.fillRect(barX + botWidth, progressY, barW - botWidth, progressH);
 
     // 顶部高光：自然 3D 立体感
     ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(x, progressY, w, progressH * 0.2);
+    ctx.fillRect(barX, progressY, barW, progressH * 0.2);
 
     // 底部阴影：自然 3D 立体感
     ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(x, progressY + progressH * 0.8, w, progressH * 0.2);
+    ctx.fillRect(barX, progressY + progressH * 0.8, barW, progressH * 0.2);
 
     ctx.restore();
 
@@ -1111,11 +1175,35 @@ class BattleRenderer {
     if (this.battleProgressIcon && this.battleProgressIconLoaded) {
       const iconH = 24 * s;
       const iconW = iconH * (this.battleProgressIcon.width / this.battleProgressIcon.height);
-      let iconX = x + botWidth - iconW / 2;
-      iconX = Math.max(x, Math.min(iconX, x + w - iconW));
-      const iconY = progressY + (progressH - iconH) / 2;
+      let iconX = barX + botWidth - iconW / 2;
+      iconX = Math.max(barX, Math.min(iconX, barX + barW - iconW));
+      const iconY = progressY + (progressH - iconH) / 2 - 4 * s;
       ctx.drawImage(this.battleProgressIcon, iconX, iconY, iconW, iconH);
     }
+
+    // 两端当前分数（左=对手蓝，右=我红），垂直居中于进度条，带得分脉冲缩放
+    const scoreScale = this._getBattleScoreScale(game, Date.now());
+    const scoreCY = progressY + progressH / 2;
+    ctx.save();
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.font = `bold ${Math.floor(13 * s)}px ${this.parent.titleFontFamily}`;
+
+    ctx.save();
+    ctx.translate(x + scoreSlotW / 2, scoreCY);
+    ctx.scale(scoreScale, scoreScale);
+    ctx.fillStyle = COLORS.blueHeader;
+    ctx.fillText(`${botScoreVal}`, 0, 0);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(x + w - scoreSlotW / 2, scoreCY);
+    ctx.scale(scoreScale, scoreScale);
+    ctx.fillStyle = '#993E2D';
+    ctx.fillText(`${playerScoreVal}`, 0, 0);
+    ctx.restore();
+
+    ctx.restore();
   }
 
   // 计算 VS 模块分数缩放动画（双方飞行动画都显示后，延迟 500ms 同时触发）
@@ -1403,7 +1491,7 @@ class BattleRenderer {
           wordText = '?'.repeat(myWordLen);
           hidden = true;
         } else {
-          baseText = '对手选择中...';
+          baseText = '对手选择中';
         }
       } else {
         if (game.battlePhase === 'selecting') {
@@ -1482,7 +1570,7 @@ class BattleRenderer {
     }
 
     // 状态文本颜色与位移动画（以基础文案为准，避免倒计时数字变化触发弹跳）
-    const isGrayStatus = baseText === '对手选择中...' || baseText === '请出牌' || baseText === '超时未出牌';
+    const isGrayStatus = baseText === '对手选择中' || baseText === '请出牌' || baseText === '超时未出牌';
     const targetOffsetY = isGrayStatus ? 9 * s : 0;
 
     const lastKey = isLeft ? '_lastBotStatusBaseText' : '_lastPlayerStatusBaseText';
@@ -1533,7 +1621,7 @@ class BattleRenderer {
       ctx.fillStyle = isGrayStatus ? '#8a8a8a' : COLORS.text;
       const isBoldStatus = baseText.startsWith('✓ ');
       const isPleasePlay = baseText === '请出牌';
-      const isOpponentThinking = baseText === '对手选择中...';
+      const isOpponentThinking = baseText === '对手选择中';
       const isTimeoutStatus = baseText === '超时未出牌';
       const statusFontSize = (isPleasePlay || isOpponentThinking || isTimeoutStatus) ? Math.floor(15 * s) : Math.floor(13 * s);
       ctx.font = isBoldStatus
@@ -1600,7 +1688,7 @@ class BattleRenderer {
       } else if (isTimeoutStatus && this.battleOvertimeIcon && this.battleOvertimeIconLoaded) {
         // 超时未出牌：小图标 + 文字 横向居中
         const text = baseText;
-        const iconSize = 18 * s;
+        const iconSize = 20 * s;
         const gap = 5 * s;
         const textWidth = ctx.measureText(text).width;
         const totalWidth = iconSize + gap + textWidth;
@@ -1866,7 +1954,9 @@ class BattleRenderer {
     ctx.lineTo(x, y + corner);
     ctx.closePath();
 
-    ctx.fillStyle = '#f7ecd8';
+    // 背景/边框按胜负区分：成功暖金，失败/平局灰
+    const vsIsWin = (game.battlePlayerScore || 0) > (game.battleBotScore || 0);
+    ctx.fillStyle = vsIsWin ? '#F1E5CE' : '#D2CCC4';
     ctx.shadowColor = 'rgba(90, 62, 31, 0.15)';
     ctx.shadowBlur = 10 * s;
     ctx.shadowOffsetY = 3 * s;
@@ -1874,10 +1964,10 @@ class BattleRenderer {
     ctx.shadowColor = 'transparent';
 
     ctx.lineWidth = 2.5 * s;
-    ctx.strokeStyle = '#8a6d3b';
+    ctx.strokeStyle = vsIsWin ? '#D4AF37' : '#4A4A4A';
     ctx.stroke();
     ctx.lineWidth = 1 * s;
-    ctx.strokeStyle = '#e8c87a';
+    ctx.strokeStyle = vsIsWin ? '#F0E0A8' : '#8A8A8A';
     ctx.stroke();
     ctx.restore();
 
@@ -1918,7 +2008,7 @@ class BattleRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(opponentName, leftCenterX, centerY - 12 * s);
-    ctx.font = `bold ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
     ctx.fillText(`${leftScore}分`, leftCenterX, centerY + 16 * s);
     ctx.restore();
 
@@ -1932,7 +2022,7 @@ class BattleRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('我', rightCenterX, centerY - 12 * s);
-    ctx.font = `bold ${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
     ctx.fillText(`${rightScore}分`, rightCenterX, centerY + 16 * s);
     ctx.restore();
   }
@@ -2456,25 +2546,28 @@ class BattleRenderer {
       daily.addProgress('gamesCompleted');
       if ((game.battlePlayerScore || 0) > (game.battleBotScore || 0)) {
         daily.addProgress('battleWins');
+        // 荣誉杯：胜利一场 +1，本地存储 + 上传云端
+        if (game.battleManager) game.battleManager.awardHonorTrophy();
       }
     }
     this.lastBattlePhase = 'battle_end';
 
     const elapsed = Date.now() - this.battleEndAnimStartTime;
+    const playerScore = game.battlePlayerScore || 0;
+    const botScore = game.battleBotScore || 0;
+    const isWin = playerScore > botScore;
+    const isDraw = playerScore === botScore;
     const panel = this.parent._drawModalPanel(ctx, W, H, s, {
       isClosing: false,
       closeStartTime: null,
       width: 332, height: 270, enterOffset: 25,
       elapsed,
+      bgColor: isWin ? '#EDD7B5' : '#C9C5BD',
+      borderColor: isWin ? '#c4a35a' : '#4A4A4A',
       onCloseComplete: () => {}
     });
     if (!panel) return;
     const { px, py, pw, ph, closeAlpha } = panel;
-
-    const playerScore = game.battlePlayerScore || 0;
-    const botScore = game.battleBotScore || 0;
-    const isWin = playerScore > botScore;
-    const isDraw = playerScore === botScore;
 
     // 对战结束弹窗音效（成功/失败各播放一次）
     if (!this._battleEndSoundPlayed && game.audioManager) {
@@ -2487,30 +2580,37 @@ class BattleRenderer {
     }
 
     // === 简化版 VS 模块：手绘面板，左右分数 + 中间 VS ===
-    const vsModuleY = py + 80 * s;
-    const vsAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
-    ctx.save();
-    ctx.globalAlpha = vsAnim.alpha * closeAlpha;
-    ctx.translate(px + 10 * s, vsModuleY + vsAnim.yShift);
-    this._drawSimpleVSModule(ctx, game, pw - 26 * s, 0, 72 * s, s);
-    ctx.restore();
+    // 挑战成功时：VS 模块（连带其上方标题图）整体上移 5px，高度 -3px
+    const vsModuleY = py + 80 * s - (isWin ? 5 * s : 0);
+    const vsModuleH = (isWin ? 69 : 72) * s;
 
-    // === 成功/失败标题图：再放大 0.5 倍，相对上次位置下移 10px ===
+    // 成功/失败标题图几何（先算，便于光芒动画在内容背后定位）
     const resultImgKey = isWin ? 'battle_pop_success' : 'battle_pop_fail';
     const resultImg = this.parent[resultImgKey];
     const resultImgLoaded = this.parent[resultImgKey + 'Loaded'];
     const titleAnim = Easing.fadeIn(elapsed, 60, 250, 6 * s);
+    let titleH = 0, titleW = 0, titleX = 0, titleY = 0;
     if (resultImgLoaded && resultImg) {
-      const titleH = isWin ? 110 * s : 115 * s;
-      const titleW = titleH * (resultImg.width / resultImg.height);
-      const titleX = W / 2 - titleW / 2;
-      const titleY = vsModuleY - 10 * s - titleH - 30 * s + 10 * s + (isWin ? 10 * s : 0) + 10 * s + (!isWin ? -3 * s : 0) + titleAnim.yShift;
+      titleH = isWin ? 110 * s : 115 * s;
+      titleW = titleH * (resultImg.width / resultImg.height);
+      titleX = W / 2 - titleW / 2;
+      titleY = vsModuleY - 10 * s - titleH - 30 * s + 10 * s + (isWin ? 10 * s : 0) + 10 * s + (!isWin ? -3 * s : 0) + titleAnim.yShift;
+    }
 
-      // 仅挑战成功时，在标题图背后绘制光芒和闪烁星星
-      if (isWin) {
-        this._drawVictoryEffect(ctx, W / 2, titleY + titleH / 2, titleW, titleH, s, elapsed, titleAnim.alpha * closeAlpha);
-      }
+    // 挑战成功光芒动画：绘制在弹窗内容（VS 模块/标题）背后
+    if (isWin && resultImgLoaded && resultImg) {
+      this._drawVictoryEffect(ctx, W / 2, titleY + titleH / 2, titleW, titleH, s, elapsed, titleAnim.alpha * closeAlpha);
+    }
 
+    const vsAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+    ctx.save();
+    ctx.globalAlpha = vsAnim.alpha * closeAlpha;
+    ctx.translate(px + 10 * s, vsModuleY + vsAnim.yShift);
+    this._drawSimpleVSModule(ctx, game, pw - 26 * s, 0, vsModuleH, s);
+    ctx.restore();
+
+    // === 成功/失败标题图（光芒已在背后绘制）===
+    if (resultImgLoaded && resultImg) {
       ctx.save();
       ctx.globalAlpha = titleAnim.alpha * closeAlpha;
       ctx.drawImage(resultImg, titleX, titleY, titleW, titleH);
@@ -2609,16 +2709,11 @@ class BattleRenderer {
     });
     ctx.restore();
 
-    // === 激励文案：固定在底部按钮上方 23px ===
-    const promptY = btnY - 23 * s;
-    let promptText = '旗鼓相当,不分胜负!';
-    if (isWin) {
-      promptText = '太棒了,你赢得了本轮对战!';
-    } else if (!isDraw) {
-      promptText = '很遗憾,你未能击败对手,再接再厉!';
-    }
-
+    // === 激励文案：固定在底部按钮上方；挑战成功时整体再上移 5px ===
+    const promptY = btnY - 23 * s - (isWin ? 5 * s : 0);
     const promptAnim = Easing.fadeIn(elapsed, 120, 250, 8 * s);
+    const promptLineY = promptY + promptAnim.yShift;
+
     ctx.save();
     ctx.globalAlpha = promptAnim.alpha * closeAlpha;
     ctx.font = `${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
@@ -2626,23 +2721,56 @@ class BattleRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // 小字左右装饰（参考单词预览区 score_line.png）
-    if (this.parent.scoreLine && this.parent.scoreLineLoaded) {
-      const scoreLineImg = this.parent.scoreLine;
-      const lineH = 16 * s;
-      const lineW = lineH * (scoreLineImg.width / scoreLineImg.height);
-      const lineGap = 8 * s;
-      const promptTextWidth = ctx.measureText(promptText).width;
-      const lineY = promptY + promptAnim.yShift;
-      ctx.drawImage(scoreLineImg, W / 2 - promptTextWidth / 2 - lineGap - lineW, lineY - lineH / 2, lineW, lineH);
-      ctx.save();
-      ctx.translate(W / 2 + promptTextWidth / 2 + lineGap + lineW, lineY - lineH / 2);
-      ctx.scale(-1, 1);
-      ctx.drawImage(scoreLineImg, 0, 0, lineW, lineH);
-      ctx.restore();
-    }
+    if (isWin) {
+      // 胜利：荣誉杯图标 + "荣誉杯+1"（字色不变），整体稍大
+      ctx.font = `${Math.floor(16 * s)}px ${this.parent.titleFontFamily}`;
+      const winText = '荣誉杯+1';
+      const winTextW = ctx.measureText(winText).width;
+      const tIcon = this.battleHonorTrophyIcon;
+      const hasTIcon = this.battleHonorTrophyIconLoaded && tIcon;
+      const tIconH = 20 * s;
+      const tIconW = hasTIcon ? tIconH * (tIcon.width / tIcon.height) : 0;
+      const tGap = hasTIcon ? 4 * s : 0;
+      const totalW = tIconW + tGap + winTextW;
+      const startX = W / 2 - totalW / 2;
+      if (hasTIcon) {
+        ctx.drawImage(tIcon, startX, promptLineY - tIconH / 2, tIconW, tIconH);
+      }
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#8B6914';
+      ctx.fillText(winText, startX + tIconW + tGap, promptLineY);
 
-    ctx.fillText(promptText, W / 2, promptY + promptAnim.yShift);
+      // 左右装饰线（score_line.png），夹住"图标+文案"整体
+      if (this.parent.scoreLine && this.parent.scoreLineLoaded) {
+        const scoreLineImg = this.parent.scoreLine;
+        const lineH = 16 * s;
+        const lineW = lineH * (scoreLineImg.width / scoreLineImg.height);
+        const lineGap = 8 * s;
+        ctx.drawImage(scoreLineImg, startX - lineGap - lineW, promptLineY - lineH / 2, lineW, lineH);
+        ctx.save();
+        ctx.translate(startX + totalW + lineGap + lineW, promptLineY - lineH / 2);
+        ctx.scale(-1, 1);
+        ctx.drawImage(scoreLineImg, 0, 0, lineW, lineH);
+        ctx.restore();
+      }
+    } else {
+      // 失败/平局：原激励文案 + 左右装饰线
+      const promptText = isDraw ? '旗鼓相当,不分胜负!' : '很遗憾,你未能击败对手,再接再厉!';
+      if (this.parent.scoreLine && this.parent.scoreLineLoaded) {
+        const scoreLineImg = this.parent.scoreLine;
+        const lineH = 16 * s;
+        const lineW = lineH * (scoreLineImg.width / scoreLineImg.height);
+        const lineGap = 8 * s;
+        const promptTextWidth = ctx.measureText(promptText).width;
+        ctx.drawImage(scoreLineImg, W / 2 - promptTextWidth / 2 - lineGap - lineW, promptLineY - lineH / 2, lineW, lineH);
+        ctx.save();
+        ctx.translate(W / 2 + promptTextWidth / 2 + lineGap + lineW, promptLineY - lineH / 2);
+        ctx.scale(-1, 1);
+        ctx.drawImage(scoreLineImg, 0, 0, lineW, lineH);
+        ctx.restore();
+      }
+      ctx.fillText(promptText, W / 2, promptLineY);
+    }
     ctx.restore();
   }
 

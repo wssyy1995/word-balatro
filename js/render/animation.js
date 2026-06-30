@@ -779,6 +779,10 @@ module.exports = function extendAnimation(Renderer) {
 
       // === 标题 ===
       const titleY = top - 10 * s;
+
+      // 左上角返回按钮（与危险复制/星辉洗涤一致）
+      this._drawPotionBackButton(game);
+
       ctx.save();
       ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#8b6914';

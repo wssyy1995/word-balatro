@@ -5,8 +5,8 @@ const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache } = require('
 
 const HAND_SIZE = 12;
 const DEFAULT_TOTAL_ROUNDS = 10;
-const BOT_FAST_MIN_MS = 4000;
-const BOT_FAST_MAX_MS = 8000;
+const BOT_FAST_MIN_MS = 6000;
+const BOT_FAST_MAX_MS = 10000;
 const BOT_WAIT_PLAYER_MIN_MS = 2000;
 const BOT_WAIT_PLAYER_MAX_MS = 4000;
 const BOT_WAIT_PLAYER_MAX_WAIT_MS = 30000; // wait_player 策略最多等玩家 30 秒
@@ -158,6 +158,20 @@ class BattleManager {
     this._startRound();
   }
 
+  // 启动对战匹配弹窗流程（匹配中 → 匹配成功 → 倒计时 → 进入对局）
+  // 用于从主页进入对战、以及结算弹窗"重新挑战"，等同于重新进入对战页
+  startMatchAnim() {
+    const g = this.game;
+    g._battleMatchAnim = {
+      phase: 'matching',
+      startTime: Date.now(),
+      matchDuration: 3000 + Math.floor(Math.random() * 3000),
+      matchedTime: null,
+      opponent: null
+    };
+    if (g.audioManager) g.audioManager.play('cloth_flap');
+  }
+
   // 匹配弹窗结束后清理状态，玩家可立即开始操作
   finishMatchSetup() {
     const g = this.game;
@@ -165,6 +179,29 @@ class BattleManager {
     g._battleMatchFinished = true;
     // 匹配弹窗结束后 bot 才真正开始思考，避免弹窗等待期间计入思考时间
     this._startBotTimer();
+  }
+
+  // 荣誉杯：对战胜利一场 +1。本地累加存储，并上传云端数据库
+  // （云端取 max 合并，重试 / 重复调用不会重复计数或回退）
+  awardHonorTrophy() {
+    const g = this.game;
+    if (!g.storageManager) return;
+    const total = g.storageManager.addHonorTrophy();
+    g.honorTrophies = total;
+    try {
+      if (typeof wx !== 'undefined' && wx.cloud && wx.cloud.callFunction) {
+        wx.cloud.callFunction({
+          name: 'updateHonorTrophy',
+          data: { count: total }
+        }).then(res => {
+          console.log('[HonorTrophy] 云函数返回:', res.result);
+        }).catch(err => {
+          console.error('[HonorTrophy] 云函数调用失败:', err);
+        });
+      }
+    } catch (e) {
+      console.error('[HonorTrophy] 上报异常:', e);
+    }
   }
 
   // 每回合随机选择 Bot 出牌策略

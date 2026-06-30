@@ -1155,7 +1155,7 @@ wx.onTouchStart((e) => {
           const popupTop = (renderer ? renderer.H : 667) / 2 - popupH / 2;
           game.hintToast = {
             text: '金币奖励已到账，前往通关模式查看',
-            expireAt: Date.now() + 2500,
+            expireAt: Date.now() + 3000,
             startTime: Date.now(),
             customY: popupTop + 70 * s
           };
@@ -2924,11 +2924,26 @@ function handleInput(x, inputY) {
               // 执行字母置换
               const { LETTER_SCORE, letterUpgrades, FACE_CARDS } = require('./js/data');
               card.letter = popup.targetLetter;
-              card.baseScore = LETTER_SCORE[popup.targetLetter];
+              // 用该字母真实的当前分（base*mult + add），而非基础分；
+              // 否则靠 add 强化（字母强化/平分秋色）的字母会被置换成基础分
+              const base = LETTER_SCORE[popup.targetLetter];
               const upgrade = letterUpgrades.get(popup.targetLetter);
-              card.score = upgrade ? Math.floor(card.baseScore * upgrade.mult) : card.baseScore;
-              card.upgraded = !!upgrade;
-              card.upgradeMult = upgrade ? upgrade.mult : 1;
+              let newScore = base;
+              let upgraded = false;
+              let upgradeMult = 1;
+              let upgradeAdd = 0;
+              if (upgrade) {
+                if (upgrade.mult) newScore = Math.floor(newScore * upgrade.mult);
+                if (upgrade.add) newScore += upgrade.add;
+                upgraded = true;
+                upgradeMult = upgrade.mult || 1;
+                upgradeAdd = upgrade.add || 0;
+              }
+              card.baseScore = base;
+              card.score = newScore;
+              card.upgraded = upgraded;
+              card.upgradeMult = upgradeMult;
+              card.upgradeAdd = upgradeAdd;
               card.isFace = FACE_CARDS.has(popup.targetLetter);
               // 保持卡牌选中状态，不移除 game.selected
               // 消耗药水
@@ -3708,8 +3723,9 @@ function handleInput(x, inputY) {
         if (game.audioManager) game.audioManager.play('tap');
         const item = game.shopItems[priceHit.index];
         if (!item) return;
-        // 金币不足直接忽略
-        if (game.gold < item.cost) return;
+        // 金币不足直接忽略（用折后价判定，与 buyItem/渲染端一致，避免折扣后买得起却点不动）
+        const finalCost = game._shopDiscountActive ? Math.floor(item.cost * game._shopDiscountRate) : item.cost;
+        if (game.gold < finalCost) return;
         const isAlwaysBuyablePotion = item.type === 'potion' && ['upgrade_letter', 'random_upgrade', 'replicate_letter', 'equal_split', 'starlight_wash'].includes(item.effect);
         if (item.type === 'potion' && (game.potions || []).length >= 2 && !isAlwaysBuyablePotion) return;
 
@@ -4225,15 +4241,8 @@ function gameLoop(timestamp) {
       }
       // 双人对战已在点击时初始化，这里只需切到对应状态
       // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
-      if (targetState === 'battle' && game) {
-        game._battleMatchAnim = {
-          phase: 'matching',
-          startTime: Date.now(),
-          matchDuration: 3000 + Math.floor(Math.random() * 3000),
-          matchedTime: null,
-          opponent: null
-        };
-        if (game.audioManager) game.audioManager.play('cloth_flap');
+      if (targetState === 'battle' && game && game.battleManager) {
+        game.battleManager.startMatchAnim();
       }
     }
   } else if (showHomepage) {
@@ -4269,6 +4278,10 @@ function gameLoop(timestamp) {
     }
     // 主页上打开的弹窗滚动物理也需要更新
     if (game) {
+      // 主页不走 game.update()，需在此清除过期 hintToast，确保领取奖励等提示能自动消失
+      if (game.hintToast && Date.now() > game.hintToast.expireAt) {
+        game.hintToast = null;
+      }
       game._updateDailyAchievementScroll(deltaTime);
       game._updateDailyWordsScroll(deltaTime);
       game._updateWordBookScroll(deltaTime);
