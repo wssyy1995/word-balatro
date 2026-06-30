@@ -634,15 +634,15 @@ module.exports = function extendAnimation(Renderer) {
           const glowAlpha = 0.7 * hb * 3;
 
           const base = LETTER_SCORE[letter];
-          const up = letterUpgrades.get(letter) || {};
-          const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
+          // 心跳阶段显示变化"前"的旧分（letterUpgrades 可能已提前改成新分，统一用 anim.scores）
+          const score = anim.scores[i];
 
           const tempCard = {
             letter,
             score,
             baseScore: base,
-            upgraded: !!(up.mult || up.add),
-            upgradeMult: up.mult || 1,
+            upgraded: score !== base,
+            upgradeMult: 1,
             animOffset: { scale: 1, opacity: 1 }
           };
 
@@ -1029,15 +1029,15 @@ module.exports = function extendAnimation(Renderer) {
           const glowAlpha = 0.7 * hb * 3;
 
           const base = LETTER_SCORE[letter];
-          const up = letterUpgrades.get(letter) || {};
-          const score = Math.floor(base * (up.mult || 1)) + (up.add || 0);
+          // 心跳阶段显示变化"前"的旧分（letterUpgrades 可能已提前改成新分，统一用 anim.scores）
+          const score = anim.scores[i];
 
           const tempCard = {
             letter,
             score,
             baseScore: base,
-            upgraded: !!(up.mult || up.add),
-            upgradeMult: up.mult || 1,
+            upgraded: score !== base,
+            upgradeMult: 1,
             animOffset: { scale: 1, opacity: 1 }
           };
 

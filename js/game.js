@@ -1531,6 +1531,12 @@ class Game {
 
     // 恢复对战模式状态
     this.battleMode = p.battleMode || false;
+    // 对战是一次性快速对局，无法跨启动恢复：若存档恢复出"对战中"状态，重置回安全态。
+    // 否则启动后主页展示时 game.state==='battle' 会被 homepage 触摸排除条件拦截，导致全屏点击无响应
+    if (this.state === 'battle' || this.battleMode) {
+      this.state = 'playing';
+      this.battleMode = false;
+    }
     this.battleDifficulty = p.battleDifficulty || 'easy';
     this.battleRound = p.battleRound || 1;
     this.battleTotalRounds = p.battleTotalRounds || 10;
@@ -3156,6 +3162,7 @@ class Game {
             this.storageManager.saveCollectedWitchCards(this.collectedWitchCards);
           }
         }
+        return level; // 返回本回合新收集到的女巫卡牌等级（供 claimSettlement 决定是否弹"获得新卡牌"）
       } else {
         console.log('[CardBook] 重复收集检查 level=' + level + ', 当前已有:', JSON.stringify(this.collectedWitchCards));
       }
@@ -3169,7 +3176,6 @@ class Game {
     this._closingSettlement = true;
     this._closeStartTime = Date.now();
     this._delay(() => {
-      const witchSkill = this.settlementData ? this.settlementData.witchSkill : null;
       this.settlementData = null;
       this._closingSettlement = false;
 
@@ -3178,27 +3184,29 @@ class Game {
       this._disableWitchAnim = null;
       this._witchCardValueHalfAnim = null;
       this.state = 'shop';
-      this._checkCardBookUnlock();
+      const newCardLevel = this._checkCardBookUnlock();
       this.shopItems = generateShopItems(this);
 
-      if (witchSkill) {
-        // 女巫奖励改为：进入商店后先弹出"获得新词牌"，点击收集后再延迟1s进入女巫奖励
-        // 结算弹窗关闭后延迟 200ms 再显示新词牌弹窗，并播放音效
+      // "获得新卡牌"弹窗：本回合收集到新女巫卡牌就弹（任意女巫回合，不再受女巫奖励的第3关限制）
+      if (newCardLevel) {
+        const cardSkill = getSkillForLevel(this.round, this._shuffledSkills);
         this._newWitchCardPopupClosed = false;
         this._delay(() => {
           if (this.audioManager) this.audioManager.play('buy_success');
           this._newWitchCardPopup = {
             startTime: Date.now(),
-            level: witchSkill.level,
-            skill: witchSkill,
+            level: newCardLevel,
+            skill: cardSkill,
           };
         }, 200);
+        // 标记进入"获得新词牌"阶段：保持 HUD 背景，避免弹窗出现前闪现商店背景。
+        // 女巫奖励礼盒是否真正发放仍由 index.js 的第 3 关判断决定（非第3关只走延迟、不出礼盒）
         this._pendingWitchRewardDelay = true;
         this._witchRewardDelayStartTime = null; // 点击收集后再设置
 
         // 预加载当前回合 witch_card 大图
-        if (this.cloudStorage && witchSkill.level) {
-          this.cloudStorage.preloadWitchCardForLevel(witchSkill.level, this.renderer).catch(err => {
+        if (this.cloudStorage && newCardLevel) {
+          this.cloudStorage.preloadWitchCardForLevel(newCardLevel, this.renderer).catch(err => {
             console.error('[NewWitchCard] 预加载 witch_card 失败:', err);
           });
         }

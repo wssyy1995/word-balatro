@@ -905,6 +905,8 @@ Renderer.prototype.render = function(game) {
       width: 300,
       height: 400,
       overlayAlpha: 0.65,
+      bgColor: null,    // 去掉弹窗边框背景，只保留遮罩 + 标题/图片/按钮
+      borderColor: null,
       elapsed,
       onCloseComplete: () => {}
     });
@@ -922,8 +924,8 @@ Renderer.prototype.render = function(game) {
     const level = data.level;
     const iconName = level ? `witch_card_${level}` : null;
     const iconData = iconName ? this.witchCardImages[iconName] : null;
-    const cardMaxW = 220 * s;
-    const cardMaxH = 240 * s;
+    const cardMaxW = 252 * s;
+    const cardMaxH = 276 * s;
     let cardW = cardMaxW;
     let cardH = cardMaxH;
     if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
@@ -938,7 +940,7 @@ Renderer.prototype.render = function(game) {
       }
     }
     const cardCX = W / 2;
-    const cardCY = py + ph / 2 - 10 * s;
+    const cardCY = py + ph / 2 + 5 * s;
     const cardX = cardCX - cardW / 2;
     const cardY = cardCY - cardH / 2;
 
@@ -981,31 +983,30 @@ Renderer.prototype.render = function(game) {
     this._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.45);
     ctx.restore();
 
-    // 词牌大图闪烁星星（随机分布、更大更多）
+    // 词牌大图闪烁星星（随机分布；比原来少 2 颗）
     ctx.save();
     ctx.globalAlpha = closeAlpha;
-    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100, true, 12, 1.1);
+    this._drawCardPressedStars(ctx, cardX, cardY, cardW, cardH, s, (level || 0) * 100, true, 10, 1.1);
     ctx.restore();
 
-    // 卡牌名称
-    const skillDef = level ? WITCH_SKILLS.find(s => s.level === level) : null;
-    if (skillDef && skillDef.name) {
-      const nameY = cardY + cardH + 28 * s;
-      ctx.save();
-      ctx.globalAlpha = closeAlpha;
-      ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-      ctx.fillStyle = darkBlue;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(skillDef.name, W / 2, nameY);
-      ctx.restore();
-    }
+    // 卡牌左右闪烁星星（参考购买成功弹窗，每侧 6 颗）
+    ctx.save();
+    ctx.globalAlpha = closeAlpha;
+    const sideStarW = 36 * s;
+    const sideStarH = cardH * 1.1;
+    const sideLeftCX = cardX - 22 * s;
+    const sideRightCX = cardX + cardW + 22 * s;
+    this._newWitchCardLeftStars = this._drawSparkleStars(ctx, sideLeftCX, cardCY, sideStarW, sideStarH, s, elapsed, 5, this._newWitchCardLeftStars, 1, 0.6);
+    this._newWitchCardRightStars = this._drawSparkleStars(ctx, sideRightCX, cardCY, sideStarW, sideStarH, s, elapsed, 5, this._newWitchCardRightStars, 1, 0.6);
+    ctx.restore();
+
+    // 卡牌名称已移除（弹窗简化为只保留标题 + 图片 + 按钮）
 
     // 收集按钮
-    const btnW = 140 * s;
-    const btnH = 44 * s;
+    const btnW = 126 * s;
+    const btnH = 40 * s;
     const btnX = (W - btnW) / 2;
-    const btnY = py + ph - btnH - 29 * s;
+    const btnY = py + ph - btnH - 4 * s;
     ctx.save();
     ctx.globalAlpha = closeAlpha;
     // 微弱的 2 层水波纹（比装备按钮更弱、更短周期，保证同时约 2 层；颜色加深）
