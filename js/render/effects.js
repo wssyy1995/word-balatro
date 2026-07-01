@@ -976,15 +976,19 @@ module.exports = function extendEffects(Renderer) {
     }
 
     Renderer.prototype._drawSparkleShape = function(ctx, x, y, r) {
+      // 四角闪光星：对角凹点系数越小，尖角越突出。
+      // 原 0.35 时内外半径比约 0.5，星星偏"胖"，真机小尺寸下接近旋转的正方形，
+      // 收窄到 0.2（内外比约 0.28）让四个尖角更明显。
+      const k = 0.2;
       ctx.beginPath();
       ctx.moveTo(x, y - r);
-      ctx.lineTo(x + r * 0.35, y - r * 0.35);
+      ctx.lineTo(x + r * k, y - r * k);
       ctx.lineTo(x + r, y);
-      ctx.lineTo(x + r * 0.35, y + r * 0.35);
+      ctx.lineTo(x + r * k, y + r * k);
       ctx.lineTo(x, y + r);
-      ctx.lineTo(x - r * 0.35, y + r * 0.35);
+      ctx.lineTo(x - r * k, y + r * k);
       ctx.lineTo(x - r, y);
-      ctx.lineTo(x - r * 0.35, y - r * 0.35);
+      ctx.lineTo(x - r * k, y - r * k);
       ctx.closePath();
       ctx.fill();
     }
