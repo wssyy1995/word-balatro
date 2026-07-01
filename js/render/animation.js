@@ -1626,6 +1626,12 @@ module.exports = function extendAnimation(Renderer) {
         return;
       }
 
+      // 其他卡牌分数晃动结束、进入飞行的瞬间播放一次「星光」音效
+      if (anim && !anim._twinklePlayed && Date.now() - anim.startTime >= SHAKE_DURATION) {
+        anim._twinklePlayed = true;
+        if (game.audioManager) game.audioManager.play('magic_twinkle');
+      }
+
       // === 标题（左上角返回按钮） ===
       const titleY = top - 10 * s;
       const backIconSize = 16 * s;

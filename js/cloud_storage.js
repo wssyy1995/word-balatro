@@ -188,7 +188,8 @@ class CloudStorageManager {
       'battle_pop_success': c('/music/sound_effect/battle/battle_pop_success.mp3'),
       'cloth_flap': c('/music/sound_effect/cloth_flap.mp3'),
       'battle_countdown': c('/music/sound_effect/battle_countdown.mp3'),
-      'battle_play_card': c('/music/sound_effect/battle_play_card.mp3')
+      'battle_play_card': c('/music/sound_effect/battle_play_card.mp3'),
+      'magic_twinkle': c('/music/sound_effect/magic_twinkle.mp3')
     };
 
     // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
