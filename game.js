@@ -1152,7 +1152,7 @@ wx.onTouchStart((e) => {
         // 首次领取奖励提示（每个用户只弹一次），使用通用 hintToast 模板
         // 定位在每日成就弹窗内部偏上位置，确保在弹窗里可见
         if (game.storageManager && !game.storageManager.get('daily_first_claim_toast_shown', false)) {
-          const s = renderer ? renderer.scale || 1 : 1;
+          const s = (renderer ? renderer.scale || 1 : 1) * 0.92; // 与每日成就弹窗缩小比例保持一致
           const popupH = 560 * s;
           const popupTop = (renderer ? renderer.H : 667) / 2 - popupH / 2;
           game.hintToast = {

@@ -2574,7 +2574,8 @@ module.exports = function extendPopup(Renderer) {
       const ctx = this.ctx;
       const W = this.W;
       const H = this.H;
-      const s = this.scale;
+      // 每日成就弹窗整体等比缩小一点（面板与内部内容共用同一缩小后的 s）
+      const s = this.scale * 0.92;
       const popup = game._dailyAchievementPopup;
       if (!popup) return;
 
