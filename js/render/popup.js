@@ -2329,28 +2329,6 @@ module.exports = function extendPopup(Renderer) {
       ctx.stroke();
       ctx.restore();
 
-      // 返回按钮(使用 setting_right.png 水平镜像)
-      const backY = py + 26 * s;
-      const backIconSize = 16 * s;
-      const backIconX = px + 14 * s;
-      const backW = backIconSize;
-      const rightIcon = this.settingIcons && this.settingIcons.right;
-      ctx.save();
-      ctx.globalAlpha = contentAlpha;
-      if (rightIcon && rightIcon.loaded && rightIcon.img) {
-        ctx.translate(backIconX + backIconSize / 2, backY);
-        ctx.scale(-1, 1);
-        ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
-      } else {
-        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
-        ctx.fillStyle = '#8b6914';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('‹', backIconX, backY);
-      }
-      ctx.restore();
-      this.wordBookBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
-
       // 关闭按钮(使用 pop_close.png,与设置弹窗一致)
       const closeSize = 32 * s;
       const closeX = px + pw - closeSize - 10 * s + 3;

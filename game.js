@@ -1075,7 +1075,9 @@ wx.onTouchStart((e) => {
 
   // 检测 top_icon：短按返回主页，长按打开调试菜单（药水使用页面不响应）
   // 长按调试入口仅在非正式版本（开发版/体验版）开放，正式版禁用
-  if (renderer.topIconRect && !(game && game.state === 'potion')) {
+  // 主页展示时不响应游戏内 top_icon：主页覆盖在 playing 画面上，drawHUD 残留的 topIconRect
+  // 仍在左上角，若不排除会导致主页弹窗（设置/每日成就/单词本）打开时点击左上角穿透触发返回主页
+  if (renderer.topIconRect && !showHomepage && !(game && game.state === 'potion')) {
     const iconHit = renderer.hitTest(x, inputY, [renderer.topIconRect]);
     if (iconHit) {
       longPressTriggered = false;
@@ -1186,16 +1188,11 @@ wx.onTouchStart((e) => {
 
   // 单词本弹窗交互（优先处理）
   if (game._wordBookPopup && !game._closingWordBook) {
-    const wbBackHit = renderer.wordBookBackRect && renderer.hitTest(x, y, [renderer.wordBookBackRect]);
     const wbCloseHit = renderer.wordBookCloseRect && renderer.hitTest(x, y, [renderer.wordBookCloseRect]);
     const wbWordHeaderHit = renderer.wordBookWordHeaderRect && renderer.hitTest(x, y, [renderer.wordBookWordHeaderRect]);
     const wbCountHeaderHit = renderer.wordBookCountHeaderRect && renderer.hitTest(x, y, [renderer.wordBookCountHeaderRect]);
     const wbContentHit = renderer.wordBookContentRect && renderer.hitTest(x, y, [renderer.wordBookContentRect]);
 
-    if (wbBackHit) {
-      game._wordBookBackPressed = true;
-      return;
-    }
     if (wbCloseHit) {
       game._wordBookClosePressed = true;
       return;
@@ -1462,10 +1459,6 @@ wx.onTouchMove((e) => {
   }
 
   // 移出单词本弹窗按钮区域时取消按下状态
-  if (game._wordBookBackPressed && renderer.wordBookBackRect) {
-    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookBackRect]);
-    if (!hit) game._wordBookBackPressed = false;
-  }
   if (game._wordBookClosePressed && renderer.wordBookCloseRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookCloseRect]);
     if (!hit) game._wordBookClosePressed = false;
@@ -1869,8 +1862,8 @@ wx.onTouchEnd(() => {
     if (game.storageManager) game.storageManager.saveProgress();
   }
 
-  // top_icon 短按：返回主页（长按未触发时；对战/药水状态不触发）
-  if (!longPressTriggered && touchStartPos && renderer.topIconRect && !(game && (game.state === 'battle' || game.state === 'potion'))) {
+  // top_icon 短按：返回主页（长按未触发时；主页展示/对战/药水状态不触发）
+  if (!longPressTriggered && touchStartPos && renderer.topIconRect && !showHomepage && !(game && (game.state === 'battle' || game.state === 'potion'))) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
     const iconHit = renderer.hitTest(touchStartPos.x, endInputY, [renderer.topIconRect]);
     if (iconHit) {
@@ -2167,16 +2160,6 @@ wx.onTouchEnd(() => {
       }
     }
 
-    if (game._wordBookBackPressed) {
-      game._wordBookBackPressed = false;
-      // 关闭单词本弹窗，回到设置弹窗
-      game._closingWordBook = true;
-      game._closeWordBookStartTime = Date.now();
-      game._settingsPopup = { startTime: Date.now() };
-      game._closingSettings = false;
-      game._closeSettingsStartTime = null;
-      if (game.audioManager) game.audioManager.play('tap');
-    }
     if (game._wordBookClosePressed) {
       game._wordBookClosePressed = false;
       game._closingWordBook = true;
