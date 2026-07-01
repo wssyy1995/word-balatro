@@ -1795,7 +1795,7 @@ class Renderer {
         ctx.fillText(`${displayScore}分`, 0, 0);
         ctx.shadowColor = 'rgba(255, 215, 0, 0.45)';
         ctx.shadowBlur = 4 * s;
-        ctx.fillStyle = '#ffd700';
+        ctx.fillStyle = '#b8860b';
         ctx.fillText(`${displayScore}分`, 0, 0);
       } else {
         ctx.fillStyle = darkBlue;
