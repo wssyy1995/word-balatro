@@ -2030,7 +2030,7 @@ class ConfirmBuyRenderer {
     // === 光彩夺目效果（金色脉动光晕 + 四角闪烁星）===
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;
-    this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s);
+    this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, 0.45);
     ctx.restore();
 
     // === 卡牌左右闪烁星星 ===
