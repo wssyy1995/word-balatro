@@ -1,7 +1,7 @@
 // ===== 对战模式状态管理器 =====
 const { BattleBot } = require('./bot');
 const { createBattleDeck, shuffle } = require('./deck');
-const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache } = require('../data');
+const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache, wordMeaningCache } = require('../data');
 
 const HAND_SIZE = 12;
 const DEFAULT_TOTAL_ROUNDS = 10;
@@ -111,6 +111,12 @@ function getBattleWordMeaning(word, seedWords) {
   // 3. 扩展离线词库
   if (EXPAND_WORD_DATA && EXPAND_WORD_DATA.has(lower)) {
     return EXPAND_WORD_DATA.get(lower) || '';
+  }
+  // 4. 在线校验缓存的释义：玩家打出「在线校验通过但不在本地词库/种子词」的生僻词时，
+  //    本地取不到释义，但 isValidWordOnline 已把百度词典释义写入全局 wordMeaningCache
+  if (wordMeaningCache && wordMeaningCache.has(lower)) {
+    const cached = wordMeaningCache.get(lower);
+    if (cached && cached.meaning) return cached.meaning;
   }
   return '';
 }
