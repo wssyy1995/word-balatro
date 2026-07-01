@@ -976,21 +976,33 @@ module.exports = function extendEffects(Renderer) {
     }
 
     Renderer.prototype._drawSparkleShape = function(ctx, x, y, r) {
-      // 四角闪光星：对角凹点系数越小，尖角越突出。
-      // 原 0.35 时内外半径比约 0.5，星星偏"胖"，真机小尺寸下接近旋转的正方形，
-      // 收窄到 0.2（内外比约 0.28）让四个尖角更明显。
-      const k = 0.2;
+      // 与 _drawSparkleStars 的单颗星芒保持一致：曲线四芒主体 + 十字长芒 + 金色发光。
+      // 让 _drawCardGlow 四角的闪烁星与「获得新词牌」弹窗左右的星星形状统一，
+      // 不再是纯填充的直线四角星（真机小尺寸下偏方）。颜色沿用调用方设置的 fillStyle。
+      ctx.save();
+      ctx.translate(x, y);
+      const color = ctx.fillStyle;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = Math.max(0.8, r * 0.15);
+      ctx.shadowColor = 'rgba(255, 190, 45, 0.7)';
+      ctx.shadowBlur = r * 1.5;
+      // 曲线四芒主体（尖角 ±r，凹点约 0.13r，尖锐且带弧度）
       ctx.beginPath();
-      ctx.moveTo(x, y - r);
-      ctx.lineTo(x + r * k, y - r * k);
-      ctx.lineTo(x + r, y);
-      ctx.lineTo(x + r * k, y + r * k);
-      ctx.lineTo(x, y + r);
-      ctx.lineTo(x - r * k, y + r * k);
-      ctx.lineTo(x - r, y);
-      ctx.lineTo(x - r * k, y - r * k);
+      ctx.moveTo(0, -r);
+      ctx.quadraticCurveTo(r * 0.13, -r * 0.13, r, 0);
+      ctx.quadraticCurveTo(r * 0.13, r * 0.13, 0, r);
+      ctx.quadraticCurveTo(-r * 0.13, r * 0.13, -r, 0);
+      ctx.quadraticCurveTo(-r * 0.13, -r * 0.13, 0, -r);
       ctx.closePath();
       ctx.fill();
+      // 十字长芒（略长于主体，营造星光四射感）
+      ctx.beginPath();
+      ctx.moveTo(-r * 1.35, 0);
+      ctx.lineTo(r * 1.35, 0);
+      ctx.moveTo(0, -r * 1.35);
+      ctx.lineTo(0, r * 1.35);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // 通用闪烁星星组（可控制数量）
