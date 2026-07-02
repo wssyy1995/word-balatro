@@ -141,6 +141,7 @@ Renderer.prototype.render = function(game) {
                   rewardItem: null,
                 };
                 game.state = 'witch_reward';
+                if (game.audioManager) game.audioManager.play('magic_twinkle');
               }
             }
           }
