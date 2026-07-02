@@ -404,13 +404,24 @@ class WitchRewardRenderer {
           descY = iconCY + 60 * s;
         }
 
-        const btnW = 130 * s;
-        const btnH = 44 * s;
+        const btnW = 126 * s;
+        const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
         const btnY = descY + 20 * s + btnH / 2;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, { stateKey: 'witch_reward_ok', color: { r: 255, g: 215, b: 120 }, strokeColor: { r: 212, g: 169, b: 78 }, alphaScale: 0.9 });
+        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, {
+          stateKey: 'witch_reward_ok',
+          radius: 8,
+          interval: 900,
+          duration: 1800,
+          alphaScale: 0.55,
+          lineWidthScale: 0.8,
+          fillAlpha: 0.22,
+          strokeAlpha: 0.45,
+          color: { r: 255, g: 195, b: 70 },
+          strokeColor: { r: 188, g: 140, b: 40 }
+        });
         this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
         ctx.restore();
         this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
@@ -596,13 +607,24 @@ class WitchRewardRenderer {
         ctx.fillText(`+${data.consolationGold} 金币`, W / 2, descY);
         ctx.restore();
 
-        const btnW = 130 * s;
-        const btnH = 44 * s;
+        const btnW = 126 * s;
+        const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
         const btnY = descY + 20 * s + btnH / 2;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, { stateKey: 'witch_reward_consolation', color: { r: 255, g: 215, b: 120 }, strokeColor: { r: 212, g: 169, b: 78 }, alphaScale: 0.9 });
+        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, {
+          stateKey: 'witch_reward_consolation',
+          radius: 8,
+          interval: 900,
+          duration: 1800,
+          alphaScale: 0.55,
+          lineWidthScale: 0.8,
+          fillAlpha: 0.22,
+          strokeAlpha: 0.45,
+          color: { r: 255, g: 195, b: 70 },
+          strokeColor: { r: 188, g: 140, b: 40 }
+        });
         this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
         ctx.restore();
         this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
@@ -619,13 +641,24 @@ class WitchRewardRenderer {
         ctx.fillText('什么都没有', W / 2, H / 2);
         ctx.restore();
 
-        const btnW = 120 * s;
+        const btnW = 126 * s;
         const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
         const btnY = H / 2 + 70 * s;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
-        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, { stateKey: 'witch_reward_empty', color: { r: 255, g: 215, b: 120 }, strokeColor: { r: 212, g: 169, b: 78 }, alphaScale: 0.9 });
+        this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, {
+          stateKey: 'witch_reward_empty',
+          radius: 8,
+          interval: 900,
+          duration: 1800,
+          alphaScale: 0.55,
+          lineWidthScale: 0.8,
+          fillAlpha: 0.22,
+          strokeAlpha: 0.45,
+          color: { r: 255, g: 195, b: 70 },
+          strokeColor: { r: 188, g: 140, b: 40 }
+        });
         this.parent._drawScaledButton(ctx, '确定', btnX, btnY, btnW, btnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
         ctx.restore();
         this.okBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
