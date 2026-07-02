@@ -131,7 +131,7 @@ Renderer.prototype.render = function(game) {
               game._witchRewardDelayAfterGuide = false;
               const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
               // 存在女巫技能且通过约束时发放女巫奖励
-              if (witchSkill && game.witchSkillPassed) {
+              if (witchSkill && game.witchSkillPassed && witchSkill.has_reward !== false) {
                 game.witchRewardData = {
                   skill: witchSkill,
                   phase: 'gift',

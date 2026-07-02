@@ -3051,7 +3051,7 @@ class Game {
 
     // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放；存在女巫技能且通过约束时触发）
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    const hasWitchReward = witchSkill && this.witchSkillPassed;
+    const hasWitchReward = witchSkill && this.witchSkillPassed && witchSkill.has_reward !== false;
 
     this.settlementData = {
       baseGold,
