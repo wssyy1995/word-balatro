@@ -3188,7 +3188,6 @@ class Game {
       this.shopItems = generateShopItems(this);
 
       // "获得新卡牌"弹窗：本回合收集到新女巫卡牌就弹（任意女巫回合，不再受女巫奖励的第3关限制）
-      const newCardLevel = this._checkCardBookUnlock();
       const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
       const shouldShowWitchReward = witchSkill && this.witchSkillPassed && witchSkill.has_reward !== false;
       if (newCardLevel) {
