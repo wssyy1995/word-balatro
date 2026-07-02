@@ -37,7 +37,7 @@ Renderer.prototype.render = function(game) {
       ctx.translate(0, 10);
 
       this.drawHUD(game);
-      // 自动触发 HUD 女巫头像星星动画（约束失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
+      // 自动触发 HUD 女巫头像星星动画（试炼失败时，在 drawHUD 之后触发因为 Rect 在 HUD 中计算）
       if (game._witchStarBurstAuto && this.hudWitchAvatarRect) {
         game._witchStarBurstAuto = false;
         const rect = this.hudWitchAvatarRect;

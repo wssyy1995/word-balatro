@@ -57,7 +57,7 @@ const SKILL_POOL = [
 //   { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'each_round_hand_plus1',card_skill_desc:'每回合出牌次数+1,但基础金币-2'},
 //   { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'illegal_words_one',card_skill_desc:'每回合,首次非法单词不扣除出牌次数'},
 //   { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'last_letter_double',card_skill_desc:'单词最后一个字母，触发结算2次'},
-//   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'witch_skill_protect',card_skill_desc:'有女巫的回合,首次出牌不会触发约束规则'},
+//   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'witch_skill_protect',card_skill_desc:'有女巫的回合,首次出牌不会触发试炼规则'},
 //   { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'shop_discount',card_skill_desc:'每回合分数超过目标分30%，则该回合的卡牌商店打6折'},
 //   { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'score_overflow',card_skill_desc:'每回合溢出分数（超过目标分部分）的10%计入下回合初始分'},
 //   { card_id: 'witch_card_21', witch_name: '赫丝佩瑞丝', witch_desc:'异界来客，裂隙彼岸之人',card_skill_name: 'out_card_different',card_skill_desc:'每次弃牌后补入的字母,一定会排除原弃牌字母'},
@@ -141,7 +141,7 @@ function checkSkill(skillName, game, playedCards) {
     case 'disable_potion_card':
     case 'disable_one_witch_card':
     case 'disable_two_witch_card':
-      // 禁用类约束：约束在道具/女巫牌点击层处理，出牌本身不受限制
+      // 禁用类试炼：限制在道具/女巫牌点击层处理，出牌本身不受限制
       return true;
     case 'witch_card_value_half':
       // 倍率效果减半：不影响出牌本身是否合法
@@ -156,26 +156,26 @@ function getSkillFailText(skillName) {
   // force_contain_X
   const requiredLetter = getForceContainLetter(skillName);
   if (requiredLetter) {
-    return `女巫约束：本回合打出的单词必须包含字母 '${requiredLetter}'`;
+    return `女巫试炼：本回合打出的单词必须包含字母 '${requiredLetter}'`;
   }
 
   switch (skillName) {
     case 'need_letter_4':
-      return '女巫约束：每次出牌必须不少于4个字母';
+      return '女巫试炼：每次出牌必须不少于4个字母';
     case 'force_letter_3':
-      return '女巫约束：每次出牌只能出3张字母牌';
+      return '女巫试炼：每次出牌只能出3张字母牌';
     case 'force_letter_4':
-      return '女巫约束：每次出牌只能出4张字母牌';
+      return '女巫试炼：每次出牌只能出4张字母牌';
     case 'disable_potion_card':
-      return '女巫约束：本回合禁用魔法药水牌';
+      return '女巫试炼：本回合禁用魔法药水牌';
     case 'disable_one_witch_card':
-      return '女巫约束：本回合随机禁用1张女巫牌';
+      return '女巫试炼：本回合随机禁用1张女巫牌';
     case 'disable_two_witch_card':
-      return '女巫约束：本回合随机禁用2张女巫牌';
+      return '女巫试炼：本回合随机禁用2张女巫牌';
     case 'witch_card_value_half':
-      return '女巫约束：本回合所有女巫牌倍率效果减半';
+      return '女巫试炼：本回合所有女巫牌倍率效果减半';
     default:
-      return '女巫约束未满足';
+      return '女巫试炼未满足';
   }
 }
 

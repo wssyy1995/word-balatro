@@ -52,7 +52,7 @@ module.exports = function extendPopup(Renderer) {
       const hasLastWord = joker.trigger === 'no_duplicate' || joker.trigger === 'initial_succession';
       const hasValueHalfConstraint = !popup.isShop && game._witchCardValueHalfActive && joker.scope === 'whole_word' && joker.value !== undefined && joker.value !== null;
       let contentH = pad * 2 + lineH * 3 + 4 * s; // 名称 + 效果标签 + 描述
-      if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫约束:当前倍率
+      if (hasValueHalfConstraint) contentH += lineH + 2 * s; // 女巫试炼:当前倍率
       if (hasLastWord && !popup.isShop) contentH += lineH + 2 * s; // 上一手单词(仅限游戏页)
       if (hasAccumulation) contentH += lineH + 2 * s; // 倍率增值
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
@@ -177,7 +177,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(joker.desc, popupX + pad, cy);
       ctx.restore();
 
-      // 女巫约束:witch_card_value_half 时显示当前实际倍率
+      // 女巫试炼:witch_card_value_half 时显示当前实际倍率
       if (hasValueHalfConstraint) {
         cy += lineH + 2 * s;
         ctx.save();
@@ -187,12 +187,12 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         let constraintText;
         if (joker.trigger === 'chaos_orb') {
-          // 混沌法球:value 为随机倍率加成,女巫约束下加成范围减半
-          constraintText = '女巫约束:倍率加成随机 +[0.25~0.6]';
+          // 混沌法球:value 为随机倍率加成,女巫试炼下加成范围减半
+          constraintText = '女巫试炼:倍率加成随机 +[0.25~0.6]';
         } else {
           const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
           const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
-          constraintText = isMultiplier ? `女巫约束:当前倍率为 x${valueText}` : `女巫约束:当前倍率为 +${valueText}`;
+          constraintText = isMultiplier ? `女巫试炼:当前倍率为 x${valueText}` : `女巫试炼:当前倍率为 +${valueText}`;
         }
         ctx.fillText(constraintText, popupX + pad, cy);
         ctx.restore();

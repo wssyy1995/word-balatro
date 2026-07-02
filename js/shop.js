@@ -1588,15 +1588,15 @@ class ShopRenderer {
       ctx.fillStyle = '#6a1b9a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const skillTitleText = '女巫约束';
+      const skillTitleText = '女巫试炼';
       const skillTitleWidth = ctx.measureText(skillTitleText).width;
       const hasWitchReward = witchSkill && witchSkill.has_reward !== false;
-      const giftIconSize = 14 * s;
+      const giftIconSize = 16 * s;
       const giftGap = 4 * s;
       const titleDrawX = hasWitchReward ? textX : textX;
       ctx.fillText(skillTitleText, titleDrawX, skillY + 1 * s);
 
-      // 下一回合有女巫奖励时，在"女巫约束"文字右侧绘制礼物图标并做呼吸缩放动画
+      // 下一回合有女巫奖励时，在"女巫试炼"文字右侧绘制礼物图标并做呼吸缩放动画
       if (hasWitchReward && this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
         const giftBaseScale = 1;
         const breathScale = 0.08;

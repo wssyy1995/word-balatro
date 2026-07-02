@@ -2231,7 +2231,7 @@ class Game {
   }
 
   toggleSelect(cardId) {
-    // 如果有非法提示或女巫约束失败提示，先清除
+    // 如果有非法提示或女巫试炼失败提示，先清除
     if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
       this.pendingCheck = null;
     }
@@ -2521,15 +2521,15 @@ class Game {
       if (card) equippedCardSkills.push(card.card_skill_name);
     }
 
-    // === 女巫技能约束检查 ===
+    // === 女巫技能试炼检查 ===
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     if (witchSkill) {
-      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过约束检查（多张叠加次数）
+      // 装备卡牌：艾莉瑟瑞丝 - 有女巫的回合首次出牌跳过试炼检查（多张叠加次数）
       const protectCount = equippedCardSkills.filter(s => s === 'witch_skill_protect').length;
       if (protectCount > this._witchSkillProtectUsed) {
         this._witchSkillProtectUsed++;
         console.log('[EquippedSkill] witch_skill_protect skipped skill check, used:', this._witchSkillProtectUsed, 'total:', protectCount);
-        // 跳过约束检查，witchSkillPassed 保持 true
+        // 跳过试炼检查，witchSkillPassed 保持 true
       } else if (!checkSkill(witchSkill.skill, this, playedInOrder)) {
         this.witchSkillPassed = false;
         this.pendingCheck.state = 'witch_failed';
@@ -3049,7 +3049,7 @@ class Game {
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
 
-    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放；存在女巫技能且通过约束时触发）
+    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放；存在女巫技能且通过试炼时触发）
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
     const hasWitchReward = witchSkill && this.witchSkillPassed && witchSkill.has_reward !== false;
 
@@ -3847,7 +3847,7 @@ class Game {
 
   clearSelection() {
     if (this.selected.length === 0 && !(this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed'))) return;
-    // 如果有非法提示或女巫约束失败提示，先清除
+    // 如果有非法提示或女巫试炼失败提示，先清除
     if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
       this.pendingCheck = null;
     }

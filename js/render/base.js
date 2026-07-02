@@ -423,7 +423,7 @@ class Renderer {
       this.witchGiftIconLoaded = false;
     }
 
-    // 加载女巫帽子图标（用于女巫约束提示）
+    // 加载女巫帽子图标（用于女巫试炼提示）
     this.witchHatIcon = null;
     this.witchHatIconLoaded = false;
     try {

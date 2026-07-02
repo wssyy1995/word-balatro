@@ -874,7 +874,7 @@ module.exports = function extendPlaying(Renderer) {
           // 画文字
           ctx.fillText(errText, errBaseX + errIconSize + 4 * s + errTextWidth / 2, errY);
         } else if (pc.state === 'witch_failed') {
-          // 女巫约束失败：橙色单词 + 紫色提示
+          // 女巫试炼失败：橙色单词 + 紫色提示
           invalid = true;
   
           ctx.save();
@@ -885,7 +885,7 @@ module.exports = function extendPlaying(Renderer) {
           ctx.fillText(word, W / 2, wordAreaY);
           ctx.restore();
   
-          const failText = pc.witchFailText || '女巫约束未满足';
+          const failText = pc.witchFailText || '女巫试炼未满足';
           ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
           const failTextWidth = ctx.measureText(failText).width;
           const hatSize = 14 * s;
