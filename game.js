@@ -840,7 +840,7 @@ async function startPreload() {
   }
 
   await cloudStorage.preloadShopCardImages(onProgress);
-  await cloudStorage.preloadBgIconImages(onProgress);
+  await cloudStorage.preloadBgIconImages(onProgress, isResuming ? (savedProgress.round || 1) : 1);
   if (needGuide) {
     await cloudStorage.preloadGuideGroup(1, renderer);
     onProgress();

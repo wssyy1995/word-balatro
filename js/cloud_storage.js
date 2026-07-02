@@ -134,8 +134,14 @@ class CloudStorageManager {
       'homepageRanking': c('/bg_icon/hompage_ranking.png'),
       'homepageDaily': c('/bg_icon/hompage_daily.png'),
       'homepageStudy': c('/bg_icon/hompage_study.png'),
-      'topHome': c('/bg_icon/top_home.png')
+      'topHome': c('/bg_icon/top_home.png'),
+      'global_hand_1': c('/bg_icon/global_hand_1.png'),
+      'global_letter_1': c('/bg_icon/global_letter_1.png'),
+      'global_witch_card_1': c('/bg_icon/global_witch_card_1.png')
     };
+
+    // 第5回合后按需加载的 bg_icon 图片名称集合
+    this.lazyBgIconNames = ['global_hand_1', 'global_letter_1', 'global_witch_card_1'];
 
     // 默认 battle 图片云文件映射（images/battle 目录）
     this.defaultBattleFileMap = {
@@ -1217,8 +1223,10 @@ class CloudStorageManager {
   }
 
   // 从云存储下载并缓存所有 bg_icon 图片（后台静默加载）
-  async preloadBgIconImages(onProgress = null) {
-    const names = Object.keys(this.bgIconFileMap);
+  // lazyNames 中的图片需要游戏进行到第5回合后才会加载
+  async preloadBgIconImages(onProgress = null, round = 1) {
+    const lazySet = new Set(this.lazyBgIconNames || []);
+    const names = Object.keys(this.bgIconFileMap).filter(n => !lazySet.has(n));
     if (names.length === 0) {
       this.log('没有 bg_icon 云存储映射，跳过预加载');
       return;
@@ -1239,6 +1247,24 @@ class CloudStorageManager {
     if (failed.length > 0) {
       this.log('bg_icon 失败：' + failed.join(', '));
     }
+
+    // 第5回合开始时，后台按需加载延迟 bg_icon 图片
+    if (round >= 5) {
+      this._loadLazyBgIcons();
+    }
+  }
+
+  // 后台按需加载第5回合后才需要的 bg_icon 图片
+  async _loadLazyBgIcons() {
+    const lazyNames = this.lazyBgIconNames || [];
+    if (lazyNames.length === 0) return;
+    this.log('第5回合后按需加载 bg_icon 图片：' + lazyNames.join(', '));
+    for (const name of lazyNames) {
+      await this._loadBgIconImage(name).catch(err => {
+        this.log('延迟加载 bg_icon 失败：' + name + ' - ' + (err && err.message ? err.message : String(err)));
+      });
+    }
+    this.log('延迟 bg_icon 图片加载完成');
   }
 
   async _loadBgIconImage(name) {
@@ -1559,6 +1585,19 @@ class CloudStorageManager {
     } else {
       this.log('bg_icon topHome 未加载，跳过注入');
     }
+
+    // 女巫奖励 buff 图标从 bg_icon 云存储注入
+    const rewardBuffNames = ['global_hand_1', 'global_letter_1', 'global_witch_card_1'];
+    if (!renderer.rewardBuffImages) renderer.rewardBuffImages = {};
+    rewardBuffNames.forEach(name => {
+      const data = this.bgIconImages[name];
+      if (data && data.loaded && data.img) {
+        renderer.rewardBuffImages[name] = data.img;
+        this.log('已注入 bg_icon renderer: ' + name);
+      } else {
+        this.log('bg_icon ' + name + ' 未加载，跳过注入');
+      }
+    });
   }
 
   // ===== music 文件管理 =====

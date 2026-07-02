@@ -3815,6 +3815,12 @@ class Game {
     this.shopItems = null;
     this._shopDiscountActive = false; // 折扣只持续一回合商店
     this._shopDiscountRate = 0.6;
+
+    // 第5回合开始时，按需加载延迟 bg_icon 奖励图标
+    if (this.round === 5 && this.cloudStorage) {
+      this.cloudStorage._loadLazyBgIcons();
+    }
+
     this.resetRound();
     this._preloadWitchAvatars();
     if (this.storageManager) this.storageManager.saveProgress();
