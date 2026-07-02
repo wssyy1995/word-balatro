@@ -327,6 +327,16 @@ class WitchRewardRenderer {
           }
 
           const descY = iconCY + 65 * s;
+
+          // desc 背后深色金色蒙层
+          ctx.save();
+          ctx.globalAlpha = 0.35 * contentAlpha;
+          ctx.fillStyle = '#6b5a2e';
+          ctx.beginPath();
+          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
+          ctx.fill();
+          ctx.restore();
+
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
@@ -356,6 +366,16 @@ class WitchRewardRenderer {
           ctx.restore();
 
           const descY = iconCY + 70 * s;
+
+          // desc 背后深色金色蒙层
+          ctx.save();
+          ctx.globalAlpha = 0.35 * contentAlpha;
+          ctx.fillStyle = '#6b5a2e';
+          ctx.beginPath();
+          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
+          ctx.fill();
+          ctx.restore();
+
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
@@ -387,6 +407,16 @@ class WitchRewardRenderer {
           ctx.restore();
 
           const descY = iconCY + 60 * s;
+
+          // desc 背后深色金色蒙层
+          ctx.save();
+          ctx.globalAlpha = 0.35 * contentAlpha;
+          ctx.fillStyle = '#6b5a2e';
+          ctx.beginPath();
+          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
+          ctx.fill();
+          ctx.restore();
+
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
