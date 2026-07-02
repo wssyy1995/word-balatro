@@ -1361,21 +1361,31 @@ class ShopRenderer {
           ctx.fillText(btnText, btnTextX, midY);
         }
 
-        // 折扣标签雪碧图（右上角）
-        const sheet = this.parent.discountSpritesheet;
-        if (game._shopDiscountActive && sheet && this.parent.discountSpritesheetLoaded) {
-          const tagW = 20 * s;
-          const tagH = tagW;
-          const tagX = btnX + btnW - tagW * 0.7;
-          const tagY = btnY - tagH * 0.5 + pressOffset;
-          const discountLevel = Math.max(6, Math.min(9, Math.round((game._shopDiscountRate || 0.8) * 10)));
-          const frameIndex = discountLevel - 6;
-          const frameW = 100;
-          const frameH = 100;
-          const sx = frameIndex * frameW;
+        // 折扣标签（右上角）：5折使用本地 discount.png，其他折扣使用雪碧图
+        const discountRate = game._shopDiscountRate || 0.8;
+        if (game._shopDiscountActive && Math.abs(discountRate - 0.5) < 0.01 && this.parent.discountIcon && this.parent.discountIconLoaded) {
+          const tagSize = 22 * s;
+          const tagX = btnX + btnW - tagSize * 0.55;
+          const tagY = btnY - tagSize * 0.45 + pressOffset;
           ctx.save();
-          ctx.drawImage(sheet, sx, 0, frameW, frameH, tagX, tagY, tagW, tagH);
+          ctx.drawImage(this.parent.discountIcon, tagX, tagY, tagSize, tagSize);
           ctx.restore();
+        } else if (game._shopDiscountActive) {
+          const sheet = this.parent.discountSpritesheet;
+          if (sheet && this.parent.discountSpritesheetLoaded) {
+            const tagW = 20 * s;
+            const tagH = tagW;
+            const tagX = btnX + btnW - tagW * 0.7;
+            const tagY = btnY - tagH * 0.5 + pressOffset;
+            const discountLevel = Math.max(6, Math.min(9, Math.round(discountRate * 10)));
+            const frameIndex = discountLevel - 6;
+            const frameW = 100;
+            const frameH = 100;
+            const sx = frameIndex * frameW;
+            ctx.save();
+            ctx.drawImage(sheet, sx, 0, frameW, frameH, tagX, tagY, tagW, tagH);
+            ctx.restore();
+          }
         }
 
         this.shopPriceBtnRects.push({ x: btnX - 2, y: btnY - 2, w: btnW + 4, h: btnH + 4, index: itemIdx });
