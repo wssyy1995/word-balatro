@@ -3276,7 +3276,10 @@ class Game {
               this._shopDiscountRate = 0.5;
             }
           }
-          // 进入商店前取消所有女巫牌禁用状态
+          // 进入商店前取消所有女巫牌禁用状态，并清理女巫奖励延迟标记，避免卡在商店背景
+          this._pendingWitchRewardDelay = false;
+          this._witchRewardDelayStartTime = null;
+          this._witchRewardDelayAfterGuide = false;
           (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
           this._disableWitchAnim = null;
           this._witchCardValueHalfAnim = null;
@@ -3292,7 +3295,10 @@ class Game {
               this.potions.push({ ...data.rewardItem });
             }
           }
-          // 进入商店前取消所有女巫牌禁用状态
+          // 进入商店前取消所有女巫牌禁用状态，并清理女巫奖励延迟标记
+          this._pendingWitchRewardDelay = false;
+          this._witchRewardDelayStartTime = null;
+          this._witchRewardDelayAfterGuide = false;
           (this.jokers || []).forEach(j => { if (j) j._disabled = false; });
           this._disableWitchAnim = null;
           this._witchCardValueHalfAnim = null;
