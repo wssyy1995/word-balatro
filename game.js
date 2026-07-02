@@ -249,6 +249,15 @@ function showRankPopup(tab = 'friend') {
   if (!game) return;
   game._showingRankPopup = true;
   game._rankTab = tab;
+
+  // 点击排行榜时按需下载 rank_avatar 云图集（不阻塞弹窗展示）
+  if (game.cloudStorage && !game._rankAvatarPreloaded) {
+    game._rankAvatarPreloaded = true;
+    game.cloudStorage.preloadRankAvatarImages().then(() => {
+      if (game.cloudStorage) game.cloudStorage.injectRankAvatarToRenderer(renderer);
+    });
+  }
+
   switchRankTab(tab);
 }
 
@@ -949,13 +958,8 @@ function startGame() {
   // 游戏启动后按需预加载女巫头像（当前回合兜底 + 下一回合提前）
   game._preloadWitchAvatars();
 
-  // 预加载页完成后进入游戏页面时，后台下载 rank_avatar 云图集（不区分是否第一回合）
-  if (game.cloudStorage && !game._rankAvatarPreloaded) {
-    game._rankAvatarPreloaded = true;
-    game.cloudStorage.preloadRankAvatarImages().then(() => {
-      if (game.cloudStorage) game.cloudStorage.injectRankAvatarToRenderer(renderer);
-    });
-  }
+  // rank_avatar 不再在启动时预加载，改为点击排行榜/对战时按需下载
+  // if (game.cloudStorage && !game._rankAvatarPreloaded) { ... }
 
   // ===== 分享转发初始化 =====
   wx.showShareMenu({ withShareTicket: true });

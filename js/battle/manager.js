@@ -176,6 +176,14 @@ class BattleManager {
       opponent: null
     };
     if (g.audioManager) g.audioManager.play('cloth_flap');
+
+    // 匹配中阶段按需下载 rank_avatar 云图集（不阻塞匹配动画）
+    if (g.cloudStorage && !g._rankAvatarPreloaded) {
+      g._rankAvatarPreloaded = true;
+      g.cloudStorage.preloadRankAvatarImages().then(() => {
+        if (g.cloudStorage) g.cloudStorage.injectRankAvatarToRenderer(g.renderer);
+      });
+    }
   }
 
   // 匹配弹窗结束后清理状态，玩家可立即开始操作
