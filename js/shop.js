@@ -1588,7 +1588,28 @@ class ShopRenderer {
       ctx.fillStyle = '#6a1b9a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('女巫约束', textX, skillY + 1 * s);
+      const skillTitleText = '女巫约束';
+      const skillTitleWidth = ctx.measureText(skillTitleText).width;
+      const hasWitchReward = witchSkill && witchSkill.has_reward !== false;
+      const giftIconSize = 14 * s;
+      const giftGap = 4 * s;
+      const titleDrawX = hasWitchReward ? textX : textX;
+      ctx.fillText(skillTitleText, titleDrawX, skillY + 1 * s);
+
+      // 下一回合有女巫奖励时，在"女巫约束"文字右侧绘制礼物图标并做呼吸缩放动画
+      if (hasWitchReward && this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+        const giftBaseScale = 1;
+        const breathScale = 0.08;
+        const breathProgress = (Date.now() % 1200) / 1200;
+        const scale = giftBaseScale + Math.sin(breathProgress * Math.PI * 2) * breathScale;
+        const giftDrawX = titleDrawX + skillTitleWidth + giftGap + giftIconSize / 2;
+        const giftDrawY = skillY + 1 * s;
+        ctx.save();
+        ctx.translate(giftDrawX, giftDrawY);
+        ctx.scale(scale, scale);
+        ctx.drawImage(this.parent.witchGiftIcon, -giftIconSize / 2, -giftIconSize / 2, giftIconSize, giftIconSize);
+        ctx.restore();
+      }
       ctx.restore();
       skillY += 16 * s;
 
@@ -1646,35 +1667,8 @@ class ShopRenderer {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const hasWitchReward = witchSkill && witchSkill.has_reward !== false;
-    const challengeText = '挑战';
-    const challengeTextWidth = ctx.measureText(challengeText).width;
-    const giftIconSize = 16 * s;
-    const giftGap = 4 * s;
-    const textDrawX = challengeBtnX + challengeBtnW / 2;
-    const textDrawY = challengeBtnY + challengeBtnH / 2 + pressOffset;
-    if (hasWitchReward) {
-      // 有礼赠时，文字略微左移，右侧留空绘制礼物图标
-      ctx.fillText(challengeText, textDrawX - (giftIconSize + giftGap) / 2, textDrawY);
-    } else {
-      ctx.fillText(challengeText, textDrawX, textDrawY);
-    }
+    ctx.fillText('挑战', challengeBtnX + challengeBtnW / 2, challengeBtnY + challengeBtnH / 2 + pressOffset);
     ctx.restore();
-
-    // 下一回合有女巫奖励时，在"挑战"文字右侧绘制礼物图标并做呼吸缩放动画
-    if (hasWitchReward && this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
-      const giftBaseScale = 1;
-      const breathScale = 0.08;
-      const breathProgress = (Date.now() % 1200) / 1200;
-      const scale = giftBaseScale + Math.sin(breathProgress * Math.PI * 2) * breathScale;
-      const giftDrawX = textDrawX + challengeTextWidth / 2 + giftGap + giftIconSize / 2 - (giftIconSize + giftGap) / 2;
-      const giftDrawY = textDrawY;
-      ctx.save();
-      ctx.translate(giftDrawX, giftDrawY);
-      ctx.scale(scale, scale);
-      ctx.drawImage(this.parent.witchGiftIcon, -giftIconSize / 2, -giftIconSize / 2, giftIconSize, giftIconSize);
-      ctx.restore();
-    }
 
     this.nextRoundBtnRect = { x: challengeBtnX, y: challengeBtnY, w: challengeBtnW, h: challengeBtnH };
 
