@@ -1598,7 +1598,12 @@ class CloudStorageManager {
     rewardBuffNames.forEach(name => {
       const data = this.bgIconImages[name];
       if (data && data.loaded && data.img) {
-        renderer.rewardBuffImages[name] = data.img;
+        const existing = renderer.rewardBuffImages[name];
+        if (existing && existing.loaded && existing.img) {
+          this.log('bg_icon renderer ' + name + ' 已存在，跳过注入');
+          return;
+        }
+        renderer.rewardBuffImages[name] = { img: data.img, loaded: true, width: data.width || 0, height: data.height || 0 };
         this.log('已注入 bg_icon renderer: ' + name);
       } else {
         this.log('bg_icon ' + name + ' 未加载，跳过注入');

@@ -375,10 +375,13 @@ class WitchRewardRenderer {
           };
           const imageName = effectToImageMap[rewardItem.effect];
           const iconData = imageName && this.parent.rewardBuffImages ? this.parent.rewardBuffImages[imageName] : null;
+          // 兼容 cloudStorage 注入的 img 对象和统一格式 { img, loaded, width, height }
+          const iconImg = iconData ? (iconData.img || iconData) : null;
+          const iconLoaded = iconData ? (iconData.loaded !== undefined ? iconData.loaded : !!iconImg) : false;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
-          if (iconData && iconData.loaded && iconData.img) {
-            ctx.drawImage(iconData.img, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
+          if (iconLoaded && iconImg) {
+            ctx.drawImage(iconImg, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
           } else {
             // 兜底：圆形 +1
             const iconR = 35 * s;
