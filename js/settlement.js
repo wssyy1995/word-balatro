@@ -281,10 +281,10 @@ class WitchRewardRenderer {
 
       // result 阶段复用女巫奖励弹窗风格：标题 + 中间内容 + 底部领取按钮，无窗口边框/背景
       const titleText = data.result ? '获得奖励' : (data.consolationGold ? '获得奖励' : '');
-      const titleY = H / 2 - 120 * s;
+      const titleY = H / 2 - 130 * s;
       this.parent._drawWitchRewardTitle(ctx, titleText, W, titleY, s, { alpha: contentAlpha });
 
-      const iconCY = H / 2 + panelOffsetY;
+      const iconCY = H / 2 - 20 * s + panelOffsetY;
       const rewardItem = data.rewardItem;
 
       if (data.result && rewardItem && rewardItem.type === 'buff') {
@@ -458,6 +458,20 @@ class WitchRewardRenderer {
         ctx.restore();
 
         const nameY = cardY + cardH + 25 * s;
+        const descY = nameY + 24 * s;
+
+        // 卡牌名称和描述背后的金色蒙层
+        const descPanelPadding = 16 * s;
+        const descPanelH = (descY - nameY) + 40 * s;
+        const descPanelY = nameY - 20 * s;
+        ctx.save();
+        ctx.globalAlpha = 0.18 * contentAlpha;
+        ctx.fillStyle = '#c4a35a';
+        ctx.beginPath();
+        ctx.roundRect(W / 2 - (cardW / 2 + descPanelPadding), descPanelY, cardW + descPanelPadding * 2, descPanelH, 10 * s);
+        ctx.fill();
+        ctx.restore();
+
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
@@ -467,11 +481,10 @@ class WitchRewardRenderer {
         ctx.fillText(data.rewardItem.name, W / 2, nameY);
         ctx.restore();
 
-        const descY = nameY + 24 * s;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-        ctx.fillStyle = '#ccc';
+        ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(data.rewardItem.desc, W / 2, descY);
@@ -480,7 +493,7 @@ class WitchRewardRenderer {
         const collectBtnH = 44 * s;
         const btnW = 120 * s;
         const btnGap = 12 * s;
-        const btnY = H - collectBtnH - 80 * s;
+        const btnY = descY + 50 * s;
 
         const isGameScope = data.rewardItem.scope === 'game';
         if (isGameScope) {
