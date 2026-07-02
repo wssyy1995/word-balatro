@@ -401,7 +401,7 @@ class WitchRewardRenderer {
           }
           ctx.restore();
 
-          const descY = iconCY + 60 * s;
+          const descY = iconCY + 62 * s;
 
           ctx.save();
           ctx.globalAlpha = contentAlpha;
@@ -413,17 +413,17 @@ class WitchRewardRenderer {
           ctx.restore();
         }
 
-        let descY = iconCY + 60 * s;
+        let descY = iconCY + 62 * s;
         if (rewardItem.effect === 'double_coin') {
-          descY = iconCY + 65 * s;
+          descY = iconCY + 67 * s;
         } else if (rewardItem.effect === 'shop_discount_5') {
-          descY = iconCY + 60 * s;
+          descY = iconCY + 62 * s;
         }
 
         const btnW = 126 * s;
         const btnH = 40 * s;
         const btnX = (W - btnW) / 2;
-        const btnY = descY + 20 * s + btnH / 2;
+        const btnY = descY + 22 * s + btnH / 2;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         this.parent._drawButtonRipple(ctx, btnX, btnY, btnW, btnH, s, {
