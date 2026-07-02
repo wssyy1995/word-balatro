@@ -3049,9 +3049,9 @@ class Game {
     const extraDiscards = this.discardsLeft * 1;
     const totalGold = baseGold + extraHands + extraDiscards;
 
-    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放；临时仅第 3 关发放奖励）
+    // 女巫技能信息（奖励在 witch_reward 阶段根据概率发放；存在女巫技能且通过约束时触发）
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    const hasWitchReward = witchSkill && this.witchSkillPassed && this.round === 3;
+    const hasWitchReward = witchSkill && this.witchSkillPassed;
 
     this.settlementData = {
       baseGold,
