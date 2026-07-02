@@ -1591,19 +1591,20 @@ class ShopRenderer {
       const skillTitleText = '女巫试炼';
       const skillTitleWidth = ctx.measureText(skillTitleText).width;
       const hasWitchReward = witchSkill && witchSkill.has_reward !== false;
-      const giftIconSize = 16 * s;
+      const giftIconSize = 17 * s;
       const giftGap = 4 * s;
       const titleDrawX = hasWitchReward ? textX : textX;
-      ctx.fillText(skillTitleText, titleDrawX, skillY + 1 * s);
+      const titleDrawY = skillY + 2 * s;
+      ctx.fillText(skillTitleText, titleDrawX, titleDrawY);
 
       // 下一回合有女巫奖励时，在"女巫试炼"文字右侧绘制礼物图标并做呼吸缩放动画
       if (hasWitchReward && this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
         const giftBaseScale = 1;
-        const breathScale = 0.08;
+        const breathScale = 0.05;
         const breathProgress = (Date.now() % 1200) / 1200;
         const scale = giftBaseScale + Math.sin(breathProgress * Math.PI * 2) * breathScale;
         const giftDrawX = titleDrawX + skillTitleWidth + giftGap + giftIconSize / 2;
-        const giftDrawY = skillY + 1 * s;
+        const giftDrawY = titleDrawY;
         ctx.save();
         ctx.translate(giftDrawX, giftDrawY);
         ctx.scale(scale, scale);
@@ -1618,7 +1619,7 @@ class ShopRenderer {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 3 * s, textMaxW, 13 * s);
+      const descH = drawWrappedText(ctx, witchSkill.desc, textX, skillY + 5 * s, textMaxW, 13 * s);
       ctx.restore();
       skillY += descH + 4 * s;
 
