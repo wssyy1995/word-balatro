@@ -385,25 +385,30 @@ class WitchRewardRenderer {
           ctx.fillText(rewardItem.desc, W / 2, descY);
           ctx.restore();
         } else {
-          const iconR = 35 * s;
+          const iconSize = 100 * s;
+          const iconName = rewardItem.effect;
+          const iconData = this.parent.rewardBuffImages ? this.parent.rewardBuffImages[iconName] : null;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
-          ctx.beginPath();
-          ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
-          ctx.fillStyle = '#f5f0e6';
-          ctx.fill();
-          ctx.lineWidth = 2 * s;
-          ctx.strokeStyle = '#c4a35a';
-          ctx.stroke();
-          ctx.restore();
+          if (iconData && iconData.loaded && iconData.img) {
+            ctx.drawImage(iconData.img, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
+          } else {
+            // 兜底：圆形 +1
+            const iconR = 35 * s;
+            ctx.beginPath();
+            ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
+            ctx.fillStyle = '#f5f0e6';
+            ctx.fill();
+            ctx.lineWidth = 2 * s;
+            ctx.strokeStyle = '#c4a35a';
+            ctx.stroke();
 
-          ctx.save();
-          ctx.globalAlpha = contentAlpha;
-          ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
-          ctx.fillStyle = '#c4a35a';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('+1', W / 2, iconCY);
+            ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
+            ctx.fillStyle = '#c4a35a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('+1', W / 2, iconCY);
+          }
           ctx.restore();
 
           const descY = iconCY + 60 * s;
