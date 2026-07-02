@@ -99,8 +99,9 @@ Renderer.prototype.render = function(game) {
     } else if (game.state === 'shop') {
       // 获得新词牌弹窗：复用之前女巫奖励的弹出时机，背景与结算弹窗一致（只显示 HUD）
       // 包含 settlement 关闭后到弹窗出现前的 200ms 延迟，避免背景突变为商店
-      // "获得新词牌"弹窗阶段：弹窗显示中/弹出前，保持 HUD 背景；弹窗关闭后一律进入商店背景
-      const isNewWitchCardPhase = game._newWitchCardPopup || (game._pendingWitchRewardDelay && !game._newWitchCardPopupClosed && !game._witchRewardDelayStartTime);
+      // "获得新词牌"弹窗阶段：只有真正存在 _newWitchCardPopup 弹窗对象时才保持 HUD 背景，
+      // 避免没有新词牌但 _pendingWitchRewardDelay 为 true 时误判为新词牌阶段而卡住。
+      const isNewWitchCardPhase = !!game._newWitchCardPopup;
 
       ctx.save();
       ctx.translate(0, 10);
