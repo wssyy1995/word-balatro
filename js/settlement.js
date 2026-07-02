@@ -397,6 +397,13 @@ class WitchRewardRenderer {
           ctx.restore();
         }
 
+        let descY = iconCY + 60 * s;
+        if (rewardItem.effect === 'double_coin') {
+          descY = iconCY + 65 * s;
+        } else if (rewardItem.effect === 'shop_discount_5') {
+          descY = iconCY + 60 * s;
+        }
+
         const btnW = 130 * s;
         const btnH = 44 * s;
         const btnX = (W - btnW) / 2;
