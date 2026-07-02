@@ -368,8 +368,13 @@ class WitchRewardRenderer {
           ctx.restore();
         } else {
           const iconSize = 100 * s;
-          const iconName = rewardItem.effect;
-          const iconData = this.parent.rewardBuffImages ? this.parent.rewardBuffImages[iconName] : null;
+          const effectToImageMap = {
+            'extra_hand': 'global_hand_1',
+            'extra_letter': 'global_letter_1',
+            'extra_witch_slot': 'global_witch_card_1'
+          };
+          const imageName = effectToImageMap[rewardItem.effect];
+          const iconData = imageName && this.parent.rewardBuffImages ? this.parent.rewardBuffImages[imageName] : null;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           if (iconData && iconData.loaded && iconData.img) {
