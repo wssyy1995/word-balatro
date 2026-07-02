@@ -231,7 +231,7 @@ function createRewardItem(rewardType) {
         type: 'buff',
         effect: 'extra_hand',
         value: 1,
-        desc: '本赛局出牌次数+1'
+        desc: '本赛局，出牌次数+1'
       };
     case 'global_letter_1':
       return {
@@ -239,7 +239,7 @@ function createRewardItem(rewardType) {
         type: 'buff',
         effect: 'extra_letter',
         value: 1,
-        desc: '本赛局字母手牌+1'
+        desc: '本赛局，字母手牌+1'
       };
     case 'double_coin':
       return {
@@ -255,7 +255,7 @@ function createRewardItem(rewardType) {
         type: 'buff',
         effect: 'extra_witch_slot',
         value: 1,
-        desc: '本赛局女巫牌槽位+1'
+        desc: '本赛局，女巫牌槽位+1'
       };
     case 'shop_discount_5':
       return {
