@@ -97,9 +97,29 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
         setTimeout(() => {
           const playerScore = game.battlePlayerScore || 0;
           const botScore = game.battleBotScore || 0;
+          const canvas = renderer.ctx && renderer.ctx.canvas;
+          let imageUrl = '';
+          if (canvas) {
+            try {
+              const captureH = Math.floor(canvas.height * 0.5);
+              const captureY = Math.floor((canvas.height - captureH) / 2);
+              imageUrl = canvas.toTempFilePathSync({
+                x: 0,
+                y: captureY,
+                width: canvas.width,
+                height: captureH,
+                destWidth: 500,
+                destHeight: Math.floor(500 * captureH / canvas.width),
+                fileType: 'png',
+                quality: 0.85
+              });
+            } catch (e) {
+              console.warn('[BattleShare] Canvas 截图失败:', e);
+            }
+          }
           wx.shareAppMessage({
             title: `我在单词对战中以 ${playerScore}:${botScore} 获胜!`,
-            imageUrl: ''
+            imageUrl
           });
           game._battleShareBtnLocked = false;
         }, 350);
