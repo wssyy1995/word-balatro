@@ -331,10 +331,7 @@ class WitchRewardRenderer {
           // desc 背后深色金色蒙层
           ctx.save();
           ctx.globalAlpha = 0.35 * contentAlpha;
-          ctx.fillStyle = '#6b5a2e';
-          ctx.beginPath();
-          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
-          ctx.fill();
+          this.parent.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s, '#6b5a2e');
           ctx.restore();
 
           ctx.save();
@@ -370,10 +367,7 @@ class WitchRewardRenderer {
           // desc 背后深色金色蒙层
           ctx.save();
           ctx.globalAlpha = 0.35 * contentAlpha;
-          ctx.fillStyle = '#6b5a2e';
-          ctx.beginPath();
-          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
-          ctx.fill();
+          this.parent.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s, '#6b5a2e');
           ctx.restore();
 
           ctx.save();
@@ -416,10 +410,7 @@ class WitchRewardRenderer {
           // desc 背后深色金色蒙层
           ctx.save();
           ctx.globalAlpha = 0.35 * contentAlpha;
-          ctx.fillStyle = '#6b5a2e';
-          ctx.beginPath();
-          ctx.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s);
-          ctx.fill();
+          this.parent.roundRect(W / 2 - 70 * s, descY - 14 * s, 140 * s, 28 * s, 6 * s, '#6b5a2e');
           ctx.restore();
 
           ctx.save();
@@ -521,9 +512,7 @@ class WitchRewardRenderer {
         ctx.save();
         ctx.globalAlpha = 0.18 * contentAlpha;
         ctx.fillStyle = '#c4a35a';
-        ctx.beginPath();
-        ctx.roundRect(W / 2 - (cardW / 2 + descPanelPadding), descPanelY, cardW + descPanelPadding * 2, descPanelH, 10 * s);
-        ctx.fill();
+        this.parent.roundRect(W / 2 - (cardW / 2 + descPanelPadding), descPanelY, cardW + descPanelPadding * 2, descPanelH, 10 * s, '#c4a35a');
         ctx.restore();
 
         ctx.save();
