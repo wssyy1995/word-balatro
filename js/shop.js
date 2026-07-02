@@ -1646,8 +1646,36 @@ class ShopRenderer {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('挑战', challengeBtnX + challengeBtnW / 2, challengeBtnY + challengeBtnH / 2 + pressOffset);
+    const hasWitchReward = witchSkill && witchSkill.has_reward !== false;
+    const challengeText = '挑战';
+    const challengeTextWidth = ctx.measureText(challengeText).width;
+    const giftIconSize = 16 * s;
+    const giftGap = 4 * s;
+    const textDrawX = challengeBtnX + challengeBtnW / 2;
+    const textDrawY = challengeBtnY + challengeBtnH / 2 + pressOffset;
+    if (hasWitchReward) {
+      // 有礼赠时，文字略微左移，右侧留空绘制礼物图标
+      ctx.fillText(challengeText, textDrawX - (giftIconSize + giftGap) / 2, textDrawY);
+    } else {
+      ctx.fillText(challengeText, textDrawX, textDrawY);
+    }
     ctx.restore();
+
+    // 下一回合有女巫奖励时，在"挑战"文字右侧绘制礼物图标并做呼吸缩放动画
+    if (hasWitchReward && this.parent.witchGiftIcon && this.parent.witchGiftIconLoaded) {
+      const giftBaseScale = 1;
+      const breathScale = 0.08;
+      const breathProgress = (Date.now() % 1200) / 1200;
+      const scale = giftBaseScale + Math.sin(breathProgress * Math.PI * 2) * breathScale;
+      const giftDrawX = textDrawX + challengeTextWidth / 2 + giftGap + giftIconSize / 2 - (giftIconSize + giftGap) / 2;
+      const giftDrawY = textDrawY;
+      ctx.save();
+      ctx.translate(giftDrawX, giftDrawY);
+      ctx.scale(scale, scale);
+      ctx.drawImage(this.parent.witchGiftIcon, -giftIconSize / 2, -giftIconSize / 2, giftIconSize, giftIconSize);
+      ctx.restore();
+    }
+
     this.nextRoundBtnRect = { x: challengeBtnX, y: challengeBtnY, w: challengeBtnW, h: challengeBtnH };
 
     // === 二次确认气泡框（点击价格按钮后弹出）===
