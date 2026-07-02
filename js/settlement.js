@@ -336,18 +336,18 @@ class WitchRewardRenderer {
           ctx.fillText(rewardItem.desc, W / 2, descY);
           ctx.restore();
         } else if (rewardItem.effect === 'shop_discount_5') {
-          const iconSize = 70 * s;
+          const iconSize = 90 * s;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           if (this.parent.discountIcon && this.parent.discountIconLoaded) {
             ctx.drawImage(this.parent.discountIcon, W / 2 - iconSize / 2, iconCY - iconSize / 2, iconSize, iconSize);
           } else {
-            const iconR = 35 * s;
+            const iconR = 45 * s;
             ctx.beginPath();
             ctx.arc(W / 2, iconCY, iconR, 0, Math.PI * 2);
             ctx.fillStyle = '#e74c3c';
             ctx.fill();
-            ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+            ctx.font = `bold ${Math.floor(28 * s)}px sans-serif`;
             ctx.fillStyle = '#fff';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -355,7 +355,7 @@ class WitchRewardRenderer {
           }
           ctx.restore();
 
-          const descY = iconCY + 60 * s;
+          const descY = iconCY + 70 * s;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
