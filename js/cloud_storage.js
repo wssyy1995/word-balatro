@@ -1248,9 +1248,9 @@ class CloudStorageManager {
       this.log('bg_icon 失败：' + failed.join(', '));
     }
 
-    // 第5回合开始时，后台按需加载延迟 bg_icon 图片
+    // 第5回合开始时，按需加载延迟 bg_icon 图片（存档恢复到>=5的回合时也要确保加载完成）
     if (round >= 5) {
-      this._loadLazyBgIcons();
+      await this._loadLazyBgIcons();
     }
   }
 
@@ -1587,6 +1587,12 @@ class CloudStorageManager {
     }
 
     // 女巫奖励 buff 图标从 bg_icon 云存储注入
+    this.injectRewardBuffImages(renderer);
+  }
+
+  // 单独注入女巫奖励 buff 图标（支持延迟加载完成后补充注入）
+  injectRewardBuffImages(renderer) {
+    if (!renderer) return;
     const rewardBuffNames = ['global_hand_1', 'global_letter_1', 'global_witch_card_1'];
     if (!renderer.rewardBuffImages) renderer.rewardBuffImages = {};
     rewardBuffNames.forEach(name => {

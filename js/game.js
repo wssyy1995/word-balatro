@@ -3816,9 +3816,13 @@ class Game {
     this._shopDiscountActive = false; // 折扣只持续一回合商店
     this._shopDiscountRate = 0.6;
 
-    // 第5回合开始时，按需加载延迟 bg_icon 奖励图标
-    if (this.round === 5 && this.cloudStorage) {
-      this.cloudStorage._loadLazyBgIcons();
+    // 第5回合及之后，按需加载延迟 bg_icon 奖励图标（仅当尚未加载成功时才会下载），加载完成后注入到 renderer
+    if (this.round >= 5 && this.cloudStorage) {
+      this.cloudStorage._loadLazyBgIcons().then(() => {
+        if (this.renderer) this.cloudStorage.injectRewardBuffImages(this.renderer);
+      }).catch(err => {
+        console.error('[LazyBgIcon] 延迟加载失败:', err);
+      });
     }
 
     this.resetRound();
