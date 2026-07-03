@@ -1407,7 +1407,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('双人对战', W / 2, py + 38 * s + titleAnim.yShift);
+      ctx.fillText(popup.title || '对战模式', W / 2, py + 38 * s + titleAnim.yShift);
       ctx.restore();
 
       const itemH = 52 * s;

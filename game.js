@@ -1939,18 +1939,6 @@ wx.onTouchEnd(() => {
         startGame();
       }
       if (btnKey === 'round' || btnKey === 'battle') {
-        // 双人对战：先弹对战模式选择弹窗，不直接翻页
-        if (btnKey === 'battle' && game) {
-          game._battleModeSelectPopup = {
-            startTime: Date.now(),
-            friendPressed: false,
-            onlinePressed: false
-          };
-          if (game.audioManager) game.audioManager.play('tap');
-          renderer._homepagePressedBtn = null;
-          return;
-        }
-
         // 首次点击"开始"：仅先持久化标记（冷启动后即显示"继续"）；
         // 本次会话的显示切换推迟到翻页完成、主页移出视野后再生效，避免点击瞬间主页大按钮突变
         if (btnKey === 'round' && game && !game._roundEntered && game.storageManager) {
@@ -1958,9 +1946,13 @@ wx.onTouchEnd(() => {
         }
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
-        const targetState = 'playing';
+        const targetState = btnKey === 'battle' ? 'battle' : 'playing';
 
         const enterGame = () => {
+          // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
+          if (targetState === 'battle' && game && game.battleManager) {
+            game.battleManager.startBattle('easy');
+          }
           pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
           // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
           if (btnKey === 'round' && game && game.guidePhase === 1) {
@@ -1968,7 +1960,17 @@ wx.onTouchEnd(() => {
           }
         };
 
-        enterGame();
+        // 双人对战：先启动翻页动画，翻页过程中并行下载 battle 云图片
+        if (targetState === 'battle' && game && game.cloudStorage) {
+          enterGame();
+          game.cloudStorage.preloadBattleImages().then(() => {
+            game.cloudStorage.injectBattleToRenderer(renderer);
+          }).catch(err => {
+            console.error('battle 图片预加载失败:', err);
+          });
+        } else {
+          enterGame();
+        }
       } else {
         if (game && game.audioManager) game.audioManager.play('tap');
       }
@@ -2052,14 +2054,14 @@ wx.onTouchEnd(() => {
     if (game && game.battleManager) {
       game.battleManager.startBattle('easy');
     }
-    enterBattlePage();
+    if (game) game._battleModeSelectPopup = null;
   }
 
   function startFriendBattle() {
     if (game && game.battleManager) {
       game.battleManager.startBattle('easy', { online: true, roomId: game._battleRoomId, isHost: true });
     }
-    enterBattlePage();
+    if (game) game._battleRoomPopup = null;
   }
 
   function joinFriendBattle(roomId) {
@@ -4614,15 +4616,14 @@ function gameLoop(timestamp) {
       if (targetState === 'playing' && game) {
         game._roundEntered = true;
       }
-      // 双人对战已在点击时初始化，这里只需切到对应状态
-      // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
+      // 双人对战翻页完成后弹出对战模式选择弹窗
       if (targetState === 'battle' && game && game.battleManager) {
-        if (game._battleOnline) {
-          // 联网对战：开始轮询房间状态
-          game.battleManager.startRoomPolling();
-        } else {
-          game.battleManager.startMatchAnim();
-        }
+        game._battleModeSelectPopup = {
+          startTime: Date.now(),
+          title: '对战模式',
+          friendPressed: false,
+          onlinePressed: false
+        };
       }
     }
   } else if (showHomepage) {
@@ -4635,18 +4636,6 @@ function gameLoop(timestamp) {
     // 重新闯关二次确认弹窗
     if (game && game._restartRoundConfirmPopup && renderer._drawRestartRoundConfirmPopup) {
       renderer._drawRestartRoundConfirmPopup(game);
-    }
-    // 对战模式选择弹窗
-    if (game && game._battleModeSelectPopup && renderer._drawBattleModeSelectPopup) {
-      renderer._drawBattleModeSelectPopup(game);
-    }
-    // 对战房间弹窗（创建/等待/加入确认）
-    if (game && game._battleRoomPopup && renderer._drawBattleRoomPopup) {
-      renderer._drawBattleRoomPopup(game);
-    }
-    // 加入好友对战确认弹窗（复用对战房间弹窗绘制）
-    if (game && game._battleJoinConfirmPopup && renderer._drawBattleRoomPopup) {
-      renderer._drawBattleRoomPopup({ ...game, _battleRoomPopup: game._battleJoinConfirmPopup });
     }
     // 排行榜弹窗在主页上叠加绘制
     if (game && game._showingRankPopup && renderer._drawRankPopup) {
@@ -4695,6 +4684,22 @@ function gameLoop(timestamp) {
     renderer.render(game);
     transitionStartTime = null;
   } else {
+    // 对战相关弹窗（在对战页面上叠加绘制）
+    renderer.render(game);
+
+    // 对战模式选择弹窗
+    if (game && game._battleModeSelectPopup && renderer._drawBattleModeSelectPopup) {
+      renderer._drawBattleModeSelectPopup(game);
+    }
+    // 对战房间弹窗（创建/等待/加入确认）
+    if (game && game._battleRoomPopup && renderer._drawBattleRoomPopup) {
+      renderer._drawBattleRoomPopup(game);
+    }
+    // 加入好友对战确认弹窗（复用对战房间弹窗绘制）
+    if (game && game._battleJoinConfirmPopup && renderer._drawBattleRoomPopup) {
+      renderer._drawBattleRoomPopup({ ...game, _battleRoomPopup: game._battleJoinConfirmPopup });
+    }
+
     // 对战模式状态更新（匹配弹窗显示期间暂停 bot 思考与 reveal 检查）
     if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim) {
       game.battleManager.updateTurnTimer();
@@ -4702,7 +4707,6 @@ function gameLoop(timestamp) {
       game.battleManager.checkReveal();
     }
     game.update(deltaTime);
-    renderer.render(game);
   }
 
   requestAnimationFrame(gameLoop);
