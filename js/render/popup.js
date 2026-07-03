@@ -2215,7 +2215,7 @@ module.exports = function extendPopup(Renderer) {
           },
           {
             key: 'restartRound',
-            iconKey: 'feedback',
+            iconKey: 'reset',
             title: '重新闯关',
             subtitle: '重置当前闯关进度，从第 1 关开始',
             type: 'arrow'
