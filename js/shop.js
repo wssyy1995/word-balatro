@@ -140,7 +140,7 @@ function buyItem(game, idx) {
 
   game.gold -= finalCost;
 
-  if (game.audioManager) game.audioManager.play('buy');
+  if (game.audioManager) game.audioManager.play('buy_success');
 
   if (item.type === 'witch') {
     // 女巫牌：购买后不在此加入 jokers，成功弹窗点击"装备"后才加入
@@ -235,7 +235,7 @@ function upgradeLetter(game, letter) {
     }
   });
 
-  if (game.audioManager) game.audioManager.play('upgrade');
+  if (game.audioManager) game.audioManager.play('word_score');
 
   // 药水已从道具栏提前移除（道具栏使用时）或不在道具栏中（商店直接使用时）
   game.potionMode = null;

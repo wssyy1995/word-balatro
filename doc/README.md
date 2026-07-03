@@ -18,62 +18,72 @@
 
 ```
 word-balatro/
-├── game.js              # 游戏入口：初始化、主循环、触摸输入分发
-├── game.json            # 小游戏配置（竖屏、无状态栏）
-├── project.config.json  # 微信项目配置（需替换 appid）
+├── game.js                  # 游戏入口：初始化、主循环、触摸输入分发
+├── game.json                # 小游戏配置（竖屏、无状态栏）
+├── project.config.json      # 微信项目配置（需替换 appid）
+├── project.private.config.json  # 微信开发者工具私有配置
+├── code.fortify.config.json     # 代码加固配置
+├── .gitignore
 ├── doc/
 │   ├── README.md                       # 本文档
-│   ├── GAME_LAYOUT_AND_ADAPTATION.md   # 页面布局与机型适配文档
 │   ├── ANIMATION_GUIDE.md              # 动画开发规范
-│   └── START.md                        # 开发启动说明
-├── test_full.js         # 全量测试脚本（离线词库校验等）
-├── images/              # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
-├── raw_words/           # 原始词库数据（构建脚本输入）
-├── openDataContext/     # 微信开放数据域 —— 好友排行榜
-│   └── index.js         # 排行榜绘制与好友数据拉取
-├── cloudfunctions/      # 微信云函数
-│   ├── baiduDict/       # 百度翻译词典版 API（换取 access_token）
-│   ├── getDailyWords/   # 每日挑战单词获取
-│   ├── getGlobalRank/   # 全国排行榜数据获取
-│   ├── updateBestRound/ # 排行榜 bestround 上传
-│   ├── updateUserProfile/  # 头像昵称授权后上传到云数据库
-│   ├── syncWordBook/       # 单词本增量同步到云数据库
-│   ├── updateHonorTrophy/  # 对战荣誉杯累计上传到云数据库
-│   └── login/              # 用户登录信息上报
-├── scripts/             # 构建脚本（词库生成、精灵图打包等）
+│   ├── START.md                        # 开发启动说明
+│   ├── START_SIMPLE.md                 # 简化版启动说明
+│   ├── TECHNICAL_ARCHITECTURE.md       # 技术架构文档
+│   ├── 26位女巫名字.md                  # 女巫名称参考
+│   ├── 加固流程.md                       # 代码加固流程
+│   └── daily_words_06_13_16.json       # 每日挑战示例词库
+├── images/                  # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
+├── music/                   # 音效/BGM 资源
+│   ├── bg/                  # 背景音乐
+│   └── sound_effect/        # 音效文件
+├── raw_words/               # 原始词库数据（构建脚本输入）
+├── openDataContext/         # 微信开放数据域 —— 好友排行榜
+│   └── index.js             # 排行榜绘制与好友数据拉取
+├── cloudfunctions/          # 微信云函数
+│   ├── baiduDict/           # 百度翻译词典版 API（换取 access_token）
+│   ├── getDailyWords/       # 每日挑战单词获取
+│   ├── getGlobalRank/       # 全国排行榜数据获取
+│   ├── updateBestRound/     # 排行榜 bestround 上传
+│   ├── updateUserProfile/   # 头像昵称授权后上传到云数据库
+│   ├── syncWordBook/        # 单词本增量同步到云数据库
+│   ├── updateHonorTrophy/   # 对战荣誉杯累计上传到云数据库
+│   └── login/               # 用户登录信息上报
+├── scripts/                 # 构建脚本（词库生成、精灵图打包等）
 └── js/
-    ├── data.js          # 静态数据：字母分数/分布、人头牌、词库引用、缓存
-    ├── words.js         # 本地核心词库（高频词含中文释义）
-    ├── expand_words.js  # 扩展离线词库（补充高频词）
-    ├── game.js          # Game 核心类 + 工具函数（计分、校验、保底、发牌）
-    ├── renderer.js      # 渲染器入口薄层：require('./render/index')
-    ├── render/          # Renderer 模块化目录（原 6600+ 行 renderer.js 拆分）
-    │   ├── base.js      # Renderer 核心类、构造函数、通用工具
-    │   ├── index.js     # 模块组装入口、render(game) 状态机调度
-    │   ├── effects.js   # 道具卡牌渲染、星辰燔边粒子
-    │   ├── animation.js # 飞星/飞分/闪光粒子动画
-    │   ├── hud.js       # 顶部标题栏、HUD（回合/目标分/女巫头像）
-    │   ├── playing.js   # 主玩法画面（手牌矩阵、道具栏、预览、按钮）
-    │   ├── popup.js     # 弹窗系统（换字母/药水/升级/续命）
-    │   ├── guide.js     # 新手引导覆盖层
-    │   ├── cardbook.js  # 卡牌图鉴图标与详情
-    │   ├── debug.js     # 调试菜单、云日志
-    │   ├── gameover.js  # GameOverRenderer 独立类
+    ├── data.js              # 静态数据：字母分数/分布、人头牌、词库引用、缓存
+    ├── words.js             # 本地核心词库（高频词含中文释义）
+    ├── expand_words.js      # 扩展离线词库（补充高频词）
+    ├── game.js              # Game 核心类 + 工具函数（计分、校验、保底、发牌）
+    ├── renderer.js          # 渲染器入口薄层：require('./render/index')
+    ├── render/              # Renderer 模块化目录（原 6600+ 行 renderer.js 拆分）
+    │   ├── base.js          # Renderer 核心类、构造函数、通用工具
+    │   ├── index.js         # 模块组装入口、render(game) 状态机调度
+    │   ├── effects.js       # 道具卡牌渲染、星辰燔边粒子
+    │   ├── animation.js     # 飞星/飞分/闪光粒子动画
+    │   ├── hud.js           # 顶部标题栏、HUD（回合/目标分/女巫头像）
+    │   ├── playing.js       # 主玩法画面（手牌矩阵、道具栏、预览、按钮）
+    │   ├── popup.js         # 弹窗系统（换字母/药水/升级/续命）
+    │   ├── guide.js         # 新手引导覆盖层
+    │   ├── cardbook.js      # 卡牌图鉴图标与详情
+    │   ├── debug.js         # 调试菜单、云日志
+    │   ├── gameover.js      # GameOverRenderer 独立类
     │   ├── homepage_entry.js # 主页入场动画与装饰星星
-    │   └── test.js      # 渲染层自测脚本
-    ├── battle/          # 对战模式（独立状态机与渲染）
-    │   ├── index.js     # 对战入口
-    │   ├── manager.js   # 对战逻辑管理
-    │   ├── renderer.js  # 对战画面渲染
-    │   ├── input.js     # 对战输入处理
-    │   ├── deck.js      # 对战牌组
-    │   └── bot.js       # 对战机器人
-    ├── shop.js          # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
-    ├── settlement.js    # 回合金币结算弹窗 + 女巫奖励渲染
-    ├── animation.js     # 动画系统：Easing 曲线 + Animation + AnimationManager
-    ├── cloud_storage.js # 微信云存储：shop_card / witch / bg_icon / guide / rank_avatar 图片上传/下载/注入
-    ├── audio.js         # 音效管理器（wx.createInnerAudioContext）
-    ├── storage.js       # 本地存储：进度存档、最高分、统计、设置
+    │   └── test.js          # 渲染层自测脚本
+    ├── battle/              # 对战模式（独立状态机与渲染）
+    │   ├── index.js         # 对战入口
+    │   ├── manager.js       # 对战逻辑管理
+    │   ├── renderer.js      # 对战画面渲染
+    │   ├── input.js         # 对战输入处理
+    │   ├── deck.js          # 对战牌组
+    │   └── bot.js           # 对战机器人
+    ├── battle.js            # 对战模块薄层入口（require('./battle/index')）
+    ├── shop.js              # 商店数据池、购买逻辑、ShopRenderer、ConfirmBuyRenderer
+    ├── settlement.js        # 回合金币结算弹窗 + 女巫奖励渲染
+    ├── animation.js         # 动画系统：Easing 曲线 + Animation + AnimationManager
+    ├── cloud_storage.js     # 微信云存储：shop_card / witch / bg_icon / guide / rank_avatar / battle / music
+    ├── audio.js             # 音效管理器（wx.createInnerAudioContext）
+    ├── storage.js           # 本地存储：进度存档、最高分、统计、设置
     ├── witch_skills.js      # 女巫技能约束与奖励
     ├── daily_achievements.js # 每日成就系统：任务进度、奖励领取、每日过期清理
     ├── input.js             # InputHandler 类（触摸事件处理，game.js 入口引用）
@@ -261,7 +271,7 @@ for each flat_bonus 女巫牌:
 | 名称 | Trigger | Scope | 条件 | 效果 |
 |------|---------|-------|------|------|
 | 元音强化 | `has_vowel` | per_card | 卡牌为元音 | 该卡 score ×3 |
-| 元音为首 | `initial_vowel` | per_card | 单词首字母为元音 | 该首字母 score +60 |
+| 元音为首 | `initial_vowel` | per_card | 单词首字母为元音 | 该首字母 score +100 |
 | 左右开弓 | `left_right_open` | per_card | 单词首尾两张字母牌 | 首尾字母各 score +30 |
 | 五字母连击 | `length_5` | whole_word | 单词 ≥5 字母 | mult +2 |
 | 六字母连击 | `length_6` | whole_word | 单词 ≥6 字母 | mult +4 |
@@ -385,20 +395,38 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 
 特定回合会出现女巫约束，必须满足才能算合法出牌：
 
-| 回合 | 约束 | 奖励 |
-|------|------|------|
-| 第 3 关 | 动态分配* | 字母置换药水（100%） |
-| 第 5 关 | 动态分配* | 额外字母（100%） |
-| 第 8 关 | 动态分配* | 女巫槽位+1（100%） |
-| 第 11 关 | 动态分配* | 商店5折（100%） |
-| 第 14 关 | 动态分配* | 金币翻倍（50%） |
-| 第 16 关 | 动态分配* | 随机强化药水（100%） |
-| 第 18 关 | 动态分配* | 额外出牌（100%） |
-| 第 21 关 | 动态分配* | 字母升级（30%） |
-| 第 24 关 | 动态分配* | 商店5折（100%） |
-| 第 27、29、32、35、38、41、44、47、50、53、56、59、62、65、68、71、74 关 | 动态分配* | 字母升级（30%） |
+| 回合 | 约束 | 奖励 | 是否进入 `witch_reward` |
+|------|------|------|------------------------|
+| 第 3 关 | 动态分配* | 字母置换药水（100%） | ✅ |
+| 第 5 关 | 动态分配* | 额外字母（10%） | ❌ |
+| 第 8 关 | 动态分配* | 额外字母（100%） | ✅ |
+| 第 11 关 | 动态分配* | 商店5折（100%） | ❌ |
+| 第 14 关 | 动态分配* | 女巫槽位+1（100%） | ✅ |
+| 第 16 关 | 动态分配* | 随机强化药水（100%） | ❌ |
+| 第 18 关 | 动态分配* | 额外出牌（100%） | ✅ |
+| 第 21 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 24 关 | 动态分配* | 商店5折（100%） | ✅ |
+| 第 27 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 29 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 32 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 35 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 38 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 41 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 44 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 47 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 50 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 53 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 56 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 59 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 62 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 65 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 68 关 | 动态分配* | 字母升级（30%） | ❌ |
+| 第 71 关 | 动态分配* | 字母升级（30%） | ✅ |
+| 第 74 关 | 动态分配* | 字母升级（30%） | ❌ |
 
-> 女巫约束按上表在各关卡生效；满足约束通关后，对应关卡的女巫奖励阶段（`witch_reward`）按该技能 `rate` 概率触发。
+> 女巫约束按上表在各关卡生效；满足约束通关后，`has_reward` 为 `true` 的关卡进入女巫奖励阶段（`witch_reward`），按该技能 `rate` 概率触发 3 选 1 礼盒；`has_reward` 为 `false` 的关卡不进入奖励阶段，奖励按 `rate` 概率直接发放。
+>
+> 当前 `WITCH_SKILLS` 配置中不包含 `double_coin`（金币翻倍），该奖励类型仅在 `getRewardName` / `createRewardItem` 中保留定义，未实际投放。
 >
 > *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，每局游戏的约束组合各不相同。`SKILL_POOL` 包含：
 > - `force_letter_3`：每次出牌只能出 3 张字母牌
@@ -418,9 +446,13 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 > - `force_contain_O`：打出的单词必须包含字母 O
 > - `witch_card_value_half`：本回合所有女巫牌倍率效果减半
 
-过关且满足约束后，进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，根据技能 `rate` 概率获得奖励。奖励类型包括：
-- **buff 类**：额外出牌、额外字母、金币翻倍、女巫槽位+1、商店5折（直接生效）
+过关且满足约束后，`has_reward` 为 `true` 的关卡进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，按该技能 `rate` 概率获得奖励。`has_reward` 为 `false` 的关卡则不进入奖励阶段，奖励按概率直接发放。
+
+奖励类型包括：
+- **buff 类**：额外出牌、额外字母、女巫槽位+1、商店5折（直接生效）
 - **药水类**：字母强化、字母置换、随机强化（可暂存或立即使用）
+
+> 注：`double_coin`（金币翻倍）在 `getRewardName` / `createRewardItem` 中有定义，但当前 `WITCH_SKILLS` 配置未实际投放该奖励。
 
 ---
 
@@ -740,45 +772,47 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 使用 `wx.createInnerAudioContext()` 管理音效：
 
-| 音效名 | 文件 | 触发时机 |
-|--------|------|---------|
-| `card_placement` | music/sound_effect/card_placement.mp3 | 点击字母卡牌 |
-| `card_valid` | music/sound_effect/card_valid.mp3 | 单词校验合法 |
-| `card_shuffle` | music/sound_effect/card_shuffle.mp3 | 点击弃牌 |
-| `card_illegal` | music/sound_effect/card_illegal.mp3 | 非法单词提示 |
-| `card_jump` | music/sound_effect/card_jump.mp3 | 字母牌跳跃动画 |
-| `answer_tone` | music/sound_effect/answer_tone.mp3 | 字母跳跃触发女巫牌 |
-| `word_score` | music/sound_effect/word_score.mp3 | 计分总数弹出（含药水升级分数变化） |
-| `round_win` | music/sound_effect/round_win.mp3 | 回合结算弹窗 |
-| `game_over` | music/sound_effect/game_over.mp3 | 游戏结束弹窗 |
-| `fail` | music/sound_effect/fail.mp3 | 复刻失败等失败提示 |
-| `buy_success` | music/sound_effect/buy_success.mp3 | 购买成功弹窗 |
-| `card_sell` | music/sound_effect/card_sell.mp3 | 售出道具 |
-| `card_book_page` | music/sound_effect/card_book_page.mp3 | 图鉴翻页 |
-| `challenge` | music/sound_effect/challenge.mp3 | 点击挑战按钮 |
-| `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 |
-| `levelup` | music/sound_effect/levelup.mp3 | 进入下一关 |
-| `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） |
-| `heart_beat` | music/sound_effect/heart_beat.mp3 | 危险复制心跳共振动画 |
-| `battle_matching` | music/sound_effect/battle/battle_matching.mp3 | 对战匹配弹窗循环音效 |
-| `battle_match_sccess` | music/sound_effect/battle_match_sccess.mp3 | 对战匹配成功瞬间（键名 `sccess` 为代码实际拼写） |
-| `battle_play_card` | music/sound_effect/battle_play_card.mp3 | 对战双方出牌后展示占位方块 |
-| `battle_countdown` | music/sound_effect/battle_countdown.mp3 | 对战匹配成功后 3 秒倒计时 |
-| `battle_pop_success` | music/sound_effect/battle/battle_pop_success.mp3 | 对战胜利结束弹窗 |
-| `cloth_flap` | music/sound_effect/cloth_flap.mp3 | 对战匹配弹窗启动（含结算「重新挑战」重走匹配流程） |
-| `bubble_wash` | music/sound_effect/bubble_wash.mp3 | 星辉洗涤泡沫动画阶段 |
-| `bubble` | music/sound_effect/bubble.mp3 | 主页入场气泡装饰音效（连播 2 次） |
-| `win_success` | music/sound_effect/win_success.mp3 | 迷之优惠刮奖刮开后的中奖音效 |
-| `homepage_round_tap` | music/sound_effect/homepage_round_tap.mp3 | 主页「开始闯关/继续」按钮点击 |
-| `homepage_big_button` | music/sound_effect/homepage_big_button.mp3 | 主页两个大按钮入场弹出 |
-| `guide_type` | music/sound_effect/type_2.mp3 | 新手/商店/图鉴引导打字机循环音效（3 秒循环） |
-| `witch_guide_1_bg` | music/sound_effect/witch_guide_1_bg.mp3 | 新手引导 Phase 1 背景音乐（播放一次） |
-| `fantasy` | music/sound_effect/fantasy.mp3 | 吸星大法分数飞行（已预加载，触发点待接入） |
+| 音效名 | 文件 | 触发时机 | 预加载 |
+|--------|------|---------|--------|
+| `card_placement` | music/sound_effect/card_placement.mp3 | 点击字母卡牌 | ✅ |
+| `card_valid` | music/sound_effect/card_valid.mp3 | 单词校验合法 | ✅ |
+| `card_shuffle` | music/sound_effect/card_shuffle.mp3 | 点击弃牌 | ✅ |
+| `card_illegal` | music/sound_effect/card_illegal.mp3 | 非法单词提示 | ✅ |
+| `card_jump` | music/sound_effect/card_jump.mp3 | 字母牌跳跃动画 | ✅ |
+| `answer_tone` | music/sound_effect/answer_tone.mp3 | 字母跳跃触发女巫牌 | ✅ |
+| `word_score` | music/sound_effect/word_score.mp3 | 计分总数弹出（含药水升级分数变化） | ✅ |
+| `round_win` | music/sound_effect/round_win.mp3 | 回合结算弹窗 | ✅ |
+| `game_over` | music/sound_effect/game_over.mp3 | 游戏结束弹窗 | ✅ |
+| `fail` | music/sound_effect/fail.mp3 | 复刻失败等失败提示 | ✅ |
+| `buy_success` | music/sound_effect/buy_success.mp3 | 购买成功弹窗 | ✅ |
+| `card_sell` | music/sound_effect/card_sell.mp3 | 售出道具 | ✅ |
+| `card_book_page` | music/sound_effect/card_book_page.mp3 | 图鉴翻页 | ✅ |
+| `challenge` | music/sound_effect/challenge.mp3 | 点击挑战按钮 | ✅ |
+| `tap` | music/sound_effect/tap.mp3 | 弹窗/按钮点击 | ✅ |
+| `levelup` | music/sound_effect/levelup.mp3 | 进入下一关 | ✅ |
+| `spin_wheel` | music/sound_effect/spin_wheel.mp3 | 转盘旋转（随机强化药水） | ✅ |
+| `heart_beat` | music/sound_effect/heart_beat.mp3 | 危险复制心跳共振动画 | ✅ |
+| `magic_twinkle` | 云存储加载 | 星辉洗涤数字晃动/女巫奖励阶段闪光 | ⚠️ 未预加载 |
+| `battle_matching` | music/sound_effect/battle/battle_matching.mp3 | 对战匹配弹窗循环音效 | ✅ |
+| `battle_match_sccess` | music/sound_effect/battle_match_sccess.mp3 | 对战匹配成功瞬间（键名 `sccess` 为代码实际拼写） | ⚠️ 依赖云缓存 |
+| `battle_play_card` | music/sound_effect/battle_play_card.mp3 | 对战双方出牌后展示占位方块 | ⚠️ 依赖云缓存 |
+| `battle_countdown` | music/sound_effect/battle_countdown.mp3 | 对战匹配成功后 3 秒倒计时 | ⚠️ 依赖云缓存 |
+| `battle_pop_success` | music/sound_effect/battle/battle_pop_success.mp3 | 对战胜利结束弹窗 | ⚠️ 依赖云缓存 |
+| `cloth_flap` | music/sound_effect/cloth_flap.mp3 | 对战匹配弹窗启动（含结算「重新挑战」重走匹配流程） | ⚠️ 依赖云缓存 |
+| `bubble_wash` | music/sound_effect/bubble_wash.mp3 | 星辉洗涤泡沫动画阶段 | ⚠️ 依赖云缓存 |
+| `bubble` | music/sound_effect/bubble.mp3 | 主页入场气泡装饰音效（连播 2 次） | ⚠️ 依赖云缓存 |
+| `win_success` | music/sound_effect/win_success.mp3 | 迷之优惠刮奖刮开后的中奖音效 | ⚠️ 依赖云缓存 |
+| `homepage_round_tap` | music/sound_effect/homepage_round_tap.mp3 | 主页「开始闯关/继续」按钮点击 | ✅ |
+| `homepage_big_button` | music/sound_effect/homepage_big_button.mp3 | 主页两个大按钮入场弹出 | ✅ |
+| `guide_type` | music/sound_effect/type_2.mp3 | 新手/商店/图鉴引导打字机循环音效（3 秒循环） | ✅ |
+| `witch_guide_1_bg` | music/sound_effect/witch_guide_1_bg.mp3 | 新手引导 Phase 1 背景音乐（播放一次） | ✅ |
+| `fantasy` | music/sound_effect/fantasy.mp3 | 吸星大法分数飞行（已预加载，触发点待接入） | ✅ |
 
 **音频管理**：
-- 音效通过 `wx.createInnerAudioContext()` 管理，音量 0.6
+- 音效通过 `wx.createInnerAudioContext()` 管理，默认音量 0.6；`guide_type` 单独使用 0.35
 - BGM 支持循环播放，音量 0.3
-- 所有音频文件通过 **云存储** 管理（`music/` 目录），预加载页自动下载到本地缓存
+- 预加载列表（`preloadAll`）包含 24 个音效；其他音效依赖 `cloudStorage.musicCache` 从云缓存加载
+- 云存储默认映射中存在音源路径拼写差异：`challenge` 对应 `challange.mp3`，`spin_wheel` 对应 `spin_whell.mp3`，需与上传至云端的实际文件名保持一致
 
 ---
 
@@ -803,24 +837,32 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_joker_sort_hint_shown` | 女巫牌长按拖拽排序提示是否已展示 |
 | `word_balatro_honor_trophies` | 对战荣誉杯累计胜场数（跨局永久保留） |
 | `word_balatro_round_entered` | 是否已首次进入过单人玩法（主页大按钮「开始闯关」↔「继续」切换依据） |
+| `word_balatro_daily_achievements_v2` | 每日成就任务进度与领取状态（日期 + 各任务记录） |
 
 ### 3.7 cloud_storage.js — 微信云存储
 
-用于管理 `shop_card`、`witch`、`bg_icon`、`guide`、`rank_avatar` 系列图片的上传、下载与运行时注入：
+用于管理 `shop_card`、`witch`、`bg_icon`、`guide`、`rank_avatar`、`battle`、`music` 系列资源的上传、下载与运行时注入：
 
 - **上传**：
   - `uploadShopCards()`：批量上传 `images/shop_card/` 到云存储
   - `uploadWitchImages()`：递归扫描 `images/witch/`（含子目录 `witch_guide_1`~`witch_guide_4`），witch 头像上传至 `witch/`，guide 精灵图上传至 `witch/guide/`（自动跳过各目录下的旧单帧图）
-  - `uploadBgIconImages()`：上传背景图与卡牌模板到 `bg_icon/`
+  - `uploadBgIconImages()`：上传背景图、卡牌模板、主页按钮、对战/荣誉杯图标到 `bg_icon/`
   - `uploadRankAvatarImages()`：批量上传 `images/rank_avatar/` 到云存储（全国榜默认头像）
+  - `uploadBattleImages()`：批量上传 `images/battle/` 到云存储（对战模式图片）
+  - `uploadMusicFiles()`：批量上传 `music/` 下所有 `.mp3` 到云存储
 - **下载**：
   - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
   - `preloadBgIconImages()`：预加载页下载背景图与卡牌模板
   - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的精灵图并注入渲染器；预加载页通过它下载 witch_guide_1/2
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
-  - `preloadRankAvatarImages()`：**预加载页完成后进入游戏页面时下载**，不在预加载页加载，后台下载全国榜默认头像
-- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` / `injectRankAvatarToRenderer()` 将云缓存图片覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
+  - `preloadRankAvatarImages()`：点击排行榜或对战匹配时按需下载全国榜默认头像
+  - `preloadBattleImages()`：点击主页「双人对战」时预加载对战模式图片
+  - `preloadMusicFiles()`：预加载页完成后后台下载非预加载音效/BGM
+- **注入**：`injectToRenderer()` / `injectWitchToRenderer()` / `injectBgIconToRenderer()` / `injectGuideToRenderer()` / `injectRankAvatarToRenderer()` / `injectBattleToRenderer()` / `injectRewardBuffImages()` 将云缓存资源覆盖到渲染器；`injectBgIconToRenderer()` 额外注入 `card_template` / `card_template_selected` / `card_template_upgrade` 系列卡牌模板
 - **调试**：提供 `debugLogs` 数组，可在游戏中通过调试菜单查看云存储操作日志
+
+> 注：`bg_icon/` 云存储中的卡牌模板文件名与渲染器字段名并不完全一一对应：`card_template_selected` 对应云端 `card_template_selected_new.png`，`card_template_upgrade` 对应 `card_template_upgrade9.png`，`card_template_upgrade_selected` 对应 `card_template_upgrade_selected2.png`。主页部分按钮文件名在云存储中拼写为 `hompage_*`，代码中通过字段名 `homepage*` 做映射。
+> 注：音源路径在云存储默认映射中存在拼写差异，`challenge` 对应 `challange.mp3`，`spin_wheel` 对应 `spin_whell.mp3`，需确保与实际上传的云文件名一致。
 
 ---
 
@@ -846,7 +888,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 |------|------|-------|
 | 字母升级 | 指定字母分数 +10（加法叠加，全局跨回合保留） | 10 |
 | 字母置换 | 将手牌中一张替换为指定字母 | - |
-| 随机强化 | 随机强化 1 个字母，分数乘以 1.2~3.0 倍随机倍数（商店）；女巫奖励的随机强化固定 ×4 | 2/4 |
+| 随机强化 | 随机强化 1 个字母，分数乘以 1.2~3.0 倍随机倍数（商店与女巫奖励相同） | 1.2~3.0 |
 | 危险复制 | 选择两个字母，60% 概率低分变高分，40% 概率相反 | - |
 | 平分秋色 | 选择两个字母，将当前分数相加后平分，永久修改两字母的基础分 | - |
 | 吸星大法 | 游戏中选择一张手牌，将其他手牌分数临时加给它，该牌参与计分 | - |
@@ -1092,7 +1134,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 | 键 | 内容 |
 |----|------|
-| `daily_achievements_v2` | `{ records: { index: { name, completed, completedDate, claimed, progress } }, savedAt }` |
+| `word_balatro_daily_achievements_v2` | `{ records: { index: { name, completed, completedDate, claimed, progress } }, savedAt }` |
 
 - 加载时仅保留 `completedDate` 为当天的记录，非当天记录自动清理。
 - 所有记录均过期时会删除整份存储。
@@ -1678,7 +1720,8 @@ letterUpgrades = Map {
 | v1.12.4 | 2026-06-29 | 对战模式 `top_home` 长按调试入口仅在非正式版本（开发版/体验版）开放，正式版本（`release`）禁用；同步更新 README |
 | v1.12.5 | 2026-06-29 | 修复每日成就首次领取奖励的 hintToast 不在弹窗内显示的问题：主页状态也绘制 hintToast，并定位到每日成就弹窗内部偏上位置 |
 | v1.12.6 | 2026-06-30 | 新增对战荣誉杯系统：胜利 +1，本地存储 `honor_trophies` + 云函数 `updateHonorTrophy`（云端取 max 幂等合并），对战页 VS 模块/匹配弹窗/结算弹窗展示荣誉杯徽章（白色蒙层+图标+金棕色数字）；主页大按钮首次进入游戏后永久显示「继续」（`_roundEntered` / `word_balatro_round_entered`）；对战「重新挑战」改为重走匹配弹窗流程（`startMatchAnim`）；Bot 出牌时间 4~8s 调整为 6~10s；每日成就任务表调整顺序与文案（连续闯关、完成 3 局双人对战等）；星辉洗涤新增卡牌弹出 popup 阶段与 `bubble_wash` 音效；修复迷之优惠按折后价判定可购买、平分秋色支持降分、字母置换用真实当前分等；同步更新 README（荣誉杯系统、存储键、云函数、音效表、五/六字母连击倍率 +2/+4、主页继续按钮、每日成就表） |
+| v1.12.7 | 2026-07-02 | 女巫奖励全局 buff 图标改为云存储懒加载，修复高回合/存档恢复时 buff 图片未生效与重复注入日志问题；商店 5 折时价格按钮右上角改用本地 `discount.png`；对战结束分享战绩截取屏幕中间 50% 区域作为分享图；商店女巫试炼 UI 统一：礼物图标、文案、按钮尺寸与水波纹样式调整；修复领取女巫奖励后延迟标记未清理导致卡在商店页的问题；修复结算领取后无新词牌时误判为新词牌阶段导致卡住的问题；同步更新 README |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-06-30*
+*文档基于实际代码整理，最后更新：2026-07-03*
