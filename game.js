@@ -2298,6 +2298,8 @@ wx.onTouchEnd(() => {
       }
       // 重新闯关后主页大按钮恢复为"开始闯关"
       newGame._roundEntered = false;
+      // 重新加载每日成就（进度与领取状态保留）
+      new DailyAchievements(newGame, true);
       wx.game = newGame;
       game = newGame;
       if (game.audioManager) game.audioManager.play('tap');
