@@ -2222,8 +2222,8 @@ module.exports = function extendPopup(Renderer) {
           }
         ];
 
-        const itemH = 57 * s;
-        const itemStartY = titleY + 28 * s;
+        const itemH = 59 * s;
+        const itemStartY = titleY + 31 * s;
         const iconSize = 52 * s;
 
         items.forEach((item, i) => {
