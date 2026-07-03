@@ -1949,10 +1949,6 @@ wx.onTouchEnd(() => {
         const targetState = btnKey === 'battle' ? 'battle' : 'playing';
 
         const enterGame = () => {
-          // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
-          if (targetState === 'battle' && game && game.battleManager) {
-            game.battleManager.startBattle('easy');
-          }
           pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
           // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
           if (btnKey === 'round' && game && game.guidePhase === 1) {
@@ -4624,6 +4620,22 @@ function gameLoop(timestamp) {
           friendPressed: false,
           onlinePressed: false
         };
+        // 重置对战状态，避免残留旧局数据
+        game.state = 'battle';
+        game.battleMode = true;
+        game.battleRound = 1;
+        game.battlePlayerScore = 0;
+        game.battleBotScore = 0;
+        game.battlePlayerRoundScores = [];
+        game.battleBotRoundScores = [];
+        game.battlePhase = 'selecting';
+        game.battleHand = null;
+        game.battleBotHand = null;
+        game.battleSelected = [];
+        game._battleDeck = null;
+        game._battleMatchAnim = null;
+        game._battleMatchFinished = false;
+        game._battleOpponent = null;
       }
     }
   } else if (showHomepage) {
