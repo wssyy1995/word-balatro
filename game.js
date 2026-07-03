@@ -1244,6 +1244,23 @@ wx.onTouchStart((e) => {
     return;
   }
 
+  // 重新闯关二次确认弹窗交互（优先于设置弹窗）
+  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
+    const yesHit = renderer.restartRoundConfirmYesRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmYesRect]);
+    const noHit = renderer.restartRoundConfirmNoRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmNoRect]);
+    if (yesHit) {
+      game._restartRoundConfirmPopup.yesPressed = true;
+      return;
+    }
+    if (noHit) {
+      game._restartRoundConfirmPopup.noPressed = true;
+      return;
+    }
+    // 点击弹窗外区域直接取消
+    game._restartRoundConfirmPopup.noPressed = true;
+    return;
+  }
+
   // 设置弹窗交互（优先处理）
   if (game._settingsPopup && !game._closingSettings) {
     // 精确检测关闭按钮（延迟关闭）
@@ -1446,6 +1463,16 @@ wx.onTouchMove((e) => {
   if (game._settingsRestartRoundPressed && renderer.settingsRestartRoundRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsRestartRoundRect]);
     if (!hit) game._settingsRestartRoundPressed = false;
+  }
+  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
+    if (game._restartRoundConfirmPopup.yesPressed && renderer.restartRoundConfirmYesRect) {
+      const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.restartRoundConfirmYesRect]);
+      if (!hit) game._restartRoundConfirmPopup.yesPressed = false;
+    }
+    if (game._restartRoundConfirmPopup.noPressed && renderer.restartRoundConfirmNoRect) {
+      const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.restartRoundConfirmNoRect]);
+      if (!hit) game._restartRoundConfirmPopup.noPressed = false;
+    }
   }
   if (game._dailyWordsBackPressed && renderer.dailyWordsBackRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsBackRect]);
@@ -2262,6 +2289,15 @@ wx.onTouchEnd(() => {
       game._closeSettingsStartTime = Date.now();
       // 创建新游戏实例并切换
       const newGame = new Game();
+      newGame.cloudStorage = cloudStorage;
+      newGame.renderer = renderer;
+      newGame.initAudio();
+      if (newGame.audioManager) {
+        newGame.audioManager.loadFromCloud(cloudStorage);
+        newGame.audioManager.tryStartBGM();
+      }
+      // 重新闯关后主页大按钮恢复为"开始闯关"
+      newGame._roundEntered = false;
       wx.game = newGame;
       game = newGame;
       if (game.audioManager) game.audioManager.play('tap');
@@ -2272,26 +2308,6 @@ wx.onTouchEnd(() => {
       popup.closing = true;
       popup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
-    }
-  }
-
-  // 重新闯关二次确认弹窗交互
-  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
-    const yesHit = renderer.restartRoundConfirmYesRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmYesRect]);
-    const noHit = renderer.restartRoundConfirmNoRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmNoRect]);
-    if (yesHit) {
-      game._restartRoundConfirmPopup.yesPressed = true;
-      return;
-    }
-    if (noHit) {
-      game._restartRoundConfirmPopup.noPressed = true;
-      return;
-    }
-    // 点击弹窗外区域直接取消
-    const confirmPanelHit = false;
-    if (!confirmPanelHit) {
-      game._restartRoundConfirmPopup.noPressed = true;
-      return;
     }
   }
 
