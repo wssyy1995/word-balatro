@@ -4636,6 +4636,9 @@ function gameLoop(timestamp) {
         game._battleOpponent = null;
         // 提前初始化第一回合手牌，避免卡牌区空白
         game.battleManager.startBattle('easy');
+        // 选择模式前暂停 Bot 自动出牌计时
+        game.battleBotThinking = false;
+        game._battleTurnDeadline = null;
       }
     }
   } else if (showHomepage) {
