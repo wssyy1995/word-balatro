@@ -1304,6 +1304,80 @@ module.exports = function extendPopup(Renderer) {
       this.lifeExtensionBtnRect = { x: btnX, y: finalBtnY, w: btnW, h: btnH };
     }
 
+    // ===== 重新闯关二次确认弹窗 =====
+    Renderer.prototype._drawRestartRoundConfirmPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._restartRoundConfirmPopup;
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: popup.closing || false,
+        closeStartTime: popup.closeStartTime,
+        width: 300, height: 200, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        overlayAlpha: 0.6,
+        onCloseComplete: () => { game._restartRoundConfirmPopup = null; }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, elapsed: panelElapsed, closeAlpha } = panel;
+      const ca = closeAlpha;
+
+      // 标题
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('重新闯关', W / 2, py + 36 * s + titleAnim.yShift);
+      ctx.restore();
+
+      // 提示文案
+      const hintAnim = Easing.fadeIn(elapsed, 160, 250, 6 * s);
+      ctx.save();
+      ctx.globalAlpha = hintAnim.alpha * ca;
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#6a5a4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('确认重置闯关进度?', W / 2, py + 84 * s + hintAnim.yShift);
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#9a8a7a';
+      ctx.fillText('重置后将从第 1 关开始', W / 2, py + 108 * s + hintAnim.yShift);
+      ctx.restore();
+
+      // 按钮
+      const btnW = 110 * s;
+      const btnH = 40 * s;
+      const btnY = py + ph - btnH - 28 * s;
+      const gap = 16 * s;
+      const totalW = btnW * 2 + gap;
+      const firstBtnX = (W - totalW) / 2;
+
+      const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+
+      // 取消按钮
+      ctx.save();
+      ctx.globalAlpha = btnAnim.alpha * ca;
+      this._drawScaledButton(ctx, '取消', firstBtnX, btnY + btnAnim.yShift, btnW, btnH, s, popup.noPressed, { color: '#b0a898', textColor: '#fff', radius: 8 });
+      ctx.restore();
+
+      // 确认按钮
+      ctx.save();
+      ctx.globalAlpha = btnAnim.alpha * ca;
+      this._drawScaledButton(ctx, '确认', firstBtnX + btnW + gap, btnY + btnAnim.yShift, btnW, btnH, s, popup.yesPressed, { color: '#c4a35a', textColor: '#fff', radius: 8 });
+      ctx.restore();
+
+      // 记录点击区域（使用最终位置，不含 yShift）
+      this.restartRoundConfirmNoRect = { x: firstBtnX, y: btnY, w: btnW, h: btnH };
+      this.restartRoundConfirmYesRect = { x: firstBtnX + btnW + gap, y: btnY, w: btnW, h: btnH };
+    };
+
     // ===== 今日新词弹窗 =====
     Renderer.prototype._drawDailyWordsPopup = function(game) {
       const ctx = this.ctx;
@@ -1777,6 +1851,9 @@ module.exports = function extendPopup(Renderer) {
       this.settingsSoundRect = null;
       this.settingsDailyChallengeRect = null;
       this.settingsFeedbackRect = null;
+      this.settingsRestartRoundRect = null;
+      this.restartRoundConfirmYesRect = null;
+      this.restartRoundConfirmNoRect = null;
       this.feedbackBackRect = null;
       this.feedbackInputRect = null;
       this.feedbackSubmitRect = null;
@@ -1897,6 +1974,11 @@ module.exports = function extendPopup(Renderer) {
 
       ctx.restore();
 
+      // 重新闯关二次确认弹窗
+      if (game._restartRoundConfirmPopup) {
+        this._drawRestartRoundConfirmPopup(game);
+      }
+
       // Toast 提示
       if (game._feedbackSubmitToast) {
         if (Date.now() > game._feedbackSubmitToast.expireAt) {
@@ -1963,10 +2045,10 @@ module.exports = function extendPopup(Renderer) {
             type: 'arrow'
           },
           {
-            key: 'dailyChallenge',
-            iconKey: 'study',
-            title: '学习模式',
-            subtitle: '每天10个新词挑战',
+            key: 'restartRound',
+            iconKey: 'feedback',
+            title: '重新闯关',
+            subtitle: '重置当前闯关进度，从第 1 关开始',
             type: 'arrow'
           }
         ];
@@ -2066,20 +2148,6 @@ module.exports = function extendPopup(Renderer) {
             // 记录点击区域
             this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
           } else if (item.type === 'arrow') {
-            // 学习模式:在箭头左侧显示开关状态标签
-            if (item.key === 'dailyChallenge') {
-              const isOn = game.settings && game.settings.dailyWordChallengeEnabled === true;
-              ctx.save();
-              ctx.globalAlpha = contentAlpha;
-              ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-              ctx.textAlign = 'right';
-              ctx.textBaseline = 'middle';
-              const statusText = isOn ? '已开启' : '已关闭';
-              ctx.fillStyle = isOn ? '#8b6914' : '#b0a898';
-              ctx.fillText(statusText, ctrlRightX - 18 * s, centerY);
-              ctx.restore();
-            }
-
             const rightIcon = this.settingIcons && this.settingIcons.right;
             if (rightIcon && rightIcon.loaded && rightIcon.img) {
               const iconSize = 10 * s;
@@ -2101,7 +2169,7 @@ module.exports = function extendPopup(Renderer) {
             // 记录整行点击区域
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
-            if (item.key === 'dailyChallenge') this.settingsDailyChallengeRect = rect;
+            if (item.key === 'restartRound') this.settingsRestartRoundRect = rect;
           }
 
           // 分隔线(非最后一项)

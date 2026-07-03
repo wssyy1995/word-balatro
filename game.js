@@ -1160,7 +1160,7 @@ wx.onTouchStart((e) => {
           const popupH = 560 * s;
           const popupTop = (renderer ? renderer.H : 667) / 2 - popupH / 2;
           game.hintToast = {
-            text: '金币奖励已到账，前往通关模式查看',
+            text: '金币奖励已到账，快去闯关吧！',
             expireAt: Date.now() + 3000,
             startTime: Date.now(),
             customY: popupTop + 70 * s
@@ -1252,7 +1252,7 @@ wx.onTouchStart((e) => {
 
     // 主页按钮
     const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
-    const dailyChallengeHit = renderer.settingsDailyChallengeRect && renderer.hitTest(x, y, [renderer.settingsDailyChallengeRect]);
+    const restartRoundHit = renderer.settingsRestartRoundRect && renderer.hitTest(x, y, [renderer.settingsRestartRoundRect]);
     const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
 
     // 反馈页按钮
@@ -1264,10 +1264,8 @@ wx.onTouchStart((e) => {
       game._settingsSoundPressed = true;
       return;
     }
-    if (dailyChallengeHit) {
-      // 打开今日新词弹窗
-      game._dailyWordsPopup = { startTime: Date.now() };
-      if (game.audioManager) game.audioManager.play('tap');
+    if (restartRoundHit) {
+      game._settingsRestartRoundPressed = true;
       return;
     }
     if (feedbackHit) {
@@ -1444,6 +1442,10 @@ wx.onTouchMove((e) => {
   if (game._settingsSoundPressed && renderer.settingsSoundRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsSoundRect]);
     if (!hit) game._settingsSoundPressed = false;
+  }
+  if (game._settingsRestartRoundPressed && renderer.settingsRestartRoundRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsRestartRoundRect]);
+    if (!hit) game._settingsRestartRoundPressed = false;
   }
   if (game._dailyWordsBackPressed && renderer.dailyWordsBackRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.dailyWordsBackRect]);
@@ -1622,6 +1624,10 @@ wx.onTouchMove((e) => {
   if (game._settingsCloseBtnPressed && renderer.settingsCloseBtnRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsCloseBtnRect]);
     if (!hit) game._settingsCloseBtnPressed = false;
+  }
+  if (game._settingsRestartRoundPressed && renderer.settingsRestartRoundRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.settingsRestartRoundRect]);
+    if (!hit) game._settingsRestartRoundPressed = false;
   }
   // 移出求助提示弹窗按钮区域时取消按下状态
   if (game._tipHelpClosePressed && renderer.tipHelpCloseRect) {
@@ -2197,6 +2203,12 @@ wx.onTouchEnd(() => {
       if (game.audioManager) game.audioManager.play('tap');
     }
 
+    if (game._settingsRestartRoundPressed) {
+      game._settingsRestartRoundPressed = false;
+      game._restartRoundConfirmPopup = { startTime: Date.now(), yesPressed: false, noPressed: false };
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+
     // 反馈页交互
     if (game._feedbackBackPressed) {
       game._feedbackBackPressed = false;
@@ -2231,6 +2243,55 @@ wx.onTouchEnd(() => {
       game._closingSettings = true;
       game._closeSettingsStartTime = Date.now();
       wx.hideKeyboard();
+    }
+  }
+
+  // 重新闯关二次确认弹窗松开处理
+  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
+    const popup = game._restartRoundConfirmPopup;
+    if (popup.yesPressed) {
+      popup.yesPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      // 执行重置
+      if (game.storageManager) {
+        game.storageManager.clearProgress();
+      }
+      // 关闭设置弹窗
+      game._closingSettings = true;
+      game._closeSettingsStartTime = Date.now();
+      // 创建新游戏实例并切换
+      const newGame = new Game();
+      wx.game = newGame;
+      game = newGame;
+      if (game.audioManager) game.audioManager.play('tap');
+      // 触发主页显示
+      game._returnToHomepage = true;
+    } else if (popup.noPressed) {
+      popup.noPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
+
+  // 重新闯关二次确认弹窗交互
+  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
+    const yesHit = renderer.restartRoundConfirmYesRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmYesRect]);
+    const noHit = renderer.restartRoundConfirmNoRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmNoRect]);
+    if (yesHit) {
+      game._restartRoundConfirmPopup.yesPressed = true;
+      return;
+    }
+    if (noHit) {
+      game._restartRoundConfirmPopup.noPressed = true;
+      return;
+    }
+    // 点击弹窗外区域直接取消
+    const confirmPanelHit = false;
+    if (!confirmPanelHit) {
+      game._restartRoundConfirmPopup.noPressed = true;
+      return;
     }
   }
 
@@ -4241,6 +4302,10 @@ function gameLoop(timestamp) {
     // 主页 setting 按钮复用 top_icon 行为，设置弹窗打开时叠加在主页上绘制
     if (game && game._settingsPopup) {
       renderer.drawSettingsPopup(game);
+    }
+    // 重新闯关二次确认弹窗
+    if (game && game._restartRoundConfirmPopup && renderer._drawRestartRoundConfirmPopup) {
+      renderer._drawRestartRoundConfirmPopup(game);
     }
     // 排行榜弹窗在主页上叠加绘制
     if (game && game._showingRankPopup && renderer._drawRankPopup) {

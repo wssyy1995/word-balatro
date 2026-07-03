@@ -839,6 +839,11 @@ Renderer.prototype.render = function(game) {
       this.drawSettingsPopup(game);
     }
 
+    // 重新闯关二次确认弹窗
+    if (game._restartRoundConfirmPopup) {
+      this._drawRestartRoundConfirmPopup(game);
+    }
+
     // 单词本弹窗
     if (game._wordBookPopup) {
       this.drawWordBookPopup(game);
