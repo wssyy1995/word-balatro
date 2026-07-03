@@ -126,7 +126,7 @@ class BattleManager {
     this.game = game;
   }
 
-  startBattle(difficulty = 'easy') {
+  startBattle(difficulty = 'easy', options = {}) {
     const g = this.game;
     g.state = 'battle';
     g.battleMode = true;
@@ -151,6 +151,14 @@ class BattleManager {
     g._battleMatchFinished = false;
     g._battleOpponent = null;
     g._battleSeedWords = [];
+    // 联网对战标记
+    g._battleOnline = options.online || false;
+    g._battleRoomId = options.roomId || null;
+    g._battleIsHost = options.isHost || false;
+    g._battleOpponentOpenId = null;
+    g._battleHostPlay = null;
+    g._battleGuestPlay = null;
+    g._battleRoomPollTimer = null;
     // 清除对战结束弹窗按钮锁，避免重开后按钮无响应
     g._battleShareBtnLocked = false;
     g._battleRestartBtnLocked = false;
@@ -293,6 +301,8 @@ class BattleManager {
     g._battleScoreBarAnim = null;
     g._battleAvatarGlowAnim = null;
     g._battlePlayerPlayed = false;
+    g._battleOnlinePlayerPlayed = false;
+    g._battleOnlineOpponentPlayed = false;
 
     // 出牌倒计时：一方出牌后给另一方 15 秒
     g._battleTurnDeadline = null;
@@ -387,11 +397,16 @@ class BattleManager {
     // 玩家出牌后显示 battle_me_place 占位方块时播放音效
     if (g.audioManager) g.audioManager.play('battle_play_card');
 
+    // 联网对战：把出牌同步到云端
+    if (g._battleOnline) {
+      this._syncPlayToServer(word, selected, score);
+    }
+
     // 如果对方已经就绪，直接进入揭晓阶段
     if (g.battleBotReady) {
       this.startReveal();
-    } else {
-      // 玩家先出牌，给 Bot 启动 15 秒倒计时
+    } else if (!g._battleOnline) {
+      // 玩家先出牌，给 Bot 启动 15 秒倒计时（本地人机）
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
       g._battleTurnCountdownSide = 'bot';
       if (g._battleBotStrategy === 'wait_player') {
@@ -401,6 +416,94 @@ class BattleManager {
     }
 
     return { valid: true, score };
+  }
+
+  // 联网对战：同步出牌到服务器
+  _syncPlayToServer(word, cards, score) {
+    const g = this.game;
+    if (!g._battleRoomId) return;
+    wx.cloud.callFunction({
+      name: 'battlePlay',
+      data: {
+        roomId: g._battleRoomId,
+        word,
+        cards: cards.map(c => ({ id: c.id, letter: c.letter, score: c.score })),
+        score
+      },
+      success: (res) => {
+        if (res.result && res.result.code === 0) {
+          this._applyRoomState(res.result.room);
+        }
+      },
+      fail: (err) => {
+        console.error('[battlePlay] 同步失败:', err);
+      }
+    });
+  }
+
+  // 联网对战：轮询房间状态
+  startRoomPolling() {
+    const g = this.game;
+    if (!g._battleOnline || !g._battleRoomId) return;
+    if (g._battleRoomPollTimer) {
+      clearInterval(g._battleRoomPollTimer);
+    }
+    g._battleRoomPollTimer = setInterval(() => {
+      if (!g._battleOnline || !g._battleRoomId) {
+        clearInterval(g._battleRoomPollTimer);
+        g._battleRoomPollTimer = null;
+        return;
+      }
+      wx.cloud.callFunction({
+        name: 'battleGet',
+        data: { roomId: g._battleRoomId },
+        success: (res) => {
+          if (res.result && res.result.code === 0) {
+            this._applyRoomState(res.result.room);
+          }
+        },
+        fail: (err) => {
+          console.error('[battleGet] 轮询失败:', err);
+        }
+      });
+    }, 1500);
+  }
+
+  // 联网对战：应用房间状态
+  _applyRoomState(room) {
+    const g = this.game;
+    if (!room || !g._battleOnline) return;
+
+    const myOpenId = room.host === g._battleOpponentOpenId ? room.guest : room.host;
+    if (!g._battleOpponentOpenId) {
+      g._battleOpponentOpenId = room.host === myOpenId ? room.guest : room.host;
+    }
+
+    const hostPlay = room.hostPlay;
+    const guestPlay = room.guestPlay;
+    const myPlay = g._battleIsHost ? hostPlay : guestPlay;
+    const opponentPlay = g._battleIsHost ? guestPlay : hostPlay;
+
+    // 如果本地还没标记自己出牌，但服务端已有，则同步回来（极少情况）
+    if (!g._battleOnlinePlayerPlayed && myPlay) {
+      g._battleOnlinePlayerPlayed = true;
+    }
+
+    // 对方已出牌
+    if (!g._battleOnlineOpponentPlayed && opponentPlay) {
+      g._battleOnlineOpponentPlayed = true;
+      g.battleBotReady = true;
+      g._battleBotReadyAnimStart = Date.now();
+      g.battleBotWord = opponentPlay.word;
+      g.battleBotCards = (opponentPlay.cards || []).map(c => createBattleCard(c.letter));
+      g.battleBotRoundScore = opponentPlay.score || 0;
+      g.battleBotWordMeaning = getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
+      if (g.audioManager) g.audioManager.play('battle_play_card');
+
+      if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
+        this.startReveal();
+      }
+    }
   }
 
   // 双方都已出牌，进入揭晓动画
@@ -413,19 +516,30 @@ class BattleManager {
     g._battleTurnDeadline = null;
     g._battleTurnCountdownSide = null;
 
-    // Bot 未超时时，使用预计算的 Bot 出牌；超时时已置为 0 分，不再覆盖
-    if (!g._battleBotTimedOut) {
-      const botChoice = g._pendingBotChoice;
-      if (botChoice) {
-        g.battleBotWord = botChoice.word;
-        g.battleBotCards = botChoice.cards;
-        g.battleBotRoundScore = botChoice.score;
-        g.battleBotWordMeaning = botChoice.meaning || '';
-      } else {
+    // 联网对战：直接使用双方已同步的出牌
+    if (g._battleOnline) {
+      // 本地玩家数据已经设置好；对手数据在轮询里已设置
+      if (g.battleBotWord === undefined || g.battleBotWord === null) {
         g.battleBotWord = '';
         g.battleBotCards = [];
         g.battleBotRoundScore = 0;
         g.battleBotWordMeaning = '';
+      }
+    } else {
+      // Bot 未超时时，使用预计算的 Bot 出牌；超时时已置为 0 分，不再覆盖
+      if (!g._battleBotTimedOut) {
+        const botChoice = g._pendingBotChoice;
+        if (botChoice) {
+          g.battleBotWord = botChoice.word;
+          g.battleBotCards = botChoice.cards;
+          g.battleBotRoundScore = botChoice.score;
+          g.battleBotWordMeaning = botChoice.meaning || '';
+        } else {
+          g.battleBotWord = '';
+          g.battleBotCards = [];
+          g.battleBotRoundScore = 0;
+          g.battleBotWordMeaning = '';
+        }
       }
     }
 
@@ -512,8 +626,8 @@ class BattleManager {
     // 如果玩家已经出牌，双方就绪，进入揭晓
     if (g.battlePhase === 'player_played') {
       this.startReveal();
-    } else {
-      // Bot 先出牌，给玩家启动 15 秒倒计时
+    } else if (!g._battleOnline) {
+      // Bot 先出牌，给玩家启动 15 秒倒计时（仅本地人机）
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
       g._battleTurnCountdownSide = 'player';
     }
@@ -522,6 +636,7 @@ class BattleManager {
   // 检查出牌倒计时：一方出牌后另一方必须在 15 秒内出牌，否则超时判 0 分
   updateTurnTimer() {
     const g = this.game;
+    if (g._battleOnline) return; // 联网对战不本地计时
     if (!g._battleTurnDeadline) return;
     if (g.battlePhase !== 'selecting' && g.battlePhase !== 'player_played') return;
     if (Date.now() < g._battleTurnDeadline) return;
@@ -645,6 +760,10 @@ class BattleManager {
       clearTimeout(g._battlePendingCheckTimer);
       g._battlePendingCheckTimer = null;
     }
+    if (g._battleRoomPollTimer) {
+      clearInterval(g._battleRoomPollTimer);
+      g._battleRoomPollTimer = null;
+    }
     g._battleAnimTimeline = null;
     g._battleFlyingScores = [];
     g._battleAvatarGlowAnim = null;
@@ -654,6 +773,14 @@ class BattleManager {
     g._battleTurnCountdownSide = null;
     g._battlePlayerTimedOut = false;
     g._battleBotTimedOut = false;
+    g._battleOnline = false;
+    g._battleRoomId = null;
+    g._battleIsHost = false;
+    g._battleOpponentOpenId = null;
+    g._battleHostPlay = null;
+    g._battleGuestPlay = null;
+    g._battleOnlinePlayerPlayed = false;
+    g._battleOnlineOpponentPlayed = false;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');
   }
 }

@@ -993,6 +993,28 @@ function startGame() {
 
   // 游戏启动后：隐私授权同意后，弹出底部头像昵称授权弹窗
   requestPrivacyAndProfile();
+
+  // 检查是否通过好友对战分享链接启动
+  setTimeout(() => {
+    const launchOptions = wx.getLaunchOptionsSync ? wx.getLaunchOptionsSync() : {};
+    const query = launchOptions.query || {};
+    if (query.roomId && game) {
+      console.log('[Launch] 通过分享链接进入房间:', query.roomId);
+      game._pendingBattleRoomId = query.roomId;
+      game._battleJoinConfirmPopup = {
+        startTime: Date.now(),
+        title: '加入好友对战',
+        hint: '房间号: ' + query.roomId,
+        roomId: query.roomId,
+        showStart: true,
+        showCancel: true,
+        showShare: false,
+        showWaiting: false,
+        startPressed: false,
+        cancelPressed: false
+      };
+    }
+  }, 500);
 }
 
 // 长按检测状态
@@ -1095,6 +1117,53 @@ wx.onTouchStart((e) => {
       }
       return; // 长按期间不触发其他交互（短按返回主页在 touchEnd 处理）
     }
+  }
+
+  // 对战模式选择弹窗交互（优先）
+  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
+    const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
+    const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
+    if (friendHit) {
+      game._battleModeSelectPopup.friendPressed = true;
+      return;
+    }
+    if (onlineHit) {
+      game._battleModeSelectPopup.onlinePressed = true;
+      return;
+    }
+    return;
+  }
+
+  // 对战房间弹窗交互（优先）
+  if (game._battleRoomPopup && !game._battleRoomPopup.closing) {
+    const popup = game._battleRoomPopup;
+    if (renderer.battleRoomStartRect && renderer.hitTest(x, y, [renderer.battleRoomStartRect])) {
+      popup.startPressed = true;
+      return;
+    }
+    if (renderer.battleRoomShareRect && renderer.hitTest(x, y, [renderer.battleRoomShareRect])) {
+      popup.sharePressed = true;
+      return;
+    }
+    if (renderer.battleRoomCancelRect && renderer.hitTest(x, y, [renderer.battleRoomCancelRect])) {
+      popup.cancelPressed = true;
+      return;
+    }
+    return;
+  }
+
+  // 加入好友对战确认弹窗交互（优先）
+  if (game._battleJoinConfirmPopup && !game._battleJoinConfirmPopup.closing) {
+    const popup = game._battleJoinConfirmPopup;
+    if (renderer.battleRoomStartRect && renderer.hitTest(x, y, [renderer.battleRoomStartRect])) {
+      popup.startPressed = true;
+      return;
+    }
+    if (renderer.battleRoomCancelRect && renderer.hitTest(x, y, [renderer.battleRoomCancelRect])) {
+      popup.cancelPressed = true;
+      return;
+    }
+    return;
   }
 
   // 今日新词弹窗交互（优先处理）
@@ -1258,6 +1327,53 @@ wx.onTouchStart((e) => {
     }
     // 点击弹窗外区域直接取消
     game._restartRoundConfirmPopup.noPressed = true;
+    return;
+  }
+
+  // 对战模式选择弹窗交互（优先）
+  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
+    const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
+    const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
+    if (friendHit) {
+      game._battleModeSelectPopup.friendPressed = true;
+      return;
+    }
+    if (onlineHit) {
+      game._battleModeSelectPopup.onlinePressed = true;
+      return;
+    }
+    return;
+  }
+
+  // 对战房间弹窗交互（优先）
+  if (game._battleRoomPopup && !game._battleRoomPopup.closing) {
+    const popup = game._battleRoomPopup;
+    if (renderer.battleRoomStartRect && renderer.hitTest(x, y, [renderer.battleRoomStartRect])) {
+      popup.startPressed = true;
+      return;
+    }
+    if (renderer.battleRoomShareRect && renderer.hitTest(x, y, [renderer.battleRoomShareRect])) {
+      popup.sharePressed = true;
+      return;
+    }
+    if (renderer.battleRoomCancelRect && renderer.hitTest(x, y, [renderer.battleRoomCancelRect])) {
+      popup.cancelPressed = true;
+      return;
+    }
+    return;
+  }
+
+  // 加入好友对战确认弹窗交互（优先）
+  if (game._battleJoinConfirmPopup && !game._battleJoinConfirmPopup.closing) {
+    const popup = game._battleJoinConfirmPopup;
+    if (renderer.battleRoomStartRect && renderer.hitTest(x, y, [renderer.battleRoomStartRect])) {
+      popup.startPressed = true;
+      return;
+    }
+    if (renderer.battleRoomCancelRect && renderer.hitTest(x, y, [renderer.battleRoomCancelRect])) {
+      popup.cancelPressed = true;
+      return;
+    }
     return;
   }
 
@@ -1823,6 +1939,18 @@ wx.onTouchEnd(() => {
         startGame();
       }
       if (btnKey === 'round' || btnKey === 'battle') {
+        // 双人对战：先弹对战模式选择弹窗，不直接翻页
+        if (btnKey === 'battle' && game) {
+          game._battleModeSelectPopup = {
+            startTime: Date.now(),
+            friendPressed: false,
+            onlinePressed: false
+          };
+          if (game.audioManager) game.audioManager.play('tap');
+          renderer._homepagePressedBtn = null;
+          return;
+        }
+
         // 首次点击"开始"：仅先持久化标记（冷启动后即显示"继续"）；
         // 本次会话的显示切换推迟到翻页完成、主页移出视野后再生效，避免点击瞬间主页大按钮突变
         if (btnKey === 'round' && game && !game._roundEntered && game.storageManager) {
@@ -1830,13 +1958,9 @@ wx.onTouchEnd(() => {
         }
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
-        const targetState = btnKey === 'battle' ? 'battle' : 'playing';
+        const targetState = 'playing';
 
         const enterGame = () => {
-          // 双人对战需要提前初始化，确保翻页过程中渲染的是对战页面而非通关页面
-          if (targetState === 'battle' && game && game.battleManager) {
-            game.battleManager.startBattle('easy');
-          }
           pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
           // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
           if (btnKey === 'round' && game && game.guidePhase === 1) {
@@ -1844,17 +1968,7 @@ wx.onTouchEnd(() => {
           }
         };
 
-        // 双人对战：先启动翻页动画，翻页过程中并行下载 battle 云图片
-        if (targetState === 'battle' && game && game.cloudStorage) {
-          enterGame();
-          game.cloudStorage.preloadBattleImages().then(() => {
-            game.cloudStorage.injectBattleToRenderer(renderer);
-          }).catch(err => {
-            console.error('battle 图片预加载失败:', err);
-          });
-        } else {
-          enterGame();
-        }
+        enterGame();
       } else {
         if (game && game.audioManager) game.audioManager.play('tap');
       }
@@ -1883,6 +1997,94 @@ wx.onTouchEnd(() => {
   }
 
   if (!game) return;
+
+  // ===== 好友对战相关函数 =====
+  function enterBattlePage() {
+    const targetState = 'battle';
+    if (game && game.cloudStorage) {
+      game.cloudStorage.preloadBattleImages().then(() => {
+        if (game && game.cloudStorage) game.cloudStorage.injectBattleToRenderer(renderer);
+      }).catch(err => {
+        console.error('battle 图片预加载失败:', err);
+      });
+    }
+    pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
+  }
+
+  function createBattleRoom() {
+    wx.cloud.callFunction({
+      name: 'battleRoom',
+      success: (res) => {
+        if (res.result && res.result.code === 0) {
+          const roomId = res.result.roomId;
+          game._battleRoomId = roomId;
+          game._battleRoomPopup = {
+            startTime: Date.now(),
+            title: '对战房间已创建',
+            roomId: roomId,
+            showStart: false,
+            showShare: true,
+            showCancel: true,
+            showWaiting: false,
+            sharePressed: false,
+            cancelPressed: false
+          };
+        } else {
+          console.error('[battleRoom] 创建失败:', res.result);
+          game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
+        }
+      },
+      fail: (err) => {
+        console.error('[battleRoom] 调用失败:', err);
+        game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
+      }
+    });
+  }
+
+  function shareBattleRoom(roomId) {
+    wx.shareAppMessage({
+      title: '快来和我一起玩女巫词牌对战！',
+      query: `roomId=${roomId}`
+    });
+  }
+
+  function startOnlineBattleMatch() {
+    if (game && game.battleManager) {
+      game.battleManager.startBattle('easy');
+    }
+    enterBattlePage();
+  }
+
+  function startFriendBattle() {
+    if (game && game.battleManager) {
+      game.battleManager.startBattle('easy', { online: true, roomId: game._battleRoomId, isHost: true });
+    }
+    enterBattlePage();
+  }
+
+  function joinFriendBattle(roomId) {
+    wx.cloud.callFunction({
+      name: 'battleJoin',
+      data: { roomId },
+      success: (res) => {
+        if (res.result && res.result.code === 0) {
+          game._battleRoomId = roomId;
+          game._pendingBattleRoomId = null;
+          if (game.battleManager) {
+            game.battleManager.startBattle('easy', { online: true, roomId, isHost: false });
+          }
+          enterBattlePage();
+        } else {
+          console.error('[battleJoin] 加入失败:', res.result);
+          game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
+        }
+      },
+      fail: (err) => {
+        console.error('[battleJoin] 调用失败:', err);
+        game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
+      }
+    });
+  }
 
   // 辅助：药水页面返回商店，discard=true 表示槽位满时丢弃当前药水
   function returnPotionToShop(discard) {
@@ -2310,6 +2512,110 @@ wx.onTouchEnd(() => {
       popup.closing = true;
       popup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
+
+  // 对战模式选择弹窗交互（优先）
+  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
+    const popup = game._battleModeSelectPopup;
+    if (popup.friendPressed) {
+      popup.friendPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      createBattleRoom();
+    } else if (popup.onlinePressed) {
+      popup.onlinePressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      startOnlineBattleMatch();
+    }
+  }
+
+  // 对战房间弹窗交互（松开时）
+  if (game._battleRoomPopup && !game._battleRoomPopup.closing) {
+    const popup = game._battleRoomPopup;
+    if (popup.startPressed) {
+      popup.startPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      startFriendBattle();
+    } else if (popup.sharePressed) {
+      popup.sharePressed = false;
+      if (game.audioManager) game.audioManager.play('tap');
+      shareBattleRoom(popup.roomId);
+      popup.showShare = false;
+      popup.showWaiting = true;
+      popup.title = '等待好友加入';
+      popup.hint = '房间号: ' + popup.roomId;
+    } else if (popup.cancelPressed) {
+      popup.cancelPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
+
+  // 对战模式选择弹窗交互（优先）
+  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
+    const popup = game._battleModeSelectPopup;
+    if (popup.friendPressed) {
+      popup.friendPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      createBattleRoom();
+    } else if (popup.onlinePressed) {
+      popup.onlinePressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      startOnlineBattleMatch();
+    }
+  }
+
+  // 对战房间弹窗交互（松开时）
+  if (game._battleRoomPopup && !game._battleRoomPopup.closing) {
+    const popup = game._battleRoomPopup;
+    if (popup.startPressed) {
+      popup.startPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      startFriendBattle();
+    } else if (popup.sharePressed) {
+      popup.sharePressed = false;
+      if (game.audioManager) game.audioManager.play('tap');
+      shareBattleRoom(popup.roomId);
+      popup.showShare = false;
+      popup.showWaiting = true;
+      popup.title = '等待好友加入';
+      popup.hint = '房间号: ' + popup.roomId;
+    } else if (popup.cancelPressed) {
+      popup.cancelPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
+
+  // 加入好友对战确认弹窗交互
+  if (game._battleJoinConfirmPopup && !game._battleJoinConfirmPopup.closing) {
+    const popup = game._battleJoinConfirmPopup;
+    if (popup.startPressed) {
+      popup.startPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      joinFriendBattle(popup.roomId);
+    } else if (popup.cancelPressed) {
+      popup.cancelPressed = false;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+      game._pendingBattleRoomId = null;
     }
   }
 
@@ -4311,7 +4617,12 @@ function gameLoop(timestamp) {
       // 双人对战已在点击时初始化，这里只需切到对应状态
       // 翻页完成后启动对战匹配弹窗：匹配中状态，随机 3~6 秒后匹配成功
       if (targetState === 'battle' && game && game.battleManager) {
-        game.battleManager.startMatchAnim();
+        if (game._battleOnline) {
+          // 联网对战：开始轮询房间状态
+          game.battleManager.startRoomPolling();
+        } else {
+          game.battleManager.startMatchAnim();
+        }
       }
     }
   } else if (showHomepage) {
@@ -4324,6 +4635,18 @@ function gameLoop(timestamp) {
     // 重新闯关二次确认弹窗
     if (game && game._restartRoundConfirmPopup && renderer._drawRestartRoundConfirmPopup) {
       renderer._drawRestartRoundConfirmPopup(game);
+    }
+    // 对战模式选择弹窗
+    if (game && game._battleModeSelectPopup && renderer._drawBattleModeSelectPopup) {
+      renderer._drawBattleModeSelectPopup(game);
+    }
+    // 对战房间弹窗（创建/等待/加入确认）
+    if (game && game._battleRoomPopup && renderer._drawBattleRoomPopup) {
+      renderer._drawBattleRoomPopup(game);
+    }
+    // 加入好友对战确认弹窗（复用对战房间弹窗绘制）
+    if (game && game._battleJoinConfirmPopup && renderer._drawBattleRoomPopup) {
+      renderer._drawBattleRoomPopup({ ...game, _battleRoomPopup: game._battleJoinConfirmPopup });
     }
     // 排行榜弹窗在主页上叠加绘制
     if (game && game._showingRankPopup && renderer._drawRankPopup) {

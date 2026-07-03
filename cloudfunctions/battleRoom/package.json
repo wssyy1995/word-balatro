@@ -1,0 +1,9 @@
+{
+  "name": "battleRoom",
+  "version": "1.0.0",
+  "description": "创建好友对战房间",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

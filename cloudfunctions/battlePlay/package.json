@@ -1,0 +1,9 @@
+{
+  "name": "battlePlay",
+  "version": "1.0.0",
+  "description": "好友对战出牌同步",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

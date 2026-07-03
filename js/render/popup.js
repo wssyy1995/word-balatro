@@ -1378,6 +1378,170 @@ module.exports = function extendPopup(Renderer) {
       this.restartRoundConfirmYesRect = { x: firstBtnX + btnW + gap, y: btnY, w: btnW, h: btnH };
     };
 
+    // ===== 对战模式选择弹窗 =====
+    Renderer.prototype._drawBattleModeSelectPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popup = game._battleModeSelectPopup;
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: popup.closing || false,
+        closeStartTime: popup.closeStartTime,
+        width: 320, height: 240, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        overlayAlpha: 0.6,
+        onCloseComplete: () => { game._battleModeSelectPopup = null; }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+      const ca = closeAlpha;
+
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('双人对战', W / 2, py + 38 * s + titleAnim.yShift);
+      ctx.restore();
+
+      const itemH = 52 * s;
+      const itemStartY = py + 72 * s;
+      const items = [
+        { key: 'friend', title: '好友对战', subtitle: '邀请好友一起对战' },
+        { key: 'online', title: '在线匹配', subtitle: '随机匹配虚拟对手' }
+      ];
+
+      const btnAnim = Easing.fadeIn(elapsed, 200, 250, 6 * s);
+      items.forEach((item, i) => {
+        const itemY = itemStartY + i * (itemH + 12 * s);
+        const pressed = item.key === 'friend' ? popup.friendPressed : popup.onlinePressed;
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '', px + 24 * s, itemY + btnAnim.yShift, pw - 48 * s, itemH, s, pressed, { color: item.key === 'friend' ? '#c4a35a' : '#8b6914', textColor: '#fff', radius: 10 });
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.title, W / 2, itemY + itemH / 2 + btnAnim.yShift - 8 * s);
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fillText(item.subtitle, W / 2, itemY + itemH / 2 + btnAnim.yShift + 10 * s);
+        ctx.restore();
+
+        const rect = { x: px + 24 * s, y: itemY, w: pw - 48 * s, h: itemH };
+        if (item.key === 'friend') this.battleModeFriendRect = rect;
+        else this.battleModeOnlineRect = rect;
+      });
+    };
+
+    // ===== 对战房间弹窗（创建成功 / 等待加入 / 加入确认） =====
+    Renderer.prototype._drawBattleRoomPopup = function(game) {
+      const ctx = this.ctx;
+      const W = this.W;
+      const H = this.H;
+      const s = this.scale;
+      const popupKey = game._battleJoinConfirmPopup ? '_battleJoinConfirmPopup' : '_battleRoomPopup';
+      const popup = game[popupKey];
+      if (!popup) return;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        isClosing: popup.closing || false,
+        closeStartTime: popup.closeStartTime,
+        width: 320, height: 240, enterOffset: 25, closeOffset: 40,
+        elapsed,
+        overlayAlpha: 0.6,
+        onCloseComplete: () => {
+          game[popupKey] = null;
+          if (popupKey === '_battleJoinConfirmPopup') {
+            game._pendingBattleRoomId = null;
+          }
+        }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+      const ca = closeAlpha;
+
+      const titleAnim = Easing.fadeIn(elapsed, 80, 250, 8 * s);
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(popup.title || '好友对战', W / 2, py + 38 * s + titleAnim.yShift);
+      ctx.restore();
+
+      const hintAnim = Easing.fadeIn(elapsed, 180, 250, 6 * s);
+      ctx.save();
+      ctx.globalAlpha = hintAnim.alpha * ca;
+      ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+      ctx.fillStyle = '#6a5a4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      if (popup.roomId) {
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.fillText(popup.roomId, W / 2, py + 86 * s + hintAnim.yShift);
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9a8a7a';
+        ctx.fillText('房间号', W / 2, py + 62 * s + hintAnim.yShift);
+      } else {
+        ctx.fillText(popup.hint || '', W / 2, py + 80 * s + hintAnim.yShift);
+      }
+      ctx.restore();
+
+      // 按钮
+      const btnW = popup.showShare ? 120 * s : 110 * s;
+      const btnH = 40 * s;
+      const btnY = py + ph - btnH - 28 * s;
+      const gap = popup.showShare ? 16 * s : 0;
+      const totalW = popup.showShare ? btnW * 2 + gap : btnW;
+      const firstBtnX = (W - totalW) / 2;
+
+      const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+
+      if (popup.showStart) {
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '开始', firstBtnX, btnY + btnAnim.yShift, btnW, btnH, s, popup.startPressed, { color: '#c4a35a', textColor: '#fff', radius: 8 });
+        ctx.restore();
+        this.battleRoomStartRect = { x: firstBtnX, y: btnY, w: btnW, h: btnH };
+      }
+      if (popup.showShare) {
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '分享', firstBtnX, btnY + btnAnim.yShift, btnW, btnH, s, popup.sharePressed, { color: '#8b6914', textColor: '#fff', radius: 8 });
+        ctx.restore();
+        this.battleRoomShareRect = { x: firstBtnX, y: btnY, w: btnW, h: btnH };
+      }
+      if (popup.showCancel) {
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '取消', firstBtnX + gap + (popup.showShare ? btnW : 0), btnY + btnAnim.yShift, btnW, btnH, s, popup.cancelPressed, { color: '#b0a898', textColor: '#fff', radius: 8 });
+        ctx.restore();
+        this.battleRoomCancelRect = { x: firstBtnX + gap + (popup.showShare ? btnW : 0), y: btnY, w: btnW, h: btnH };
+      }
+      if (popup.showWaiting) {
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        const dots = ['', '.', '..', '...'];
+        const idx = Math.floor(Date.now() / 500) % 4;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#9a8a7a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('等待好友加入' + dots[idx], W / 2, btnY + btnH / 2);
+        ctx.restore();
+      }
+    };
+
     // ===== 今日新词弹窗 =====
     Renderer.prototype._drawDailyWordsPopup = function(game) {
       const ctx = this.ctx;
@@ -1854,6 +2018,11 @@ module.exports = function extendPopup(Renderer) {
       this.settingsRestartRoundRect = null;
       this.restartRoundConfirmYesRect = null;
       this.restartRoundConfirmNoRect = null;
+      this.battleModeFriendRect = null;
+      this.battleModeOnlineRect = null;
+      this.battleRoomStartRect = null;
+      this.battleRoomShareRect = null;
+      this.battleRoomCancelRect = null;
       this.feedbackBackRect = null;
       this.feedbackInputRect = null;
       this.feedbackSubmitRect = null;
