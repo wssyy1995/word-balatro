@@ -6,6 +6,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const _ = db.command;
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
@@ -14,9 +15,11 @@ exports.main = async (event, context) => {
   if (!roomId) return { code: -1, message: '房间号不能为空' };
 
   try {
-    const roomRes = await db.collection('rooms').doc(roomId).get();
-    const room = roomRes.data;
-    if (!room) return { code: -1, message: '房间不存在' };
+    const roomRes = await db.collection('rooms').where({ roomId }).get();
+    if (!roomRes.data || roomRes.data.length === 0) {
+      return { code: -1, message: '房间不存在' };
+    }
+    const room = roomRes.data[0];
 
     if (room.status !== 'waiting') {
       return { code: -1, message: '房间已开始或已结束' };
@@ -29,7 +32,7 @@ exports.main = async (event, context) => {
     }
 
     const now = Date.now();
-    await db.collection('rooms').doc(roomId).update({
+    await db.collection('rooms').doc(room._id).update({
       data: {
         guest: OPENID,
         status: 'ready',
@@ -38,7 +41,7 @@ exports.main = async (event, context) => {
       }
     });
 
-    const updated = await db.collection('rooms').doc(roomId).get();
+    const updated = await db.collection('rooms').doc(room._id).get();
     return { code: 0, roomId, role: 'guest', room: updated.data };
   } catch (e) {
     console.error('[battleJoin] 加入房间失败:', e);

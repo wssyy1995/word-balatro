@@ -25,8 +25,8 @@ exports.main = async (event, context) => {
     let exists = true;
     let retry = 0;
     while (exists && retry < 5) {
-      const check = await db.collection('rooms').doc(roomId).get().catch(() => null);
-      if (!check) {
+      const check = await db.collection('rooms').where({ roomId }).get();
+      if (!check.data || check.data.length === 0) {
         exists = false;
       } else {
         roomId = generateRoomId();
@@ -35,14 +35,14 @@ exports.main = async (event, context) => {
     }
 
     const now = Date.now();
-    await db.collection('rooms').doc(roomId).set({
+    const addRes = await db.collection('rooms').add({
       data: {
-        _id: roomId,
+        roomId: roomId,
         host: OPENID,
         hostReady: false,
         guest: null,
         guestReady: false,
-        status: 'waiting', // waiting -> ready -> playing -> finished
+        status: 'waiting',
         createTime: now,
         updateTime: now,
         round: 1,
@@ -58,7 +58,7 @@ exports.main = async (event, context) => {
       }
     });
 
-    return { code: 0, roomId };
+    return { code: 0, roomId: roomId, _id: addRes._id };
   } catch (e) {
     console.error('[battleRoom] 创建房间失败:', e);
     return { code: -1, message: e.message || '创建房间失败' };

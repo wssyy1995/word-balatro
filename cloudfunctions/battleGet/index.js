@@ -14,11 +14,12 @@ exports.main = async (event, context) => {
   if (!roomId) return { code: -1, message: '房间号不能为空' };
 
   try {
-    const roomRes = await db.collection('rooms').doc(roomId).get();
-    const room = roomRes.data;
-    if (!room) return { code: -1, message: '房间不存在' };
+    const roomRes = await db.collection('rooms').where({ roomId }).get();
+    if (!roomRes.data || roomRes.data.length === 0) {
+      return { code: -1, message: '房间不存在' };
+    }
 
-    return { code: 0, room };
+    return { code: 0, room: roomRes.data[0] };
   } catch (e) {
     console.error('[battleGet] 查询房间失败:', e);
     return { code: -1, message: e.message || '查询房间失败' };
