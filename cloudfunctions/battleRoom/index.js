@@ -16,11 +16,21 @@ function generateRoomId() {
   return id;
 }
 
+async function ensureCollection() {
+  try {
+    await db.createCollection('rooms');
+  } catch (e) {
+    // 集合已存在或其他错误，忽略
+  }
+}
+
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
   if (!OPENID) return { code: -1, message: '无法获取 OPENID' };
 
   try {
+    await ensureCollection();
+
     let roomId = generateRoomId();
     let exists = true;
     let retry = 0;
