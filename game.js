@@ -4620,22 +4620,22 @@ function gameLoop(timestamp) {
           friendPressed: false,
           onlinePressed: false
         };
-        // 重置对战状态，避免残留旧局数据
+        // 初始化对战默认值，确保选择模式前就有回合标签和手牌显示
         game.state = 'battle';
         game.battleMode = true;
         game.battleRound = 1;
+        game.battleTotalRounds = 10;
         game.battlePlayerScore = 0;
         game.battleBotScore = 0;
         game.battlePlayerRoundScores = [];
         game.battleBotRoundScores = [];
         game.battlePhase = 'selecting';
-        game.battleHand = null;
-        game.battleBotHand = null;
         game.battleSelected = [];
-        game._battleDeck = null;
         game._battleMatchAnim = null;
         game._battleMatchFinished = false;
         game._battleOpponent = null;
+        // 提前初始化第一回合手牌，避免卡牌区空白
+        game.battleManager.startBattle('easy');
       }
     }
   } else if (showHomepage) {
