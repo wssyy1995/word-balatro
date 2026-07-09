@@ -235,7 +235,8 @@ function upgradeLetter(game, letter) {
     }
   });
 
-  if (game.audioManager) game.audioManager.play('word_score');
+  // 动画中自己播放音效,避免在 300~600ms 显示旧分数阶段误触发
+  // if (game.audioManager) game.audioManager.play('word_score');
 
   // 药水已从道具栏提前移除（道具栏使用时）或不在道具栏中（商店直接使用时）
   game.potionMode = null;
