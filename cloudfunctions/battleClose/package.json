@@ -1,0 +1,9 @@
+{
+  "name": "battleClose",
+  "version": "1.0.0",
+  "description": "房主或好友退出对战时关闭房间并通知另一方",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

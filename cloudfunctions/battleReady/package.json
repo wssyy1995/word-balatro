@@ -1,0 +1,9 @@
+{
+  "name": "battleReady",
+  "version": "1.0.0",
+  "description": "好友对战玩家点击准备/开始对战后上报状态",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

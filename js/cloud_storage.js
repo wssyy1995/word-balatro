@@ -153,7 +153,15 @@ class CloudStorageManager {
       'battle_pop_restart': c('/battle/battle_pop_restart.png'),
       'battle_pop_backto_homepage': c('/battle/battle_pop_backto_homepage.png'),
       'battle_pop_success': c('/battle/battle_pop_success.png'),
-      'battle_pop_fail': c('/battle/battle_pop_fail.png')
+      'battle_pop_fail': c('/battle/battle_pop_fail.png'),
+      'battle_friends': c('/battle/battle_friends.png'),
+      'battle_random': c('/battle/battle_random.png'),
+      'battle_room_share': c('/battle/battle_room_share.png'),
+      'battle_card_icon': c('/battle/battle_card_icon.png'),
+      'battle_card_icon_rival': c('/battle/battle_card_icon_rival.png'),
+      'battle_hornor_trophy': c('/battle/battle_hornor_trophy.png'),
+      'battle_overtime': c('/battle/battle_overtime.png'),
+      'battle_progress_icon': c('/battle/battle_progress_icon.png')
     };
 
     // 默认 rank_avatar 图片云文件映射
@@ -354,9 +362,20 @@ class CloudStorageManager {
   }
 
   log(msg) {
-    const line = '[' + new Date().toLocaleTimeString() + '] ' + msg;
-    this.debugLogs.push(line);
-    if (this.debugLogs.length > 30) this.debugLogs.shift();
+    if (!this.debugLogs) this.debugLogs = [];
+    const time = new Date().toLocaleTimeString();
+    // 长消息自动按屏幕宽度拆成多行，避免红色浮层一行塞不下
+    const maxLen = 42;
+    const raw = String(msg);
+    const lines = [];
+    for (let i = 0; i < raw.length; i += maxLen) {
+      lines.push(raw.slice(i, i + maxLen));
+    }
+    lines.forEach((line, idx) => {
+      const prefix = idx === 0 ? '[' + time + '] ' : '... ';
+      this.debugLogs.push(prefix + line);
+      if (this.debugLogs.length > 60) this.debugLogs.shift();
+    });
     console.log('[Cloud]', msg);
   }
 
@@ -1403,13 +1422,51 @@ class CloudStorageManager {
     await this._loadImageWithCache(name, fileID, this.battleImages);
   }
 
-  // 将云缓存 battle 图片注入到 renderer（对战模块占位/单词背景）
+  // 预加载对战模式选择弹窗的按钮图片
+  async preloadBattleModeButtonImages() {
+    const names = [
+      'battle_friends',
+      'battle_random',
+      'battle_room_share',
+      'battle_card_icon',
+      'battle_card_icon_rival',
+      'battle_hornor_trophy',
+      'battle_overtime',
+      'battle_progress_icon'
+    ];
+    for (const name of names) {
+      const fileID = this.battleFileMap[name];
+      if (!fileID) continue;
+      await this._loadImageWithCache(name, fileID, this.battleImages).catch(err => {
+        this.log('预加载对战模式按钮图失败: ' + name + ' ' + (err && err.message ? err.message : String(err)));
+      });
+    }
+    const loaded = names.filter(n => this.battleImages[n] && this.battleImages[n].loaded);
+    this.log('对战模式按钮图预加载完成: ' + loaded.join(', '));
+  }
+
+  // 将云缓存 battle 图片注入到 renderer（对战模块占位/单词背景 + 对战模式按钮）
   injectBattleToRenderer(renderer) {
+    // 部分 battle 图片在 renderer 中使用驼峰命名，这里做映射
+    const camelCaseMap = {
+      'battle_card_icon': 'battleCardIcon',
+      'battle_card_icon_rival': 'battleCardIconRival',
+      'battle_hornor_trophy': 'battleHonorTrophyIcon',
+      'battle_overtime': 'battleOvertimeIcon',
+      'battle_progress_icon': 'battleProgressIcon'
+    };
+
     Object.keys(this.battleImages).forEach(name => {
       const data = this.battleImages[name];
       if (data && data.loaded && data.img) {
         renderer[name] = data.img;
         renderer[name + 'Loaded'] = true;
+        // 同步注入驼峰命名别名，供 battle/renderer.js 和 popup.js 使用
+        const camelKey = camelCaseMap[name];
+        if (camelKey) {
+          renderer[camelKey] = data.img;
+          renderer[camelKey + 'Loaded'] = true;
+        }
         this.log('已注入 battle renderer: ' + name);
       } else {
         this.log('battle ' + name + ' 未加载，跳过注入');

@@ -1387,11 +1387,19 @@ module.exports = function extendPopup(Renderer) {
       const popup = game._battleModeSelectPopup;
       if (!popup) return;
 
+      const mode = popup.mode || 'select';
       const elapsed = Date.now() - popup.startTime;
+      let panelHeight = 240;
+      if (mode === 'select') {
+        panelHeight = 280;
+      } else if (mode === 'friend_join_ready' || mode === 'friend_join_wait') {
+        panelHeight = 220;
+      }
+
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: popup.closing || false,
         closeStartTime: popup.closeStartTime,
-        width: 320, height: 240, enterOffset: 25, closeOffset: 40,
+        width: 280, height: panelHeight, enterOffset: 25, closeOffset: 40,
         elapsed,
         overlayAlpha: 0.6,
         onCloseComplete: () => { game._battleModeSelectPopup = null; }
@@ -1410,31 +1418,470 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillText(popup.title || '对战模式', W / 2, py + 38 * s + titleAnim.yShift);
       ctx.restore();
 
-      const itemH = 52 * s;
-      const itemStartY = py + 72 * s;
-      const items = [
-        { key: 'friend', title: '好友对战', subtitle: '邀请好友一起对战' },
-        { key: 'online', title: '在线匹配', subtitle: '随机匹配虚拟对手' }
-      ];
+      // === 标题下装饰线(参考设置弹窗) ===
+      const decoLineY = py + 54 * s + titleAnim.yShift;
+      const decoLineW = pw * 0.5;
+      const decoLineX = px + (pw - decoLineW) / 2;
+      ctx.save();
+      ctx.globalAlpha = titleAnim.alpha * ca;
+      this._drawTitleDivider(ctx, decoLineX, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+      ctx.restore();
 
-      const btnAnim = Easing.fadeIn(elapsed, 200, 250, 6 * s);
-      items.forEach((item, i) => {
-        const itemY = itemStartY + i * (itemH + 12 * s);
-        const pressed = item.key === 'friend' ? popup.friendPressed : popup.onlinePressed;
+      this.battleModeFriendRect = null;
+      this.battleModeOnlineRect = null;
+      this.battleModeShareRect = null;
+      this.battleModeCancelRect = null;
+      this.battleModeStartRect = null;
+      this.battleModeCloseRect = null;
+
+      const contentAnim = Easing.fadeIn(elapsed, 180, 250, 6 * s);
+      const cx = W / 2;
+      const contentY = py + 110 * s;
+
+      // === 右上角关闭按钮(与设置弹窗样式一致) ===
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 3;
+      const closeY = py + 10 * s - 3;
+      const closePressOffset = popup.closeBtnPressed ? 2 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = contentAnim.alpha * ca;
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + closePressOffset, closeSize, closeSize);
+      } else {
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + closePressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
+      ctx.restore();
+      this.battleModeCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+
+      if (mode === 'friend_loading') {
+        // loading 图标：旋转的圆弧
         ctx.save();
-        ctx.globalAlpha = btnAnim.alpha * ca;
-        this._drawScaledButton(ctx, '', px + 24 * s, itemY + btnAnim.yShift, pw - 48 * s, itemH, s, pressed, { color: item.key === 'friend' ? '#c4a35a' : '#8b6914', textColor: '#fff', radius: 10 });
-        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.title, W / 2, itemY + itemH / 2 + btnAnim.yShift - 8 * s);
-        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText(item.subtitle, W / 2, itemY + itemH / 2 + btnAnim.yShift + 10 * s);
+        ctx.globalAlpha = contentAnim.alpha * ca;
+        ctx.translate(cx, contentY);
+        const rotation = (Date.now() % 1000) / 1000 * Math.PI * 2;
+        ctx.rotate(rotation);
+        const r = 18 * s;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 1.5);
+        ctx.lineWidth = 3 * s;
+        ctx.strokeStyle = '#8b6914';
+        ctx.lineCap = 'round';
+        ctx.stroke();
         ctx.restore();
 
-        const rect = { x: px + 24 * s, y: itemY, w: pw - 48 * s, h: itemH };
+        ctx.save();
+        ctx.globalAlpha = contentAnim.alpha * ca;
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('正在创建对战房间...', cx, contentY + 34 * s);
+        ctx.restore();
+        return;
+      }
+
+      if (mode === 'friend_room') {
+        const hintAnim = contentAnim;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9a8a7a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('房间号', cx, contentY - 16 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(popup.roomId || '', cx, contentY + 10 * s);
+        ctx.restore();
+
+        // 按钮：仅分享图片按钮，居中显示
+        const shareImg = this.battle_room_share;
+        const shareLoaded = this.battle_room_shareLoaded;
+        const btnH = 44 * s;
+        const btnW = 120 * s;
+        const btnY = py + ph - btnH - 26 * s;
+        const btnX = (W - btnW) / 2;
+        const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+        const offset = popup.sharePressed ? 2 * s : 0;
+
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        if (shareLoaded && shareImg) {
+          const imgW = btnW;
+          const aspect = shareImg.width / shareImg.height;
+          const imgH = imgW / aspect;
+          const drawY = btnY + btnAnim.yShift + offset + (btnH - imgH) / 2;
+          ctx.save();
+          ctx.beginPath();
+          const r = 10 * s;
+          ctx.moveTo(btnX + r, btnY + btnAnim.yShift + offset);
+          ctx.lineTo(btnX + imgW - r, btnY + btnAnim.yShift + offset);
+          ctx.quadraticCurveTo(btnX + imgW, btnY + btnAnim.yShift + offset, btnX + imgW, btnY + btnAnim.yShift + offset + r);
+          ctx.lineTo(btnX + imgW, btnY + btnAnim.yShift + offset + btnH - r);
+          ctx.quadraticCurveTo(btnX + imgW, btnY + btnAnim.yShift + offset + btnH, btnX + imgW - r, btnY + btnAnim.yShift + offset + btnH);
+          ctx.lineTo(btnX + r, btnY + btnAnim.yShift + offset + btnH);
+          ctx.quadraticCurveTo(btnX, btnY + btnAnim.yShift + offset + btnH, btnX, btnY + btnAnim.yShift + offset + btnH - r);
+          ctx.lineTo(btnX, btnY + btnAnim.yShift + offset + r);
+          ctx.quadraticCurveTo(btnX, btnY + btnAnim.yShift + offset, btnX + r, btnY + btnAnim.yShift + offset);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(shareImg, btnX, drawY, imgW, imgH);
+          ctx.restore();
+        } else {
+          this._drawScaledButton(ctx, '分享', btnX, btnY + btnAnim.yShift + offset, btnW, btnH, s, popup.sharePressed, { color: '#c4a35a', textColor: '#fff', radius: 8 });
+        }
+        this.battleModeShareRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+        ctx.restore();
+
+        // 不再显示取消按钮
+        this.battleModeCancelRect = null;
+        return;
+      }
+
+      if (mode === 'friend_waiting') {
+        // 等待好友加入：保留显示房间号 + 取消按钮
+        const hintAnim = contentAnim;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9a8a7a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('房间号', cx, contentY - 16 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(popup.roomId || '', cx, contentY + 10 * s);
+        ctx.restore();
+
+        // 等待提示（字体再加大，位置继续下移，深金色）
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        const dots = ['', '.', '..', '...'];
+        const idx = Math.floor(Date.now() / 500) % 4;
+        ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('等待好友加入' + dots[idx], cx, contentY + 54 * s);
+        ctx.restore();
+
+        // 不显示取消按钮
+        this.battleModeCancelRect = null;
+        return;
+      }
+
+      // 房主：好友已加入并准备，双方即将开始倒计时
+      if (mode === 'friend_ready') {
+        // 这个状态会在极短时间内被轮询切换到 friend_countdown，
+        // 兜底显示与 friend_waiting 一致，避免弹窗空白
+        const hintAnim = contentAnim;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#9a8a7a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('房间号', cx, contentY - 16 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(popup.roomId || '', cx, contentY + 10 * s);
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('好友已准备，即将开始', cx, contentY + 54 * s);
+        ctx.restore();
+        return;
+      }
+
+      // 好友：已加入房间，点击开始对战通知房主
+      if (mode === 'friend_join_ready') {
+        const hintAnim = contentAnim;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('已加入好友房间', cx, contentY - 22 * s);
+        ctx.fillText('准备开始对战了吗？', cx, contentY - 4 * s);
+        ctx.restore();
+
+        const btnH = 40 * s;
+        const btnW = 110 * s;
+        const btnY = py + ph - btnH - 28 * s;
+        const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '开始对战', (W - btnW) / 2, btnY + btnAnim.yShift, btnW, btnH, s, popup.startPressed, { color: '#c4a35a', textColor: '#fff', radius: 8 });
+        this.battleModeStartRect = { x: (W - btnW) / 2, y: btnY, w: btnW, h: btnH };
+        ctx.restore();
+        return;
+      }
+
+      // 好友：已准备，等待房主开始对战
+      if (mode === 'friend_join_wait') {
+        const hintAnim = contentAnim;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('已准备', cx, contentY - 22 * s);
+        ctx.fillText('房主即将开始对战...', cx, contentY - 4 * s);
+        ctx.restore();
+
+        // loading 图标
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.translate(cx, contentY + 26 * s);
+        const rotation = (Date.now() % 1000) / 1000 * Math.PI * 2;
+        ctx.rotate(rotation);
+        const r = 14 * s;
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 1.5);
+        ctx.lineWidth = 3 * s;
+        ctx.strokeStyle = '#8b6914';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        // 取消按钮
+        const btnH = 36 * s;
+        const btnW = 100 * s;
+        const btnY = py + ph - btnH - 24 * s;
+        const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '取消', (W - btnW) / 2, btnY + btnAnim.yShift, btnW, btnH, s, popup.cancelPressed, { color: '#b0a898', textColor: '#fff', radius: 8 });
+        this.battleModeCancelRect = { x: (W - btnW) / 2, y: btnY, w: btnW, h: btnH };
+        ctx.restore();
+        return;
+      }
+
+      // 好友对战：重开邀请中
+      if (mode === 'friend_restart_inviting') {
+        const hintAnim = contentAnim;
+        const offsetY = 11 * s;
+        const loadingR = 22 * s;
+        // loading 图标
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.translate(cx, contentY - 8 * s + offsetY);
+        const rotation = (Date.now() % 1000) / 1000 * Math.PI * 2;
+        ctx.rotate(rotation);
+        ctx.beginPath();
+        ctx.arc(0, 0, loadingR, 0, Math.PI * 1.5);
+        ctx.lineWidth = 3 * s;
+        ctx.strokeStyle = '#8b6914';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('正在邀请好友重开一局', cx, contentY + 30 * s + offsetY + (loadingR - 18 * s));
+        ctx.restore();
+        return;
+      }
+
+      // 好友对战：收到重开邀请
+      if (mode === 'friend_restart_invited') {
+        const hintAnim = contentAnim;
+        const offsetY = 11 * s;
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('好友邀请您，再来一战！', cx, contentY - 22 * s + offsetY);
+        ctx.restore();
+
+        const btnH = 40 * s;
+        const btnW = 110 * s;
+        const btnY = py + ph - btnH - 28 * s;
+        const btnAnim = Easing.fadeIn(elapsed, 260, 250, 10 * s);
+
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+        this._drawScaledButton(ctx, '开始对战', (W - btnW) / 2, btnY + btnAnim.yShift, btnW, btnH, s, popup.startPressed, { color: '#c4a35a', textColor: '#fff', radius: 8 });
+        this.battleModeStartRect = { x: (W - btnW) / 2, y: btnY, w: btnW, h: btnH };
+        ctx.restore();
+        return;
+      }
+
+      // 好友对战：双方同步 10 秒倒计时
+      if (mode === 'friend_countdown') {
+        const cdOffsetY = 10 * s;
+        const hintAnim = contentAnim;
+        const cd = game._friendBattleCountdown;
+        const cdElapsed = cd ? Math.max(0, Date.now() - cd.startTime) : 0;
+        const secondsTotal = cd ? Math.ceil(cd.duration / 1000) : 10;
+        const secondsLeft = Math.max(0, secondsTotal - Math.floor(cdElapsed / 1000));
+        const finished = !cd || cd.finished;
+
+        // 倒计时数字背景圆环（参考匹配弹窗金光之环）
+        const ringR = 42 * s;
+        const ringY = contentY - 6 * s + cdOffsetY;
+        const breath = 1 + 0.06 * Math.sin(Date.now() / 400);
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.beginPath();
+        ctx.arc(cx, ringY, ringR * breath, 0, Math.PI * 2);
+        const ringGrad = ctx.createRadialGradient(cx, ringY, ringR * 0.6, cx, ringY, ringR * 1.2);
+        ringGrad.addColorStop(0, 'rgba(196, 163, 90, 0.25)');
+        ringGrad.addColorStop(0.5, 'rgba(196, 163, 90, 0.55)');
+        ringGrad.addColorStop(1, 'rgba(196, 163, 90, 0.15)');
+        ctx.strokeStyle = ringGrad;
+        ctx.lineWidth = 4 * s;
+        ctx.stroke();
+        ctx.restore();
+
+        // 倒计时数字
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `bold ${Math.floor(42 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(secondsLeft), cx, ringY);
+        ctx.restore();
+
+        // 副标题
+        ctx.save();
+        ctx.globalAlpha = hintAnim.alpha * ca;
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#6a5a4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const subtitle = finished
+          ? '正在开始对战...'
+          : '请做好对战准备';
+        ctx.fillText(subtitle, cx, ringY + ringR + 18 * s);
+        ctx.restore();
+        return;
+      }
+
+      // 兜底：上面的分支都已经 return，如果 mode 没匹配到也要重置按钮热区，避免旧热区残留
+      this.battleModeStartRect = null;
+      this.battleModeCancelRect = null;
+
+      const friendImg = this.battle_friends;
+      const randomImg = this.battle_random;
+      const friendLoaded = this.battle_friendsLoaded;
+      const randomLoaded = this.battle_randomLoaded;
+
+      const itemW = pw - 48 * s;
+      const itemGap = 10 * s;
+      const itemStartY = py + 72 * s;
+      const items = [
+        { key: 'friend', img: friendImg, loaded: friendLoaded },
+        { key: 'online', img: randomImg, loaded: randomLoaded }
+      ];
+      // 按原图比例计算每张图片的实际高度，确保间距精确可控
+      const itemHeights = items.map(item => {
+        if (item.loaded && item.img && item.img.height > 0) {
+          const aspect = item.img.width / item.img.height;
+          return itemW / aspect;
+        }
+        return 80 * s;
+      });
+
+      const verticalOffsets = [10 * s, 15 * s];
+
+      const btnAnim = Easing.fadeIn(elapsed, 200, 250, 6 * s);
+      let currentY = itemStartY;
+      items.forEach((item, i) => {
+        const itemH = itemHeights[i];
+        const extraY = verticalOffsets[i] || 0;
+        const itemY = currentY + extraY;
+        currentY += itemH + itemGap + extraY;
+        const pressed = item.key === 'friend' ? popup.friendPressed : popup.onlinePressed;
+        const offset = pressed ? 2 * s : 0;
+        const rect = { x: px + 24 * s, y: itemY, w: itemW, h: itemH };
+
+        ctx.save();
+        ctx.globalAlpha = btnAnim.alpha * ca;
+
+        // 绘制图片按钮：优先使用云存储图片，未加载时用圆角矩形兜底
+        if (item.loaded && item.img) {
+          const imgW = rect.w;
+          // 按原图比例计算高度
+          const aspect = item.img.width / item.img.height;
+          const imgH = imgW / aspect;
+          const drawY = rect.y + btnAnim.yShift + offset + (rect.h - imgH) / 2;
+          // 保持圆角裁剪
+          ctx.save();
+          ctx.beginPath();
+          const r = 10 * s;
+          ctx.moveTo(rect.x + r, rect.y + btnAnim.yShift + offset);
+          ctx.lineTo(rect.x + imgW - r, rect.y + btnAnim.yShift + offset);
+          ctx.quadraticCurveTo(rect.x + imgW, rect.y + btnAnim.yShift + offset, rect.x + imgW, rect.y + btnAnim.yShift + offset + r);
+          ctx.lineTo(rect.x + imgW, rect.y + btnAnim.yShift + offset + rect.h - r);
+          ctx.quadraticCurveTo(rect.x + imgW, rect.y + btnAnim.yShift + offset + rect.h, rect.x + imgW - r, rect.y + btnAnim.yShift + offset + rect.h);
+          ctx.lineTo(rect.x + r, rect.y + btnAnim.yShift + offset + rect.h);
+          ctx.quadraticCurveTo(rect.x, rect.y + btnAnim.yShift + offset + rect.h, rect.x, rect.y + btnAnim.yShift + offset + rect.h - r);
+          ctx.lineTo(rect.x, rect.y + btnAnim.yShift + offset + r);
+          ctx.quadraticCurveTo(rect.x, rect.y + btnAnim.yShift + offset, rect.x + r, rect.y + btnAnim.yShift + offset);
+          ctx.closePath();
+          ctx.clip();
+          ctx.drawImage(item.img, rect.x, drawY, imgW, imgH);
+          ctx.restore();
+        } else {
+          this._drawScaledButton(ctx, '', rect.x, rect.y + btnAnim.yShift + offset, rect.w, rect.h, s, pressed, { color: item.key === 'friend' ? '#c4a35a' : '#8b6914', textColor: '#fff', radius: 10 });
+          ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const title = item.key === 'friend' ? '好友对战' : '在线匹配';
+          ctx.fillText(title, W / 2, rect.y + rect.h / 2 + btnAnim.yShift + offset);
+        }
+
+        ctx.restore();
+
         if (item.key === 'friend') this.battleModeFriendRect = rect;
         else this.battleModeOnlineRect = rect;
       });
@@ -1454,7 +1901,7 @@ module.exports = function extendPopup(Renderer) {
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing: popup.closing || false,
         closeStartTime: popup.closeStartTime,
-        width: 320, height: 240, enterOffset: 25, closeOffset: 40,
+        width: 280, height: 240, enterOffset: 25, closeOffset: 40,
         elapsed,
         overlayAlpha: 0.6,
         onCloseComplete: () => {
@@ -2020,6 +2467,10 @@ module.exports = function extendPopup(Renderer) {
       this.restartRoundConfirmNoRect = null;
       this.battleModeFriendRect = null;
       this.battleModeOnlineRect = null;
+      this.battleModeShareRect = null;
+      this.battleModeStartRect = null;
+      this.battleModeCancelRect = null;
+      this.battleModeCloseRect = null;
       this.battleRoomStartRect = null;
       this.battleRoomShareRect = null;
       this.battleRoomCancelRect = null;

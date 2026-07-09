@@ -1,0 +1,9 @@
+{
+  "name": "battleAcceptRestart",
+  "version": "1.0.0",
+  "description": "好友对战接受重新开始邀请并重置房间",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

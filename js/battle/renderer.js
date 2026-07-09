@@ -25,6 +25,7 @@ class BattleRenderer {
     this.battleClearBtnRect = null;
     this.battleCardRects = [];
     this.battleTopHomeRect = null;
+    this.battleMatchCloseRect = null;
     this.battleHomeConfirmBtnRect = null;
     this.battleMenuBtnRect = null;
     this.battlePanelLeft = null;
@@ -52,30 +53,25 @@ class BattleRenderer {
       alpha: 0.3 + Math.random() * 0.7
     }));
 
-    // 加载分数进度条闪电图标（本地资源，不走云存储）
+    // 分数进度条闪电图标（由 cloudStorage 注入）
     this.battleProgressIcon = null;
     this.battleProgressIconLoaded = false;
-    this._loadBattleProgressIcon();
 
-    // 加载荣誉杯图标（本地资源，不走云存储）
+    // 荣誉杯图标（由 cloudStorage 注入）
     this.battleHonorTrophyIcon = null;
     this.battleHonorTrophyIconLoaded = false;
-    this._loadBattleHonorTrophyIcon();
 
-    // 加载"请出牌"提示图标（本地资源，不走云存储）
+    // "请出牌"提示图标（由 cloudStorage 注入）
     this.battleCardIcon = null;
     this.battleCardIconLoaded = false;
-    this._loadBattleCardIcon();
 
-    // 加载"对手选择中"提示图标（本地资源，不走云存储）
+    // "对手选择中"提示图标（由 cloudStorage 注入）
     this.battleCardIconRival = null;
     this.battleCardIconRivalLoaded = false;
-    this._loadBattleCardIconRival();
 
-    // 加载"超时未出牌"提示图标（本地资源，不走云存储）
+    // "超时未出牌"提示图标（由 cloudStorage 注入）
     this.battleOvertimeIcon = null;
     this.battleOvertimeIconLoaded = false;
-    this._loadBattleOvertimeIcon();
 
     // 加载当前用户头像
     this.selfAvatarUrl = null;
@@ -102,64 +98,23 @@ class BattleRenderer {
     ];
   }
 
-  _loadBattleProgressIcon() {
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_progress_icon.png';
-      img.onload = () => { this.battleProgressIconLoaded = true; };
-      img.onerror = () => { this.battleProgressIconLoaded = false; };
-      this.battleProgressIcon = img;
-    } catch (e) {
-      this.battleProgressIconLoaded = false;
-    }
-  }
-
-  _loadBattleHonorTrophyIcon() {
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_hornor_trophy.png';
-      img.onload = () => { this.battleHonorTrophyIconLoaded = true; };
-      img.onerror = () => { this.battleHonorTrophyIconLoaded = false; };
-      this.battleHonorTrophyIcon = img;
-    } catch (e) {
-      this.battleHonorTrophyIconLoaded = false;
-    }
-  }
-
-  _loadBattleCardIcon() {
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_card_icon.png';
-      img.onload = () => { this.battleCardIconLoaded = true; };
-      img.onerror = () => { this.battleCardIconLoaded = false; };
-      this.battleCardIcon = img;
-    } catch (e) {
-      this.battleCardIconLoaded = false;
-    }
-  }
-
-  _loadBattleCardIconRival() {
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_card_icon_rival.png';
-      img.onload = () => { this.battleCardIconRivalLoaded = true; };
-      img.onerror = () => { this.battleCardIconRivalLoaded = false; };
-      this.battleCardIconRival = img;
-    } catch (e) {
-      this.battleCardIconRivalLoaded = false;
-    }
-  }
-
-  _loadBattleOvertimeIcon() {
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_overtime.png';
-      img.onload = () => { this.battleOvertimeIconLoaded = true; };
-      img.onerror = () => { this.battleOvertimeIconLoaded = false; };
-      this.battleOvertimeIcon = img;
-    } catch (e) {
-      this.battleOvertimeIconLoaded = false;
-    }
+  // 从主 renderer 同步 cloudStorage 注入的对战图标
+  _syncBattleIcons() {
+    const parent = this.parent;
+    if (!parent) return;
+    const icons = [
+      'battleProgressIcon',
+      'battleHonorTrophyIcon',
+      'battleCardIcon',
+      'battleCardIconRival',
+      'battleOvertimeIcon'
+    ];
+    icons.forEach(key => {
+      if (parent[key + 'Loaded'] && parent[key] && !this[key]) {
+        this[key] = parent[key];
+        this[key + 'Loaded'] = true;
+      }
+    });
   }
 
   // ===== 加载当前用户头像 =====
@@ -202,7 +157,37 @@ class BattleRenderer {
     }
   }
 
+  // 联网对战：异步加载对手真实头像
+  _loadOpponentAvatar(url, game) {
+    if (!url || !game) return;
+    try {
+      const img = wx.createImage();
+      img.src = url;
+      img.onload = () => {
+        if (game._battleOpponent) {
+          game._battleOpponent.avatar = {
+            type: 'url',
+            img,
+            loaded: true
+          };
+        }
+      };
+      img.onerror = () => {
+        if (game._battleOpponent) {
+          game._battleOpponent.avatar = { type: 'url', img: null, loaded: false };
+        }
+      };
+    } catch (e) {
+      if (game._battleOpponent) {
+        game._battleOpponent.avatar = { type: 'url', img: null, loaded: false };
+      }
+    }
+  }
+
   draw(ctx, game, W, H, s) {
+    // 同步 cloudStorage 注入的对战图标
+    this._syncBattleIcons();
+
     // 禁用游戏页左上角的设置按钮热区，避免与对战返回/设置按钮冲突
     this.parent.topIconRect = null;
 
@@ -273,6 +258,11 @@ class BattleRenderer {
     if (game._battleHomeConfirmPopup) {
       this._drawHomeConfirmPopup(ctx, game, W, H, s);
     }
+
+    // === 房间已结束弹窗（对方退出） ===
+    if (game._battleRoomClosedPopup) {
+      this._drawRoomClosedPopup(ctx, game, W, H, s);
+    }
   }
 
   // ===== 随机生成对手（头像 + 昵称），与全国榜默认头像/昵称分配逻辑一致 =====
@@ -310,6 +300,7 @@ class BattleRenderer {
   // ===== 对战匹配弹窗：果冻感弹出 + 匹配流程 =====
   _drawBattleMatchPopup(ctx, game, W, H, s) {
     let anim = game._battleMatchAnim;
+    this.battleMatchCloseRect = null;
     if (!anim) return;
 
     const now = Date.now();
@@ -426,6 +417,42 @@ class BattleRenderer {
 
     // 绘制底图
     ctx.drawImage(matchImg, matchX, matchY, matchW, matchH);
+
+    // 关闭按钮（右上角）
+    const closeBtnSize = 24 * s;
+    const closeBtnX = matchX + matchW - closeBtnSize - 10 * s;
+    const closeBtnY = matchY + 10 * s - 15 * s; // 上移 15px
+    const closeBtnCX = closeBtnX + closeBtnSize / 2;
+    const closeBtnCY = closeBtnY + closeBtnSize / 2;
+
+    // 记录屏幕坐标点击区域（考虑弹窗整体缩放）
+    this.battleMatchCloseRect = {
+      x: cx + (closeBtnX - cx) * panelScale,
+      y: cy + (closeBtnY - cy) * panelScale,
+      w: closeBtnSize * panelScale,
+      h: closeBtnSize * panelScale
+    };
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(closeBtnCX, closeBtnCY, closeBtnSize / 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
+    ctx.lineWidth = 1.5 * s;
+    ctx.strokeStyle = 'rgba(215, 177, 98, 0.8)';
+    ctx.stroke();
+
+    const xSize = 7 * s;
+    ctx.beginPath();
+    ctx.moveTo(closeBtnCX - xSize, closeBtnCY - xSize);
+    ctx.lineTo(closeBtnCX + xSize, closeBtnCY + xSize);
+    ctx.moveTo(closeBtnCX + xSize, closeBtnCY - xSize);
+    ctx.lineTo(closeBtnCX - xSize, closeBtnCY + xSize);
+    ctx.lineWidth = 2 * s;
+    ctx.strokeStyle = '#d7b162';
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    ctx.restore();
 
     // 标题区域
     const titleY = matchY + 61 * s;
@@ -1481,7 +1508,7 @@ class BattleRenderer {
     const timedOut = mySide === 'player' ? game._battlePlayerTimedOut : game._battleBotTimedOut;
     const myWordLen = mySide === 'player'
       ? (game.battlePlayerWord ? game.battlePlayerWord.length : 0)
-      : (game.battleBotWordLength || 0);
+      : (game.battleBotReady ? (game.battleBotWord ? game.battleBotWord.length : (game.battleBotWordLength || 0)) : 0);
     const myWord = mySide === 'player' ? (game.battlePlayerWord || '') : (game.battleBotWord || '');
 
     if (game.battlePhase === 'selecting' || game.battlePhase === 'player_played') {
@@ -2909,6 +2936,126 @@ class BattleRenderer {
 
     this.battleHomeConfirmCancelRect = { x: cancelX, y: btnY, w: btnW, h: btnH };
     this.battleHomeConfirmOkRect = { x: confirmX, y: btnY, w: btnW, h: btnH };
+    ctx.restore();
+  }
+
+  // ===== 房间已结束弹窗（对方退出） =====
+  _drawRoomClosedPopup(ctx, game, W, H, s) {
+    const pw = 260 * s;
+    const ph = 230 * s;
+    const px = (W - pw) / 2;
+    const py = (H - ph) / 2;
+    const r = 14 * s;
+    const gold = '#c4a35a';
+
+    if (!game._battleRoomClosedAnimStart) {
+      game._battleRoomClosedAnimStart = Date.now();
+    }
+    const elapsed = Date.now() - game._battleRoomClosedAnimStart;
+    const enterProgress = Math.min(elapsed / 300, 1);
+    const enterEase = Easing.easeOutBack(enterProgress);
+    const drawPy = py + (1 - enterEase) * 25 * s;
+
+    // 遮罩
+    ctx.save();
+    ctx.fillStyle = `rgba(0,0,0,${0.65 * enterEase})`;
+    ctx.fillRect(0, 0, W, H);
+
+    // 背景 + 金色边框
+    this.parent.roundRect(px, drawPy, pw, ph, r, '#faf6ee', gold);
+
+    // 内层细边框
+    ctx.save();
+    ctx.strokeStyle = gold;
+    ctx.lineWidth = 1.5 * s;
+    ctx.beginPath();
+    const inset = 4 * s;
+    const ix = px + inset, iy = drawPy + inset, iw = pw - inset * 2, ih = ph - inset * 2, ir = r - inset;
+    ctx.moveTo(ix + ir, iy);
+    ctx.lineTo(ix + iw - ir, iy);
+    ctx.quadraticCurveTo(ix + iw, iy, ix + iw, iy + ir);
+    ctx.lineTo(ix + iw, iy + ih - ir);
+    ctx.quadraticCurveTo(ix + iw, iy + ih, ix + iw - ir, iy + ih);
+    ctx.lineTo(ix + ir, iy + ih);
+    ctx.quadraticCurveTo(ix, iy + ih, ix, iy + ih - ir);
+    ctx.lineTo(ix, iy + ir);
+    ctx.quadraticCurveTo(ix, iy, ix + ir, iy);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+
+    // 标题
+    ctx.save();
+    ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+    ctx.fillStyle = '#1a2f4a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('对战结束', W / 2, drawPy + 42 * s);
+    ctx.restore();
+
+    // 标题下装饰线
+    const decoLineY = drawPy + 58 * s;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(196,163,90,0.4)';
+    ctx.lineWidth = 1 * s;
+    const dlW = pw * 0.45;
+    const dlX = px + (pw - dlW) / 2;
+    ctx.beginPath();
+    ctx.moveTo(dlX, decoLineY);
+    ctx.lineTo(dlX + dlW, decoLineY);
+    ctx.stroke();
+    ctx.save();
+    ctx.translate(W / 2, decoLineY);
+    ctx.rotate(Math.PI / 4);
+    ctx.fillStyle = gold;
+    ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
+    ctx.restore();
+    ctx.restore();
+
+    // 中间文字
+    const text = '好友已退出房间，对战结束';
+    ctx.save();
+    ctx.font = `${Math.floor(14 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const maxW = pw - 48 * s;
+    const lineHeight = 20 * s;
+    const lines = [];
+    let line = '';
+    for (let i = 0; i < text.length; i++) {
+      const testLine = line + text[i];
+      if (ctx.measureText(testLine).width > maxW && line !== '') {
+        lines.push(line);
+        line = text[i];
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+    const startY = drawPy + 100 * s - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((l, i) => {
+      ctx.fillText(l, W / 2, startY + i * lineHeight);
+    });
+    ctx.restore();
+
+    // 底部退出对战按钮
+    const btnW = 200 * s;
+    const btnH = 42 * s;
+    const btnX = (W - btnW) / 2;
+    const btnY = drawPy + ph - btnH - 34 * s;
+    const pressed = game._battleRoomClosedOkPressed || false;
+    const offset = pressed ? 2 * s : 0;
+    this.parent.roundRect(btnX, btnY + offset, btnW, btnH, 8 * s, '#c4a35a');
+    ctx.save();
+    ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('退出对战', btnX + btnW / 2, btnY + offset + btnH / 2);
+    ctx.restore();
+
+    this.battleRoomClosedOkRect = { x: btnX, y: btnY, w: btnW, h: btnH };
     ctx.restore();
   }
 }

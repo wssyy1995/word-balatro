@@ -1,0 +1,9 @@
+{
+  "name": "battleStart",
+  "version": "1.0.0",
+  "description": "房主正式开始好友对战",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

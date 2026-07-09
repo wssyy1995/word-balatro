@@ -1,0 +1,9 @@
+{
+  "name": "battleRequestRestart",
+  "version": "1.0.0",
+  "description": "好友对战结束弹窗发起重新开始邀请",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

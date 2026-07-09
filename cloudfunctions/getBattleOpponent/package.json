@@ -1,0 +1,9 @@
+{
+  "name": "getBattleOpponent",
+  "version": "1.0.0",
+  "description": "根据 openid 查询对战对手的头像、昵称和荣誉杯",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

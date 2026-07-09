@@ -1152,6 +1152,10 @@ class Game {
     this._roundEntered = this.storageManager.loadRoundEntered() || false;
     // 荣誉杯累计数（对战每胜一场 +1，跨局永久保留）
     this.honorTrophies = this.storageManager.getHonorTrophies() || 0;
+    // 若本地没有荣誉杯记录，尝试从云端同步
+    if (!this.storageManager.hasHonorTrophiesLocal()) {
+      this._syncHonorTrophiesFromCloud();
+    }
     this.audioManager = new AudioManager();
     // 2026-06-24 优化：homepage 阶段不预加载全部音效
     // 避免创建 30 个 InnerAudioContext 实例占用内存
@@ -2071,8 +2075,9 @@ class Game {
     this._hastePlayStartTime = null;
 
     // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
-    console.log('[Guide] trigger check round:', this.round, 'guidePhase:', this.guidePhase, '_guideEnabled:', this._guideEnabled);
-    if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined)) {
+    // 仅限单人回合游戏；若用户从对战入口进入，则不应触发小女巫引导
+    console.log('[Guide] trigger check round:', this.round, 'guidePhase:', this.guidePhase, '_guideEnabled:', this._guideEnabled, 'state:', this.state, 'battleMode:', this.battleMode);
+    if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined) && this.state === 'playing' && !this.battleMode) {
       this.guidePhase = 1;
       this._guideOverlayStartTime = Date.now();
       this._guideLastVisibleChars = -1;
@@ -3811,6 +3816,32 @@ class Game {
       this.battleManager.exitBattle();
     }
     this._returnToHomepage = true;
+  }
+
+  // 从云端同步荣誉杯数量到本地
+  async _syncHonorTrophiesFromCloud() {
+    try {
+      const res = await new Promise((resolve, reject) => {
+        if (!wx.cloud || !wx.cloud.callFunction) {
+          reject(new Error('云函数不可用'));
+          return;
+        }
+        wx.cloud.callFunction({
+          name: 'getBattleOpponent',
+          data: {}, // 不传 opponentOpenId 时云函数返回当前用户自己的信息
+          success: (res) => resolve(res),
+          fail: (err) => reject(err)
+        });
+      });
+      // 临时复用 getBattleOpponent 查询自己；将云端荣誉杯数写入本地，避免每次启动都查询
+      if (res.result && res.result.code === 0 && res.result.opponent) {
+        const trophies = res.result.opponent.trophies || 0;
+        this.honorTrophies = trophies;
+        this.storageManager.set('honor_trophies', trophies);
+      }
+    } catch (e) {
+      console.error('[Game] 从云端同步荣誉杯失败:', e);
+    }
   }
 
   nextRound() {

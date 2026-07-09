@@ -1,0 +1,9 @@
+{
+  "name": "battleNextRound",
+  "version": "1.0.0",
+  "description": "好友对战推进到下一回合，生成双方一致的手牌",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

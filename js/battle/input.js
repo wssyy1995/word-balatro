@@ -31,13 +31,35 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
       setTimeout(() => {
         game._battleHomeConfirmPopup = false;
         game._battleHomeConfirmAnimStart = null;
-        game.returnToHomepage();
+        // 联网对战且仍在房间中：先关闭房间再返回首页
+        if (game._battleOnline && game._battleRoomId) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        } else {
+          game.returnToHomepage();
+        }
       }, 350);
       return true;
     }
     // 点击弹窗外关闭弹窗
     game._battleHomeConfirmPopup = false;
     game._battleHomeConfirmAnimStart = null;
+    return true;
+  }
+
+  // 房间已结束弹窗（对方退出）
+  if (game._battleRoomClosedPopup) {
+    const okHit = battle.battleRoomClosedOkRect && renderer.hitTest(x, inputY, [battle.battleRoomClosedOkRect]);
+    if (okHit) {
+      vibrate();
+      if (game.audioManager) game.audioManager.play('tap');
+      game._battleRoomClosedOkPressed = true;
+      setTimeout(() => { game._battleRoomClosedOkPressed = false; }, 150);
+      setTimeout(() => {
+        game.battleManager.closeRoomClosedPopupAndExit();
+      }, 350);
+      return true;
+    }
+    // 房间结束弹窗必须点击按钮才能关闭
     return true;
   }
 
@@ -138,9 +160,14 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
         setTimeout(() => { game._battleRestartBtnPressed = false; }, 150);
         if (game.audioManager) game.audioManager.play('tap');
         setTimeout(() => {
-          game.battleManager.startBattle('easy');
-          // 重新走一遍匹配弹窗流程，等同于重新进入对战页
-          game.battleManager.startMatchAnim();
+          if (game._battleOnline && game.battleManager) {
+            // 好友对战：发起重新开始邀请
+            game.battleManager.requestRestart();
+          } else {
+            // 本地人机/随机匹配：重新开局
+            game.battleManager.startBattle('easy');
+            game.battleManager.startMatchAnim();
+          }
         }, 350);
         return true;
       }

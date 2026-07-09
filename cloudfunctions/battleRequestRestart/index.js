@@ -1,16 +1,16 @@
 /**
- * 云函数：battleJoin
- * 职责：加入好友对战房间
+ * 云函数：battleRequestRestart
+ * 职责：好友对战结束弹窗中，任意一方发起"重新开始此房间"邀请
  */
 
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
-const _ = db.command;
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
   const { roomId } = event;
+
   if (!OPENID) return { code: -1, message: '无法获取 OPENID' };
   if (!roomId) return { code: -1, message: '房间号不能为空' };
 
@@ -21,30 +21,32 @@ exports.main = async (event, context) => {
     }
     const room = roomRes.data[0];
 
-    if (room.status !== 'waiting' && room.status !== 'ready') {
-      return { code: -1, message: '房间已开始或已结束' };
-    }
-    if (room.host === OPENID) {
-      return { code: 0, roomId, role: 'host', room };
-    }
-    if (room.guest && room.guest !== OPENID) {
-      return { code: -1, message: '房间已满' };
+    const isHost = room.host === OPENID;
+    const isGuest = room.guest === OPENID;
+    if (!isHost && !isGuest) {
+      return { code: -1, message: '你不是房间玩家' };
     }
 
     const now = Date.now();
+    const restartRequest = {
+      fromOpenId: OPENID,
+      fromSide: isHost ? 'host' : 'guest',
+      timestamp: now,
+      accepted: false,
+      acceptedAt: null
+    };
+
     await db.collection('rooms').doc(room._id).update({
       data: {
-        guest: OPENID,
-        status: 'ready',
-        updateTime: now,
-        [`scores.${OPENID}`]: 0
+        restartRequest,
+        updateTime: now
       }
     });
 
     const updated = await db.collection('rooms').doc(room._id).get();
-    return { code: 0, roomId, role: 'guest', room: updated.data };
+    return { code: 0, room: updated.data };
   } catch (e) {
-    console.error('[battleJoin] 加入房间失败:', e);
-    return { code: -1, message: e.message || '加入房间失败' };
+    console.error('[battleRequestRestart] 发起重开邀请失败:', e);
+    return { code: -1, message: e.message || '发起重开邀请失败' };
   }
 };

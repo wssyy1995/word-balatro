@@ -3,6 +3,12 @@ const { BattleBot } = require('./bot');
 const { createBattleDeck, shuffle } = require('./deck');
 const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache, wordMeaningCache } = require('../data');
 
+function cloudLog(game, msg) {
+  if (game && game.cloudStorage && game.cloudStorage.log) {
+    game.cloudStorage.log(msg);
+  }
+}
+
 const HAND_SIZE = 12;
 const DEFAULT_TOTAL_ROUNDS = 10;
 const BOT_FAST_MIN_MS = 6000;
@@ -169,7 +175,47 @@ class BattleManager {
     g._battleHomeConfirmCancelPressed = false;
     g._battleHomeConfirmOkPressed = false;
     // 立即初始化第一回合手牌，匹配弹窗弹出时背景已能看到字母卡牌
-    this._startRound();
+    // 联网对战且传入 roomData 时，使用云端统一生成的手牌
+    if (g._battleOnline && options.roomData) {
+      this._startRound(options.roomData);
+    } else {
+      this._startRound();
+    }
+
+    // 联网对战：异步加载对手真实头像/昵称/荣誉杯
+    // 注意：startBattle 时 _battleOpponentOpenId 可能尚未赋值，
+    // 实际加载逻辑在 _applyRoomState 首次获取到 room.host/guest 时触发。
+  }
+
+  // 联网对战：从云端加载对手真实信息
+  async _loadOnlineOpponent(opponentOpenId) {
+    const g = this.game;
+    if (!opponentOpenId) return;
+    try {
+      const res = await new Promise((resolve, reject) => {
+        wx.cloud.callFunction({
+          name: 'getBattleOpponent',
+          data: { opponentOpenId },
+          success: (res) => resolve(res),
+          fail: (err) => reject(err)
+        });
+      });
+      if (res.result && res.result.code === 0 && res.result.opponent) {
+        const opp = res.result.opponent;
+        g._battleOpponent = {
+          name: opp.nickname || '玩家A',
+          avatarUrl: opp.avatarUrl || '',
+          trophies: typeof opp.trophies === 'number' ? opp.trophies : 0,
+          openid: opp.openid
+        };
+        // 如果有头像 URL，让渲染器异步加载图片
+        if (opp.avatarUrl && g.renderer && g.renderer.battleRenderer) {
+          g.renderer.battleRenderer._loadOpponentAvatar(opp.avatarUrl, g);
+        }
+      }
+    } catch (e) {
+      console.error('[BattleManager] _loadOnlineOpponent 失败:', e);
+    }
   }
 
   // 启动对战匹配弹窗流程（匹配中 → 匹配成功 → 倒计时 → 进入对局）
@@ -249,33 +295,49 @@ class BattleManager {
     g.battleBotReady = false;
   }
 
-  _startRound() {
+  _startRound(roundData) {
     const g = this.game;
 
-    // 生成 3 个种子词：1 个 3 字母 + 2 个 4 字母
-    const seedWords = generateBattleSeedWords();
-    g._battleSeedWords = seedWords;
+    let seedWords;
+    let hand;
+    let botSeed;
+    let botSeedIndex;
 
-    // Bot 随机从 3 个种子词里选一个
-    const botSeedIndex = Math.floor(Math.random() * seedWords.length);
-    const botSeed = seedWords[botSeedIndex];
-    g._battleBotSeedIndex = botSeedIndex;
-
-    // 计算 3 个种子词合并所需字母，生成手牌（确保玩家能出所有种子词）
-    const requiredLetters = getRequiredLetters(seedWords.map(s => s.word));
-    let hand = requiredLetters.map(letter => createBattleCard(letter));
-
-    // 从牌堆补牌到 12 张
-    const deckCopy = [...g._battleDeck];
-    while (hand.length < HAND_SIZE && deckCopy.length > 0) {
-      hand.push(deckCopy.shift());
+    if (g._battleOnline && roundData) {
+      // 联网对战：使用云端统一生成的种子词和手牌，确保双方一致
+      seedWords = roundData.seedWords || generateBattleSeedWords();
+      hand = (roundData.hand || []).map(c => createBattleCard(c.letter));
+      // 补齐 12 张（云端应已保证，但做防御性兜底）
+      if (hand.length < HAND_SIZE) {
+        const deck = createBattleDeck();
+        while (hand.length < HAND_SIZE && deck.length > 0) {
+          hand.push(deck.shift());
+        }
+        hand = shuffle(hand);
+      }
+      // 云端已对手牌洗过牌，客户端不再重洗，避免双方显示顺序不一致
+      botSeedIndex = Math.floor(Math.random() * seedWords.length);
+      botSeed = seedWords[botSeedIndex];
+    } else {
+      // 本地人机/随机匹配：本地生成
+      seedWords = generateBattleSeedWords();
+      g._battleSeedWords = seedWords;
+      botSeedIndex = Math.floor(Math.random() * seedWords.length);
+      botSeed = seedWords[botSeedIndex];
+      const requiredLetters = getRequiredLetters(seedWords.map(s => s.word));
+      hand = requiredLetters.map(letter => createBattleCard(letter));
+      const deckCopy = [...g._battleDeck];
+      while (hand.length < HAND_SIZE && deckCopy.length > 0) {
+        hand.push(deckCopy.shift());
+      }
+      hand = shuffle(hand);
+      g._battleDeck = deckCopy;
     }
-    // 洗牌
-    hand = shuffle(hand);
 
+    g._battleSeedWords = seedWords;
+    g._battleBotSeedIndex = botSeedIndex;
     g.battleHand = hand;
     g.battleBotHand = [...hand];
-    g._battleDeck = deckCopy;
 
     if (g.battleRound > 1 && g.audioManager) g.audioManager.play('card_shuffle');
     g.battleSelected = [];
@@ -399,6 +461,7 @@ class BattleManager {
 
     // 联网对战：把出牌同步到云端
     if (g._battleOnline) {
+      cloudLog(g, '[Battle] playHand 准备同步到云端 roomId=' + (g._battleRoomId || 'null') + ' word=' + word + ' score=' + score);
       this._syncPlayToServer(word, selected, score);
     }
 
@@ -421,7 +484,11 @@ class BattleManager {
   // 联网对战：同步出牌到服务器
   _syncPlayToServer(word, cards, score) {
     const g = this.game;
-    if (!g._battleRoomId) return;
+    if (!g._battleRoomId) {
+      cloudLog(g, '[Battle] _syncPlayToServer 跳过，无 roomId');
+      return;
+    }
+    cloudLog(g, '[Battle] _syncPlayToServer 调用 roomId=' + g._battleRoomId + ' word=' + word + ' score=' + score + ' cardsCount=' + (cards ? cards.length : 0));
     wx.cloud.callFunction({
       name: 'battlePlay',
       data: {
@@ -431,11 +498,32 @@ class BattleManager {
         score
       },
       success: (res) => {
+        cloudLog(g, '[Battle] _syncPlayToServer success res=' + JSON.stringify({
+          code: res.result && res.result.code,
+          roomStatus: res.result && res.result.room && res.result.room.status,
+          roomCurrentRound: res.result && res.result.room && res.result.room.currentRound,
+          hasHostPlay: !!(res.result && res.result.room && res.result.room.hostPlay),
+          hasGuestPlay: !!(res.result && res.result.room && res.result.room.guestPlay)
+        }));
         if (res.result && res.result.code === 0) {
-          this._applyRoomState(res.result.room);
+          // 同步成功后，标记自己已在线同步
+          if (res.result.room) {
+            const room = res.result.room;
+            const myOpenId = g._battleIsHost ? room.host : room.guest;
+            const myPlay = g._battleIsHost
+              ? (room.hostPlay && room.hostPlay.openid === myOpenId ? room.hostPlay : null)
+              : (room.guestPlay && room.guestPlay.openid === myOpenId ? room.guestPlay : null);
+            if (myPlay) {
+              g._battleOnlinePlayerPlayed = true;
+            }
+            // battlePlay 返回的 room 可能已包含对手出牌（尤其后出牌一方），立即应用
+            // 避免等下一轮 1.5s 轮询，减少“对方选择中”滞留
+            this._applyRoomState(room);
+          }
         }
       },
       fail: (err) => {
+        cloudLog(g, '[Battle] _syncPlayToServer fail err=' + (err && err.message ? err.message : String(err)));
         console.error('[battlePlay] 同步失败:', err);
       }
     });
@@ -474,23 +562,99 @@ class BattleManager {
     const g = this.game;
     if (!room || !g._battleOnline) return;
 
-    const myOpenId = room.host === g._battleOpponentOpenId ? room.guest : room.host;
+    cloudLog(g, '[Battle] _applyRoomState fullRoom=' + JSON.stringify({
+      _id: room._id,
+      status: room.status,
+      currentRound: room.currentRound,
+      host: (room.host || '').slice(-6),
+      guest: (room.guest || '').slice(-6),
+      hasHostPlay: !!room.hostPlay,
+      hasGuestPlay: !!room.guestPlay
+    }));
+
+    // 房间被对方关闭，弹出“房间已结束”提示
+    if (room.status === 'closed') {
+      cloudLog(g, '[Battle] 房间已关闭，触发对战结束弹窗');
+      this._showRoomClosedPopup();
+      return;
+    }
+
+    // 检测到重开邀请：对战结束后统一交给 game.js 的好友房轮询处理弹窗/倒计时/开局
+    if (room.restartRequest && g.battlePhase === 'battle_end') {
+      cloudLog(g, '[Battle] 检测到重开邀请，切到好友房轮询: accepted=' + room.restartRequest.accepted);
+      if (g.applyFriendRoomState) {
+        g.applyFriendRoomState(room);
+      }
+      if (g.startFriendRoomPolling) {
+        g.startFriendRoomPolling(g._battleRoomId);
+      }
+      return;
+    }
+
+    // 正确计算我的 openid：直接用 _battleIsHost 判断
+    const myOpenId = g._battleIsHost ? room.host : room.guest;
+    // 对方的 openid 实时计算，不依赖可能出错的缓存
+    const opponentOpenId = g._battleIsHost ? room.guest : room.host;
     if (!g._battleOpponentOpenId) {
-      g._battleOpponentOpenId = room.host === myOpenId ? room.guest : room.host;
+      g._battleOpponentOpenId = opponentOpenId;
+      // 首次确定对手 openid 时，异步加载对手真实头像/昵称/荣誉杯
+      this._loadOnlineOpponent(opponentOpenId);
     }
 
     const hostPlay = room.hostPlay;
     const guestPlay = room.guestPlay;
-    const myPlay = g._battleIsHost ? hostPlay : guestPlay;
-    const opponentPlay = g._battleIsHost ? guestPlay : hostPlay;
+
+    cloudLog(g, '[Battle] _applyRoomState host=' + (hostPlay ? 'yes' : 'no') + ' guest=' + (guestPlay ? 'yes' : 'no') + ' isHost=' + g._battleIsHost + ' myOpenId=' + (myOpenId || '').slice(-6) + ' oppOpenId=' + (opponentOpenId || '').slice(-6));
+    if (hostPlay) cloudLog(g, '[Battle] hostPlay raw=' + JSON.stringify({ word: hostPlay.word, round: hostPlay.round, openid: (hostPlay.openid || '').slice(-6) }));
+    if (guestPlay) cloudLog(g, '[Battle] guestPlay raw=' + JSON.stringify({ word: guestPlay.word, round: guestPlay.round, openid: (guestPlay.openid || '').slice(-6) }));
+
+    // 我的出牌：openId 必须匹配自己
+    const myPlay = g._battleIsHost
+      ? (hostPlay && hostPlay.openid === myOpenId ? hostPlay : null)
+      : (guestPlay && guestPlay.openid === myOpenId ? guestPlay : null);
+
+    // 对方的出牌：openId 必须匹配对方，且绝对不能是我自己
+    let opponentPlay = g._battleIsHost
+      ? (guestPlay && guestPlay.openid && guestPlay.openid === opponentOpenId && guestPlay.openid !== myOpenId ? guestPlay : null)
+      : (hostPlay && hostPlay.openid && hostPlay.openid === opponentOpenId && hostPlay.openid !== myOpenId ? hostPlay : null);
+
+    // 兜底：如果严格 openid 匹配没命中，但对手槽位有出牌且不是我方 openid，也视为对手出牌
+    if (!opponentPlay) {
+      if (g._battleIsHost && guestPlay && guestPlay.openid && guestPlay.openid !== myOpenId) {
+        opponentPlay = guestPlay;
+      } else if (!g._battleIsHost && hostPlay && hostPlay.openid && hostPlay.openid !== myOpenId) {
+        opponentPlay = hostPlay;
+      }
+    }
+
+    cloudLog(g, '[Battle] _applyRoomState myPlay=' + (myPlay ? myPlay.word : 'null') + ' opponentPlay=' + (opponentPlay ? opponentPlay.word : 'null') + ' hostOpenid=' + (hostPlay ? (hostPlay.openid || '').slice(-6) : 'null') + ' guestOpenid=' + (guestPlay ? (guestPlay.openid || '').slice(-6) : 'null'));
+
+    // 只同步当前回合的出牌，避免开局/跨回合时旧数据误判
+    // 严格用本地 battleRound 作为当前回合；云端 currentRound 仅作参考
+    const currentRound = g.battleRound || 1;
+    const isMyPlayCurrent = myPlay && (myPlay.round === undefined || myPlay.round === currentRound);
+    const isOpponentPlayCurrent = opponentPlay && (opponentPlay.round === undefined || opponentPlay.round === currentRound);
+
+    // 回合推进检测：云端 currentRound 大于本地，说明房主已经推进到下一回合
+    if (g._battleOnline && room.currentRound && room.currentRound > currentRound) {
+      cloudLog(g, '[Battle] 检测到云端进入第' + room.currentRound + '回合，本地同步');
+      g.battleRound = room.currentRound;
+      this._startRound({
+        seedWords: room.seedWords,
+        hand: room.hand
+      });
+      return;
+    }
+
+    cloudLog(g, '[Battle] _applyRoomState currentRound=' + currentRound + ' myRound=' + (myPlay ? myPlay.round : 'null') + ' oppRound=' + (opponentPlay ? opponentPlay.round : 'null'));
 
     // 如果本地还没标记自己出牌，但服务端已有，则同步回来（极少情况）
-    if (!g._battleOnlinePlayerPlayed && myPlay) {
+    if (!g._battleOnlinePlayerPlayed && myPlay && isMyPlayCurrent) {
       g._battleOnlinePlayerPlayed = true;
     }
 
     // 对方已出牌
-    if (!g._battleOnlineOpponentPlayed && opponentPlay) {
+    if (!g._battleOnlineOpponentPlayed && opponentPlay && isOpponentPlayCurrent) {
       g._battleOnlineOpponentPlayed = true;
       g.battleBotReady = true;
       g._battleBotReadyAnimStart = Date.now();
@@ -591,12 +755,43 @@ class BattleManager {
       g.battlePhase = 'battle_end';
       return;
     }
+
+    if (g._battleOnline) {
+      // 联网对战：只有房主可以推进下一回合，避免双方并发生成不同手牌
+      if (!g._battleIsHost) {
+        // 好友点击下一回合：只标记状态，等待房主推进后通过轮询同步
+        g._battleNextRoundPressed = true;
+        return;
+      }
+      wx.cloud.callFunction({
+        name: 'battleNextRound',
+        data: { roomId: g._battleRoomId },
+        success: (res) => {
+          if (res.result && res.result.code === 0 && res.result.room) {
+            g.battleRound++;
+            this._startRound({
+              seedWords: res.result.room.seedWords,
+              hand: res.result.room.hand
+            });
+          } else {
+            cloudLog(g, '[Battle] battleNextRound 失败: ' + JSON.stringify(res.result));
+          }
+        },
+        fail: (err) => {
+          cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)));
+        }
+      });
+      return;
+    }
+
     g.battleRound++;
     this._startRound();
   }
 
   updateBotThinking() {
     const g = this.game;
+    // 联网对战不走本地 Bot 思考逻辑，完全由云端轮询决定对方是否出牌
+    if (g._battleOnline) return;
     if (!g.battleBotThinking || g.battleBotReady) return;
     if (!g.battleBotThinkingStartTime) return;
 
@@ -688,8 +883,17 @@ class BattleManager {
         if (g.battleRound >= g.battleTotalRounds) {
           g.battlePhase = 'battle_end';
         } else {
-          g.battleRound++;
-          this._startRound();
+          if (g._battleOnline) {
+            // 联网对战：揭晓动画结束后进入 round_end，由房主调用 battleNextRound 生成统一手牌；
+            // 好友等待轮询同步，避免本地 _startRound 生成不同手牌。
+            g.battlePhase = 'round_end';
+            if (g._battleIsHost) {
+              this.nextRound();
+            }
+          } else {
+            g.battleRound++;
+            this._startRound();
+          }
         }
       }
     }
@@ -733,7 +937,131 @@ class BattleManager {
     g.state = 'playing';
     g._battleHomeConfirmPopup = false;
     g._battleHomeConfirmAnimStart = null;
+    g._battleRoomClosedPopup = false;
+    g._battleRoomClosedAnimStart = null;
     this._resetToSinglePlayer();
+  }
+
+  _showRoomClosedPopup() {
+    const g = this.game;
+    if (!g._battleOnline || g._battleRoomClosedPopup) return;
+    // 停止轮询，避免弹窗弹出后继续请求
+    if (g._battleRoomPollTimer) {
+      clearInterval(g._battleRoomPollTimer);
+      g._battleRoomPollTimer = null;
+    }
+    g._battleRoomClosedPopup = true;
+    g._battleRoomClosedAnimStart = Date.now();
+  }
+
+  // 关闭房间并返回首页：当用户主动点击左上角退出对战时调用
+  closeRoomAndReturnHomepage() {
+    const g = this.game;
+    const roomId = g._battleRoomId;
+    if (!roomId) {
+      if (g.returnToHomepage) g.returnToHomepage();
+      return;
+    }
+    // 先调用云函数关闭房间
+    wx.cloud.callFunction({
+      name: 'battleClose',
+      data: { roomId },
+      success: (res) => {
+        cloudLog(g, '[Battle] battleClose success: ' + JSON.stringify(res.result));
+      },
+      fail: (err) => {
+        cloudLog(g, '[Battle] battleClose fail: ' + (err && err.message ? err.message : String(err)));
+      },
+      complete: () => {
+        // 无论关闭是否成功，都清空本地对战状态并返回首页
+        if (g.returnToHomepage) g.returnToHomepage();
+      }
+    });
+  }
+
+  closeRoomClosedPopupAndExit() {
+    const g = this.game;
+    g._battleRoomClosedPopup = false;
+    g._battleRoomClosedAnimStart = null;
+    if (g.returnToHomepage) {
+      g.returnToHomepage();
+    }
+  }
+
+  // 好友对战：发起重新开始邀请
+  requestRestart() {
+    const g = this.game;
+    if (!g._battleOnline || !g._battleRoomId) return;
+    cloudLog(g, '[Battle] requestRestart roomId=' + g._battleRoomId);
+    wx.cloud.callFunction({
+      name: 'battleRequestRestart',
+      data: { roomId: g._battleRoomId },
+      success: (res) => {
+        cloudLog(g, '[Battle] requestRestart success: ' + JSON.stringify({ code: res.result && res.result.code }));
+        if (res.result && res.result.code === 0) {
+          // 本地立即显示"正在邀请"弹窗，并关闭对战结束弹窗
+          g._battleModeSelectPopup = {
+            mode: 'friend_restart_inviting',
+            title: '重新挑战',
+            roomId: g._battleRoomId,
+            startTime: Date.now(),
+            closing: false
+          };
+          g.battlePhase = 'selecting'; // 关闭 battle_end 结束弹窗
+          if (g.renderer) g.renderer.lastBattlePhase = null;
+          // 切到 game.js 的好友房轮询，由它统一处理对方接受后的倒计时与开局
+          if (res.result && res.result.room && g.applyFriendRoomState) {
+            g.applyFriendRoomState(res.result.room);
+          }
+          if (g.startFriendRoomPolling) {
+            g.startFriendRoomPolling(g._battleRoomId);
+          }
+        } else {
+          const msg = res.result && res.result.message ? res.result.message : '邀请失败，请重试';
+          g.hintToast = { text: msg, expireAt: Date.now() + 2000 };
+        }
+      },
+      fail: (err) => {
+        cloudLog(g, '[Battle] requestRestart fail: ' + (err && err.message ? err.message : String(err)));
+        g.hintToast = { text: '邀请失败，请重试', expireAt: Date.now() + 2000 };
+      }
+    });
+  }
+
+  // 好友对战：接受重新开始邀请
+  acceptRestart() {
+    const g = this.game;
+    if (!g._battleOnline || !g._battleRoomId) return;
+    cloudLog(g, '[Battle] acceptRestart roomId=' + g._battleRoomId);
+    wx.cloud.callFunction({
+      name: 'battleAcceptRestart',
+      data: { roomId: g._battleRoomId },
+      success: (res) => {
+        cloudLog(g, '[Battle] acceptRestart success: ' + JSON.stringify({ code: res.result && res.result.code }));
+        if (res.result && res.result.code === 0 && res.result.room) {
+          // 交给 game.js 的好友房状态机处理倒计时与开局
+          if (g.applyFriendRoomState) {
+            g.applyFriendRoomState(res.result.room);
+          }
+          if (!g._battleRoomPollTimer && g.startFriendRoomPolling) {
+            g.startFriendRoomPolling(g._battleRoomId);
+          }
+        } else {
+          const msg = res.result && res.result.message ? res.result.message : '接受失败，请重试';
+          g.hintToast = { text: msg, expireAt: Date.now() + 2000 };
+          if (g._battleModeSelectPopup) {
+            g._battleModeSelectPopup.startPressed = false;
+          }
+        }
+      },
+      fail: (err) => {
+        cloudLog(g, '[Battle] acceptRestart fail: ' + (err && err.message ? err.message : String(err)));
+        g.hintToast = { text: '接受失败，请重试', expireAt: Date.now() + 2000 };
+        if (g._battleModeSelectPopup) {
+          g._battleModeSelectPopup.startPressed = false;
+        }
+      }
+    });
   }
 
   _resetToSinglePlayer() {
@@ -781,6 +1109,8 @@ class BattleManager {
     g._battleGuestPlay = null;
     g._battleOnlinePlayerPlayed = false;
     g._battleOnlineOpponentPlayed = false;
+    g._battleRoomClosedPopup = false;
+    g._battleRoomClosedAnimStart = null;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');
   }
 }

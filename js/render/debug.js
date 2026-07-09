@@ -1,27 +1,31 @@
 module.exports = function extendDebug(Renderer) {
     Renderer.prototype._drawCloudDebugLogs = function(ctx, game, s) {
       if (!this.showCloudDebugLogs) return;
-      const logs = game.cloudStorage && game.cloudStorage.debugLogs;
+      // 兼容 homepage 分支调用时 game 可能为 undefined
+      if (!game) game = wx.game;
+      const logs = game && game.cloudStorage && game.cloudStorage.debugLogs;
       if (!logs || logs.length === 0) return;
   
       const lineH = 13 * s;
-      const visibleLines = 10;
+      const visibleLines = 8;
       const pad = 6 * s;
-      const boxW = 280 * s;
+      const boxW = 320 * s;
       const viewportH = visibleLines * lineH + pad * 2;
       const contentH = logs.length * lineH + pad * 2;
-      const boxX = this.W - boxW - 8 * s;
-      const boxY = this.H - viewportH - 8 * s;
+      // 灰色完整日志浮层置顶显示
+      const boxX = 8 * s;
+      const boxY = 8 * s;
   
       const maxScrollY = Math.max(0, contentH - viewportH);
-      this.cloudLogScrollY = Math.max(0, Math.min(this.cloudLogScrollY, maxScrollY));
+      // 自动滚动到底部，始终显示最新日志
+      this.cloudLogScrollY = maxScrollY;
       const startLine = Math.floor(this.cloudLogScrollY / lineH);
   
       ctx.save();
       // 日志框背景（限制在视口内）
-      ctx.fillStyle = 'rgba(0,0,0,0.65)';
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
       ctx.fillRect(boxX, boxY, boxW, viewportH);
-      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.3)';
       ctx.lineWidth = 1;
       ctx.strokeRect(boxX, boxY, boxW, viewportH);
   
@@ -68,6 +72,49 @@ module.exports = function extendDebug(Renderer) {
       this.cloudLogRect = { x: boxX, y: boxY, w: boxW, h: viewportH };
     }
 
+    // 无条件绘制的紧凑调试日志（体验版排查用，不受 showCloudDebugLogs 开关影响）
+    Renderer.prototype._drawCompactDebugLogs = function(game) {
+      const ctx = this.ctx;
+      const s = this.scale;
+      if (!game) game = wx.game;
+      const logs = game && game.cloudStorage && game.cloudStorage.debugLogs;
+      if (!logs || logs.length === 0) return;
+
+      const lineH = 12 * s;
+      const visibleLines = 6;
+      const pad = 5 * s;
+      const boxW = 330 * s;
+      const viewportH = visibleLines * lineH + pad * 2;
+      // 放在灰色完整日志浮层下方，避免重叠（灰色浮层 8行 * 13 + 2*6 = 116）
+      const boxX = 6 * s;
+      const boxY = 8 * s + (8 * 13 * s + 2 * 6 * s) + 6 * s;
+
+      ctx.save();
+      // 高对比度背景，确保在各种页面都能看见
+      ctx.fillStyle = 'rgba(180, 30, 30, 0.92)';
+      ctx.fillRect(boxX, boxY, boxW, viewportH);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(boxX, boxY, boxW, viewportH);
+
+      ctx.beginPath();
+      ctx.rect(boxX + 1, boxY + 1, boxW - 2, viewportH - 2);
+      ctx.clip();
+
+      ctx.font = `bold ${Math.floor(10 * s)}px monospace`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+
+      const startLine = Math.max(0, logs.length - visibleLines);
+      for (let i = 0; i < visibleLines; i++) {
+        const lineIdx = startLine + i;
+        if (lineIdx >= logs.length) break;
+        ctx.fillText(logs[lineIdx], boxX + pad, boxY + pad + i * lineH);
+      }
+      ctx.restore();
+    }
+
     Renderer.prototype._drawDebugMenu = function(ctx, game, x, y, s) {
       const items = [
         { label: '⚔️ 对战模式', action: 'debug_startBattle' },
@@ -92,6 +139,7 @@ module.exports = function extendDebug(Renderer) {
         { label: '👻 结束游戏', action: 'debug_endGame' },
         { label: '图鉴闪烁', action: 'debug_flashCardBook' },
         { label: '今日新词完成', action: 'debug_completeDailyWords' },
+        { label: '开/关日志浮层', action: 'debug_toggleCloudLog' },
       ];
       const itemW = 130 * s;
       const itemH = 34 * s;

@@ -13,8 +13,37 @@ const { handleBattleInput } = require('./js/battle/input');
 const { DailyAchievements } = require('./js/daily_achievements');
 
 // 获取 Canvas 上下文
-wx.onShow(() => {
-  console.log('[Game] 切回前台');
+wx.onShow((res) => {
+  console.log('[Game] 切回前台', res && res.scene, res && res.query);
+
+  // 切回前台时：如果当前在首页且有未处理的分享房间号，则重置自动加入计时
+  // 用于处理好友已在小游戏内，再点击分享链接进入的场景
+  if (showHomepage && game && game._autoJoinBattleRoomId && !game._autoJoiningBattle) {
+    cloudStorage.log('[Launch] onShow 重新触发自动加入房间: ' + game._autoJoinBattleRoomId);
+    game._autoJoinBattleStartTime = Date.now();
+  }
+
+  // 切回前台时：如果当前在首页且尚未记录自动加入房间号，则读取本次启动参数并触发
+  // 注意：热启动/重新触发 onShow 时，必须使用 onShow 回调参数 res.query，
+  // wx.getLaunchOptionsSync() 只会返回冷启动参数，导致已在小游戏内的用户点击分享链接读不到 roomId
+  if (showHomepage && game && !game._autoJoiningBattle) {
+    try {
+      const query = (res && res.query) || {};
+      if (query.roomId) {
+        cloudStorage.log('[Launch] onShow 读取到分享房间号: ' + query.roomId);
+        game._pendingBattleRoomId = query.roomId;
+        game._autoJoinBattleRoomId = query.roomId;
+        game._autoJoinBattleStartTime = Date.now();
+        game._battleJoinConfirmPopup = null;
+        // 热启动场景立即尝试加入，未就绪时 gameLoop 会继续兜底
+        tryAutoJoinFriendBattle();
+      } else {
+        cloudStorage.log('[Launch] onShow 未读取到 roomId res.query=' + JSON.stringify(query));
+      }
+    } catch (e) {
+      cloudStorage.log('[Launch] onShow 读取启动参数失败: ' + (e && e.message ? e.message : String(e)));
+    }
+  }
 
   // === 分享复活检测 ===
   if (shareReviveState && shareReviveState.resolving && game && game.state === 'gameover') {
@@ -757,6 +786,26 @@ async function startPreload() {
 
   // 提前初始化 game 实例，使预加载页也能显示头像昵称授权弹窗
   initGameInstance();
+  // 确保 game 关联上 cloudStorage，否则预加载阶段日志无法写入
+  if (game) game.cloudStorage = cloudStorage;
+
+  // 读取本次启动参数，若通过好友对战分享链接进入，则提前记录房间号，
+  // 确保预加载阶段能优先加载 homepage 图片，并在首页入场后自动加入房间
+  try {
+    const launchOptions = wx.getLaunchOptionsSync ? wx.getLaunchOptionsSync() : {};
+    const query = launchOptions.query || {};
+    if (query.roomId && game) {
+      cloudStorage.log('[Launch] startPreload 读取到分享房间号: ' + query.roomId);
+      game._pendingBattleRoomId = query.roomId;
+      game._autoJoinBattleRoomId = query.roomId;
+      game._autoJoinBattleStartTime = Date.now();
+      game._battleJoinConfirmPopup = null;
+    } else {
+      cloudStorage.log('[Launch] startPreload 未读取到 roomId query=' + JSON.stringify(query));
+    }
+  } catch (e) {
+    cloudStorage.log('[Launch] startPreload 读取启动参数失败: ' + (e && e.message ? e.message : String(e)));
+  }
 
   // 游戏启动后尽早触发隐私授权流程：预加载页即可展示头像昵称授权弹窗
   requestPrivacyAndProfile();
@@ -848,7 +897,24 @@ async function startPreload() {
     preloadProgress = Math.floor((loaded / total) * 100);
   }
 
+  // 好友对战分享链接进入：预加载阶段优先下载 homepage 相关 bg_icon，
+  // 确保首页按钮弹出时图片已就绪，避免资源未加载完成时卡住
+  const isAutoJoinBattle = game && game._autoJoinBattleRoomId;
+  if (isAutoJoinBattle) {
+    const homepageIconNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageRoundContinue', 'homepageBattle'];
+    cloudStorage.log('[AutoJoin] 优先加载 homepage 图片');
+    for (const name of homepageIconNames) {
+      if (cloudStorage.bgIconFileMap[name]) {
+        await cloudStorage._loadBgIconImage(name).catch(err => {
+          cloudStorage.log('[AutoJoin] 优先加载 homepage 图片失败: ' + name + ' ' + (err && err.message ? err.message : String(err)));
+        });
+      }
+    }
+  }
+
+  cloudStorage.log('[AutoJoin] 开始预加载 shop_card');
   await cloudStorage.preloadShopCardImages(onProgress);
+  cloudStorage.log('[AutoJoin] 开始预加载 bg_icon');
   await cloudStorage.preloadBgIconImages(onProgress, isResuming ? (savedProgress.round || 1) : 1);
   if (needGuide) {
     await cloudStorage.preloadGuideGroup(1, renderer);
@@ -860,17 +926,27 @@ async function startPreload() {
   // 预加载 music 文件到本地缓存
   await cloudStorage.preloadMusicFiles(onProgress);
 
+  // 预加载对战模式相关图片（按钮图标等），避免进入对战页/弹窗时资源未就绪
+  if (game && game.cloudStorage && game.cloudStorage.preloadBattleModeButtonImages) {
+    cloudStorage.log('[AutoJoin] 开始预加载对战模式按钮图');
+    await game.cloudStorage.preloadBattleModeButtonImages().catch(err => {
+      cloudStorage.log('[AutoJoin] 对战模式按钮图预加载失败: ' + (err && err.message ? err.message : String(err)));
+    });
+  }
+
   // 存档恢复时：并行预加载所有已解锁的 witch_card
   if (collectedWitchCards.length > 0) {
-    console.log('[Preload] 存档恢复，预加载已解锁 witch_card:', collectedWitchCards);
+    cloudStorage.log('[Preload] 存档恢复，预加载已解锁 witch_card:' + JSON.stringify(collectedWitchCards));
     await Promise.all(collectedWitchCards.map(level =>
       cloudStorage.preloadWitchCardForLevel(level, renderer)
     ));
-    console.log('[Preload] 已解锁 witch_card 预加载完成');
+    cloudStorage.log('[Preload] 已解锁 witch_card 预加载完成');
   }
 
+  cloudStorage.log('[AutoJoin] 预加载完成，准备进入主页');
   cloudStorage.injectToRenderer(renderer);
   cloudStorage.injectBgIconToRenderer(renderer);
+  cloudStorage.injectBattleToRenderer(renderer);
   if (needGuide) {
     cloudStorage.injectGuideToRenderer(renderer);
   }
@@ -880,7 +956,12 @@ async function startPreload() {
   renderer.homepageAnimStartTime = Date.now();
   renderer._homepageEntryAnim = { startTime: Date.now() };
   renderer._resetHomepageEntryAnim();
-  console.log('[Game] 云图片预加载完成，进入主页');
+  // 好友对战分享链接进入：提前重置自动加入计时，确保首页入场动画后能立即触发加入
+  if (game && game._autoJoinBattleRoomId) {
+    game._autoJoinBattleStartTime = Date.now();
+    cloudStorage.log('[AutoJoin] 进入主页，已重置自动加入计时 roomId=' + game._autoJoinBattleRoomId);
+  }
+  cloudStorage.log('[Game] 云图片预加载完成，进入主页');
 }
 
 function initGameInstance() {
@@ -900,21 +981,24 @@ function initGameInstance() {
 
   if (saved && !isExpired && saved.state !== 'gameover' && hasRequiredFields) {
     game = new Game(saved);
-    console.log('[Game] 从存档恢复，回合:', saved.round);
+    cloudStorage.log('[Game] 从存档恢复，回合:' + saved.round);
   } else {
     game = new Game();
     // 无效或过期存档统一清理，避免反复加载旧存档导致异常
     if (saved && (!hasRequiredFields || isExpired)) {
       storage.clearProgress();
-      console.log('[Game] 旧存档字段不完整/已过期，已清理，开始新游戏');
+      cloudStorage.log('[Game] 旧存档字段不完整/已过期，已清理，开始新游戏');
     } else {
-      console.log('[Game] 新游戏');
+      cloudStorage.log('[Game] 新游戏');
     }
   }
 
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+  game.startFriendRoomPolling = startFriendRoomPolling;
+  game.applyFriendRoomState = applyFriendRoomState;
+  game.startFriendBattleCountdown = startFriendBattleCountdown;
   return game;
 }
 
@@ -922,6 +1006,11 @@ function startGame() {
   // 如果预加载阶段已提前创建 game，则复用；否则重新创建
   if (!game) {
     initGameInstance();
+  }
+
+  // 确保 game 与 cloudStorage 关联，方便 startGame 后的日志写入
+  if (game && !game.cloudStorage) {
+    game.cloudStorage = cloudStorage;
   }
 
   // 恢复每日成就（只恢复今天的，非今天的自动清理）
@@ -999,22 +1088,23 @@ function startGame() {
     const launchOptions = wx.getLaunchOptionsSync ? wx.getLaunchOptionsSync() : {};
     const query = launchOptions.query || {};
     if (query.roomId && game) {
-      console.log('[Launch] 通过分享链接进入房间:', query.roomId);
+      cloudStorage.log('[Launch] setTimeout 读取到分享房间号: ' + query.roomId);
       game._pendingBattleRoomId = query.roomId;
-      game._battleJoinConfirmPopup = {
-        startTime: Date.now(),
-        title: '加入好友对战',
-        hint: '房间号: ' + query.roomId,
-        roomId: query.roomId,
-        showStart: true,
-        showCancel: true,
-        showShare: false,
-        showWaiting: false,
-        startPressed: false,
-        cancelPressed: false
-      };
+      // 好友点击分享链接后，先进入首页，再自动加入房间，无需手动确认
+      game._autoJoinBattleRoomId = query.roomId;
+      // 记录 launch 时间；预加载完成后 gameLoop 再根据 autoJoinElapsed 自动加入
+      game._autoJoinBattleStartTime = Date.now();
+      game._battleJoinConfirmPopup = null;
+      // 立即尝试加入（兼容冷启动预加载很快完成的场景），若未就绪 gameLoop 会继续兜底
+      if (preloadComplete) {
+        tryAutoJoinFriendBattle();
+      }
+    } else {
+      cloudStorage.log('[Launch] setTimeout 未读取到 roomId query=' + JSON.stringify(query));
     }
   }, 500);
+
+  cloudStorage.log('[Game] startGame 完成');
 }
 
 // 长按检测状态
@@ -1043,6 +1133,494 @@ function getInputY(x, y) {
   );
   return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended')) ? y - 10 : y;
 }
+
+  // ===== 好友对战相关函数 =====
+  function enterBattlePage() {
+    const targetState = 'battle';
+    if (game && game.cloudStorage) {
+      game.cloudStorage.preloadBattleImages().then(() => {
+        if (game && game.cloudStorage) game.cloudStorage.injectBattleToRenderer(renderer);
+      }).catch(err => {
+        console.error('battle 图片预加载失败:', err);
+      });
+    }
+    // 好友从分享链接进入，点击开始对战后从主页翻页到对战页
+    // 翻页期间让 render() 绘制对战页，避免进入单人游戏画面
+    game.state = 'battle';
+    game.battleMode = true;
+
+    // 好友通过分享链接进入对战页时，先预生成一局本地手牌作为背景预览，
+    // 避免字母牌区域空白；等房间正式开始后再用云端统一手牌覆盖。
+    if (game && game.battleManager && game._battleRoomId && !game._friendBattleStarted && !game.battleHand) {
+      game.battleManager.startBattle('easy', {
+        online: true,
+        roomId: game._battleRoomId,
+        isHost: !!game._battleIsHost
+      });
+    }
+
+    pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
+  }
+
+  function createBattleRoom() {
+    if (game._battleModeSelectPopup) {
+      game._battleModeSelectPopup.mode = 'friend_loading';
+      game._battleModeSelectPopup.title = '对战房间创建中';
+      game._battleModeSelectPopup.startTime = Date.now();
+      game._battleModeSelectPopup.friendPressed = false;
+      game._battleModeSelectPopup.onlinePressed = false;
+    }
+
+    wx.cloud.callFunction({
+      name: 'battleRoom',
+      success: (res) => {
+        if (res.result && res.result.code === 0) {
+          const roomId = res.result.roomId;
+          game._battleRoomId = roomId;
+          game._battleIsHost = true;
+          game._friendBattleStarted = false;
+          // 创建房间后立即启动轮询，确保好友加入后能第一时间检测到
+          startFriendRoomPolling(roomId);
+          if (game._battleModeSelectPopup) {
+            game._battleModeSelectPopup.mode = 'friend_room';
+            game._battleModeSelectPopup.title = '对战房间已创建';
+            game._battleModeSelectPopup.roomId = roomId;
+            game._battleModeSelectPopup.sharePressed = false;
+            game._battleModeSelectPopup.cancelPressed = false;
+            game._battleModeSelectPopup.startTime = Date.now();
+          }
+        } else {
+          console.error('[battleRoom] 创建失败:', res.result);
+          game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
+          if (game._battleModeSelectPopup) {
+            game._battleModeSelectPopup.mode = 'select';
+            game._battleModeSelectPopup.title = '对战模式';
+            game._battleModeSelectPopup.startTime = Date.now();
+          }
+        }
+      },
+      fail: (err) => {
+        console.error('[battleRoom] 调用失败:', err);
+        game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
+        if (game._battleModeSelectPopup) {
+          game._battleModeSelectPopup.mode = 'select';
+          game._battleModeSelectPopup.title = '对战模式';
+          game._battleModeSelectPopup.startTime = Date.now();
+        }
+      }
+    });
+  }
+
+  function shareBattleRoom(roomId) {
+    wx.shareAppMessage({
+      title: '快来和我一起玩女巫词牌对战！',
+      query: `roomId=${roomId}`
+    });
+  }
+
+  function startOnlineBattleMatch() {
+    if (game && game.battleManager) {
+      game.battleManager.startBattle('easy');
+      game.battleManager.startMatchAnim();
+    }
+    if (game) game._battleModeSelectPopup = null;
+  }
+
+  function startFriendBattle() {
+    if (game && game.battleManager) {
+      game.battleManager.startBattle('easy', { online: true, roomId: game._battleRoomId, isHost: true });
+    }
+    if (game) game._battleRoomPopup = null;
+  }
+
+  function joinFriendBattle(roomId) {
+    cloudStorage.log('[AutoJoin] joinFriendBattle 开始 roomId=' + roomId);
+    // 防止云函数调用长时间无回调导致 _autoJoiningBattle 永久锁定
+    if (game._autoJoinBattleTimer) {
+      clearTimeout(game._autoJoinBattleTimer);
+      game._autoJoinBattleTimer = null;
+    }
+    game._autoJoinBattleTimer = setTimeout(() => {
+      if (game._autoJoiningBattle) {
+        cloudStorage.log('[AutoJoin] joinFriendBattle 10s 超时，解除锁定并重试');
+        game._autoJoiningBattle = false;
+        game.hintToast = { text: '加入房间超时，正在重试...', expireAt: Date.now() + 2000 };
+      }
+    }, 10000);
+
+    wx.cloud.callFunction({
+      name: 'battleJoin',
+      data: { roomId },
+      success: (res) => {
+        if (game._autoJoinBattleTimer) {
+          clearTimeout(game._autoJoinBattleTimer);
+          game._autoJoinBattleTimer = null;
+        }
+        cloudStorage.log('[AutoJoin] battleJoin success: ' + JSON.stringify(res.result));
+        if (res.result && res.result.code === 0) {
+          const room = res.result.room || {};
+          // 如果房间已经被关闭，说明房主已经退出，提示用户
+          if (room.status === 'closed') {
+            game._autoJoiningBattle = false;
+            game._autoJoinBattleRoomId = null;
+            game.hintToast = { text: '好友对战房间已关闭', expireAt: Date.now() + 3000 };
+            cloudStorage.log('[AutoJoin] 房间已关闭，停止加入 roomId=' + roomId);
+            return;
+          }
+          game._battleRoomId = roomId;
+          game._pendingBattleRoomId = null;
+          game._autoJoinBattleRoomId = null;
+          game._autoJoiningBattle = false;
+          game._friendBattleStarted = false;
+          const isHost = res.result.role === 'host';
+          game._battleIsHost = isHost;
+          cloudStorage.log('[AutoJoin] 加入房间成功 role=' + res.result.role + ' popup=' + (isHost ? 'friend_waiting' : 'friend_join_ready'));
+          // 一加入房间就拿到对手 openid，提前加载头像/昵称/荣誉杯
+          const opponentOpenId = isHost ? room.guest : room.host;
+          if (opponentOpenId && game.battleManager) {
+            game.battleManager._loadOnlineOpponent(opponentOpenId);
+          }
+          // 好友加入房间后：先自动翻页进入对战页，再在对战页上弹出准备确认弹窗
+          // 避免在首页弹窗因homepage触摸拦截导致按钮无响应
+          if (!isHost) {
+            enterBattlePage();
+            // 等翻页完成后再弹出好友对战弹窗，避免被 gameLoop pageFlipState.complete 覆盖
+            game._pendingFriendJoinReadyPopup = {
+              startTime: Date.now(),
+              title: '好友对战',
+              mode: 'friend_join_ready',
+              roomId: roomId,
+              cancelPressed: false,
+              startPressed: false,
+              closeBtnPressed: false,
+              isHost: false
+            };
+          } else {
+            game._battleModeSelectPopup = {
+              startTime: Date.now(),
+              title: '等待好友加入',
+              mode: 'friend_waiting',
+              roomId: roomId,
+              cancelPressed: false,
+              startPressed: false,
+              closeBtnPressed: false,
+              isHost: true
+            };
+          }
+          // 双方都需要轮询房间状态（好友准备 / 倒计时结束 / 正式开始）
+          startFriendRoomPolling(roomId);
+        } else {
+          cloudStorage.log('[AutoJoin] battleJoin 业务失败: ' + JSON.stringify(res.result));
+          const msg = res.result && res.result.message ? res.result.message : '';
+          // 房间已关闭或已开始等明确提示
+          if (msg.includes('已开始') || msg.includes('已结束') || msg.includes('房间不存在')) {
+            game.hintToast = { text: '好友对战房间已关闭', expireAt: Date.now() + 3000 };
+          } else {
+            game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
+          }
+          game._autoJoiningBattle = false;
+        }
+      },
+      fail: (err) => {
+        if (game._autoJoinBattleTimer) {
+          clearTimeout(game._autoJoinBattleTimer);
+          game._autoJoinBattleTimer = null;
+        }
+        cloudStorage.log('[AutoJoin] battleJoin fail: ' + (err && err.message ? err.message : String(err)));
+        game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
+        game._autoJoiningBattle = false;
+      }
+    });
+  }
+
+  // 重试加入好友对战房间，用于首次冷启动时预加载未完成或云函数未就绪的情况
+  function tryAutoJoinFriendBattle() {
+    if (!game._autoJoinBattleRoomId || game._autoJoiningBattle) {
+      cloudStorage.log('[AutoJoin] tryAutoJoin 跳过，无 roomId 或正在加入');
+      return;
+    }
+    game._autoJoiningBattle = true;
+    const roomId = game._autoJoinBattleRoomId;
+    game.hintToast = { text: '正在加入对战房间...', expireAt: Date.now() + 3000 };
+    cloudStorage.log('[AutoJoin] tryAutoJoin 触发 roomId=' + roomId);
+    try {
+      joinFriendBattle(roomId);
+    } catch (e) {
+      cloudStorage.log('[AutoJoin] joinFriendBattle 异常: ' + (e && e.message ? e.message : String(e)));
+      game._autoJoiningBattle = false;
+      game.hintToast = { text: '加入房间失败，请重试', expireAt: Date.now() + 2000 };
+    }
+  }
+
+  // 好友对战房间轮询（ lobby 阶段，检测到 playing 后正式进入对战）
+  function startFriendRoomPolling(roomId) {
+    if (game._battleRoomPollTimer) {
+      clearInterval(game._battleRoomPollTimer);
+    }
+    game._battleRoomPollTimer = setInterval(() => {
+      if (!game._battleRoomId) {
+        clearInterval(game._battleRoomPollTimer);
+        game._battleRoomPollTimer = null;
+        return;
+      }
+      wx.cloud.callFunction({
+        name: 'battleGet',
+        data: { roomId: game._battleRoomId },
+        success: (res) => {
+          cloudStorage.log('[AutoJoin] battleGet poll: ' + JSON.stringify(res.result));
+          if (res.result && res.result.code === 0) {
+            applyFriendRoomState(res.result.room);
+          }
+        },
+        fail: (err) => {
+          cloudStorage.log('[AutoJoin] battleGet poll fail: ' + (err && err.message ? err.message : String(err)));
+        }
+      });
+    }, 1500);
+  }
+
+  function stopFriendRoomPolling() {
+    if (game._battleRoomPollTimer) {
+      clearInterval(game._battleRoomPollTimer);
+      game._battleRoomPollTimer = null;
+    }
+  }
+
+  function applyFriendRoomState(room) {
+    if (!room || !game._battleRoomId) return;
+    const popup = game._battleModeSelectPopup;
+    const myOpenId = game.userid || '';
+    cloudStorage.log('[AutoJoin] applyFriendRoomState status=' + room.status + ' guest=' + (room.guest ? 'yes' : 'no') + ' guestReady=' + room.guestReady + ' host=' + game._battleIsHost + ' popup=' + (popup && popup.mode) + ' countdown=' + (!!game._friendBattleCountdown) + ' restart=' + (!!room.restartRequest));
+
+    // 房主：轮询过程中一检测到好友加入，就提前加载对方头像/昵称/荣誉杯
+    if (game._battleIsHost && room.guest && !game._battleOpponentOpenId && game.battleManager) {
+      game._battleOpponentOpenId = room.guest;
+      game.battleManager._loadOnlineOpponent(room.guest);
+    }
+
+    // 房间已被关闭（对方退出），弹出房间已结束提示或在首页提示
+    if (room.status === 'closed') {
+      stopFriendRoomPolling();
+      cloudStorage.log('[AutoJoin] 检测到房间已关闭，对战结束');
+      if (game.state === 'battle' && game.battleManager) {
+        game.battleManager._showRoomClosedPopup();
+      } else {
+        game.hintToast = { text: '好友对战房间已关闭', expireAt: Date.now() + 3000 };
+      }
+      return;
+    }
+
+    // 处理重开邀请状态（status 可能是 playing/ready/waiting 等，只要有未接受的 restartRequest 就优先处理）
+    if (room.restartRequest) {
+      const req = room.restartRequest;
+      // 对方已接受邀请且已准备：双方进入倒计时（房间已正式 playing 时交给下面的 playing 分支开局）
+      if (req.accepted && room.status !== 'playing' && room.guestReady && !game._friendBattleCountdown) {
+        cloudStorage.log('[AutoJoin] 重开邀请已接受，启动同步 countdown=' + (room.guestReadyAt || 'none'));
+        startFriendBattleCountdown(room.guestReadyAt);
+        return;
+      }
+
+      // 邀请尚未接受：根据身份显示对应弹窗，并关闭对战结束弹窗
+      if (!req.accepted) {
+        const isInviter = req.fromOpenId === myOpenId;
+        const expectedMode = isInviter ? 'friend_restart_inviting' : 'friend_restart_invited';
+        const expectedTitle = isInviter ? '正在邀请好友重开一局' : '好友邀请重开一局';
+        if (!popup || popup.mode !== expectedMode) {
+          game._battleModeSelectPopup = {
+            mode: expectedMode,
+            title: '重新挑战',
+            roomId: game._battleRoomId,
+            startTime: Date.now(),
+            closing: false
+          };
+        }
+        if (game.battlePhase === 'battle_end') {
+          game.battlePhase = 'selecting';
+          if (renderer) renderer.lastBattlePhase = null;
+        }
+        return;
+      }
+    }
+
+    // 双方检测到 playing，正式开始对战
+    if (room.status === 'playing') {
+      stopFriendRoomPolling();
+      if (popup) {
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+      }
+      startBattleFromRoom(room);
+      return;
+    }
+
+    if (!popup) return;
+
+    // 房主：检测到好友已准备，双方同步进入 10 秒倒计时
+    if (game._battleIsHost && room.guestReady && !game._friendBattleCountdown) {
+      cloudStorage.log('[AutoJoin] 房主检测到好友已准备，启动同步 countdown=' + (room.guestReadyAt || 'none'));
+      startFriendBattleCountdown(room.guestReadyAt);
+      return;
+    }
+
+    // 好友：检测到房主已经设置 playing 之前的状态迁移（防御性）
+    // 如果房主已经点了开始但网络延迟，好友继续等待 playing 状态即可
+  }
+
+  function callBattleReady() {
+    if (!game._battleRoomId) return;
+    cloudStorage.log('[AutoJoin] callBattleReady roomId=' + game._battleRoomId + ' isHost=' + game._battleIsHost);
+    // 只有好友需要通知云端；房主由轮询检测到 guestReady 后自动启动倒计时
+    if (!game._battleIsHost) {
+      wx.cloud.callFunction({
+        name: 'battleReady',
+        data: { roomId: game._battleRoomId },
+        success: (res) => {
+          cloudStorage.log('[AutoJoin] battleReady success: ' + JSON.stringify(res.result));
+          if (!res.result || res.result.code !== 0) {
+            const msg = res.result && res.result.message ? res.result.message : '准备失败，请重试';
+            cloudStorage.log('[AutoJoin] battleReady 业务失败: ' + msg + '，请检查 battleReady 云函数是否已部署');
+            game.hintToast = { text: msg, expireAt: Date.now() + 2000 };
+            game._friendBattleCountdown = null;
+            if (game._battleModeSelectPopup) {
+              game._battleModeSelectPopup.mode = 'friend_join_ready';
+              game._battleModeSelectPopup.title = '好友对战';
+              game._battleModeSelectPopup.startTime = Date.now();
+              game._battleModeSelectPopup.startPressed = false;
+            }
+          } else if (res.result.room && res.result.room.guestReadyAt) {
+            // 用云端返回的 guestReadyAt 作为统一起点，确保双方倒计时同步
+            startFriendBattleCountdown(res.result.room.guestReadyAt);
+          }
+        },
+        fail: (err) => {
+          const errMsg = err && err.message ? err.message : String(err);
+          cloudStorage.log('[AutoJoin] battleReady fail: ' + errMsg + '，请检查 battleReady 云函数是否已部署');
+          game.hintToast = { text: '准备失败，请重试', expireAt: Date.now() + 2000 };
+          // 准备失败时重置倒计时，让用户可以再次点击
+          game._friendBattleCountdown = null;
+          if (game._battleModeSelectPopup) {
+            game._battleModeSelectPopup.mode = 'friend_join_ready';
+            game._battleModeSelectPopup.title = '好友对战';
+            game._battleModeSelectPopup.startTime = Date.now();
+            game._battleModeSelectPopup.startPressed = false;
+          }
+        }
+      });
+    }
+  }
+
+  // 好友对战：双方同步 10 秒倒计时，倒计时结束后正式进入对战
+  // syncStartAt: 统一倒计时起点时间戳（毫秒），默认当前时间
+  function startFriendBattleCountdown(syncStartAt) {
+    if (game._friendBattleCountdown) return;
+    const startTime = syncStartAt || Date.now();
+    cloudStorage.log('[AutoJoin] 启动好友对战同步倒计时 roomId=' + game._battleRoomId + ' isHost=' + game._battleIsHost + ' startTime=' + startTime);
+    game._friendBattleCountdown = {
+      startTime,
+      duration: 3000,
+      finished: false,
+      _countdownSoundPlayed: false
+    };
+    if (game._battleModeSelectPopup) {
+      game._battleModeSelectPopup.mode = 'friend_countdown';
+      game._battleModeSelectPopup.title = '对战即将开始';
+      game._battleModeSelectPopup.startTime = Date.now();
+      game._battleModeSelectPopup.startPressed = false;
+    }
+  }
+
+  // 好友对战倒计时 tick，由 gameLoop 调用
+  function updateFriendBattleCountdown() {
+    if (!game._friendBattleCountdown || game._friendBattleCountdown.finished) return;
+    const elapsed = Date.now() - game._friendBattleCountdown.startTime;
+    // 倒计时音效是完整音频，进入倒计时阶段只播放一次
+    if (game.audioManager && !game._friendBattleCountdown._countdownSoundPlayed) {
+      game.audioManager.play('battle_countdown');
+      game._friendBattleCountdown._countdownSoundPlayed = true;
+    }
+    if (elapsed >= game._friendBattleCountdown.duration) {
+      game._friendBattleCountdown.finished = true;
+      cloudStorage.log('[AutoJoin] 好友对战倒计时结束 roomId=' + game._battleRoomId + ' isHost=' + game._battleIsHost);
+      // 倒计时结束后由房主正式将房间状态改为 playing
+      if (game._battleIsHost) {
+        callBattleStart();
+        // 房主调用 battleStart 后，等待轮询到 playing 状态再统一进入对战；
+        // 此前若本地立即 startBattleFromRoom({ status: 'playing' }) 会拿不到
+        // 云端生成的 seedWords/hand，导致房主用本地随机手牌，好友用云端手牌，双方不一致。
+      }
+      // 好友等待轮询到 playing 后由 applyFriendRoomState 进入对战
+    }
+  }
+
+  function callBattleStart() {
+    if (!game._battleRoomId) return;
+    cloudStorage.log('[AutoJoin] callBattleStart roomId=' + game._battleRoomId);
+    wx.cloud.callFunction({
+      name: 'battleStart',
+      data: { roomId: game._battleRoomId },
+      success: (res) => {
+        cloudStorage.log('[AutoJoin] callBattleStart success: ' + JSON.stringify(res.result));
+        if (res.result && res.result.code === 0) {
+          // 房间状态已变为 playing，轮询会处理进入对战
+        } else {
+          cloudStorage.log('[AutoJoin] callBattleStart 失败: ' + JSON.stringify(res.result));
+          const msg = res.result && res.result.message ? res.result.message : '开始对战失败，请重试';
+          game.hintToast = { text: msg, expireAt: Date.now() + 2000 };
+        }
+      },
+      fail: (err) => {
+        cloudStorage.log('[AutoJoin] callBattleStart fail: ' + (err && err.message ? err.message : String(err)));
+        game.hintToast = { text: '开始对战失败，请重试', expireAt: Date.now() + 2000 };
+      }
+    });
+  }
+
+  function startBattleFromRoom(room) {
+    const roomId = game._battleRoomId;
+    const isHost = game._battleIsHost;
+    // 重开后的新一轮：room.currentRound 回到 1 且本地已完成过一轮，需要重置标志并清空对战状态
+    const isRestart = room.currentRound === 1 && game._friendBattleStarted;
+    if (isRestart) {
+      cloudStorage.log('[AutoJoin] startBattleFromRoom 检测到房间重开，重置本地对战状态 roomId=' + roomId);
+      game._friendBattleStarted = false;
+      if (game.battleManager) {
+        game.battleManager._resetToSinglePlayer();
+        // 保留房间关键信息（resetToSinglePlayer 会清掉）
+        game._battleOnline = true;
+        game._battleRoomId = roomId;
+        game._battleIsHost = isHost;
+      }
+    }
+    if (game._friendBattleStarted) {
+      cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动过，跳过 roomId=' + roomId);
+      return;
+    }
+    game._friendBattleStarted = true;
+    cloudStorage.log('[AutoJoin] startBattleFromRoom roomId=' + roomId + ' isHost=' + isHost + ' state=' + game.state);
+    // 清理倒计时状态
+    game._friendBattleCountdown = null;
+    if (game.battleManager) {
+      const roomData = room && room.seedWords && room.hand ? { seedWords: room.seedWords, hand: room.hand } : null;
+      game.battleManager.startBattle('easy', { online: true, roomId, isHost, roomData });
+    }
+    if (isHost) {
+      // 房主已经在对战页，关闭弹窗即可
+      game._battleModeSelectPopup = null;
+      game.state = 'battle';
+      game.battleMode = true;
+    } else {
+      // 好友需要翻页进入对战页；若已在对战页则直接关闭弹窗
+      if (showHomepage || game.state !== 'battle') {
+        enterBattlePage();
+      } else {
+        game._battleModeSelectPopup = null;
+      }
+    }
+    if (game.battleManager) {
+      game.battleManager.startRoomPolling();
+    }
+  }
+
 
 // 触摸事件处理
 wx.onTouchStart((e) => {
@@ -1075,6 +1653,14 @@ wx.onTouchStart((e) => {
             renderer.debugMenuOpen = !renderer.debugMenuOpen;
           }, LONG_PRESS_DURATION);
         }
+      }
+      // 长按 battle 按钮也打开调试菜单（体验版排查好友对战问题用）
+      if (hit.key === 'battle' && isDebugVersion()) {
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          longPressTriggered = true;
+          renderer.debugMenuOpen = !renderer.debugMenuOpen;
+        }, LONG_PRESS_DURATION);
       }
       return;
     }
@@ -1119,17 +1705,58 @@ wx.onTouchStart((e) => {
     }
   }
 
-  // 对战模式选择弹窗交互（优先）
-  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
-    const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
-    const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
-    if (friendHit) {
-      game._battleModeSelectPopup.friendPressed = true;
+  // 主页长按 battle 按钮也打开调试菜单（体验版排查好友对战问题用）
+  if (showHomepage && game && game.state !== 'battle' && isDebugVersion()) {
+    const homepageBattleRect = renderer.homepageBtnRects && renderer.homepageBtnRects.find(r => r.key === 'battle');
+    if (homepageBattleRect && renderer.hitTest(x, y, [homepageBattleRect])) {
+      longPressTimer = setTimeout(() => {
+        longPressTimer = null;
+        longPressTriggered = true;
+        renderer.debugMenuOpen = !renderer.debugMenuOpen;
+      }, LONG_PRESS_DURATION);
       return;
     }
-    if (onlineHit) {
-      game._battleModeSelectPopup.onlinePressed = true;
+  }
+
+  // 对战模式选择弹窗交互（优先）
+  if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
+    const popup = game._battleModeSelectPopup;
+    const mode = popup.mode || 'select';
+    if (renderer.battleModeCloseRect && renderer.hitTest(x, y, [renderer.battleModeCloseRect])) {
+      popup.closeBtnPressed = true;
       return;
+    }
+    if (mode === 'select') {
+      const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
+      const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
+      if (friendHit) {
+        game._battleModeSelectPopup.friendPressed = true;
+        return;
+      }
+      if (onlineHit) {
+        game._battleModeSelectPopup.onlinePressed = true;
+        return;
+      }
+    } else if (mode === 'friend_room' || mode === 'friend_waiting') {
+      if (renderer.battleModeShareRect && renderer.hitTest(x, y, [renderer.battleModeShareRect])) {
+        popup.sharePressed = true;
+        console.log('[BattleMode] share pressed');
+        return;
+      }
+      if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
+        popup.cancelPressed = true;
+        console.log('[BattleMode] cancel pressed');
+        return;
+      }
+    } else if (mode === 'friend_ready' || mode === 'friend_join_ready' || mode === 'friend_join_wait' || mode === 'friend_restart_invited') {
+      if (renderer.battleModeStartRect && renderer.hitTest(x, y, [renderer.battleModeStartRect])) {
+        popup.startPressed = true;
+        return;
+      }
+      if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
+        popup.cancelPressed = true;
+        return;
+      }
     }
     return;
   }
@@ -1332,15 +1959,43 @@ wx.onTouchStart((e) => {
 
   // 对战模式选择弹窗交互（优先）
   if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
-    const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
-    const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
-    if (friendHit) {
-      game._battleModeSelectPopup.friendPressed = true;
+    const popup = game._battleModeSelectPopup;
+    const mode = popup.mode || 'select';
+    if (renderer.battleModeCloseRect && renderer.hitTest(x, y, [renderer.battleModeCloseRect])) {
+      popup.closeBtnPressed = true;
       return;
     }
-    if (onlineHit) {
-      game._battleModeSelectPopup.onlinePressed = true;
-      return;
+    if (mode === 'select') {
+      const friendHit = renderer.battleModeFriendRect && renderer.hitTest(x, y, [renderer.battleModeFriendRect]);
+      const onlineHit = renderer.battleModeOnlineRect && renderer.hitTest(x, y, [renderer.battleModeOnlineRect]);
+      if (friendHit) {
+        game._battleModeSelectPopup.friendPressed = true;
+        return;
+      }
+      if (onlineHit) {
+        game._battleModeSelectPopup.onlinePressed = true;
+        return;
+      }
+    } else if (mode === 'friend_room' || mode === 'friend_waiting') {
+      if (renderer.battleModeShareRect && renderer.hitTest(x, y, [renderer.battleModeShareRect])) {
+        popup.sharePressed = true;
+        console.log('[BattleMode] share pressed');
+        return;
+      }
+      if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
+        popup.cancelPressed = true;
+        console.log('[BattleMode] cancel pressed');
+        return;
+      }
+    } else if (mode === 'friend_ready' || mode === 'friend_join_ready' || mode === 'friend_join_wait' || mode === 'friend_restart_invited') {
+      if (renderer.battleModeStartRect && renderer.hitTest(x, y, [renderer.battleModeStartRect])) {
+        popup.startPressed = true;
+        return;
+      }
+      if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
+        popup.cancelPressed = true;
+        return;
+      }
     }
     return;
   }
@@ -1948,6 +2603,15 @@ wx.onTouchEnd(() => {
         // 启动主页 → 游戏翻页过渡动画
         const targetState = btnKey === 'battle' ? 'battle' : 'playing';
 
+        // 从对战入口进入时，若单人小女巫引导尚未完成，则直接结束并持久化，
+        // 避免小女巫引导在对战页弹出（小女巫引导仅限单人回合游戏）
+        if (btnKey === 'battle' && game && game.guidePhase >= 1 && game.guidePhase <= 4) {
+          game.guidePhase = 5;
+          game._guideExitStartTime = Date.now();
+          if (game.audioManager) game.audioManager.stopSound('guide_type');
+          if (game.storageManager) game.storageManager.saveGuidePhase(5);
+        }
+
         const enterGame = () => {
           pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
           // 用户真正进入第一回合时才启动新手引导入场动画，避免预加载完成后在 homepage 等待过久导致动画被跳过
@@ -1958,6 +2622,21 @@ wx.onTouchEnd(() => {
 
         // 双人对战：先启动翻页动画，翻页过程中并行下载 battle 云图片
         if (targetState === 'battle' && game && game.cloudStorage) {
+          // 在翻页动画开始前就初始化对战默认值，确保翻页过程中能看到正确内容
+          game.state = 'battle';
+          game.battleMode = true;
+          game.battleRound = 1;
+          game.battleTotalRounds = 10;
+          game.battlePlayerScore = 0;
+          game.battleBotScore = 0;
+          game.battlePlayerRoundScores = [];
+          game.battleBotRoundScores = [];
+          game.battlePhase = 'selecting';
+          game.battleSelected = [];
+          game._battleMatchAnim = null;
+          game._battleMatchFinished = false;
+          game._battleOpponent = null;
+          if (game.battleManager) game.battleManager.startBattle('easy');
           enterGame();
           game.cloudStorage.preloadBattleImages().then(() => {
             game.cloudStorage.injectBattleToRenderer(renderer);
@@ -1996,93 +2675,6 @@ wx.onTouchEnd(() => {
 
   if (!game) return;
 
-  // ===== 好友对战相关函数 =====
-  function enterBattlePage() {
-    const targetState = 'battle';
-    if (game && game.cloudStorage) {
-      game.cloudStorage.preloadBattleImages().then(() => {
-        if (game && game.cloudStorage) game.cloudStorage.injectBattleToRenderer(renderer);
-      }).catch(err => {
-        console.error('battle 图片预加载失败:', err);
-      });
-    }
-    pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState };
-  }
-
-  function createBattleRoom() {
-    wx.cloud.callFunction({
-      name: 'battleRoom',
-      success: (res) => {
-        if (res.result && res.result.code === 0) {
-          const roomId = res.result.roomId;
-          game._battleRoomId = roomId;
-          game._battleRoomPopup = {
-            startTime: Date.now(),
-            title: '对战房间已创建',
-            roomId: roomId,
-            showStart: false,
-            showShare: true,
-            showCancel: true,
-            showWaiting: false,
-            sharePressed: false,
-            cancelPressed: false
-          };
-        } else {
-          console.error('[battleRoom] 创建失败:', res.result);
-          game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
-        }
-      },
-      fail: (err) => {
-        console.error('[battleRoom] 调用失败:', err);
-        game.hintToast = { text: '创建房间失败，请重试', expireAt: Date.now() + 2000 };
-      }
-    });
-  }
-
-  function shareBattleRoom(roomId) {
-    wx.shareAppMessage({
-      title: '快来和我一起玩女巫词牌对战！',
-      query: `roomId=${roomId}`
-    });
-  }
-
-  function startOnlineBattleMatch() {
-    if (game && game.battleManager) {
-      game.battleManager.startBattle('easy');
-    }
-    if (game) game._battleModeSelectPopup = null;
-  }
-
-  function startFriendBattle() {
-    if (game && game.battleManager) {
-      game.battleManager.startBattle('easy', { online: true, roomId: game._battleRoomId, isHost: true });
-    }
-    if (game) game._battleRoomPopup = null;
-  }
-
-  function joinFriendBattle(roomId) {
-    wx.cloud.callFunction({
-      name: 'battleJoin',
-      data: { roomId },
-      success: (res) => {
-        if (res.result && res.result.code === 0) {
-          game._battleRoomId = roomId;
-          game._pendingBattleRoomId = null;
-          if (game.battleManager) {
-            game.battleManager.startBattle('easy', { online: true, roomId, isHost: false });
-          }
-          enterBattlePage();
-        } else {
-          console.error('[battleJoin] 加入失败:', res.result);
-          game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
-        }
-      },
-      fail: (err) => {
-        console.error('[battleJoin] 调用失败:', err);
-        game.hintToast = { text: '加入房间失败', expireAt: Date.now() + 2000 };
-      }
-    });
-  }
 
   // 辅助：药水页面返回商店，discard=true 表示槽位满时丢弃当前药水
   function returnPotionToShop(discard) {
@@ -2516,18 +3108,121 @@ wx.onTouchEnd(() => {
   // 对战模式选择弹窗交互（优先）
   if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
     const popup = game._battleModeSelectPopup;
-    if (popup.friendPressed) {
-      popup.friendPressed = false;
+    const mode = popup.mode || 'select';
+    if (popup.closeBtnPressed) {
+      popup.closeBtnPressed = false;
       popup.closing = true;
       popup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
-      createBattleRoom();
-    } else if (popup.onlinePressed) {
-      popup.onlinePressed = false;
-      popup.closing = true;
-      popup.closeStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
-      startOnlineBattleMatch();
+      stopFriendRoomPolling();
+      // 只要是在联网对战房间里（包括 waiting/ready/playing），关闭弹窗都先关闭房间
+      if (game._battleRoomId && game.battleManager) {
+        game.battleManager.closeRoomAndReturnHomepage();
+      } else if (game.state === 'battle') {
+        game.returnToHomepage();
+      }
+    } else if (mode === 'select') {
+      if (popup.friendPressed) {
+        popup.friendPressed = false;
+        popup.mode = 'friend_loading';
+        popup.title = '对战房间创建中';
+        popup.startTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        createBattleRoom();
+      } else if (popup.onlinePressed) {
+        popup.onlinePressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        startOnlineBattleMatch();
+      }
+    } else if (mode === 'friend_room') {
+      if (popup.sharePressed) {
+        popup.sharePressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        shareBattleRoom(popup.roomId);
+        popup.mode = 'friend_waiting';
+        popup.title = '等待好友加入';
+        popup.startTime = Date.now();
+        popup.startPressed = false;
+        startFriendRoomPolling(popup.roomId);
+      } else if (popup.cancelPressed) {
+        // friend_room 模式已去掉取消按钮，此处为防御性兜底：点取消等同关闭弹窗，关闭房间
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        } else {
+          console.log('[BattleMode] friend_room cancel action');
+        }
+      }
+    } else if (mode === 'friend_waiting') {
+      if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        // 房主在等待阶段取消，关闭房间再返回首页
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        } else {
+          console.log('[BattleMode] friend_waiting cancel action');
+        }
+      }
+    } else if (mode === 'friend_ready') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        callBattleReady();
+      } else if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_join_ready') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        cloudStorage.log('[AutoJoin] friend_join_ready 点击开始对战 roomId=' + game._battleRoomId);
+        callBattleReady();
+      } else if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_join_wait') {
+      if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_restart_invited') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        cloudStorage.log('[AutoJoin] friend_restart_invited 点击开始对战 roomId=' + game._battleRoomId);
+        if (game.battleManager) {
+          game.battleManager.acceptRestart();
+        }
+      }
     }
   }
 
@@ -2559,18 +3254,121 @@ wx.onTouchEnd(() => {
   // 对战模式选择弹窗交互（优先）
   if (game._battleModeSelectPopup && !game._battleModeSelectPopup.closing) {
     const popup = game._battleModeSelectPopup;
-    if (popup.friendPressed) {
-      popup.friendPressed = false;
+    const mode = popup.mode || 'select';
+    if (popup.closeBtnPressed) {
+      popup.closeBtnPressed = false;
       popup.closing = true;
       popup.closeStartTime = Date.now();
       if (game.audioManager) game.audioManager.play('tap');
-      createBattleRoom();
-    } else if (popup.onlinePressed) {
-      popup.onlinePressed = false;
-      popup.closing = true;
-      popup.closeStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
-      startOnlineBattleMatch();
+      stopFriendRoomPolling();
+      // 只要是在联网对战房间里（包括 waiting/ready/playing），关闭弹窗都先关闭房间
+      if (game._battleRoomId && game.battleManager) {
+        game.battleManager.closeRoomAndReturnHomepage();
+      } else if (game.state === 'battle') {
+        game.returnToHomepage();
+      }
+    } else if (mode === 'select') {
+      if (popup.friendPressed) {
+        popup.friendPressed = false;
+        popup.mode = 'friend_loading';
+        popup.title = '对战房间创建中';
+        popup.startTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        createBattleRoom();
+      } else if (popup.onlinePressed) {
+        popup.onlinePressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        startOnlineBattleMatch();
+      }
+    } else if (mode === 'friend_room') {
+      if (popup.sharePressed) {
+        popup.sharePressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        shareBattleRoom(popup.roomId);
+        popup.mode = 'friend_waiting';
+        popup.title = '等待好友加入';
+        popup.startTime = Date.now();
+        popup.startPressed = false;
+        startFriendRoomPolling(popup.roomId);
+      } else if (popup.cancelPressed) {
+        // friend_room 模式已去掉取消按钮，此处为防御性兜底：点取消等同关闭弹窗，关闭房间
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        } else {
+          console.log('[BattleMode] friend_room cancel action');
+        }
+      }
+    } else if (mode === 'friend_waiting') {
+      if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        // 房主在等待阶段取消，关闭房间再返回首页
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        } else {
+          console.log('[BattleMode] friend_waiting cancel action');
+        }
+      }
+    } else if (mode === 'friend_ready') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        callBattleReady();
+      } else if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_join_ready') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        cloudStorage.log('[AutoJoin] friend_join_ready 点击开始对战 roomId=' + game._battleRoomId);
+        callBattleReady();
+      } else if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_join_wait') {
+      if (popup.cancelPressed) {
+        popup.cancelPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        if (game.audioManager) game.audioManager.play('tap');
+        stopFriendRoomPolling();
+        if (game._battleRoomId && game.battleManager) {
+          game.battleManager.closeRoomAndReturnHomepage();
+        }
+      }
+    } else if (mode === 'friend_restart_invited') {
+      if (popup.startPressed) {
+        popup.startPressed = false;
+        if (game.audioManager) game.audioManager.play('tap');
+        cloudStorage.log('[AutoJoin] friend_restart_invited 点击开始对战 roomId=' + game._battleRoomId);
+        if (game.battleManager) {
+          game.battleManager.acceptRestart();
+        }
+      }
     }
   }
 
@@ -3036,6 +3834,9 @@ function handleInput(x, inputY) {
           game.hintToast = { text: '今日新词已全部学习完成！', expireAt: Date.now() + 2000, startTime: Date.now() };
         }
       }
+      if (debugHit.action === 'debug_toggleCloudLog') {
+        renderer.showCloudDebugLogs = !renderer.showCloudDebugLogs;
+      }
       renderer.debugMenuOpen = false;
       return;
     }
@@ -3251,6 +4052,22 @@ function handleInput(x, inputY) {
   }
 
   // 对战模式输入处理（匹配弹窗显示期间禁用对战交互）
+  if (game.state === 'battle' && game._battleMatchAnim && renderer.battleRenderer && renderer.battleRenderer.battleMatchCloseRect) {
+    const closeHit = renderer.hitTest(x, inputY, [renderer.battleRenderer.battleMatchCloseRect]);
+    if (closeHit) {
+      vibrate();
+      if (game.audioManager) game.audioManager.play('tap');
+      game._battleMatchAnim = null;
+      // 匹配弹窗关闭时若仍在线对战房间中，先关闭房间
+      if (game._battleOnline && game._battleRoomId && game.battleManager) {
+        game.battleManager.closeRoomAndReturnHomepage();
+      } else {
+        game.returnToHomepage();
+      }
+      return;
+    }
+  }
+
   if (game.state === 'battle' && !game._battleMatchAnim && handleBattleInput(game, renderer, x, inputY, vibrate)) {
     return;
   }
@@ -4567,6 +5384,9 @@ function restartGame() {
   game.cloudStorage = cloudStorage;
   game.renderer = renderer;
   wx.game = game;
+  game.startFriendRoomPolling = startFriendRoomPolling;
+  game.applyFriendRoomState = applyFriendRoomState;
+  game.startFriendBattleCountdown = startFriendBattleCountdown;
 
   // 2026-06-24 优化：restart 后也需要加载音效
   game.initAudio();
@@ -4587,7 +5407,6 @@ function restartGame() {
   game._lifeExtensionBtnPressed = false;
 }
 
-// 游戏主循环
 let lastTime = 0;
 function gameLoop(timestamp) {
   const deltaTime = timestamp - lastTime;
@@ -4612,31 +5431,23 @@ function gameLoop(timestamp) {
       if (targetState === 'playing' && game) {
         game._roundEntered = true;
       }
-      // 双人对战翻页完成后弹出对战模式选择弹窗
+      // 双人对战翻页完成后：如果已有好友对战弹窗则保留，否则弹出对战模式选择弹窗
       if (targetState === 'battle' && game && game.battleManager) {
-        game._battleModeSelectPopup = {
-          startTime: Date.now(),
-          title: '对战模式',
-          friendPressed: false,
-          onlinePressed: false
-        };
-        // 初始化对战默认值，确保选择模式前就有回合标签和手牌显示
+        if (game._pendingFriendJoinReadyPopup) {
+          // 好友从分享链接进入：翻页完成后显示准备好的好友对战弹窗
+          game._battleModeSelectPopup = game._pendingFriendJoinReadyPopup;
+          game._pendingFriendJoinReadyPopup = null;
+        } else if (!game._battleModeSelectPopup) {
+          game._battleModeSelectPopup = {
+            startTime: Date.now(),
+            title: '对战模式',
+            friendPressed: false,
+            onlinePressed: false
+          };
+        }
+        // 翻页开始时已初始化对战数据，翻页完成后只需确保状态一致
         game.state = 'battle';
         game.battleMode = true;
-        game.battleRound = 1;
-        game.battleTotalRounds = 10;
-        game.battlePlayerScore = 0;
-        game.battleBotScore = 0;
-        game.battlePlayerRoundScores = [];
-        game.battleBotRoundScores = [];
-        game.battlePhase = 'selecting';
-        game.battleSelected = [];
-        game._battleMatchAnim = null;
-        game._battleMatchFinished = false;
-        game._battleOpponent = null;
-        // 提前初始化第一回合手牌，避免卡牌区空白
-        game.battleManager.startBattle('easy');
-        // 选择模式前暂停 Bot 自动出牌计时
         game.battleBotThinking = false;
         game._battleTurnDeadline = null;
       }
@@ -4672,6 +5483,55 @@ function gameLoop(timestamp) {
     if (game && game._showingProfileAuthButton && renderer._drawProfileAuthPopup) {
       renderer._drawProfileAuthPopup(renderer.ctx, game, renderer.W, renderer.H, renderer.scale);
     }
+
+    // 首页调试日志（showCloudDebugLogs=false 时不绘制）
+    // if (renderer.drawHomepageDebugLogs) {
+    //   renderer.drawHomepageDebugLogs(game);
+    // }
+    // renderer._drawCompactDebugLogs(game);
+
+    // 通过分享链接进入：homepage 入场动画后自动加入好友对战房间
+    if (game && game._autoJoinBattleRoomId && !game._autoJoiningBattle) {
+      const autoJoinElapsed = Date.now() - (game._autoJoinBattleStartTime || 0);
+      cloudStorage.log('[AutoJoin] gameLoop autoJoinElapsed=' + autoJoinElapsed + ' preloadComplete=' + preloadComplete + ' state=' + game.state + ' roomId=' + game._autoJoinBattleRoomId);
+      // 等 homepage 按钮弹出动画完成、且预加载完成后再自动加入，避免渲染循环未就绪时卡住
+      if (autoJoinElapsed >= 1500 && preloadComplete && game && game.state !== 'battle') {
+        tryAutoJoinFriendBattle();
+      }
+    }
+
+    // 若首页入场动画期间未能自动加入，则入场动画完成后兜底尝试一次
+    if (game && game._autoJoinBattleRoomId && !game._autoJoiningBattle && preloadComplete && game.state !== 'battle') {
+      const entryElapsed = Date.now() - (renderer._homepageEntryAnim ? renderer._homepageEntryAnim.startTime : renderer.homepageAnimStartTime);
+      if (entryElapsed >= 3200) {
+        tryAutoJoinFriendBattle();
+      }
+    }
+
+    // 持续尝试：好友对战链接进入时，即使前面失败也不要轻易放弃，每帧尝试直到成功或用户主动取消
+    if (game && game._autoJoinBattleRoomId && !game._autoJoiningBattle && preloadComplete && game.state !== 'battle') {
+      const retryElapsed = Date.now() - (game._autoJoinBattleStartTime || 0);
+      if (retryElapsed >= 4000 && (!game._lastAutoJoinTry || Date.now() - game._lastAutoJoinTry >= 1000)) {
+        game._lastAutoJoinTry = Date.now();
+        tryAutoJoinFriendBattle();
+      }
+    }
+
+    // 好友对战同步倒计时 tick
+    updateFriendBattleCountdown();
+
+    // 好友对战模式选择弹窗在主页上叠加绘制（加入房间后显示准备/开始按钮）
+    if (game && game._battleModeSelectPopup && renderer._drawBattleModeSelectPopup) {
+      renderer._drawBattleModeSelectPopup(game);
+    }
+    // 如果弹窗已标记关闭但对象仍在，1.2s 后强制清理，避免旧弹窗残留遮挡
+    if (game && game._battleModeSelectPopup && game._battleModeSelectPopup.closing) {
+      const closeElapsed = Date.now() - (game._battleModeSelectPopup.closeStartTime || 0);
+      if (closeElapsed >= 1200) {
+        game._battleModeSelectPopup = null;
+      }
+    }
+
     // 主页弹窗上的通用 hintToast（领取奖励等提示需要在弹窗打开时也能看到）
     if (game && game.hintToast && renderer._drawHintToast) {
       renderer._drawHintToast(game);
@@ -4694,6 +5554,15 @@ function gameLoop(timestamp) {
     if (game && game._showingProfileAuthButton && renderer._drawProfileAuthPopup) {
       renderer._drawProfileAuthPopup(renderer.ctx, game, renderer.W, renderer.H, renderer.scale);
     }
+    // 预加载阶段调试日志（showCloudDebugLogs=false 时不绘制）
+    // if (renderer.drawHomepageDebugLogs) {
+    //   renderer.drawHomepageDebugLogs(game);
+    // }
+    // renderer._drawCompactDebugLogs(game);
+    // 预加载阶段每帧记录进度，便于排查卡住位置
+    if (game && game._autoJoinBattleRoomId) {
+      cloudStorage.log('[AutoJoin] preload progress=' + preloadProgress + ' complete=' + preloadComplete);
+    }
   } else if (transitionStartTime !== null) {
     // 过渡阶段：直接渲染游戏页面（去掉淡入淡出）
     renderer.render(game);
@@ -4702,9 +5571,19 @@ function gameLoop(timestamp) {
     // 对战相关弹窗（在对战页面上叠加绘制）
     renderer.render(game);
 
+    // 好友对战同步倒计时 tick
+    updateFriendBattleCountdown();
+
     // 对战模式选择弹窗
     if (game && game._battleModeSelectPopup && renderer._drawBattleModeSelectPopup) {
       renderer._drawBattleModeSelectPopup(game);
+    }
+    // 如果弹窗已标记关闭但对象仍在，1.2s 后强制清理，避免旧弹窗残留遮挡
+    if (game && game._battleModeSelectPopup && game._battleModeSelectPopup.closing) {
+      const closeElapsed = Date.now() - (game._battleModeSelectPopup.closeStartTime || 0);
+      if (closeElapsed >= 1200) {
+        game._battleModeSelectPopup = null;
+      }
     }
     // 对战房间弹窗（创建/等待/加入确认）
     if (game && game._battleRoomPopup && renderer._drawBattleRoomPopup) {
@@ -4715,8 +5594,12 @@ function gameLoop(timestamp) {
       renderer._drawBattleRoomPopup({ ...game, _battleRoomPopup: game._battleJoinConfirmPopup });
     }
 
-    // 对战模式状态更新（匹配弹窗显示期间暂停 bot 思考与 reveal 检查）
-    if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim) {
+    // 对战页调试日志（showCloudDebugLogs=false 时不绘制）
+    // renderer._drawCompactDebugLogs(game);
+
+    // 对战模式状态更新（匹配弹窗/好友对战弹窗显示期间暂停 bot 思考与 reveal 检查）
+    const inFriendBattleLobby = game && game._battleRoomId && game._battleModeSelectPopup;
+    if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim && !inFriendBattleLobby) {
       game.battleManager.updateTurnTimer();
       game.battleManager.updateBotThinking();
       game.battleManager.checkReveal();

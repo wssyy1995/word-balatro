@@ -268,6 +268,15 @@ class StorageManager {
     return this.get('honor_trophies', 0);
   }
 
+  hasHonorTrophiesLocal() {
+    try {
+      const value = wx.getStorageSync(this.prefix + 'honor_trophies');
+      return value !== undefined && value !== null && value !== '';
+    } catch (e) {
+      return false;
+    }
+  }
+
   // 对战胜利一场 +1，返回累计总数
   addHonorTrophy() {
     const total = (this.getHonorTrophies() || 0) + 1;

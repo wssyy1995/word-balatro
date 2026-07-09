@@ -290,8 +290,8 @@ Renderer.prototype.render = function(game) {
       }
     }
 
-    // 云存储调试日志（真机排查用）
-    this._drawCloudDebugLogs(ctx, game, s);
+    // 云存储调试日志（真机排查用，showCloudDebugLogs=false 时不绘制）
+    // this._drawCloudDebugLogs(ctx, game, s);
 
     // 卡牌图鉴弹窗（使用 _drawModalPanel 标准弹窗框架）
     if (game.cardBookOpen) {
@@ -891,6 +891,15 @@ Renderer.prototype.render = function(game) {
     if (game._showingRankPopup) {
       this._drawRankPopup(game);
     }
+  };
+
+  // 首页调试日志覆盖绘制（render 默认不绘制首页）
+  Renderer.prototype.drawHomepageDebugLogs = function(game) {
+    if (!this.showCloudDebugLogs) return;
+    const ctx = this.ctx;
+    const s = this.scale;
+    // 首页调用时 game 可能未传入，使用 wx.game
+    this._drawCloudDebugLogs(ctx, game || wx.game, s);
   };
 
   // ===== 获得新词牌弹窗（回合结算 → 商店页 → 点击收集 → 1s后女巫奖励） =====
@@ -1494,6 +1503,19 @@ Renderer.prototype.render = function(game) {
           } catch (e) {}
           if (this.battleRenderer) {
             this.battleRenderer._setSelfAvatar(userInfo.avatarUrl);
+          }
+          // 授权成功时上传头像昵称到云端 users 表，确保好友对战等场景能展示真实信息
+          if (wx.cloud && wx.cloud.callFunction && userInfo.avatarUrl && userInfo.nickName) {
+            wx.cloud.callFunction({
+              name: 'updateUserProfile',
+              data: { avatarUrl: userInfo.avatarUrl, nickname: userInfo.nickName },
+              success: () => {
+                console.log('[ProfileAuth] 头像昵称上传成功');
+              },
+              fail: (err) => {
+                console.error('[ProfileAuth] 头像昵称上传失败', err);
+              }
+            });
           }
           // 授权成功不再显示 toast
         } else {

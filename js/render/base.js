@@ -463,31 +463,13 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
-    // 加载对战进度图标（每日成就用）
+    // 加载对战进度图标（每日成就用，由 cloudStorage 注入）
     this.battleProgressIcon = null;
     this.battleProgressIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_progress_icon.png';
-      img.onload = () => { this.battleProgressIconLoaded = true; };
-      img.onerror = () => { this.battleProgressIconLoaded = false; };
-      this.battleProgressIcon = img;
-    } catch (e) {
-      this.battleProgressIconLoaded = false;
-    }
 
-    // 加载荣誉杯图标（每日成就「赢得对战」用）
+    // 加载荣誉杯图标（每日成就「赢得对战」用，由 cloudStorage 注入）
     this.battleHonorTrophyIcon = null;
     this.battleHonorTrophyIconLoaded = false;
-    try {
-      const img = wx.createImage();
-      img.src = 'images/battle_hornor_trophy.png';
-      img.onload = () => { this.battleHonorTrophyIconLoaded = true; };
-      img.onerror = () => { this.battleHonorTrophyIconLoaded = false; };
-      this.battleHonorTrophyIcon = img;
-    } catch (e) {
-      this.battleHonorTrophyIconLoaded = false;
-    }
 
     // 加载禁用锁图标
     this.cardDisableIcon = null;
@@ -720,7 +702,7 @@ class Renderer {
     this.cloudLogDragStartScrollY = 0;
     this.cloudLogRect = null;
     this.cloudLogScrollBarRect = null;
-    this.showCloudDebugLogs = false; // 调试日志开关，需要排查时设为 true
+    this.showCloudDebugLogs = false; // 调试日志开关，生产环境关闭
     this._equippedLetters = new Set(); // 已装备女巫卡牌对应的字母集合
     
     // 子渲染器
@@ -901,12 +883,29 @@ class Renderer {
     const OVERLAY_ALPHA = 0.2;
     const OVERLAY_RGB = '120,90,55'; // 蒙层颜色：米棕色
 
+    // 提前切换 game.state 为目标状态，使 render() 绘制正确的底层页面。
+    // 翻页完成后 gameLoop 会再次设置 state/targetState，这里只是为动画期间提供正确背景。
+    const targetState = state.targetState || 'playing';
+    const savedState = game.state;
+    if (game.state !== targetState) {
+      game.state = targetState;
+    }
+
+    const drawTargetPage = () => {
+      if (targetState === 'battle' && this.battleRenderer) {
+        // 对战页目标页面由 BattleRenderer 自己清空并绘制背景
+        this.battleRenderer.draw(ctx, game, W, H, s);
+      } else {
+        this.render(game);
+      }
+    };
+
     if (eased < 0.5) {
       // === 第一阶段：homepage 像古卷一样从右向左卷起 ===
       const roll = eased * 2;
 
-      // 1. 底层游戏页面（playing）
-      this.render(game);
+      // 1. 底层目标页面
+      drawTargetPage();
 
       // 2. 底层目标页面始终覆盖米棕色透明蒙层
       ctx.fillStyle = `rgba(${OVERLAY_RGB},${OVERLAY_ALPHA})`;
@@ -968,7 +967,7 @@ class Renderer {
       // === 第二阶段：playing 页面已完全露出，添加展开光效 ===
       const unroll = (eased - 0.5) * 2;
 
-      this.render(game);
+      drawTargetPage();
 
       // 米棕色蒙层随光效扫过逐渐褪去，光效结束蒙层也完全去除
       const overlayAlpha = OVERLAY_ALPHA * (1 - unroll);
@@ -1009,8 +1008,21 @@ class Renderer {
       }
     }
 
+    // 翻页完成后把状态固定为目标状态，并清理残留弹窗
     if (t >= 1) {
       state.complete = true;
+      if (game.state !== targetState) {
+        game.state = targetState;
+      }
+      // 好友对战翻页完成后，确保 lobby 弹窗已关闭
+      if (targetState === 'battle' && game && game._battleModeSelectPopup) {
+        game._battleModeSelectPopup = null;
+      }
+    }
+
+    // 恢复 game.state，避免动画期间的状态切换影响外层逻辑判断
+    if (!state.complete && game.state !== savedState) {
+      game.state = savedState;
     }
   }
 
