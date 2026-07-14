@@ -48,7 +48,18 @@ word-balatro/
 │   ├── updateUserProfile/   # 头像昵称授权后上传到云数据库
 │   ├── syncWordBook/        # 单词本增量同步到云数据库
 │   ├── updateHonorTrophy/   # 对战荣誉杯累计上传到云数据库
-│   └── login/               # 用户登录信息上报
+│   ├── login/               # 用户登录信息上报
+│   ├── battleRoom/          # 创建好友对战房间
+│   ├── battleJoin/          # 加入好友对战房间
+│   ├── battleStart/         # 房主开始对战（生成统一种子词/手牌）
+│   ├── battleReady/         # 好友点击准备
+│   ├── battleGet/           # 轮询获取房间状态
+│   ├── battlePlay/          # 玩家出牌同步到云端
+│   ├── battleNextRound/     # 房主推进下一回合
+│   ├── battleRequestRestart/# 发起重新挑战邀请
+│   ├── battleAcceptRestart/ # 接受重新挑战邀请
+│   ├── battleClose/         # 关闭房间（一方退出）
+│   └── getBattleOpponent/   # 获取对战对手头像/昵称/荣誉杯
 ├── scripts/                 # 构建脚本（词库生成、精灵图打包等）
 └── js/
     ├── data.js              # 静态数据：字母分数/分布、人头牌、词库引用、缓存
@@ -1214,14 +1225,18 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 ```
 js/battle/
 ├── index.js     # 模块入口，导出 BattleManager / BattleRenderer / BattleBot 等
-├── manager.js   # 对战状态机与核心逻辑（出牌、计分、揭晓、回合推进）
+├── manager.js   # 对战状态机与核心逻辑（出牌、计分、揭晓、回合推进、联网同步）
 ├── renderer.js  # 对战画面渲染（匹配弹窗、手牌、揭晓动画、结束弹窗）
 ├── input.js     # 对战触摸输入处理
 ├── bot.js       # 对战机器人行为
 └── deck.js      # 对战专用牌堆生成
 ```
 
-#### 对战流程
+对战模式支持两种子模式：
+- **本地人机 / 在线随机匹配**：由 `BattleBot` 充当对手，走匹配弹窗流程。
+- **好友对战**：房主创建房间 → 分享房间号 → 好友加入 → 双方准备 → 同步开局，10 回合后支持重新挑战。
+
+#### 本地人机对战流程
 
 ```
 [开始对战] → 匹配弹窗（matching → matched → countdown → disappearing）
@@ -1231,7 +1246,7 @@ js/battle/
         10 回合后 → battle_end（对战结束弹窗）
 ```
 
-1. **进入对战**：调试菜单点击「⚔️ 对战模式」或后续主页入口调用 `battleManager.startBattle('easy')`。
+1. **进入对战**：主页点击「双人对战」→ 选择「在线对战」→ `battleManager.startBattle('easy')`。
 2. **匹配弹窗**：弹出 `battle_match.png` 底图，显示「对手匹配中」， swords 图标伴随金色呼吸光圈；音效 `battle_matching` 延迟 200ms 启动，呼吸频率与该循环音效时长同步。
 3. **匹配成功**：随机生成对手（昵称与头像索引绑定），进入 matched 阶段展示对手信息；1.5 秒后进入 countdown 3 秒倒计时；最后 disappearing 淡出并正式进入对战。
    - **对手头像来源**：取自 `rank_avatar` 云图集，共 4 张 5×5 精灵图（每张 200×200，单头像 40×40），按索引 `idx` 计算所在图集、行、列。为去除单头像四周留白，绘制时居中裁剪 20% 直径的边距（四周各 10%，取中间 32×32 区域），再拉伸铺满圆形显示区域。
@@ -1240,14 +1255,81 @@ js/battle/
    - 每回合生成 **3 个种子词**：1 个 3 字母 + 2 个 4 字母，合并所需字母作为初始手牌，再从对战牌堆补至 **12 张**后洗牌。
    - Bot 从 3 个种子词中随机选择一个作为本回合出牌。
 5. **Bot 策略**：
-   - **70% fast 模式**：Bot 在 3~6 秒内自行出牌。
-   - **30% wait_player 模式**：等玩家出牌后再等待 2 秒出牌。
+   - **70% fast 模式**：Bot 在 **6~10 秒**内自行出牌。
+   - **30% wait_player 模式**：等玩家出牌后再等待 **2~4 秒**出牌；玩家一直不出则最多等 30 秒。
 6. **玩家出牌**：
    - 选中 ≥2 张卡牌，点击「出牌」。
    - 校验顺序：长度检查 → 本地/在线词库校验（支持 `isValidWordOnline`）→ 本局是否已出过（`_battlePlayedWords` 去重）。
    - 非法/重复提示不自动消失，需重新选择。
+   - 玩家出牌后若 Bot 未出，启动 **15 秒倒计时**，超时判该方 0 分。
 7. **揭晓动画（revealing）**：双方均出牌后进入揭晓阶段，展示双方单词、中文释义、得分，进度条从旧比例滑动到新比例，总分在动画结束后累加。
 8. **回合结束**：揭晓动画完成后进入下一回合，10 回合后进入 `battle_end`。
+
+#### 好友对战流程
+
+```
+主页「双人对战」→ 选择「好友对战」
+    │
+    ├── 房主：创建房间 → 分享房间号 → 等待好友加入 → 检测到好友已准备 → 同步 3 秒倒计时 → 开始对战
+    │
+    └── 好友：通过分享链接进入 → 自动加入房间 → 点击「开始对战」准备 → 等待房主启动 → 同步 3 秒倒计时 → 开始对战
+
+对局中：
+每回合：selecting → player_played → revealing → round_end（房主推进下一回合）
+        ↓
+10 回合后 → battle_end → 可发起/接受重新挑战
+```
+
+**状态字段**
+
+| 字段 | 说明 |
+|------|------|
+| `_battleOnline` | 是否为联网好友对战 |
+| `_battleRoomId` | 房间号（6 位字母数字） |
+| `_battleIsHost` | 当前玩家是否为房主 |
+| `_battleOpponentOpenId` | 对手 openid |
+| `_friendBattleStarted` | 本轮好友对战是否已正式开始 |
+| `_friendBattleCountdown` | 同步倒计时状态 |
+| `_battleModeSelectPopup` | 对战模式/房间/准备/重开弹窗状态 |
+| `_battleNextRoundPressed` | 好友是否已点击「下一回合」（等待房主推进） |
+
+**弹窗状态（`_battleModeSelectPopup.mode`）**
+
+| 模式 | 场景 | 交互 |
+|------|------|------|
+| `select` | 初始选择好友对战 / 在线对战 | 点击对应按钮进入 |
+| `friend_loading` | 创建房间中 | 显示 loading |
+| `friend_room` | 房主创建成功 | 显示房间号 + 分享按钮 |
+| `friend_waiting` | 房主等待好友加入 | 显示房间号 + 等待动画 |
+| `friend_join_ready` | 好友加入后未准备 | 显示「开始对战」按钮 |
+| `friend_join_wait` | 好友已准备，等待房主开始 | 显示 loading |
+| `friend_countdown` | 双方同步 3 秒倒计时 | 显示倒计时数字 |
+| `friend_restart_inviting` | 对战结束，自己发起重新挑战 | 显示「正在邀请」 |
+| `friend_restart_invited` | 对战结束，收到对方重新挑战邀请 | 显示「接受」/「取消」 |
+
+**云函数交互**
+
+| 云函数 | 调用方 | 职责 |
+|--------|--------|------|
+| `battleRoom` | 房主 | 创建房间，生成 6 位房间号 |
+| `battleJoin` | 好友 | 加入房间，返回角色（host/guest） |
+| `battleReady` | 好友 | 点击「开始对战」后标记准备，返回统一起点时间 `guestReadyAt` |
+| `battleStart` | 房主 | 倒计时结束后将房间状态改为 `playing`，并生成第一回合统一种子词和手牌 |
+| `battleGet` | 双方 | 每 1.5 秒轮询房间状态 |
+| `battlePlay` | 双方 | 玩家出牌后同步单词/卡牌/得分到云端 |
+| `battleNextRound` | 房主 | 揭晓动画结束后生成下一回合统一种子词和手牌 |
+| `battleRequestRestart` | 任意一方 | 对战结束后发起重新挑战邀请 |
+| `battleAcceptRestart` | 另一方 | 接受重新挑战邀请，房间重置为 ready |
+| `battleClose` | 退出方 | 一方主动退出或关闭房间时调用 |
+| `getBattleOpponent` | 双方 | 加载对手真实头像、昵称、累计荣誉杯 |
+
+**关键机制**
+
+- **统一手牌**：`battleStart` 与 `battleNextRound` 在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。
+- **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。
+- **超时处理**：好友对战不启用本地 15 秒倒计时，出牌同步依赖云端 `battlePlay`；超时逻辑由云函数侧控制（当前版本前端暂未接入超时提示）。
+- **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。
+- **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
 
 #### 对战计分规则
 
@@ -1269,14 +1351,14 @@ js/battle/
 - **本地存储**：`StorageManager.addHonorTrophy()` 累加并写入本地键 `word_balatro_honor_trophies`（跨局永久保留）；`game.honorTrophies` 在游戏初始化时由 `getHonorTrophies()` 读入。
 - **云端同步**：`awardHonorTrophy()` 调用云函数 `updateHonorTrophy`，上传本地累计总数到云数据库 `user_honor_trophy` 集合。云端取 `max(已有, 上传值)` 合并，保证幂等——重试或重复调用不会重复计数或回退。
 - **展示位置**（半透明白色圆角蒙层 + `battle_hornor_trophy.png` 图标 + 金棕色数字）：
-  - **VS 模块**（对战页顶部 `_drawTrophyBadge`）：左对手、右"我"各显示荣誉杯徽章。我方为真实值，对手为虚拟值（我方 +2~10，整局缓存，缓存在 `game._battleOpponent.trophies`）。
+  - **VS 模块**（对战页顶部 `_drawTrophyBadge`）：左对手、右"我"各显示荣誉杯徽章。我方为真实值，对手本地人机时为虚拟值（我方 +2~10，整局缓存，缓存在 `game._battleOpponent.trophies`）；好友对战时显示对手真实荣誉杯。
   - **匹配弹窗 / 倒计时阶段**：展示对手荣誉杯数。
   - **对战结束弹窗**：胜利时在激励文案上方显示荣誉杯图标 + `荣誉杯+1`（金棕 `#8B6914`）+ 左右 `score_line` 装饰线。
 - **图标资源**：`images/battle_hornor_trophy.png`，由 `Renderer`（`base.js`）与对战渲染器各自加载为 `battleHonorTrophyIcon`。
 
 #### 对战结束弹窗
 
-10 回合结束后弹出结束面板（`panelH = 380*s`）：
+10 回合结束后弹出结束面板（`panelH = 270*s`）：
 
 ```
 ┌─────────────────────────────────────┐
@@ -1297,13 +1379,15 @@ js/battle/
   - 失败/平局只显示：重新挑战、回到主页。
   - 按钮使用云存储图片 `battle_pop_share.png`、`battle_pop_restart.png`、`battle_pop_backto_homepage.png`，未加载时兜底为圆形文字按钮。
 - 点击「分享战绩」拉起 `wx.shareAppMessage`，标题为 `我在单词对战中以 X:Y 获胜!`。
-- 点击「重新挑战」重走匹配弹窗流程（`startMatchAnim()` → 匹配中 → 匹配成功 → 倒计时 → 进入新一局），等同于重新进入对战页。
-- 点击「回到主页」调用 `game.returnToHomepage()` 退出对战。
+- 点击「重新挑战」：
+  - 本地人机：重走匹配弹窗流程（`startMatchAnim()`）。
+  - 好友对战：发起重新挑战邀请，对方接受后房间重置并重新开局。
+- 点击「回到主页」调用 `game.returnToHomepage()` 退出对战；好友对战还会调用 `battleClose` 关闭房间。
 
 #### 对战模式 top_home 交互
 
 对战界面左上角 `top_home` 图标：
-- **短按**：返回主页（`returnToHomepage`）。
+- **短按**：返回主页（`returnToHomepage`）；好友对战会先调用 `battleClose` 关闭房间。
 - **长按 600ms**：打开调试面板，与主玩法长按 top_icon 逻辑一致。
   - ⚠️ 该调试入口仅在**开发版/体验版**开放，正式版本（`envVersion === 'release'`）长按不会触发。
 - 按下时图标下压 2*s。
@@ -1315,6 +1399,8 @@ js/battle/
 | `battle_matching` | `music/sound_effect/battle/battle_matching.mp3` | 匹配弹窗弹出后循环播放，匹配成功/弹窗消失时停止 |
 | `battle_match_success` | 同目录（`battle_match_sccess.mp3`） | 匹配成功瞬间 |
 | `battle_play_card` | 同目录 | 玩家或 Bot 出牌后展示占位方块时 |
+| `battle_countdown` | 同目录 | 好友对战同步 3 秒倒计时阶段 |
+| `battle_pop_success` | 同目录 | 对战胜利结束弹窗 |
 
 #### 对战相关云存储资源
 
@@ -1323,6 +1409,8 @@ js/battle/
 - `battle_match.png` / `battle_match_sword.png`：匹配弹窗底图与剑图标
 - `battle_me_place.png` / `battle_me_word_bg.png` / `battle_rival_place.png` / `battle_rival_word_bg.png`：对战双方单词展示背景
 - `battle_pop_share.png` / `battle_pop_restart.png` / `battle_pop_backto_homepage.png`：对战结束弹窗按钮
+- `battle_pop_success.png` / `battle_pop_fail.png`：对战结束胜利/失败标题图
+- `battle_room_share.png`：好友对战房间分享按钮
 - `music/sound_effect/battle/battle_matching.mp3`：匹配循环音效
 
 ---
@@ -1479,6 +1567,54 @@ letterUpgrades = Map {
 ```
 
 > 注：该接口同时覆盖原 dictionaryapi.dev + MyMemory 的功能，既校验单词合法性，又返回中文释义，无需再维护两套外部 API。
+
+### 7.1.1 好友对战云函数
+
+好友对战依赖微信云开发数据库 `rooms` 集合与以下云函数：
+
+| 云函数 | 调用方 | 输入 | 输出 | 说明 |
+|--------|--------|------|------|------|
+| `battleRoom` | 房主 | — | `{ code, roomId, _id }` | 创建 6 位房间号，status=`waiting` |
+| `battleJoin` | 好友 | `{ roomId }` | `{ code, role, room }` | 加入房间，role=`host`/`guest`；房间满或已开始则失败 |
+| `battleReady` | 好友 | `{ roomId }` | `{ code, room }` | 好友标记准备，记录 `guestReadyAt` 作为同步倒计时起点 |
+| `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`，生成第一回合统一种子词和手牌 |
+| `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 1.5s 轮询 |
+| `battlePlay` | 双方 | `{ roomId, word, cards, score }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay` |
+| `battleNextRound` | 房主 | `{ roomId }` | `{ code, room }` | 清空双方出牌，生成下一回合统一种子词和手牌，`currentRound++` |
+| `battleRequestRestart` | 任意一方 | `{ roomId }` | `{ code, room }` | 在对战结束后写入 `restartRequest` 邀请 |
+| `battleAcceptRestart` | 另一方 | `{ roomId }` | `{ code, room }` | 接受重新挑战，重置房间状态为 `ready`，`currentRound=1` |
+| `battleClose` | 退出方 | `{ roomId }` | `{ code }` | 将房间状态改为 `closed`，另一方轮询到后结束对战 |
+| `getBattleOpponent` | 双方 | `{ opponentOpenId }` | `{ code, opponent }` | 从 `user_honor_trophy` / `user_profiles` 读取对手昵称、头像、荣誉杯 |
+
+**房间状态流转**
+
+```
+waiting（房主创建） → ready（好友加入） → playing（房主开始） → closed（一方退出）
+                          ↑_________________________________|
+                                    （重新挑战 accepted 后回到 ready）
+```
+
+**数据字段（rooms 集合）**
+
+```js
+{
+  roomId: 'A1B2C3',
+  host: '房主 OPENID',
+  guest: '好友 OPENID',
+  hostReady: true,
+  guestReady: true,
+  status: 'playing',
+  currentRound: 1,
+  totalRounds: 10,
+  seedWords: [{ word, meaning }, ...],
+  hand: [{ letter, baseScore, score, isFace, id, selected }],
+  hostPlay: { openid, word, cards, score, round },
+  guestPlay: { openid, word, cards, score, round },
+  restartRequest: { fromOpenId, accepted, acceptedAt },
+  createTime: Date.now(),
+  updateTime: Date.now()
+}
+```
 
 ### 7.2 启动隐私与头像昵称授权
 
@@ -1721,7 +1857,9 @@ letterUpgrades = Map {
 | v1.12.5 | 2026-06-29 | 修复每日成就首次领取奖励的 hintToast 不在弹窗内显示的问题：主页状态也绘制 hintToast，并定位到每日成就弹窗内部偏上位置 |
 | v1.12.6 | 2026-06-30 | 新增对战荣誉杯系统：胜利 +1，本地存储 `honor_trophies` + 云函数 `updateHonorTrophy`（云端取 max 幂等合并），对战页 VS 模块/匹配弹窗/结算弹窗展示荣誉杯徽章（白色蒙层+图标+金棕色数字）；主页大按钮首次进入游戏后永久显示「继续」（`_roundEntered` / `word_balatro_round_entered`）；对战「重新挑战」改为重走匹配弹窗流程（`startMatchAnim`）；Bot 出牌时间 4~8s 调整为 6~10s；每日成就任务表调整顺序与文案（连续闯关、完成 3 局双人对战等）；星辉洗涤新增卡牌弹出 popup 阶段与 `bubble_wash` 音效；修复迷之优惠按折后价判定可购买、平分秋色支持降分、字母置换用真实当前分等；同步更新 README（荣誉杯系统、存储键、云函数、音效表、五/六字母连击倍率 +2/+4、主页继续按钮、每日成就表） |
 | v1.12.7 | 2026-07-02 | 女巫奖励全局 buff 图标改为云存储懒加载，修复高回合/存档恢复时 buff 图片未生效与重复注入日志问题；商店 5 折时价格按钮右上角改用本地 `discount.png`；对战结束分享战绩截取屏幕中间 50% 区域作为分享图；商店女巫试炼 UI 统一：礼物图标、文案、按钮尺寸与水波纹样式调整；修复领取女巫奖励后延迟标记未清理导致卡在商店页的问题；修复结算领取后无新词牌时误判为新词牌阶段导致卡住的问题；同步更新 README |
+| v1.12.8 | 2026-07-09 | 好友对战特性更新：新增 `battleRoom`/`battleJoin`/`battleStart`/`battleReady`/`battleGet`/`battlePlay`/`battleNextRound`/`battleRequestRestart`/`battleAcceptRestart`/`battleClose`/`getBattleOpponent` 云函数；实现创建房间、分享房间号、好友加入、准备同步、云端统一手牌、出牌同步、回合推进、重新挑战、房间关闭等完整流程；对战模式选择弹窗支持好友对战/在线对战双入口；修复好友对战重开邀请对方未弹窗、一方退出后另一方未提示、轮次不同步等问题；同步更新 README（好友对战流程、云函数、目录结构） |
+| v1.12.9 | 2026-07-09 | 修复字母升级/随机升级音效在动画期间重复播放的问题：只在分数切换阶段播放一次 `word_score` |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-07-03*
+*文档基于实际代码整理，最后更新：2026-07-14*
