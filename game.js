@@ -1376,7 +1376,7 @@ function getInputY(x, y) {
           cloudStorage.log('[AutoJoin] battleGet poll fail: ' + (err && err.message ? err.message : String(err)));
         }
       });
-    }, 1500);
+    }, 800); // 降低轮询间隔，减少好友准备/出牌状态同步延迟
   }
 
   function stopFriendRoomPolling() {
@@ -1389,7 +1389,8 @@ function getInputY(x, y) {
   function applyFriendRoomState(room) {
     if (!room || !game._battleRoomId) return;
     const popup = game._battleModeSelectPopup;
-    const myOpenId = game.userid || '';
+    // 用房间字段计算当前用户 openid，避免 game.userid 未设置导致重开邀请身份判断错误
+    const myOpenId = game._battleIsHost ? (room.host || '') : (room.guest || '');
     cloudStorage.log('[AutoJoin] applyFriendRoomState status=' + room.status + ' guest=' + (room.guest ? 'yes' : 'no') + ' guestReady=' + room.guestReady + ' host=' + game._battleIsHost + ' popup=' + (popup && popup.mode) + ' countdown=' + (!!game._friendBattleCountdown) + ' restart=' + (!!room.restartRequest));
 
     // 房主：轮询过程中一检测到好友加入，就提前加载对方头像/昵称/荣誉杯
@@ -1455,7 +1456,7 @@ function getInputY(x, y) {
 
     if (!popup) return;
 
-    // 房主：检测到好友已准备，双方同步进入 10 秒倒计时
+    // 房主：检测到好友已准备，双方同步进入 3 秒倒计时
     if (game._battleIsHost && room.guestReady && !game._friendBattleCountdown) {
       cloudStorage.log('[AutoJoin] 房主检测到好友已准备，启动同步 countdown=' + (room.guestReadyAt || 'none'));
       startFriendBattleCountdown(room.guestReadyAt);
@@ -1509,11 +1510,18 @@ function getInputY(x, y) {
     }
   }
 
-  // 好友对战：双方同步 10 秒倒计时，倒计时结束后正式进入对战
+  // 好友对战：双方同步 3 秒倒计时，倒计时结束后正式进入对战
   // syncStartAt: 统一倒计时起点时间戳（毫秒），默认当前时间
   function startFriendBattleCountdown(syncStartAt) {
     if (game._friendBattleCountdown) return;
-    const startTime = syncStartAt || Date.now();
+    const now = Date.now();
+    let startTime = syncStartAt || now;
+    // 校正因设备时间差或网络延迟导致的时间戳异常：
+    // 如果起始时间比当前时间晚（未来）或早超过一个倒计时周期，改用当前时间
+    if (startTime > now || startTime < now - 5000) {
+      cloudStorage.log('[AutoJoin] 倒计时时间戳异常，已校正: ' + startTime + ' -> ' + now);
+      startTime = now;
+    }
     cloudStorage.log('[AutoJoin] 启动好友对战同步倒计时 roomId=' + game._battleRoomId + ' isHost=' + game._battleIsHost + ' startTime=' + startTime);
     game._friendBattleCountdown = {
       startTime,
@@ -1570,7 +1578,24 @@ function getInputY(x, y) {
       },
       fail: (err) => {
         cloudStorage.log('[AutoJoin] callBattleStart fail: ' + (err && err.message ? err.message : String(err)));
-        game.hintToast = { text: '开始对战失败，请重试', expireAt: Date.now() + 2000 };
+        game.hintToast = { text: '开始对战失败，正在重试...', expireAt: Date.now() + 2000 };
+        // 网络抖动时自动重试一次，避免双方卡在倒计时结束页面
+        setTimeout(() => {
+          if (game._battleRoomId && game._battleIsHost) {
+            cloudStorage.log('[AutoJoin] callBattleStart 自动重试 roomId=' + game._battleRoomId);
+            wx.cloud.callFunction({
+              name: 'battleStart',
+              data: { roomId: game._battleRoomId },
+              success: (res2) => {
+                cloudStorage.log('[AutoJoin] callBattleStart 重试成功: ' + JSON.stringify(res2.result));
+              },
+              fail: (err2) => {
+                cloudStorage.log('[AutoJoin] callBattleStart 重试失败: ' + (err2 && err2.message ? err2.message : String(err2)));
+                game.hintToast = { text: '开始对战失败，请重试', expireAt: Date.now() + 2000 };
+              }
+            });
+          }
+        }, 1000);
       }
     });
   }

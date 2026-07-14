@@ -185,7 +185,12 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
         setTimeout(() => { game._battleHomeBtnPressed = false; }, 150);
         if (game.audioManager) game.audioManager.play('tap');
         setTimeout(() => {
-          game.returnToHomepage();
+          // 好友对战需要先关闭房间，避免对方卡在房间中看不到状态
+          if (game._battleOnline && game.battleManager) {
+            game.battleManager.closeRoomAndReturnHomepage();
+          } else {
+            game.returnToHomepage();
+          }
         }, 350);
         return true;
       }

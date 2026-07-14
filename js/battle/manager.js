@@ -19,6 +19,7 @@ const BOT_WAIT_PLAYER_MAX_WAIT_MS = 30000; // wait_player 策略最多等玩家 
 const BOT_FAST_PROBABILITY = 0.7;
 const REVEAL_DURATION_MS = 4000;
 const TURN_TIMEOUT_MS = 15000; // 单回合出牌倒计时 15 秒
+const ROOM_POLL_INTERVAL_MS = 800; // 好友对战房间状态轮询间隔（原 1500ms，降低延迟）
 
 // 模块加载时预缓存 3 字母和 4 字母种子词，避免每轮遍历整个词库
 const BATTLE_SEED_WORDS_3 = [];
@@ -482,13 +483,13 @@ class BattleManager {
   }
 
   // 联网对战：同步出牌到服务器
-  _syncPlayToServer(word, cards, score) {
+  _syncPlayToServer(word, cards, score, retryCount = 1) {
     const g = this.game;
     if (!g._battleRoomId) {
       cloudLog(g, '[Battle] _syncPlayToServer 跳过，无 roomId');
       return;
     }
-    cloudLog(g, '[Battle] _syncPlayToServer 调用 roomId=' + g._battleRoomId + ' word=' + word + ' score=' + score + ' cardsCount=' + (cards ? cards.length : 0));
+    cloudLog(g, '[Battle] _syncPlayToServer 调用 roomId=' + g._battleRoomId + ' word=' + word + ' score=' + score + ' cardsCount=' + (cards ? cards.length : 0) + ' retry=' + retryCount);
     wx.cloud.callFunction({
       name: 'battlePlay',
       data: {
@@ -520,11 +521,35 @@ class BattleManager {
             // 避免等下一轮 1.5s 轮询，减少“对方选择中”滞留
             this._applyRoomState(room);
           }
+        } else {
+          // 业务失败也尝试重试，过滤掉明确的参数错误
+          const msg = res.result && res.result.message ? res.result.message : '';
+          if (retryCount > 0 && !msg.includes('参数错误') && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家')) {
+            cloudLog(g, '[Battle] _syncPlayToServer 业务失败，准备重试: ' + msg);
+            setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1), 800);
+          } else {
+            cloudLog(g, '[Battle] _syncPlayToServer 业务失败不重试: ' + msg);
+          }
         }
       },
       fail: (err) => {
-        cloudLog(g, '[Battle] _syncPlayToServer fail err=' + (err && err.message ? err.message : String(err)));
-        console.error('[battlePlay] 同步失败:', err);
+        cloudLog(g, '[Battle] _syncPlayToServer fail err=' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
+        if (retryCount > 0) {
+          setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1), 800);
+        } else {
+          // 最终失败：提示玩家并允许重新出牌
+          g.hintToast = { text: '出牌同步失败，请重新出牌', expireAt: Date.now() + 2000 };
+          g.battlePhase = 'selecting';
+          g._battlePlayerPlayed = false;
+          g.battlePlayerWord = null;
+          g.battlePlayerCards = null;
+          g.battlePlayerRoundScore = 0;
+          // 从本局已出牌集合中移除，避免重新出同一个词时被误判为重复
+          if (g._battlePlayedWords && word) {
+            g._battlePlayedWords.delete(word.toLowerCase());
+          }
+          cloudLog(g, '[Battle] _syncPlayToServer 最终失败，允许重新出牌');
+        }
       }
     });
   }
@@ -554,7 +579,7 @@ class BattleManager {
           console.error('[battleGet] 轮询失败:', err);
         }
       });
-    }, 1500);
+    }, ROOM_POLL_INTERVAL_MS);
   }
 
   // 联网对战：应用房间状态
@@ -595,9 +620,9 @@ class BattleManager {
     const myOpenId = g._battleIsHost ? room.host : room.guest;
     // 对方的 openid 实时计算，不依赖可能出错的缓存
     const opponentOpenId = g._battleIsHost ? room.guest : room.host;
-    if (!g._battleOpponentOpenId) {
+    // 只有拿到有效对手 openid 时才缓存，避免被 undefined 污染后反复加载
+    if (!g._battleOpponentOpenId && opponentOpenId) {
       g._battleOpponentOpenId = opponentOpenId;
-      // 首次确定对手 openid 时，异步加载对手真实头像/昵称/荣誉杯
       this._loadOnlineOpponent(opponentOpenId);
     }
 
@@ -622,23 +647,36 @@ class BattleManager {
     if (!opponentPlay) {
       if (g._battleIsHost && guestPlay && guestPlay.openid && guestPlay.openid !== myOpenId) {
         opponentPlay = guestPlay;
+        cloudLog(g, '[Battle] 使用兜底对手出牌 guestPlay=' + (guestPlay ? guestPlay.word : 'null'));
       } else if (!g._battleIsHost && hostPlay && hostPlay.openid && hostPlay.openid !== myOpenId) {
         opponentPlay = hostPlay;
+        cloudLog(g, '[Battle] 使用兜底对手出牌 hostPlay=' + (hostPlay ? hostPlay.word : 'null'));
       }
     }
 
     cloudLog(g, '[Battle] _applyRoomState myPlay=' + (myPlay ? myPlay.word : 'null') + ' opponentPlay=' + (opponentPlay ? opponentPlay.word : 'null') + ' hostOpenid=' + (hostPlay ? (hostPlay.openid || '').slice(-6) : 'null') + ' guestOpenid=' + (guestPlay ? (guestPlay.openid || '').slice(-6) : 'null'));
 
     // 只同步当前回合的出牌，避免开局/跨回合时旧数据误判
-    // 严格用本地 battleRound 作为当前回合；云端 currentRound 仅作参考
+    // 以本地 battleRound 为主，但允许合理的云端推进（room.currentRound >= local）
     const currentRound = g.battleRound || 1;
-    const isMyPlayCurrent = myPlay && (myPlay.round === undefined || myPlay.round === currentRound);
-    const isOpponentPlayCurrent = opponentPlay && (opponentPlay.round === undefined || opponentPlay.round === currentRound);
+    const cloudRound = room.currentRound || 1;
+    const isMyPlayCurrent = myPlay && (myPlay.round === undefined || myPlay.round === currentRound || myPlay.round === cloudRound);
+    // 对手出牌接受条件：round 未定义 / 等于本地当前回合 / 等于云端当前回合 / 大于本地（云端已提前推进）
+    // 仅当 round 明确小于 currentRound - 1 时才视为过期数据丢弃
+    const isOpponentPlayCurrent = opponentPlay && (
+      opponentPlay.round === undefined ||
+      opponentPlay.round === currentRound ||
+      opponentPlay.round === cloudRound ||
+      opponentPlay.round > currentRound
+    );
+    if (opponentPlay && !isOpponentPlayCurrent) {
+      cloudLog(g, '[Battle] 对手出牌被过滤: oppRound=' + opponentPlay.round + ' localRound=' + currentRound + ' cloudRound=' + cloudRound);
+    }
 
     // 回合推进检测：云端 currentRound 大于本地，说明房主已经推进到下一回合
-    if (g._battleOnline && room.currentRound && room.currentRound > currentRound) {
-      cloudLog(g, '[Battle] 检测到云端进入第' + room.currentRound + '回合，本地同步');
-      g.battleRound = room.currentRound;
+    if (g._battleOnline && cloudRound > currentRound) {
+      cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
+      g.battleRound = cloudRound;
       this._startRound({
         seedWords: room.seedWords,
         hand: room.hand
@@ -662,6 +700,7 @@ class BattleManager {
       g.battleBotCards = (opponentPlay.cards || []).map(c => createBattleCard(c.letter));
       g.battleBotRoundScore = opponentPlay.score || 0;
       g.battleBotWordMeaning = getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
+      cloudLog(g, '[Battle] 同步到对手出牌 word=' + opponentPlay.word + ' score=' + opponentPlay.score + ' phase=' + g.battlePhase);
       if (g.audioManager) g.audioManager.play('battle_play_card');
 
       if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
