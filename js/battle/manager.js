@@ -596,142 +596,147 @@ class BattleManager {
   // 联网对战：应用房间状态
   _applyRoomState(room) {
     const g = this.game;
-    if (!room || !g._battleOnline) return;
+    try {
+      if (!room || !g._battleOnline) return;
 
-    cloudLog(g, '[Battle] _applyRoomState fullRoom=' + JSON.stringify({
-      _id: room._id,
-      status: room.status,
-      currentRound: room.currentRound,
-      host: (room.host || '').slice(-6),
-      guest: (room.guest || '').slice(-6),
-      hasHostPlay: !!room.hostPlay,
-      hasGuestPlay: !!room.guestPlay
-    }));
+      cloudLog(g, '[Battle] _applyRoomState fullRoom=' + JSON.stringify({
+        _id: room._id,
+        status: room.status,
+        currentRound: room.currentRound,
+        host: (room.host || '').slice(-6),
+        guest: (room.guest || '').slice(-6),
+        hasHostPlay: !!room.hostPlay,
+        hasGuestPlay: !!room.guestPlay
+      }));
 
-    const currentRound = g.battleRound || 1;
-    const cloudRound = room.currentRound || 1;
+      const currentRound = g.battleRound || 1;
+      const cloudRound = room.currentRound || 1;
 
-    // 防御性过滤：云端轮次比本地还旧，说明是乱序到达的过期响应，直接丢弃
-    if (cloudRound < currentRound) {
-      cloudLog(g, '[Battle] 房间响应过期，丢弃: cloudRound=' + cloudRound + ' < localRound=' + currentRound);
-      return;
-    }
-
-    // 房间被对方关闭，弹出“房间已结束”提示
-    if (room.status === 'closed') {
-      cloudLog(g, '[Battle] 房间已关闭，触发对战结束弹窗');
-      this._showRoomClosedPopup();
-      return;
-    }
-
-    // 检测到重开邀请：对战结束后统一交给 game.js 的好友房轮询处理弹窗/倒计时/开局
-    if (room.restartRequest && g.battlePhase === 'battle_end') {
-      cloudLog(g, '[Battle] 检测到重开邀请，切到好友房轮询: accepted=' + room.restartRequest.accepted);
-      if (g.applyFriendRoomState) {
-        g.applyFriendRoomState(room);
-      }
-      if (g.startFriendRoomPolling) {
-        g.startFriendRoomPolling(g._battleRoomId);
-      }
-      return;
-    }
-
-    // 正确计算我的 openid：直接用 _battleIsHost 判断
-    const myOpenId = g._battleIsHost ? room.host : room.guest;
-    // 对方的 openid 实时计算，不依赖可能出错的缓存
-    const opponentOpenId = g._battleIsHost ? room.guest : room.host;
-
-    // 只有拿到有效对手 openid 时才缓存，避免被 undefined 污染后反复加载
-    if (!g._battleOpponentOpenId && opponentOpenId) {
-      g._battleOpponentOpenId = opponentOpenId;
-      this._loadOnlineOpponent(opponentOpenId);
-    }
-
-    const hostPlay = room.hostPlay;
-    const guestPlay = room.guestPlay;
-
-    const effectiveRound = currentRound;
-    cloudLog(g, '[Battle] _applyRoomState effectiveRound=' + effectiveRound + ' host=' + (hostPlay ? 'yes' : 'no') + ' guest=' + (guestPlay ? 'yes' : 'no') + ' isHost=' + g._battleIsHost + ' myOpenId=' + (myOpenId || '').slice(-6) + ' oppOpenId=' + (opponentOpenId || '').slice(-6));
-    if (hostPlay) cloudLog(g, '[Battle] hostPlay raw=' + JSON.stringify({ word: hostPlay.word, round: hostPlay.round, openid: (hostPlay.openid || '').slice(-6) }));
-    if (guestPlay) cloudLog(g, '[Battle] guestPlay raw=' + JSON.stringify({ word: guestPlay.word, round: guestPlay.round, openid: (guestPlay.openid || '').slice(-6) }));
-
-    // 我的出牌：openId 必须匹配自己
-    const myPlay = g._battleIsHost
-      ? (hostPlay && hostPlay.openid === myOpenId ? hostPlay : null)
-      : (guestPlay && guestPlay.openid === myOpenId ? guestPlay : null);
-
-    // 对方的出牌：openId 必须匹配对方，且绝对不能是我自己
-    let opponentPlay = g._battleIsHost
-      ? (guestPlay && guestPlay.openid && guestPlay.openid === opponentOpenId && guestPlay.openid !== myOpenId ? guestPlay : null)
-      : (hostPlay && hostPlay.openid && hostPlay.openid === opponentOpenId && hostPlay.openid !== myOpenId ? hostPlay : null);
-
-    // 兜底：如果严格 openid 匹配没命中，但对手槽位有出牌且不是我方 openid，也视为对手出牌
-    if (!opponentPlay) {
-      if (g._battleIsHost && guestPlay && guestPlay.openid && guestPlay.openid !== myOpenId) {
-        opponentPlay = guestPlay;
-        cloudLog(g, '[Battle] 使用兜底对手出牌 guestPlay=' + (guestPlay ? guestPlay.word : 'null'));
-      } else if (!g._battleIsHost && hostPlay && hostPlay.openid && hostPlay.openid !== myOpenId) {
-        opponentPlay = hostPlay;
-        cloudLog(g, '[Battle] 使用兜底对手出牌 hostPlay=' + (hostPlay ? hostPlay.word : 'null'));
-      }
-    }
-
-    // 回合推进检测：云端 currentRound 大于本地，说明房主已经推进到下一回合
-    if (g._battleOnline && cloudRound > currentRound) {
-      // 如果本机还在揭晓动画中，先缓存房间状态，等 reveal 完成后再同步。
-      // 否则房主已经推进到下一回合时，本机直接 reset 到 selecting 会中断 reveal，
-      // 导致本轮总分未累加、对手出牌也看不到（好友对战第 x 回合偶现问题）。
-      if (g.battlePhase === 'revealing') {
-        g._battlePendingRoom = room;
-        cloudLog(g, '[Battle] 云端已进入第' + cloudRound + '回合，本地仍在揭晓动画，延迟同步');
+      // 防御性过滤：云端轮次比本地还旧，说明是乱序到达的过期响应，直接丢弃
+      if (cloudRound < currentRound) {
+        cloudLog(g, '[Battle] 房间响应过期，丢弃: cloudRound=' + cloudRound + ' < localRound=' + currentRound);
         return;
       }
-      cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
-      g._battlePendingRoom = null;
-      g.battleRound = cloudRound;
-      this._startRound({
-        seedWords: room.seedWords,
-        hand: room.hand
-      });
-      // 同步新回合后，继续处理当前 room 中可能已有的出牌数据（如好友已在新回合出牌）
-      // 而不是 return 等下一次轮询，减少"看不到对手出牌"的概率
-    }
 
-    // 重新计算 isMyPlayCurrent / isOpponentPlayCurrent（如果回合推进过，使用新轮次）
-    const newEffectiveRound = g.battleRound || 1;
-    const isMyPlayCurrent2 = myPlay && (myPlay.round === undefined || myPlay.round === newEffectiveRound || myPlay.round === cloudRound);
-    const isOpponentPlayCurrent2 = opponentPlay && (
-      opponentPlay.round === undefined ||
-      opponentPlay.round === newEffectiveRound ||
-      opponentPlay.round === cloudRound ||
-      opponentPlay.round > newEffectiveRound
-    );
-    if (opponentPlay && !isOpponentPlayCurrent2) {
-      cloudLog(g, '[Battle] 对手出牌被过滤: oppRound=' + opponentPlay.round + ' localRound=' + newEffectiveRound + ' cloudRound=' + cloudRound);
-    }
-
-    cloudLog(g, '[Battle] _applyRoomState myPlay=' + (myPlay ? myPlay.word : 'null') + ' opponentPlay=' + (opponentPlay ? opponentPlay.word : 'null') + ' hostOpenid=' + (hostPlay ? (hostPlay.openid || '').slice(-6) : 'null') + ' guestOpenid=' + (guestPlay ? (guestPlay.openid || '').slice(-6) : 'null'));
-
-    // 如果本地还没标记自己出牌，但服务端已有，则同步回来（极少情况）
-    if (!g._battleOnlinePlayerPlayed && myPlay && isMyPlayCurrent2) {
-      g._battleOnlinePlayerPlayed = true;
-    }
-
-    // 对方已出牌
-    if (!g._battleOnlineOpponentPlayed && opponentPlay && isOpponentPlayCurrent2) {
-      g._battleOnlineOpponentPlayed = true;
-      g.battleBotReady = true;
-      g._battleBotReadyAnimStart = Date.now();
-      g.battleBotWord = opponentPlay.word;
-      g.battleBotCards = (opponentPlay.cards || []).map(c => createBattleCard(c.letter));
-      g.battleBotRoundScore = opponentPlay.score || 0;
-      g.battleBotWordMeaning = getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
-      cloudLog(g, '[Battle] 同步到对手出牌 word=' + opponentPlay.word + ' score=' + opponentPlay.score + ' phase=' + g.battlePhase);
-      if (g.audioManager) g.audioManager.play('battle_play_card');
-
-      if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
-        this.startReveal();
+      // 房间被对方关闭，弹出“房间已结束”提示
+      if (room.status === 'closed') {
+        cloudLog(g, '[Battle] 房间已关闭，触发对战结束弹窗');
+        this._showRoomClosedPopup();
+        return;
       }
+
+      // 检测到重开邀请：对战结束后统一交给 game.js 的好友房轮询处理弹窗/倒计时/开局
+      if (room.restartRequest && g.battlePhase === 'battle_end') {
+        cloudLog(g, '[Battle] 检测到重开邀请，切到好友房轮询: accepted=' + room.restartRequest.accepted);
+        if (g.applyFriendRoomState) {
+          g.applyFriendRoomState(room);
+        }
+        if (g.startFriendRoomPolling) {
+          g.startFriendRoomPolling(g._battleRoomId);
+        }
+        return;
+      }
+
+      // 正确计算我的 openid：直接用 _battleIsHost 判断
+      const myOpenId = g._battleIsHost ? room.host : room.guest;
+      // 对方的 openid 实时计算，不依赖可能出错的缓存
+      const opponentOpenId = g._battleIsHost ? room.guest : room.host;
+
+      // 只有拿到有效对手 openid 时才缓存，避免被 undefined 污染后反复加载
+      if (!g._battleOpponentOpenId && opponentOpenId) {
+        g._battleOpponentOpenId = opponentOpenId;
+        this._loadOnlineOpponent(opponentOpenId);
+      }
+
+      const hostPlay = room.hostPlay;
+      const guestPlay = room.guestPlay;
+
+      const effectiveRound = currentRound;
+      cloudLog(g, '[Battle] _applyRoomState effectiveRound=' + effectiveRound + ' host=' + (hostPlay ? 'yes' : 'no') + ' guest=' + (guestPlay ? 'yes' : 'no') + ' isHost=' + g._battleIsHost + ' myOpenId=' + (myOpenId || '').slice(-6) + ' oppOpenId=' + (opponentOpenId || '').slice(-6));
+      if (hostPlay) cloudLog(g, '[Battle] hostPlay raw=' + JSON.stringify({ word: hostPlay.word, round: hostPlay.round, openid: (hostPlay.openid || '').slice(-6) }));
+      if (guestPlay) cloudLog(g, '[Battle] guestPlay raw=' + JSON.stringify({ word: guestPlay.word, round: guestPlay.round, openid: (guestPlay.openid || '').slice(-6) }));
+
+      // 我的出牌：openId 必须匹配自己
+      const myPlay = g._battleIsHost
+        ? (hostPlay && hostPlay.openid === myOpenId ? hostPlay : null)
+        : (guestPlay && guestPlay.openid === myOpenId ? guestPlay : null);
+
+      // 对方的出牌：openId 必须匹配对方，且绝对不能是我自己
+      let opponentPlay = g._battleIsHost
+        ? (guestPlay && guestPlay.openid && guestPlay.openid === opponentOpenId && guestPlay.openid !== myOpenId ? guestPlay : null)
+        : (hostPlay && hostPlay.openid && hostPlay.openid === opponentOpenId && hostPlay.openid !== myOpenId ? hostPlay : null);
+
+      // 兜底：如果严格 openid 匹配没命中，但对手槽位有出牌且不是我方 openid，也视为对手出牌
+      if (!opponentPlay) {
+        if (g._battleIsHost && guestPlay && guestPlay.openid && guestPlay.openid !== myOpenId) {
+          opponentPlay = guestPlay;
+          cloudLog(g, '[Battle] 使用兜底对手出牌 guestPlay=' + (guestPlay ? guestPlay.word : 'null'));
+        } else if (!g._battleIsHost && hostPlay && hostPlay.openid && hostPlay.openid !== myOpenId) {
+          opponentPlay = hostPlay;
+          cloudLog(g, '[Battle] 使用兜底对手出牌 hostPlay=' + (hostPlay ? hostPlay.word : 'null'));
+        }
+      }
+
+      // 回合推进检测：云端 currentRound 大于本地，说明房主已经推进到下一回合
+      if (g._battleOnline && cloudRound > currentRound) {
+        // 如果本机还在揭晓动画中，先缓存房间状态，等 reveal 完成后再同步。
+        // 否则房主已经推进到下一回合时，本机直接 reset 到 selecting 会中断 reveal，
+        // 导致本轮总分未累加、对手出牌也看不到（好友对战第 x 回合偶现问题）。
+        if (g.battlePhase === 'revealing') {
+          g._battlePendingRoom = room;
+          cloudLog(g, '[Battle] 云端已进入第' + cloudRound + '回合，本地仍在揭晓动画，延迟同步');
+          return;
+        }
+        cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
+        g._battlePendingRoom = null;
+        g.battleRound = cloudRound;
+        this._startRound({
+          seedWords: room.seedWords,
+          hand: room.hand
+        });
+        // 同步新回合后，继续处理当前 room 中可能已有的出牌数据（如好友已在新回合出牌）
+        // 而不是 return 等下一次轮询，减少"看不到对手出牌"的概率
+      }
+
+      // 重新计算 isMyPlayCurrent / isOpponentPlayCurrent（如果回合推进过，使用新轮次）
+      const newEffectiveRound = g.battleRound || 1;
+      const isMyPlayCurrent2 = myPlay && (myPlay.round === undefined || myPlay.round === newEffectiveRound || myPlay.round === cloudRound);
+      const isOpponentPlayCurrent2 = opponentPlay && (
+        opponentPlay.round === undefined ||
+        opponentPlay.round === newEffectiveRound ||
+        opponentPlay.round === cloudRound ||
+        opponentPlay.round > newEffectiveRound
+      );
+      if (opponentPlay && !isOpponentPlayCurrent2) {
+        cloudLog(g, '[Battle] 对手出牌被过滤: oppRound=' + opponentPlay.round + ' localRound=' + newEffectiveRound + ' cloudRound=' + cloudRound);
+      }
+
+      cloudLog(g, '[Battle] _applyRoomState myPlay=' + (myPlay ? myPlay.word : 'null') + ' opponentPlay=' + (opponentPlay ? opponentPlay.word : 'null') + ' hostOpenid=' + (hostPlay ? (hostPlay.openid || '').slice(-6) : 'null') + ' guestOpenid=' + (guestPlay ? (guestPlay.openid || '').slice(-6) : 'null'));
+
+      // 如果本地还没标记自己出牌，但服务端已有，则同步回来（极少情况）
+      if (!g._battleOnlinePlayerPlayed && myPlay && isMyPlayCurrent2) {
+        g._battleOnlinePlayerPlayed = true;
+      }
+
+      // 对方已出牌
+      if (!g._battleOnlineOpponentPlayed && opponentPlay && isOpponentPlayCurrent2) {
+        g._battleOnlineOpponentPlayed = true;
+        g.battleBotReady = true;
+        g._battleBotReadyAnimStart = Date.now();
+        g.battleBotWord = opponentPlay.word;
+        g.battleBotCards = (opponentPlay.cards || []).map(c => createBattleCard(c.letter));
+        g.battleBotRoundScore = opponentPlay.score || 0;
+        g.battleBotWordMeaning = getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
+        cloudLog(g, '[Battle] 同步到对手出牌 word=' + opponentPlay.word + ' score=' + opponentPlay.score + ' phase=' + g.battlePhase);
+        if (g.audioManager) g.audioManager.play('battle_play_card');
+
+        if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
+          this.startReveal();
+        }
+      }
+    } catch (e) {
+      cloudLog(g, '[Battle] _applyRoomState 异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
+      console.error('[Battle] _applyRoomState 异常:', e);
     }
   }
 
@@ -815,67 +820,73 @@ class BattleManager {
 
   nextRound(retryCount = 1) {
     const g = this.game;
-    if (g.battlePhase !== 'round_end') return;
-    if (g.battleRound >= g.battleTotalRounds) {
-      g.battlePhase = 'battle_end';
-      return;
-    }
+    try {
+      if (g.battlePhase !== 'round_end') return;
+      if (g.battleRound >= g.battleTotalRounds) {
+        g.battlePhase = 'battle_end';
+        return;
+      }
 
-    if (g._battleOnline) {
-      // 联网对战：只有房主可以推进下一回合，避免双方并发生成不同手牌
-      if (!g._battleIsHost) {
-        // 好友点击下一回合：只标记状态，等待房主推进后通过轮询同步
-        g._battleNextRoundPressed = true;
-        return;
-      }
-      // 防止房主并发多次调用 battleNextRound
-      if (g._battleNextRoundCalling) {
-        cloudLog(g, '[Battle] nextRound 已在调用中，跳过重复请求');
-        return;
-      }
-      g._battleNextRoundCalling = true;
-      wx.cloud.callFunction({
-        name: 'battleNextRound',
-        data: { roomId: g._battleRoomId },
-        success: (res) => {
-          g._battleNextRoundCalling = false;
-          if (res.result && res.result.code === 0 && res.result.room) {
-            const room = res.result.room;
-            cloudLog(g, '[Battle] battleNextRound 成功, currentRound=' + room.currentRound);
-            // 先更新本地轮次，再 _startRound，避免轮询在旧轮次上过滤数据
-            g.battleRound = room.currentRound || (g.battleRound + 1);
-            this._startRound({
-              seedWords: room.seedWords,
-              hand: room.hand
-            });
-            // battleNextRound 返回的 room 可能已包含对手出牌（尤其好友出牌很快时），
-            // 立即应用一次，避免等下一次轮询
-            if (room.hostPlay || room.guestPlay) {
-              this._applyRoomState(room);
-            }
-          } else {
-            const msg = res.result && res.result.message ? res.result.message : '';
-            cloudLog(g, '[Battle] battleNextRound 失败: ' + msg + ' retry=' + retryCount);
-            if (retryCount > 0 && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家') && !msg.includes('对局已结束')) {
-              setTimeout(() => this.nextRound(retryCount - 1), 800);
-            }
-          }
-        },
-        fail: (err) => {
-          g._battleNextRoundCalling = false;
-          cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
-          if (retryCount > 0) {
-            setTimeout(() => this.nextRound(retryCount - 1), 800);
-          } else {
-            g.hintToast = { text: '推进回合失败，请重试', expireAt: Date.now() + 2000 };
-          }
+      if (g._battleOnline) {
+        // 联网对战：只有房主可以推进下一回合，避免双方并发生成不同手牌
+        if (!g._battleIsHost) {
+          // 好友点击下一回合：只标记状态，等待房主推进后通过轮询同步
+          g._battleNextRoundPressed = true;
+          return;
         }
-      });
-      return;
-    }
+        // 防止房主并发多次调用 battleNextRound
+        if (g._battleNextRoundCalling) {
+          cloudLog(g, '[Battle] nextRound 已在调用中，跳过重复请求');
+          return;
+        }
+        g._battleNextRoundCalling = true;
+        wx.cloud.callFunction({
+          name: 'battleNextRound',
+          data: { roomId: g._battleRoomId },
+          success: (res) => {
+            g._battleNextRoundCalling = false;
+            if (res.result && res.result.code === 0 && res.result.room) {
+              const room = res.result.room;
+              cloudLog(g, '[Battle] battleNextRound 成功, currentRound=' + room.currentRound);
+              // 先更新本地轮次，再 _startRound，避免轮询在旧轮次上过滤数据
+              g.battleRound = room.currentRound || (g.battleRound + 1);
+              this._startRound({
+                seedWords: room.seedWords,
+                hand: room.hand
+              });
+              // battleNextRound 返回的 room 可能已包含对手出牌（尤其好友出牌很快时），
+              // 立即应用一次，避免等下一次轮询
+              if (room.hostPlay || room.guestPlay) {
+                this._applyRoomState(room);
+              }
+            } else {
+              const msg = res.result && res.result.message ? res.result.message : '';
+              cloudLog(g, '[Battle] battleNextRound 失败: ' + msg + ' retry=' + retryCount);
+              if (retryCount > 0 && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家') && !msg.includes('对局已结束')) {
+                setTimeout(() => this.nextRound(retryCount - 1), 800);
+              }
+            }
+          },
+          fail: (err) => {
+            g._battleNextRoundCalling = false;
+            cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
+            if (retryCount > 0) {
+              setTimeout(() => this.nextRound(retryCount - 1), 800);
+            } else {
+              g.hintToast = { text: '推进回合失败，请重试', expireAt: Date.now() + 2000 };
+            }
+          }
+        });
+        return;
+      }
 
-    g.battleRound++;
-    this._startRound();
+      g.battleRound++;
+      this._startRound();
+    } catch (e) {
+      g._battleNextRoundCalling = false;
+      cloudLog(g, '[Battle] nextRound 异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
+      console.error('[Battle] nextRound 异常:', e);
+    }
   }
 
   updateBotThinking() {
@@ -968,61 +979,72 @@ class BattleManager {
 
   checkReveal() {
     const g = this.game;
-    // 优先处理因本地仍在揭晓动画而延迟的云端回合推进
-    if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
-      const pendingRoom = g._battlePendingRoom;
-      g._battlePendingRoom = null;
-      cloudLog(g, '[Battle] 揭晓动画已结束，应用延迟的回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
-      this._applyRoomState(pendingRoom);
-      return;
-    }
-    if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done') {
-      if (Date.now() - g._battleAnimTimeline.stepStartTime >= 800) {
-        if (g.battleRound >= g.battleTotalRounds) {
-          g.battlePhase = 'battle_end';
-        } else {
-          if (g._battleOnline) {
-            // 联网对战：揭晓动画结束后进入 round_end，由房主调用 battleNextRound 生成统一手牌；
-            // 好友等待轮询同步，避免本地 _startRound 生成不同手牌。
-            g.battlePhase = 'round_end';
-            g._battleRoundEndStartTime = Date.now();
-            if (g._battleIsHost) {
-              this.nextRound();
-            }
+    try {
+      cloudLog(g, '[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
+
+      // 优先处理因本地仍在揭晓动画而延迟的云端回合推进
+      if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
+        const pendingRoom = g._battlePendingRoom;
+        g._battlePendingRoom = null;
+        cloudLog(g, '[Battle] 揭晓动画已结束，应用延迟的回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
+        this._applyRoomState(pendingRoom);
+        return;
+      }
+      if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done') {
+        const elapsedSinceDone = Date.now() - g._battleAnimTimeline.stepStartTime;
+        cloudLog(g, '[Battle] reveal 已 done，等待 ' + elapsedSinceDone + 'ms 后进入下一状态');
+        if (elapsedSinceDone >= 800) {
+          if (g.battleRound >= g.battleTotalRounds) {
+            cloudLog(g, '[Battle] 最后一回合结束，进入 battle_end');
+            g.battlePhase = 'battle_end';
           } else {
-            g.battleRound++;
-            this._startRound();
+            if (g._battleOnline) {
+              // 联网对战：揭晓动画结束后进入 round_end，由房主调用 battleNextRound 生成统一手牌；
+              // 好友等待轮询同步，避免本地 _startRound 生成不同手牌。
+              cloudLog(g, '[Battle] 联网对战 reveal 结束，进入 round_end');
+              g.battlePhase = 'round_end';
+              g._battleRoundEndStartTime = Date.now();
+              if (g._battleIsHost) {
+                this.nextRound();
+              }
+            } else {
+              g.battleRound++;
+              this._startRound();
+            }
           }
         }
       }
-    }
 
-    // 防御性恢复：如果因为网络抖动/房主推进失败导致长时间卡在 round_end，主动补救
-    if (g._battleOnline && g.battlePhase === 'round_end' && g._battleRoundEndStartTime) {
-      const stuckMs = Date.now() - g._battleRoundEndStartTime;
-      if (stuckMs >= 3000) {
-        cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
-        if (g._battleIsHost) {
-          // 房主：重试推进下一回合
-          this.nextRound();
-        } else {
-          // 好友：立即主动拉取一次最新房间状态
-          wx.cloud.callFunction({
-            name: 'battleGet',
-            data: { roomId: g._battleRoomId },
-            success: (res) => {
-              if (res.result && res.result.code === 0) {
-                this._applyRoomState(res.result.room);
+      // 防御性恢复：如果因为网络抖动/房主推进失败导致长时间卡在 round_end，主动补救
+      if (g._battleOnline && g.battlePhase === 'round_end' && g._battleRoundEndStartTime) {
+        const stuckMs = Date.now() - g._battleRoundEndStartTime;
+        if (stuckMs >= 3000) {
+          cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
+          if (g._battleIsHost) {
+            // 房主：重试推进下一回合
+            this.nextRound();
+          } else {
+            // 好友：立即主动拉取一次最新房间状态
+            wx.cloud.callFunction({
+              name: 'battleGet',
+              data: { roomId: g._battleRoomId },
+              success: (res) => {
+                if (res.result && res.result.code === 0) {
+                  this._applyRoomState(res.result.room);
+                }
+              },
+              fail: (err) => {
+                console.error('[battleGet] 主动恢复拉取失败:', err);
               }
-            },
-            fail: (err) => {
-              console.error('[battleGet] 主动恢复拉取失败:', err);
-            }
-          });
+            });
+          }
+          // 防止短时间内频繁触发，重置计时
+          g._battleRoundEndStartTime = Date.now();
         }
-        // 防止短时间内频繁触发，重置计时
-        g._battleRoundEndStartTime = Date.now();
       }
+    } catch (e) {
+      cloudLog(g, '[Battle] checkReveal 异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
+      console.error('[Battle] checkReveal 异常:', e);
     }
   }
 

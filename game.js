@@ -5623,11 +5623,20 @@ function gameLoop(timestamp) {
     // renderer._drawCompactDebugLogs(game);
 
     // 对战模式状态更新（匹配弹窗/好友对战弹窗显示期间暂停 bot 思考与 reveal 检查）
-    const inFriendBattleLobby = game && game._battleRoomId && game._battleModeSelectPopup;
+    // 注意：弹窗对象可能残留但已标记 closing，此时不应再阻塞对战状态更新
+    const battleModePopup = game && game._battleModeSelectPopup;
+    const inFriendBattleLobby = game && game._battleRoomId && battleModePopup && !battleModePopup.closing;
     if (game && game.state === 'battle' && game.battleManager && !game._battleMatchAnim && !inFriendBattleLobby) {
-      game.battleManager.updateTurnTimer();
-      game.battleManager.updateBotThinking();
-      game.battleManager.checkReveal();
+      try {
+        game.battleManager.updateTurnTimer();
+        game.battleManager.updateBotThinking();
+        game.battleManager.checkReveal();
+      } catch (e) {
+        if (game && game.cloudStorage && game.cloudStorage.log) {
+          game.cloudStorage.log('[Battle] gameLoop 对战状态更新异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
+        }
+        console.error('[Battle] gameLoop 对战状态更新异常:', e);
+      }
     }
     game.update(deltaTime);
   }
