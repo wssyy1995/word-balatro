@@ -166,6 +166,7 @@ class BattleManager {
     g._battleHostPlay = null;
     g._battleGuestPlay = null;
     g._battleRoomPollTimer = null;
+    g._battlePendingRoom = null;
     // 清除对战结束弹窗按钮锁，避免重开后按钮无响应
     g._battleShareBtnLocked = false;
     g._battleRestartBtnLocked = false;
@@ -559,11 +560,10 @@ class BattleManager {
     const g = this.game;
     if (!g._battleOnline || !g._battleRoomId) return;
     if (g._battleRoomPollTimer) {
-      clearInterval(g._battleRoomPollTimer);
+      clearTimeout(g._battleRoomPollTimer);
     }
-    g._battleRoomPollTimer = setInterval(() => {
+    const poll = () => {
       if (!g._battleOnline || !g._battleRoomId) {
-        clearInterval(g._battleRoomPollTimer);
         g._battleRoomPollTimer = null;
         return;
       }
@@ -577,9 +577,17 @@ class BattleManager {
         },
         fail: (err) => {
           console.error('[battleGet] 轮询失败:', err);
+        },
+        complete: () => {
+          if (g._battleOnline && g._battleRoomId) {
+            g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
+          } else {
+            g._battleRoomPollTimer = null;
+          }
         }
       });
-    }, ROOM_POLL_INTERVAL_MS);
+    };
+    g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
   }
 
   // 联网对战：应用房间状态
@@ -675,7 +683,16 @@ class BattleManager {
 
     // 回合推进检测：云端 currentRound 大于本地，说明房主已经推进到下一回合
     if (g._battleOnline && cloudRound > currentRound) {
+      // 如果本机还在揭晓动画中，先缓存房间状态，等 reveal 完成后再同步。
+      // 否则房主已经推进到下一回合时，本机直接 reset 到 selecting 会中断 reveal，
+      // 导致本轮总分未累加、对手出牌也看不到（好友对战第 x 回合偶现问题）。
+      if (g.battlePhase === 'revealing' && g._battleAnimTimeline) {
+        g._battlePendingRoom = room;
+        cloudLog(g, '[Battle] 云端已进入第' + cloudRound + '回合，本地仍在揭晓动画，延迟同步');
+        return;
+      }
       cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
+      g._battlePendingRoom = null;
       g.battleRound = cloudRound;
       this._startRound({
         seedWords: room.seedWords,
@@ -947,6 +964,14 @@ class BattleManager {
 
   checkReveal() {
     const g = this.game;
+    // 优先处理因本地仍在揭晓动画而延迟的云端回合推进
+    if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
+      const pendingRoom = g._battlePendingRoom;
+      g._battlePendingRoom = null;
+      cloudLog(g, '[Battle] 揭晓动画已结束，应用延迟的回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
+      this._applyRoomState(pendingRoom);
+      return;
+    }
     if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done') {
       if (Date.now() - g._battleAnimTimeline.stepStartTime >= 800) {
         if (g.battleRound >= g.battleTotalRounds) {
@@ -1178,6 +1203,7 @@ class BattleManager {
     g._battleGuestPlay = null;
     g._battleOnlinePlayerPlayed = false;
     g._battleOnlineOpponentPlayed = false;
+    g._battlePendingRoom = null;
     g._battleRoomClosedPopup = false;
     g._battleRoomClosedAnimStart = null;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');

@@ -1315,8 +1315,8 @@ js/battle/
 | `battleJoin` | 好友 | 加入房间，返回角色（host/guest） |
 | `battleReady` | 好友 | 点击「开始对战」后标记准备，返回统一起点时间 `guestReadyAt` |
 | `battleStart` | 房主 | 倒计时结束后将房间状态改为 `playing`，并生成第一回合统一种子词和手牌 |
-| `battleGet` | 双方 | 每 1.5 秒轮询房间状态 |
-| `battlePlay` | 双方 | 玩家出牌后同步单词/卡牌/得分到云端 |
+| `battleGet` | 双方 | 每 800 毫秒轮询房间状态（串行请求，避免重叠响应导致状态回退） |
+| `battlePlay` | 双方 | 玩家出牌后同步单词/卡牌/得分到云端（失败自动重试，最终失败回滚并允许重新出牌） |
 | `battleNextRound` | 房主 | 揭晓动画结束后生成下一回合统一种子词和手牌 |
 | `battleRequestRestart` | 任意一方 | 对战结束后发起重新挑战邀请 |
 | `battleAcceptRestart` | 另一方 | 接受重新挑战邀请，房间重置为 ready |
@@ -1326,9 +1326,10 @@ js/battle/
 **关键机制**
 
 - **统一手牌**：`battleStart` 与 `battleNextRound` 在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。
-- **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。
+- **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。揭晓动画期间若收到下一回合的房间状态，会先把房间缓存起来，等本地 reveal 动画完成、总分累加后再同步新回合，避免"看不到对手出牌"和分数丢失。
+- **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。
 - **超时处理**：好友对战不启用本地 15 秒倒计时，出牌同步依赖云端 `battlePlay`；超时逻辑由云函数侧控制（当前版本前端暂未接入超时提示）。
-- **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。
+- **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。对战结束弹窗点击「回到首页」同样会调用 `battleClose`。
 - **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
 
 #### 对战计分规则
@@ -1578,7 +1579,7 @@ letterUpgrades = Map {
 | `battleJoin` | 好友 | `{ roomId }` | `{ code, role, room }` | 加入房间，role=`host`/`guest`；房间满或已开始则失败 |
 | `battleReady` | 好友 | `{ roomId }` | `{ code, room }` | 好友标记准备，记录 `guestReadyAt` 作为同步倒计时起点 |
 | `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`，生成第一回合统一种子词和手牌 |
-| `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 1.5s 轮询 |
+| `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 800ms 串行轮询 |
 | `battlePlay` | 双方 | `{ roomId, word, cards, score }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay` |
 | `battleNextRound` | 房主 | `{ roomId }` | `{ code, room }` | 清空双方出牌，生成下一回合统一种子词和手牌，`currentRound++` |
 | `battleRequestRestart` | 任意一方 | `{ roomId }` | `{ code, room }` | 在对战结束后写入 `restartRequest` 邀请 |
@@ -1859,6 +1860,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.12.7 | 2026-07-02 | 女巫奖励全局 buff 图标改为云存储懒加载，修复高回合/存档恢复时 buff 图片未生效与重复注入日志问题；商店 5 折时价格按钮右上角改用本地 `discount.png`；对战结束分享战绩截取屏幕中间 50% 区域作为分享图；商店女巫试炼 UI 统一：礼物图标、文案、按钮尺寸与水波纹样式调整；修复领取女巫奖励后延迟标记未清理导致卡在商店页的问题；修复结算领取后无新词牌时误判为新词牌阶段导致卡住的问题；同步更新 README |
 | v1.12.8 | 2026-07-09 | 好友对战特性更新：新增 `battleRoom`/`battleJoin`/`battleStart`/`battleReady`/`battleGet`/`battlePlay`/`battleNextRound`/`battleRequestRestart`/`battleAcceptRestart`/`battleClose`/`getBattleOpponent` 云函数；实现创建房间、分享房间号、好友加入、准备同步、云端统一手牌、出牌同步、回合推进、重新挑战、房间关闭等完整流程；对战模式选择弹窗支持好友对战/在线对战双入口；修复好友对战重开邀请对方未弹窗、一方退出后另一方未提示、轮次不同步等问题；同步更新 README（好友对战流程、云函数、目录结构） |
 | v1.12.9 | 2026-07-09 | 修复字母升级/随机升级音效在动画期间重复播放的问题：只在分数切换阶段播放一次 `word_score` |
+| v1.13.0 | 2026-07-14 | 好友对战状态同步加固：轮询间隔降至 800ms 并改为串行轮询避免请求重叠；出牌同步/回合推进增加失败重试；揭晓动画期间收到下一回合状态则延迟同步，防止中断 reveal 导致看不到对手出牌和分数未累加；对战结束弹窗「回到首页」正确调用 `battleClose` 关闭房间；同步更新 README |
 
 ---
 
