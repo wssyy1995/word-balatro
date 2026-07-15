@@ -1327,7 +1327,8 @@ js/battle/
 
 - **统一手牌**：`battleStart` 与 `battleNextRound` 在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。
 - **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。揭晓动画期间若收到下一回合的房间状态，会先把房间缓存起来，等本地 reveal 动画完成、总分累加后再同步新回合，避免"看不到对手出牌"和分数丢失。
-- **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。
+- **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。`_applyRoomState` 会丢弃 `cloudRound` 小于本地的过期响应，并在揭晓动画期间把新回合房间状态缓存到 `_battlePendingRoom`，等动画完成后再同步。
+- **防卡死**：揭晓动画结束后进入 `round_end`，房主调用 `battleNextRound` 推进；若超过 3 秒仍未离开 `round_end`，房主会自动重试推进，好友会主动拉取一次最新房间状态，避免网络抖动导致双方卡住。
 - **超时处理**：好友对战不启用本地 15 秒倒计时，出牌同步依赖云端 `battlePlay`；超时逻辑由云函数侧控制（当前版本前端暂未接入超时提示）。
 - **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。对战结束弹窗点击「回到首页」同样会调用 `battleClose`。
 - **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
@@ -1861,6 +1862,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.12.8 | 2026-07-09 | 好友对战特性更新：新增 `battleRoom`/`battleJoin`/`battleStart`/`battleReady`/`battleGet`/`battlePlay`/`battleNextRound`/`battleRequestRestart`/`battleAcceptRestart`/`battleClose`/`getBattleOpponent` 云函数；实现创建房间、分享房间号、好友加入、准备同步、云端统一手牌、出牌同步、回合推进、重新挑战、房间关闭等完整流程；对战模式选择弹窗支持好友对战/在线对战双入口；修复好友对战重开邀请对方未弹窗、一方退出后另一方未提示、轮次不同步等问题；同步更新 README（好友对战流程、云函数、目录结构） |
 | v1.12.9 | 2026-07-09 | 修复字母升级/随机升级音效在动画期间重复播放的问题：只在分数切换阶段播放一次 `word_score` |
 | v1.13.0 | 2026-07-14 | 好友对战状态同步加固：轮询间隔降至 800ms 并改为串行轮询避免请求重叠；出牌同步/回合推进增加失败重试；揭晓动画期间收到下一回合状态则延迟同步，防止中断 reveal 导致看不到对手出牌和分数未累加；对战结束弹窗「回到首页」正确调用 `battleClose` 关闭房间；同步更新 README |
+| v1.13.1 | 2026-07-14 | 修复好友对战计分动画后偶现页面卡住：修复 `_applyRoomState` 中 `effectiveRound` 引用错误；丢弃乱序到达的过期房间响应；增加 round_end 3 秒卡住自动恢复（房主重试推进/好友主动拉取）；防止房主并发调用 `battleNextRound` |
 
 ---
 
