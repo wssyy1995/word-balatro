@@ -437,16 +437,6 @@ class BattleManager {
       }
     }
 
-    // === 第三重校验：本局是否已出过 ===
-    if (g._battlePlayedWords && g._battlePlayedWords.has(lowerWord)) {
-      g.battlePendingCheck = { word, state: 'duplicate', failText: '本局已出过该单词', startTime: Date.now() };
-      if (g.audioManager) g.audioManager.play('card_illegal');
-      // 重复提示不自动消失，玩家需点击新卡牌或清空后重新选择
-      return { valid: false };
-    }
-
-    // 校验通过：记录已出单词
-    g._battlePlayedWords.add(lowerWord);
     if (g._battlePendingCheckTimer) {
       clearTimeout(g._battlePendingCheckTimer);
       g._battlePendingCheckTimer = null;
@@ -565,10 +555,6 @@ class BattleManager {
             g.battlePlayerWord = null;
             g.battlePlayerCards = null;
             g.battlePlayerRoundScore = 0;
-            // 从本局已出牌集合中移除，避免重新出同一个词时被误判为重复
-            if (g._battlePlayedWords && word) {
-              g._battlePlayedWords.delete(word.toLowerCase());
-            }
             cloudLog(g, '[Battle] _syncPlayToServer 最终失败，允许重新出牌');
           }
         }
