@@ -834,17 +834,24 @@ class BattleManager {
           g._battleNextRoundPressed = true;
           return;
         }
-        // 防止房主并发多次调用 battleNextRound
+        // 防止房主并发多次调用 battleNextRound；若上一次调用长时间未返回（iOS 偶现回调丢失），强制重置锁
         if (g._battleNextRoundCalling) {
-          cloudLog(g, '[Battle] nextRound 已在调用中，跳过重复请求');
-          return;
+          const callingMs = Date.now() - (g._battleNextRoundCallingStartTime || 0);
+          if (callingMs < 5000) {
+            cloudLog(g, '[Battle] nextRound 已在调用中，跳过重复请求');
+            return;
+          }
+          cloudLog(g, '[Battle] nextRound 调用锁超时 ' + callingMs + 'ms，强制重置');
+          g._battleNextRoundCalling = false;
         }
         g._battleNextRoundCalling = true;
+        g._battleNextRoundCallingStartTime = Date.now();
         wx.cloud.callFunction({
           name: 'battleNextRound',
           data: { roomId: g._battleRoomId },
           success: (res) => {
             g._battleNextRoundCalling = false;
+            g._battleNextRoundCallingStartTime = null;
             if (res.result && res.result.code === 0 && res.result.room) {
               const room = res.result.room;
               cloudLog(g, '[Battle] battleNextRound 成功, currentRound=' + room.currentRound);
@@ -869,6 +876,7 @@ class BattleManager {
           },
           fail: (err) => {
             g._battleNextRoundCalling = false;
+            g._battleNextRoundCallingStartTime = null;
             cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
             if (retryCount > 0) {
               setTimeout(() => this.nextRound(retryCount - 1), 800);
@@ -884,6 +892,7 @@ class BattleManager {
       this._startRound();
     } catch (e) {
       g._battleNextRoundCalling = false;
+      g._battleNextRoundCallingStartTime = null;
       cloudLog(g, '[Battle] nextRound 异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
       console.error('[Battle] nextRound 异常:', e);
     }
@@ -1021,7 +1030,12 @@ class BattleManager {
         if (stuckMs >= 3000) {
           cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
           if (g._battleIsHost) {
-            // 房主：重试推进下一回合
+            // 房主：重试推进下一回合。若上一次 battleNextRound 请求仍未返回（iOS 上偶现回调丢失），
+            // 先重置调用锁，避免重试被跳过导致屏幕一直卡住。
+            if (g._battleNextRoundCalling) {
+              cloudLog(g, '[Battle] 重置 _battleNextRoundCalling 后重试推进');
+              g._battleNextRoundCalling = false;
+            }
             this.nextRound();
           } else {
             // 好友：立即主动拉取一次最新房间状态
@@ -1262,6 +1276,7 @@ class BattleManager {
     g._battleRoundEndStartTime = null;
     g._battleNextRoundPressed = false;
     g._battleNextRoundCalling = false;
+    g._battleNextRoundCallingStartTime = null;
     g._battleRoomClosedPopup = false;
     g._battleRoomClosedAnimStart = null;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');
