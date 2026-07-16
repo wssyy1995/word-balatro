@@ -379,6 +379,7 @@ class BattleManager {
     g._battlePlayerTimedOut = false;
     g._battleBotTimedOut = false;
     g._battleRoundStartTime = Date.now();
+    g._battleStuckSince = null;
 
     // 预计算 Bot 出牌：它出的就是选中的种子词
     const botCards = findCardsForWord(botSeed.word, g.battleBotHand) || botSeed.word.toUpperCase().split('').map(letter => createBattleCard(letter));
@@ -1128,8 +1129,8 @@ class BattleManager {
   checkReveal() {
     const g = this.game;
     try {
-      cloudLog(g, '[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
-      console.log('[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
+      cloudLog(g, '[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound + ' pendingRoom=' + (g._battlePendingRoom ? 'yes' : 'no'));
+      console.log('[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound + ' pendingRoom=' + (g._battlePendingRoom ? 'yes' : 'no'));
 
       // 在线对战期间确保轮询始终运行
       if (g._battleOnline && g._battleRoomId) {
@@ -1256,6 +1257,31 @@ class BattleManager {
           // 重置计时，避免频繁拉取
           g._battlePlayerReadyAnimStart = Date.now();
         }
+      }
+
+      // 通用兜底：在线对战期间长时间卡在非 selecting/battle_end 状态，强制拉取房间恢复
+      if (g._battleOnline && g._battleRoomId && g.battlePhase !== 'selecting' && g.battlePhase !== 'battle_end') {
+        if (!g._battleStuckSince) g._battleStuckSince = Date.now();
+        const stuckMs = Date.now() - g._battleStuckSince;
+        if (stuckMs >= 12000) {
+          cloudLog(g, '[Battle] 检测到 phase=' + g.battlePhase + ' 卡住 ' + stuckMs + 'ms，强制拉取房间恢复');
+          console.log('[Battle] 检测到 phase=' + g.battlePhase + ' 卡住 ' + stuckMs + 'ms，强制拉取房间恢复');
+          wx.cloud.callFunction({
+            name: 'battleGet',
+            data: { roomId: g._battleRoomId },
+            success: (res) => {
+              if (res.result && res.result.code === 0) {
+                this._applyRoomState(res.result.room);
+              }
+            },
+            fail: (err) => {
+              console.error('[battleGet] 通用兜底拉取失败:', err);
+            }
+          });
+          g._battleStuckSince = Date.now();
+        }
+      } else {
+        g._battleStuckSince = null;
       }
     } catch (e) {
       cloudLog(g, '[Battle] checkReveal 异常: ' + (e && e.message ? e.message : String(e)) + ' stack=' + (e && e.stack ? e.stack : 'null'));
@@ -1476,6 +1502,7 @@ class BattleManager {
     g._battlePendingRoom = null;
     g._battleRoundEndStartTime = null;
     g._battleRoundStartTime = null;
+    g._battleStuckSince = null;
     g._battleNextRoundPressed = false;
     g._battleNextRoundCalling = false;
     g._battleNextRoundCallingStartTime = null;
