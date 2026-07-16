@@ -476,7 +476,9 @@ class BattleManager {
 
     // 如果对方已经就绪，直接进入揭晓阶段
     if (g.battleBotReady) {
-      this.startReveal();
+      // 超时方先展示 +0；否则保持玩家先 Bot 后
+      const firstSide = g._battleBotTimedOut ? 'bot' : (g._battlePlayerTimedOut ? 'player' : 'player');
+      this.startReveal(firstSide);
     } else if (!g._battleOnline) {
       // 玩家先出牌，给 Bot 启动 15 秒倒计时（本地人机）
       g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
@@ -747,8 +749,9 @@ class BattleManager {
         if (g.audioManager) g.audioManager.play('battle_play_card');
 
         if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
-          // 自己已经出过，直接揭晓
-          this.startReveal();
+          // 自己已经出过，直接揭晓；超时方先展示 +0
+          const firstSide = g._battleBotTimedOut ? 'bot' : (g._battlePlayerTimedOut ? 'player' : 'player');
+          this.startReveal(firstSide);
         } else if (opponentPlay.isTimeout) {
           // 对手已超时，自己还没出：给自己 15 秒倒计时继续出牌
           g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
@@ -874,19 +877,24 @@ class BattleManager {
         g._battleNextRoundCallingStartTime = Date.now();
         wx.cloud.callFunction({
           name: 'battleNextRound',
-          data: { roomId: g._battleRoomId },
+          data: { roomId: g._battleRoomId, currentRound: g.battleRound },
           success: (res) => {
             g._battleNextRoundCalling = false;
             g._battleNextRoundCallingStartTime = null;
             if (res.result && res.result.code === 0 && res.result.room) {
               const room = res.result.room;
-              cloudLog(g, '[Battle] battleNextRound 成功, currentRound=' + room.currentRound);
-              // 先更新本地轮次，再 _startRound，避免轮询在旧轮次上过滤数据
-              g.battleRound = room.currentRound || (g.battleRound + 1);
-              this._startRound({
-                seedWords: room.seedWords,
-                hand: room.hand
-              });
+              const cloudRound = room.currentRound || (g.battleRound + 1);
+              cloudLog(g, '[Battle] battleNextRound 成功, cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
+              // 仅当云端轮次确实领先本地时才 _startRound，避免轮询已同步到新回合后又被 reset
+              if (cloudRound > g.battleRound) {
+                g.battleRound = cloudRound;
+                this._startRound({
+                  seedWords: room.seedWords,
+                  hand: room.hand
+                });
+              } else {
+                cloudLog(g, '[Battle] 本地轮次已 >= 云端轮次，跳过 _startRound');
+              }
               // battleNextRound 返回的 room 可能已包含对手出牌（尤其好友出牌很快时），
               // 立即应用一次，避免等下一次轮询
               if (room.hostPlay || room.guestPlay) {
@@ -895,7 +903,12 @@ class BattleManager {
             } else {
               const msg = res.result && res.result.message ? res.result.message : '';
               cloudLog(g, '[Battle] battleNextRound 失败: ' + msg + ' retry=' + retryCount);
-              if (retryCount > 0 && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家') && !msg.includes('对局已结束')) {
+              if (msg.includes('对局已结束')) {
+                cloudLog(g, '[Battle] 服务端提示对局已结束，本地进入 battle_end');
+                g.battlePhase = 'battle_end';
+                return;
+              }
+              if (retryCount > 0 && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家') && !msg.includes('房间轮次落后')) {
                 setTimeout(() => this.nextRound(retryCount - 1), 800);
               }
             }

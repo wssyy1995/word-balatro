@@ -112,7 +112,8 @@ function generateRoundData() {
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
-  const { roomId } = event;
+  const { roomId, currentRound } = event;
+  console.log('[battleNextRound] 收到请求 OPENID=' + (OPENID || 'null') + ' roomId=' + (roomId || 'null') + ' currentRound=' + (currentRound !== undefined ? currentRound : 'null'));
   if (!OPENID) return { code: -1, message: '无法获取 OPENID' };
   if (!roomId) return { code: -1, message: '房间号不能为空' };
 
@@ -128,7 +129,22 @@ exports.main = async (event, context) => {
     const isGuest = room.guest === OPENID;
     if (!isHost && !isGuest) return { code: -1, message: '你不是房间玩家' };
 
-    const nextRound = (room.currentRound || 1) + 1;
+    const roomCurrentRound = room.currentRound || 1;
+    const clientRound = typeof currentRound === 'number' ? currentRound : roomCurrentRound;
+
+    // 幂等保护：若云端轮次已大于客户端期望轮次，说明该回合已被推进过，直接返回当前房间
+    if (roomCurrentRound > clientRound) {
+      console.log('[battleNextRound] 云端轮次已领先，直接返回当前房间 roomCurrentRound=' + roomCurrentRound + ' clientRound=' + clientRound);
+      const updated = await db.collection('rooms').doc(room._id).get();
+      return { code: 0, room: updated.data, message: '回合已推进' };
+    }
+    // 客户端轮次超前，可能是状态不同步，拒绝推进并提示重新拉取
+    if (roomCurrentRound < clientRound) {
+      console.log('[battleNextRound] 云端轮次落后 clientRound=' + clientRound + ' roomCurrentRound=' + roomCurrentRound);
+      return { code: -1, message: '房间轮次落后，请重新拉取' };
+    }
+
+    const nextRound = roomCurrentRound + 1;
     if (nextRound > (room.totalRounds || 10)) {
       return { code: -1, message: '对局已结束' };
     }
@@ -148,6 +164,7 @@ exports.main = async (event, context) => {
     });
 
     const updated = await db.collection('rooms').doc(room._id).get();
+    console.log('[battleNextRound] 推进成功 currentRound=' + nextRound);
     return { code: 0, room: updated.data };
   } catch (e) {
     console.error('[battleNextRound] 推进回合失败:', e);
