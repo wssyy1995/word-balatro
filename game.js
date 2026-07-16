@@ -1498,6 +1498,13 @@ function getInputY(x, y) {
     // 只有好友需要通知云端；房主由轮询检测到 guestReady 后自动启动倒计时
     if (!game._battleIsHost) {
       cloudStorage.log('[AutoJoin] callBattleReady 以好友身份调用 battleReady roomId=' + game._battleRoomId);
+      // 先立即切换到"已准备"等待状态，给用户即时反馈，避免云函数回调延迟时感觉"没反应"
+      if (game._battleModeSelectPopup) {
+        game._battleModeSelectPopup.mode = 'friend_join_wait';
+        game._battleModeSelectPopup.title = '好友对战';
+        game._battleModeSelectPopup.startTime = Date.now();
+        game._battleModeSelectPopup.startPressed = false;
+      }
       wx.cloud.callFunction({
         name: 'battleReady',
         data: { roomId: game._battleRoomId },
@@ -1519,6 +1526,14 @@ function getInputY(x, y) {
             cloudStorage.log('[AutoJoin] battleReady 成功且返回 guestReadyAt，准备启动倒计时');
             startFriendBattleCountdown(res.result.room.guestReadyAt);
             cloudStorage.log('[AutoJoin] battleReady 倒计时启动完成 countdown=' + (!!game._friendBattleCountdown));
+            // 兜底：如果倒计时已存在但弹窗仍停留在准备页，强制切到倒计时显示
+            if (game._friendBattleCountdown && game._battleModeSelectPopup && game._battleModeSelectPopup.mode !== 'friend_countdown') {
+              game._battleModeSelectPopup.mode = 'friend_countdown';
+              game._battleModeSelectPopup.title = '对战即将开始';
+              game._battleModeSelectPopup.startTime = Date.now();
+              game._battleModeSelectPopup.startPressed = false;
+              cloudStorage.log('[AutoJoin] battleReady 强制切到 countdown 弹窗');
+            }
           } else {
             cloudStorage.log('[AutoJoin] battleReady 成功但未返回 guestReadyAt，不启动倒计时 res=' + JSON.stringify(res.result));
           }
