@@ -1388,6 +1388,14 @@ function getInputY(x, y) {
 
   function applyFriendRoomState(room) {
     if (!room || !game._battleRoomId) return;
+
+    // 好友房轮询已停止但对战已经启动，说明是 stopFriendRoomPolling 之前已发出请求的残留响应，
+    // 忽略它，避免重开/开局后被重复触发导致状态重置。
+    if (!game._battleRoomPollTimer && game._friendBattleStarted) {
+      cloudStorage.log('[AutoJoin] applyFriendRoomState 忽略残留响应 roomId=' + game._battleRoomId);
+      return;
+    }
+
     const popup = game._battleModeSelectPopup;
     // 用房间字段计算当前用户 openid，避免 game.userid 未设置导致重开邀请身份判断错误
     const myOpenId = game._battleIsHost ? (room.host || '') : (room.guest || '');
@@ -1603,6 +1611,13 @@ function getInputY(x, y) {
   function startBattleFromRoom(room) {
     const roomId = game._battleRoomId;
     const isHost = game._battleIsHost;
+
+    // 防御性跳过：如果新一局已经启动到相同轮次，避免重复响应导致重置
+    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === (room.currentRound || 1)) {
+      cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动到相同轮次，跳过 roomId=' + roomId);
+      return;
+    }
+
     // 重开后的新一轮：room.currentRound 回到 1 且本地已完成过一轮，需要重置标志并清空对战状态
     const isRestart = room.currentRound === 1 && game._friendBattleStarted;
     if (isRestart) {
