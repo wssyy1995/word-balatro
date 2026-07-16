@@ -1652,9 +1652,11 @@ function getInputY(x, y) {
     const roomRound = room.currentRound || 1;
     const roomUpdateTime = room.updateTime || 0;
 
-    // 防御性跳过：如果已经启动到相同轮次且房间状态未更新，直接返回，避免残留响应重复重置对战状态
-    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === roomRound && game._friendBattleLobbyUpdateTime && roomUpdateTime <= game._friendBattleLobbyUpdateTime) {
-      cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动到相同轮次，跳过 roomId=' + roomId);
+    // 防御性跳过：如果已经启动到相同轮次且房间状态更旧，直接返回，避免残留响应重复重置对战状态
+    // 注意：必须用 < 而不是 <=，因为 applyFriendRoomState 已经把 _friendBattleLobbyUpdateTime 设为当前响应的 updateTime，
+    // 如果用 <= 会把当前这个正要开局的响应也跳过，导致 _startRound 不执行、双方手牌不一致。
+    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === roomRound && game._friendBattleLobbyUpdateTime && roomUpdateTime < game._friendBattleLobbyUpdateTime) {
+      cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动到相同轮次且响应更旧，跳过 roomId=' + roomId + ' roomUpdateTime=' + roomUpdateTime + ' last=' + game._friendBattleLobbyUpdateTime);
       return;
     }
 
