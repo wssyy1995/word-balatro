@@ -174,7 +174,6 @@ class BattleManager {
     g._battleShareBtnLocked = false;
     g._battleRestartBtnLocked = false;
     g._battleHomeBtnLocked = false;
-    g._battleRetryBtnPressed = false;
     // 清除回到首页确认弹窗状态
     g._battleHomeConfirmPopup = false;
     g._battleHomeConfirmAnimStart = null;
