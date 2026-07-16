@@ -2559,7 +2559,7 @@ class BattleRenderer {
   }
 
   // ===== 回合推进卡住时的手动重试按钮 =====
-  _drawRetryButton(ctx, game, W, H, btnY, s) {
+  _drawRetryButton(ctx, game, W, H, baseBtnY, s) {
     // 仅在 round_end 或 revealing done 后卡住时显示
     const showRetry = game.battlePhase === 'round_end' ||
       (game.battlePhase === 'revealing' && game._battleAnimTimeline && game._battleAnimTimeline.step === 'done');
@@ -2572,7 +2572,7 @@ class BattleRenderer {
     const btnH = 44 * s;
     const btnX = (W - btnW) / 2;
     // 放在屏幕中下部，避免被底部安全区遮挡
-    const btnY = Math.min(btnY + 70 * s, H - (this.parent.safeBottom || 0) - btnH - 20 * s);
+    const btnY = Math.min(baseBtnY + 70 * s, H - (this.parent.safeBottom || 0) - btnH - 20 * s);
     const pressed = game._battleRetryBtnPressed || false;
     const offset = pressed ? 2 * s : 0;
 
