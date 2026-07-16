@@ -303,6 +303,7 @@ class BattleManager {
 
   _startRound(roundData) {
     const g = this.game;
+    console.log('[Battle] _startRound called online=' + g._battleOnline + ' round=' + (g.battleRound || 'null') + ' phase=' + g.battlePhase);
 
     let seedWords;
     let hand;
@@ -719,6 +720,7 @@ class BattleManager {
         if (g.battlePhase === 'revealing') {
           g._battlePendingRoom = room;
           cloudLog(g, '[Battle] 云端已进入第' + cloudRound + '回合，本地仍在揭晓动画，延迟同步');
+          console.log('[Battle] 云端已进入第' + cloudRound + '回合，本地仍在揭晓动画，延迟同步');
           return;
         }
         cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');

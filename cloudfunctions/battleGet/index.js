@@ -10,6 +10,7 @@ const db = cloud.database();
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
   const { roomId } = event;
+  console.log('[battleGet] 收到请求 OPENID=' + (OPENID || 'null') + ' roomId=' + (roomId || 'null'));
   if (!OPENID) return { code: -1, message: '无法获取 OPENID' };
   if (!roomId) return { code: -1, message: '房间号不能为空' };
 
