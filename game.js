@@ -1516,7 +1516,11 @@ function getInputY(x, y) {
             }
           } else if (res.result.room && res.result.room.guestReadyAt) {
             // 用云端返回的 guestReadyAt 作为统一起点，确保双方倒计时同步
+            cloudStorage.log('[AutoJoin] battleReady 成功且返回 guestReadyAt，准备启动倒计时');
             startFriendBattleCountdown(res.result.room.guestReadyAt);
+            cloudStorage.log('[AutoJoin] battleReady 倒计时启动完成 countdown=' + (!!game._friendBattleCountdown));
+          } else {
+            cloudStorage.log('[AutoJoin] battleReady 成功但未返回 guestReadyAt，不启动倒计时 res=' + JSON.stringify(res.result));
           }
         },
         fail: (err) => {
@@ -1539,6 +1543,7 @@ function getInputY(x, y) {
   // 好友对战：双方同步 3 秒倒计时，倒计时结束后正式进入对战
   // syncStartAt: 统一倒计时起点时间戳（毫秒），默认当前时间
   function startFriendBattleCountdown(syncStartAt) {
+    cloudStorage.log('[AutoJoin] startFriendBattleCountdown 被调用 syncStartAt=' + syncStartAt + ' existing=' + (!!game._friendBattleCountdown));
     if (game._friendBattleCountdown) return;
     const now = Date.now();
     let startTime = syncStartAt || now;
