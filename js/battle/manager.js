@@ -875,10 +875,31 @@ class BattleManager {
         }
         g._battleNextRoundCalling = true;
         g._battleNextRoundCallingStartTime = Date.now();
+        // 客户端兜底：iOS 上偶现云函数回调完全丢失（success/fail 都不触发），
+        // 设置 6 秒超时，到期未收到回调则按失败重试
+        let callbackFired = false;
+        const callTimeoutId = setTimeout(() => {
+          if (callbackFired) return;
+          callbackFired = true;
+          g._battleNextRoundCalling = false;
+          g._battleNextRoundCallingStartTime = null;
+          cloudLog(g, '[Battle] battleNextRound 客户端 6 秒超时，按失败重试 retry=' + retryCount);
+          if (retryCount > 0) {
+            setTimeout(() => this.nextRound(retryCount - 1), 800);
+          } else {
+            g.hintToast = { text: '推进回合超时，请重试', expireAt: Date.now() + 2000 };
+          }
+        }, 6000);
         wx.cloud.callFunction({
           name: 'battleNextRound',
           data: { roomId: g._battleRoomId, currentRound: g.battleRound },
           success: (res) => {
+            if (callbackFired) {
+              cloudLog(g, '[Battle] battleNextRound 超时后收到 success，忽略');
+              return;
+            }
+            callbackFired = true;
+            clearTimeout(callTimeoutId);
             g._battleNextRoundCalling = false;
             g._battleNextRoundCallingStartTime = null;
             if (res.result && res.result.code === 0 && res.result.room) {
@@ -914,6 +935,12 @@ class BattleManager {
             }
           },
           fail: (err) => {
+            if (callbackFired) {
+              cloudLog(g, '[Battle] battleNextRound 超时后收到 fail，忽略');
+              return;
+            }
+            callbackFired = true;
+            clearTimeout(callTimeoutId);
             g._battleNextRoundCalling = false;
             g._battleNextRoundCallingStartTime = null;
             cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
@@ -1116,31 +1143,80 @@ class BattleManager {
         const stuckMs = Date.now() - g._battleRoundEndStartTime;
         if (stuckMs >= 3000) {
           cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
-          if (g._battleIsHost) {
-            // 房主：重试推进下一回合。若上一次 battleNextRound 请求仍未返回（iOS 上偶现回调丢失），
-            // 先重置调用锁，避免重试被跳过导致屏幕一直卡住。
-            if (g._battleNextRoundCalling) {
-              cloudLog(g, '[Battle] 重置 _battleNextRoundCalling 后重试推进');
-              g._battleNextRoundCalling = false;
-            }
-            this.nextRound();
-          } else {
-            // 好友：立即主动拉取一次最新房间状态
-            wx.cloud.callFunction({
-              name: 'battleGet',
-              data: { roomId: g._battleRoomId },
-              success: (res) => {
-                if (res.result && res.result.code === 0) {
-                  this._applyRoomState(res.result.room);
+          // 房主/好友都先主动拉取一次最新房间状态；如果云端已推进则直接同步，避免不必要的 battleNextRound 重试
+          wx.cloud.callFunction({
+            name: 'battleGet',
+            data: { roomId: g._battleRoomId },
+            success: (res) => {
+              if (res.result && res.result.code === 0) {
+                const room = res.result.room;
+                const cloudRound = room && room.currentRound ? room.currentRound : 0;
+                cloudLog(g, '[Battle] round_end 卡住恢复拉取房间 cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
+                if (cloudRound > g.battleRound) {
+                  // 云端已推进，直接同步
+                  this._applyRoomState(room);
+                } else if (g._battleIsHost) {
+                  // 云端未推进且是房主：重置调用锁后重试推进
+                  if (g._battleNextRoundCalling) {
+                    cloudLog(g, '[Battle] 重置 _battleNextRoundCalling 后重试推进');
+                    g._battleNextRoundCalling = false;
+                  }
+                  this.nextRound();
                 }
-              },
-              fail: (err) => {
-                console.error('[battleGet] 主动恢复拉取失败:', err);
+              } else if (g._battleIsHost) {
+                if (g._battleNextRoundCalling) g._battleNextRoundCalling = false;
+                this.nextRound();
               }
-            });
-          }
+            },
+            fail: (err) => {
+              console.error('[battleGet] 主动恢复拉取失败:', err);
+              if (g._battleIsHost) {
+                if (g._battleNextRoundCalling) g._battleNextRoundCalling = false;
+                this.nextRound();
+              }
+            }
+          });
           // 防止短时间内频繁触发，重置计时
           g._battleRoundEndStartTime = Date.now();
+        }
+      }
+
+      // 防御性恢复：揭晓动画完成后长时间未离开 revealing，强制进入 round_end/battle_end
+      if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done' && g._battleRevealStartTime) {
+        const doneMs = Date.now() - g._battleAnimTimeline.stepStartTime;
+        if (doneMs >= 3000) {
+          cloudLog(g, '[Battle] 检测到 reveal done 后 3 秒未离开 revealing，强制推进');
+          if (g.battleRound >= g.battleTotalRounds) {
+            g.battlePhase = 'battle_end';
+          } else {
+            g.battlePhase = 'round_end';
+            g._battleRoundEndStartTime = Date.now();
+            if (g._battleIsHost) {
+              this.nextRound();
+            }
+          }
+        }
+      }
+
+      // 防御性恢复：player_played 状态长时间未进入 revealing，主动拉取房间看看对手是否已出牌
+      if (g._battleOnline && g.battlePhase === 'player_played' && g._battlePlayerReadyAnimStart) {
+        const playedMs = Date.now() - g._battlePlayerReadyAnimStart;
+        if (playedMs >= 10000) {
+          cloudLog(g, '[Battle] 检测到 player_played 卡住 ' + playedMs + 'ms，主动拉取房间');
+          wx.cloud.callFunction({
+            name: 'battleGet',
+            data: { roomId: g._battleRoomId },
+            success: (res) => {
+              if (res.result && res.result.code === 0) {
+                this._applyRoomState(res.result.room);
+              }
+            },
+            fail: (err) => {
+              console.error('[battleGet] player_played 恢复拉取失败:', err);
+            }
+          });
+          // 重置计时，避免频繁拉取
+          g._battlePlayerReadyAnimStart = Date.now();
         }
       }
     } catch (e) {

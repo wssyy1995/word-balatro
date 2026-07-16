@@ -1328,7 +1328,7 @@ js/battle/
 - **统一手牌**：`battleStart` 与 `battleNextRound` 在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。
 - **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。揭晓动画期间若收到下一回合的房间状态，会先把房间缓存起来，等本地 reveal 动画完成、总分累加后再同步新回合，避免"看不到对手出牌"和分数丢失。
 - **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。`_applyRoomState` 会丢弃 `cloudRound` 小于本地的过期响应，并在揭晓动画期间把新回合房间状态缓存到 `_battlePendingRoom`，等动画完成后再同步。
-- **防卡死**：揭晓动画结束后进入 `round_end`，房主调用 `battleNextRound` 推进；若超过 3 秒仍未离开 `round_end`，房主会自动重试推进，好友会主动拉取一次最新房间状态，避免网络抖动导致双方卡住。`battleNextRound` 已做幂等处理：客户端携带 `currentRound`，服务端仅在 `room.currentRound === currentRound` 时推进，已推进则直接返回当前房间，避免 iOS 上云函数回调丢失导致重复推进、轮次跳变最终返回「对局已结束」而卡住。
+- **防卡死**：揭晓动画结束后进入 `round_end`，房主调用 `battleNextRound` 推进；若超过 3 秒仍未离开 `round_end`，房主/好友会先主动拉取一次房间状态，云端已推进则直接同步，未推进且是房主则重试 `battleNextRound`。`battleNextRound` 已做幂等处理并带 6 秒客户端超时兜底：客户端携带 `currentRound`，服务端仅在 `room.currentRound === currentRound` 时推进，已推进则直接返回当前房间；若 iOS 上云函数回调完全丢失，6 秒后会自动按失败重试，避免一直卡住。
 - **超时处理**：好友对战已接入本地 15 秒出牌倒计时。一方出牌或超时后，另一方需在 15 秒内出牌，否则本地自动提交 0 分空牌到云端（`battlePlay` 带 `isTimeout: true`）；同时增加 30 秒兜底超时，若双方开局后 30 秒都未出牌，本地玩家自动超时，避免双人挂机导致对局卡住。超时方在揭晓动画中先展示 `+0`，面板会显示「对手已超时」/「已超时」状态。
 - **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。对战结束弹窗点击「回到首页」同样会调用 `battleClose`。
 - **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
@@ -1866,7 +1866,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.13.2 | 2026-07-14 | 好友对战卡顿问题进一步加固：修复弹窗 closing 后仍阻塞 `checkReveal` 的问题；给 `gameLoop` 对战状态更新和 `nextRound` 增加异常捕获，防止异常中断渲染循环；增加更详细的对战日志前缀 `[Battle]`，便于复现时通过调试面板定位卡住阶段 |
 | v1.13.3 | 2026-07-16 | 修复 iOS 好友对战计分动画后屏幕卡住：为房主的 `battleNextRound` 调用锁增加 5 秒超时，并在 round_end 3 秒恢复逻辑中重置调用锁，避免 iOS 上云函数回调丢失导致重试被跳过、对局无法推进；同步更新 README |
 | v1.13.4 | 2026-07-16 | 好友对战新增 15 秒出牌倒计时：一方出牌/超时后，另一方需在 15 秒内出牌，超时自动提交 0 分；增加 30 秒双方未出牌兜底超时，避免双人挂机对局卡住；对战面板显示「对手已超时」/「已超时」状态；云函数 `battlePlay` 支持 `isTimeout` 字段；同步更新 README |
-| v1.13.5 | 2026-07-16 | 再次修复 iOS 好友对战计分动画后屏幕卡住（好友超时+0 场景）：`battleNextRound` 增加 `currentRound` 幂等校验，防止 iOS 云函数回调丢失后重试导致 `currentRound` 重复累加、最终返回「对局已结束」而冻结；客户端收到「对局已结束」时直接进入 `battle_end`；揭晓动画中超时方先展示 +0；同步更新 README |
+| v1.13.5 | 2026-07-16 | 再次修复 iOS 好友对战计分动画后屏幕卡住：`battleNextRound` 增加 `currentRound` 幂等校验与 6 秒客户端超时兜底；round_end 卡住恢复改为先拉取房间状态再决定同步或重试；增加 revealing done 后 3 秒未离开、player_played 10 秒未进入 revealing 的兜底恢复；客户端收到「对局已结束」时直接进入 `battle_end`；揭晓动画中超时方先展示 +0；同步更新 README |
 
 ---
 
