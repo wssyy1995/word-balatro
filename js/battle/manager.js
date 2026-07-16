@@ -578,12 +578,17 @@ class BattleManager {
   // 联网对战：轮询房间状态
   startRoomPolling() {
     const g = this.game;
-    if (!g._battleOnline || !g._battleRoomId) return;
+    if (!g._battleOnline || !g._battleRoomId) {
+      console.log('[Battle] startRoomPolling 跳过，非在线或 roomId 为空');
+      return;
+    }
     if (g._battleRoomPollTimer) {
       clearTimeout(g._battleRoomPollTimer);
     }
+    console.log('[Battle] startRoomPolling 启动 roomId=' + g._battleRoomId + ' isHost=' + g._battleIsHost);
     const poll = () => {
       if (!g._battleOnline || !g._battleRoomId) {
+        console.log('[Battle] 轮询停止 _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
         g._battleRoomPollTimer = null;
         return;
       }
@@ -602,12 +607,23 @@ class BattleManager {
           if (g._battleOnline && g._battleRoomId) {
             g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
           } else {
+            console.log('[Battle] 轮询 complete 停止 _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
             g._battleRoomPollTimer = null;
           }
         }
       });
     };
     g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
+  }
+
+  // 联网对战：确保轮询在运行（用于卡住恢复时发现轮询停止的情况）
+  ensureRoomPolling() {
+    const g = this.game;
+    if (!g._battleOnline || !g._battleRoomId || g.battlePhase === 'battle_end') return;
+    if (!g._battleRoomPollTimer) {
+      console.log('[Battle] ensureRoomPolling 发现轮询停止，重新启动');
+      this.startRoomPolling();
+    }
   }
 
   // 联网对战：应用房间状态
@@ -632,6 +648,7 @@ class BattleManager {
       // 防御性过滤：云端轮次比本地还旧，说明是乱序到达的过期响应，直接丢弃
       if (cloudRound < currentRound) {
         cloudLog(g, '[Battle] 房间响应过期，丢弃: cloudRound=' + cloudRound + ' < localRound=' + currentRound);
+        console.log('[Battle] 房间响应过期，丢弃: cloudRound=' + cloudRound + ' < localRound=' + currentRound);
         return;
       }
 
@@ -1112,6 +1129,12 @@ class BattleManager {
       cloudLog(g, '[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
       console.log('[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
 
+      // 在线对战期间确保轮询始终运行
+      if (g._battleOnline && g._battleRoomId) {
+        console.log('[Battle] checkReveal 轮询状态 pollTimer=' + (g._battleRoomPollTimer ? 'yes' : 'no'));
+        this.ensureRoomPolling();
+      }
+
       // 优先处理因本地仍在揭晓动画而延迟的云端回合推进
       if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
         const pendingRoom = g._battlePendingRoom;
@@ -1148,9 +1171,11 @@ class BattleManager {
       // 防御性恢复：如果因为网络抖动/房主推进失败导致长时间卡在 round_end，主动补救
       if (g._battleOnline && g.battlePhase === 'round_end' && g._battleRoundEndStartTime) {
         const stuckMs = Date.now() - g._battleRoundEndStartTime;
-        if (stuckMs >= 3000) {
+        if (stuckMs >= 2000) {
           cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
           console.log('[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
+          // 先确保轮询还活着
+          this.ensureRoomPolling();
           // 房主/好友都先主动拉取一次最新房间状态；如果云端已推进则直接同步，避免不必要的 battleNextRound 重试
           wx.cloud.callFunction({
             name: 'battleGet',
