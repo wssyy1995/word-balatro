@@ -28,6 +28,7 @@ class BattleRenderer {
     this.battleMatchCloseRect = null;
     this.battleHomeConfirmBtnRect = null;
     this.battleMenuBtnRect = null;
+    this.battleRetryBtnRect = null;
     this.battlePanelLeft = null;
     this.battlePanelRight = null;
     this._lastBotStatusText = null;
@@ -238,6 +239,9 @@ class BattleRenderer {
     // === 底部按钮 ===
     const btnY = Math.min(handBottom + 18 * s, H - safeBottom - 68 * s) + 10 * s;
     this._drawBottomButtons(ctx, game, W, btnY, s);
+
+    // === 回合推进卡住时的手动重试按钮 ===
+    this._drawRetryButton(ctx, game, W, H, btnY, s);
 
     // === Reveal 动画触发与绘制 ===
     this._updateBattleRevealAnimation(game, s);
@@ -2552,6 +2556,57 @@ class BattleRenderer {
     ctx.fillText(resetText, resetTx, resetTextY);
     ctx.restore();
     this.battleClearBtnRect = { x: resetX, y: btnY, w: btnW, h: btnH };
+  }
+
+  // ===== 回合推进卡住时的手动重试按钮 =====
+  _drawRetryButton(ctx, game, W, H, btnY, s) {
+    // 仅在 round_end 或 revealing done 后卡住时显示
+    const showRetry = game.battlePhase === 'round_end' ||
+      (game.battlePhase === 'revealing' && game._battleAnimTimeline && game._battleAnimTimeline.step === 'done');
+    if (!showRetry) {
+      this.battleRetryBtnRect = null;
+      return;
+    }
+
+    const btnW = 160 * s;
+    const btnH = 44 * s;
+    const btnX = (W - btnW) / 2;
+    // 放在屏幕中下部，避免被底部安全区遮挡
+    const btnY = Math.min(btnY + 70 * s, H - (this.parent.safeBottom || 0) - btnH - 20 * s);
+    const pressed = game._battleRetryBtnPressed || false;
+    const offset = pressed ? 2 * s : 0;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = 6 * s;
+    ctx.shadowOffsetY = 3 * s;
+    this.parent.roundRect(btnX, btnY + offset, btnW, btnH, 8 * s, '#c4a35a', '#5a4a2a', 1.5 * s);
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(15 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 2 * s;
+    ctx.strokeStyle = '#3a2e1d';
+    const text = game._battleIsHost ? '同步下一回合' : '刷新房间状态';
+    const textX = btnX + btnW / 2;
+    const textY = btnY + offset + btnH / 2;
+    ctx.strokeText(text, textX, textY);
+    ctx.fillText(text, textX, textY);
+    ctx.restore();
+
+    // 提示文字
+    ctx.save();
+    ctx.font = `${Math.floor(12 * s)}px ${this.parent.titleFontFamily}`;
+    ctx.fillStyle = '#8a7a6a';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('若长时间未进入下一回合，请点击', textX, btnY - 12 * s);
+    ctx.restore();
+
+    this.battleRetryBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
   }
 
   // ===== 通用按钮绘制 =====

@@ -105,6 +105,42 @@ function handleBattleInput(game, renderer, x, inputY, vibrate) {
         return true;
       }
     }
+  } else if (game.battlePhase === 'round_end' || (game.battlePhase === 'revealing' && game._battleAnimTimeline && game._battleAnimTimeline.step === 'done')) {
+    // 回合推进卡住时的手动重试按钮
+    if (battle.battleRetryBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [battle.battleRetryBtnRect]);
+      if (btnHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._battleRetryBtnPressed = true;
+        setTimeout(() => { game._battleRetryBtnPressed = false; }, 150);
+        if (game.battleManager) {
+          if (game._battleIsHost) {
+            // 房主：强制重置调用锁并重试推进
+            if (game._battleNextRoundCalling) {
+              game._battleNextRoundCalling = false;
+              game._battleNextRoundCallingStartTime = null;
+            }
+            game.battleManager.nextRound();
+          } else {
+            // 好友：主动拉取一次最新房间状态
+            wx.cloud.callFunction({
+              name: 'battleGet',
+              data: { roomId: game._battleRoomId },
+              success: (res) => {
+                if (res.result && res.result.code === 0 && game.battleManager) {
+                  game.battleManager._applyRoomState(res.result.room);
+                }
+              },
+              fail: (err) => {
+                console.error('[battleGet] 手动刷新失败:', err);
+              }
+            });
+          }
+        }
+        return true;
+      }
+    }
   } else if (game.battlePhase === 'battle_end') {
     // 检测分享战绩按钮（仅胜利时存在）
     if (battle.battleShareBtnRect) {

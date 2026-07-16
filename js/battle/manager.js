@@ -174,6 +174,7 @@ class BattleManager {
     g._battleShareBtnLocked = false;
     g._battleRestartBtnLocked = false;
     g._battleHomeBtnLocked = false;
+    g._battleRetryBtnPressed = false;
     // 清除回到首页确认弹窗状态
     g._battleHomeConfirmPopup = false;
     g._battleHomeConfirmAnimStart = null;
@@ -704,6 +705,7 @@ class BattleManager {
           return;
         }
         cloudLog(g, '[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
+        console.log('[Battle] 检测到云端进入第' + cloudRound + '回合，本地同步');
         g._battlePendingRoom = null;
         g.battleRound = cloudRound;
         this._startRound({
@@ -884,6 +886,7 @@ class BattleManager {
           g._battleNextRoundCalling = false;
           g._battleNextRoundCallingStartTime = null;
           cloudLog(g, '[Battle] battleNextRound 客户端 6 秒超时，按失败重试 retry=' + retryCount);
+          console.log('[Battle] battleNextRound 客户端 6 秒超时，按失败重试 retry=' + retryCount);
           if (retryCount > 0) {
             setTimeout(() => this.nextRound(retryCount - 1), 800);
           } else {
@@ -906,6 +909,7 @@ class BattleManager {
               const room = res.result.room;
               const cloudRound = room.currentRound || (g.battleRound + 1);
               cloudLog(g, '[Battle] battleNextRound 成功, cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
+              console.log('[Battle] battleNextRound 成功, cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
               // 仅当云端轮次确实领先本地时才 _startRound，避免轮询已同步到新回合后又被 reset
               if (cloudRound > g.battleRound) {
                 g.battleRound = cloudRound;
@@ -924,6 +928,7 @@ class BattleManager {
             } else {
               const msg = res.result && res.result.message ? res.result.message : '';
               cloudLog(g, '[Battle] battleNextRound 失败: ' + msg + ' retry=' + retryCount);
+              console.log('[Battle] battleNextRound 失败: ' + msg + ' retry=' + retryCount);
               if (msg.includes('对局已结束')) {
                 cloudLog(g, '[Battle] 服务端提示对局已结束，本地进入 battle_end');
                 g.battlePhase = 'battle_end';
@@ -944,6 +949,7 @@ class BattleManager {
             g._battleNextRoundCalling = false;
             g._battleNextRoundCallingStartTime = null;
             cloudLog(g, '[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
+            console.log('[Battle] battleNextRound 调用失败: ' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
             if (retryCount > 0) {
               setTimeout(() => this.nextRound(retryCount - 1), 800);
             } else {
@@ -1104,6 +1110,7 @@ class BattleManager {
     const g = this.game;
     try {
       cloudLog(g, '[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
+      console.log('[Battle] checkReveal phase=' + g.battlePhase + ' timeline=' + (g._battleAnimTimeline ? g._battleAnimTimeline.step : 'null') + ' isHost=' + g._battleIsHost + ' round=' + g.battleRound);
 
       // 优先处理因本地仍在揭晓动画而延迟的云端回合推进
       if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
@@ -1143,6 +1150,7 @@ class BattleManager {
         const stuckMs = Date.now() - g._battleRoundEndStartTime;
         if (stuckMs >= 3000) {
           cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
+          console.log('[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
           // 房主/好友都先主动拉取一次最新房间状态；如果云端已推进则直接同步，避免不必要的 battleNextRound 重试
           wx.cloud.callFunction({
             name: 'battleGet',
@@ -1152,6 +1160,7 @@ class BattleManager {
                 const room = res.result.room;
                 const cloudRound = room && room.currentRound ? room.currentRound : 0;
                 cloudLog(g, '[Battle] round_end 卡住恢复拉取房间 cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
+                console.log('[Battle] round_end 卡住恢复拉取房间 cloudRound=' + cloudRound + ' localRound=' + g.battleRound);
                 if (cloudRound > g.battleRound) {
                   // 云端已推进，直接同步
                   this._applyRoomState(room);
@@ -1186,6 +1195,7 @@ class BattleManager {
         const doneMs = Date.now() - g._battleAnimTimeline.stepStartTime;
         if (doneMs >= 3000) {
           cloudLog(g, '[Battle] 检测到 reveal done 后 3 秒未离开 revealing，强制推进');
+          console.log('[Battle] 检测到 reveal done 后 3 秒未离开 revealing，强制推进');
           if (g.battleRound >= g.battleTotalRounds) {
             g.battlePhase = 'battle_end';
           } else {
@@ -1203,6 +1213,7 @@ class BattleManager {
         const playedMs = Date.now() - g._battlePlayerReadyAnimStart;
         if (playedMs >= 10000) {
           cloudLog(g, '[Battle] 检测到 player_played 卡住 ' + playedMs + 'ms，主动拉取房间');
+          console.log('[Battle] 检测到 player_played 卡住 ' + playedMs + 'ms，主动拉取房间');
           wx.cloud.callFunction({
             name: 'battleGet',
             data: { roomId: g._battleRoomId },
