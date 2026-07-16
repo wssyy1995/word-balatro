@@ -1497,6 +1497,7 @@ function getInputY(x, y) {
     cloudStorage.log('[AutoJoin] callBattleReady roomId=' + game._battleRoomId + ' isHost=' + game._battleIsHost);
     // 只有好友需要通知云端；房主由轮询检测到 guestReady 后自动启动倒计时
     if (!game._battleIsHost) {
+      cloudStorage.log('[AutoJoin] callBattleReady 以好友身份调用 battleReady roomId=' + game._battleRoomId);
       wx.cloud.callFunction({
         name: 'battleReady',
         data: { roomId: game._battleRoomId },
@@ -1808,6 +1809,7 @@ wx.onTouchStart((e) => {
     } else if (mode === 'friend_ready' || mode === 'friend_join_ready' || mode === 'friend_join_wait' || mode === 'friend_restart_invited') {
       if (renderer.battleModeStartRect && renderer.hitTest(x, y, [renderer.battleModeStartRect])) {
         popup.startPressed = true;
+        cloudStorage.log('[AutoJoin] touchStart 开始对战按钮被按下 mode=' + mode + ' roomId=' + game._battleRoomId);
         return;
       }
       if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
@@ -2047,6 +2049,7 @@ wx.onTouchStart((e) => {
     } else if (mode === 'friend_ready' || mode === 'friend_join_ready' || mode === 'friend_join_wait' || mode === 'friend_restart_invited') {
       if (renderer.battleModeStartRect && renderer.hitTest(x, y, [renderer.battleModeStartRect])) {
         popup.startPressed = true;
+        cloudStorage.log('[AutoJoin] touchStart 开始对战按钮被按下 mode=' + mode + ' roomId=' + game._battleRoomId);
         return;
       }
       if (renderer.battleModeCancelRect && renderer.hitTest(x, y, [renderer.battleModeCancelRect])) {
