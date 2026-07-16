@@ -1514,15 +1514,23 @@ class BattleRenderer {
     if (game.battlePhase === 'selecting' || game.battlePhase === 'player_played') {
       if (isLeft) {
         if (game.battleBotReady) {
-          baseText = ''; // 对手已选择：不显示文字，只保留 ? 方块
-          wordText = '?'.repeat(myWordLen);
-          hidden = true;
+          if (timedOut && !myWord) {
+            baseText = '对手已超时';
+            wordText = null;
+          } else {
+            baseText = ''; // 对手已选择：不显示文字，只保留 ? 方块
+            wordText = '?'.repeat(myWordLen);
+            hidden = true;
+          }
         } else {
           baseText = '对手选择中';
         }
       } else {
         if (game.battlePhase === 'selecting') {
           baseText = '请出牌';
+        } else if (timedOut && !myWord) {
+          baseText = '已超时';
+          wordText = null;
         } else {
           baseText = '';
           wordText = '?'.repeat(myWordLen);

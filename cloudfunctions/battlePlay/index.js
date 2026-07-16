@@ -10,10 +10,14 @@ const _ = db.command;
 
 exports.main = async (event, context) => {
   const { OPENID } = cloud.getWXContext();
-  const { roomId, word, cards, score } = event;
-  console.log('[battlePlay] 收到请求 OPENID=' + (OPENID || 'null') + ' roomId=' + (roomId || 'null') + ' word=' + (word || 'null') + ' cardsCount=' + (Array.isArray(cards) ? cards.length : 'invalid') + ' score=' + (score !== undefined ? score : 'null'));
+  const { roomId, word, cards, score, isTimeout } = event;
+  console.log('[battlePlay] 收到请求 OPENID=' + (OPENID || 'null') + ' roomId=' + (roomId || 'null') + ' word=' + (word || 'null') + ' cardsCount=' + (Array.isArray(cards) ? cards.length : 'invalid') + ' score=' + (score !== undefined ? score : 'null') + ' isTimeout=' + !!isTimeout);
   if (!OPENID) return { code: -1, message: '无法获取 OPENID' };
-  if (!roomId || !word || !Array.isArray(cards)) {
+  if (!roomId) {
+    return { code: -1, message: '参数错误' };
+  }
+  // 超时出牌允许空 word / 空 cards；正常出牌必须校验
+  if (!isTimeout && (!word || !Array.isArray(cards))) {
     return { code: -1, message: '参数错误' };
   }
 
@@ -34,7 +38,7 @@ exports.main = async (event, context) => {
     const playerKey = isHost ? 'hostPlay' : 'guestPlay';
     const now = Date.now();
     const currentRound = room.currentRound || 1;
-    const playData = { word, cards, score, openid: OPENID, time: now, round: currentRound };
+    const playData = { word: word || '', cards: cards || [], score: score || 0, openid: OPENID, time: now, round: currentRound, isTimeout: !!isTimeout };
 
     console.log('[battlePlay] 准备写入 playerKey=' + playerKey + ' word=' + word + ' round=' + currentRound);
     // 云数据库对 null 字段不能直接创建子字段，需先 remove 再 set

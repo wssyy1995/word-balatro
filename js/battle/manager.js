@@ -376,6 +376,7 @@ class BattleManager {
     g._battleTurnCountdownSide = null;
     g._battlePlayerTimedOut = false;
     g._battleBotTimedOut = false;
+    g._battleRoundStartTime = Date.now();
 
     // 预计算 Bot 出牌：它出的就是选中的种子词
     const botCards = findCardsForWord(botSeed.word, g.battleBotHand) || botSeed.word.toUpperCase().split('').map(letter => createBattleCard(letter));
@@ -464,8 +465,11 @@ class BattleManager {
     // 玩家出牌后显示 battle_me_place 占位方块时播放音效
     if (g.audioManager) g.audioManager.play('battle_play_card');
 
-    // 联网对战：把出牌同步到云端
+    // 联网对战：把出牌同步到云端；本地已出牌，停止自己的倒计时
     if (g._battleOnline) {
+      g._battleTurnDeadline = null;
+      g._battleTurnCountdownSide = null;
+      g._battlePlayerTimedOut = false;
       cloudLog(g, '[Battle] playHand 准备同步到云端 roomId=' + (g._battleRoomId || 'null') + ' word=' + word + ' score=' + score);
       this._syncPlayToServer(word, selected, score);
     }
@@ -486,21 +490,22 @@ class BattleManager {
     return { valid: true, score };
   }
 
-  // 联网对战：同步出牌到服务器
-  _syncPlayToServer(word, cards, score, retryCount = 1) {
+  // 联网对战：同步出牌到服务器（isTimeout 为 true 表示本地倒计时超时，提交 0 分空牌）
+  _syncPlayToServer(word, cards, score, retryCount = 1, isTimeout = false) {
     const g = this.game;
     if (!g._battleRoomId) {
       cloudLog(g, '[Battle] _syncPlayToServer 跳过，无 roomId');
       return;
     }
-    cloudLog(g, '[Battle] _syncPlayToServer 调用 roomId=' + g._battleRoomId + ' word=' + word + ' score=' + score + ' cardsCount=' + (cards ? cards.length : 0) + ' retry=' + retryCount);
+    cloudLog(g, '[Battle] _syncPlayToServer 调用 roomId=' + g._battleRoomId + ' word=' + word + ' score=' + score + ' cardsCount=' + (cards ? cards.length : 0) + ' retry=' + retryCount + ' isTimeout=' + isTimeout);
     wx.cloud.callFunction({
       name: 'battlePlay',
       data: {
         roomId: g._battleRoomId,
         word,
-        cards: cards.map(c => ({ id: c.id, letter: c.letter, score: c.score })),
-        score
+        cards: (cards || []).map(c => ({ id: c.id, letter: c.letter, score: c.score })),
+        score,
+        isTimeout
       },
       success: (res) => {
         cloudLog(g, '[Battle] _syncPlayToServer success res=' + JSON.stringify({
@@ -530,29 +535,38 @@ class BattleManager {
           const msg = res.result && res.result.message ? res.result.message : '';
           if (retryCount > 0 && !msg.includes('参数错误') && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家')) {
             cloudLog(g, '[Battle] _syncPlayToServer 业务失败，准备重试: ' + msg);
-            setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1), 800);
+            setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1, isTimeout), 800);
           } else {
             cloudLog(g, '[Battle] _syncPlayToServer 业务失败不重试: ' + msg);
+            if (isTimeout) {
+              // 超时同步最终失败：无法重新出牌，只能记录日志，由轮询或对手超时推进
+              cloudLog(g, '[Battle] 超时同步最终失败，等待轮询恢复');
+            }
           }
         }
       },
       fail: (err) => {
         cloudLog(g, '[Battle] _syncPlayToServer fail err=' + (err && err.message ? err.message : String(err)) + ' retry=' + retryCount);
         if (retryCount > 0) {
-          setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1), 800);
+          setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1, isTimeout), 800);
         } else {
-          // 最终失败：提示玩家并允许重新出牌
-          g.hintToast = { text: '出牌同步失败，请重新出牌', expireAt: Date.now() + 2000 };
-          g.battlePhase = 'selecting';
-          g._battlePlayerPlayed = false;
-          g.battlePlayerWord = null;
-          g.battlePlayerCards = null;
-          g.battlePlayerRoundScore = 0;
-          // 从本局已出牌集合中移除，避免重新出同一个词时被误判为重复
-          if (g._battlePlayedWords && word) {
-            g._battlePlayedWords.delete(word.toLowerCase());
+          if (isTimeout) {
+            // 超时同步最终失败：无法重新出牌
+            cloudLog(g, '[Battle] 超时同步最终失败，等待轮询恢复');
+          } else {
+            // 最终失败：提示玩家并允许重新出牌
+            g.hintToast = { text: '出牌同步失败，请重新出牌', expireAt: Date.now() + 2000 };
+            g.battlePhase = 'selecting';
+            g._battlePlayerPlayed = false;
+            g.battlePlayerWord = null;
+            g.battlePlayerCards = null;
+            g.battlePlayerRoundScore = 0;
+            // 从本局已出牌集合中移除，避免重新出同一个词时被误判为重复
+            if (g._battlePlayedWords && word) {
+              g._battlePlayedWords.delete(word.toLowerCase());
+            }
+            cloudLog(g, '[Battle] _syncPlayToServer 最终失败，允许重新出牌');
           }
-          cloudLog(g, '[Battle] _syncPlayToServer 最终失败，允许重新出牌');
         }
       }
     });
@@ -718,20 +732,32 @@ class BattleManager {
         g._battleOnlinePlayerPlayed = true;
       }
 
-      // 对方已出牌
+      // 对方已出牌（含超时出牌）
       if (!g._battleOnlineOpponentPlayed && opponentPlay && isOpponentPlayCurrent2) {
         g._battleOnlineOpponentPlayed = true;
         g.battleBotReady = true;
         g._battleBotReadyAnimStart = Date.now();
-        g.battleBotWord = opponentPlay.word;
+        g.battleBotWord = opponentPlay.word || '';
         g.battleBotCards = (opponentPlay.cards || []).map(c => createBattleCard(c.letter));
         g.battleBotRoundScore = opponentPlay.score || 0;
-        g.battleBotWordMeaning = getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
-        cloudLog(g, '[Battle] 同步到对手出牌 word=' + opponentPlay.word + ' score=' + opponentPlay.score + ' phase=' + g.battlePhase);
+        g._battleBotTimedOut = !!opponentPlay.isTimeout;
+        g.battleBotWordLength = opponentPlay.isTimeout ? 0 : (opponentPlay.word ? opponentPlay.word.length : 0);
+        g.battleBotWordMeaning = opponentPlay.isTimeout ? '' : getBattleWordMeaning(opponentPlay.word, g._battleSeedWords);
+        cloudLog(g, '[Battle] 同步到对手出牌 word=' + opponentPlay.word + ' score=' + opponentPlay.score + ' isTimeout=' + opponentPlay.isTimeout + ' phase=' + g.battlePhase);
         if (g.audioManager) g.audioManager.play('battle_play_card');
 
         if (g.battlePhase === 'player_played' || g._battlePlayerPlayed) {
+          // 自己已经出过，直接揭晓
           this.startReveal();
+        } else if (opponentPlay.isTimeout) {
+          // 对手已超时，自己还没出：给自己 15 秒倒计时继续出牌
+          g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+          g._battleTurnCountdownSide = 'player';
+          cloudLog(g, '[Battle] 对手已超时，本地玩家获得 15 秒倒计时');
+        } else {
+          // 对手已正常出牌，自己还没出：启动 15 秒倒计时
+          g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+          g._battleTurnCountdownSide = 'player';
         }
       }
     } catch (e) {
@@ -941,7 +967,39 @@ class BattleManager {
   // 检查出牌倒计时：一方出牌后另一方必须在 15 秒内出牌，否则超时判 0 分
   updateTurnTimer() {
     const g = this.game;
-    if (g._battleOnline) return; // 联网对战不本地计时
+    if (g._battleOnline) {
+      // 联网对战：对手已出牌/超时且自己尚未出牌时，维持 15 秒倒计时
+      if (g.battlePhase === 'selecting' && g._battleOnlineOpponentPlayed && !g._battlePlayerPlayed && !g._battlePlayerTimedOut) {
+        if (!g._battleTurnDeadline) {
+          g._battleTurnDeadline = Date.now() + TURN_TIMEOUT_MS;
+          g._battleTurnCountdownSide = 'player';
+        }
+      } else if (g.battlePhase !== 'selecting' && g.battlePhase !== 'player_played') {
+        g._battleTurnDeadline = null;
+        g._battleTurnCountdownSide = null;
+      }
+      if (g._battleTurnDeadline) {
+        if (Date.now() >= g._battleTurnDeadline) {
+          // 本地玩家超时
+          const side = g._battleTurnCountdownSide;
+          g._battleTurnDeadline = null;
+          g._battleTurnCountdownSide = null;
+          if (side === 'player') {
+            this.forceTimeout('player');
+          }
+        }
+        return;
+      }
+
+      // 双方一直未出牌兜底：回合开始 30 秒后强制本地玩家超时，避免双人同时挂机导致对局卡住
+      const roundElapsed = Date.now() - (g._battleRoundStartTime || Date.now());
+      if (g.battlePhase === 'selecting' && !g._battlePlayerPlayed && !g._battlePlayerTimedOut && roundElapsed >= 30000) {
+        cloudLog(g, '[Battle] 回合开始 30 秒双方仍未出牌，强制本地玩家超时');
+        this.forceTimeout('player');
+      }
+      return;
+    }
+
     if (!g._battleTurnDeadline) return;
     if (g.battlePhase !== 'selecting' && g.battlePhase !== 'player_played') return;
     if (Date.now() < g._battleTurnDeadline) return;
@@ -954,6 +1012,10 @@ class BattleManager {
 
   forceTimeout(side) {
     const g = this.game;
+    // 超时后先清理倒计时，避免同一帧重复触发
+    g._battleTurnDeadline = null;
+    g._battleTurnCountdownSide = null;
+
     if (side === 'player') {
       g._battlePlayerTimedOut = true;
       g.battlePlayerWord = '';
@@ -969,8 +1031,20 @@ class BattleManager {
         g._battlePendingCheckTimer = null;
       }
       g._battlePlayerReadyAnimStart = Date.now();
-      // 玩家超时后直接揭晓，超时方（玩家）先展示 +0
-      this.startReveal('player');
+
+      if (g._battleOnline) {
+        // 联网对战：把超时 0 分同步到云端，并标记自己已出牌
+        g._battlePlayerPlayed = true;
+        g.battlePhase = 'player_played';
+        this._syncPlayToServer('', [], 0, 1, true);
+        // 若对手也已出牌/超时，则直接揭晓；否则等待对手出牌或超时
+        if (g._battleOnlineOpponentPlayed) {
+          this.startReveal('player');
+        }
+      } else {
+        // 本地人机：玩家超时后直接揭晓，超时方（玩家）先展示 +0
+        this.startReveal('player');
+      }
     } else if (side === 'bot') {
       g._battleBotTimedOut = true;
       g.battleBotWord = '';
@@ -1274,6 +1348,7 @@ class BattleManager {
     g._battleOnlineOpponentPlayed = false;
     g._battlePendingRoom = null;
     g._battleRoundEndStartTime = null;
+    g._battleRoundStartTime = null;
     g._battleNextRoundPressed = false;
     g._battleNextRoundCalling = false;
     g._battleNextRoundCallingStartTime = null;

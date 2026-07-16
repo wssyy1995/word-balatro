@@ -1329,7 +1329,7 @@ js/battle/
 - **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。揭晓动画期间若收到下一回合的房间状态，会先把房间缓存起来，等本地 reveal 动画完成、总分累加后再同步新回合，避免"看不到对手出牌"和分数丢失。
 - **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。`_applyRoomState` 会丢弃 `cloudRound` 小于本地的过期响应，并在揭晓动画期间把新回合房间状态缓存到 `_battlePendingRoom`，等动画完成后再同步。
 - **防卡死**：揭晓动画结束后进入 `round_end`，房主调用 `battleNextRound` 推进；若超过 3 秒仍未离开 `round_end`，房主会自动重试推进，好友会主动拉取一次最新房间状态，避免网络抖动导致双方卡住。
-- **超时处理**：好友对战不启用本地 15 秒倒计时，出牌同步依赖云端 `battlePlay`；超时逻辑由云函数侧控制（当前版本前端暂未接入超时提示）。
+- **超时处理**：好友对战已接入本地 15 秒出牌倒计时。一方出牌或超时后，另一方需在 15 秒内出牌，否则本地自动提交 0 分空牌到云端（`battlePlay` 带 `isTimeout: true`）；同时增加 30 秒兜底超时，若双方开局后 30 秒都未出牌，本地玩家自动超时，避免双人挂机导致对局卡住。超时方在揭晓动画中先展示 `+0`，面板会显示「对手已超时」/「已超时」状态。
 - **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。对战结束弹窗点击「回到首页」同样会调用 `battleClose`。
 - **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
 
@@ -1581,7 +1581,7 @@ letterUpgrades = Map {
 | `battleReady` | 好友 | `{ roomId }` | `{ code, room }` | 好友标记准备，记录 `guestReadyAt` 作为同步倒计时起点 |
 | `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`，生成第一回合统一种子词和手牌 |
 | `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 800ms 串行轮询 |
-| `battlePlay` | 双方 | `{ roomId, word, cards, score }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay` |
+| `battlePlay` | 双方 | `{ roomId, word, cards, score, isTimeout }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay`；`isTimeout=true` 时允许空 word/cards，表示本地 15 秒倒计时超时提交 0 分 |
 | `battleNextRound` | 房主 | `{ roomId }` | `{ code, room }` | 清空双方出牌，生成下一回合统一种子词和手牌，`currentRound++` |
 | `battleRequestRestart` | 任意一方 | `{ roomId }` | `{ code, room }` | 在对战结束后写入 `restartRequest` 邀请 |
 | `battleAcceptRestart` | 另一方 | `{ roomId }` | `{ code, room }` | 接受重新挑战，重置房间状态为 `ready`，`currentRound=1` |
@@ -1610,8 +1610,8 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
   totalRounds: 10,
   seedWords: [{ word, meaning }, ...],
   hand: [{ letter, baseScore, score, isFace, id, selected }],
-  hostPlay: { openid, word, cards, score, round },
-  guestPlay: { openid, word, cards, score, round },
+  hostPlay: { openid, word, cards, score, round, isTimeout, time },
+  guestPlay: { openid, word, cards, score, round, isTimeout, time },
   restartRequest: { fromOpenId, accepted, acceptedAt },
   createTime: Date.now(),
   updateTime: Date.now()
@@ -1865,6 +1865,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.13.1 | 2026-07-14 | 修复好友对战计分动画后偶现页面卡住：修复 `_applyRoomState` 中 `effectiveRound` 引用错误；丢弃乱序到达的过期房间响应；增加 round_end 3 秒卡住自动恢复（房主重试推进/好友主动拉取）；防止房主并发调用 `battleNextRound` |
 | v1.13.2 | 2026-07-14 | 好友对战卡顿问题进一步加固：修复弹窗 closing 后仍阻塞 `checkReveal` 的问题；给 `gameLoop` 对战状态更新和 `nextRound` 增加异常捕获，防止异常中断渲染循环；增加更详细的对战日志前缀 `[Battle]`，便于复现时通过调试面板定位卡住阶段 |
 | v1.13.3 | 2026-07-16 | 修复 iOS 好友对战计分动画后屏幕卡住：为房主的 `battleNextRound` 调用锁增加 5 秒超时，并在 round_end 3 秒恢复逻辑中重置调用锁，避免 iOS 上云函数回调丢失导致重试被跳过、对局无法推进；同步更新 README |
+| v1.13.4 | 2026-07-16 | 好友对战新增 15 秒出牌倒计时：一方出牌/超时后，另一方需在 15 秒内出牌，超时自动提交 0 分；增加 30 秒双方未出牌兜底超时，避免双人挂机对局卡住；对战面板显示「对手已超时」/「已超时」状态；云函数 `battlePlay` 支持 `isTimeout` 字段；同步更新 README |
 
 ---
 
