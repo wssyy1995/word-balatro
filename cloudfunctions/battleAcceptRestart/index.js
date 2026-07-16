@@ -45,6 +45,8 @@ exports.main = async (event, context) => {
       data: {
         status: 'ready',
         currentRound: 1,
+        currentTurn: _.remove(),
+        turnDeadline: _.remove(),
         hostPlay: _.remove(),
         guestPlay: _.remove(),
         scores,

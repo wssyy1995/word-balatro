@@ -1179,6 +1179,7 @@ function getInputY(x, y) {
           game._battleRoomId = roomId;
           game._battleIsHost = true;
           game._friendBattleStarted = false;
+          game._friendBattleLobbyUpdateTime = 0; // 新房间，重置 lobby 时间戳
           // 创建房间后立即启动轮询，确保好友加入后能第一时间检测到
           startFriendRoomPolling(roomId);
           if (game._battleModeSelectPopup) {
@@ -1272,6 +1273,7 @@ function getInputY(x, y) {
           game._autoJoinBattleRoomId = null;
           game._autoJoiningBattle = false;
           game._friendBattleStarted = false;
+          game._friendBattleLobbyUpdateTime = 0; // 新加入房间，重置 lobby 时间戳
           const isHost = res.result.role === 'host';
           game._battleIsHost = isHost;
           cloudStorage.log('[AutoJoin] 加入房间成功 role=' + res.result.role + ' popup=' + (isHost ? 'friend_waiting' : 'friend_join_ready'));
@@ -1356,10 +1358,12 @@ function getInputY(x, y) {
   function startFriendRoomPolling(roomId) {
     if (game._battleRoomPollTimer) {
       clearInterval(game._battleRoomPollTimer);
+      clearTimeout(game._battleRoomPollTimer);
     }
     game._battleRoomPollTimer = setInterval(() => {
       if (!game._battleRoomId) {
         clearInterval(game._battleRoomPollTimer);
+        clearTimeout(game._battleRoomPollTimer);
         game._battleRoomPollTimer = null;
         return;
       }
@@ -1382,12 +1386,22 @@ function getInputY(x, y) {
   function stopFriendRoomPolling() {
     if (game._battleRoomPollTimer) {
       clearInterval(game._battleRoomPollTimer);
+      clearTimeout(game._battleRoomPollTimer);
       game._battleRoomPollTimer = null;
     }
   }
 
   function applyFriendRoomState(room) {
     if (!room || !game._battleRoomId) return;
+
+    const roomUpdateTime = room.updateTime || 0;
+    // 忽略比已处理房间状态更旧的 lobby 响应，防止重开/开局后的过期响应重复重置对战状态
+    if (game._friendBattleLobbyUpdateTime && roomUpdateTime && roomUpdateTime <= game._friendBattleLobbyUpdateTime) {
+      cloudStorage.log('[AutoJoin] applyFriendRoomState 忽略过期响应 roomId=' + game._battleRoomId + ' roomUpdateTime=' + roomUpdateTime + ' last=' + game._friendBattleLobbyUpdateTime);
+      return;
+    }
+    // 记录本次处理的房间更新时间，后续旧响应用来过滤
+    game._friendBattleLobbyUpdateTime = roomUpdateTime;
 
     // 好友房轮询已停止但对战已经启动，说明是 stopFriendRoomPolling 之前已发出请求的残留响应，
     // 忽略它，避免重开/开局后被重复触发导致状态重置。
@@ -1615,9 +1629,10 @@ function getInputY(x, y) {
     const roomId = game._battleRoomId;
     const isHost = game._battleIsHost;
     const roomRound = room.currentRound || 1;
+    const roomUpdateTime = room.updateTime || 0;
 
-    // 防御性跳过：如果已经启动到相同轮次，直接返回，避免残留响应重复重置对战状态
-    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === roomRound) {
+    // 防御性跳过：如果已经启动到相同轮次且房间状态未更新，直接返回，避免残留响应重复重置对战状态
+    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === roomRound && game._friendBattleLobbyUpdateTime && roomUpdateTime <= game._friendBattleLobbyUpdateTime) {
       cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动到相同轮次，跳过 roomId=' + roomId);
       return;
     }
@@ -1641,8 +1656,10 @@ function getInputY(x, y) {
     game._friendBattleCountdown = null;
     if (game.battleManager) {
       const roomData = room && room.seedWords && room.hand ? { seedWords: room.seedWords, hand: room.hand } : null;
-      game.battleManager.startBattle('easy', { online: true, roomId, isHost, roomData });
+      game.battleManager.startBattle('easy', { online: true, roomId, isHost, roomData, roomUpdateTime });
     }
+    // 记录本次开局对应的房间更新时间，用于过滤 lobby 过期响应
+    game._friendBattleLobbyUpdateTime = roomUpdateTime;
     if (isHost) {
       // 房主已经在对战页，关闭弹窗即可
       game._battleModeSelectPopup = null;

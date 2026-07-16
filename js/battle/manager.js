@@ -162,9 +162,14 @@ class BattleManager {
     g._battleOnline = options.online || false;
     g._battleRoomId = options.roomId || null;
     g._battleIsHost = options.isHost || false;
+    g._battleLastRoomUpdateTime = options.roomUpdateTime || 0;
     g._battleOpponentOpenId = null;
     g._battleHostPlay = null;
     g._battleGuestPlay = null;
+    if (g._battleRoomPollTimer) {
+      clearTimeout(g._battleRoomPollTimer);
+      clearInterval(g._battleRoomPollTimer);
+    }
     g._battleRoomPollTimer = null;
     g._battlePendingRoom = null;
     g._battleRoundEndStartTime = null;
@@ -571,6 +576,7 @@ class BattleManager {
     }
     if (g._battleRoomPollTimer) {
       clearTimeout(g._battleRoomPollTimer);
+      clearInterval(g._battleRoomPollTimer);
     }
     console.log('[Battle] startRoomPolling 启动 roomId=' + g._battleRoomId + ' isHost=' + g._battleIsHost);
     const poll = () => {
@@ -618,6 +624,14 @@ class BattleManager {
     const g = this.game;
     try {
       if (!room || !g._battleOnline) return;
+
+      const roomUpdateTime = room.updateTime || 0;
+      // 防御性过滤：响应的房间更新时间比已处理的旧，说明是乱序到达的过期响应，直接丢弃
+      if (g._battleLastRoomUpdateTime && roomUpdateTime && roomUpdateTime < g._battleLastRoomUpdateTime) {
+        cloudLog(g, '[Battle] _applyRoomState 忽略过期响应 roomUpdateTime=' + roomUpdateTime + ' last=' + g._battleLastRoomUpdateTime);
+        return;
+      }
+      g._battleLastRoomUpdateTime = roomUpdateTime;
 
       cloudLog(g, '[Battle] _applyRoomState fullRoom=' + JSON.stringify({
         _id: room._id,
@@ -728,8 +742,7 @@ class BattleManager {
       const isOpponentPlayCurrent2 = opponentPlay && (
         opponentPlay.round === undefined ||
         opponentPlay.round === newEffectiveRound ||
-        opponentPlay.round === cloudRound ||
-        opponentPlay.round > newEffectiveRound
+        opponentPlay.round === cloudRound
       );
       if (opponentPlay && !isOpponentPlayCurrent2) {
         cloudLog(g, '[Battle] 对手出牌被过滤: oppRound=' + opponentPlay.round + ' localRound=' + newEffectiveRound + ' cloudRound=' + cloudRound);
@@ -1357,6 +1370,7 @@ class BattleManager {
     // 停止轮询，避免弹窗弹出后继续请求
     if (g._battleRoomPollTimer) {
       clearInterval(g._battleRoomPollTimer);
+      clearTimeout(g._battleRoomPollTimer);
       g._battleRoomPollTimer = null;
     }
     g._battleRoomClosedPopup = true;
@@ -1420,6 +1434,7 @@ class BattleManager {
           if (g.renderer) g.renderer.lastBattlePhase = null;
           // 切到 game.js 的好友房轮询，由它统一处理对方接受后的倒计时与开局
           if (res.result && res.result.room && g.applyFriendRoomState) {
+            g._friendBattleLobbyUpdateTime = 0; // 重置 lobby 时间戳，允许处理重开响应
             g.applyFriendRoomState(res.result.room);
           }
           if (g.startFriendRoomPolling) {
@@ -1450,6 +1465,7 @@ class BattleManager {
         if (res.result && res.result.code === 0 && res.result.room) {
           // 交给 game.js 的好友房状态机处理倒计时与开局
           if (g.applyFriendRoomState) {
+            g._friendBattleLobbyUpdateTime = 0; // 重置 lobby 时间戳，允许处理重开响应
             g.applyFriendRoomState(res.result.room);
           }
           if (!g._battleRoomPollTimer && g.startFriendRoomPolling) {
@@ -1499,6 +1515,7 @@ class BattleManager {
     }
     if (g._battleRoomPollTimer) {
       clearInterval(g._battleRoomPollTimer);
+      clearTimeout(g._battleRoomPollTimer);
       g._battleRoomPollTimer = null;
     }
     g._battleAnimTimeline = null;
@@ -1527,6 +1544,9 @@ class BattleManager {
     g._battleNextRoundCallingStartTime = null;
     g._battleRoomClosedPopup = false;
     g._battleRoomClosedAnimStart = null;
+    g._battleLastRoomUpdateTime = 0;
+    g._friendBattleStarted = false;
+    g._friendBattleLobbyUpdateTime = 0;
     if (g.audioManager) g.audioManager.stopSound('battle_matching');
   }
 }

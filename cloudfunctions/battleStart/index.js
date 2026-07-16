@@ -7,6 +7,7 @@
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
+const _ = db.command;
 
 const LETTER_SCORE = {
   A:11, B:12, C:13, D:14, E:15, F:16, G:17, H:18, I:19,
@@ -145,7 +146,8 @@ exports.main = async (event, context) => {
         hostPlay: null,
         guestPlay: null,
         seedWords: roundData.seedWords,
-        hand: roundData.hand
+        hand: roundData.hand,
+        restartRequest: _.remove()
       }
     });
 
