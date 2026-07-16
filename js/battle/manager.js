@@ -731,8 +731,9 @@ class BattleManager {
           seedWords: room.seedWords,
           hand: room.hand
         });
-        // 同步新回合后，继续处理当前 room 中可能已有的出牌数据（如好友已在新回合出牌）
-        // 而不是 return 等下一次轮询，减少"看不到对手出牌"的概率
+        // 已经进入新回合，旧房间里的出牌数据属于上一回合，不再继续处理，
+        // 避免用旧数据污染新回合状态。
+        return;
       }
 
       // 重新计算 isMyPlayCurrent / isOpponentPlayCurrent（如果回合推进过，使用新轮次）
@@ -1141,31 +1142,64 @@ class BattleManager {
       if (g._battlePendingRoom && (g.battlePhase !== 'revealing' || (g._battleAnimTimeline && g._battleAnimTimeline.step === 'done'))) {
         const pendingRoom = g._battlePendingRoom;
         g._battlePendingRoom = null;
+        // 若仍在 revealing，先切到 round_end，避免 _applyRoomState 再次缓存
+        if (g.battlePhase === 'revealing') {
+          g.battlePhase = 'round_end';
+          g._battleRoundEndStartTime = Date.now();
+        }
         cloudLog(g, '[Battle] 揭晓动画已结束，应用延迟的回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
+        console.log('[Battle] 揭晓动画已结束，应用延迟的回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
         this._applyRoomState(pendingRoom);
         return;
       }
       if (g.battlePhase === 'revealing' && g._battleAnimTimeline && g._battleAnimTimeline.step === 'done') {
-        const elapsedSinceDone = Date.now() - g._battleAnimTimeline.stepStartTime;
-        cloudLog(g, '[Battle] reveal 已 done，等待 ' + elapsedSinceDone + 'ms 后进入下一状态');
-        if (elapsedSinceDone >= 800) {
-          if (g.battleRound >= g.battleTotalRounds) {
-            cloudLog(g, '[Battle] 最后一回合结束，进入 battle_end');
-            g.battlePhase = 'battle_end';
-          } else {
-            if (g._battleOnline) {
-              // 联网对战：揭晓动画结束后进入 round_end，由房主调用 battleNextRound 生成统一手牌；
-              // 好友等待轮询同步，避免本地 _startRound 生成不同手牌。
-              cloudLog(g, '[Battle] 联网对战 reveal 结束，进入 round_end');
-              g.battlePhase = 'round_end';
-              g._battleRoundEndStartTime = Date.now();
-              if (g._battleIsHost) {
-                this.nextRound();
-              }
+        // reveal 动画一旦完成，优先应用因动画而延迟的云端回合推进；
+        // 这能避免非房主在 round_end 中间状态再卡一次。
+        if (g._battlePendingRoom) {
+          const pendingRoom = g._battlePendingRoom;
+          g._battlePendingRoom = null;
+          // 先把 phase 切到 round_end，避免 _applyRoomState 因仍在 revealing 而再次缓存 pendingRoom，
+          // 导致死循环或延迟同步。
+          g.battlePhase = 'round_end';
+          g._battleRoundEndStartTime = Date.now();
+          cloudLog(g, '[Battle] reveal done 立即应用延迟的云端回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
+          console.log('[Battle] reveal done 立即应用延迟的云端回合推进 currentRound=' + (pendingRoom.currentRound || 'null'));
+          this._applyRoomState(pendingRoom);
+          return;
+        }
+
+        if (g.battleRound >= g.battleTotalRounds) {
+          cloudLog(g, '[Battle] 最后一回合结束，进入 battle_end');
+          g.battlePhase = 'battle_end';
+        } else {
+          if (g._battleOnline) {
+            // 联网对战：揭晓动画结束后进入 round_end，由房主调用 battleNextRound 生成统一手牌；
+            // 好友等待轮询同步，避免本地 _startRound 生成不同手牌。
+            cloudLog(g, '[Battle] 联网对战 reveal 结束，进入 round_end');
+            console.log('[Battle] 联网对战 reveal 结束，进入 round_end');
+            g.battlePhase = 'round_end';
+            g._battleRoundEndStartTime = Date.now();
+            if (g._battleIsHost) {
+              this.nextRound();
             } else {
-              g.battleRound++;
-              this._startRound();
+              // 好友立即主动拉取一次最新房间，比等 800ms 轮询更快同步房主推进
+              console.log('[Battle] 好友 round_end 立即主动拉取房间');
+              wx.cloud.callFunction({
+                name: 'battleGet',
+                data: { roomId: g._battleRoomId },
+                success: (res) => {
+                  if (res.result && res.result.code === 0) {
+                    this._applyRoomState(res.result.room);
+                  }
+                },
+                fail: (err) => {
+                  console.error('[battleGet] 好友 round_end 主动拉取失败:', err);
+                }
+              });
             }
+          } else {
+            g.battleRound++;
+            this._startRound();
           }
         }
       }
@@ -1173,7 +1207,7 @@ class BattleManager {
       // 防御性恢复：如果因为网络抖动/房主推进失败导致长时间卡在 round_end，主动补救
       if (g._battleOnline && g.battlePhase === 'round_end' && g._battleRoundEndStartTime) {
         const stuckMs = Date.now() - g._battleRoundEndStartTime;
-        if (stuckMs >= 2000) {
+        if (stuckMs >= 1500) {
           cloudLog(g, '[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
           console.log('[Battle] 检测到 round_end 卡住 ' + stuckMs + 'ms，主动恢复');
           // 先确保轮询还活着
