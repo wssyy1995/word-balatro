@@ -1454,6 +1454,9 @@ function getInputY(x, y) {
     // 双方检测到 playing，正式开始对战
     if (room.status === 'playing') {
       stopFriendRoomPolling();
+      // 立即上锁：防止 stopFriendRoomPolling 之前已发出请求的残留响应再次进入本分支，
+      // 导致 startBattleFromRoom / startBattle 被重复调用。
+      game._friendBattleStarted = true;
       if (popup) {
         popup.closing = true;
         popup.closeStartTime = Date.now();
@@ -1611,18 +1614,18 @@ function getInputY(x, y) {
   function startBattleFromRoom(room) {
     const roomId = game._battleRoomId;
     const isHost = game._battleIsHost;
+    const roomRound = room.currentRound || 1;
 
-    // 防御性跳过：如果新一局已经启动到相同轮次，避免重复响应导致重置
-    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === (room.currentRound || 1)) {
+    // 防御性跳过：如果已经启动到相同轮次，直接返回，避免残留响应重复重置对战状态
+    if (game._friendBattleStarted && game.battlePhase === 'selecting' && game.battleRound === roomRound) {
       cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动到相同轮次，跳过 roomId=' + roomId);
       return;
     }
 
-    // 重开后的新一轮：room.currentRound 回到 1 且本地已完成过一轮，需要重置标志并清空对战状态
-    const isRestart = room.currentRound === 1 && game._friendBattleStarted;
+    // 重开后的新一轮：房间 currentRound 回到 1 且本地已经玩过一轮，需要清空旧对战状态
+    const isRestart = roomRound === 1 && game.battleRound > 1;
     if (isRestart) {
       cloudStorage.log('[AutoJoin] startBattleFromRoom 检测到房间重开，重置本地对战状态 roomId=' + roomId);
-      game._friendBattleStarted = false;
       if (game.battleManager) {
         game.battleManager._resetToSinglePlayer();
         // 保留房间关键信息（resetToSinglePlayer 会清掉）
@@ -1631,12 +1634,9 @@ function getInputY(x, y) {
         game._battleIsHost = isHost;
       }
     }
-    if (game._friendBattleStarted) {
-      cloudStorage.log('[AutoJoin] startBattleFromRoom 已启动过，跳过 roomId=' + roomId);
-      return;
-    }
+
     game._friendBattleStarted = true;
-    cloudStorage.log('[AutoJoin] startBattleFromRoom roomId=' + roomId + ' isHost=' + isHost + ' state=' + game.state);
+    cloudStorage.log('[AutoJoin] startBattleFromRoom roomId=' + roomId + ' isHost=' + isHost + ' state=' + game.state + ' restart=' + isRestart);
     // 清理倒计时状态
     game._friendBattleCountdown = null;
     if (game.battleManager) {
