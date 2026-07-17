@@ -614,6 +614,17 @@ class BattleManager {
     g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
   }
 
+  // 停止对局轮询：清定时器并抬升代数，in-flight 的旧链在 complete 里自动死亡
+  _stopRoomPolling() {
+    const g = this.game;
+    if (g._battleRoomPollTimer) {
+      clearTimeout(g._battleRoomPollTimer);
+      clearInterval(g._battleRoomPollTimer);
+      g._battleRoomPollTimer = null;
+    }
+    g._battlePollGen = (g._battlePollGen || 0) + 1;
+  }
+
   // 联网对战：确保轮询在运行（用于卡住恢复时发现轮询停止的情况）
   ensureRoomPolling() {
     const g = this.game;
@@ -675,6 +686,8 @@ class BattleManager {
         // 切回 lobby 轮询让 applyFriendRoomState 走 isRestart 重置开局，避免永远卡在结束页。
         if (g.battlePhase === 'battle_end' && room.status === 'playing' && roomGameId > g._battleGameId && g.applyFriendRoomState) {
           cloudLog(g, '[Battle] 本地错过重开流程，切 lobby 轮询追上新局 gameId=' + roomGameId);
+          // 先停对局轮询、启动 lobby 轮询，再处理房间状态（顺序保证 lobby 轮询已活，残留检查不拦截）
+          this._stopRoomPolling();
           if (g.startFriendRoomPolling) g.startFriendRoomPolling(g._battleRoomId);
           g.applyFriendRoomState(room);
         }
@@ -682,13 +695,17 @@ class BattleManager {
       }
 
       // 检测到重开邀请：对战结束后统一交给 game.js 的好友房轮询处理弹窗/倒计时/开局
+      // 顺序关键：必须先停对局轮询、启动 lobby 轮询，最后才调 applyFriendRoomState——
+      // 否则 applyFriendRoomState 会把 _friendBattleLobbyUpdateTime 推进到本响应的 updateTime，
+      // 之后 lobby 轮询读到的同一房间全部被“过期响应”过滤，受邀方永远弹不出重开邀请弹窗。
       if (room.restartRequest && g.battlePhase === 'battle_end') {
         cloudLog(g, '[Battle] 检测到重开邀请，切到好友房轮询: accepted=' + room.restartRequest.accepted);
-        if (g.applyFriendRoomState) {
-          g.applyFriendRoomState(room);
-        }
+        this._stopRoomPolling();
         if (g.startFriendRoomPolling) {
           g.startFriendRoomPolling(g._battleRoomId);
+        }
+        if (g.applyFriendRoomState) {
+          g.applyFriendRoomState(room);
         }
         return;
       }
@@ -1453,13 +1470,15 @@ class BattleManager {
           };
           g.battlePhase = 'selecting'; // 关闭 battle_end 结束弹窗
           if (g.renderer) g.renderer.lastBattlePhase = null;
-          // 切到 game.js 的好友房轮询，由它统一处理对方接受后的倒计时与开局
+          // 切到 game.js 的好友房轮询，由它统一处理对方接受后的倒计时与开局。
+          // 顺序：先停对局轮询、启动 lobby 轮询，再处理本次响应（保证残留检查不拦截）
+          this._stopRoomPolling();
+          if (g.startFriendRoomPolling) {
+            g.startFriendRoomPolling(g._battleRoomId);
+          }
           if (res.result && res.result.room && g.applyFriendRoomState) {
             g._friendBattleLobbyUpdateTime = 0; // 重置 lobby 时间戳，允许处理重开响应
             g.applyFriendRoomState(res.result.room);
-          }
-          if (g.startFriendRoomPolling) {
-            g.startFriendRoomPolling(g._battleRoomId);
           }
         } else {
           const msg = res.result && res.result.message ? res.result.message : '邀请失败，请重试';
@@ -1484,13 +1503,14 @@ class BattleManager {
       success: (res) => {
         cloudLog(g, '[Battle] acceptRestart success: ' + JSON.stringify({ code: res.result && res.result.code }));
         if (res.result && res.result.code === 0 && res.result.room) {
-          // 交给 game.js 的好友房状态机处理倒计时与开局
+          // 交给 game.js 的好友房状态机处理倒计时与开局。
+          // 顺序：先确保 lobby 轮询已启动，再处理本次响应（保证残留检查不拦截）
+          if (!g._friendRoomPollTimer && g.startFriendRoomPolling) {
+            g.startFriendRoomPolling(g._battleRoomId);
+          }
           if (g.applyFriendRoomState) {
             g._friendBattleLobbyUpdateTime = 0; // 重置 lobby 时间戳，允许处理重开响应
             g.applyFriendRoomState(res.result.room);
-          }
-          if (!g._friendRoomPollTimer && g.startFriendRoomPolling) {
-            g.startFriendRoomPolling(g._battleRoomId);
           }
         } else {
           const msg = res.result && res.result.message ? res.result.message : '接受失败，请重试';

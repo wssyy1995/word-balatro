@@ -1433,9 +1433,11 @@ function getInputY(x, y) {
     // 记录本次处理的房间更新时间，后续旧响应用来过滤
     game._friendBattleLobbyUpdateTime = roomUpdateTime;
 
-    // 好友房轮询已停止但对战已经启动，说明是 stopFriendRoomPolling 之前已发出请求的残留响应，
+    // 好友房轮询已停止但对局进行中，说明是 stopFriendRoomPolling 之前已发出请求的残留响应，
     // 忽略它，避免重开/开局后被重复触发导致状态重置。
-    if (!game._friendRoomPollTimer && game._friendBattleStarted) {
+    // 注意 battle_end 阶段必须放行：对局轮询会把重开邀请转交这里处理，
+    // 若此时拦截并把 _friendBattleLobbyUpdateTime 推进掉，受邀方将永远弹不出重开邀请弹窗。
+    if (!game._friendRoomPollTimer && game._friendBattleStarted && game.battlePhase !== 'battle_end') {
       cloudStorage.log('[AutoJoin] applyFriendRoomState 忽略残留响应 roomId=' + game._battleRoomId);
       return;
     }
