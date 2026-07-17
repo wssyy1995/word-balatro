@@ -1149,13 +1149,17 @@ function getInputY(x, y) {
     game.state = 'battle';
     game.battleMode = true;
 
-    // 好友通过分享链接进入对战页时，先预生成一局本地手牌作为背景预览，
-    // 避免字母牌区域空白；等房间正式开始后再用云端统一手牌覆盖。
+    // 好友通过分享链接进入对战页时，用房间创建时已生成的统一种子词/手牌做背景预览，
+    // 让 B 此时的字母牌区域就与 A 一致（旧逻辑是本地随机生成，正式开始后才被云端手牌覆盖）。
+    // 旧版房间没有预生成手牌时 roomData 为空，退化为本地随机预览。
     if (game && game.battleManager && game._battleRoomId && !game._friendBattleStarted && !game.battleHand) {
+      const roomData = game._pendingFriendRoomData || null;
+      game._pendingFriendRoomData = null;
       game.battleManager.startBattle('easy', {
         online: true,
         roomId: game._battleRoomId,
-        isHost: !!game._battleIsHost
+        isHost: !!game._battleIsHost,
+        roomData: roomData || undefined
       });
     }
 
@@ -1180,7 +1184,22 @@ function getInputY(x, y) {
           game._battleIsHost = true;
           game._friendBattleStarted = false;
           game._friendBattleLobbyUpdateTime = 0; // 新房间，重置 lobby 时间戳
+          game._pendingFriendRoomData = null; // 房主侧不使用好友预览数据
+          // 房间创建时已生成第一回合统一种子词/手牌：房主立即用它做背景预览，
+          // 这样好友加入后看到的字母牌区域与房主一致
+          const createdRoom = res.result.room || {};
+          if (game.battleManager && !game.battleHand &&
+              Array.isArray(createdRoom.seedWords) && createdRoom.seedWords.length &&
+              Array.isArray(createdRoom.hand) && createdRoom.hand.length) {
+            game.battleManager.startBattle('easy', {
+              online: true,
+              roomId: roomId,
+              isHost: true,
+              roomData: { seedWords: createdRoom.seedWords, hand: createdRoom.hand }
+            });
+          }
           // 创建房间后立即启动轮询，确保好友加入后能第一时间检测到
+          // 注意必须在 startBattle 之后启动（startBattle 会清空 _battleRoomPollTimer）
           startFriendRoomPolling(roomId);
           if (game._battleModeSelectPopup) {
             game._battleModeSelectPopup.mode = 'friend_room';
@@ -1274,6 +1293,13 @@ function getInputY(x, y) {
           game._autoJoiningBattle = false;
           game._friendBattleStarted = false;
           game._friendBattleLobbyUpdateTime = 0; // 新加入房间，重置 lobby 时间戳
+          // 房间创建时已生成统一种子词/手牌，先存起来供 enterBattlePage 做背景预览，
+          // 让好友在等待/倒计时阶段看到的字母牌区域就与房主一致；
+          // 旧版房间没有预生成数据时置空，预览退化为本地随机手牌
+          game._pendingFriendRoomData = (Array.isArray(room.seedWords) && room.seedWords.length &&
+                                         Array.isArray(room.hand) && room.hand.length)
+            ? { seedWords: room.seedWords, hand: room.hand }
+            : null;
           const isHost = res.result.role === 'host';
           game._battleIsHost = isHost;
           cloudStorage.log('[AutoJoin] 加入房间成功 role=' + res.result.role + ' popup=' + (isHost ? 'friend_waiting' : 'friend_join_ready'));

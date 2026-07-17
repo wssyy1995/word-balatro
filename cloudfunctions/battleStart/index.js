@@ -134,7 +134,15 @@ exports.main = async (event, context) => {
     }
 
     const now = Date.now();
-    const roundData = generateRoundData();
+    // 创建房间时已生成第一回合种子词/手牌（好友加入后即可预览，双方一致），直接复用；
+    // 重新挑战或旧版房间没有预生成数据时，才现场生成。
+    let seedWords = (Array.isArray(room.seedWords) && room.seedWords.length) ? room.seedWords : null;
+    let hand = (Array.isArray(room.hand) && room.hand.length) ? room.hand : null;
+    if (!seedWords || !hand) {
+      const roundData = generateRoundData();
+      seedWords = roundData.seedWords;
+      hand = roundData.hand;
+    }
     await db.collection('rooms').doc(room._id).update({
       data: {
         status: 'playing',
@@ -145,8 +153,8 @@ exports.main = async (event, context) => {
         currentRound: 1,
         hostPlay: null,
         guestPlay: null,
-        seedWords: roundData.seedWords,
-        hand: roundData.hand,
+        seedWords: seedWords,
+        hand: hand,
         restartRequest: _.remove()
       }
     });

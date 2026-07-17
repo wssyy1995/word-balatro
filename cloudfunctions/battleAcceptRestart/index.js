@@ -49,6 +49,9 @@ exports.main = async (event, context) => {
         turnDeadline: _.remove(),
         hostPlay: _.remove(),
         guestPlay: _.remove(),
+        // 清掉上一局的种子词/手牌，让 battleStart 为重开的新一局生成全新手牌
+        seedWords: _.remove(),
+        hand: _.remove(),
         scores,
         roundScores: {},
         playedWords: [],

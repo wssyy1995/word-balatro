@@ -49,9 +49,9 @@ word-balatro/
 │   ├── syncWordBook/        # 单词本增量同步到云数据库
 │   ├── updateHonorTrophy/   # 对战荣誉杯累计上传到云数据库
 │   ├── login/               # 用户登录信息上报
-│   ├── battleRoom/          # 创建好友对战房间
+│   ├── battleRoom/          # 创建好友对战房间（生成第一回合统一种子词/手牌）
 │   ├── battleJoin/          # 加入好友对战房间
-│   ├── battleStart/         # 房主开始对战（生成统一种子词/手牌）
+│   ├── battleStart/         # 房主开始对战（复用预生成的种子词/手牌）
 │   ├── battleReady/         # 好友点击准备
 │   ├── battleGet/           # 轮询获取房间状态
 │   ├── battlePlay/          # 玩家出牌同步到云端
@@ -1311,10 +1311,10 @@ js/battle/
 
 | 云函数 | 调用方 | 职责 |
 |--------|--------|------|
-| `battleRoom` | 房主 | 创建房间，生成 6 位房间号 |
+| `battleRoom` | 房主 | 创建房间，生成 6 位房间号；同时生成第一回合统一种子词和手牌 |
 | `battleJoin` | 好友 | 加入房间，返回角色（host/guest） |
 | `battleReady` | 好友 | 点击「开始对战」后标记准备，返回统一起点时间 `guestReadyAt` |
-| `battleStart` | 房主 | 倒计时结束后将房间状态改为 `playing`，并生成第一回合统一种子词和手牌 |
+| `battleStart` | 房主 | 倒计时结束后将房间状态改为 `playing`；第一回合手牌复用 `battleRoom` 预生成的数据（无预生成数据时才现场生成） |
 | `battleGet` | 双方 | 每 800 毫秒轮询房间状态（串行请求，避免重叠响应导致状态回退） |
 | `battlePlay` | 双方 | 玩家出牌后同步单词/卡牌/得分到云端（失败自动重试，最终失败回滚并允许重新出牌） |
 | `battleNextRound` | 房主 | 揭晓动画结束后生成下一回合统一种子词和手牌 |
@@ -1325,7 +1325,7 @@ js/battle/
 
 **关键机制**
 
-- **统一手牌**：`battleStart` 与 `battleNextRound` 在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。
+- **统一手牌**：`battleRoom`（第一回合）与 `battleNextRound`（后续回合）在云端生成 `seedWords` 与 `hand`，双方通过轮询获取同一份数据，保证每回合手牌完全一致。第一回合手牌在创建房间时即生成，房主创建后与好友加入后都会立即用它做背景预览，因此好友从分享链接进入对战页时看到的字母牌区域就与房主一致，不必等到正式开始；`battleStart` 直接复用该预生成数据（重新挑战时 `battleAcceptRestart` 会清掉旧数据，下一局重新生成）。
 - **回合推进**：只有房主可以调用 `battleNextRound`；好友点击「下一回合」后仅设置 `_battleNextRoundPressed = true`，等待房主推进并同步。揭晓动画期间若收到下一回合的房间状态，会先把房间缓存起来，等本地 reveal 动画完成、总分累加后再同步新回合，避免"看不到对手出牌"和分数丢失。
 - **状态同步**：`battleGet` 采用串行轮询（上一请求返回后才发下一次），并把轮询间隔降到 800ms，降低因请求重叠或响应乱序导致的状态回退。`_applyRoomState` 会丢弃 `cloudRound` 小于本地的过期响应，并在揭晓动画期间把新回合房间状态缓存到 `_battlePendingRoom`，等动画完成后再同步。
 - **防卡死**：揭晓动画结束后进入 `round_end`，房主调用 `battleNextRound` 推进；若超过 3 秒仍未离开 `round_end`，房主/好友会先主动拉取一次房间状态，云端已推进则直接同步，未推进且是房主则重试 `battleNextRound`。`battleNextRound` 已做幂等处理并带 6 秒客户端超时兜底：客户端携带 `currentRound`，服务端仅在 `room.currentRound === currentRound` 时推进，已推进则直接返回当前房间；若 iOS 上云函数回调完全丢失，6 秒后会自动按失败重试，避免一直卡住。`round_end` 或 `revealing` 动画结束后若仍卡住，界面会显示「同步下一回合/刷新房间状态」手动按钮供玩家主动恢复。
@@ -1576,10 +1576,10 @@ letterUpgrades = Map {
 
 | 云函数 | 调用方 | 输入 | 输出 | 说明 |
 |--------|--------|------|------|------|
-| `battleRoom` | 房主 | — | `{ code, roomId, _id }` | 创建 6 位房间号，status=`waiting` |
+| `battleRoom` | 房主 | — | `{ code, roomId, _id, room }` | 创建 6 位房间号，status=`waiting`；同时生成第一回合统一种子词和手牌（双方可在开局前预览） |
 | `battleJoin` | 好友 | `{ roomId }` | `{ code, role, room }` | 加入房间，role=`host`/`guest`；房间满或已开始则失败 |
 | `battleReady` | 好友 | `{ roomId }` | `{ code, room }` | 好友标记准备，记录 `guestReadyAt` 作为同步倒计时起点 |
-| `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`，生成第一回合统一种子词和手牌 |
+| `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`；第一回合种子词/手牌复用 `battleRoom` 预生成的数据（无预生成数据时才现场生成） |
 | `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 800ms 串行轮询 |
 | `battlePlay` | 双方 | `{ roomId, word, cards, score, isTimeout }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay`；`isTimeout=true` 时允许空 word/cards，表示本地 15 秒倒计时超时提交 0 分 |
 | `battleNextRound` | 房主 | `{ roomId, currentRound }` | `{ code, room }` | 清空双方出牌，生成下一回合统一种子词和手牌；带 `currentRound` 幂等校验，防止 iOS 云函数回调丢失时重复推进 |
@@ -1868,7 +1868,8 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.13.4 | 2026-07-16 | 好友对战新增 15 秒出牌倒计时：一方出牌/超时后，另一方需在 15 秒内出牌，超时自动提交 0 分；增加 30 秒双方未出牌兜底超时，避免双人挂机对局卡住；对战面板显示「对手已超时」/「已超时」状态；云函数 `battlePlay` 支持 `isTimeout` 字段；同步更新 README |
 | v1.13.5 | 2026-07-16 | 再次修复 iOS 好友对战计分动画后屏幕卡住：`battleNextRound` 增加 `currentRound` 幂等校验与 6 秒客户端超时兜底；round_end 卡住恢复改为先拉取房间状态再决定同步或重试；增加 revealing done 后 3 秒未离开、player_played 10 秒未进入 revealing 的兜底恢复；客户端收到「对局已结束」时直接进入 `battle_end`；揭晓动画中超时方先展示 +0；同步更新 README |
 | v1.13.6 | 2026-07-16 | 好友对战卡住问题增加手动逃生与诊断：round_end / revealing done 后显示「同步下一回合/刷新房间状态」手动按钮；关键路径（checkReveal、battleNextRound 成功/失败/超时、房间状态同步）增加 `console.log`，便于在微信开发者工具真机调试中直接查看；同步更新 README |
+| v1.13.7 | 2026-07-17 | 好友对战第一回合手牌生成时机提前到创建房间（`battleRoom`）：好友从分享链接进入对战页时，字母牌区域立即与房主一致，不再等正式开始才同步；`battleStart` 复用预生成数据（旧房间无数据时兜底现场生成）；`battleAcceptRestart` 重开时清空旧手牌以便新一局重新生成；房主创建房间后同样立即展示统一手牌预览；同步更新 README |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-07-16*
+*文档基于实际代码整理，最后更新：2026-07-17*
