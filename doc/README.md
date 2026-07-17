@@ -1332,6 +1332,7 @@ js/battle/
 - **超时处理**：好友对战已接入本地 15 秒出牌倒计时。一方出牌或超时后，另一方需在 15 秒内出牌，否则本地自动提交 0 分空牌到云端（`battlePlay` 带 `isTimeout: true`）；同时增加 30 秒兜底超时，若双方开局后 30 秒都未出牌，本地玩家自动超时，避免双人挂机导致对局卡住。超时方在揭晓动画中先展示 `+0`，面板会显示「对手已超时」/「已超时」状态。
 - **房间关闭**：一方主动退出（点击左上角返回主页）调用 `battleClose`，另一方轮询到 `status === 'closed'` 后弹出「房间已结束」提示。对战结束弹窗点击「回到首页」同样会调用 `battleClose`。
 - **重新挑战**：对战结束弹窗点击「重新挑战」→ 调用 `battleRequestRestart`；对方收到 `friend_restart_invited` 弹窗，点击接受后双方回到准备状态，房间 `currentRound` 重置为 1，重走倒计时与 `battleStart`。
+- **局号（gameId）跨局防护**：`battleStart` 每次开局把房间 `gameId + 1`（第一局为 1，重开为 2……），客户端在 `startBattleFromRoom` 记录本地局号 `_battleGameId`。对局轮询 `_applyRoomState` 丢弃 `gameId` 不符的响应；lobby 状态机 `applyFriendRoomState` 发现本局已开局则跳过 `playing` 重复触发；`battlePlay` 云端校验上报 `gameId` 不符拒绝写入。重开邀请流程中的迟到响应、残留轮询链因此无处可写，从机制上杜绝跨局状态污染。同时 lobby 轮询（`_friendRoomPollTimer`）与对局轮询（`_battleRoomPollTimer` + 代数计数）使用相互独立的定时器，旧轮询链在重开/退出时自动死亡。若本地完全错过重开流程仍停在 `battle_end`，轮询到新局 `playing` 响应时会自动切回 lobby 流程追上新局。
 
 #### 对战计分规则
 
@@ -1579,9 +1580,9 @@ letterUpgrades = Map {
 | `battleRoom` | 房主 | — | `{ code, roomId, _id, room }` | 创建 6 位房间号，status=`waiting`；同时生成第一回合统一种子词和手牌（双方可在开局前预览） |
 | `battleJoin` | 好友 | `{ roomId }` | `{ code, role, room }` | 加入房间，role=`host`/`guest`；房间满或已开始则失败 |
 | `battleReady` | 好友 | `{ roomId }` | `{ code, room }` | 好友标记准备，记录 `guestReadyAt` 作为同步倒计时起点 |
-| `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`；第一回合种子词/手牌复用 `battleRoom` 预生成的数据（无预生成数据时才现场生成） |
+| `battleStart` | 房主 | `{ roomId }` | `{ code, room }` | 将房间状态改为 `playing`；第一回合种子词/手牌复用 `battleRoom` 预生成的数据（无预生成数据时才现场生成）；每次开局 `gameId + 1`，作为跨局响应的身份标识 |
 | `battleGet` | 双方 | `{ roomId }` | `{ code, room }` | 获取房间完整状态，供前端 800ms 串行轮询 |
-| `battlePlay` | 双方 | `{ roomId, word, cards, score, isTimeout }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay`；`isTimeout=true` 时允许空 word/cards，表示本地 15 秒倒计时超时提交 0 分 |
+| `battlePlay` | 双方 | `{ roomId, word, cards, score, isTimeout, gameId }` | `{ code, room }` | 玩家出牌后写入 `hostPlay` 或 `guestPlay`；`isTimeout=true` 时允许空 word/cards，表示本地 15 秒倒计时超时提交 0 分；`gameId` 与房间当前局号不符时拒绝写入（防上一局迟到请求跨局覆盖） |
 | `battleNextRound` | 房主 | `{ roomId, currentRound }` | `{ code, room }` | 清空双方出牌，生成下一回合统一种子词和手牌；带 `currentRound` 幂等校验，防止 iOS 云函数回调丢失时重复推进 |
 | `battleRequestRestart` | 任意一方 | `{ roomId }` | `{ code, room }` | 在对战结束后写入 `restartRequest` 邀请 |
 | `battleAcceptRestart` | 另一方 | `{ roomId }` | `{ code, room }` | 接受重新挑战，重置房间状态为 `ready`，`currentRound=1` |
@@ -1869,6 +1870,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.13.5 | 2026-07-16 | 再次修复 iOS 好友对战计分动画后屏幕卡住：`battleNextRound` 增加 `currentRound` 幂等校验与 6 秒客户端超时兜底；round_end 卡住恢复改为先拉取房间状态再决定同步或重试；增加 revealing done 后 3 秒未离开、player_played 10 秒未进入 revealing 的兜底恢复；客户端收到「对局已结束」时直接进入 `battle_end`；揭晓动画中超时方先展示 +0；同步更新 README |
 | v1.13.6 | 2026-07-16 | 好友对战卡住问题增加手动逃生与诊断：round_end / revealing done 后显示「同步下一回合/刷新房间状态」手动按钮；关键路径（checkReveal、battleNextRound 成功/失败/超时、房间状态同步）增加 `console.log`，便于在微信开发者工具真机调试中直接查看；同步更新 README |
 | v1.13.7 | 2026-07-17 | 好友对战第一回合手牌生成时机提前到创建房间（`battleRoom`）：好友从分享链接进入对战页时，字母牌区域立即与房主一致，不再等正式开始才同步；`battleStart` 复用预生成数据（旧房间无数据时兜底现场生成）；`battleAcceptRestart` 重开时清空旧手牌以便新一局重新生成；房主创建房间后同样立即展示统一手牌预览；同步更新 README |
+| v1.13.8 | 2026-07-17 | 根治重开后出牌状态不同步：引入局号 `gameId`（`battleStart` 每次开局 +1），对局轮询丢弃跨局响应、lobby 状态机跳过本局 `playing` 重复触发、`battlePlay` 云端拒绝跨局写入；lobby 轮询改用独立定时器字段 `_friendRoomPollTimer`（原与对局轮询共用字段导致重开时清错定时器、lobby 轮询存活进对局并重置出牌状态，为问题根因）；对局轮询链加代数计数自动死亡；本地错过重开流程时自动切回 lobby 追上新局；同步更新 README |
 
 ---
 

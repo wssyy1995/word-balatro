@@ -504,7 +504,9 @@ class BattleManager {
         word,
         cards: (cards || []).map(c => ({ id: c.id, letter: c.letter, score: c.score })),
         score,
-        isTimeout
+        isTimeout,
+        // 本局局号：云端据此拒绝上一局的迟到/重试写入，防止跨局覆盖出牌
+        gameId: g._battleGameId || 0
       },
       success: (res) => {
         cloudLog(g, '[Battle] _syncPlayToServer success res=' + JSON.stringify({
@@ -530,9 +532,9 @@ class BattleManager {
             this._applyRoomState(room);
           }
         } else {
-          // 业务失败也尝试重试，过滤掉明确的参数错误
+          // 业务失败也尝试重试，过滤掉明确的参数错误与跨局拒绝
           const msg = res.result && res.result.message ? res.result.message : '';
-          if (retryCount > 0 && !msg.includes('参数错误') && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家')) {
+          if (retryCount > 0 && !msg.includes('参数错误') && !msg.includes('房间不存在') && !msg.includes('你不是房间玩家') && !msg.includes('对局已更替')) {
             cloudLog(g, '[Battle] _syncPlayToServer 业务失败，准备重试: ' + msg);
             setTimeout(() => this._syncPlayToServer(word, cards, score, retryCount - 1, isTimeout), 800);
           } else {
@@ -578,10 +580,13 @@ class BattleManager {
       clearTimeout(g._battleRoomPollTimer);
       clearInterval(g._battleRoomPollTimer);
     }
-    console.log('[Battle] startRoomPolling 启动 roomId=' + g._battleRoomId + ' isHost=' + g._battleIsHost);
+    // 轮询代数：每次启动 +1。旧链若在 in-flight 请求的 complete 里“复活”，
+    // 会因代数不符在下一跳自动死亡，避免重开后两条轮询链并存互相覆盖定时器。
+    const pollGen = (g._battlePollGen = (g._battlePollGen || 0) + 1);
+    console.log('[Battle] startRoomPolling 启动 roomId=' + g._battleRoomId + ' isHost=' + g._battleIsHost + ' gen=' + pollGen);
     const poll = () => {
-      if (!g._battleOnline || !g._battleRoomId) {
-        console.log('[Battle] 轮询停止 _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
+      if (pollGen !== g._battlePollGen || !g._battleOnline || !g._battleRoomId) {
+        console.log('[Battle] 轮询停止 gen=' + pollGen + '/' + g._battlePollGen + ' _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
         g._battleRoomPollTimer = null;
         return;
       }
@@ -597,11 +602,11 @@ class BattleManager {
           console.error('[battleGet] 轮询失败:', err);
         },
         complete: () => {
-          if (g._battleOnline && g._battleRoomId) {
+          if (pollGen === g._battlePollGen && g._battleOnline && g._battleRoomId) {
             g._battleRoomPollTimer = setTimeout(poll, ROOM_POLL_INTERVAL_MS);
           } else {
-            console.log('[Battle] 轮询 complete 停止 _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
-            g._battleRoomPollTimer = null;
+            console.log('[Battle] 轮询 complete 停止 gen=' + pollGen + '/' + g._battlePollGen + ' _battleOnline=' + g._battleOnline + ' roomId=' + g._battleRoomId);
+            if (pollGen === g._battlePollGen) g._battleRoomPollTimer = null;
           }
         }
       });
@@ -657,6 +662,22 @@ class BattleManager {
       if (room.status === 'closed') {
         cloudLog(g, '[Battle] 房间已关闭，触发对战结束弹窗');
         this._showRoomClosedPopup();
+        return;
+      }
+
+      // 跨局防护：房间 gameId 与本地已开局局号不一致，说明是上一局的迟到响应
+      // （或重开后旧轮询链读到的中间态），直接丢弃，绝不让它污染本局状态。
+      const roomGameId = room.gameId || 0;
+      if (g._battleGameId && roomGameId && roomGameId !== g._battleGameId) {
+        cloudLog(g, '[Battle] _applyRoomState 忽略跨局响应 roomGameId=' + roomGameId + ' localGameId=' + g._battleGameId);
+        // 兜底：本地仍停在 battle_end 而房间已开新局（完全错过重开邀请流程，
+        // 例如 restartRequest 被 battleStart 移除前一次都没轮询到），
+        // 切回 lobby 轮询让 applyFriendRoomState 走 isRestart 重置开局，避免永远卡在结束页。
+        if (g.battlePhase === 'battle_end' && room.status === 'playing' && roomGameId > g._battleGameId && g.applyFriendRoomState) {
+          cloudLog(g, '[Battle] 本地错过重开流程，切 lobby 轮询追上新局 gameId=' + roomGameId);
+          if (g.startFriendRoomPolling) g.startFriendRoomPolling(g._battleRoomId);
+          g.applyFriendRoomState(room);
+        }
         return;
       }
 
@@ -1468,7 +1489,7 @@ class BattleManager {
             g._friendBattleLobbyUpdateTime = 0; // 重置 lobby 时间戳，允许处理重开响应
             g.applyFriendRoomState(res.result.room);
           }
-          if (!g._battleRoomPollTimer && g.startFriendRoomPolling) {
+          if (!g._friendRoomPollTimer && g.startFriendRoomPolling) {
             g.startFriendRoomPolling(g._battleRoomId);
           }
         } else {
@@ -1518,6 +1539,15 @@ class BattleManager {
       clearTimeout(g._battleRoomPollTimer);
       g._battleRoomPollTimer = null;
     }
+    // 抬升轮询代数，让任何 in-flight 的旧轮询链在 complete 里自动死亡
+    g._battlePollGen = (g._battlePollGen || 0) + 1;
+    // 顺带清理 lobby 轮询（字段属于 game.js 的好友房流程，但退出/重开时必须一起死）
+    if (g._friendRoomPollTimer) {
+      clearInterval(g._friendRoomPollTimer);
+      clearTimeout(g._friendRoomPollTimer);
+      g._friendRoomPollTimer = null;
+    }
+    g._battleGameId = 0;
     g._battleAnimTimeline = null;
     g._battleFlyingScores = [];
     g._battleAvatarGlowAnim = null;

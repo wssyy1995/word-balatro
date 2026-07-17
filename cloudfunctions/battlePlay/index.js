@@ -36,6 +36,12 @@ exports.main = async (event, context) => {
     if (!isHost && !isGuest) return { code: -1, message: '你不是房间玩家' };
 
     const playerKey = isHost ? 'hostPlay' : 'guestPlay';
+    // 跨局防护：客户端上报的 gameId 与房间当前 gameId 不一致，说明是上一局的迟到/重试请求，
+    // 拒绝写入，避免把上一局的出牌覆盖到新一局。
+    if (room.gameId && event.gameId && room.gameId !== event.gameId) {
+      console.log('[battlePlay] 拒绝跨局写入 roomGameId=' + room.gameId + ' clientGameId=' + event.gameId);
+      return { code: -1, message: '对局已更替' };
+    }
     const now = Date.now();
     const currentRound = room.currentRound || 1;
     const playData = { word: word || '', cards: cards || [], score: score || 0, openid: OPENID, time: now, round: currentRound, isTimeout: !!isTimeout };

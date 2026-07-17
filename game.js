@@ -1381,16 +1381,20 @@ function getInputY(x, y) {
   }
 
   // 好友对战房间轮询（ lobby 阶段，检测到 playing 后正式进入对战）
+  // 注意：lobby 轮询使用独立字段 _friendRoomPollTimer，与对局轮询 _battleRoomPollTimer 完全分离。
+  // 历史上两者共用一个字段，重开时 stopFriendRoomPolling 经常清错定时器，
+  // 导致 lobby 轮询存活进对局并重复触发 startBattleFromRoom（出牌状态被重置），这是重开后
+  // 出牌状态不同步的根因。
   function startFriendRoomPolling(roomId) {
-    if (game._battleRoomPollTimer) {
-      clearInterval(game._battleRoomPollTimer);
-      clearTimeout(game._battleRoomPollTimer);
+    if (game._friendRoomPollTimer) {
+      clearInterval(game._friendRoomPollTimer);
+      clearTimeout(game._friendRoomPollTimer);
     }
-    game._battleRoomPollTimer = setInterval(() => {
+    game._friendRoomPollTimer = setInterval(() => {
       if (!game._battleRoomId) {
-        clearInterval(game._battleRoomPollTimer);
-        clearTimeout(game._battleRoomPollTimer);
-        game._battleRoomPollTimer = null;
+        clearInterval(game._friendRoomPollTimer);
+        clearTimeout(game._friendRoomPollTimer);
+        game._friendRoomPollTimer = null;
         return;
       }
       wx.cloud.callFunction({
@@ -1410,10 +1414,10 @@ function getInputY(x, y) {
   }
 
   function stopFriendRoomPolling() {
-    if (game._battleRoomPollTimer) {
-      clearInterval(game._battleRoomPollTimer);
-      clearTimeout(game._battleRoomPollTimer);
-      game._battleRoomPollTimer = null;
+    if (game._friendRoomPollTimer) {
+      clearInterval(game._friendRoomPollTimer);
+      clearTimeout(game._friendRoomPollTimer);
+      game._friendRoomPollTimer = null;
     }
   }
 
@@ -1431,7 +1435,7 @@ function getInputY(x, y) {
 
     // 好友房轮询已停止但对战已经启动，说明是 stopFriendRoomPolling 之前已发出请求的残留响应，
     // 忽略它，避免重开/开局后被重复触发导致状态重置。
-    if (!game._battleRoomPollTimer && game._friendBattleStarted) {
+    if (!game._friendRoomPollTimer && game._friendBattleStarted) {
       cloudStorage.log('[AutoJoin] applyFriendRoomState 忽略残留响应 roomId=' + game._battleRoomId);
       return;
     }
@@ -1493,6 +1497,16 @@ function getInputY(x, y) {
 
     // 双方检测到 playing，正式开始对战
     if (room.status === 'playing') {
+      // gameId 防护：这一局已经在本地开过时，直接跳过。
+      // 重开流程中 lobby 轮询即便意外存活，读到本局 playing 也只会命中本分支并跳过，
+      // 从机制上杜绝重复 startBattleFromRoom 把进行中的出牌状态整局重置。
+      // （roomGameId 缺失说明云端是旧版函数，退化为原有行为，不影响兼容。）
+      const roomGameId = room.gameId || 0;
+      if (roomGameId && game._battleGameId && roomGameId === game._battleGameId &&
+          game._friendBattleStarted && game.battleRound === (room.currentRound || 1)) {
+        cloudStorage.log('[AutoJoin] applyFriendRoomState 本局已开局，跳过 playing 重复触发 gameId=' + roomGameId + ' round=' + game.battleRound);
+        return;
+      }
       stopFriendRoomPolling();
       // 立即上锁：防止 stopFriendRoomPolling 之前已发出请求的残留响应再次进入本分支，
       // 导致 startBattleFromRoom / startBattle 被重复调用。
@@ -1709,6 +1723,8 @@ function getInputY(x, y) {
     }
     // 记录本次开局对应的房间更新时间，用于过滤 lobby 过期响应
     game._friendBattleLobbyUpdateTime = roomUpdateTime;
+    // 记录本局局号：之后所有轮询响应/出牌同步都凭它识别并丢弃跨局数据
+    game._battleGameId = room.gameId || 0;
     if (isHost) {
       // 房主已经在对战页，关闭弹窗即可
       game._battleModeSelectPopup = null;

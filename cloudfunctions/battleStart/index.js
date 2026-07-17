@@ -148,6 +148,9 @@ exports.main = async (event, context) => {
         status: 'playing',
         hostReady: true,
         updateTime: now,
+        // 局号：每次开局 +1（第一局为 1，重开为 2……）。
+        // 客户端凭 gameId 识别并丢弃上一局的迟到/残留响应，防止跨局状态污染。
+        gameId: (room.gameId || 0) + 1,
         currentTurn: room.host,
         turnDeadline: now + 15000,
         currentRound: 1,
