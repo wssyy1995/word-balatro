@@ -635,14 +635,15 @@ class ShopRenderer {
         ctx.rotate(rotation * Math.PI / 180);
         ctx.translate(-(sx + slotW / 2), -(oSlotY + oSlotH / 2));
         ctx.translate(flyX, flyY);
-        this.parent._drawPropCard(ctx, potion, sx, oSlotY, slotW, oSlotH, s);
+        // 商店已装备栏不显示回合禁用蒙层（disable_potion_card 仅限制回合内使用）
+        this.parent._drawPropCard(ctx, potion, sx, oSlotY, slotW, oSlotH, s, false);
         ctx.restore();
       } else if (potion) {
         const isSelected = this.shopSelectedOwned && this.shopSelectedOwned.type === 'potions' && this.shopSelectedOwned.index === i;
         const selectedOffsetY = isSelected ? -3 * s : 0;
         const pDrawX = sx + slideOffsetX;
         const pDrawY = oSlotY + selectedOffsetY;
-        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s);
+        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s, false);
         // 药水牌绿色发光蒙层（圆形，覆盖在卡牌上方，中心透明边缘发光）
         ctx.save();
         const pCx = pDrawX + slotW / 2;
@@ -2233,15 +2234,16 @@ class ConfirmBuyRenderer {
       this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH, action: 'stashPotion' };
       this.successBtn2Rect = null;
     } else {
-      // 非药水牌：单个按钮
-      const collectBtnW = 160 * s;
+      // 非药水牌：单个按钮（宽度收窄至 140，整体下移 3px）
+      const collectBtnW = 140 * s;
       const collectBtnX = (W - collectBtnW) / 2;
+      const btnDownShift = 3 * s;
       const singleScale = (game._successPressedBtn && cpe > 0 && cpe < 150) ? 0.95 : 1;
 
       const finalBW = collectBtnW * singleScale;
       const finalBH = collectBtnH * singleScale;
       const finalBX = collectBtnX + (collectBtnW - finalBW) / 2;
-      const finalBY = collectBtnY + (collectBtnH - finalBH) / 2 + contentYShift;
+      const finalBY = collectBtnY + (collectBtnH - finalBH) / 2 + contentYShift + btnDownShift;
 
       this.parent.roundRect(finalBX, finalBY, finalBW, finalBH, 8 * s, '#c4a35a');
       ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
@@ -2259,7 +2261,7 @@ class ConfirmBuyRenderer {
       ctx.fillText(btnLabel, W / 2, finalBY + finalBH / 2);
       ctx.restore();
 
-      const finalCollectY = collectBtnY;
+      const finalCollectY = collectBtnY + btnDownShift;
       this.successBtnRect = { x: collectBtnX, y: finalCollectY, w: collectBtnW, h: collectBtnH, action: btnAction };
       this.successBtn2Rect = null;
     }

@@ -4426,6 +4426,8 @@ function handleInput(x, inputY) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
+        // 每次打开图鉴默认回到「全部」tab
+        game._cardBookTab = 'all';
         // 如果有新收集的卡牌，自动翻到对应页码
         if (game._newWitchCardThisShop) {
           const allLevels = WITCH_SKILLS.map(s => s.level);
@@ -4731,6 +4733,8 @@ function handleInput(x, inputY) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game.cardBookOpen = true;
+        // 每次打开图鉴默认回到「全部」tab
+        game._cardBookTab = 'all';
         // 如果有新收集的卡牌，自动翻到对应页码
         if (game._newWitchCardThisShop) {
           const allLevels = WITCH_SKILLS.map(s => s.level);
