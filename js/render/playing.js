@@ -621,9 +621,10 @@ module.exports = function extendPlaying(Renderer) {
               }
   
               // 计算每张字母牌的最终分数（含 per_card 女巫牌加成），动画期间只算一次
+              // 与 calcWordScore 保持一致：先加吸星大法 absorbBonus，再应用 per_card 加成
               if (!pc._cardFinalScores) {
                 pc._cardFinalScores = cardsInOrder.map((card, i) => {
-                  let score = card.score;
+                  let score = card.score + (card.absorbBonus || 0);
                   const triggered = pc.jokerTriggers?.[i] || [];
                   triggered.forEach(jIdx => {
                     const joker = jokers[jIdx];
