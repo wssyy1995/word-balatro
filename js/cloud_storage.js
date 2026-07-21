@@ -18,6 +18,7 @@ class CloudStorageManager {
     this.guideSpritesheets = {}; // { witch_4: { img, loaded } } 精灵图缓存
     this.rankAvatarImages = {}; // { name: { img, loaded, width, height } }
     this.battleImages = {};   // { name: { img, loaded, width, height } }
+    this.cafeImages = {};     // { name: { img, loaded, width, height } }
     this.cloudFileMap = {};   // { name: fileID }
     this.witchFileMap = {};   // { name: fileID }
     this.witchCardFileMap = {}; // { name: fileID }
@@ -162,6 +163,11 @@ class CloudStorageManager {
       'battle_hornor_trophy': c('/battle/battle_hornor_trophy.png'),
       'battle_overtime': c('/battle/battle_overtime.png'),
       'battle_progress_icon': c('/battle/battle_progress_icon.png')
+    };
+
+    // 默认 cafe 图片云文件映射（images/cafe 目录）
+    this.defaultCafeFileMap = {
+      cafe_bill: c('/images/cafe/cafe_bill.png'),
     };
 
     // 默认 rank_avatar 图片云文件映射
