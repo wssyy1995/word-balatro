@@ -2032,6 +2032,13 @@ class ConfirmBuyRenderer {
     const cardX = cardCX - cardW / 2;
     const cardY = cardCY - cardH / 2;
 
+    // === 卡牌背后金色呼吸光晕（在卡牌图片之前绘制，只画光晕不画四角星）===
+    ctx.save();
+    ctx.globalAlpha = contentAlpha * closeAlpha;
+    const glowBreathe = 1.1 + 0.5 * Math.sin(elapsed / 480);
+    this.parent._drawCardGlow(ctx, cardX, cardY, cardW, cardH, s, glowBreathe, { sparkles: false });
+    ctx.restore();
+
     // === 卡牌图片（带金色边框 + 高光）===
     ctx.save();
     ctx.globalAlpha = contentAlpha * closeAlpha;

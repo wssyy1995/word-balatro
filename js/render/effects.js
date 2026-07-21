@@ -790,22 +790,25 @@ module.exports = function extendEffects(Renderer) {
       return { px, py, pw, ph, elapsed, enterProgress, closeProgress, closeAlpha };
     }
 
-    Renderer.prototype._drawCardGlow = function(ctx, cardX, cardY, cardW, cardH, s, alphaScale = 1) {
+    Renderer.prototype._drawCardGlow = function(ctx, cardX, cardY, cardW, cardH, s, alphaScale = 1, options = {}) {
       ctx.save();
       const t = Date.now();
       const cardCX = cardX + cardW / 2;
       const cardCY = cardY + cardH / 2;
-      const haloR = Math.max(cardW, cardH) * 0.85;
-      const pulse = 0.5 + 0.5 * Math.sin(t / 500);
-      const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
-      haloGrad.addColorStop(0, `rgba(255,215,0,${(0.12 + 0.06 * pulse) * alphaScale})`);
-      haloGrad.addColorStop(0.5, `rgba(255,200,60,${(0.06 + 0.04 * pulse) * alphaScale})`);
-      haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
-      ctx.fillStyle = haloGrad;
-      ctx.beginPath();
-      ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
-      ctx.fill();
+      if (options.halo !== false) {
+        const haloR = Math.max(cardW, cardH) * 0.85;
+        const pulse = 0.5 + 0.5 * Math.sin(t / 500);
+        const haloGrad = ctx.createRadialGradient(cardCX, cardCY, haloR * 0.25, cardCX, cardCY, haloR);
+        haloGrad.addColorStop(0, `rgba(255,215,0,${(0.12 + 0.06 * pulse) * alphaScale})`);
+        haloGrad.addColorStop(0.5, `rgba(255,200,60,${(0.06 + 0.04 * pulse) * alphaScale})`);
+        haloGrad.addColorStop(1, 'rgba(255,180,0,0)');
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath();
+        ctx.arc(cardCX, cardCY, haloR, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
+      if (options.sparkles !== false) {
       const sparkles = [
         { x: cardX - 10*s, y: cardY - 6*s, r: 5, ph: 0.0 },
         { x: cardX + cardW + 8*s, y: cardY + 4*s, r: 4, ph: 2.0 },
@@ -822,6 +825,7 @@ module.exports = function extendEffects(Renderer) {
         this._drawSparkleShape(ctx, sp.x, sp.y, r);
         ctx.restore();
       });
+      }
       ctx.restore();
     }
 
@@ -1012,34 +1016,40 @@ module.exports = function extendEffects(Renderer) {
         const twinkle = (Math.sin(elapsed * 0.003 * star.speed + star.phase) + 1) / 2;
         const alpha = star.alpha * (0.25 + twinkle * 0.85) * closeAlpha;
         const r = star.r * s * (0.65 + twinkle * 0.7) * scale;
-        const rotation = elapsed * 0.0005 + star.phase;
 
         ctx.save();
         ctx.translate(sx, sy);
-        ctx.rotate(rotation);
-        ctx.strokeStyle = `rgba(255, 243, 177, ${alpha})`;
-        ctx.fillStyle = `rgba(255, 204, 67, ${alpha})`;
-        ctx.lineWidth = Math.max(1 * s, r * 0.15);
-        ctx.shadowColor = 'rgba(255, 190, 45, 0.7)';
-        ctx.shadowBlur = r * 1.6;
+        // 不做旋转：四角星旋转到小角度时，小尺寸+阴影模糊下会被看成正方形
+        ctx.shadowColor = 'rgba(255, 190, 45, 0.55)';
+        ctx.shadowBlur = r * 0.9;
 
-        // 十字星主体
+        // 十字星主体（细腰长臂，保持星形锐利）
+        ctx.fillStyle = `rgba(255, 204, 67, ${alpha})`;
         ctx.beginPath();
-        ctx.moveTo(0, -r * 1.8);
-        ctx.quadraticCurveTo(r * 0.22, -r * 0.22, r * 1.8, 0);
-        ctx.quadraticCurveTo(r * 0.22, r * 0.22, 0, r * 1.8);
-        ctx.quadraticCurveTo(-r * 0.22, r * 0.22, -r * 1.8, 0);
-        ctx.quadraticCurveTo(-r * 0.22, -r * 0.22, 0, -r * 1.8);
+        ctx.moveTo(0, -r * 2.0);
+        ctx.quadraticCurveTo(r * 0.12, -r * 0.12, r * 2.0, 0);
+        ctx.quadraticCurveTo(r * 0.12, r * 0.12, 0, r * 2.0);
+        ctx.quadraticCurveTo(-r * 0.12, r * 0.12, -r * 2.0, 0);
+        ctx.quadraticCurveTo(-r * 0.12, -r * 0.12, 0, -r * 2.0);
         ctx.closePath();
         ctx.fill();
 
-        // 十字线
+        // 十字光线（短而细，仅作点缀，避免糊成方块轮廓）
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = `rgba(255, 243, 177, ${alpha * 0.55})`;
+        ctx.lineWidth = Math.max(0.6 * s, r * 0.1);
         ctx.beginPath();
-        ctx.moveTo(-r * 2.4, 0);
-        ctx.lineTo(r * 2.4, 0);
-        ctx.moveTo(0, -r * 2.4);
-        ctx.lineTo(0, r * 2.4);
+        ctx.moveTo(-r * 1.5, 0);
+        ctx.lineTo(r * 1.5, 0);
+        ctx.moveTo(0, -r * 1.5);
+        ctx.lineTo(0, r * 1.5);
         ctx.stroke();
+
+        // 中心亮点：小尺寸下仍能读出"星"的核心
+        ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(1, alpha * 1.2)})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
       });
 
