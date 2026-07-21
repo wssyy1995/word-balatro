@@ -2317,7 +2317,10 @@ wx.onTouchStart((e) => {
 
   // 药水页面左上角返回按钮（动画播放期间不响应，避免中断升级/洗涤/复制动画）
   const isPotionAnimating = !!(game._potionUpgrading || game._starlightWashAnim || game._replicateAnim || game._equalSplitAnim);
-  if (!isPotionAnimating && game.state === 'potion' && renderer.potionBackRect) {
+  // 吸星大法选择页有独立返回逻辑（handleInput 内处理，返回游戏且药水不消耗），
+  // 此处跳过通用拦截，避免命中残留的 potionBackRect 误弹"卡槽已满"确认窗
+  const isAbsorbStarsSelect = game.state === 'potion' && game.potionMode && game.potionMode.effect === 'absorb_stars';
+  if (!isPotionAnimating && !isAbsorbStarsSelect && game.state === 'potion' && renderer.potionBackRect) {
     const potionBackHit = renderer.hitTest(x, inputY, [renderer.potionBackRect]);
     if (potionBackHit) {
       game._potionBackBtnPressed = true;
@@ -2817,6 +2820,29 @@ wx.onTouchEnd(() => {
     if (game.storageManager) game.storageManager.saveProgress();
   }
 
+  // 从游戏中道具栏进入的药水页：返回游戏进行页，药水放回原槽位
+  function returnPotionToGame() {
+    if (game.potionMode) {
+      const potion = { ...game.potionMode };
+      const idx = potion._potionIndex;
+      delete potion._potionIndex;
+      if (idx !== undefined && idx >= 0 && idx <= game.potions.length) {
+        game.potions.splice(idx, 0, potion);
+      } else {
+        game.potions.push(potion);
+      }
+    }
+    game.potionMode = null;
+    game._randomUpgradePopup = null;
+    game._potionSelectedLetter = null;
+    game._starlightWashSelectedLetter = null;
+    game._replicateSelectedLetters = [];
+    game._equalSplitSelectedLetters = [];
+    game._prePotionState = null;
+    game.state = 'playing';
+    if (game.storageManager) game.storageManager.saveProgress();
+  }
+
   // top_icon 短按：返回主页（长按未触发时；主页展示/对战/药水状态不触发）
   if (!longPressTriggered && touchStartPos && renderer.topIconRect && !showHomepage && !(game && (game.state === 'battle' || game.state === 'potion'))) {
     const endInputY = getInputY(touchStartPos.x, touchStartPos.y);
@@ -2839,13 +2865,16 @@ wx.onTouchEnd(() => {
     if (game.audioManager) game.audioManager.play('tap');
   }
 
-  // 药水页面返回按钮：松开时若仍在按钮区域内，返回商店并暂存/丢弃药水
+  // 药水页面返回按钮：松开时若仍在按钮区域内，按来源返回（游戏中使用回游戏，商店使用回商店）
   if (game && game._potionBackBtnPressed) {
     game._potionBackBtnPressed = false;
     if (renderer.potionBackRect && touchStartPos && renderer.hitTest(touchStartPos.x, touchStartPos.y, [renderer.potionBackRect])) {
       if (game.audioManager) game.audioManager.play('tap');
-      // 药水槽位满时弹出二次确认弹窗
-      if ((game.potions || []).length >= 2) {
+      if (game._prePotionState === 'playing') {
+        // 游戏中从道具栏使用的药水：进入时已腾出槽位，放回原位并返回游戏
+        returnPotionToGame();
+      } else if ((game.potions || []).length >= 2) {
+        // 商店购买立即使用的药水：槽位满时弹出二次确认弹窗
         game._potionBackConfirmPopup = true;
         game._potionBackConfirmAnimStart = Date.now();
       } else {
@@ -4451,9 +4480,9 @@ function handleInput(x, inputY) {
           if (game.storageManager) game.storageManager.saveProgress();
           return;
         }
-        // 其他药水：从道具栏移除后进入 potion 状态
+        // 其他药水：从道具栏移除后进入 potion 状态（记下原槽位，返回时放回原位）
         game.potions.splice(potionHit.potionIndex, 1);
-        game.potionMode = {...potion};
+        game.potionMode = {...potion, _potionIndex: potionHit.potionIndex};
         game._prePotionState = 'playing';
         game.state = 'potion';
         if (game.storageManager) game.storageManager.saveProgress();
