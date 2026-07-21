@@ -392,7 +392,7 @@ module.exports = function extendAnimation(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('选择两个字母，80%概率低分变高分', W / 2, subTitleY);
+      ctx.fillText('选择两个字母，70%概率低分变高分', W / 2, subTitleY);
       ctx.restore();
 
       // === 分隔线 ===
@@ -525,8 +525,8 @@ module.exports = function extendAnimation(Renderer) {
           failScores = [scoreB, scoreB];
         }
 
-        const line1 = `60%概率:  ${letterA}=${successScores[0]}, ${letterB}=${successScores[1]}`;
-        const line2 = `40%概率:  ${letterA}=${failScores[0]}, ${letterB}=${failScores[1]}`;
+        const line1 = `70%概率:  ${letterA}=${successScores[0]}, ${letterB}=${successScores[1]}`;
+        const line2 = `30%概率:  ${letterA}=${failScores[0]}, ${letterB}=${failScores[1]}`;
         const tipY = gridBottomY + 18 * s;
         const lineGap = 18 * s;
 

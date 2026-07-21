@@ -66,7 +66,7 @@ const SHOP_POOL = {
     {name:'随机强化', type:'potion', effect:'random_upgrade', value:2, cost:6, desc:'随机强化1个字母，分数乘以1.2~3倍'},
     {name:'字母升级', type:'potion', effect:'upgrade_letter', value:10, cost:5, desc:'指定一张字母牌，分数 +10'},
     {name:'字母置换', type:'potion', effect:'change_letter',scope:'game', value:2, cost:6, desc:'游戏中,可选择一张字母牌切换字母'},
-    {name:'危险复制', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，60%概率低分变高分，40%概率相反'},
+    {name:'危险复制', type:'potion', effect:'replicate_letter', cost:8, desc:'选择两个字母，70%概率低分变高分，30%概率相反'},
     {name:'平分秋色', type:'potion', effect:'equal_split', cost:8, desc:'选择两个字母，将分数相加后平分，永久生效'},
     {name:'吸星大法', type:'potion', effect:'absorb_stars', scope:'game', cost:8, desc:'游戏中，选择一张手牌，将其他手牌分数临时加给它'},
     {name:'星辉洗涤', type:'potion', effect:'starlight_wash', cost:5, desc:'选择一个字母，重置强化恢复基础分，获得差值分数1/3的金币'}

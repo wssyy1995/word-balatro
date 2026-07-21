@@ -4070,7 +4070,7 @@ class Game {
     const scoreA = Math.floor(baseA * (upA.mult || 1)) + (upA.add || 0);
     const scoreB = Math.floor(baseB * (upB.mult || 1)) + (upB.add || 0);
 
-    const success = Math.random() < 0.6;
+    const success = Math.random() < 0.7;
     let targetLetter, sourceLetter, newScore;
 
     if (scoreA === scoreB) {
@@ -4090,7 +4090,7 @@ class Game {
     }
 
     if (success) {
-      // 80%：低分变高分
+      // 70%：低分变高分
       if (scoreA < scoreB) {
         targetLetter = letterA;
         sourceLetter = letterB;
@@ -4101,7 +4101,7 @@ class Game {
         newScore = scoreA;
       }
     } else {
-      // 20%：高分变低分
+      // 30%：高分变低分
       if (scoreA > scoreB) {
         targetLetter = letterA;
         sourceLetter = letterB;
