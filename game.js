@@ -751,6 +751,9 @@ let showHomepage = false;
 let pageFlipState = null;
 const PAGE_FLIP_DURATION = 1200;
 
+// "继续闯关"可直接恢复的单人页面状态（与存档 saveProgress 可落地、_restoreFromProgress 可恢复的状态一致）
+const SOLO_RESUMABLE_STATES = ['playing', 'settlement', 'shop'];
+
 // 过渡状态（预加载页 → 游戏页）
 let transitionAlpha = 0;
 let transitionStartTime = null;
@@ -1717,6 +1720,10 @@ function getInputY(x, y) {
 
     game._friendBattleStarted = true;
     cloudStorage.log('[AutoJoin] startBattleFromRoom roomId=' + roomId + ' isHost=' + isHost + ' state=' + game.state + ' restart=' + isRestart);
+    // 埋点：好友对战正式开局（房主/好友双方都会走到这里；重开新局也计为新一场）
+    reportEvent("battle_friend", {
+      "userid": game.userid || ''
+    });
     // 清理倒计时状态
     game._friendBattleCountdown = null;
     if (game.battleManager) {
@@ -2730,7 +2737,10 @@ wx.onTouchEnd(() => {
         }
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
-        const targetState = btnKey === 'battle' ? 'battle' : 'playing';
+        // 闯关入口：若当前停留在可恢复的单人页面（商店/结算），"继续闯关"应回到原页面，
+        // 而不是强制切到 playing（否则从商店回主页再继续会错误地回到出牌页）
+        const targetState = btnKey === 'battle' ? 'battle'
+          : (game && SOLO_RESUMABLE_STATES.indexOf(game.state) !== -1 ? game.state : 'playing');
 
         // 从对战入口进入时，若单人小女巫引导尚未完成，则直接结束并持久化，
         // 避免小女巫引导在对战页弹出（小女巫引导仅限单人回合游戏）
@@ -5587,7 +5597,8 @@ function gameLoop(timestamp) {
       pageFlipState = null;
       showHomepage = false;
       // 翻页完成、主页已移出视野后再切换显示标记：下次回到主页时大按钮才显示"继续"
-      if (targetState === 'playing' && game) {
+      // （单人闯关入口不论落在 playing/结算/商店，都算已进过闯关）
+      if (targetState !== 'battle' && game) {
         game._roundEntered = true;
       }
       // 双人对战翻页完成后：如果已有好友对战弹窗则保留，否则弹出对战模式选择弹窗

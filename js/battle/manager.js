@@ -2,6 +2,7 @@
 const { BattleBot } = require('./bot');
 const { createBattleDeck, shuffle } = require('./deck');
 const { LETTER_SCORE, WORD_DATA, EXPAND_WORD_DATA, onlineWordCache, wordMeaningCache } = require('../data');
+const { reportEvent } = require('../report');
 
 function cloudLog(game, msg) {
   if (game && game.cloudStorage && game.cloudStorage.log) {
@@ -255,6 +256,10 @@ class BattleManager {
     const g = this.game;
     if (g._battleMatchFinished) return;
     g._battleMatchFinished = true;
+    // 埋点：随机匹配成功，对战正式开始（在匹配弹窗结束时上报，用户中途关闭匹配不计）
+    reportEvent("battle_random", {
+      "userid": g.userid || ''
+    });
     // 匹配弹窗结束后 bot 才真正开始思考，避免弹窗等待期间计入思考时间
     this._startBotTimer();
   }
