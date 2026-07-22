@@ -1,5 +1,38 @@
 // require('./js/render/test');
 // 微信小游戏入口
+
+// ===== 版本更新检查（必须在所有 require 之前同步注册）=====
+// 微信在冷启动瞬间就检查并后台下载新版本；本游戏代码包小（图片/音频在云存储），
+// 下载可能很快完成。若等数万行模块（巨型词库等）同步求值完再注册，
+// onUpdateReady 可能已先于注册触发且不会补发，导致永远收不到回调。
+(function checkGameUpdate() {
+  try {
+    if (typeof wx === 'undefined' || !wx.getUpdateManager) return;
+    const updateManager = wx.getUpdateManager();
+    updateManager.onCheckForUpdate((res) => {
+      console.log('[Update] 检查新版本:', res.hasUpdate);
+    });
+    updateManager.onUpdateReady(() => {
+      wx.showModal({
+        title: '更新提示',
+        content: '新版本已准备好，是否立即重启更新？',
+        confirmText: '重启',
+        cancelText: '稍后再说',
+        success: (res) => {
+          if (res.confirm) {
+            updateManager.applyUpdate();
+          }
+        }
+      });
+    });
+    updateManager.onUpdateFailed(() => {
+      console.error('[Update] 新版本下载失败');
+    });
+  } catch (e) {
+    console.error('[Update] 更新管理器初始化失败:', e);
+  }
+})();
+
 const { Game, requestGlobalProfile, fetchGlobalRank } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
@@ -761,31 +794,7 @@ const TRANSITION_DURATION = 600;
 
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
-  // 小游戏版本更新检查（有新版时主动提示重启）
-  try {
-    const updateManager = wx.getUpdateManager();
-    updateManager.onCheckForUpdate((res) => {
-      console.log('[Update] 检查新版本:', res.hasUpdate);
-    });
-    updateManager.onUpdateReady(() => {
-      wx.showModal({
-        title: '更新提示',
-        content: '新版本已准备好，是否立即重启更新？',
-        confirmText: '重启',
-        cancelText: '稍后再说',
-        success: (res) => {
-          if (res.confirm) {
-            updateManager.applyUpdate();
-          }
-        }
-      });
-    });
-    updateManager.onUpdateFailed(() => {
-      console.error('[Update] 新版本下载失败');
-    });
-  } catch (e) {
-    console.error('[Update] 更新管理器初始化失败:', e);
-  }
+  // 版本更新检查已上移至 game.js 顶部（所有 require 之前同步注册），此处不再重复注册
 
   // 提前初始化 game 实例，使预加载页也能显示头像昵称授权弹窗
   initGameInstance();
