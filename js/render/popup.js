@@ -3,6 +3,7 @@ const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills
 const { SHOP_POOL } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
 const { DailyAchievements } = require('../daily_achievements');
+const { GAME_VERSION } = require('../game');
 
 module.exports = function extendPopup(Renderer) {
     Renderer.prototype._drawWitchDetailPopup = function(ctx, game, s) {
@@ -2648,6 +2649,13 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
 
         // === 设置项列表 ===
+        // 版本号：正式版读线上真实版本号，开发版/体验版该字段为空则兜底硬编码常量
+        let versionText = GAME_VERSION;
+        try {
+          const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
+          if (onlineVersion) versionText = onlineVersion;
+        } catch (e) { /* 读取失败时使用硬编码版本 */ }
+
         const items = [
           {
             key: 'sound',
@@ -2658,6 +2666,13 @@ module.exports = function extendPopup(Renderer) {
             value: game.settings && game.settings.soundEnabled !== false
           },
           {
+            key: 'restartRound',
+            iconKey: 'reset',
+            title: '重新闯关',
+            subtitle: '重置当前闯关进度，从第 1 关开始',
+            type: 'arrow'
+          },
+          {
             key: 'feedback',
             iconKey: 'feedback',
             title: '问题反馈',
@@ -2665,11 +2680,11 @@ module.exports = function extendPopup(Renderer) {
             type: 'arrow'
           },
           {
-            key: 'restartRound',
-            iconKey: 'reset',
-            title: '重新闯关',
-            subtitle: '重置当前闯关进度，从第 1 关开始',
-            type: 'arrow'
+            key: 'version',
+            iconKey: 'version',
+            title: '版本信息',
+            subtitle: `当前版本: ${versionText}`,
+            type: 'none'
           }
         ];
 

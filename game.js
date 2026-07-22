@@ -33,7 +33,7 @@
   }
 })();
 
-const { Game, requestGlobalProfile, fetchGlobalRank } = require('./js/game');
+const { Game, requestGlobalProfile, fetchGlobalRank, GAME_VERSION } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
 const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
@@ -708,7 +708,7 @@ async function submitFeedback(text) {
         text,
         createTime: db.serverDate(),
         round: game.round || 0,
-        version: '1.9.0'
+        game_version: GAME_VERSION
       }
     });
     game._feedbackSubmitToast = { text: '反馈提交成功，感谢！', expireAt: Date.now() + 2000 };

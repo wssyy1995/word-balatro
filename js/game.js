@@ -1,4 +1,11 @@
 // ===== 游戏核心逻辑 =====
+
+// ===== 游戏版本号 =====
+// 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
+// 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
+// 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
+const GAME_VERSION = '7.22.16';
+
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA, EXPAND_WORD_DATA,
@@ -4438,4 +4445,4 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
 // 挂载到原型，避免 battle/manager.js 与 game.js 循环依赖
 Game.prototype.isValidWordOnline = isValidWordOnline;
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank, GAME_VERSION };
