@@ -1158,6 +1158,9 @@ function getInputY(x, y) {
     }
     // 好友从分享链接进入，点击开始对战后从主页翻页到对战页
     // 翻页期间让 render() 绘制对战页，避免进入单人游戏画面
+    if (game.state !== 'battle') {
+      game._preBattleSoloState = game.state;
+    }
     game.state = 'battle';
     game.battleMode = true;
 
@@ -1245,7 +1248,7 @@ function getInputY(x, y) {
 
   function shareBattleRoom(roomId) {
     wx.shareAppMessage({
-      title: '快来和我一起玩女巫词牌对战！',
+      title: '快来和我进行一场单词对战！',
       query: `roomId=${roomId}`
     });
   }
@@ -2771,6 +2774,9 @@ wx.onTouchEnd(() => {
         // 双人对战：先启动翻页动画，翻页过程中并行下载 battle 云图片
         if (targetState === 'battle' && game && game.cloudStorage) {
           // 在翻页动画开始前就初始化对战默认值，确保翻页过程中能看到正确内容
+          if (game.state !== 'battle') {
+            game._preBattleSoloState = game.state;
+          }
           game.state = 'battle';
           game.battleMode = true;
           game.battleRound = 1;

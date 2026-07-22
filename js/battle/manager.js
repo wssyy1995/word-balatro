@@ -136,6 +136,10 @@ class BattleManager {
 
   startBattle(difficulty = 'easy', options = {}) {
     const g = this.game;
+    // 记录进入对战前的单人页面状态，退出对战后"继续闯关"可恢复到原页面（商店/结算/出牌）
+    if (g.state !== 'battle') {
+      g._preBattleSoloState = g.state;
+    }
     g.state = 'battle';
     g.battleMode = true;
     g.battleDifficulty = difficulty;
@@ -1399,7 +1403,11 @@ class BattleManager {
   exitBattle() {
     const g = this.game;
     g.battleMode = false;
-    g.state = 'playing';
+    // 恢复到进入对战前的单人页面状态（商店/结算），而不是固定回出牌页，
+    // 否则从商店进对战再回主页后，"继续闯关"会错误地回到已通关回合的出牌页
+    const preSoloState = g._preBattleSoloState;
+    g._preBattleSoloState = null;
+    g.state = (preSoloState === 'shop' || preSoloState === 'settlement') ? preSoloState : 'playing';
     g._battleHomeConfirmPopup = false;
     g._battleHomeConfirmAnimStart = null;
     g._battleRoomClosedPopup = false;
