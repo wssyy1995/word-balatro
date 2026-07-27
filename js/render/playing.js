@@ -986,6 +986,16 @@ module.exports = function extendPlaying(Renderer) {
       }
   
       // 分数预览（两个方块）—— 始终显示背景图
+      // 新的出牌校验开始时重置方块动画状态，保证计分动画从 0 开始滚动/脉冲
+      if (game.pendingCheck && this._lastPendingCheck !== game.pendingCheck) {
+        this._lastPendingCheck = game.pendingCheck;
+        this.lastBoxScore = 0;
+        this.scoreRoll = null;
+        this.lastMultValue = null;
+        this.multAnim = null;
+      } else if (!game.pendingCheck) {
+        this._lastPendingCheck = null;
+      }
       const scoreColor = valid ? '#3498db' : (invalid ? '#e74c3c' : '#888');
       const multColor = valid ? '#2ecc71' : (invalid ? '#e74c3c' : '#888');
   
@@ -1034,27 +1044,7 @@ module.exports = function extendPlaying(Renderer) {
           const rollProgress = pc._stepProgress !== undefined
             ? pc._stepProgress
             : Math.min((Date.now() - this.scoreRoll.startTime) / this.scoreRoll.duration, 1);
-          const ease = Easing.easeOutCubic(rollProgress);
-          const cx = leftBoxX + boxSize / 2;
-          const cy = boxY + boxSize / 2;
-          const offset = boxSize * 0.5;
-
-          ctx.save();
-          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
-          ctx.fillStyle = '#f5f0e8';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-
-          // 旧数字向上淡出
-          ctx.globalAlpha = 1 - ease;
-          ctx.fillText(String(this.scoreRoll.from), cx, cy - Math.round(ease * offset));
-
-          // 新数字从下方进入
-          ctx.globalAlpha = ease;
-          ctx.fillText(String(this.scoreRoll.to), cx, cy + Math.round((1 - ease) * offset));
-
-          ctx.restore();
-
+          this._drawRollingNumber(this.scoreRoll, leftBoxX + boxSize / 2, boxY + boxSize / 2, boxSize * 0.5, s, rollProgress);
           if (rollProgress >= 1) {
             this.scoreRoll = null;
           }
@@ -1080,15 +1070,28 @@ module.exports = function extendPlaying(Renderer) {
           this.lastLeftLabelText = null;
         }
       } else if (!game.pendingCheck) {
-        // 没有 pendingCheck 时重置
-        this.lastBoxScore = 0;
-        this.scoreRoll = null;
-        this.lastMultValue = null;
-        this.multAnim = null;
-        // 出牌前预览：选中 ≥2 张时显示基础字母总分（不含女巫牌加成）
-        if (selected.length >= 2) {
+        if (selected.length >= 1) {
+          // 出牌前预览：选中即显示基础字母总分（不含女巫牌加成），复用计分的滚动数字动画
           const previewScore = selected.reduce((sum, c) => sum + c.score, 0);
-          this.text(String(previewScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
+          if (this.lastBoxScore !== previewScore) {
+            if (!this.scoreRoll) this.scoreRoll = {};
+            this.scoreRoll.from = this.lastBoxScore;
+            this.scoreRoll.to = previewScore;
+            this.scoreRoll.startTime = Date.now();
+            this.scoreRoll.duration = 350;
+            this.lastBoxScore = previewScore;
+          }
+          if (this.scoreRoll) {
+            const rollProgress = Math.min((Date.now() - this.scoreRoll.startTime) / this.scoreRoll.duration, 1);
+            this._drawRollingNumber(this.scoreRoll, leftBoxX + boxSize / 2, boxY + boxSize / 2, boxSize * 0.5, s, rollProgress);
+            if (rollProgress >= 1) this.scoreRoll = null;
+          } else {
+            this.text(String(previewScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
+          }
+        } else {
+          // 没有选中且没有 pendingCheck 时重置
+          this.lastBoxScore = 0;
+          this.scoreRoll = null;
         }
       }
   
@@ -1238,16 +1241,38 @@ module.exports = function extendPlaying(Renderer) {
         } else {
           this.lastLabelText = null;
         }
-      } else if (!game.pendingCheck && selected.length >= 2) {
-        // 出牌前预览：显示单词基础倍率（即字母数量，不含女巫牌加成）
-        this.text(String(selected.length), rightBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
+      } else if (!game.pendingCheck) {
+        if (selected.length >= 1) {
+          // 出牌前预览：显示单词基础倍率（即字母数量，不含女巫牌加成），复用计分的倍率脉冲动画
+          const previewMult = selected.length;
+          if (this.lastMultValue !== previewMult) {
+            this.lastMultValue = previewMult;
+            this.multAnim = { startTime: Date.now(), duration: 400 };
+          }
+          const multPulse = this._calcPulseScale(this.multAnim, 0.28);
+          const pulseScale = multPulse.scale;
+          if (multPulse.progress >= 1) this.multAnim = null;
+          ctx.save();
+          ctx.translate(rightBoxX + boxSize / 2, boxY + boxSize / 2);
+          ctx.scale(pulseScale, pulseScale);
+          ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+          ctx.fillStyle = '#f5f0e8';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(String(previewMult), 0, 0);
+          ctx.restore();
+        } else {
+          // 没有选中且没有 pendingCheck 时重置
+          this.lastMultValue = null;
+          this.multAnim = null;
+        }
       }
 
       // 方块上方提示小字（计分动画期间隐藏，避免与 xN/+N 标签重叠）
       if (!valid) {
         ctx.save();
         ctx.font = `${Math.floor(10 * s)}px sans-serif`;
-        ctx.fillStyle = 'rgba(90,74,42,0.55)';
+        ctx.fillStyle = '#b87333';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText('字母总分', leftBoxX + boxSize / 2, boxY - 3 * s);
@@ -1453,6 +1478,29 @@ module.exports = function extendPlaying(Renderer) {
       // 女巫牌详情弹窗
       this._drawWitchDetailPopup(ctx, game, s);
     }
+
+  // ===== 数字向上滚动替换绘制（计分动画与出牌前预览共用）=====
+  // roll: { from, to }，progress: 0~1，offset: 滚动位移幅度
+  Renderer.prototype._drawRollingNumber = function(roll, cx, cy, offset, s, progress) {
+    const ctx = this.ctx;
+    const ease = Easing.easeOutCubic(progress);
+
+    ctx.save();
+    ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+    ctx.fillStyle = '#f5f0e8';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // 旧数字向上淡出
+    ctx.globalAlpha = 1 - ease;
+    ctx.fillText(String(roll.from), cx, cy - Math.round(ease * offset));
+
+    // 新数字从下方进入
+    ctx.globalAlpha = ease;
+    ctx.fillText(String(roll.to), cx, cy + Math.round((1 - ease) * offset));
+
+    ctx.restore();
+  }
 
   // ===== 求助提示弹窗 =====
   Renderer.prototype.drawTipHelpPopup = function(game) {
