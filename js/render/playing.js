@@ -1085,6 +1085,11 @@ module.exports = function extendPlaying(Renderer) {
         this.scoreRoll = null;
         this.lastMultValue = null;
         this.multAnim = null;
+        // 出牌前预览：选中 ≥2 张时显示基础字母总分（不含女巫牌加成）
+        if (selected.length >= 2) {
+          const previewScore = selected.reduce((sum, c) => sum + c.score, 0);
+          this.text(String(previewScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
+        }
       }
   
       // 中：乘号（金棕色，加粗变大）
@@ -1233,8 +1238,23 @@ module.exports = function extendPlaying(Renderer) {
         } else {
           this.lastLabelText = null;
         }
+      } else if (!game.pendingCheck && selected.length >= 2) {
+        // 出牌前预览：显示单词基础倍率（即字母数量，不含女巫牌加成）
+        this.text(String(selected.length), rightBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
       }
-  
+
+      // 方块上方提示小字（计分动画期间隐藏，避免与 xN/+N 标签重叠）
+      if (!valid) {
+        ctx.save();
+        ctx.font = `${Math.floor(10 * s)}px sans-serif`;
+        ctx.fillStyle = 'rgba(90,74,42,0.55)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('字母总分', leftBoxX + boxSize / 2, boxY - 3 * s);
+        ctx.fillText('倍率', rightBoxX + boxSize / 2, boxY - 3 * s);
+        ctx.restore();
+      }
+
       // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）
       game.hand.forEach((card, i) => {
         if (!card) return;
