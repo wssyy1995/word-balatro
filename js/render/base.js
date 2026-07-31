@@ -463,6 +463,19 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
+    // 加载结算翻倍敲章图（单手通关奖励，本地加载）
+    this.bonusDoubleImg = null;
+    this.bonusDoubleLoaded = false;
+    try {
+      const bdImg = wx.createImage();
+      bdImg.src = 'images/bg_icon/bonus_double.png';
+      bdImg.onload = () => { this.bonusDoubleLoaded = true; };
+      bdImg.onerror = () => { this.bonusDoubleLoaded = false; };
+      this.bonusDoubleImg = bdImg;
+    } catch (e) {
+      this.bonusDoubleLoaded = false;
+    }
+
     // 加载对战进度图标（每日成就用，由 cloudStorage 注入）
     this.battleProgressIcon = null;
     this.battleProgressIconLoaded = false;

@@ -18,6 +18,7 @@ class SettlementRenderer {
     if (!isClosing && this.lastSettlementData !== settlement) {
       this.animStartTime = Date.now();
       this.lastSettlementData = settlement;
+      this._bonusStampImpacted = false;
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
@@ -63,16 +64,25 @@ class SettlementRenderer {
     this.parent._drawTitleDivider(ctx, px + 30 * s, line1Y, line1W, s);
     ctx.restore();
 
+    // ===== 单手通关翻倍：敲章时间线（统一基于弹窗 elapsed，无独立计时器）=====
+    const bonusDouble = !!settlement.bonusDouble;
+    const STAMP_START = 600;  // 弹窗入场(~300ms)后再延迟300ms 敲章
+    const STAMP_SLAM = 160;   // 砸下时长
+    const NUM_FLIP_AT = STAMP_START + STAMP_SLAM + 100; // 敲章出现后延迟100ms 数字翻倍
+    const stampElapsed = elapsed - STAMP_START;
+    const stampDone = stampElapsed >= STAMP_SLAM;
+    const doubled = bonusDouble && elapsed >= NUM_FLIP_AT;
+
     // 金币明细
     const lineY = py + 85 * s;
     const lineH = 36 * s;
     const items = [
-      { label: '基础金币', value: `+${settlement.baseGold}` },
-      { label: '剩余出牌次数 ×2', value: `+${settlement.extraHands}` },
-      { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}` },
+      { label: '基础金币', value: `+${settlement.baseGold}`, num: settlement.baseGold },
+      { label: '剩余出牌次数 ×2', value: `+${settlement.extraHands}`, num: settlement.extraHands },
+      { label: '剩余弃牌次数 ×1', value: `+${settlement.extraDiscards}`, num: settlement.extraDiscards },
     ];
     if (settlement.zeroHandsBonus > 0) {
-      items.push({ label: '出牌小能手', value: `+${settlement.zeroHandsBonus}`, color: '#4b0082' });
+      items.push({ label: '出牌小能手', value: `+${settlement.zeroHandsBonus}`, color: '#4b0082', num: settlement.zeroHandsBonus });
     }
 
     items.forEach((item, i) => {
@@ -86,10 +96,24 @@ class SettlementRenderer {
       ctx.textBaseline = 'middle';
       ctx.fillText(item.label, px + 35 * s, y);
 
-      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-      ctx.fillStyle = '#c4a35a';
-      ctx.textAlign = 'right';
-      ctx.fillText(item.value, px + pw - 35 * s, y);
+      if (doubled) {
+        // 翻倍揭晓："+2 → +4"，翻倍值加粗金棕
+        const doubledText = `+${item.num * 2}`;
+        const origText = `+${item.num} → `;
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#b87333';
+        ctx.textAlign = 'right';
+        const doubledW = ctx.measureText(doubledText).width;
+        ctx.fillText(doubledText, px + pw - 35 * s, y);
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.fillText(origText, px + pw - 35 * s - doubledW, y);
+      } else {
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'right';
+        ctx.fillText(item.value, px + pw - 35 * s, y);
+      }
       ctx.restore();
     });
 
@@ -111,10 +135,24 @@ class SettlementRenderer {
     ctx.textBaseline = 'middle';
     ctx.fillText('总计', px + 35 * s, totalY + 25 * s);
 
-    ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-    ctx.fillStyle = '#c4a35a';
-    ctx.textAlign = 'right';
-    ctx.fillText(`+${settlement.totalGold}`, px + pw - 35 * s, totalY + 25 * s);
+    if (doubled) {
+      // 翻倍揭晓："+11 → +22"，翻倍值加粗金棕
+      const doubledTotal = `+${settlement.totalGold * 2}`;
+      const origTotal = `+${settlement.totalGold} → `;
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#b87333';
+      ctx.textAlign = 'right';
+      const doubledTotalW = ctx.measureText(doubledTotal).width;
+      ctx.fillText(doubledTotal, px + pw - 35 * s, totalY + 25 * s);
+      ctx.font = `${Math.floor(16 * s)}px sans-serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.fillText(origTotal, px + pw - 35 * s - doubledTotalW, totalY + 25 * s);
+    } else {
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'right';
+      ctx.fillText(`+${settlement.totalGold}`, px + pw - 35 * s, totalY + 25 * s);
+    }
     ctx.restore();
 
     // 领取按钮
@@ -127,6 +165,59 @@ class SettlementRenderer {
     ctx.globalAlpha = btnAnim.alpha * closeAlpha;
     this.parent._drawScaledButton(ctx, '领取', btnX, btnY, btnW, btnH, s, this.claimBtnPressed, { color: '#c4a35a', radius: 8 });
     ctx.restore();
+
+    // ===== 单手通关翻倍敲章（一击入魂横幅：重敲砸下 + 落点震动 + 粒子迸发）=====
+    if (bonusDouble && this.parent.bonusDoubleLoaded && stampElapsed >= 0) {
+      const bdImg = this.parent.bonusDoubleImg;
+      const bdW = 150 * s;
+      const bdH = bdW * (bdImg.height / bdImg.width || 191 / 400);
+      const bdCX = px + pw / 2;
+      const bdCY = py - 10 * s; // 骑在弹窗顶边偏上
+
+      let stampScale;
+      let stampAlpha = 1;
+      let shakeX = 0;
+      let shakeY = 0;
+      if (!stampDone) {
+        // 砸下阶段：2.6倍 → 1倍，easeInCubic 加速（重敲感），透明度快速到位
+        const slamP = Math.max(0, Math.min(stampElapsed / STAMP_SLAM, 1));
+        stampScale = 2.6 - 1.6 * Easing.easeInCubic(slamP);
+        stampAlpha = Math.min(1, slamP * 2.5);
+      } else {
+        // 落点：轻微回弹 + 震动快速衰减（约 260ms）
+        const impactT = stampElapsed - STAMP_SLAM;
+        const decay = Math.max(0, 1 - impactT / 260);
+        stampScale = 1 + 0.07 * Math.sin(Math.PI * Math.min(impactT / 180, 1));
+        shakeX = Math.sin(impactT * 0.11) * 3 * s * decay;
+        shakeY = Math.cos(impactT * 0.13) * 2 * s * decay;
+        // 落点瞬间：金色粒子迸发 + 重震动（仅触发一次）
+        if (!this._bonusStampImpacted) {
+          this._bonusStampImpacted = true;
+          this.parent._spawnSparkles(bdCX - 40 * s, bdCY, 8);
+          this.parent._spawnSparkles(bdCX + 40 * s, bdCY, 8);
+          let isDevTools = false;
+          try {
+            if (typeof wx !== 'undefined' && wx.getSystemInfoSync) {
+              isDevTools = wx.getSystemInfoSync().platform === 'devtools';
+            }
+          } catch (e) {}
+          if (!isDevTools && typeof wx !== 'undefined' && wx.vibrateShort) {
+            try { wx.vibrateShort({ type: 'heavy' }); } catch (e) {}
+          }
+        }
+      }
+
+      ctx.save();
+      ctx.globalAlpha = stampAlpha * closeAlpha;
+      ctx.translate(bdCX + shakeX, bdCY + shakeY);
+      ctx.scale(stampScale, stampScale);
+      // 投影增强"砸下去"的份量感
+      ctx.shadowColor = 'rgba(0,0,0,0.35)';
+      ctx.shadowBlur = 8 * s;
+      ctx.shadowOffsetY = 3 * s;
+      ctx.drawImage(bdImg, -bdW / 2, -bdH / 2, bdW, bdH);
+      ctx.restore();
+    }
 
     // 闭合 closing 动画的 globalAlpha
     ctx.restore();

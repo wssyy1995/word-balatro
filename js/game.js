@@ -1982,6 +1982,8 @@ class Game {
     }
     this.handsLeft = 4 + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
+    // 本回合出牌次数清零（结算"只出牌一次"翻倍判定用）
+    this._roundPlayCount = 0;
     // 应用装备的女巫卡牌回合技能
     this._applyEquippedCardBonus('round');
     this.extraHands = 0;
@@ -2393,6 +2395,9 @@ class Game {
     this._helpIdleAnim = null;
 
     if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
+
+    // 本回合出牌次数累计（点出牌即算一次，含非法单词/试炼失败；结算翻倍判定用）
+    this._roundPlayCount = (this._roundPlayCount || 0) + 1;
 
     // 争分夺秒 20 秒过期检查
     if (this._hastePlayActive && this._hastePlayStartTime && Date.now() - this._hastePlayStartTime > 20000) {
@@ -3076,6 +3081,8 @@ class Game {
       totalGold,
       round: this.round,
       witchSkill: hasWitchReward ? witchSkill : null,
+      // 本回合只出牌一次（点出牌即算）时，结算金币全部翻倍，弹窗敲章揭晓
+      bonusDouble: (this._roundPlayCount || 0) === 1,
     };
     this.state = 'settlement';
 
@@ -3186,7 +3193,10 @@ class Game {
 
   claimSettlement() {
     if (!this.settlementData) return;
-    this.gold += this.settlementData.totalGold;
+    // 只出牌一次触发翻倍时，按翻倍后的总金币入账
+    this.gold += this.settlementData.bonusDouble
+      ? this.settlementData.totalGold * 2
+      : this.settlementData.totalGold;
     // settlementData 暂时保留用于 closing 动画，200ms 后再处理
     this._closingSettlement = true;
     this._closeStartTime = Date.now();
