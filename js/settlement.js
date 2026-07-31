@@ -19,6 +19,7 @@ class SettlementRenderer {
       this.animStartTime = Date.now();
       this.lastSettlementData = settlement;
       this._bonusStampImpacted = false;
+      this._bonusStampStars = null;
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
@@ -66,7 +67,7 @@ class SettlementRenderer {
 
     // ===== 单手通关翻倍：敲章时间线（统一基于弹窗 elapsed，无独立计时器）=====
     const bonusDouble = !!settlement.bonusDouble;
-    const STAMP_START = 600;  // 弹窗入场(~300ms)后再延迟300ms 敲章
+    const STAMP_START = 800;  // 弹窗入场(~300ms)后再延迟500ms 敲章
     const STAMP_SLAM = 160;   // 砸下时长
     const NUM_FLIP_AT = STAMP_START + STAMP_SLAM + 100; // 敲章出现后延迟100ms 数字翻倍
     const stampElapsed = elapsed - STAMP_START;
@@ -205,6 +206,15 @@ class SettlementRenderer {
             try { wx.vibrateShort({ type: 'heavy' }); } catch (e) {}
           }
         }
+      }
+
+      // 落点完成后：图片背后光芒射线 + 闪烁星星（300ms 淡入，复用对战胜利同款效果）
+      if (stampDone) {
+        const glowAlpha = Math.min(1, (stampElapsed - STAMP_SLAM) / 300) * closeAlpha;
+        this.parent._drawLightRays(ctx, bdCX, bdCY, Math.max(bdW, bdH) * 1.15, s, elapsed, glowAlpha);
+        this._bonusStampStars = this.parent._drawSparkleStars(
+          ctx, bdCX, bdCY, bdW * 1.3, bdH * 1.7, s, elapsed, 12, this._bonusStampStars, glowAlpha
+        );
       }
 
       ctx.save();

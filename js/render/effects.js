@@ -1057,6 +1057,49 @@ module.exports = function extendEffects(Renderer) {
       return stars;
     }
 
+    // 通用胜利光芒射线 + 中心光晕（对战胜利标题、结算翻倍敲章等复用）
+    // 从 battle/renderer.js _drawVictoryEffect 提炼，alpha 由调用方控制（含 closeAlpha/淡入）
+    Renderer.prototype._drawLightRays = function(ctx, cx, cy, maxLen, s, elapsed, alpha = 1) {
+      const rayCount = 14;
+      const time = elapsed;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.globalCompositeOperation = 'lighter';
+
+      // 光芒射线
+      for (let i = 0; i < rayCount; i++) {
+        const angle = -Math.PI * 0.95 + (Math.PI * 1.9 / rayCount) * i;
+        const width = 0.08 + 0.04 * Math.sin(time * 0.004 + i);
+        const pulse = 0.35 + 0.25 * Math.sin(time * 0.006 + i * 0.9);
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(angle - width) * maxLen, cy + Math.sin(angle - width) * maxLen);
+        ctx.lineTo(cx + Math.cos(angle + width) * maxLen, cy + Math.sin(angle + width) * maxLen);
+        ctx.closePath();
+
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
+        grad.addColorStop(0, `rgba(255, 200, 80, ${0.12 * pulse})`);
+        grad.addColorStop(0.4, `rgba(255, 170, 50, ${0.05 * pulse})`);
+        grad.addColorStop(1, 'rgba(255, 150, 0, 0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+
+      // 中心光晕
+      const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
+      halo.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
+      halo.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
+      halo.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
+      halo.addColorStop(1, 'rgba(255, 130, 20, 0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(cx, cy, maxLen * 0.55, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    };
     Renderer.prototype._drawGentleStars = function(cx, cy, size, s, globalAlpha = 1, glowMult = 1, theme = 'purple') {
       const ctx = this.ctx;
       const now = Date.now();
