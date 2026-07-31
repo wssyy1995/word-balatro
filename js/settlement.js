@@ -1,5 +1,23 @@
 const { Easing } = require('./animation');
 
+// 金色块状向右箭头（结算翻倍揭晓用）：矩形箭杆 + 三角箭头，纯 Canvas 绘制
+function _drawBlockArrow(ctx, cx, cy, w, h, color) {
+  const headW = w * 0.45;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx - w / 2, cy - h / 4);
+  ctx.lineTo(cx + w / 2 - headW, cy - h / 4);
+  ctx.lineTo(cx + w / 2 - headW, cy - h / 2);
+  ctx.lineTo(cx + w / 2, cy);
+  ctx.lineTo(cx + w / 2 - headW, cy + h / 2);
+  ctx.lineTo(cx + w / 2 - headW, cy + h / 4);
+  ctx.lineTo(cx - w / 2, cy + h / 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 // ===== 金币结算弹窗渲染 =====
 class SettlementRenderer {
   constructor(renderer) {
@@ -20,6 +38,7 @@ class SettlementRenderer {
       this.lastSettlementData = settlement;
       this._bonusStampImpacted = false;
       this._bonusStampStars = null;
+      this._bonusStampSoundPlayed = false;
     }
 
     const elapsed = isClosing ? 99999 : Date.now() - this.animStartTime;
@@ -98,17 +117,19 @@ class SettlementRenderer {
       ctx.fillText(item.label, px + 35 * s, y);
 
       if (doubled) {
-        // 翻倍揭晓："+2" 静态让位，"→ +4" 中翻倍值 easeOutBack 缩放弹出（锚定右缘）
-        const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 250);
+        // 翻倍揭晓："+2" 静态让位 + Canvas 金色箭头，"+4" 翻倍值 easeOutBack 缩放弹出（锚定右缘）
+        const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 450);
         const popScale = Easing.easeOutBack(flipP);
         const doubledText = `+${item.num * 2}`;
-        const origText = `+${item.num} → `;
+        const arrowW = 13 * s;
+        const arrowGap = 5 * s;
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         const doubledW = ctx.measureText(doubledText).width;
         ctx.font = `${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
         ctx.textAlign = 'right';
-        ctx.fillText(origText, px + pw - 35 * s - doubledW, y);
+        ctx.fillText(`+${item.num}`, px + pw - 35 * s - doubledW - arrowW - arrowGap * 2, y);
+        _drawBlockArrow(ctx, px + pw - 35 * s - doubledW - arrowGap - arrowW / 2, y, arrowW, 9 * s, '#c4a35a');
         ctx.save();
         ctx.translate(px + pw - 35 * s, y);
         ctx.scale(popScale, popScale);
@@ -145,17 +166,19 @@ class SettlementRenderer {
     ctx.fillText('总计', px + 35 * s, totalY + 25 * s);
 
     if (doubled) {
-      // 翻倍揭晓："+11" 静态让位，"→ +22" 中翻倍值 easeOutBack 缩放弹出（锚定右缘）
-      const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 250);
+      // 翻倍揭晓："+11" 静态让位 + Canvas 金色箭头，"+22" 翻倍值 easeOutBack 缩放弹出（锚定右缘）
+      const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 450);
       const popScale = Easing.easeOutBack(flipP);
       const doubledTotal = `+${settlement.totalGold * 2}`;
-      const origTotal = `+${settlement.totalGold} → `;
+      const arrowW = 15 * s;
+      const arrowGap = 6 * s;
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
       const doubledTotalW = ctx.measureText(doubledTotal).width;
       ctx.font = `${Math.floor(16 * s)}px sans-serif`;
       ctx.fillStyle = '#c4a35a';
       ctx.textAlign = 'right';
-      ctx.fillText(origTotal, px + pw - 35 * s - doubledTotalW, totalY + 25 * s);
+      ctx.fillText(`+${settlement.totalGold}`, px + pw - 35 * s - doubledTotalW - arrowW - arrowGap * 2, totalY + 25 * s);
+      _drawBlockArrow(ctx, px + pw - 35 * s - doubledTotalW - arrowGap - arrowW / 2, totalY + 25 * s, arrowW, 11 * s, '#c4a35a');
       ctx.save();
       ctx.translate(px + pw - 35 * s, totalY + 25 * s);
       ctx.scale(popScale, popScale);
@@ -185,11 +208,16 @@ class SettlementRenderer {
 
     // ===== 单手通关翻倍敲章（一击入魂横幅：重敲砸下 + 落点震动 + 粒子迸发）=====
     if (bonusDouble && this.parent.bonusDoubleLoaded && stampElapsed >= 0) {
+      // 敲章开始下落时播放音效（仅一次）
+      if (!this._bonusStampSoundPlayed) {
+        this._bonusStampSoundPlayed = true;
+        if (game.audioManager) game.audioManager.play('battle_pop_success');
+      }
       const bdImg = this.parent.bonusDoubleImg;
-      const bdW = 150 * s;
+      const bdW = 210 * s;
       const bdH = bdW * (bdImg.height / bdImg.width || 191 / 400);
       const bdCX = px + pw / 2;
-      const bdCY = py - 10 * s; // 骑在弹窗顶边偏上
+      const bdCY = py - 22 * s; // 骑在弹窗顶边偏上
 
       let stampScale;
       let stampAlpha = 1;
