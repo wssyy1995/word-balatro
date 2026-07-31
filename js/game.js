@@ -2605,11 +2605,14 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    // === 混沌法球：每次出牌随机给倍率 +0.5~1.2 ===
+    // === 混沌法球：每次出牌随机给倍率 +0.5~1.2（女巫试炼减半为 0.25~0.6）===
     const chaosOrb = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'chaos_orb' && !j._disabled);
     if (chaosOrb) {
-      const chaosMult = 0.5 + Math.random() * 0.7; // 0.5 ~ 1.2
-      chaosOrb.value = chaosMult;
+      // 量化到 0.1 步进：方块按 1 位小数显示，保证显示值与实际参与计分的值完全一致
+      const halfActive = this._witchCardValueHalfActive;
+      const min = halfActive ? 0.25 : 0.5;
+      const range = halfActive ? 0.35 : 0.7;
+      chaosOrb.value = Math.round((min + Math.random() * range) * 10) / 10;
     }
 
     // === 温故知新：基于本地单词本判断当前单词是否首次打出 ===
