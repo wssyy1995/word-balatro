@@ -580,12 +580,75 @@ module.exports = function extendPlaying(Renderer) {
             const cardsInOrder = pc.cardsInOrder || [];
             let accumulatedScore = 0;
             let isAllJumped = false;
-  
-            // === 阶段1: 字母跳跃 ===
-            // 每张 per_card 对应一次独立的字母跳跃步骤；无 per_card 的字母基础跳一次
+
+            // 预览值无缝接管：构建"有戏"的动画步骤（触发 per_card 女巫牌 / 装备卡二次计分 /
+            // 吸星大法加成），无触发的普通字母不再逐一跳跃计分；
+            // 左方块以预览分为起点，每个动画步骤滚动累加该步的差值
+            if (!pc._animSteps && pc.perCardSteps) {
+              const allJokers = game.jokers || [];
+              // 每张字母牌的最终分数（先加吸星大法 absorbBonus，再按顺序应用 per_card 加成），与 calcWordScore 一致
+              if (!pc._cardFinalScores) {
+                pc._cardFinalScores = cardsInOrder.map((card, i) => {
+                  let score = card.score + (card.absorbBonus || 0);
+                  const triggered = pc.jokerTriggers?.[i] || [];
+                  triggered.forEach(jIdx => {
+                    const joker = allJokers[jIdx];
+                    if (joker && joker.value) {
+                      if (joker.operation === 'add') {
+                        score += joker.value;
+                      } else {
+                        score *= joker.value;
+                      }
+                    }
+                  });
+                  return score;
+                });
+              }
+              const animSteps = [];
+              const stepDeltas = [];
+              const runningScores = cardsInOrder.map(c => c.score);
+              const absorbApplied = cardsInOrder.map(() => false);
+              pc.perCardSteps.forEach(st => {
+                const ci = st.cardIdx;
+                const card = cardsInOrder[ci];
+                if (!card) return;
+                if (st.isDouble) {
+                  // 装备卡二次计分（last_letter_double / letter_trigger_twice）：完整再计一次
+                  animSteps.push(st);
+                  stepDeltas.push(pc._cardFinalScores[ci]);
+                  return;
+                }
+                let delta = 0;
+                if (!absorbApplied[ci]) {
+                  absorbApplied[ci] = true;
+                  delta += card.absorbBonus || 0;
+                }
+                if (st.jokerIdx !== null) {
+                  const jk = allJokers[st.jokerIdx];
+                  if (jk && jk.value) {
+                    const after = jk.operation === 'add'
+                      ? runningScores[ci] + jk.value
+                      : runningScores[ci] * jk.value;
+                    delta += after - runningScores[ci];
+                    runningScores[ci] = after;
+                  }
+                  animSteps.push(st);
+                  stepDeltas.push(delta);
+                } else if (delta !== 0) {
+                  // 仅吸星大法加成的普通步：保留跳跃并累加差值
+                  animSteps.push(st);
+                  stepDeltas.push(delta);
+                }
+              });
+              pc._animSteps = animSteps;
+              pc._animStepDeltas = stepDeltas;
+              pc._animBaseScore = cardsInOrder.reduce((sum, c) => sum + c.score, 0);
+            }
+
+            // === 阶段1: 字母跳跃（仅触发女巫牌/有加成的字母）===
             if (phase >= 1) {
               const jumpElapsed = elapsed - letterJumpStart;
-              const steps = pc.perCardSteps || [];
+              const steps = pc._animSteps || [];
               const stepIdx = Math.floor(jumpElapsed / letterInterval);
               // 每张字母牌开始跳跃时播放音效（触发女巫牌用 answer_tone，否则用 card_jump）
               if (jumpElapsed >= 0 && stepIdx >= 0 && stepIdx < steps.length) {
@@ -620,38 +683,11 @@ module.exports = function extendPlaying(Renderer) {
                 }
               }
   
-              // 计算每张字母牌的最终分数（含 per_card 女巫牌加成），动画期间只算一次
-              // 与 calcWordScore 保持一致：先加吸星大法 absorbBonus，再应用 per_card 加成
-              if (!pc._cardFinalScores) {
-                pc._cardFinalScores = cardsInOrder.map((card, i) => {
-                  let score = card.score + (card.absorbBonus || 0);
-                  const triggered = pc.jokerTriggers?.[i] || [];
-                  triggered.forEach(jIdx => {
-                    const joker = jokers[jIdx];
-                    if (joker && joker.value) {
-                      if (joker.operation === 'add') {
-                        score += joker.value;
-                      } else {
-                        score *= joker.value;
-                      }
-                    }
-                  });
-                  return score;
-                });
-              }
-              const cardFinalScores = pc._cardFinalScores;
-
-              // 累加基础字母分
-              for (let i = 0; i <= cardIdx && i < cardsInOrder.length; i++) {
-                accumulatedScore += cardFinalScores[i];
-              }
-              // 累加已触发的“分数算多次”额外步骤（last_letter_double / letter_trigger_twice）
+              // 左方块累计分 = 预览分起点 + 已完成动画步骤的差值
+              accumulatedScore = pc._animBaseScore || 0;
               const activeStepIdx = isAllJumped ? steps.length - 1 : stepIdx;
               for (let si = 0; si <= activeStepIdx && si < steps.length; si++) {
-                const st = steps[si];
-                if (st.isDouble) {
-                  accumulatedScore += cardFinalScores[st.cardIdx];
-                }
+                accumulatedScore += pc._animStepDeltas[si];
               }
   
               // 清除女巫牌状态
@@ -728,18 +764,19 @@ module.exports = function extendPlaying(Renderer) {
               }
             }
   
-            // === 阶段2: 基础倍率弹出 + whole_word 依次触发 ===
+            // === 阶段2: whole_word 依次触发（基础倍率已由预览接管，不再弹出）===
             showSecondBox = phase >= 2;
-  
+
             if (phase >= 2) {
               const wjList = pc.wholeWordJokers || [];
               const STEP_DURATION = 350; // 每一步固定 350ms
-  
+
               // 阶段2时间基准
               if (!pc._phase2StartTime) pc._phase2StartTime = Date.now();
               const elapsedSincePhase2 = Date.now() - pc._phase2StartTime;
-              const baseMultDelay = 500;
-  
+              // 预览已显示单词长度，跳过原"基础倍率弹出"的 500ms 等待与一步弹出，仅留 200ms 停顿
+              const baseMultDelay = 200;
+
               // 计算当前步（事件驱动）
               let afterBase = 0;
               let currentStep = -1;
@@ -747,19 +784,19 @@ module.exports = function extendPlaying(Renderer) {
                 afterBase = elapsedSincePhase2 - baseMultDelay;
                 currentStep = Math.floor(afterBase / STEP_DURATION);
               }
-  
-              // 固定 400ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
+
+              // 固定 350ms 一步，触发 whole_word 女巫牌（跳跃+标签+倍率同时发生）
               wjList.forEach(({ idx }, i) => {
                 const joker = game.jokers?.[idx];
                 if (!joker) return;
-                // currentStep = 0: 基础倍率弹出；currentStep = 1~N: whole_word 依次触发
-                if (currentStep === i + 1 && !joker._wwJumpStart && !joker._wwJumpDone) {
+                // currentStep = i: 第 i 张 whole_word 触发
+                if (currentStep === i && !joker._wwJumpStart && !joker._wwJumpDone) {
                   joker._wwJumpStart = Date.now();
                   joker._triggered = true;
                 }
               });
-  
-              // 处理跳跃动画（保持原 400ms 时长，在 500ms 步内完成）
+
+              // 处理跳跃动画（400ms 时长，在 350ms 步后自然收尾）
               wjList.forEach(({ idx }) => {
                 const joker = game.jokers?.[idx];
                 if (!joker) return;
@@ -777,11 +814,11 @@ module.exports = function extendPlaying(Renderer) {
                   }
                 }
               });
-  
+
               // 检测阶段2完成 → 进入阶段3（或 letter_a_mult_half 惩罚动画）
               if (phase < 3) {
-                // totalSteps = 1(基础倍率) + N(whole_word) + 1(强制等待 300ms)
-                const totalSteps = 1 + wjList.length;
+                // totalSteps = N(whole_word)，基础倍率步已移除
+                const totalSteps = wjList.length;
                 const postWait = 200; // 全部完成后强制等待 200ms
                 const readyTime = totalSteps * STEP_DURATION + postWait;
   
@@ -986,12 +1023,11 @@ module.exports = function extendPlaying(Renderer) {
       }
   
       // 分数预览（两个方块）—— 始终显示背景图
-      // 新的出牌校验开始时重置方块动画状态，保证计分动画从 0 开始滚动/脉冲
+      // 新的出牌校验开始时仅清动画状态：保留预览的 lastBoxScore / lastMultValue
+      // 作为正式计分的起点（预览值无缝接管，不再从 0 重新滚动）
       if (game.pendingCheck && this._lastPendingCheck !== game.pendingCheck) {
         this._lastPendingCheck = game.pendingCheck;
-        this.lastBoxScore = 0;
         this.scoreRoll = null;
-        this.lastMultValue = null;
         this.multAnim = null;
       } else if (!game.pendingCheck) {
         this._lastPendingCheck = null;
@@ -1069,6 +1105,9 @@ module.exports = function extendPlaying(Renderer) {
         } else {
           this.lastLeftLabelText = null;
         }
+      } else if (game.pendingCheck && !invalid && !game._letterGodAnim && this.lastBoxScore > 0) {
+        // 校验中 / 烟花阶段：静态保持预览分（无缝接管，不清零）
+        this.text(String(this.lastBoxScore), leftBoxX + boxSize / 2, boxY + boxSize / 2, 20, '#f5f0e8');
       } else if (!game.pendingCheck) {
         if (selected.length >= 1) {
           // 出牌前预览：选中即显示基础字母总分（不含女巫牌加成），复用计分的滚动数字动画
@@ -1107,19 +1146,19 @@ module.exports = function extendPlaying(Renderer) {
       // letter_a_mult_half 惩罚动画：妖雾弥散边框（提前 100ms 开始，总时长 700ms）
       if (valid && showSecondBox && pc.multHalfResult?.triggered) {
         const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
-        const baseMultDelay = 500;
+        const baseMultDelay = 200;
         const STEP_DURATION = 350;
-        const totalSteps = 1 + (pc.wholeWordJokers || []).length;
+        const totalSteps = (pc.wholeWordJokers || []).length;
         const postWait = 200;
         const readyTime = totalSteps * STEP_DURATION + postWait;
         const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
         const penaltyElapsed = afterBase - (readyTime - 100); // 提前 100ms
-  
+
         if (penaltyElapsed >= 0 && penaltyElapsed < 700) {
           this._drawLashBorder(ctx, rightBoxX, boxY, boxSize, boxSize, 4 * s, s, penaltyElapsed / 1000);
         }
       }
-  
+
       // 右：长度倍率（背景图）
       const lengthImg = this.scoreBoxImages['length'];
       if (lengthImg && lengthImg.loaded && lengthImg.img) {
@@ -1128,27 +1167,27 @@ module.exports = function extendPlaying(Renderer) {
         this.roundRect(rightBoxX, boxY, boxSize, boxSize, 4 * s, null, multColor);
       }
       if (valid && showSecondBox) {
-        // 基础倍率 + whole_word 依次触发（固定 400ms 一步，跳跃+标签+倍率同时发生）
+        // whole_word 依次触发（固定 350ms 一步，跳跃+标签+倍率同时发生；基础倍率已由预览接管）
         let displayValue = null;
         let labelText = null;
         const wjList = pc.wholeWordJokers || [];
-  
+
         // 计算 phase 2 已进行的时间
         const phase2Elapsed = Date.now() - (pc._phase2StartTime || Date.now());
-  
-        const baseMultDelay = 500;
+
+        const baseMultDelay = 200;
         const STEP_DURATION = 350;
-  
+
         // 计算当前步
         let currentStep = -1;
         if (phase2Elapsed >= baseMultDelay) {
           const afterBase = phase2Elapsed - baseMultDelay;
           currentStep = Math.floor(afterBase / STEP_DURATION);
         }
-  
-        // 计算当前倍率：currentStep = 0 为基础倍率弹出；currentStep >= 1 依次加 whole_word
+
+        // 计算当前倍率：currentStep = i 表示前 i+1 张 whole_word 已生效
         let curMult = pendingLength;
-        for (let i = 0; i < Math.min(Math.max(0, currentStep), wjList.length); i++) {
+        for (let i = 0; i < Math.min(currentStep + 1, wjList.length); i++) {
           const item = wjList[i];
           const joker = item.joker;
           if (item.isPenalty) {
@@ -1160,9 +1199,9 @@ module.exports = function extendPlaying(Renderer) {
           }
         }
         displayValue = curMult;
-  
-        // 标签：currentStep = 1 时显示第1张的 xValue / +Value
-        const labelIdx = currentStep - 1;
+
+        // 标签：currentStep = i 时显示第 i 张的 xValue / +Value
+        const labelIdx = currentStep;
         if (labelIdx >= 0 && labelIdx < wjList.length) {
           const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
           const stepProgress = (afterBase % STEP_DURATION) / STEP_DURATION;
@@ -1179,20 +1218,19 @@ module.exports = function extendPlaying(Renderer) {
             }
           }
         }
-  
-        // 数字变化时触发一次脉冲（类似金币动画），首次出现也播放
+
+        // 数字变化时触发一次脉冲（类似金币动画）；基础倍率与预览相同，不会触发
         const isFirstMultShow = this.lastMultValue === null && displayValue !== null;
         if (isFirstMultShow || this.lastMultValue !== displayValue) {
           this.lastMultValue = displayValue;
           this.multAnim = { startTime: Date.now(), duration: 400 };
-          // currentStep >= 1 表示触发了 whole_word 女巫牌，用 answer_tone；否则（首次基础倍率）用 card_jump
-          const multSound = currentStep >= 1 ? 'answer_tone' : 'card_jump';
-          if (game && game.audioManager) game.audioManager.play(multSound);
+          // 基础倍率步已移除，数字变化均来自 whole_word 触发，统一用 answer_tone
+          if (game && game.audioManager) game.audioManager.play('answer_tone');
         }
-  
+
         // letter_a_mult_half 惩罚动画：进入惩罚阶段后数字减半（提前 100ms）
         if (pc.multHalfResult?.triggered) {
-          const totalSteps = 1 + wjList.length;
+          const totalSteps = wjList.length;
           const postWait = 200;
           const readyTime = totalSteps * STEP_DURATION + postWait;
           const afterBase = Math.max(0, phase2Elapsed - baseMultDelay);
@@ -1241,6 +1279,16 @@ module.exports = function extendPlaying(Renderer) {
         } else {
           this.lastLabelText = null;
         }
+      } else if (game.pendingCheck && !invalid && !game._letterGodAnim && this.lastMultValue !== null) {
+        // 校验中 / 阶段2之前：静态保持预览的单词长度（无缝接管，不清零）
+        ctx.save();
+        ctx.translate(rightBoxX + boxSize / 2, boxY + boxSize / 2);
+        ctx.font = `bold ${Math.floor(20 * s)}px sans-serif`;
+        ctx.fillStyle = '#f5f0e8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(this.lastMultValue), 0, 0);
+        ctx.restore();
       } else if (!game.pendingCheck) {
         if (selected.length >= 1) {
           // 出牌前预览：显示单词基础倍率（即字母数量，不含女巫牌加成），复用计分的倍率脉冲动画
@@ -1276,7 +1324,7 @@ module.exports = function extendPlaying(Renderer) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
         ctx.fillText('字母总分', leftBoxX + boxSize / 2, boxY - 3 * s);
-        ctx.fillText('倍率', rightBoxX + boxSize / 2, boxY - 3 * s);
+        ctx.fillText('单词长度', rightBoxX + boxSize / 2, boxY - 3 * s);
         ctx.restore();
       }
 
