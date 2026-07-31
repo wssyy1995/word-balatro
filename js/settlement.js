@@ -123,7 +123,7 @@ class SettlementRenderer {
         const doubledText = `+${item.num * 2}`;
         const arrowW = 13 * s;
         const arrowGap = 5 * s;
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
         const doubledW = ctx.measureText(doubledText).width;
         ctx.font = `${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
@@ -133,7 +133,7 @@ class SettlementRenderer {
         ctx.save();
         ctx.translate(px + pw - 35 * s, y);
         ctx.scale(popScale, popScale);
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
         ctx.fillStyle = '#b87333';
         ctx.textAlign = 'right';
         ctx.fillText(doubledText, 0, 0);
@@ -172,7 +172,7 @@ class SettlementRenderer {
       const doubledTotal = `+${settlement.totalGold * 2}`;
       const arrowW = 15 * s;
       const arrowGap = 6 * s;
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       const doubledTotalW = ctx.measureText(doubledTotal).width;
       ctx.font = `${Math.floor(16 * s)}px sans-serif`;
       ctx.fillStyle = '#c4a35a';
@@ -182,7 +182,7 @@ class SettlementRenderer {
       ctx.save();
       ctx.translate(px + pw - 35 * s, totalY + 25 * s);
       ctx.scale(popScale, popScale);
-      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
       ctx.fillStyle = '#b87333';
       ctx.textAlign = 'right';
       ctx.fillText(doubledTotal, 0, 0);
@@ -217,7 +217,7 @@ class SettlementRenderer {
       const bdW = 210 * s;
       const bdH = bdW * (bdImg.height / bdImg.width || 191 / 400);
       const bdCX = px + pw / 2;
-      const bdCY = py - 22 * s; // 骑在弹窗顶边偏上
+      const bdCY = py - 34 * s; // 骑在弹窗顶边偏上
 
       let stampScale;
       let stampAlpha = 1;

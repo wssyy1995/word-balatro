@@ -1281,7 +1281,8 @@ class Game {
     this._witchAngryTip = null;
     this.pendingCheck = null;
     this._seedWordHint = null;
-    this.settlementData = null;
+    // 恢复存档时保留 _restoreFromProgress 读回的结算数据，新游戏则为 null
+    this.settlementData = this.settlementData || null;
     this.witchRewardData = null;
     this._lifeExtensionAnim = null;
     this._playHandAnimCompleted = false;
@@ -1324,7 +1325,8 @@ class Game {
     this._hastePlayStartTime = null;
     this._letterGodAnim = null;
     this._debugLabelShow = null;
-    this._witchSkillProtectUsed = false;
+    // 恢复存档时保留已使用的女巫技能保护次数，新游戏则为 false
+    this._witchSkillProtectUsed = this._witchSkillProtectUsed !== undefined ? this._witchSkillProtectUsed : false;
     this._dailyWordsPopup = null;
     this._dailyWordsClosePressed = false;
     this._dailyWordsBackPressed = false;
@@ -1355,10 +1357,10 @@ class Game {
     this._tipHelpBuyDelaying = false;
     this._tipHelpShareDelaying = false;
 
-    // 每日分享获得提示次数限制
+    // 每日分享获得提示次数限制（恢复存档时保留已恢复的值，新游戏则为今天/0）
     const today = new Date().toISOString().slice(0, 10);
-    this._dailyShareDate = today;
-    this._dailyShareCount = 0;
+    this._dailyShareDate = this._dailyShareDate || today;
+    this._dailyShareCount = this._dailyShareCount || 0;
 
     // 用户 openid（用于数据上报）
     this.userid = '';
@@ -1368,13 +1370,13 @@ class Game {
     this._lastPlayTime = Date.now();
     this._helpIdleAnim = null; // { startTime: number }
 
-    // 装备女巫卡牌跨回合状态
-    this._shopDiscountActive = false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
-    this._shopDiscountRate = 0.6;       // 默认折扣率
-    this._overflowBonus = 0;            // 格莱薇妮娅：下回合初始溢出分
+    // 装备女巫卡牌跨回合状态（恢复存档时保留 _restoreFromProgress 读回的值）
+    this._shopDiscountActive = this._shopDiscountActive !== undefined ? this._shopDiscountActive : false;   // 菲兰瑟娅/女巫奖励：本回合商店折扣
+    this._shopDiscountRate = this._shopDiscountRate !== undefined ? this._shopDiscountRate : 0.6;       // 默认折扣率
+    this._overflowBonus = this._overflowBonus || 0;            // 格莱薇妮娅：下回合初始溢出分
 
-    // 迷之优惠状态
-    this._mysteryDiscountState = null;  // { selectedIdx, scratched, scratchProgress, revealed, animStartTime }
+    // 迷之优惠状态（恢复存档时保留已恢复的值）
+    this._mysteryDiscountState = this._mysteryDiscountState !== undefined ? this._mysteryDiscountState : null;  // { selectedIdx, scratched, scratchProgress, revealed, animStartTime }
 
     // 设置弹窗
     this._settingsPopup = null;
