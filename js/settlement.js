@@ -69,7 +69,7 @@ class SettlementRenderer {
     const bonusDouble = !!settlement.bonusDouble;
     const STAMP_START = 800;  // 弹窗入场(~300ms)后再延迟500ms 敲章
     const STAMP_SLAM = 160;   // 砸下时长
-    const NUM_FLIP_AT = STAMP_START + STAMP_SLAM + 100; // 敲章出现后延迟100ms 数字翻倍
+    const NUM_FLIP_AT = STAMP_START + STAMP_SLAM + 200; // 敲章落下完成后延迟200ms 数字翻倍弹出
     const stampElapsed = elapsed - STAMP_START;
     const stampDone = stampElapsed >= STAMP_SLAM;
     const doubled = bonusDouble && elapsed >= NUM_FLIP_AT;
@@ -98,17 +98,25 @@ class SettlementRenderer {
       ctx.fillText(item.label, px + 35 * s, y);
 
       if (doubled) {
-        // 翻倍揭晓："+2 → +4"，翻倍值加粗金棕
+        // 翻倍揭晓："+2" 静态让位，"→ +4" 中翻倍值 easeOutBack 缩放弹出（锚定右缘）
+        const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 250);
+        const popScale = Easing.easeOutBack(flipP);
         const doubledText = `+${item.num * 2}`;
         const origText = `+${item.num} → `;
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-        ctx.fillStyle = '#b87333';
-        ctx.textAlign = 'right';
         const doubledW = ctx.measureText(doubledText).width;
-        ctx.fillText(doubledText, px + pw - 35 * s, y);
         ctx.font = `${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
+        ctx.textAlign = 'right';
         ctx.fillText(origText, px + pw - 35 * s - doubledW, y);
+        ctx.save();
+        ctx.translate(px + pw - 35 * s, y);
+        ctx.scale(popScale, popScale);
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#b87333';
+        ctx.textAlign = 'right';
+        ctx.fillText(doubledText, 0, 0);
+        ctx.restore();
       } else {
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         ctx.fillStyle = '#c4a35a';
@@ -137,17 +145,25 @@ class SettlementRenderer {
     ctx.fillText('总计', px + 35 * s, totalY + 25 * s);
 
     if (doubled) {
-      // 翻倍揭晓："+11 → +22"，翻倍值加粗金棕
+      // 翻倍揭晓："+11" 静态让位，"→ +22" 中翻倍值 easeOutBack 缩放弹出（锚定右缘）
+      const flipP = Math.min(1, (elapsed - NUM_FLIP_AT) / 250);
+      const popScale = Easing.easeOutBack(flipP);
       const doubledTotal = `+${settlement.totalGold * 2}`;
       const origTotal = `+${settlement.totalGold} → `;
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#b87333';
-      ctx.textAlign = 'right';
       const doubledTotalW = ctx.measureText(doubledTotal).width;
-      ctx.fillText(doubledTotal, px + pw - 35 * s, totalY + 25 * s);
       ctx.font = `${Math.floor(16 * s)}px sans-serif`;
       ctx.fillStyle = '#c4a35a';
+      ctx.textAlign = 'right';
       ctx.fillText(origTotal, px + pw - 35 * s - doubledTotalW, totalY + 25 * s);
+      ctx.save();
+      ctx.translate(px + pw - 35 * s, totalY + 25 * s);
+      ctx.scale(popScale, popScale);
+      ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#b87333';
+      ctx.textAlign = 'right';
+      ctx.fillText(doubledTotal, 0, 0);
+      ctx.restore();
     } else {
       ctx.font = `bold ${Math.floor(20 * s)}px Georgia, serif`;
       ctx.fillStyle = '#c4a35a';
