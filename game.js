@@ -3813,7 +3813,6 @@ function handleInput(x, inputY) {
     const claimHit = renderer.hitTest(x, inputY, [renderer.guideGiftClaimBtnRect]);
     if (claimHit) {
       vibrate();
-      if (game.audioManager) game.audioManager.play('buy_success');
       game.claimGuideGift();
     }
     return;

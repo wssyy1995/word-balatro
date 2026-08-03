@@ -159,7 +159,12 @@ module.exports = function extendGuide(Renderer) {
       const displayText = fullText.slice(0, visibleChars);
       const isTextComplete = visibleChars >= fullText.length;
   
-      // === 1. 蒙层：渐暗完成后立即聚光灯高亮字母卡牌区域（Phase 5 退场时恢复全屏压暗） ===
+      // === 1. 蒙层：渐暗完成后聚光灯高亮字母卡牌区域（Phase 5 退场时恢复全屏压暗） ===
+      // 高亮不是瞬间亮起：卡牌区遮罩在 SPOT_FADE_DURATION 内逐渐褪去，形成渐亮过程
+      const SPOT_FADE_DURATION = 600;
+      const spotFade = (phase === 1)
+        ? Math.min(Math.max(0, (overlayElapsed - UI_SHOW_DELAY) / SPOT_FADE_DURATION), 1)
+        : 1;
       const spotReady = phase !== 5 && (phase !== 1 || overlayElapsed >= UI_SHOW_DELAY);
       if (spotReady) {
         const pad = 8 * s;
@@ -189,10 +194,18 @@ module.exports = function extendGuide(Renderer) {
         ctx.fill('evenodd');
         ctx.restore();
   
-        // 聚光灯区域金色边框（呼吸效果）
+        // 卡牌区自身的遮罩逐渐褪去（0.75 → 0），实现逐渐高亮
+        if (spotFade < 1) {
+          ctx.save();
+          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - spotFade)})`;
+          ctx.fillRect(spotX, spotY, spotW, spotH);
+          ctx.restore();
+        }
+  
+        // 聚光灯区域金色边框（呼吸效果，随渐亮淡入）
         const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
         ctx.save();
-        ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+        ctx.strokeStyle = `rgba(196, 163, 90, ${(0.5 + breathe * 0.5) * spotFade})`;
         ctx.lineWidth = 2.5 * s;
         ctx.setLineDash([6 * s, 4 * s]);
         this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
@@ -322,7 +335,11 @@ module.exports = function extendGuide(Renderer) {
 
     // 「获得女巫牌」弹窗：主引导退场完成后弹出（样式参考女巫奖励弹窗 result 阶段）
     Renderer.prototype._drawGuideGiftPopup = function(ctx, game, W, H, s) {
-      if (!game._guideGiftPopupStartTime) game._guideGiftPopupStartTime = Date.now();
+      if (!game._guideGiftPopupStartTime) {
+        game._guideGiftPopupStartTime = Date.now();
+        // 弹窗出现音效（与女巫奖励弹窗一致）
+        if (game.audioManager) game.audioManager.play('magic_twinkle');
+      }
       const elapsed = Date.now() - game._guideGiftPopupStartTime;
 
       // 弹出动效（easeOutBack，与女巫奖励弹窗一致）
@@ -544,18 +561,42 @@ module.exports = function extendGuide(Renderer) {
         game._guideTypingSoundPlaying = false;
       }
   
-      // 女巫和对话框布局（与 witch_guide_1/2 保持一致）
-      const dialogPadX = 20 * s;
-      const dialogTargetX = dialogPadX;
-      const imgW = 180 * s;
-      const imgH = 220 * s;
-      const imgTargetX = dialogTargetX;
-      const imgTargetY = H * 0.6 - imgH;
-  
-      const dialogW = W - dialogPadX * 2;
-      const dialogH = 130 * s;
+      // 女巫和对话框布局（与主引导一致：女巫在左、对话框在右，整体位于底部高亮区域上方）
+      const imgW = 130 * s; // 女巫图片比原 180*s 小一些
+      const imgH = imgW * (220 / 180); // 保持引导图原始宽高比
+      const imgTargetX = 20 * s;
+      const imgTargetY = spotY - 10 * s - imgH; // 女巫底部悬浮在高亮区域上方
+
+      const dialogTargetX = imgTargetX + imgW + 12 * s;
+      const dialogW = W - dialogTargetX - 16 * s;
       const dialogR = 12 * s;
-      const dialogTargetY = H * 0.6;
+      const textPad = 16 * s;
+      const lineHeight = 24 * s;
+      const textMaxW = dialogW - textPad * 2;
+
+      // 预先测量文案行数，动态确定对话框高度（预留倒三角按钮空间）
+      ctx.save();
+      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      let lineCount = 1;
+      let measureLine = '';
+      for (let i = 0; i < fullText.length; i++) {
+        const testLine = measureLine + fullText[i];
+        if (ctx.measureText(testLine).width > textMaxW && measureLine !== '') {
+          lineCount++;
+          measureLine = fullText[i];
+        } else {
+          measureLine = testLine;
+        }
+      }
+      ctx.restore();
+      const dialogH = Math.max(96 * s, lineCount * lineHeight + textPad * 2 + 24 * s);
+
+      // 对话框垂直方向与女巫居中，且底部不压到高亮区域
+      let dialogTargetY = imgTargetY + (imgH - dialogH) / 2;
+      const dialogMaxY = spotY - 8 * s - dialogH;
+      if (dialogTargetY > dialogMaxY) dialogTargetY = dialogMaxY;
+      const dialogMinY = (this.safeTop || 0) + 8 * s;
+      if (dialogTargetY < dialogMinY) dialogTargetY = dialogMinY;
   
       let imgX, imgY, dialogDrawX, dialogDrawY;
       if (phase === 2) {
@@ -611,11 +652,8 @@ module.exports = function extendGuide(Renderer) {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
 
-      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad + 2; // 文字下移 2px：首行下移、末行与框底间距缩小 2px（对话框高度不变）
-      const textMaxW = dialogW - textPad * 2;
-      const lineHeight = 24 * s;
 
       let line = '';
       let currentY = textY;
