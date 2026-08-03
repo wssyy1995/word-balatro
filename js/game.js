@@ -248,6 +248,8 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
 
   let seedLetters4 = [];
   let seedWord4 = null;
+  let seedLetters5 = [];
+  let seedWord5 = null;
 
   if (dailyWord) {
     // 学习模式：用每日新词替代第二个种子词（保留完整字母含重复）
@@ -260,6 +262,34 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
     }
     seedLetters4 = dailyLetters;
     console.log('种子词：', seedWord3 + '(正常) + ' + dailyWord + '(每日)');
+  } else if (round === 1) {
+    // 第一回合：3 个长度 3 的种子词（元音规则与双种子词一致：不同元音 ≤2 种，每种元音 ≤2 次）
+    const pool = [...candidates3];
+    shuffle(pool);
+    const seedWords = [];
+    for (const w of pool) {
+      if (seedWords.length >= 3) break;
+      if (seedWords.includes(w)) continue;
+      const merged = [...seedWords, w].join('');
+      if (getVowelSet(merged).size > 2) continue;
+      const freq = countVowelFreq(merged);
+      if (Object.values(freq).some(c => c > 2)) continue;
+      seedWords.push(w);
+    }
+    // 兜底：元音规则凑不齐时放宽限制，直接补足 3 个
+    for (const w of pool) {
+      if (seedWords.length >= 3) break;
+      if (!seedWords.includes(w)) seedWords.push(w);
+    }
+    while (seedWords.length < 3) seedWords.push(getSeedWord(3, 3, excludeLetters));
+
+    seedWord3 = seedWords[0];
+    seedWord4 = seedWords[1];
+    seedWord5 = seedWords[2];
+    seedLetters3 = seedWord3.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    seedLetters4 = seedWord4.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    seedLetters5 = seedWord5.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    console.log('种子词(第1回合)：' + seedWords.join(','));
   } else {
     // 普通模式：再生成一个长度4的种子词
     // 要求：两个种子词的所有字母加起来，不同元音不能超过2个
@@ -336,7 +366,7 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
     console.log('种子词：', seedWord3 + ',' + seedWord4);
   }
 
-  const allSeedLetters = [...seedLetters3, ...seedLetters4];
+  const allSeedLetters = [...seedLetters3, ...seedLetters4, ...seedLetters5];
   const seedLetterSet = new Set(allSeedLetters);
 
   const makeSeedCards = (letters, seedWord) => letters.map(letter => {
@@ -378,7 +408,8 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
           id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _isDailyChallengeCard: true, _seedWord: dailyWord };
       })
     : makeSeedCards(seedLetters4, seedWord4);
-  const allSeedCards = [...seedCards3, ...seedCards4];
+  const seedCards5 = makeSeedCards(seedLetters5, seedWord5);
+  const allSeedCards = [...seedCards3, ...seedCards4, ...seedCards5];
 
   // 过滤牌堆：随机补牌的字母不能跟种子单词字母重复
   // 种子词字母的牌保留在 deck 中，仅抽出不含种子词字母的随机牌
