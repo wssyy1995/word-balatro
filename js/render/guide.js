@@ -159,6 +159,16 @@ module.exports = function extendGuide(Renderer) {
       const displayText = fullText.slice(0, visibleChars);
       const isTextComplete = visibleChars >= fullText.length;
   
+      // 领取「获得女巫牌」后的退出动画进度（弹窗上滑 40px + 淡出 200ms，蒙层同步淡出）
+      const giftCloseProgress = (phase === 5 && game._closingGuideGift)
+        ? Math.min((Date.now() - (game._closeGuideGiftStartTime || Date.now())) / 200, 1)
+        : 0;
+      if (giftCloseProgress >= 1) {
+        // 退出动画完成，正式结束引导
+        game.claimGuideGift();
+        return;
+      }
+  
       // === 1. 蒙层：渐暗完成后聚光灯高亮字母卡牌区域（Phase 5 退场时恢复全屏压暗） ===
       // 高亮不是瞬间亮起：卡牌区遮罩在 SPOT_FADE_DURATION 内逐渐褪去，形成渐亮过程
       const SPOT_FADE_DURATION = 600;
@@ -213,7 +223,7 @@ module.exports = function extendGuide(Renderer) {
         ctx.restore();
       } else {
         ctx.save();
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - giftCloseProgress)})`;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
       }
@@ -222,7 +232,7 @@ module.exports = function extendGuide(Renderer) {
       if (phase === 5) {
         const exitElapsed = Date.now() - (game._guideExitStartTime || Date.now());
         if (exitElapsed >= 600) {
-          this._drawGuideGiftPopup(ctx, game, W, H, s);
+          this._drawGuideGiftPopup(ctx, game, W, H, s, giftCloseProgress);
           return;
         }
       }
@@ -334,7 +344,8 @@ module.exports = function extendGuide(Renderer) {
     }
 
     // 「获得女巫牌」弹窗：主引导退场完成后弹出（样式参考女巫奖励弹窗 result 阶段）
-    Renderer.prototype._drawGuideGiftPopup = function(ctx, game, W, H, s) {
+    // closeProgress：领取后的退出动画进度（0→1，内容上滑 40px 并淡出）
+    Renderer.prototype._drawGuideGiftPopup = function(ctx, game, W, H, s, closeProgress = 0) {
       if (!game._guideGiftPopupStartTime) {
         game._guideGiftPopupStartTime = Date.now();
         // 弹窗出现音效（与女巫奖励弹窗一致）
@@ -346,11 +357,11 @@ module.exports = function extendGuide(Renderer) {
       const enterDuration = 350;
       const enterProgress = Math.min(elapsed / enterDuration, 1);
       const enterEase = Easing.easeOutBack(enterProgress);
-      const panelOffsetY = (1 - enterEase) * 30 * s;
-      const contentAlpha = enterProgress;
+      const panelOffsetY = (1 - enterEase) * 30 * s - 40 * s * closeProgress;
+      const contentAlpha = enterProgress * (1 - closeProgress);
 
       // 标题：获得女巫牌（金色装饰线标题，同女巫奖励弹窗）
-      const titleY = H / 2 - 130 * s;
+      const titleY = H / 2 - 130 * s - 40 * s * closeProgress;
       this._drawWitchRewardTitle(ctx, '获得女巫牌', W, titleY, s, { alpha: contentAlpha });
 
       // 中间：has_vowel 女巫牌（等比缩放 + 圆角裁剪 + 金色光晕）

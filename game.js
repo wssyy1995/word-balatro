@@ -3813,7 +3813,7 @@ function handleInput(x, inputY) {
     const claimHit = renderer.hitTest(x, inputY, [renderer.guideGiftClaimBtnRect]);
     if (claimHit) {
       vibrate();
-      game.claimGuideGift();
+      game.requestCloseGuideGift(); // 先播放退出动画，完成后自动结束引导
     }
     return;
   }

@@ -2187,12 +2187,21 @@ class Game {
     }
   }
 
+  // 点击「获得女巫牌」领取按钮：先播放退出动画（弹窗上滑淡出 + 蒙层淡出），完成后由渲染层调用 claimGuideGift
+  requestCloseGuideGift() {
+    if (this.guidePhase !== 5 || this._closingGuideGift) return;
+    this._closingGuideGift = true;
+    this._closeGuideGiftStartTime = Date.now();
+  }
+
   // 领取新手引导赠送的女巫牌：关闭「获得女巫牌」弹窗，引导全部完成
   claimGuideGift() {
     if (this.guidePhase !== 5) return;
     this.guidePhase = 6; // 6 = 引导全部完成（含赠卡领取）
     this._guideExitStartTime = null;
     this._guideGiftPopupStartTime = null;
+    this._closingGuideGift = false;
+    this._closeGuideGiftStartTime = null;
     if (this.renderer) {
       this.renderer.guideGiftClaimBtnRect = null;
     }
