@@ -544,12 +544,15 @@ module.exports = function extendGuide(Renderer) {
       // === Phase 2 & 3: 女巫帧动画 + 对话框 ===
       const fullText = GUIDE_TEXT;
   
-      // 弹出动画与文字延迟参数
-      const POPUP_DURATION = 600;
-      const POST_POPUP_DELAY = 500;
+      // 入场动画与文字延迟参数（参考主引导：女巫先从左侧缓慢飞入，到位后对话框再从右侧飞入）
+      const WITCH_FLY_DURATION = 1200; // 女巫骑扫把从左侧缓慢飞入
+      const DIALOG_FLY_DELAY = 100;    // 女巫停稳后稍作停顿再出对话框
+      const DIALOG_FLY_DURATION = 500; // 对话框从右侧飞入
+      const POST_DIALOG_DELAY = 500;   // 对话框到位后延迟开始打字
+      const DIALOG_ARRIVE_OFFSET = WITCH_FLY_DURATION + DIALOG_FLY_DELAY + DIALOG_FLY_DURATION;
   
-      // 计算文字开始时间：对话框弹出完成后延迟 500ms 再开始（参考 witch_guide_1）
-      const textStartTime = (game._shopGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
+      // 计算文字开始时间：女巫+对话框依次飞入后延迟 500ms 再开始
+      const textStartTime = (game._shopGuideTextStartTime || Date.now()) + DIALOG_ARRIVE_OFFSET + POST_DIALOG_DELAY;
       const charInterval = 65;
       const textElapsed = Date.now() - textStartTime;
       const visibleChars = game._shopGuideSkipTyping
@@ -609,24 +612,26 @@ module.exports = function extendGuide(Renderer) {
       const dialogMinY = (this.safeTop || 0) + 8 * s;
       if (dialogTargetY < dialogMinY) dialogTargetY = dialogMinY;
   
-      let imgX, imgY, dialogDrawX, dialogDrawY;
+      const bobY = Math.sin(Date.now() / 400) * 6 * s; // 上下漂浮（骑扫把感，同主引导）
+  
+      let imgX, dialogDrawX;
       if (phase === 2) {
         const phase2Start = game._shopGuideTextStartTime || Date.now();
-        const popupElapsed = Date.now() - phase2Start;
-        // 前 100ms 延迟后开始弹出
-        const popupStart = 100;
-        if (popupElapsed > popupStart) {
-          const popupProgress = Math.min((popupElapsed - popupStart) / POPUP_DURATION, 1);
-          const eased = Easing.easeOutBackStrong(popupProgress);
-          imgX = -imgW + (imgTargetX + imgW) * eased;
-          dialogDrawX = W + (dialogTargetX - W) * eased;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
+        const flyElapsed = Date.now() - phase2Start;
+        // 女巫先从左侧缓慢飞入（easeOutCubic）
+        if (flyElapsed > 0) {
+          const flyProgress = Math.min(flyElapsed / WITCH_FLY_DURATION, 1);
+          imgX = -imgW + (imgTargetX + imgW) * Easing.easeOutCubic(flyProgress);
         } else {
           imgX = -imgW;
+        }
+        // 女巫到位后，对话框再从右侧飞入（easeOutCubic）
+        const dialogElapsed = flyElapsed - WITCH_FLY_DURATION - DIALOG_FLY_DELAY;
+        if (dialogElapsed > 0) {
+          const dialogProgress = Math.min(dialogElapsed / DIALOG_FLY_DURATION, 1);
+          dialogDrawX = W + (dialogTargetX - W) * Easing.easeOutCubic(dialogProgress);
+        } else {
           dialogDrawX = W;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
         }
       } else if (phase === 3) {
         // 退场：女巫向左、对话框向右弹出去
@@ -635,14 +640,12 @@ module.exports = function extendGuide(Renderer) {
         const eased = Easing.easeOutBackStrong(exitProgress);
         imgX = imgTargetX - (imgTargetX + imgW) * eased;
         dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       } else {
         imgX = imgTargetX;
         dialogDrawX = dialogTargetX;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       }
+      const imgY = imgTargetY + bobY;
+      const dialogDrawY = dialogTargetY;
   
       // 女巫引导图片（witch_2 静态图，商店引导专用）
       const imgData = this.guideImages.witch_2;
