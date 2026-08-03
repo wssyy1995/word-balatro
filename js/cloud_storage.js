@@ -212,7 +212,7 @@ class CloudStorageManager {
       'magic_twinkle': c('/music/sound_effect/magic_twinkle.mp3')
     };
 
-    // 默认 guide 云文件映射（3 张静态引导图：主引导 2 张 + 商店/图鉴引导共用 1 张）
+    // 默认 guide 云文件映射（3 张静态引导图：1=主引导、2=商店引导、3=图鉴引导）
     this.defaultGuideFileMap = {};
     const guideBase = c('/witch/guide');
     this.defaultGuideFileMap['witch_guide_1'] = `${guideBase}/witch_guide/witch_guide_1.png`;
@@ -974,7 +974,7 @@ class CloudStorageManager {
   }
 
   // 按需下载指定 guide 组（如商店/图鉴引导），并注入 renderer
-  // 组 1/2 对应 witch_guide_1/2（主引导）；组 3/4 共用 witch_guide_3（商店引导与图鉴引导）
+  // 组 1=witch_guide_1（主引导）、组 2=witch_guide_2（商店引导）、组 3/4=witch_guide_3（图鉴引导）
   async preloadGuideGroup(groupNum, renderer) {
     const imageNum = groupNum >= 3 ? 3 : groupNum;
     const groupKey = `witch_${imageNum}`;

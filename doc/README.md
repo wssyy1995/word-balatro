@@ -502,7 +502,7 @@ js/render/
 | `hud.js` | ~688 | 顶部栏、金币胶囊、回合/目标分、女巫头像、Toast 及飞行星星 | 函数扩展 |
 | `playing.js` | ~1589 | 主玩法布局、手牌网格、预览/分数方块、出牌动画状态机、求助提示 | 函数扩展 |
 | `popup.js` | ~3620 | 女巫详情、字母置换、药水升级/随机强化、设置/反馈、单词本、今日新词 | 函数扩展 |
-| `guide.js` | ~760 | 新手引导/商店引导/图鉴引导（witch_1=主引导 Phase 1、witch_2=主引导 Phase 2~5、witch_3=商店/图鉴引导共用） | 函数扩展 |
+| `guide.js` | ~760 | 新手引导/商店引导/图鉴引导（witch_1=主引导、witch_2=商店引导、witch_3=图鉴引导） | 函数扩展 |
 | `cardbook.js` | ~485 | 图鉴图标/NEW 角标、详情面板、全部/已装备 Tab | 函数扩展 |
 | `debug.js` | ~176 | 云日志、调试菜单 | 函数扩展 |
 | `gameover.js` | ~242 | **独立类** `GameOverRenderer` | 独立类 |
@@ -868,7 +868,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - **下载**：
   - `preloadShopCardImages()`：预加载页批量下载商店卡牌图片
   - `preloadBgIconImages()`：预加载页下载背景图与卡牌模板
-  - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的静态引导图并注入渲染器（组 3/4 共用 witch_guide_3）；预加载页通过它下载 witch_guide_1/2
+  - `preloadGuideGroup(groupNum, renderer)`：按需下载指定 guide 组的静态引导图并注入渲染器（组 1=主引导、组 2=商店引导、组 3/4=图鉴引导）；预加载页通过它下载 witch_guide_1
   - `preloadWitchAvatarForLevel(level, renderer)`：**回合级按需下载**，当前回合进行时后台预加载下一回合的女巫头像
   - `preloadRankAvatarImages()`：点击排行榜或对战匹配时按需下载全国榜默认头像
   - `preloadBattleImages()`：点击主页「双人对战」时预加载对战模式图片
@@ -1433,7 +1433,7 @@ js/battle/
 | Phase | 内容 | 动画 |
 |-------|------|------|
 | 1 | 玩法说明：点击字母牌拼单词得分 | witch_1 静态图从屏幕左侧缓慢飞入（1200ms easeOutCubic）并持续上下漂浮（骑扫把感，x 到位后固定）；到位后聚光灯高亮字母卡牌区域（evenodd 挖空 + 金色呼吸边框）；随后对话框从屏幕右侧飞入（位于女巫右侧，不重叠、不在女巫下方）+ 逐字显示 |
-| 2 | 赠送卡牌：插入 `has_vowel` 女巫牌 | witch_2 静态图 + `has_vowel` 卡牌在高亮的卡牌区中心果冻弹入（带金色星星光晕） |
+| 2 | 赠送卡牌：插入 `has_vowel` 女巫牌 | witch_1 静态图 + `has_vowel` 卡牌在高亮的卡牌区中心果冻弹入（带金色星星光晕） |
 | 5 | 退场动画：女巫+对话框弹出屏幕 | 退场后引导层消失，恢复正常游戏 |
 
 **布局**：女巫位于左侧、字母卡牌区域上方（底部悬浮于卡牌区顶部）；对话框位于女巫右侧，垂直方向与女巫居中，宽度占满剩余屏幕，高度按文案行数动态计算。
@@ -1450,25 +1450,25 @@ js/battle/
 
 **持久化**：引导完成状态（`guidePhase ≥ 5`）通过 `storage.saveGuidePhase()` **独立存储**，即使游戏结束 `clearProgress()` 也不会清除。同一位玩家终身只显示一次引导。
 
-**预加载**：预加载页仅下载新手引导 witch_guide_1/2 静态图（判断 `savedProgress.guidePhase < 5` 或存档不存在）。witch_guide_3（商店引导与图鉴引导共用）为**回合级按需下载**，不占用预加载流量。
+**预加载**：预加载页仅下载新手引导 witch_guide_1 静态图（判断 `savedProgress.guidePhase < 5` 或存档不存在，主引导两个阶段共用此图）。witch_guide_2（商店引导）与 witch_guide_3（图鉴引导）均为**回合级按需下载**，不占用预加载流量。
 
-> 引导图片自 v1.14.0 起由 4 组精灵图（帧动画）简化为 3 张静态图，位于 `images/witch/witch_guide/`（云存储 `witch/guide/witch_guide/`）：`witch_guide_1.png`（主引导 Phase 1）、`witch_guide_2.png`（主引导 Phase 2~5）、`witch_guide_3.png`（商店引导与图鉴引导共用）。
+> 引导图片自 v1.14.0 起由 4 组精灵图（帧动画）简化为 3 张静态图，位于 `images/witch/witch_guide/`（云存储 `witch/guide/witch_guide/`）：`witch_guide_1.png`（主引导两个阶段共用）、`witch_guide_2.png`（商店引导）、`witch_guide_3.png`（图鉴引导）。
 
 预加载页底部显示一只走路小女巫（`small_witch_sprite.png`，21 帧精灵图，50ms/帧，witchScale=0.53），位置随进度条同步前进，保持原始像素比例。
 
-### 5.1.1 商店女巫技能引导（witch_guide_3）
+### 5.1.1 商店女巫技能引导（witch_guide_2）
 
 第 2 回合进入商店时触发，终身只显示一次。共 **2 个 Phase**：
 
 | Phase | 内容 | 动画 |
 |-------|------|------|
 | 1 | 聚光灯挖空聚焦下一回合女巫技能模块，只画聚光灯蒙层+呼吸边框（不画女巫），1.5 秒后自动进入 Phase 2 | 聚光灯蒙层 + 呼吸边框 |
-| 2 | 解释女巫技能的作用与影响，女巫+对话框果冻弹出 | witch_3 静态图 + 逐字显示 |
+| 2 | 解释女巫技能的作用与影响，女巫+对话框果冻弹出 | witch_2 静态图 + 逐字显示 |
 | 3 | 退场动画 | 女巫+对话框淡出，恢复正常商店交互 |
 
 **持久化**：`shopGuidePhase` 独立存储，游戏结束不清除。
 
-### 5.1.2 卡牌图鉴引导（witch_guide_3，与商店引导共用）
+### 5.1.2 卡牌图鉴引导（witch_guide_3）
 
 第 3 关解锁卡牌图鉴后，首次进入商店时触发，终身只显示一次。采用**聚光灯 + 女巫对话框**形式：
 
@@ -1885,6 +1885,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.13.9 | 2026-07-21 | 危险复制概率由 60%/40% 调整为 70%/30%（低分变高分概率提升，同步修正选择页副标题残留的过时的 80% 文案）；修复游戏中从道具栏使用的药水（危险复制/星辉洗涤/平分秋色等）点击返回错回商店、吸星大法返回误弹「卡槽已满」的问题，现按来源返回游戏进行页且药水放回原槽位；购买成功弹窗卡牌背后新增金色呼吸光晕（`_drawCardGlow` 增加 `options.halo/sparkles` 分层开关），优化卡牌左右闪烁星星在手机上的显示（去旋转 + 细腰星形 + 中心亮点，不再糊成正方形） |
 | v1.14.0 | 2026-08-03 | 三套新手引导图片由 4 组精灵图（witch_guide_1~4 帧动画）简化为 3 张静态图：`witch_guide_1.png`（主引导 Phase 1）、`witch_guide_2.png`（主引导 Phase 2~5）、`witch_guide_3.png`（商店引导与图鉴引导共用），存放于 `images/witch/witch_guide/`，云路径 `witch/guide/witch_guide/`；`guide.js` 绘制、`cloud_storage.js` 默认映射/下载/注入逻辑、`base.js` 占位结构同步简化；删除旧精灵图目录与 `scripts/build-spritesheet.js`；同步更新 README |
 | v1.14.1 | 2026-08-03 | 新手引导流程重构：内容阶段由 4 段精简为 2 段（字母牌教学 → 赠送 has_vowel 女巫牌）后直接进入退场；Phase 1 改为女巫从屏幕左侧缓慢飞入（1200ms easeOutCubic）并持续上下漂浮（骑扫把感，x 到位固定、y 悬浮于字母卡牌区上方）；女巫到位后聚光灯高亮字母卡牌区域（evenodd 挖空 + 金色呼吸边框）；对话框改为从屏幕右侧飞入，位于女巫右侧不重叠，宽度占满剩余屏幕、高度按文案行数动态计算；赠卡弹入位置改为高亮卡牌区中心；同步更新 README |
+| v1.14.2 | 2026-08-03 | 三套引导图片对应关系最终确定：`witch_guide_1`=主引导（两个阶段共用）、`witch_guide_2`=商店引导、`witch_guide_3`=图鉴引导；预加载页只下载 guide 组 1，商店/图鉴引导图按回合按需下载；同步更新 README |
 
 ---
 

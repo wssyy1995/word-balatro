@@ -929,9 +929,9 @@ async function startPreload() {
   cloudStorage.log('[AutoJoin] 开始预加载 bg_icon');
   await cloudStorage.preloadBgIconImages(onProgress, isResuming ? (savedProgress.round || 1) : 1);
   if (needGuide) {
+    // 新手引导两个阶段均使用 witch_guide_1，只需预加载第 1 组
     await cloudStorage.preloadGuideGroup(1, renderer);
     onProgress();
-    await cloudStorage.preloadGuideGroup(2, renderer);
     onProgress();
   }
 
@@ -1031,10 +1031,10 @@ function startGame() {
   // 2026-06-24 优化：进入游戏后再加载音效，homepage 阶段不占用音频实例
   game.initAudio();
 
-  // 存档恢复时：补充按需下载可能遗漏的引导图（witch_guide_3，商店/图鉴引导共用）
+  // 存档恢复时：补充按需下载可能遗漏的引导图（witch_guide_2 商店引导 / witch_guide_3 图鉴引导）
   if (game.round === 2 && game.shopGuidePhase === 0) {
-    cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
-      console.error('[Restore] 补充下载 witch_guide_3 失败:', err);
+    cloudStorage.preloadGuideGroup(2, renderer).catch(err => {
+      console.error('[Restore] 补充下载 witch_guide_2 失败:', err);
     });
   }
   if (game.round === 3 && game.cardBookGuidePhase === 0) {
@@ -3948,9 +3948,8 @@ function handleInput(x, inputY) {
         const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
         if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);
         if (game.storageManager) game.storageManager.saveProgress();
-        // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入
-        const guideGroupNum = game.guidePhase === 1 ? 1 : 2;
-        cloudStorage.preloadGuideGroup(guideGroupNum, renderer).then(() => {
+        // 如果 guide 图片尚未下载（老用户触发引导时），补充下载并注入（两个阶段均用 witch_guide_1）
+        cloudStorage.preloadGuideGroup(1, renderer).then(() => {
           cloudStorage.injectGuideToRenderer(renderer);
         });
       }
@@ -3959,14 +3958,14 @@ function handleInput(x, inputY) {
         game._shopGuideStartTime = Date.now();
         if (game.storageManager) game.storageManager.saveProgress();
         // 先检查本地是否已有缓存，避免重复下载
-        const witch3 = renderer.guideImages.witch_3;
-        const hasCache = witch3 && witch3.loaded;
+        const witch2 = renderer.guideImages.witch_2;
+        const hasCache = witch2 && witch2.loaded;
         if (!hasCache) {
-          cloudStorage.preloadGuideGroup(3, renderer).catch(err => {
+          cloudStorage.preloadGuideGroup(2, renderer).catch(err => {
             console.error('[Debug] 触发商店引导下载失败:', err);
           });
         } else {
-          console.log('[Debug] witch_guide_3 本地缓存已存在，跳过下载');
+          console.log('[Debug] witch_guide_2 本地缓存已存在，跳过下载');
         }
       }
       if (debugHit.action === 'debug_triggerCardBookGuide') {
@@ -3974,7 +3973,7 @@ function handleInput(x, inputY) {
         game._cardBookGuideStartTime = Date.now();
         game._cardBookGuideTextStartTime = Date.now();
         if (game.storageManager) game.storageManager.saveProgress();
-        // 图鉴引导与商店引导共用 witch_guide_3，先检查本地是否已有缓存，避免重复下载
+        // 先检查本地是否已有缓存，避免重复下载
         const witch3 = renderer.guideImages.witch_3;
         const hasCache = witch3 && witch3.loaded;
         if (!hasCache) {

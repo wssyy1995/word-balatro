@@ -64,7 +64,7 @@ class Renderer {
     this.shopCardBarImages = {};
     
     // 新手引导（由 cloudStorage 在预加载时注入，不再使用本地图片）
-    // 3 张静态引导图：witch_1=主引导 Phase 1，witch_2=主引导 Phase 2~5，witch_3=商店/图鉴引导共用
+    // 3 张静态引导图：witch_1=主引导（两个阶段共用），witch_2=商店引导，witch_3=图鉴引导
     this.guideImages = {
       witch_1: { img: null, loaded: false },
       witch_2: { img: null, loaded: false },

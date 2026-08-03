@@ -2096,16 +2096,16 @@ class Game {
       console.log('[Guide] triggered phase 1');
     }
 
-    // 第2回合后台按需下载商店引导图（witch_guide_3），避免进入商店时等待
+    // 第2回合后台按需下载商店引导图（witch_guide_2），避免进入商店时等待
     if (this.round === 2 && this.shopGuidePhase === 0) {
       if (this.cloudStorage && this.renderer) {
-        this.cloudStorage.preloadGuideGroup(3, this.renderer).catch(err => {
-          console.error('[ShopGuide] 按需下载 witch_guide_3 失败:', err);
+        this.cloudStorage.preloadGuideGroup(2, this.renderer).catch(err => {
+          console.error('[ShopGuide] 按需下载 witch_guide_2 失败:', err);
         });
       }
     }
 
-    // 第3回合后台按需下载卡牌图鉴引导图（与商店引导共用 witch_guide_3）
+    // 第3回合后台按需下载卡牌图鉴引导图（witch_guide_3）
     if (this.round === 3 && this.cardBookGuidePhase === 0) {
       if (this.cloudStorage && this.renderer) {
         this.cloudStorage.preloadGuideGroup(3, this.renderer).catch(err => {

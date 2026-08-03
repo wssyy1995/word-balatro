@@ -41,8 +41,8 @@ module.exports = function extendGuide(Renderer) {
   
       const PHASE_TEXTS = [
         '',
-        '看到这些字母牌了吗？点击它们，拼出一个单词，积攒分数通关！',
-        '看在你是新手的份上，送你一张女巫牌，这是很强大的道具卡牌，可以大大提高单词的分数，快去试试！'
+        '从这些字母牌中选择字母，拼出一个单词，积攒分数通关！',
+        '送你一张女巫牌，这是很强大的道具卡牌，可以大大提高单词的分数，快去试试！'
       ];
   
       // === 布局：女巫在左侧（字母卡牌区域上方），对话框在右侧（不与女巫重叠） ===
@@ -205,8 +205,8 @@ module.exports = function extendGuide(Renderer) {
   
       // === 2. 女巫引导图片 + 对话框 ===
       // 女巫：Phase 1 从左侧缓慢飞入（easeOutCubic），飞行中与到位后持续上下漂浮（骑扫把感），x 到位后固定
-      const imgName = phase === 1 ? 'witch_1' : 'witch_2';
-      const imgData = this.guideImages[imgName];
+      // 两个阶段均使用 witch_1 静态图
+      const imgData = this.guideImages.witch_1;
   
       const bobY = Math.sin(Date.now() / 400) * 6 * s; // 上下漂浮
   
@@ -241,7 +241,7 @@ module.exports = function extendGuide(Renderer) {
       const dialogDrawY = dialogTargetY;
   
 
-      // 女巫引导图片（静态图：Phase 1 用 witch_1，其余阶段用 witch_2）
+      // 女巫引导图片（两个阶段均使用 witch_1 静态图）
       if (imgData && imgData.loaded && imgData.img) {
         ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
@@ -492,8 +492,8 @@ module.exports = function extendGuide(Renderer) {
         dialogDrawY = dialogTargetY;
       }
   
-      // 女巫引导图片（witch_3 静态图，商店/图鉴引导共用）
-      const imgData = this.guideImages.witch_3;
+      // 女巫引导图片（witch_2 静态图，商店引导专用）
+      const imgData = this.guideImages.witch_2;
       if (imgData && imgData.loaded && imgData.img) {
         ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
@@ -775,7 +775,7 @@ module.exports = function extendGuide(Renderer) {
         dialogDrawY = dialogTargetY;
       }
   
-      // 女巫引导图片（witch_3 静态图，商店/图鉴引导共用）
+      // 女巫引导图片（witch_3 静态图，图鉴引导专用）
       const imgData = this.guideImages.witch_3;
       if (imgData && imgData.loaded && imgData.img) {
         ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
