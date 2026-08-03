@@ -224,14 +224,14 @@ requestAnimationFrame(loop)
    - `cloudFileMap`：商店卡牌图片。
    - `witchFileMap` / `witchCardFileMap`：女巫头像/卡牌。
    - `bgIconFileMap`：背景与 UI 图标。
-   - `guideFileMap`：引导精灵图。
+   - `guideFileMap`：引导静态图。
    - `musicFileMap`：音效/音乐。
    - `rankAvatarFileMap`：排行榜头像框。
 3. **本地缓存覆盖**：启动时从 `wx.getStorageSync` 读取本地缓存的映射表，允许热更新云文件而不改代码。
 4. **预加载**：
    - 下载云图片到 `wx.createImage()`。
    - 下载音频到本地临时文件并缓存路径。
-   - 按需下载女巫头像/引导精灵图。
+   - 按需下载女巫头像/引导静态图。
 5. **注入渲染器**：通过 `injectToRenderer`、`injectBgIconToRenderer` 等方法将加载好的资源赋值给 `Renderer` 实例的对应字段。
 
 这种设计实现了 **"云存储为资源仓库、本地缓存为加速层、Renderer 为消费端"** 的三层资源架构。

@@ -14,8 +14,7 @@ class CloudStorageManager {
     this.witchImages = {};    // { name: { img, loaded, width, height } }
     this.witchCardImages = {}; // { name: { img, loaded, width, height } }
     this.bgIconImages = {};   // { name: { img, loaded, width, height } }
-    this.guideImages = {};    // { witch_1: { frames: [...], loaded: false }, witch_2: ... }
-    this.guideSpritesheets = {}; // { witch_4: { img, loaded } } 精灵图缓存
+    this.guideImages = {};    // { witch_1: { img, loaded }, witch_2: ... } 单张静态引导图
     this.rankAvatarImages = {}; // { name: { img, loaded, width, height } }
     this.battleImages = {};   // { name: { img, loaded, width, height } }
     this.cafeImages = {};     // { name: { img, loaded, width, height } }
@@ -24,7 +23,7 @@ class CloudStorageManager {
     this.witchCardFileMap = {}; // { name: fileID }
     this.bgIconFileMap = {};  // { name: fileID }
     this.battleFileMap = {};  // { name: fileID }
-    this.guideFileMap = {};   // { 'witch_guide_1_spritesheet': fileID, ... }
+    this.guideFileMap = {};   // { 'witch_guide_1': fileID, ... }
     this.musicFileMap = {};   // { name: fileID }
     this.rankAvatarFileMap = {}; // { name: fileID }
     this.musicCache = {};     // { name: localPath }
@@ -125,6 +124,7 @@ class CloudStorageManager {
       'battle_tag_me': c('/bg_icon/battle_tag_me.png'),
       'battle_tag_rival': c('/bg_icon/battle_tag_rival.png'),
       'score_line': c('/bg_icon/score_line.png'),
+      'bonus_double': c('/bg_icon/bonus_double.png'),
       'discount_spritesheet': c('/bg_icon/discount_spritesheet.png'),
       'homepageBg': c('/bg_icon/homepage_bg.png'),
       'homepageTitle': c('/bg_icon/homepage_title.png'),
@@ -212,13 +212,12 @@ class CloudStorageManager {
       'magic_twinkle': c('/music/sound_effect/magic_twinkle.mp3')
     };
 
-    // 默认 guide 云文件映射（witch_guide_1~4 均使用精灵图）
+    // 默认 guide 云文件映射（3 张静态引导图：主引导 2 张 + 商店/图鉴引导共用 1 张）
     this.defaultGuideFileMap = {};
     const guideBase = c('/witch/guide');
-    this.defaultGuideFileMap['witch_guide_1_spritesheet'] = `${guideBase}/witch_guide_1/spritesheet.png`;
-    this.defaultGuideFileMap['witch_guide_2_spritesheet'] = `${guideBase}/witch_guide_2/spritesheet.png`;
-    this.defaultGuideFileMap['witch_guide_3_spritesheet'] = `${guideBase}/witch_guide_3/spritesheet.png`;
-    this.defaultGuideFileMap['witch_guide_4_spritesheet'] = `${guideBase}/witch_guide_4/spritesheet.png`;
+    this.defaultGuideFileMap['witch_guide_1'] = `${guideBase}/witch_guide/witch_guide_1.png`;
+    this.defaultGuideFileMap['witch_guide_2'] = `${guideBase}/witch_guide/witch_guide_2.png`;
+    this.defaultGuideFileMap['witch_guide_3'] = `${guideBase}/witch_guide/witch_guide_3.png`;
   }
 
   init() {
@@ -683,7 +682,7 @@ class CloudStorageManager {
     return results;
   }
 
-  // 上传 images/witch 目录下所有 .png（含子目录 witch_guide_1 / witch_guide_2）到云存储
+  // 上传 images/witch 目录下所有 .png（含子目录 witch_card / witch_guide）到云存储
   async uploadWitchImages() {
     if (this.uploading) return { success: false, message: '正在上传中...' };
     this.uploading = true;
@@ -705,13 +704,12 @@ class CloudStorageManager {
         cloudPath = `witch/${relPath}`;
         fileType = 'witch_card';
       } else if (relPath.includes('/')) {
-        // 其他子目录（witch_guide）：witch_guide_1/1.png → cloud: witch/guide/witch_guide_1/1.png
-        // witch_guide_1~4 均使用精灵图，只上传 spritesheet.png
-        if (relPath.startsWith('witch_guide_1/') || relPath.startsWith('witch_guide_2/') ||
-            relPath.startsWith('witch_guide_3/') || relPath.startsWith('witch_guide_4/')) {
-          if (fileName !== 'spritesheet.png') continue; // 跳过旧帧图，只上传精灵图
+        // 其他子目录（witch_guide）：witch_guide/witch_guide_1.png → cloud: witch/guide/witch_guide/witch_guide_1.png
+        if (relPath.startsWith('witch_guide/')) {
+          name = fileName.replace(/\.png$/i, ''); // witch_guide_1
+        } else {
+          name = relPath.replace(/\.png$/i, '').replace(/\//g, '_');
         }
-        name = relPath.replace(/\.png$/i, '').replace(/\//g, '_'); // witch_guide_1_spritesheet
         cloudPath = `witch/guide/${relPath}`;
         fileType = 'guide';
       } else {
@@ -924,7 +922,7 @@ class CloudStorageManager {
     this.log('已注入 witch_card renderer: ' + count + '张');
   }
 
-  // 从云存储下载并缓存所有 guide 帧序列图片
+  // 从云存储下载并缓存所有 guide 引导图（单张静态图）
   async preloadGuideImages(onProgress = null) {
     const names = Object.keys(this.guideFileMap);
     if (names.length === 0) {
@@ -937,52 +935,30 @@ class CloudStorageManager {
     for (let i = 0; i < names.length; i += batchSize) {
       const batch = names.slice(i, i + batchSize);
       await Promise.all(batch.map(async name => {
-        if (name.endsWith('_spritesheet')) {
-          const match = name.match(/^witch_guide_(\d+)_spritesheet$/);
-          if (match) {
-            await this._loadGuideSpritesheet(name, match[1]);
-          }
-        } else {
-          await this._loadGuideImage(name);
-        }
+        await this._loadGuideImage(name);
         if (onProgress) onProgress();
       }));
     }
 
-    let frameLoaded = 0;
-    let frameTotal = 0;
+    let loaded = 0;
     Object.keys(this.guideImages).forEach(gk => {
-      const frames = this.guideImages[gk].frames;
-      frameTotal += frames.length;
-      frameLoaded += frames.filter(f => f && f.loaded).length;
+      if (this.guideImages[gk].loaded) loaded++;
     });
 
-    let sheetLoaded = 0;
-    Object.keys(this.guideSpritesheets).forEach(gk => {
-      if (this.guideSpritesheets[gk].loaded) sheetLoaded++;
-    });
-
-    this.log(`guide 目录下 帧序列 ${frameLoaded}/${frameTotal}，精灵图 ${sheetLoaded} 张下载完成`);
+    this.log(`guide 引导图 ${loaded}/${names.length} 张下载完成`);
   }
 
   async _loadGuideImage(name) {
     const fileID = this.guideFileMap[name];
     if (!fileID) return;
 
-    // 解析 name: witch_guide_1_1 → groupKey='witch_1', frameIdx=0
-    const match = name.match(/^witch_guide_(\d+)_(\d+)$/);
+    // 解析 name: witch_guide_1 → groupKey='witch_1'
+    const match = name.match(/^witch_guide_(\d+)$/);
     if (!match) return;
-    const guideNum = match[1];
-    const frameNum = parseInt(match[2], 10);
-    const groupKey = `witch_${guideNum}`;
-    const frameIdx = frameNum - 1;
-
-    if (!this.guideImages[groupKey]) {
-      this.guideImages[groupKey] = { frames: [], loaded: false };
-    }
+    const groupKey = `witch_${match[1]}`;
 
     // 重复加载防护
-    const existing = this.guideImages[groupKey].frames[frameIdx];
+    const existing = this.guideImages[groupKey];
     if (existing && existing.loaded && existing.img) {
       return;
     }
@@ -992,122 +968,45 @@ class CloudStorageManager {
     }
 
     const img = await this._loadCachedImageSource(name, fileID);
-    this.guideImages[groupKey].frames[frameIdx] = img
+    this.guideImages[groupKey] = img
       ? { img, loaded: true }
       : { img: null, loaded: false };
   }
 
-  // 下载 guide 精灵图（单张大图）
-  async _loadGuideSpritesheet(name, groupNum) {
-    const fileID = this.guideFileMap[name];
-    if (!fileID) {
-      this.log('云存储映射不存在: ' + name);
-      return;
-    }
-
-    const groupKey = `witch_${groupNum}`;
-
-    // 重复加载防护
-    const existing = this.guideSpritesheets[groupKey];
-    if (existing && existing.loaded && existing.img) {
-      return;
-    }
-
-    if (existing && existing.img) {
-      existing.img.src = '';
-    }
-
-    const img = await this._loadCachedImageSource(name, fileID);
-    this.guideSpritesheets[groupKey] = img
-      ? { img, loaded: true }
-      : { img: null, loaded: false };
-  }
-
-  // 按需下载指定 guide 组（如 witch_guide_3），并注入 renderer
+  // 按需下载指定 guide 组（如商店/图鉴引导），并注入 renderer
+  // 组 1/2 对应 witch_guide_1/2（主引导）；组 3/4 共用 witch_guide_3（商店引导与图鉴引导）
   async preloadGuideGroup(groupNum, renderer) {
-    const groupKey = `witch_${groupNum}`;
-    const rendererGroup = renderer.guideImages[groupKey];
+    const imageNum = groupNum >= 3 ? 3 : groupNum;
+    const groupKey = `witch_${imageNum}`;
+    const name = `witch_guide_${imageNum}`;
 
-    // 精灵图模式（如 witch_guide_4）：单张大图
-    if (rendererGroup && rendererGroup.type === 'spritesheet') {
-      const spriteName = `witch_guide_${groupNum}_spritesheet`;
-      if (!this.guideFileMap[spriteName]) {
-        this.log(`没有 guide 组 ${groupNum} 精灵图映射，跳过下载`);
-        return;
-      }
-      this.log(`开始按需下载 guide 组 ${groupNum} 精灵图`);
-      await this._loadGuideSpritesheet(spriteName, groupNum);
-
-      // 注入 renderer
-      const sheet = this.guideSpritesheets[groupKey];
-      if (sheet && sheet.loaded && sheet.img && rendererGroup) {
-        rendererGroup.img = sheet.img;
-        rendererGroup.loaded = true;
-        this.log(`已按需注入 guide 组 ${groupNum} 精灵图`);
-      }
-      return;
-    }
-
-    // 传统帧序列模式（兜底）
-    const prefix = `witch_guide_${groupNum}_`;
-    const names = Object.keys(this.guideFileMap).filter(n => n.startsWith(prefix));
-    if (names.length === 0) {
+    if (!this.guideFileMap[name]) {
       this.log(`没有 guide 组 ${groupNum} 的云存储映射，跳过下载`);
       return;
     }
 
-    this.log(`开始按需下载 guide 组 ${groupNum}，共${names.length}张`);
-    const batchSize = 5;
-    for (let i = 0; i < names.length; i += batchSize) {
-      const batch = names.slice(i, i + batchSize);
-      await Promise.all(batch.map(async name => {
-        await this._loadGuideImage(name);
-      }));
-    }
+    this.log(`开始按需下载 guide 组 ${groupNum}（${name}）`);
+    await this._loadGuideImage(name);
 
     // 注入 renderer
     const group = this.guideImages[groupKey];
-    if (group && rendererGroup && group.frames) {
-      group.frames.forEach((frame, idx) => {
-        if (frame && frame.loaded && frame.img && rendererGroup.frames[idx]) {
-          rendererGroup.frames[idx] = { img: frame.img, loaded: true };
-        }
-      });
-      if (rendererGroup.frames.every(f => f && f.loaded)) {
-        rendererGroup.loaded = true;
-      }
-      this.log(`已按需注入 guide 组 ${groupNum}: ${rendererGroup.frames.filter(f => f && f.loaded).length}/${rendererGroup.frames.length}帧`);
+    const rendererGroup = renderer.guideImages[groupKey];
+    if (group && group.loaded && group.img && rendererGroup) {
+      rendererGroup.img = group.img;
+      rendererGroup.loaded = true;
+      this.log(`已按需注入 guide 组 ${groupNum}（${groupKey}）`);
     }
   }
 
-  // 将云缓存 guide 帧序列注入到 renderer 的 guideImages
+  // 将云缓存 guide 引导图注入到 renderer 的 guideImages
   injectGuideToRenderer(renderer) {
     let count = 0;
     Object.keys(this.guideImages).forEach(groupKey => {
       const group = this.guideImages[groupKey];
-      if (!group || !group.frames) return;
+      if (!group || !group.loaded || !group.img) return;
       const rendererGroup = renderer.guideImages[groupKey];
-      if (!rendererGroup || !rendererGroup.frames) return;
-
-      group.frames.forEach((frame, idx) => {
-        if (frame && frame.loaded && frame.img && rendererGroup.frames[idx]) {
-          rendererGroup.frames[idx] = { img: frame.img, loaded: true };
-          count++;
-        }
-      });
-
-      if (rendererGroup.frames.every(f => f && f.loaded)) {
-        rendererGroup.loaded = true;
-      }
-    });
-
-    // 注入精灵图（witch_guide_4）
-    Object.keys(this.guideSpritesheets).forEach(groupKey => {
-      const sheet = this.guideSpritesheets[groupKey];
-      if (!sheet || !sheet.loaded || !sheet.img) return;
-      const rendererGroup = renderer.guideImages[groupKey];
-      if (!rendererGroup || rendererGroup.type !== 'spritesheet') return;
-      rendererGroup.img = sheet.img;
+      if (!rendererGroup) return;
+      rendererGroup.img = group.img;
       rendererGroup.loaded = true;
       count++;
     });
@@ -1586,6 +1485,16 @@ class CloudStorageManager {
       this.log('已注入 bg_icon renderer: card_book');
     } else {
       this.log('bg_icon card_book 未加载，跳过注入');
+    }
+
+    // 结算翻倍敲章图（云端版本覆盖 base.js 的本地兜底加载）
+    const bonusDoubleData = this.bgIconImages['bonus_double'];
+    if (bonusDoubleData && bonusDoubleData.loaded && bonusDoubleData.img) {
+      renderer.bonusDoubleImg = bonusDoubleData.img;
+      renderer.bonusDoubleLoaded = true;
+      this.log('已注入 bg_icon renderer: bonus_double');
+    } else {
+      this.log('bg_icon bonus_double 未加载，跳过注入（使用本地兜底）');
     }
 
     // 商店分类栏背景图

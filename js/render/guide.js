@@ -162,13 +162,9 @@ module.exports = function extendGuide(Renderer) {
       }
   
 
-      // 女巫引导图片（精灵图）
+      // 女巫引导图片（静态图：Phase 1 用 witch_1，Phase 2~5 用 witch_2）
       if (imgData && imgData.loaded && imgData.img) {
-        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-        const coord = imgData.frameCoords[frameIdx];
-        if (coord) {
-          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
-        }
+        ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
   
       // 对话框背景（奶油色）
@@ -420,14 +416,10 @@ module.exports = function extendGuide(Renderer) {
         dialogDrawY = dialogTargetY;
       }
   
-      // 女巫引导图片（witch_3 使用精灵图渲染）
+      // 女巫引导图片（witch_3 静态图，商店/图鉴引导共用）
       const imgData = this.guideImages.witch_3;
       if (imgData && imgData.loaded && imgData.img) {
-        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-        const coord = imgData.frameCoords[frameIdx];
-        if (coord) {
-          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
-        }
+        ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
   
       // 对话框背景
@@ -707,14 +699,10 @@ module.exports = function extendGuide(Renderer) {
         dialogDrawY = dialogTargetY;
       }
   
-      // 女巫引导图片（witch_4 使用精灵图渲染）
-      const imgData = this.guideImages.witch_4;
+      // 女巫引导图片（witch_3 静态图，商店/图鉴引导共用）
+      const imgData = this.guideImages.witch_3;
       if (imgData && imgData.loaded && imgData.img) {
-        const frameIdx = Math.floor(Date.now() / imgData.frameDelay) % imgData.frameCount;
-        const coord = imgData.frameCoords[frameIdx];
-        if (coord) {
-          ctx.drawImage(imgData.img, coord.x, coord.y, coord.w, coord.h, imgX, imgY, imgW, imgH);
-        }
+        ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
   
       // 对话框背景
