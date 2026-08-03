@@ -3808,6 +3808,17 @@ function handleInput(x, inputY) {
     return;
   }
 
+  // 新手引导退场后的「获得女巫牌」弹窗：只响应领取按钮，屏蔽其他交互
+  if (game.state !== 'battle' && game.guidePhase === 5 && renderer.guideGiftClaimBtnRect) {
+    const claimHit = renderer.hitTest(x, inputY, [renderer.guideGiftClaimBtnRect]);
+    if (claimHit) {
+      vibrate();
+      if (game.audioManager) game.audioManager.play('buy_success');
+      game.claimGuideGift();
+    }
+    return;
+  }
+
   // 检测调试菜单按钮（优先）
   if (renderer.debugMenuOpen && renderer.debugMenuRects) {
     const debugHit = renderer.hitTest(x, inputY, renderer.debugMenuRects);
@@ -3944,6 +3955,9 @@ function handleInput(x, inputY) {
         game.guidePhase = 1;
         game._guideTextStartTime = Date.now();
         game._guideCardGiftStartTime = null;
+        game._guideExitStartTime = null;
+        game._guideGiftPopupStartTime = null;
+        renderer.guideGiftClaimBtnRect = null;
         // 如果已有 has_vowel 女巫牌，先移除以避免重复
         const hasVowelIdx = game.jokers.findIndex(j => j && j.trigger === 'has_vowel');
         if (hasVowelIdx >= 0) game.jokers.splice(hasVowelIdx, 1);

@@ -69,16 +69,8 @@ Renderer.prototype.render = function(game) {
       if (game._guideEnabled && game.guidePhase >= 1 && game.guidePhase <= 4) {
         this._drawGuideOverlay(game);
       } else if (game.guidePhase === 5 && game._guideExitStartTime) {
-        const exitElapsed = Date.now() - game._guideExitStartTime;
-        if (exitElapsed < 600) {
-          this._drawGuideOverlay(game);
-        } else if (exitElapsed < 1100) {
-          const fadeProgress = (exitElapsed - 600) / 500;
-          ctx.save();
-          ctx.fillStyle = `rgba(0, 0, 0, ${0.75 * (1 - fadeProgress)})`;
-          ctx.fillRect(0, 0, W, H);
-          ctx.restore();
-        }
+        // 退场动画及后续「获得女巫牌」弹窗均由 overlay 内部按时间轴处理，黑色蒙层不再淡出
+        this._drawGuideOverlay(game);
       }
 
       // 字母置换弹窗（覆盖在游戏页面上方，独立模态弹窗，不下移）

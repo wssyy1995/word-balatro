@@ -1444,6 +1444,10 @@ class Game {
       this._guideTextStartTime = Date.now() + 500;
     }
     this._guideCardGiftStartTime = null;
+    // Phase 5 恢复时若缺少退场时间，设为过去值让退场动画立即结束，直接展示「获得女巫牌」弹窗
+    if (this._guideEnabled && this.guidePhase === 5 && !this._guideExitStartTime) {
+      this._guideExitStartTime = Date.now() - 700;
+    }
 
     // 商店女巫技能引导（独立于游戏进度，永久保留）
     const savedShopGuidePhase = this.storageManager.loadShopGuidePhase();
@@ -2181,6 +2185,21 @@ class Game {
       if (this.guidePhase >= 5) {
         this.storageManager.saveGuidePhase(this.guidePhase);
       }
+    }
+  }
+
+  // 领取新手引导赠送的女巫牌：关闭「获得女巫牌」弹窗，引导全部完成
+  claimGuideGift() {
+    if (this.guidePhase !== 5) return;
+    this.guidePhase = 6; // 6 = 引导全部完成（含赠卡领取）
+    this._guideExitStartTime = null;
+    this._guideGiftPopupStartTime = null;
+    if (this.renderer) {
+      this.renderer.guideGiftClaimBtnRect = null;
+    }
+    if (this.storageManager) {
+      this.storageManager.saveProgress();
+      this.storageManager.saveGuidePhase(this.guidePhase);
     }
   }
 
