@@ -3954,7 +3954,6 @@ function handleInput(x, inputY) {
       if (debugHit.action === 'debug_triggerGuide') {
         game.guidePhase = 1;
         game._guideTextStartTime = Date.now();
-        game._guideCardGiftStartTime = null;
         game._guideExitStartTime = null;
         game._guideGiftPopupStartTime = null;
         renderer.guideGiftClaimBtnRect = null;

@@ -1443,7 +1443,6 @@ class Game {
     if (this._guideTextStartTime === undefined && this.guidePhase >= 2 && this.guidePhase <= 4) {
       this._guideTextStartTime = Date.now() + 500;
     }
-    this._guideCardGiftStartTime = null;
     // Phase 5 恢复时若缺少退场时间，设为过去值让退场动画立即结束，直接展示「获得女巫牌」弹窗
     if (this._guideEnabled && this.guidePhase === 5 && !this._guideExitStartTime) {
       this._guideExitStartTime = Date.now() - 700;

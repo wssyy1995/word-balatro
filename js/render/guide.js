@@ -318,36 +318,6 @@ module.exports = function extendGuide(Renderer) {
         // 点击区域扩大为整个对话框
         this.guideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
       }
-  
-      // === 5. 阶段2：has_vowel 卡牌弹入动画（果冻感缩放） ===
-      // 在高亮的字母卡牌区域中心弹入，点击下一步退出引导时自然消失
-      if (phase === 2 && isTextComplete) {
-        const giftStart = game._guideCardGiftStartTime || (game._guideCardGiftStartTime = Date.now());
-        const giftElapsed = Date.now() - giftStart;
-  
-        const cardW = 70 * s;
-        const cardH = 90 * s;
-        // 卡牌目标位置：字母卡牌区域中心
-        const targetX = cardZone.x + (cardZone.w - cardW) / 2;
-        const targetY = cardZone.y + (cardZone.h - cardH) / 2;
-        // 弹入动画：600ms 从小变大，easeOutBackStrong 强力果冻回弹；之后保持
-        const progress = Math.min(giftElapsed / 600, 1);
-        const scale = progress === 0 ? 0 : Easing.easeOutBackStrong(progress);
-        const curW = cardW * scale;
-        const curH = cardH * scale;
-        const cardX = targetX;
-        const cardY = targetY;
-  
-        const hasVowelData = this.shopCardImages['has_vowel'];
-        if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {
-          ctx.save();
-          ctx.globalAlpha = progress === 0 ? 0 : Math.min(scale, 1);
-          // 卡牌背后金色星星+光晕（复用购买成功弹窗效果）
-          this._drawCardGlow(ctx, cardX, cardY, curW, curH, s);
-          ctx.drawImage(hasVowelData.img, cardX, cardY, curW, curH);
-          ctx.restore();
-        }
-      }
     }
 
     // 「获得女巫牌」弹窗：主引导退场完成后弹出（样式参考女巫奖励弹窗 result 阶段）
