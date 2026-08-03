@@ -827,12 +827,17 @@ module.exports = function extendGuide(Renderer) {
       const isPhase3 = phase === 3;
       const fullText = GUIDE_TEXTS[phase] || '';
   
-      const POPUP_DURATION = 600;
-      const POST_POPUP_DELAY = 500;
-      // Phase 1: 文本等弹出动画完成后开始显示；Phase 2/3: 女巫和对话框保持不动，文本立即开始显示
+      // 入场动画与文字延迟参数（参考主引导：女巫先从左侧缓慢飞入，到位后对话框再从右侧飞入）
+      const POPUP_BASE = DELAY_BEFORE_FADE + WITCH_DELAY; // 1500ms：聚光灯显示后女巫开始飞入
+      const WITCH_FLY_DURATION = 1200; // 女巫骑扫把从左侧缓慢飞入
+      const DIALOG_FLY_DELAY = 100;    // 女巫停稳后稍作停顿再出对话框
+      const DIALOG_FLY_DURATION = 500; // 对话框从右侧飞入
+      const POST_DIALOG_DELAY = 500;   // 对话框到位后延迟开始打字
+      const DIALOG_ARRIVE_OFFSET = WITCH_FLY_DURATION + DIALOG_FLY_DELAY + DIALOG_FLY_DURATION;
+      // Phase 1: 文本等女巫+对话框依次飞入后开始显示；Phase 2/3: 女巫和对话框保持不动，文本立即开始显示
       let textStartTime;
       if (isPhase1) {
-        textStartTime = (game._cardBookGuideTextStartTime || Date.now()) + POPUP_DURATION + POST_POPUP_DELAY;
+        textStartTime = startTime + POPUP_BASE + DIALOG_ARRIVE_OFFSET + POST_DIALOG_DELAY;
       } else if (isPhase2) {
         textStartTime = (game._cardBookGuideText2StartTime || Date.now());
       } else {
@@ -893,39 +898,38 @@ module.exports = function extendGuide(Renderer) {
       const dialogR = 12 * s;
       const dialogTargetY = H * 0.6;
   
-      let imgX, imgY, dialogDrawX, dialogDrawY;
+      const bobY = Math.sin(Date.now() / 400) * 6 * s; // 上下漂浮（骑扫把感，同主引导）
+  
+      let imgX, dialogDrawX;
       if (phase === 1) {
-        // Phase 1：女巫和对话框从屏幕外弹出（计时起点对齐到聚光灯显示后）
-        const popupElapsed = elapsed - DELAY_BEFORE_FADE - WITCH_DELAY;
-        const popupDelay = 100;
-        if (popupElapsed > popupDelay) {
-          const popupProgress = Math.min((popupElapsed - popupDelay) / POPUP_DURATION, 1);
-          const eased = Easing.easeOutBackStrong(popupProgress);
-          imgX = -imgW + (imgTargetX + imgW) * eased;
-          dialogDrawX = W + (dialogTargetX - W) * eased;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
+        // Phase 1：女巫先从左侧缓慢飞入（计时起点对齐到聚光灯显示后），到位后对话框再从右侧飞入
+        const flyElapsed = elapsed - POPUP_BASE;
+        if (flyElapsed > 0) {
+          const flyProgress = Math.min(flyElapsed / WITCH_FLY_DURATION, 1);
+          imgX = -imgW + (imgTargetX + imgW) * Easing.easeOutCubic(flyProgress);
         } else {
           imgX = -imgW;
+        }
+        const dialogElapsed = flyElapsed - WITCH_FLY_DURATION - DIALOG_FLY_DELAY;
+        if (dialogElapsed > 0) {
+          const dialogProgress = Math.min(dialogElapsed / DIALOG_FLY_DURATION, 1);
+          dialogDrawX = W + (dialogTargetX - W) * Easing.easeOutCubic(dialogProgress);
+        } else {
           dialogDrawX = W;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
         }
       } else if (phase === 2 || phase === 3) {
         // Phase 2/3：女巫和对话框保持显示，不需要重新弹出
         imgX = imgTargetX;
         dialogDrawX = dialogTargetX;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       } else if (phase === 4) {
         const exitElapsed = Date.now() - (game._cardBookGuideExitStartTime || Date.now());
         const exitProgress = Math.min(exitElapsed / 600, 1);
         const eased = Easing.easeOutBackStrong(exitProgress);
         imgX = imgTargetX - (imgTargetX + imgW) * eased;
         dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       }
+      const imgY = imgTargetY + bobY;
+      const dialogDrawY = dialogTargetY;
   
       // 女巫引导图片（witch_3 静态图，图鉴引导专用）
       const imgData = this.guideImages.witch_3;
