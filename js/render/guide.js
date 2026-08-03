@@ -41,26 +41,80 @@ module.exports = function extendGuide(Renderer) {
   
       const PHASE_TEXTS = [
         '',
-        'Hi，你也是来寻找传说中具有强大能量的26张词牌吗？它们正由26位女巫保管着，只有通过试炼的人，才能唤醒词牌真正的力量。',
-        '怎么通过试炼？很简单——看到这些字母牌了吗？挑几个拼成一个单词，打出去！单词越长，能量越高。',
-        '对了，这个送你——我珍藏很久的女巫牌，它会持续给你提供帮助！（偷偷告诉你，卡牌商店有更多强大的卡牌可以买到哦）',
-        '好了，快出发寻找女巫们吧！',
+        '看到这些字母牌了吗？点击它们，拼出一个单词，积攒分数通关！',
+        '看在你是新手的份上，送你一张女巫牌，这是很强大的道具卡牌，可以大大提高单词的分数，快去试试！'
       ];
   
-      // 女巫目标位置（Phase 1 提前计算，供渐变阶段萤火环绕使用）
-      const dialogPadX = 20 * s;
-      const dialogTargetX = dialogPadX;
-      const imgW = 180 * s;
-      const imgH = 220 * s;
-      const imgTargetX = dialogTargetX;
-      const imgTargetY = H * 0.6 - imgH;
+      // === 布局：女巫在左侧（字母卡牌区域上方），对话框在右侧（不与女巫重叠） ===
+      const imgW = 130 * s;
+      const imgH = imgW * (220 / 180); // 保持引导图原始宽高比
   
-      // Phase 1 入场时序：0~800ms 全亮无UI → 800~1600ms 渐变变暗 → 1600ms+ 显示完整UI
-      const overlayStartTime = game._guideOverlayStartTime || Date.now();
+      // 字母卡牌区域（女巫到位后的高亮目标），取当前手牌网格的包围盒
+      let cardZone;
+      if (this.cardRects && this.cardRects.length) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        this.cardRects.forEach(r => {
+          if (r.x < minX) minX = r.x;
+          if (r.y < minY) minY = r.y;
+          if (r.x + r.w > maxX) maxX = r.x + r.w;
+          if (r.y + r.h > maxY) maxY = r.y + r.h;
+        });
+        cardZone = { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+      } else {
+        cardZone = { x: 40 * s, y: H * 0.45, w: W - 80 * s, h: H * 0.35 };
+      }
+  
+      const imgTargetX = 20 * s;
+      const imgTargetY = cardZone.y - 10 * s - imgH; // 女巫底部悬浮在卡牌区上方
+  
+      // 对话框位于女巫右侧，垂直方向与女巫居中，且底部不压到卡牌区
+      const dialogTargetX = imgTargetX + imgW + 12 * s;
+      const dialogW = W - dialogTargetX - 16 * s;
+      const dialogR = 12 * s;
+      const textPad = 16 * s;
+      const lineHeight = 24 * s;
+      const textMaxW = dialogW - textPad * 2;
+      const baseFont = `${Math.floor(17 * s)}px sans-serif`;
+  
+      const fullText = PHASE_TEXTS[phase] || '';
+  
+      // 预先测量完整文案的换行行数，动态确定对话框高度（预留倒三角按钮空间）
+      ctx.save();
+      ctx.font = baseFont;
+      let lineCount = 1;
+      let measureLine = '';
+      for (let i = 0; i < fullText.length; i++) {
+        const testLine = measureLine + fullText[i];
+        if (ctx.measureText(testLine).width > textMaxW && measureLine !== '') {
+          lineCount++;
+          measureLine = fullText[i];
+        } else {
+          measureLine = testLine;
+        }
+      }
+      ctx.restore();
+      const dialogH = Math.max(96 * s, lineCount * lineHeight + textPad * 2 + 24 * s);
+  
+      let dialogTargetY = imgTargetY + (imgH - dialogH) / 2;
+      const dialogMaxY = cardZone.y - 8 * s - dialogH;
+      if (dialogTargetY > dialogMaxY) dialogTargetY = dialogMaxY;
+      const dialogMinY = (this.safeTop || 0) + 8 * s;
+      if (dialogTargetY < dialogMinY) dialogTargetY = dialogMinY;
+  
+      // Phase 1 入场时序：0~800ms 全亮 → 800~1600ms 渐暗 → 女巫左侧缓慢飞入(1200ms)
+      // → 到位后高亮卡牌区 → 对话框右侧飞入(500ms) → 开始打字
+      if (!game._guideOverlayStartTime) game._guideOverlayStartTime = Date.now();
+      const overlayStartTime = game._guideOverlayStartTime;
       const overlayElapsed = Date.now() - overlayStartTime;
       const FADE_START = 800;
       const FADE_DURATION = 800;
       const UI_SHOW_DELAY = FADE_START + FADE_DURATION; // 1600ms
+      const WITCH_FLY_DURATION = 1200; // 女巫骑扫把从左侧缓慢飞入
+      const DIALOG_FLY_DELAY = 100;    // 女巫停稳后稍作停顿再出对话框
+      const DIALOG_FLY_DURATION = 500; // 对话框从右侧飞入
+      const POST_DIALOG_DELAY = 500;   // 对话框到位后延迟开始打字
+      const WITCH_ARRIVE = UI_SHOW_DELAY + WITCH_FLY_DURATION;
+      const DIALOG_ARRIVE = WITCH_ARRIVE + DIALOG_FLY_DELAY + DIALOG_FLY_DURATION;
   
       if (phase === 1 && overlayElapsed < UI_SHOW_DELAY) {
         this.guideNextBtnRect = null; // 渐变阶段禁止点击
@@ -68,24 +122,16 @@ module.exports = function extendGuide(Renderer) {
         // 渐变变暗阶段：先画遮罩
         const fadeProgress = Math.min((overlayElapsed - FADE_START) / FADE_DURATION, 1);
         ctx.save();
-        ctx.fillStyle = `rgba(0, 0, 0, ${fadeProgress * 0.75})`;
+        ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, fadeProgress) * 0.75})`;
         ctx.fillRect(0, 0, W, H);
         ctx.restore();
   
         return; // 不画女巫、对话框等
       }
   
-      const fullText = PHASE_TEXTS[phase] || '';
-  
-      // Phase 1 弹出动画参数
-      const POPUP_DELAY = 0;        // 女巫/对话框不额外延迟，UI 显示瞬间即弹出
-      const POPUP_DURATION = 600;
-      const POST_POPUP_DELAY = 800; // 弹出完成后延迟 800ms 再开始打字
-  
-  
-      // 计算文字开始时间：Phase 1 在女巫+对话框弹出并贴合后延迟 600ms 才开始；Phase 2~4 保持原有逻辑
+      // 计算文字开始时间：Phase 1 等女巫+对话框依次飞入后延迟 500ms 才开始；Phase 2 保持原有逻辑
       const textStartTime = (phase === 1)
-        ? (overlayStartTime + UI_SHOW_DELAY + POPUP_DELAY + POPUP_DURATION + POST_POPUP_DELAY)
+        ? (overlayStartTime + DIALOG_ARRIVE + POST_DIALOG_DELAY)
         : (game._guideTextStartTime || Date.now());
       const charInterval = 65; // 每 65ms 显示一个字
       const elapsed = Date.now() - textStartTime;
@@ -111,39 +157,74 @@ module.exports = function extendGuide(Renderer) {
       const displayText = fullText.slice(0, visibleChars);
       const isTextComplete = visibleChars >= fullText.length;
   
-      // === 1. 黑色半透明蒙层 ===
-      ctx.save();
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
+      // === 1. 蒙层：女巫到位后聚光灯高亮字母卡牌区域（Phase 5 退场时恢复全屏压暗） ===
+      const spotReady = phase !== 5 && (phase !== 1 || overlayElapsed >= WITCH_ARRIVE);
+      if (spotReady) {
+        const pad = 8 * s;
+        const spotX = cardZone.x - pad;
+        const spotY = cardZone.y - pad;
+        const spotW = cardZone.w + pad * 2;
+        const spotH = cardZone.h + pad * 2;
+        const spotR = 14 * s;
   
-      // === 2. 女巫引导图片 + 对话框（Phase 1 果冻感弹出，Phase 2~4 直接显示） ===
+        ctx.save();
+        ctx.beginPath();
+        // 外矩形（顺时针）
+        ctx.rect(0, 0, W, H);
+        // 内矩形（逆时针挖空）—— 圆角矩形
+        const r = spotR;
+        ctx.moveTo(spotX + r, spotY);
+        ctx.lineTo(spotX + spotW - r, spotY);
+        ctx.quadraticCurveTo(spotX + spotW, spotY, spotX + spotW, spotY + r);
+        ctx.lineTo(spotX + spotW, spotY + spotH - r);
+        ctx.quadraticCurveTo(spotX + spotW, spotY + spotH, spotX + spotW - r, spotY + spotH);
+        ctx.lineTo(spotX + r, spotY + spotH);
+        ctx.quadraticCurveTo(spotX, spotY + spotH, spotX, spotY + spotH - r);
+        ctx.lineTo(spotX, spotY + r);
+        ctx.quadraticCurveTo(spotX, spotY, spotX + r, spotY);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fill('evenodd');
+        ctx.restore();
+  
+        // 聚光灯区域金色边框（呼吸效果）
+        const breathe = (Math.sin(Date.now() / 500) + 1) / 2;
+        ctx.save();
+        ctx.strokeStyle = `rgba(196, 163, 90, ${0.5 + breathe * 0.5})`;
+        ctx.lineWidth = 2.5 * s;
+        ctx.setLineDash([6 * s, 4 * s]);
+        this.roundRect(spotX, spotY, spotW, spotH, spotR, null, ctx.strokeStyle, 2.5 * s);
+        ctx.setLineDash([]);
+        ctx.restore();
+      } else {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.restore();
+      }
+  
+      // === 2. 女巫引导图片 + 对话框 ===
+      // 女巫：Phase 1 从左侧缓慢飞入（easeOutCubic），飞行中与到位后持续上下漂浮（骑扫把感），x 到位后固定
       const imgName = phase === 1 ? 'witch_1' : 'witch_2';
       const imgData = this.guideImages[imgName];
   
-      const dialogW = W - dialogPadX * 2;
-      const dialogH = 130 * s;
-      const dialogR = 12 * s;
-      const dialogTargetY = H * 0.6;
+      const bobY = Math.sin(Date.now() / 400) * 6 * s; // 上下漂浮
   
-      let imgX, imgY, dialogDrawX, dialogDrawY;
-      let popupElapsed = 0;
+      let imgX, dialogDrawX;
       if (phase === 1) {
-        popupElapsed = overlayElapsed - UI_SHOW_DELAY - POPUP_DELAY;
-        if (popupElapsed > 0) {
-          const popupProgress = Math.min(popupElapsed / POPUP_DURATION, 1);
-          const eased = Easing.easeOutBackStrong(popupProgress);
-          // 女巫从左侧弹出：起始在屏幕外左侧，目标位置对齐
-          imgX = -imgW + (imgTargetX + imgW) * eased;
-          // 对话框从右侧弹出：起始在屏幕外右侧，目标位置对齐
-          dialogDrawX = W + (dialogTargetX - W) * eased;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
+        const flyElapsed = overlayElapsed - UI_SHOW_DELAY;
+        if (flyElapsed > 0) {
+          const flyProgress = Math.min(flyElapsed / WITCH_FLY_DURATION, 1);
+          imgX = -imgW + (imgTargetX + imgW) * Easing.easeOutCubic(flyProgress);
         } else {
           imgX = -imgW;
+        }
+        const dialogElapsed = overlayElapsed - WITCH_ARRIVE - DIALOG_FLY_DELAY;
+        if (dialogElapsed > 0) {
+          const dialogProgress = Math.min(dialogElapsed / DIALOG_FLY_DURATION, 1);
+          dialogDrawX = W + (dialogTargetX - W) * Easing.easeOutCubic(dialogProgress);
+        } else {
           dialogDrawX = W;
-          imgY = imgTargetY;
-          dialogDrawY = dialogTargetY;
         }
       } else if (phase === 5) {
         // Phase 5 退场动画：女巫向左、对话框向右弹出去
@@ -152,17 +233,15 @@ module.exports = function extendGuide(Renderer) {
         const eased = Easing.easeOutBackStrong(exitProgress);
         imgX = imgTargetX - (imgTargetX + imgW) * eased;
         dialogDrawX = dialogTargetX + (W - dialogTargetX) * eased;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       } else {
         imgX = imgTargetX;
         dialogDrawX = dialogTargetX;
-        imgY = imgTargetY;
-        dialogDrawY = dialogTargetY;
       }
+      const imgY = imgTargetY + bobY;
+      const dialogDrawY = dialogTargetY;
   
 
-      // 女巫引导图片（静态图：Phase 1 用 witch_1，Phase 2~5 用 witch_2）
+      // 女巫引导图片（静态图：Phase 1 用 witch_1，其余阶段用 witch_2）
       if (imgData && imgData.loaded && imgData.img) {
         ctx.drawImage(imgData.img, imgX, imgY, imgW, imgH);
       }
@@ -175,16 +254,13 @@ module.exports = function extendGuide(Renderer) {
   
       // === 3. 逐字显示的文字 ===
       ctx.save();
-      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      ctx.font = baseFont;
       ctx.fillStyle = '#1a2f4a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
   
-      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad;
-      const textMaxW = dialogW - textPad * 2;
-      const lineHeight = 24 * s;
   
       // 自动换行绘制
       let line = '';
@@ -232,24 +308,24 @@ module.exports = function extendGuide(Renderer) {
         this.guideNextBtnRect = { x: dialogDrawX, y: dialogDrawY, w: dialogW, h: dialogH };
       }
   
-      // === 6. 阶段3：has_vowel 卡牌弹入动画（果冻感缩放） ===
-      // 弹入完成后持续显示在女巫旁边，点击下一步进入 Phase 4 时自然消失
-      if (phase === 3 && isTextComplete) {
+      // === 5. 阶段2：has_vowel 卡牌弹入动画（果冻感缩放） ===
+      // 在高亮的字母卡牌区域中心弹入，点击下一步退出引导时自然消失
+      if (phase === 2 && isTextComplete) {
         const giftStart = game._guideCardGiftStartTime || (game._guideCardGiftStartTime = Date.now());
         const giftElapsed = Date.now() - giftStart;
   
         const cardW = 70 * s;
         const cardH = 90 * s;
-        // 卡牌目标位置：witch 图片右侧，与 witch 图片中心垂直对齐
-        const targetX = imgX + imgW + 10 * s;
-        const targetY = imgY + imgH / 2;
+        // 卡牌目标位置：字母卡牌区域中心
+        const targetX = cardZone.x + (cardZone.w - cardW) / 2;
+        const targetY = cardZone.y + (cardZone.h - cardH) / 2;
         // 弹入动画：600ms 从小变大，easeOutBackStrong 强力果冻回弹；之后保持
         const progress = Math.min(giftElapsed / 600, 1);
         const scale = progress === 0 ? 0 : Easing.easeOutBackStrong(progress);
         const curW = cardW * scale;
         const curH = cardH * scale;
         const cardX = targetX;
-        const cardY = targetY - curH / 2; // 中心对齐
+        const cardY = targetY;
   
         const hasVowelData = this.shopCardImages['has_vowel'];
         if (hasVowelData && hasVowelData.loaded && hasVowelData.img) {

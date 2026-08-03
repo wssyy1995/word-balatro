@@ -2085,7 +2085,7 @@ class Game {
     this._hastePlayActive = false;
     this._hastePlayStartTime = null;
 
-    // 第一回合触发新手引导（Phase 1 带入场延迟：1s全亮 → 500ms渐暗 → UI出现）
+    // 第一回合触发新手引导（Phase 1 入场：0.8s全亮 → 0.8s渐暗 → 女巫左侧飞入 → 高亮卡牌区 → 对话框右侧飞入）
     // 仅限单人回合游戏；若用户从对战入口进入，则不应触发小女巫引导
     console.log('[Guide] trigger check round:', this.round, 'guidePhase:', this.guidePhase, '_guideEnabled:', this._guideEnabled, 'state:', this.state, 'battleMode:', this.battleMode);
     if (this._guideEnabled && this.round === 1 && (this.guidePhase === 0 || this.guidePhase === undefined) && this.state === 'playing' && !this.battleMode) {
@@ -2140,8 +2140,8 @@ class Game {
     if (!this._guideEnabled) return;
     if (this.guidePhase < 1 || this.guidePhase > 4) return;
 
-    // 阶段3特殊处理：给 has_vowel 卡牌
-    if (this.guidePhase === 3) {
+    // 阶段2特殊处理：给 has_vowel 卡牌
+    if (this.guidePhase === 2) {
       // 如果还没给过，插入 has_vowel 女巫牌
       const hasVowel = this.jokers.find(j => j && j.trigger === 'has_vowel');
       if (!hasVowel) {
@@ -2153,7 +2153,8 @@ class Game {
       }
     }
 
-    this.guidePhase++;
+    // 新流程只有 2 个内容阶段：Phase 1（字母牌教学）→ Phase 2（赠送女巫牌）→ Phase 5 退场
+    this.guidePhase = this.guidePhase === 1 ? 2 : 5;
     // 对话框直接显示的阶段，延迟 500ms 再开始打字
     this._guideTextStartTime = Date.now() + 500;
     this._guideSkipTyping = false;
