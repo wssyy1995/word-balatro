@@ -2742,8 +2742,14 @@ wx.onTouchEnd(() => {
         startGame();
       }
       if (btnKey === 'battle' && (!game || (game.round || 1) < 5)) {
-        // 双人对战未解锁（回合数 < 5）：点击不进入对战页面
+        // 双人对战未解锁（回合数 < 5）：点击不进入对战页面，在两个大按钮上方弹出提示 toast
         if (game && game.audioManager) game.audioManager.play('tap');
+        if (game) {
+          const battleRect = renderer.homepageBtnRects && renderer.homepageBtnRects.find(r => r.key === 'battle');
+          const toastH = 32 * renderer.scale;
+          const customY = battleRect ? battleRect.y - toastH - 12 * renderer.scale : undefined;
+          game.hintToast = { text: '闯关5回合后,即可解锁', expireAt: Date.now() + 2000, startTime: Date.now(), customY };
+        }
       } else if (btnKey === 'round' || btnKey === 'battle') {
         // 首次点击"开始"：仅先持久化标记（冷启动后即显示"继续"）；
         // 本次会话的显示切换推迟到翻页完成、主页移出视野后再生效，避免点击瞬间主页大按钮突变

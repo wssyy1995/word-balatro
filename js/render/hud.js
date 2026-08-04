@@ -483,7 +483,7 @@ module.exports = function extendHud(Renderer) {
       if (!game.hintToast || !game.hintToast.text) return;
       const toastH = 32 * s;
       const padding = 12 * s;
-      const iconSize = 40 * s;
+      const iconSize = 56 * s;
       const iconSpacing = 6 * s;
       ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
       const textW = ctx.measureText(game.hintToast.text).width;
@@ -555,17 +555,17 @@ module.exports = function extendHud(Renderer) {
       ctx.fill();
       ctx.restore();
 
-      // 头部 icon（与 toast 顶部齐平）
+      // 头部 icon（底部略低于 toast 顶部，悬浮在 toast 左上角）
       const iconData = this.toastIcon;
       if (iconData && iconData.loaded && iconData.img) {
-        ctx.drawImage(iconData.img, toastX - 3, toastY - 3, iconSize, iconSize);
+        ctx.drawImage(iconData.img, toastX - 4, toastY - 28, iconSize, iconSize);
       }
 
       // 深色文字
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      const textX = toastX + padding + iconSize + iconSpacing - 3 * s - 2 * s - 2 * s;
+      const textX = toastX + padding + iconSize + iconSpacing - 10*s; // 文字整体左移
       const textY = toastY + toastH / 2;
       const dailyMatch = game.hintToast.text.match(/今日新词「(.+?)」收集成功！\((\d+)个待收集\)/);
       if (dailyMatch) {

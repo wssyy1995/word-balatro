@@ -1115,7 +1115,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 **主按钮**
 - **开始闯关 / 继续**：点击后从主页翻页过渡到单人玩法（`state = 'playing'`）。首次进入游戏前大按钮显示「开始闯关」；玩家首次点击进入后通过 `storage.saveRoundEntered()` 记录 `_roundEntered`（存储键 `word_balatro_round_entered`），此后大按钮永久显示「继续」（云图 `homepageRoundContinue`）。
-- **双人对战**：点击后同样翻页过渡，并后台预加载对战云图片，随后进入匹配弹窗。**解锁条件**：当前回合数 ≥ 5 才开放；未解锁时按钮显示锁定图 `homepageBattleLocked`（云存储 `bg_icon/homepage_battle_locked.png`），点击不进入对战页面。
+- **双人对战**：点击后同样翻页过渡，并后台预加载对战云图片，随后进入匹配弹窗。**解锁条件**：当前回合数 ≥ 5 才开放；未解锁时按钮显示锁定图 `homepageBattleLocked`（云存储 `bg_icon/homepage_battle_locked.png`），点击不进入对战页面，在两个大按钮上方 12*s 处弹出 toast「闯关5回合后,即可解锁」（复用通用 hintToast 样式，`customY` 按 battle 按钮实际位置计算）。
 
 **小按钮**
 - **设置**：在当前页面弹出设置弹窗。
