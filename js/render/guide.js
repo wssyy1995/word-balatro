@@ -2,6 +2,34 @@ const { Easing } = require('../animation');
 
 module.exports = function extendGuide(Renderer) {
 
+    // 女巫图片两侧的紫/金五角星装饰（移植自游戏结束弹窗小女巫装饰，跟随女巫移动/漂浮）
+    Renderer.prototype._drawWitchSideStars = function(ctx, imgX, imgY, imgW, imgH, s) {
+      const drawStar = (cx, cy, outerR, innerR, color) => {
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        for (let i = 0; i < 10; i++) {
+          const r = i % 2 === 0 ? outerR : innerR;
+          const angle = (i * Math.PI / 5) - Math.PI / 2;
+          ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        }
+        ctx.closePath();
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = 1.8 * s;
+        ctx.strokeStyle = color;
+        ctx.stroke();
+        ctx.fill();
+        ctx.restore();
+      };
+      // 右边三颗
+      drawStar(imgX + imgW + 8 * s,  imgY + imgH * 0.60, 5.5 * s, 2.75 * s, '#6b5b95'); // 紫色大星
+      drawStar(imgX + imgW + 20 * s, imgY + imgH * 0.73, 4 * s, 2 * s, '#c4a35a');      // 金色中星
+      drawStar(imgX + imgW + 2 * s,  imgY + imgH * 0.83, 2.5 * s, 1.25 * s, '#c4a35a'); // 金色小星
+      // 左边两颗
+      drawStar(imgX - 8 * s, imgY + imgH * 0.54, 4 * s, 2 * s, '#6b5b95');              // 紫色
+      drawStar(imgX - 2 * s, imgY + imgH * 0.68, 3 * s, 1.5 * s, '#c4a35a');            // 金色
+    };
+
     // 绘制引导对话框左上角名字标签
     Renderer.prototype._drawGuideNameTag = function(ctx, dialogDrawX, dialogDrawY, s) {
       const tagH = 36 * s;
@@ -285,6 +313,11 @@ module.exports = function extendGuide(Renderer) {
 
       // 小女巫名字标签（左上角）
       this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
+
+      // 女巫图片两侧的紫/金五角星装饰（跟随女巫移动/漂浮，绘制在对话框背景之后避免被遮挡）
+      if (imgData && imgData.loaded && imgData.img) {
+        this._drawWitchSideStars(ctx, imgX, imgY, imgW, imgH, s);
+      }
   
       // === 3. 逐字显示的文字 ===
       ctx.save();
@@ -658,6 +691,11 @@ module.exports = function extendGuide(Renderer) {
 
       // 小女巫名字标签（左上角）
       this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
+
+      // 女巫图片两侧的紫/金五角星装饰（跟随女巫移动/漂浮，绘制在对话框背景之后避免被遮挡）
+      if (imgData && imgData.loaded && imgData.img) {
+        this._drawWitchSideStars(ctx, imgX, imgY, imgW, imgH, s);
+      }
   
       // 逐字显示文字
       ctx.save();
@@ -970,6 +1008,11 @@ module.exports = function extendGuide(Renderer) {
 
       // 小女巫名字标签（左上角）
       this._drawGuideNameTag(ctx, dialogDrawX, dialogDrawY, s);
+
+      // 女巫图片两侧的紫/金五角星装饰（跟随女巫移动/漂浮，绘制在对话框背景之后避免被遮挡）
+      if (imgData && imgData.loaded && imgData.img) {
+        this._drawWitchSideStars(ctx, imgX, imgY, imgW, imgH, s);
+      }
   
       // 逐字显示文字（支持 [xxx] 高亮：加粗 + 深紫色）
       ctx.save();
