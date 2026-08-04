@@ -723,7 +723,7 @@ module.exports = function extendGuide(Renderer) {
       const GUIDE_TEXTS = [
         '',
         '太棒了！你通过了女巫的试炼，获得了第一张字母词牌：[A]！',
-        '[装备]字母词牌可以获得额外的能力，即使试炼失败重来，词牌也不会回收。但最多只能装备 [3] 张哦。',
+        '[装备]字母词牌可以获得额外的能力，但最多只能装备 [3] 张哦。',
         '我也给你准备了小奖励，来挑一个吧~',
       ];
   
@@ -886,17 +886,45 @@ module.exports = function extendGuide(Renderer) {
         game._guideTypingSoundPlaying = false;
       }
   
-      const dialogPadX = 20 * s;
-      const dialogTargetX = dialogPadX;
-      const imgW = 180 * s;
-      const imgH = 220 * s;
-      const imgTargetX = dialogTargetX;
-      const imgTargetY = H * 0.6 - imgH;
+      const imgW = 130 * s; // 女巫图片比原 180*s 小一些
+      const imgH = imgW * (220 / 180); // 保持引导图原始宽高比
+      const imgTargetX = 20 * s;
+      // 女巫位于图鉴图标（聚光灯高亮区域）下方
+      const iconRect = this.cardBookIconRect;
+      const iconBottom = iconRect ? (iconRect.y + iconRect.h) : H * 0.25;
+      const imgTargetY = iconBottom + 12 * s;
   
-      const dialogW = W - dialogPadX * 2;
-      const dialogH = 130 * s;
+      // 对话框与女巫齐平并排（右侧），宽度占满剩余屏幕
+      const dialogTargetX = imgTargetX + imgW + 12 * s;
+      const dialogW = W - dialogTargetX - 16 * s;
       const dialogR = 12 * s;
-      const dialogTargetY = H * 0.6;
+      const textPad = 16 * s;
+      const lineHeight = 24 * s;
+      const textMaxW = dialogW - textPad * 2;
+  
+      // 预先测量文案行数（基于纯字符，不含 [] 高亮标记），动态确定对话框高度（预留倒三角按钮空间）
+      ctx.save();
+      ctx.font = `${Math.floor(17 * s)}px sans-serif`;
+      let lineCount = 1;
+      let measureX = 0;
+      for (let i = 0; i < pureChars.length; i++) {
+        const cw = ctx.measureText(pureChars[i]).width;
+        if (measureX + cw > textMaxW && measureX > 0) {
+          lineCount++;
+          measureX = cw;
+        } else {
+          measureX += cw;
+        }
+      }
+      ctx.restore();
+      const dialogH = Math.max(96 * s, lineCount * lineHeight + textPad * 2 + 24 * s);
+  
+      // 对话框垂直方向与女巫居中（齐平），且底部不超出屏幕
+      let dialogTargetY = imgTargetY + (imgH - dialogH) / 2;
+      const dialogMaxY = H - 16 * s - dialogH;
+      if (dialogTargetY > dialogMaxY) dialogTargetY = dialogMaxY;
+      const dialogMinY = (this.safeTop || 0) + 8 * s;
+      if (dialogTargetY < dialogMinY) dialogTargetY = dialogMinY;
   
       const bobY = Math.sin(Date.now() / 400) * 6 * s; // 上下漂浮（骑扫把感，同主引导）
   
@@ -948,11 +976,8 @@ module.exports = function extendGuide(Renderer) {
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
 
-      const textPad = 20 * s;
       const textX = dialogDrawX + textPad;
       const textY = dialogDrawY + textPad + 2; // 文字下移 2px：首行下移、末行与框底间距缩小 2px（对话框高度不变）
-      const textMaxW = dialogW - textPad * 2;
-      const lineHeight = 24 * s;
       const baseFont = `${Math.floor(17 * s)}px sans-serif`;
       const boldFont = `bold ${Math.floor(17 * s)}px sans-serif`;
 
