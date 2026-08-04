@@ -16,7 +16,7 @@ module.exports = function extendGuide(Renderer) {
       ];
       const now = Date.now();
       stars.forEach((star, i) => {
-        const twinkle = Math.sin(now / 350 + i * 1.3) * 0.5 + 0.5; // 0~1，周期约 2.2s
+        const twinkle = Math.sin(now / 260 + i * 1.3) * 0.5 + 0.5; // 0~1，周期约 1.6s
         const alpha = 0.35 + twinkle * 0.65;   // 0.35 ~ 1
         const scale = 0.85 + twinkle * 0.3;    // 0.85 ~ 1.15
         const outerR = star.r * scale;

@@ -456,6 +456,8 @@ class Renderer {
     this.homepageRoundLoaded = false;
     this.homepageBattle = null;
     this.homepageBattleLoaded = false;
+    this.homepageBattleLocked = null;
+    this.homepageBattleLockedLoaded = false;
     this.homepageSetting = null;
     this.homepageSettingLoaded = false;
     this.homepageRanking = null;
@@ -1150,9 +1152,15 @@ class Renderer {
     const roundBtnImg = useRoundContinue ? this.homepageRoundContinue : this.homepageRound;
     const roundBtnLoaded = useRoundContinue ? this.homepageRoundContinueLoaded : this.homepageRoundLoaded;
 
+    // 双人对战解锁判断：回合数 >= 5 解锁，否则替换为锁定图（锁定图未加载时兜底正常图，点击拦截在输入层处理）
+    const battleLocked = !game || (game.round || 1) < 5;
+    const useBattleLockedImg = battleLocked && this.homepageBattleLocked && this.homepageBattleLockedLoaded;
+    const battleBtnImg = useBattleLockedImg ? this.homepageBattleLocked : this.homepageBattle;
+    const battleBtnLoaded = useBattleLockedImg ? this.homepageBattleLockedLoaded : this.homepageBattleLoaded;
+
     const bigBtnInfos = [
       { img: roundBtnImg, loaded: roundBtnLoaded, key: 'round', delay: 150 },
-      { img: this.homepageBattle, loaded: this.homepageBattleLoaded, key: 'battle', delay: 150 },
+      { img: battleBtnImg, loaded: battleBtnLoaded, key: 'battle', delay: 150 },
     ].map(({ img, loaded, key, delay }) => {
       let drawW = bigBtnMaxW;
       let drawH = bigBtnMaxH;

@@ -2741,7 +2741,10 @@ wx.onTouchEnd(() => {
       if (!game) {
         startGame();
       }
-      if (btnKey === 'round' || btnKey === 'battle') {
+      if (btnKey === 'battle' && (!game || (game.round || 1) < 5)) {
+        // 双人对战未解锁（回合数 < 5）：点击不进入对战页面
+        if (game && game.audioManager) game.audioManager.play('tap');
+      } else if (btnKey === 'round' || btnKey === 'battle') {
         // 首次点击"开始"：仅先持久化标记（冷启动后即显示"继续"）；
         // 本次会话的显示切换推迟到翻页完成、主页移出视野后再生效，避免点击瞬间主页大按钮突变
         if (btnKey === 'round' && game && !game._roundEntered && game.storageManager) {

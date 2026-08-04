@@ -131,6 +131,7 @@ class CloudStorageManager {
       'homepageRound': c('/bg_icon/hompage_round2.png'),
       'homepageRoundContinue': c('/bg_icon/hompage_round_continue.png'),
       'homepageBattle': c('/bg_icon/hompage_battle2.png'),
+      'homepageBattleLocked': c('/bg_icon/homepage_battle_locked.png'),
       'homepageSetting': c('/bg_icon/hompage_setting.png'),
       'homepageRanking': c('/bg_icon/hompage_ranking.png'),
       'homepageDaily': c('/bg_icon/hompage_daily.png'),
@@ -1536,7 +1537,7 @@ class CloudStorageManager {
     }
 
     // 主页图片从 bg_icon 云存储注入
-    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageRoundContinue', 'homepageBattle', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy'];
+    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageRoundContinue', 'homepageBattle', 'homepageBattleLocked', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy'];
     homepageNames.forEach(name => {
       const data = this.bgIconImages[name];
       if (data && data.loaded && data.img) {
