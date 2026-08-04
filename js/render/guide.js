@@ -3,31 +3,41 @@ const { Easing } = require('../animation');
 module.exports = function extendGuide(Renderer) {
 
     // 女巫图片两侧的紫/金五角星装饰（移植自游戏结束弹窗小女巫装饰，跟随女巫移动/漂浮）
+    // 闪烁呼吸动画：每颗星的透明度与缩放按正弦脉动，相位逐颗错开，呈现一闪一闪的效果
     Renderer.prototype._drawWitchSideStars = function(ctx, imgX, imgY, imgW, imgH, s) {
-      const drawStar = (cx, cy, outerR, innerR, color) => {
+      const stars = [
+        // 右边三颗
+        { x: imgX + imgW + 8 * s,  y: imgY + imgH * 0.60, r: 5.5 * s, color: '#6b5b95' }, // 紫色大星
+        { x: imgX + imgW + 20 * s, y: imgY + imgH * 0.73, r: 4 * s,   color: '#c4a35a' }, // 金色中星
+        { x: imgX + imgW + 2 * s,  y: imgY + imgH * 0.83, r: 2.5 * s, color: '#c4a35a' }, // 金色小星
+        // 左边两颗
+        { x: imgX - 8 * s, y: imgY + imgH * 0.54, r: 4 * s, color: '#6b5b95' },            // 紫色
+        { x: imgX - 2 * s, y: imgY + imgH * 0.68, r: 3 * s, color: '#c4a35a' },            // 金色
+      ];
+      const now = Date.now();
+      stars.forEach((star, i) => {
+        const twinkle = Math.sin(now / 350 + i * 1.3) * 0.5 + 0.5; // 0~1，周期约 2.2s
+        const alpha = 0.35 + twinkle * 0.65;   // 0.35 ~ 1
+        const scale = 0.85 + twinkle * 0.3;    // 0.85 ~ 1.15
+        const outerR = star.r * scale;
+        const innerR = outerR / 2; // 内外半径比与游戏结束弹窗一致（1:0.5）
         ctx.save();
-        ctx.fillStyle = color;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = star.color;
         ctx.beginPath();
-        for (let i = 0; i < 10; i++) {
-          const r = i % 2 === 0 ? outerR : innerR;
-          const angle = (i * Math.PI / 5) - Math.PI / 2;
-          ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+        for (let k = 0; k < 10; k++) {
+          const r = k % 2 === 0 ? outerR : innerR;
+          const angle = (k * Math.PI / 5) - Math.PI / 2;
+          ctx.lineTo(star.x + Math.cos(angle) * r, star.y + Math.sin(angle) * r);
         }
         ctx.closePath();
         ctx.lineJoin = 'round';
         ctx.lineWidth = 1.8 * s;
-        ctx.strokeStyle = color;
+        ctx.strokeStyle = star.color;
         ctx.stroke();
         ctx.fill();
         ctx.restore();
-      };
-      // 右边三颗
-      drawStar(imgX + imgW + 8 * s,  imgY + imgH * 0.60, 5.5 * s, 2.75 * s, '#6b5b95'); // 紫色大星
-      drawStar(imgX + imgW + 20 * s, imgY + imgH * 0.73, 4 * s, 2 * s, '#c4a35a');      // 金色中星
-      drawStar(imgX + imgW + 2 * s,  imgY + imgH * 0.83, 2.5 * s, 1.25 * s, '#c4a35a'); // 金色小星
-      // 左边两颗
-      drawStar(imgX - 8 * s, imgY + imgH * 0.54, 4 * s, 2 * s, '#6b5b95');              // 紫色
-      drawStar(imgX - 2 * s, imgY + imgH * 0.68, 3 * s, 1.5 * s, '#c4a35a');            // 金色
+      });
     };
 
     // 绘制引导对话框左上角名字标签
