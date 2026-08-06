@@ -1258,7 +1258,7 @@ class Renderer {
 
       // golden 按钮右上角红点（按钮弹出完成后显示，缩放呼吸动画）
       if (key === 'golden' && goldenUndone && goldenBtnReady) {
-        const pulse = 1 + 0.25 * Math.sin((Date.now() / 1000) * 4);
+        const pulse = 1 + 0.12 * Math.sin((Date.now() / 1000) * 4);
         const dotR = 6 * s * pulse;
         const dotX = cx + drawW / 2 - 6 * s - 2 * s;
         const dotY = smallBtnY + floatOffset - drawH / 2 + 6 * s + 2 * s;
