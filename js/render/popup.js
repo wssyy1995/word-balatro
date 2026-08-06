@@ -2046,7 +2046,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText('每日10个新词,随机添加到每回合游戏中', px + 14 * s + barPad, barY + barH / 2);
+      ctx.fillText('每日1个新词,随机添加到每回合游戏中', px + 14 * s + barPad, barY + barH / 2);
       // 右侧 switch
       const swW = 50 * s;
       const swH = 26 * s;
@@ -2295,7 +2295,7 @@ module.exports = function extendPopup(Renderer) {
       const sloganAnim = Easing.fadeIn(elapsed, 500, 250, 6 * s);
       const sloganY = py + ph - 24 * s + sloganAnim.yShift;
       const collectedCount = collected.length;
-      const isAllCollected = collectedCount >= 10 && words.length > 0;
+      const isAllCollected = words.length > 0 && collectedCount >= words.length;
       // 全部完成时:底部文案周期性小幅度上下跳跃(连续跳2次,暂停2秒)
       let sloganBounceY = 0;
       if (isAllCollected) {
@@ -2311,11 +2311,11 @@ module.exports = function extendPopup(Renderer) {
       ctx.font = `${isAllCollected ? 'bold ' : ''}${Math.floor(11 * s)}px sans-serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      let sloganText = '✦  每日10个新词,积累从现在开始!  ✦';
+      let sloganText = '✦  每日1个新词,积累从现在开始!  ✦';
       if (isAllCollected) {
         sloganText = '✦  你太棒了!今日新词学习完成,跟朋友分享下吧!  ✦';
       } else if (collectedCount >= 1) {
-        sloganText = `✦  每日10个新词,积累从现在开始!(${collectedCount}/10)   ✦`;
+        sloganText = `✦  每日1个新词,积累从现在开始!(${collectedCount}/${words.length})   ✦`;
       }
       ctx.fillStyle = isAllCollected ? '#2d7d32' : '#a09070';
       ctx.fillText(sloganText, W / 2, sloganY + sloganBounceY);
@@ -2780,8 +2780,8 @@ module.exports = function extendPopup(Renderer) {
             ctx.fill();
             ctx.restore();
 
-            // 记录点击区域
-            this.settingsSoundRect = { x: swX, y: swY, w: swW, h: swH };
+            // 记录点击区域（整行可点，与下方箭头行一致——用户习惯点按整行而非仅开关）
+            this.settingsSoundRect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
           } else if (item.type === 'arrow') {
             const rightIcon = this.settingIcons && this.settingIcons.right;
             if (rightIcon && rightIcon.loaded && rightIcon.img) {

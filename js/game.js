@@ -1378,6 +1378,24 @@ class Game {
     this._dailyWordsScrollBounceStartTime = 0;
     this._shouldToastFly = false;
 
+    // 每日金词模式
+    this.goldenWord = null;
+    this.goldenHand = null;
+    this.goldenSelected = [];
+    this._goldenDeck = null;
+    this._preGoldenSoloState = null;
+    this._goldenEntryPopup = null;
+    this._goldenEntryClosePressed = false;
+    this._goldenChecking = false;
+    this._goldenFeedback = null;
+    this._goldenInvalid = null;
+    this._goldenTilesEnterStart = null;
+    this._goldenHistoryPopup = null;
+    this._goldenResultPopup = null;
+    this._goldenSharePressed = false;
+    this._goldenHomePressed = false;
+    this._goldenHistoryPressed = false;
+
     // 求助提示弹窗
     this._tipHelpPopup = null;
     this._closingTipHelp = false;
@@ -1987,7 +2005,7 @@ class Game {
     const handSize = this.baseHandSize + (this.extraLetters || 0);
     this._maxHandSize = handSize;
 
-    // 学习模式：从10个新词中随机选1个未学习的，作为种子词传入 drawWithSafety
+    // 学习模式：从今日新词中随机选1个未学习的，作为种子词传入 drawWithSafety
     let dailyWord = null;
     if (this.settings && this.settings.dailyWordChallengeEnabled && this.dailyChallenge && this.dailyChallenge.words && this.dailyChallenge.words.length > 0) {
       const collected = this.dailyChallenge.collected || [];
@@ -3589,7 +3607,7 @@ class Game {
     const saved = this.storageManager ? this.storageManager.getDailyChallenge() : null;
     const today = new Date().toISOString().slice(0, 10);
 
-    if (saved && saved.date === today && saved.words && saved.words.length === 10) {
+    if (saved && saved.date === today && saved.words && saved.words.length === 1) {
       this.dailyChallenge = saved;
       console.log('[DailyChallenge] 恢复今日挑战:', saved.words, '已收集:', saved.collected);
     } else {
@@ -3600,7 +3618,7 @@ class Game {
 
   _loadDailyWords() {
     try {
-      wx.cloud.callFunction({
+      return wx.cloud.callFunction({
         name: 'getDailyWords',
         data: {}
       }).then(res => {
@@ -3693,12 +3711,261 @@ class Game {
     this.gold += rewardGold;
     // 用 toast 提示代替弹窗
     this.hintToast = {
-      text: '恭喜！今日10个新词全部收集完成！',
+      text: '恭喜！今日新词收集完成！',
       expireAt: Date.now() + 4000,
       startTime: Date.now(),
       starFlyAt: Date.now() + 2000
     };
     if (this.audioManager) this.audioManager.play('buy_success');
+  }
+
+  // ===== 每日金词 =====
+
+  // 金词模式统一使用北京时间日期（与云函数 getDailyWords 一致）
+  _goldenToday() {
+    return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  }
+
+  // 同步读取今日金词信息（未加载返回 null），供入口弹窗展示词长
+  getGoldenDailyWordInfo() {
+    const today = this._goldenToday();
+    const item = this.dailyChallenge && this.dailyChallenge.date === today &&
+      this.dailyChallenge.words && this.dailyChallenge.words[0];
+    if (!item) return null;
+    return {
+      word: (typeof item === 'string' ? item : item.word).toLowerCase(),
+      meaning: typeof item === 'string' ? '' : (item.meaning || ''),
+      phonetic: typeof item === 'string' ? '' : (item.phonetic || '')
+    };
+  }
+
+  // 确保今日金词已加载（未加载则请求云函数）；返回 { word, meaning, phonetic } 或 null
+  async _ensureGoldenDailyWord() {
+    const info = this.getGoldenDailyWordInfo();
+    if (info) return info;
+    try {
+      await this._loadDailyWords();
+    } catch (e) {
+      console.error('[GoldenWord] 加载今日词失败:', e);
+    }
+    return this.getGoldenDailyWordInfo();
+  }
+
+  // 进入金词模式：确保今日词已加载，恢复/初始化挑战进度并发牌
+  // 返回 true 表示可以进入（顶层据此启动翻页动画）
+  async _startGoldenWord() {
+    const today = this._goldenToday();
+
+    // 金词复用今日新词（getDailyWords 每日 1 词）
+    const info = await this._ensureGoldenDailyWord();
+    if (!info) {
+      this.hintToast = {
+        text: '今日金词加载失败，请稍后再试',
+        expireAt: Date.now() + 2500,
+        startTime: Date.now()
+      };
+      return false;
+    }
+    const { word, meaning, phonetic } = info;
+
+    const saved = this.storageManager ? this.storageManager.getGoldenWord() : null;
+
+    if (saved && saved.date === today) {
+      // 恢复今日进度（兼容旧存档：补齐位置揭示数组）
+      this.goldenWord = saved;
+      this.goldenWord.guesses = this.goldenWord.guesses || [];
+      if (!this.goldenWord.positions || this.goldenWord.positions.length !== this.goldenWord.word.length) {
+        this.goldenWord.positions = new Array(this.goldenWord.word.length).fill(this.goldenWord.won === true);
+      }
+    } else {
+      this.goldenWord = {
+        date: today, word, meaning, phonetic,
+        attemptsLeft: 10, guesses: [],
+        positions: new Array(word.length).fill(false),
+        won: false, finished: false, revealed: false, shared: false
+      };
+      if (this.storageManager) this.storageManager.saveGoldenWord(this.goldenWord);
+    }
+
+    // 重置界面状态
+    this._goldenChecking = false;
+    this._goldenFeedback = null;
+    this._goldenInvalid = null;
+    this._goldenTilesEnterStart = null;
+    this._goldenHistoryPopup = null;
+    this._goldenResultPopup = null;
+    this._goldenSharePressed = false;
+    this._goldenHomePressed = false;
+    this._goldenHistoryPressed = false;
+    this._goldenFlipAnim = null;
+    // 占位卡进入缩放动画起点
+    this._goldenTilesEnterStart = Date.now();
+
+    // 记录进入前的单人页面状态（供「闯关」入口恢复），金词手牌独立存放不污染单人手牌
+    if (this.state === 'playing' || this.state === 'settlement' || this.state === 'shop') {
+      this._preGoldenSoloState = this.state;
+    }
+
+    // 发牌作为背景（已完成时仅作展示）
+    this._goldenRedeal();
+
+    // 今日挑战已结束：直接展示结果面板，不可重复挑战
+    if (this.goldenWord.finished) {
+      this._goldenResultPopup = { startTime: Date.now(), won: this.goldenWord.won, reentry: true };
+    }
+
+    this.state = 'daily_gold';
+    return true;
+  }
+
+  // 整手重发：金词全部字母必在手牌中（复用 drawWithSafety 的 dailyWord 分支）
+  // 手牌独立于单人模式（goldenHand/goldenSelected），不污染单人存档
+  _goldenRedeal() {
+    if (!this.goldenWord) return;
+    this._goldenDeck = createDeck();
+    this.goldenHand = drawWithSafety(this._goldenDeck, 12, 1, 0, 3, 6, [], this.goldenWord.word, null);
+    this.goldenSelected = [];
+  }
+
+  getGoldenSelectedCards() {
+    return (this.goldenSelected || []).map(id => (this.goldenHand || []).find(c => c && c.id === id)).filter(Boolean);
+  }
+
+  toggleGoldenSelect(cardId) {
+    if (!this.goldenHand) return;
+    const card = this.goldenHand.find(c => c && c.id === cardId);
+    if (!card) return;
+    if (this.audioManager) this.audioManager.play('card_placement');
+    const idx = this.goldenSelected.indexOf(cardId);
+    if (idx >= 0) {
+      this.goldenSelected.splice(idx, 1);
+      card.selected = false;
+      if (this.animManager) this.animManager.cardDeselect(card);
+    } else {
+      if (this.goldenSelected.length >= this.goldenHand.length) return;
+      this.goldenSelected.push(cardId);
+      card.selected = true;
+      if (this.animManager) this.animManager.cardSelect(card);
+    }
+  }
+
+  clearGoldenSelection() {
+    if (!this.goldenHand) return;
+    this.goldenSelected.forEach(id => {
+      const card = this.goldenHand.find(c => c && c.id === id);
+      if (card) {
+        card.selected = false;
+        if (this.animManager) this.animManager.cardDeselect(card);
+      }
+    });
+    this.goldenSelected = [];
+  }
+
+  // 出牌：校验合法性 → 计算命中字母数 → 判胜负 → 重发
+  async playGoldenHand() {
+    const gw = this.goldenWord;
+    if (!gw || gw.finished) return;
+    if (this._goldenChecking) return;
+    if (this.state !== 'daily_gold') return;
+
+    const selectedCards = this.getGoldenSelectedCards();
+    if (selectedCards.length < 2) return;
+    const word = selectedCards.map(c => c.letter).join('').toLowerCase();
+
+    this._goldenChecking = true;
+    this._goldenFeedback = null;
+    this._goldenInvalid = null;
+    let valid = isValidWord(word);
+    if (!valid) {
+      try {
+        valid = await this.isValidWordOnline(word);
+      } catch (e) {
+        valid = false;
+      }
+    }
+    this._goldenChecking = false;
+    // 校验期间离开金词页则丢弃结果
+    if (this.state !== 'daily_gold') return;
+
+    if (!valid) {
+      // 非法单词：预览区上方提示，记入已猜并扣除 1 次出牌次数
+      if (this.audioManager) this.audioManager.play('card_illegal');
+      this._goldenInvalid = { word, startTime: Date.now() };
+      gw.guesses.push({ word, hits: 0, invalid: true });
+      gw.attemptsLeft--;
+      if (gw.attemptsLeft <= 0) {
+        gw.finished = true;
+        this._goldenResultPopup = { startTime: Date.now(), won: false };
+        if (this.audioManager) this.audioManager.play('fail');
+      }
+      if (this.storageManager) this.storageManager.saveGoldenWord(gw);
+      return;
+    }
+
+    if (this.audioManager) this.audioManager.play('card_valid');
+
+    // 位置命中：出牌与金词同位置字母相同即命中；命中数按本次出牌计算，
+    // 占位卡只翻「新揭示」的格子（已揭示的保持翻开）
+    const goldenChars = gw.word.split('');
+    const playChars = word.split('');
+    const newlyRevealed = [];
+    let hits = 0;
+    for (let i = 0; i < goldenChars.length; i++) {
+      if (playChars[i] === goldenChars[i]) {
+        hits++;
+        if (!gw.positions[i]) {
+          gw.positions[i] = true;
+          newlyRevealed.push(i);
+        }
+      }
+    }
+
+    gw.guesses.push({ word, hits });
+    gw.attemptsLeft--;
+    this._goldenFeedback = { word, hits, startTime: Date.now() };
+    // 新揭示位置的翻牌动画（渲染层驱动，逐格翻开）
+    if (newlyRevealed.length > 0 && word !== gw.word) {
+      this._goldenFlipAnim = { indices: newlyRevealed, startTime: Date.now() + 300, played: {} };
+    }
+
+    if (word === gw.word) {
+      // 猜中：全部位置揭示，结果弹窗等占位卡全部翻开后再弹出
+      gw.won = true;
+      gw.finished = true;
+      for (let i = 0; i < gw.positions.length; i++) gw.positions[i] = true;
+      this._goldenFlipAnim = null;
+      this._markGoldenCalendar(gw.date);
+      const now = Date.now();
+      const popupDelay = 600 + gw.word.length * 180 + 600;
+      this._goldenResultPopup = { startTime: now + popupDelay, won: true, revealStartTime: now + 600, flipIndices: newlyRevealed, flipPlayed: {} };
+      // 胜利音效移到结果弹窗弹出时播放（见 drawGoldenResultPopup）
+    } else if (gw.attemptsLeft <= 0) {
+      gw.finished = true;
+      this._goldenResultPopup = { startTime: Date.now(), won: false };
+      if (this.audioManager) this.audioManager.play('fail');
+    }
+    if (this.storageManager) this.storageManager.saveGoldenWord(gw);
+
+    if (!gw.finished) {
+      this._goldenRedeal();
+    } else {
+      this.goldenSelected = [];
+      if (this.goldenHand) this.goldenHand.forEach(c => { if (c) c.selected = false; });
+    }
+  }
+
+  // 猜中后点亮当月日历
+  _markGoldenCalendar(dateStr) {
+    if (!this.storageManager || !dateStr) return;
+    const month = dateStr.slice(0, 7);
+    const day = parseInt(dateStr.slice(8, 10), 10);
+    if (!day) return;
+    const cal = this.storageManager.getGoldenWordCalendar();
+    if (!cal[month]) cal[month] = [];
+    if (!cal[month].includes(day)) {
+      cal[month].push(day);
+      this.storageManager.saveGoldenWordCalendar(cal);
+    }
   }
 
   // 今日新词弹窗滚动物理更新（惯性滚动 + 边界回弹）

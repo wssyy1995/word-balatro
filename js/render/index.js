@@ -12,6 +12,7 @@ require('./guide')(Renderer);
 require('./cardbook')(Renderer);
 require('./debug')(Renderer);
 require('./homepage_entry')(Renderer);
+require('./golden')(Renderer);
 
 // ===== 主渲染入口 =====
 Renderer.prototype.render = function(game) {
@@ -242,6 +243,22 @@ Renderer.prototype.render = function(game) {
       this.drawHUD(game);
       this.drawPlaying(game);
       this.gameOverRenderer.draw(ctx, game, W, H, s);
+    } else if (game.state === 'daily_gold') {
+      // 每日金词模式
+      ctx.save();
+      ctx.translate(0, 10);
+      this.drawGoldenHUD(game);
+      this.drawGoldenPlaying(game);
+      this._drawToastFlyStar();
+      ctx.restore();
+
+      // 金词弹窗（独立模态，不下移）
+      if (game._goldenHistoryPopup) {
+        this.drawGoldenHistoryPopup(game);
+      }
+      if (game._goldenResultPopup) {
+        this.drawGoldenResultPopup(game);
+      }
     }
 
     // 绘制动画

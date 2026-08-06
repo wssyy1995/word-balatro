@@ -466,6 +466,8 @@ class Renderer {
     this.homepageDailyLoaded = false;
     this.homepageStudy = null;
     this.homepageStudyLoaded = false;
+    this.homepageGolden = null;
+    this.homepageGoldenLoaded = false;
     this.homepageBtnRects = [];
     this.homepageAnimStartTime = Date.now();
     this._homepageBubbleStarted = false;
@@ -1127,7 +1129,7 @@ class Renderer {
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(key.replace('homepage', ''), cx, cy);
+          ctx.fillText(key === 'golden' ? '金词' : key.replace('homepage', ''), cx, cy);
         } else {
           const drawX = cx - recordW / 2;
           const drawY = cy - recordH / 2;
@@ -1207,7 +1209,7 @@ class Renderer {
     const smallKeys = [
       { img: this.homepageSetting, loaded: this.homepageSettingLoaded, key: 'setting' },
       { img: this.homepageRanking, loaded: this.homepageRankingLoaded, key: 'ranking' },
-      { img: this.homepageDaily, loaded: this.homepageDailyLoaded, key: 'daily' },
+      { img: this.homepageGolden, loaded: this.homepageGoldenLoaded, key: 'golden' },
       { img: this.homepageStudy, loaded: this.homepageStudyLoaded, key: 'study' },
     ];
 
@@ -1229,13 +1231,15 @@ class Renderer {
     const smallTotalW = smallBtnInfos.reduce((sum, b) => sum + b.drawW, 0) + smallGap * 3;
     let smallX = (W - smallTotalW) / 2;
 
-    // daily 按钮红点：有已完成未领取的每日成就奖励时显示
-    const hasDailyUnclaimed = game && new DailyAchievements(game).hasUnclaimedReward();
-    // daily 是第 3 个小按钮（i=2），等它弹出动画结束后再显示红点
-    const dailyIndex = 2;
-    const dailyDelay = 900 + dailyIndex * 150;
-    const dailyDuration = 550;
-    const dailyBtnReady = elapsed >= entryOffset + dailyDelay + dailyDuration;
+    // golden 按钮红点：今日金词挑战未完成时显示
+    const bjToday = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const gwSave = game && game.storageManager ? game.storageManager.getGoldenWord() : null;
+    const goldenUndone = !!game && (!gwSave || gwSave.date !== bjToday || !gwSave.finished);
+    // golden 是第 3 个小按钮（i=2），等它弹出动画结束后再显示红点
+    const goldenIndex = 2;
+    const goldenDelay = 900 + goldenIndex * 150;
+    const goldenDuration = 550;
+    const goldenBtnReady = elapsed >= entryOffset + goldenDelay + goldenDuration;
 
     smallBtnInfos.forEach(({ img, loaded, key, drawW, drawH }, i) => {
       const cx = smallX + drawW / 2;
@@ -1252,11 +1256,12 @@ class Renderer {
       const floatOffset = Math.sin((Date.now() / 1000) * 1.6) * 1 * s;
       drawImgBtn(img, loaded, cx, smallBtnY + floatOffset, drawW, drawH, key, scale, showGlow, glowAlpha, true);
 
-      // daily 按钮右上角红点（按钮弹出完成后显示）
-      if (key === 'daily' && hasDailyUnclaimed && dailyBtnReady) {
-        const dotR = 6 * s;
-        const dotX = cx + drawW / 2 - dotR - 2 * s;
-        const dotY = smallBtnY + floatOffset - drawH / 2 + dotR + 2 * s;
+      // golden 按钮右上角红点（按钮弹出完成后显示，缩放呼吸动画）
+      if (key === 'golden' && goldenUndone && goldenBtnReady) {
+        const pulse = 1 + 0.25 * Math.sin((Date.now() / 1000) * 4);
+        const dotR = 6 * s * pulse;
+        const dotX = cx + drawW / 2 - 6 * s - 2 * s;
+        const dotY = smallBtnY + floatOffset - drawH / 2 + 6 * s + 2 * s;
         ctx.save();
         ctx.fillStyle = '#e74c3c';
         ctx.beginPath();

@@ -78,7 +78,8 @@ class StorageManager {
       potions: potionsSnapshot,
       crystalEffects: game.crystalEffects || [],
       shopItems: game.shopItems,
-      state: game.state === 'potion' ? (game._prePotionState || 'shop') : game.state,
+      state: game.state === 'potion' ? (game._prePotionState || 'shop')
+        : (game.state === 'daily_gold' ? (game._preGoldenSoloState || 'playing') : game.state),
       _shuffledSkills: game._shuffledSkills,
       discardsLeft: game.discardsLeft,
       handsLeft: game.handsLeft,
@@ -454,6 +455,27 @@ class StorageManager {
 
   clearDailyChallenge() {
     return this.remove('daily_challenge');
+  }
+
+  // ===== 每日金词挑战 =====
+  // 结构：{ date, word, meaning, phonetic, attemptsLeft, guesses: [{word, hits}], won, finished, revealed, shared }
+
+  getGoldenWord() {
+    return this.get('golden_word', null);
+  }
+
+  saveGoldenWord(data) {
+    return this.set('golden_word', data);
+  }
+
+  // 月度点亮日历：{ '2026-08': [5, 12, ...] }（猜中金词的日期）
+
+  getGoldenWordCalendar() {
+    return this.get('golden_word_calendar', {});
+  }
+
+  saveGoldenWordCalendar(data) {
+    return this.set('golden_word_calendar', data);
   }
 }
 

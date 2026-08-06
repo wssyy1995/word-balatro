@@ -134,8 +134,11 @@ class CloudStorageManager {
       'homepageBattleLocked': c('/bg_icon/homepage_battle_locked.png'),
       'homepageSetting': c('/bg_icon/hompage_setting.png'),
       'homepageRanking': c('/bg_icon/hompage_ranking.png'),
-      'homepageDaily': c('/bg_icon/hompage_daily.png'),
+      'homepageGooden': c('/bg_icon/hompage_gooden.png'),
       'homepageStudy': c('/bg_icon/hompage_study.png'),
+      'homepageGolden': c('/bg_icon/hompage_gooden.png'),
+      'GoldenLength':c('/bg_icon/golden_length.png'),
+      'GoldenStart':c('/bg_icon/golden_start.png'),
       'topHome': c('/bg_icon/top_home.png'),
       'global_hand_1': c('/bg_icon/global_hand_1.png'),
       'global_letter_1': c('/bg_icon/global_letter_1.png'),
@@ -1537,7 +1540,7 @@ class CloudStorageManager {
     }
 
     // 主页图片从 bg_icon 云存储注入
-    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageRoundContinue', 'homepageBattle', 'homepageBattleLocked', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy'];
+    const homepageNames = ['homepageBg', 'homepageTitle', 'homepageRound', 'homepageRoundContinue', 'homepageBattle', 'homepageBattleLocked', 'homepageSetting', 'homepageRanking', 'homepageDaily', 'homepageStudy', 'homepageGolden'];
     homepageNames.forEach(name => {
       const data = this.bgIconImages[name];
       if (data && data.loaded && data.img) {

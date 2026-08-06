@@ -5,7 +5,7 @@
  * 1. 获取当前日期（北京时间）
  * 2. 查询 daily_words 集合中 date = 今天的记录
  * 3. 若有记录，返回 words 列表（含释义、例句）
- * 4. 若无记录，自动生成 10 个随机单词并入库（兜底）
+ * 4. 若无记录，自动生成 1 个随机单词并入库（兜底）
  *
  * 调用方式（前端）：
  *   wx.cloud.callFunction({
@@ -70,7 +70,7 @@ function getBeijingDate() {
 
 function generateDailyWords() {
   const shuffled = [...FALLBACK_WORDS].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, 10);
+  return shuffled.slice(0, 1);
 }
 
 exports.main = async (event, context) => {
@@ -104,6 +104,6 @@ exports.main = async (event, context) => {
   } catch (e) {
     console.error('[GetDailyWords] 数据库操作失败:', e);
     // 失败时返回兜底词，保证前端可用
-    return { code: 0, date: today, words: FALLBACK_WORDS.slice(0, 10), fallback: true };
+    return { code: 0, date: today, words: FALLBACK_WORDS.slice(0, 1), fallback: true };
   }
 };

@@ -1021,9 +1021,9 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 ### 4.5.1 机制
 
-- **每日 10 词**：每天凌晨（北京时间）由云函数 `getDailyWords` 从数据库 `daily_words` 集合中获取当日 10 个目标单词；若无记录则自动生成兜底词库并入库
+- **每日 1 词**：每天凌晨（北京时间）由云函数 `getDailyWords` 从数据库 `daily_words` 集合中获取当日 1 个目标单词；若无记录则自动生成兜底词库并入库
 - **学习模式开关**：`settings.dailyWordChallengeEnabled`（默认关闭），首次开启时弹出「下回合起生效」提示 toast
-- **种子词替换**：开启后，`drawWithSafety()` 的第二组种子词不再随机生成，而是从当日 10 个未学习的词中随机选取一个，取其字母作为种子牌注入手牌（带 `_isDailyChallengeCard` 标记）
+- **种子词替换**：开启后，`drawWithSafety()` 的第二组种子词不再随机生成，而是从当日 1 个未学习的词中随机选取一个，取其字母作为种子牌注入手牌（带 `_isDailyChallengeCard` 标记）
 - **已学习过滤**：每回合发牌时自动排除已收集的单词，确保目标词始终为未学习状态
 - **收集判定**：玩家打出合法单词后，若该单词在当日 10 词列表中且未被收集过，则触发收集成功
 - **新词主动提示**：每回合发牌或补牌后，若当前手牌字母可直接拼出某个未收集的当日目标词，前 10 秒不显示提示；10 秒后若用户仍未点击出牌，单词预览区下方会淡入显示 `[新词提示] 中文释义`
@@ -1057,6 +1057,41 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_daily_challenge` | `{ date, words, collected, rewarded }` |
 | `word_balatro_settings.dailyWordChallengeEnabled` | 开关状态 |
 | `word_balatro_settings.dailyWordHintShown` | 首次提示是否已展示 |
+
+---
+
+## 4.6 每日金词（Golden Word）
+
+**每日金词**是每日一次的推理玩法：金词字母必然藏在每一手牌中，玩家通过多次出牌的"命中数反馈"逐步缩小范围，最终锁定答案。
+
+### 4.6.1 机制
+
+- **入口**：主页第 3 个小按钮（原「每日成就」入口位置，key `golden`，图片 `hompage_golden.png`，未加载时 canvas 兜底绘制「金词」文字按钮）；今日挑战未完成时按钮右上角显示红点。点击后先弹**入口弹窗**（`_goldenEntryPopup`，叠加在主页上）：本月点亮日历 + 今日金词词长 + [开始挑战] 按钮（今日已结束则显示 [查看结果]），点挑战按钮才翻页进入金词页
+- **金词来源**：复用云函数 `getDailyWords`（每日 1 词），与每日挑战共用当日词但进度独立
+- **状态**：`game.state = 'daily_gold'`；手牌独立存放于 `game.goldenHand` / `game.goldenSelected`（不污染单人手牌与存档）；进入前单人页面状态存 `_preGoldenSoloState`，主页「闯关/对战」入口负责恢复
+- **发牌**：初始及每次出牌后整手重发 12 张（4 列 × 3 行），`drawWithSafety(deck, 12, 1, 0, 3, 6, [], goldenWord)` 的 dailyWord 分支保证金词全部字母在手牌中，另含一个 3 字母保底词
+- **尝试次数**：每日 10 次；只要点了出牌就算一次猜测——非法单词（本地词库 + 百度 API 校验）同样记入已猜并消耗 1 次，预览区上方红色提示「『x』不是有效单词」，历史面板中标记为红色「无效」
+- **命中反馈**：按位置判定——出牌与金词同位置字母相同即揭示该位置，金词占位卡逐格翻开显示该字母（揭示跨出牌累积）；预览区上方提示「命中 N 个位置」（N 为本次新揭示数量），展示 3 秒
+- **占位卡模板**：复用对战图片 `battle_me_place`（未揭示占位）/ `battle_me_word_bg`（已揭示字母格），未加载时回退 canvas 绘制
+- **猜中**：占位卡逐格翻开（180ms 间隔 + `card_jump` 音效），点亮当月日历，当日不可重复挑战
+- **失败**：10 次用完当日失败，答案不公布，次日直接开始新挑战
+- **分享**：猜中后结果面板提供「分享战绩」（`wx.shareAppMessage` 文字分享 + 当前画面截图）
+
+### 4.6.2 页面结构（`js/render/golden.js`）
+
+- `drawGoldenEntryPopup`：主页入口弹窗（本月日历 + 今日词长 + 挑战按钮）
+- `drawGoldenHUD`：顶部栏（词长 / 剩余次数 / 已猜）
+- `drawGoldenPlaying`：词长张问号占位卡（原道具栏位置）+ 拼词预览/命中反馈 + 手牌网格 + 底部 [出牌] [历史] [清空]
+- `_drawGoldenMonthCalendar`：本月点亮日历（入口弹窗与历史面板共用）
+- `drawGoldenHistoryPopup`：「本月点亮」日历小格 + 本次挑战出牌记录（单词 · 命中数）
+- `drawGoldenResultPopup`：猜中（金词/音标/释义/分享/返回主页）或失败（明日再来提示）
+
+### 4.6.3 持久化
+
+| 键 | 内容 |
+|----|------|
+| `word_balatro_golden_word` | `{ date, word, meaning, phonetic, attemptsLeft, guesses: [{word, hits}], positions: [bool...], won, finished, revealed, shared }` |
+| `word_balatro_golden_word_calendar` | `{ '2026-08': [5, 12, ...] }` 每月猜中日期 |
 
 ---
 
@@ -1556,7 +1591,7 @@ letterUpgrades = Map {
 ```
 前端 → 云函数 baiduDict → 换取 access_token
 前端 → 直连百度接口（带 token）→ 返回翻译/词典结果
-前端 → 云函数 getDailyWords → 返回今日 10 个目标单词
+前端 → 云函数 getDailyWords → 返回今日 1 个目标单词
 前端 → 云函数 updateBestRound → 更新好友排行榜 bestround
 前端 → 云函数 syncWordBook → 同步历史打出单词到云数据库
 前端 → 云函数 updateHonorTrophy → 同步对战荣誉杯累计数到云数据库

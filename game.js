@@ -1143,7 +1143,7 @@ function getInputY(x, y) {
     (renderer && renderer.debugMenuOpen) ||
     (game._showingProfileAuthButton && !game._profileAuthCompleted)
   );
-  return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended')) ? y - 10 : y;
+  return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended' || game.state === 'daily_gold')) ? y - 10 : y;
 }
 
   // ===== 好友对战相关函数 =====
@@ -1778,7 +1778,7 @@ wx.onTouchStart((e) => {
     (Date.now() - renderer._homepageEntryAnim.startTime) < 1200; // 按钮开始弹出后允许交互
   // 对战状态下 homepage 不应拦截触摸（防止翻页/匹配弹窗后 showHomepage 残留导致全屏无响应）
   // 头像昵称授权弹窗打开时也不拦截，避免误触主页按钮
-  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup) && !(game && game._showingProfileAuthButton && !game._profileAuthCompleted)) {
+  if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup) && !(game && game._goldenEntryPopup) && !(game && game._showingProfileAuthButton && !game._profileAuthCompleted)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
@@ -1813,6 +1813,54 @@ wx.onTouchStart((e) => {
   // 预加载阶段不响应触摸
   if (!preloadComplete) return;
   if (!game) return;
+
+  // 每日金词入口弹窗（主页弹窗，用原始 y 判定）
+  if (game._goldenEntryPopup) {
+    const popup = game._goldenEntryPopup;
+    if (popup.closing) return;
+    if (renderer.goldenEntryCloseRect && renderer.hitTest(x, y, [renderer.goldenEntryCloseRect])) {
+      vibrate();
+      game._goldenEntryClosePressed = true;
+      return;
+    }
+    if (renderer.goldenEntryChallengeRect && renderer.hitTest(x, y, [renderer.goldenEntryChallengeRect])) {
+      vibrate();
+      // 今日挑战已结束（猜中/失败）：按钮变为分享，邀请好友一起竞猜神秘金词
+      const bjToday = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const gwSave = game.storageManager ? game.storageManager.getGoldenWord() : null;
+      if (gwSave && gwSave.date === bjToday && gwSave.finished) {
+        if (game.audioManager) game.audioManager.play('tap');
+        const tries = (gwSave.guesses || []).length;
+        const shareTitle = gwSave.won
+          ? `今日神秘金词我用了 ${tries} 次猜中！你能几次猜中？`
+          : '今日的神秘金词我实在猜不出来了，你试试看！';
+        try {
+          const tempFilePath = canvas.toTempFilePathSync();
+          wx.shareAppMessage({ title: shareTitle, imageUrl: tempFilePath, query: 'from=golden_word' });
+        } catch (e) {
+          wx.shareAppMessage({ title: shareTitle, query: 'from=golden_word' });
+        }
+        return;
+      }
+      if (game.audioManager) game.audioManager.play('homepage_round_tap');
+      game._goldenEntryPopup = null;
+      // 异步备好数据（今日词/挑战进度/手牌）后翻页进入金词页
+      game._startGoldenWord().then(ok => {
+        if (ok) {
+          pageFlipState = { startTime: Date.now(), duration: PAGE_FLIP_DURATION, targetState: 'daily_gold' };
+        }
+      }).catch(err => {
+        console.error('startGoldenWord error:', err);
+      });
+      return;
+    }
+    // 点击面板外关闭
+    if (renderer.goldenEntryPanelRect && !renderer.hitTest(x, y, [renderer.goldenEntryPanelRect])) {
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
+    }
+    return;
+  }
 
   const inputY = getInputY(x, y);
   touchStartPos = { x, y };
@@ -2347,7 +2395,7 @@ wx.onTouchStart((e) => {
     }
   }
 
-  handleInput(x, inputY);
+  handleInput(x, inputY, y);
 });
 
 wx.onTouchMove((e) => {
@@ -2414,6 +2462,12 @@ wx.onTouchMove((e) => {
   if (game._wordBookClosePressed && renderer.wordBookCloseRect) {
     const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.wordBookCloseRect]);
     if (!hit) game._wordBookClosePressed = false;
+  }
+
+  // 移出金词入口弹窗关闭按钮区域时取消按下状态
+  if (game._goldenEntryClosePressed && renderer.goldenEntryCloseRect) {
+    const hit = renderer.hitTest(touch.clientX, touch.clientY, [renderer.goldenEntryCloseRect]);
+    if (!hit) game._goldenEntryClosePressed = false;
   }
 
   // 移出对战 top_home 区域时取消长按
@@ -2758,6 +2812,12 @@ wx.onTouchEnd(() => {
         }
         if (game && game.audioManager) game.audioManager.play('homepage_round_tap');
         // 启动主页 → 游戏翻页过渡动画
+        // 从金词页进入闯关/对战：先恢复进入金词前的单人页面状态（金词手牌独立，单人手牌未动）
+        if (game && game.state === 'daily_gold') {
+          const preGolden = game._preGoldenSoloState;
+          game.state = (preGolden === 'shop' || preGolden === 'settlement') ? preGolden : 'playing';
+          game._preGoldenSoloState = null;
+        }
         // 闯关入口：若当前停留在可恢复的单人页面（商店/结算），"继续闯关"应回到原页面，
         // 而不是强制切到 playing（否则从商店回主页再继续会错误地回到出牌页）
         const targetState = btnKey === 'battle' ? 'battle'
@@ -2823,10 +2883,21 @@ wx.onTouchEnd(() => {
         }
       } else if (btnKey === 'ranking') {
         showRankPopup('friend');
-      } else if (btnKey === 'daily') {
-        game._dailyAchievementPopup = { startTime: Date.now() };
-        game._dailyAchievementScrollY = 0;
-        game._dailyAchievementScrollState = null;
+      } else if (btnKey === 'golden') {
+        // 每日金词：先弹入口弹窗（月度日历 + 今日词长 + 挑战按钮），挑战按钮再翻页进入
+        game._goldenEntryPopup = { startTime: Date.now() };
+        // 预加载今日词，供弹窗展示词长
+        game._ensureGoldenDailyWord().catch(err => {
+          console.error('ensureGoldenDailyWord error:', err);
+        });
+        // 预加载对战图片（金词占位卡复用 battle_me_place / battle_me_word_bg 模板）
+        if (game.cloudStorage) {
+          game.cloudStorage.preloadBattleImages().then(() => {
+            game.cloudStorage.injectBattleToRenderer(renderer);
+          }).catch(err => {
+            console.error('golden 占位卡图片预加载失败:', err);
+          });
+        }
       } else if (btnKey === 'study') {
         game._wordBookPopup = { startTime: Date.now() };
         game._wordBookScrollY = 0;
@@ -2837,6 +2908,16 @@ wx.onTouchEnd(() => {
   }
 
   if (!game) return;
+
+  // 每日金词入口弹窗关闭按钮（按下态在 touchStart 记录，此处执行关闭，与单词本一致）
+  if (game._goldenEntryClosePressed) {
+    game._goldenEntryClosePressed = false;
+    if (game._goldenEntryPopup && !game._goldenEntryPopup.closing) {
+      game._goldenEntryPopup.closing = true;
+      game._goldenEntryPopup.closeStartTime = Date.now();
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+  }
 
 
   // 辅助：药水页面返回商店，discard=true 表示槽位满时丢弃当前药水
@@ -3741,7 +3822,7 @@ function addScratchPoint(md, rect, x, y) {
   }
 }
 
-function handleInput(x, inputY) {
+function handleInput(x, inputY, rawY) {
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
   if (game._settingsPopup && !game._closingSettings) return;
 
@@ -3789,8 +3870,8 @@ function handleInput(x, inputY) {
     game.audioManager.tryStartBGM();
   }
 
-  // 新手引导阶段：优先处理引导点击，禁用其他交互（对战模式不受引导阶段限制）
-  if (game.state !== 'battle' && game.guidePhase >= 1 && game.guidePhase <= 4) {
+  // 新手引导阶段：优先处理引导点击，禁用其他交互（对战/金词模式不受引导阶段限制）
+  if (game.state !== 'battle' && game.state !== 'daily_gold' && game.guidePhase >= 1 && game.guidePhase <= 4) {
     if (renderer.guideDialogRect) {
       const btnHit = renderer.hitTest(x, inputY, [renderer.guideDialogRect]);
       if (btnHit) {
@@ -3818,7 +3899,7 @@ function handleInput(x, inputY) {
   }
 
   // 新手引导退场后的「获得女巫牌」弹窗：只响应领取按钮，屏蔽其他交互
-  if (game.state !== 'battle' && game.guidePhase === 5 && renderer.guideGiftClaimBtnRect) {
+  if (game.state !== 'battle' && game.state !== 'daily_gold' && game.guidePhase === 5 && renderer.guideGiftClaimBtnRect) {
     const claimHit = renderer.hitTest(x, inputY, [renderer.guideGiftClaimBtnRect]);
     if (claimHit) {
       vibrate();
@@ -4269,6 +4350,122 @@ function handleInput(x, inputY) {
   }
 
   if (game.state === 'battle' && !game._battleMatchAnim && handleBattleInput(game, renderer, x, inputY, vibrate)) {
+    return;
+  }
+
+  // ===== 每日金词模式输入处理 =====
+  if (game.state === 'daily_gold') {
+    const gw = game.goldenWord;
+
+    // 历史弹窗优先（弹窗不下移，用原始 y 判定）
+    if (game._goldenHistoryPopup) {
+      const popup = game._goldenHistoryPopup;
+      if (popup.closing) return;
+      if (renderer.goldenHistoryCloseRect && renderer.hitTest(x, rawY, [renderer.goldenHistoryCloseRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        return;
+      }
+      // 点击面板外关闭
+      if (renderer.goldenHistoryPanelRect && !renderer.hitTest(x, rawY, [renderer.goldenHistoryPanelRect])) {
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+      }
+      return;
+    }
+
+    // 结果弹窗（猜中可分享；失败仅返回主页）
+    if (game._goldenResultPopup) {
+      const popup = game._goldenResultPopup;
+      if (popup.closing) return;
+      // 弹窗延迟显示期间（占位卡翻开动画中）不响应任何点击
+      if (Date.now() < popup.startTime) return;
+      if (renderer.goldenShareBtnRect && renderer.hitTest(x, rawY, [renderer.goldenShareBtnRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const tries = gw ? gw.guesses.length : 0;
+        // 分享文案不揭秘金词：猜中/失败两种场景
+        const shareTitle = popup.won
+          ? `今日神秘金词我用了 ${tries} 次猜中！你能几次猜中？`
+          : '今日的神秘金词我实在猜不出来了，你试试看！';
+        try {
+          const tempFilePath = canvas.toTempFilePathSync();
+          wx.shareAppMessage({ title: shareTitle, imageUrl: tempFilePath, query: 'from=golden_word' });
+        } catch (e) {
+          wx.shareAppMessage({ title: shareTitle, query: 'from=golden_word' });
+        }
+        if (gw && !gw.shared) {
+          gw.shared = true;
+          if (game.storageManager) game.storageManager.saveGoldenWord(gw);
+        }
+        return;
+      }
+      if (renderer.goldenHomeBtnRect && renderer.hitTest(x, rawY, [renderer.goldenHomeBtnRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        game._goldenResultPopup = null;
+        showHomepage = true;
+        renderer.homepageAnimStartTime = Date.now();
+        renderer._homepageEntryAnim = null;
+        return;
+      }
+      return;
+    }
+
+    // 卡牌选择（校验中或已结束时禁用）
+    if (!game._goldenChecking && !(gw && gw.finished)) {
+      const cardHit = renderer.hitTest(x, inputY, renderer.cardRects);
+      if (cardHit) {
+        vibrate();
+        game.toggleGoldenSelect(cardHit.cardId);
+        return;
+      }
+    }
+
+    // 出牌按钮
+    if (renderer.goldenPlayBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [renderer.goldenPlayBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'golden_play';
+        if (game.animManager) game.animManager.buttonPress(renderer.goldenPlayBtnRect);
+        const selected = game.getGoldenSelectedCards();
+        if (selected.length >= 2 && !game._goldenChecking && gw && !gw.finished) {
+          game.playGoldenHand().catch(err => {
+            console.error('playGoldenHand error:', err);
+          });
+        }
+        return;
+      }
+    }
+
+    // 历史按钮
+    if (renderer.goldenHistoryBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [renderer.goldenHistoryBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'golden_history';
+        if (game.animManager) game.animManager.buttonPress(renderer.goldenHistoryBtnRect);
+        if (game.audioManager) game.audioManager.play('tap');
+        game._goldenHistoryPopup = { startTime: Date.now() };
+        return;
+      }
+    }
+
+    // 清空选择按钮
+    if (renderer.goldenResetBtnRect) {
+      const btnHit = renderer.hitTest(x, inputY, [renderer.goldenResetBtnRect]);
+      if (btnHit) {
+        vibrate();
+        renderer.pressedBtn = 'golden_reset';
+        if (game.animManager) game.animManager.buttonPress(renderer.goldenResetBtnRect);
+        if (game.audioManager) game.audioManager.play('card_placement');
+        game.clearGoldenSelection();
+        return;
+      }
+    }
     return;
   }
 
@@ -5633,7 +5830,7 @@ function gameLoop(timestamp) {
       showHomepage = false;
       // 翻页完成、主页已移出视野后再切换显示标记：下次回到主页时大按钮才显示"继续"
       // （单人闯关入口不论落在 playing/结算/商店，都算已进过闯关）
-      if (targetState !== 'battle' && game) {
+      if (targetState !== 'battle' && targetState !== 'daily_gold' && game) {
         game._roundEntered = true;
       }
       // 双人对战翻页完成后：如果已有好友对战弹窗则保留，否则弹出对战模式选择弹窗
@@ -5675,6 +5872,10 @@ function gameLoop(timestamp) {
     // 单词本弹窗在主页上叠加绘制
     if (game && game._wordBookPopup && renderer.drawWordBookPopup) {
       renderer.drawWordBookPopup(game);
+    }
+    // 每日金词入口弹窗在主页上叠加绘制
+    if (game && game._goldenEntryPopup && renderer.drawGoldenEntryPopup) {
+      renderer.drawGoldenEntryPopup(game);
     }
     // 学习模式（今日新词）弹窗在主页上叠加绘制
     if (game && game._dailyWordsPopup && renderer._drawDailyWordsPopup) {
