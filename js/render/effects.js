@@ -1079,13 +1079,13 @@ module.exports = function extendEffects(Renderer) {
         let rayGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
         let haloGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
         if (theme === 'purple') {
-          rayGrad.addColorStop(0, 'rgba(190, 120, 235, 0.14)');
-          rayGrad.addColorStop(0.4, 'rgba(165, 90, 215, 0.06)');
-          rayGrad.addColorStop(1, 'rgba(150, 60, 200, 0)');
-          haloGrad.addColorStop(0, 'rgba(215, 160, 250, 0.5)');
-          haloGrad.addColorStop(0.25, 'rgba(185, 105, 230, 0.2)');
-          haloGrad.addColorStop(0.7, 'rgba(155, 89, 182, 0.06)');
-          haloGrad.addColorStop(1, 'rgba(155, 89, 182, 0)');
+          rayGrad.addColorStop(0, 'rgba(175, 85, 235, 0.22)');
+          rayGrad.addColorStop(0.4, 'rgba(150, 50, 215, 0.1)');
+          rayGrad.addColorStop(1, 'rgba(130, 30, 190, 0)');
+          haloGrad.addColorStop(0, 'rgba(195, 115, 250, 0.65)');
+          haloGrad.addColorStop(0.25, 'rgba(165, 65, 230, 0.3)');
+          haloGrad.addColorStop(0.7, 'rgba(140, 40, 200, 0.1)');
+          haloGrad.addColorStop(1, 'rgba(140, 40, 200, 0)');
         } else {
           rayGrad.addColorStop(0, 'rgba(255, 200, 80, 0.12)');
           rayGrad.addColorStop(0.4, 'rgba(255, 170, 50, 0.05)');
