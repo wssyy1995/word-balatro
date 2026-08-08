@@ -1,6 +1,6 @@
 const { Easing } = require('../animation');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS, formatItemDesc, getChaosRange } = require('../witch_skills');
-const { SHOP_POOL, getWitchUpgradeStep, getWitchUpgradeRateStep } = require('../shop');
+const { SHOP_POOL, getWitchUpgradeStep, getWitchUpgradeRateStep, getWitchMaxLevel } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
 const { DailyAchievements } = require('../daily_achievements');
 const { GAME_VERSION, getJokerValue } = require('../game');
@@ -265,8 +265,10 @@ module.exports = function extendPopup(Renderer) {
         const btnH = 26 * s;
         const btnGap = 10 * s;
         const btnY = popupY + popupH - btnH - pad + 2 * s;
-        // 无 upgrate_value / upgrate_rate 的女巫牌不可升级：升级按钮置灰，点击弹 toast 提示
-        const canUpgrade = getWitchUpgradeStep(joker) !== undefined || getWitchUpgradeRateStep(joker) !== undefined;
+        // 无 upgrate_value / upgrate_rate 的女巫牌不可升级、达到 max_level 的不可再升：升级按钮置灰，点击弹 toast 提示
+        const maxLv = getWitchMaxLevel(joker);
+        const isMaxLevel = maxLv !== undefined && (joker.level || 1) >= maxLv;
+        const canUpgrade = (getWitchUpgradeStep(joker) !== undefined || getWitchUpgradeRateStep(joker) !== undefined) && !isMaxLevel;
         const btnCount = 2;
         // 按钮固定宽度，整体居中（不随弹窗宽度变化）
         const btnW = 84 * s;
@@ -796,17 +798,22 @@ module.exports = function extendPopup(Renderer) {
         const curVal = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
         const step = getWitchUpgradeStep(joker);
         const rateStep = getWitchUpgradeRateStep(joker);
+        // 等级上限（max_level）：已满级时预览不再增长、确认按钮置灰
+        const maxLv = getWitchMaxLevel(joker);
+        const isMaxLevel = maxLv !== undefined && curLv >= maxLv;
         // 升级预览：value 方向（默认加 real_value）或 rate 方向（概率类卡牌加 rate，如以小博大 40%→45%）
         // level 同步 +1：混沌法球的随机区间按等级计算，预览才能显示上移后的新区间
-        const nextPreview = step !== undefined
-          ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10, level: curLv + 1 }
-          : { ...joker, rate: (joker.rate || 0) + rateStep };
+        const nextPreview = isMaxLevel ? { ...joker }
+          : step !== undefined
+            ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10, level: curLv + 1 }
+            : { ...joker, rate: (joker.rate || 0) + rateStep };
         // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率，混沌法球高亮新区间 min/max
-        const nextHl = step !== undefined
-          ? (joker.trigger === 'chaos_orb'
-            ? (r => [String(r.min), String(r.max)])(getChaosRange(nextPreview))
-            : String(nextPreview.real_value))
-          : String(nextPreview.rate);
+        const nextHl = isMaxLevel ? null
+          : step !== undefined
+            ? (joker.trigger === 'chaos_orb'
+              ? (r => [String(r.min), String(r.max)])(getChaosRange(nextPreview))
+              : String(nextPreview.real_value))
+            : String(nextPreview.rate);
         const cost = (curLv + 1) * joker.cost;
 
         // ===== 等级对比预览：当前 → 下一级 =====
@@ -836,7 +843,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#8a7a5a';
         ctx.fillText(`Lv.${curLv}`, leftCX, lvLabelY);
         ctx.fillStyle = '#9b59b6';
-        ctx.fillText(`Lv.${curLv + 1}`, rightCX, lvLabelY);
+        ctx.fillText(isMaxLevel ? `Lv.${curLv}(满级)` : `Lv.${curLv + 1}`, rightCX, lvLabelY);
 
         // 效果对比框（两个框之间留间距；内容文字自动换行不超出框；升级后框内 value 加粗紫色）
         const boxW = 112 * s;
@@ -924,7 +931,7 @@ module.exports = function extendPopup(Renderer) {
         });
 
         // ===== 升级消耗 + 确认升级 =====
-        const canAfford = game.gold >= cost;
+        const canAfford = !isMaxLevel && game.gold >= cost;
         const costY = py + ph - 96 * s + 7 * s; // 整体下移 7px
 
         // 升级消耗上方分割线（弹窗宽度 90%，浅棕色）
@@ -938,25 +945,33 @@ module.exports = function extendPopup(Renderer) {
         ctx.stroke();
         ctx.restore();
 
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-        const costLabel = '升级消耗';
-        const costNum = String(cost);
-        const costLabelW = ctx.measureText(costLabel).width;
-        const costNumW = ctx.measureText(costNum).width;
-        const costCoinSize = 16 * s;
-        const costTotalW = costLabelW + 6 * s + costCoinSize + 3 * s + costNumW;
-        let costX = px + pw / 2 - costTotalW / 2;
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#8a7a5a';
-        ctx.fillText(costLabel, costX, costY);
-        costX += costLabelW + 6 * s;
-        if (this.coinIcon && this.coinIconLoaded) {
-          ctx.drawImage(this.coinIcon, costX, costY - costCoinSize / 2, costCoinSize, costCoinSize);
+        if (isMaxLevel) {
+          // 已满级：消耗行显示满级提示
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.fillStyle = '#9b59b6';
+          ctx.textAlign = 'center';
+          ctx.fillText(`已达最高等级 Lv.${maxLv}`, px + pw / 2, costY);
+        } else {
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          const costLabel = '升级消耗';
+          const costNum = String(cost);
+          const costLabelW = ctx.measureText(costLabel).width;
+          const costNumW = ctx.measureText(costNum).width;
+          const costCoinSize = 16 * s;
+          const costTotalW = costLabelW + 6 * s + costCoinSize + 3 * s + costNumW;
+          let costX = px + pw / 2 - costTotalW / 2;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#8a7a5a';
+          ctx.fillText(costLabel, costX, costY);
+          costX += costLabelW + 6 * s;
+          if (this.coinIcon && this.coinIconLoaded) {
+            ctx.drawImage(this.coinIcon, costX, costY - costCoinSize / 2, costCoinSize, costCoinSize);
+          }
+          costX += costCoinSize + 3 * s;
+          ctx.fillStyle = canAfford ? '#8b6914' : '#c0392b';
+          ctx.fillText(costNum, costX, costY);
+          ctx.textAlign = 'center';
         }
-        costX += costCoinSize + 3 * s;
-        ctx.fillStyle = canAfford ? '#8b6914' : '#c0392b';
-        ctx.fillText(costNum, costX, costY);
-        ctx.textAlign = 'center';
 
         // 确认升级按钮（金币不足置灰）：复用购买成功/结算「领取」按钮样式 + 水波纹
         const cfmW = 200 * s;
@@ -980,7 +995,7 @@ module.exports = function extendPopup(Renderer) {
         }
         this._drawScaledButton(ctx, '确认升级', cfmX, cfmY, cfmW, cfmH, s, !!popup._confirmPressed,
           { color: canAfford ? '#c4a35a' : '#b8b0a0', radius: 8 });
-        this._witchUpgradeConfirmRect = { x: cfmX, y: cfmY, w: cfmW, h: cfmH, enabled: canAfford };
+        this._witchUpgradeConfirmRect = { x: cfmX, y: cfmY, w: cfmW, h: cfmH, enabled: canAfford, reason: isMaxLevel ? 'max' : 'gold', maxLv };
       } else {
         // 无可升级女巫牌
         ctx.font = `${Math.floor(13 * s)}px sans-serif`;

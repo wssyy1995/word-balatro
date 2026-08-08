@@ -772,8 +772,8 @@ module.exports = function extendGuide(Renderer) {
       const GUIDE_TEXTS = [
         '',
         '太棒了！你通过了女巫的试炼，获得了第一张字母词牌：[A]！',
-        '[装备]字母词牌可以获得额外的能力，但最多只能装备 [3] 张哦。',
-        '我也给你准备了小奖励，来挑一个吧~',
+        '据说收集齐[26]张词牌，可以召唤神龙',
+        '另外，我也给你准备了小奖励，来挑一个吧！',
       ];
   
       const FADE_DURATION = 500;

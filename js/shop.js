@@ -39,13 +39,13 @@ const SHOP_POOL = {
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, min_level:5, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:8, min_level:10, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
     {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:12, min_level:5, desc:'每次打出非法单词，倍率累计+1'},
-    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, rate:40,upgrate_rate:5,cost:10, min_level:1, desc:'出牌<=3个字母,rate%概率倍率+value'},
+    {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, rate:40,upgrate_rate:5,max_level:5,cost:10, min_level:1, desc:'出牌<=3个字母,rate%概率倍率+value'},
     {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5,upgrate_value:0.5, cost:12, min_level:10, desc:'相邻重复字母，倍率+value'},
     {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, upgrate_value:0.5,cost:10, min_level:15, desc:'单词首尾字母相同，倍率+value'},
     {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:3, cost:8, min_level:1, desc:'每次出牌若与上一手首字母相同，倍率累计+value；中断后重置'},
     {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4,upgrate_value:0.4, cost:12, min_level:5, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+value'},
     {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3,upgrate_value:0.4, cost:14, min_level:10, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+value'},
-    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, upgrate_value:0.3,penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+value，有则-1'},
+    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, upgrate_value:0.3,penalty:-1, cost:10, min_level:1, desc:'与上一手不含相同字母时,单词倍率+value，有则-1'},
     {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, upgrate_value:50,cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +value'},
     {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', upgrate_value:0.2, min_value:0.5, max_value:1.2, value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[min~max]'},
     {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:2, upgrate_value:0.2,penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+value；若历史打出过，倍率-1'},
@@ -2731,4 +2731,12 @@ function getWitchUpgradeRateStep(joker) {
   return poolItem ? poolItem.upgrate_rate : undefined;
 }
 
-module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects, getWitchUpgradeStep, getWitchUpgradeRateStep };
+// 取女巫牌的升级上限等级（max_level）：实例上没有则回退 SHOP_POOL 按名称查找；undefined 表示无上限
+function getWitchMaxLevel(joker) {
+  if (!joker) return undefined;
+  if (joker.max_level !== undefined && joker.max_level !== null) return joker.max_level;
+  const poolItem = (SHOP_POOL.witch || []).find(w => w.name === joker.name);
+  return poolItem ? poolItem.max_level : undefined;
+}
+
+module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects, getWitchUpgradeStep, getWitchUpgradeRateStep, getWitchMaxLevel };

@@ -36,7 +36,7 @@
 const { Game, requestGlobalProfile, fetchGlobalRank, GAME_VERSION } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeLetter, refreshModule, generateShopItems, getWitchUpgradeStep, getWitchUpgradeRateStep } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems, getWitchUpgradeStep, getWitchUpgradeRateStep, getWitchMaxLevel } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
@@ -5215,7 +5215,11 @@ function handleInput(x, inputY, rawY) {
           return;
         }
         if (!renderer._witchUpgradeConfirmRect.enabled) {
-          game.hintToast = { text: '金币不足，无法升级', expireAt: Date.now() + 2000, startTime: Date.now() };
+          const r = renderer._witchUpgradeConfirmRect;
+          game.hintToast = {
+            text: r.reason === 'max' ? `该女巫牌最高等级Lv.${r.maxLv}` : '金币不足，无法升级',
+            expireAt: Date.now() + 2000, startTime: Date.now()
+          };
           return;
         }
         if (up._confirmPressed) return; // 动画进行中防重复点击
@@ -5365,11 +5369,20 @@ function handleInput(x, inputY, rawY) {
         const jokers = game.jokers || [];
         const canUp = j => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
         const sel = game._witchDetailPopup.jokerIndex;
-        if (!canUp(jokers[sel])) {
+        const selJoker = jokers[sel];
+        if (!canUp(selJoker)) {
           // toast 显示在「女巫的词牌」标题下方（标题 22px 居中于 safeTop+8s 附近）
           const s = renderer.scale || 1;
           const customY = (renderer.safeTop || 0) + 26 * s + (renderer.hasDynamicIsland ? 13 * s : 0);
           game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now(), customY };
+          return;
+        }
+        // 等级上限（max_level）：满级置灰，点击弹 toast
+        const maxLv = getWitchMaxLevel(selJoker);
+        if (maxLv !== undefined && (selJoker.level || 1) >= maxLv) {
+          const s = renderer.scale || 1;
+          const customY = (renderer.safeTop || 0) + 26 * s + (renderer.hasDynamicIsland ? 13 * s : 0);
+          game.hintToast = { text: `该女巫牌最高等级Lv.${maxLv}`, expireAt: Date.now() + 2000, startTime: Date.now(), customY };
           return;
         }
         game._witchDetailPopup = null;
