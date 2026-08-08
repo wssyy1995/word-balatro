@@ -3217,6 +3217,14 @@ module.exports = function extendPopup(Renderer) {
 
       const contentAlpha = closeAlpha;
 
+      // 版本号（设置主页/版本信息页共用）：正式版读线上真实版本号，开发版/体验版该字段为空则兜底硬编码常量
+      // 注意：必须在下方页面分发调用之前声明（ES6 转 ES5 后 let 退化为 var，后置声明会读到 undefined）
+      let versionText = GAME_VERSION;
+      try {
+        const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
+        if (onlineVersion) versionText = onlineVersion;
+      } catch (e) { /* 读取失败时使用硬编码版本 */ }
+
       // === 内层细边框(参考购买成功弹窗) ===
       ctx.save();
       ctx.globalAlpha = contentAlpha;
@@ -3360,13 +3368,6 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
     }
-
-    // 版本号（设置主页/版本信息页共用）：正式版读线上真实版本号，开发版/体验版该字段为空则兜底硬编码常量
-    let versionText = GAME_VERSION;
-    try {
-      const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
-      if (onlineVersion) versionText = onlineVersion;
-    } catch (e) { /* 读取失败时使用硬编码版本 */ }
 
     // === 内部函数:绘制设置主页 ===
     function drawMainPage(offsetX) {
