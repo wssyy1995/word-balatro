@@ -363,15 +363,12 @@ Renderer.prototype.render = function(game) {
         ctx.save();
         ctx.globalAlpha = contentAlpha;
 
-      // === Tab 切换：全部 / 已装备（绘制在 card_book 背景之下）===
+      // === Tab 切换：全部（「已装备」tab 已随装备功能一起隐藏）===
       const tabH = 24 * s;
       const allTabW = 48 * s;
-      const eqTabW = 76 * s;
-      const tabGap = 4 * s;
       const tabStartX = px + 20 * s;
       const tabY = py + 53 * s;
-      const currentTab = game._cardBookTab || 'all';
-      const equippedCount = (game.equippedWitchCards || []).length;
+      const currentTab = 'all';
 
       this.cardBookTabRects = [];
 
@@ -407,54 +404,6 @@ Renderer.prototype.render = function(game) {
       ctx.fillText('全部', allTabX + allTabW / 2, tabY + tabH / 2);
       ctx.restore();
       this.cardBookTabRects.push({ x: allTabX, y: tabY, w: allTabW, h: tabH, tab: 'all' });
-
-      // 绘制 "已装备" tab（深紫色，背景始终不透明，文案带计数小字）
-      const eqTabX = allTabX + allTabW + tabGap;
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(eqTabX + tabR, tabY);
-      ctx.lineTo(eqTabX + eqTabW - tabR, tabY);
-      ctx.quadraticCurveTo(eqTabX + eqTabW, tabY, eqTabX + eqTabW, tabY + tabR);
-      ctx.lineTo(eqTabX + eqTabW, tabY + tabH - tabR);
-      ctx.quadraticCurveTo(eqTabX + eqTabW, tabY + tabH, eqTabX + eqTabW - tabR, tabY + tabH);
-      ctx.lineTo(eqTabX + tabR, tabY + tabH);
-      ctx.quadraticCurveTo(eqTabX, tabY + tabH, eqTabX, tabY + tabH - tabR);
-      ctx.lineTo(eqTabX, tabY + tabR);
-      ctx.quadraticCurveTo(eqTabX, tabY, eqTabX + tabR, tabY);
-      ctx.closePath();
-      if (currentTab === 'equipped') {
-        ctx.fillStyle = '#5a3d7a';
-        ctx.fill();
-      } else {
-        ctx.fillStyle = '#8a7ab0';
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // 已装备 tab 文字：主文字 + 计数小字
-      ctx.save();
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      const eqMainText = '已装备';
-      const eqCountText = ` (${equippedCount}/3)`;
-      const eqMainW = ctx.measureText(eqMainText).width;
-      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
-      const eqCountW = ctx.measureText(eqCountText).width;
-      const eqTextTotalW = eqMainW + eqCountW;
-      const eqTextStartX = eqTabX + (eqTabW - eqTextTotalW) / 2;
-
-      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-      ctx.fillStyle = '#fff';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(eqMainText, eqTextStartX, tabY + tabH / 2);
-
-      ctx.font = `bold ${Math.floor(9 * s)}px sans-serif`;
-      ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(eqCountText, eqTextStartX + eqMainW, tabY + tabH / 2);
-      ctx.restore();
-      this.cardBookTabRects.push({ x: eqTabX, y: tabY, w: eqTabW, h: tabH, tab: 'equipped' });
 
       // 绘制 card_book.png 背景（顶部留出 70dp 给标题/计数器）
       let cbDrawX = px, cbDrawY = py, cbDrawW = pw, cbDrawH = ph;
@@ -577,14 +526,8 @@ Renderer.prototype.render = function(game) {
       ctx.restore();
 
       // === 图鉴内容：4 格布局 + 翻页 ===
-      let allLevels;
-      if (currentTab === 'equipped') {
-        // 已装备 tab：按 WITCH_SKILLS 顺序展示已装备的 level
-        const equippedSet = new Set(game.equippedWitchCards || []);
-        allLevels = WITCH_SKILLS.map(s => s.level).filter(l => equippedSet.has(l));
-      } else {
-        allLevels = WITCH_SKILLS.map(s => s.level);
-      }
+      // 装备功能已隐藏：始终展示全部卡牌
+      const allLevels = WITCH_SKILLS.map(s => s.level);
       const itemsPerPage = 4;
       const totalPages = Math.max(1, Math.ceil(allLevels.length / itemsPerPage));
       // 切换 tab 时如果当前页超出范围则重置
@@ -739,40 +682,6 @@ Renderer.prototype.render = function(game) {
         // 选中态闪烁小星星（复用通用方法）
         if (isPressed) {
           this._drawCardPressedStars(ctx, pos.x, pos.y, cellW, cellH, s, level * 10);
-        }
-
-        // 已装备标识（右上角小标签）
-        if (isUnlocked && game.equippedWitchCards.includes(level)) {
-          ctx.save();
-          const tagH = 18 * s;
-          const tagPad = 5 * s;
-          ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
-          const tagText = '已装备';
-          const tagTextW = ctx.measureText(tagText).width;
-          const tagW = tagTextW + tagPad * 2;
-          const tagX = pos.x + cellW - tagW - 3 * s + 4;
-          const tagY = pos.y + 3 * s;
-
-          ctx.fillStyle = 'rgba(107,76,138,0.9)';
-          ctx.beginPath();
-          const tr = 3 * s;
-          ctx.moveTo(tagX + tr, tagY);
-          ctx.lineTo(tagX + tagW - tr, tagY);
-          ctx.quadraticCurveTo(tagX + tagW, tagY, tagX + tagW, tagY + tr);
-          ctx.lineTo(tagX + tagW, tagY + tagH - tr);
-          ctx.quadraticCurveTo(tagX + tagW, tagY + tagH, tagX + tagW - tr, tagY + tagH);
-          ctx.lineTo(tagX + tr, tagY + tagH);
-          ctx.quadraticCurveTo(tagX, tagY + tagH, tagX, tagY + tagH - tr);
-          ctx.lineTo(tagX, tagY + tr);
-          ctx.quadraticCurveTo(tagX, tagY, tagX + tr, tagY);
-          ctx.closePath();
-          ctx.fill();
-
-          ctx.fillStyle = '#fff';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(tagText, tagX + tagW / 2, tagY + tagH / 2);
-          ctx.restore();
         }
       });
 
