@@ -5366,7 +5366,10 @@ function handleInput(x, inputY, rawY) {
         const canUp = j => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
         const sel = game._witchDetailPopup.jokerIndex;
         if (!canUp(jokers[sel])) {
-          game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now() };
+          // toast 显示在「女巫的词牌」标题下方（标题 22px 居中于 safeTop+8s 附近）
+          const s = renderer.scale || 1;
+          const customY = (renderer.safeTop || 0) + 26 * s + (renderer.hasDynamicIsland ? 13 * s : 0);
+          game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now(), customY };
           return;
         }
         game._witchDetailPopup = null;
