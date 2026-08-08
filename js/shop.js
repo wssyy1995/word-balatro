@@ -47,8 +47,8 @@ const SHOP_POOL = {
     {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3,upgrate_value:0.4, cost:14, min_level:10, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+value'},
     {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, upgrate_value:0.3,penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+value，有则-1'},
     {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, upgrate_value:50,cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +value'},
-    {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.2]'},
-    {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'},
+    {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', upgrate_value:0.2, min_value:0.5, max_value:1.2, value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[min~max]'},
+    {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:2, upgrate_value:0.2,penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+value；若历史打出过，倍率-1'},
     {name:'出牌小能手', type:'witch', scope:'global', trigger:'zero_hands_bonus', value:2, cost:8, min_level:3, desc:'回合结算时，若剩余出牌次数=0，则金币额外+2'}
   ],
   crystal: [

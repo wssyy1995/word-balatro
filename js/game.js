@@ -17,7 +17,7 @@ const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter, getChaosRange } = require('./witch_skills');
 const { reportEvent } = require('./report');
 const { BattleManager } = require('./battle');
 const { DailyAchievements } = require('./daily_achievements');
@@ -2700,14 +2700,17 @@ class Game {
       if (this.storageManager) this.storageManager.saveProgress();
     }
 
-    // === 混沌法球：每次出牌随机给倍率 +0.5~1.2（女巫试炼减半为 0.25~0.6）===
+    // === 混沌法球：每次出牌随机给倍率 +[min~max]（区间随等级整体上移，步进 upgrate_value；女巫试炼减半）===
     const chaosOrb = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'chaos_orb' && !j._disabled);
     if (chaosOrb) {
       // 量化到 0.1 步进：方块按 1 位小数显示，保证显示值与实际参与计分的值完全一致
+      // 注意：必须写 real_value（计分走 getJokerValue），value 仅作兼容同步
       const halfActive = this._witchCardValueHalfActive;
-      const min = halfActive ? 0.25 : 0.5;
-      const range = halfActive ? 0.35 : 0.7;
-      chaosOrb.value = Math.round((min + Math.random() * range) * 10) / 10;
+      const baseRange = getChaosRange(chaosOrb);
+      const min = halfActive ? baseRange.min / 2 : baseRange.min;
+      const max = halfActive ? baseRange.max / 2 : baseRange.max;
+      chaosOrb.real_value = Math.round((min + Math.random() * (max - min)) * 10) / 10;
+      chaosOrb.value = chaosOrb.real_value;
     }
 
     // === 温故知新：基于本地单词本判断当前单词是否首次打出 ===

@@ -309,7 +309,18 @@ function parseLetterTriggerTwiceSkill(skillName) {
   return match ? match[1].toUpperCase() : null;
 }
 
+// 混沌法球随机区间：基础 [min_value~max_value]（默认 0.5~1.2），每升 1 级整体上移 upgrate_value
+// 例：Lv1 = 0.5~1.2，Lv2 = 0.6~1.3
+function getChaosRange(item) {
+  const step = (item && item.upgrate_value !== undefined && item.upgrate_value !== null) ? item.upgrate_value : 0;
+  const boost = (((item && item.level) || 1) - 1) * step;
+  const min = Math.round((((item && item.min_value) ?? 0.5) + boost) * 10) / 10;
+  const max = Math.round((((item && item.max_value) ?? 1.2) + boost) * 10) / 10;
+  return { min, max };
+}
+
 // 渲染用描述文本：将 desc 中的 'value'/'rate' 占位符替换为实际生效值（value 取 real_value 优先，未升级时为 value）
+// 混沌法球额外支持 'min'/'max' 占位符（随机区间，随等级上移）
 // 例：{ value: 3, desc: '元音字母分×value' } → '元音字母分×3'
 function formatItemDesc(item) {
   if (!item || !item.desc) return '';
@@ -317,6 +328,10 @@ function formatItemDesc(item) {
   const v = (item.real_value !== undefined && item.real_value !== null) ? item.real_value : item.value;
   if (v !== undefined && v !== null) out = out.replace(/value/g, String(v));
   if (item.rate !== undefined && item.rate !== null) out = out.replace(/rate/g, String(item.rate));
+  if (item.trigger === 'chaos_orb' && (out.indexOf('min') >= 0 || out.indexOf('max') >= 0)) {
+    const range = getChaosRange(item);
+    out = out.replace(/min/g, String(range.min)).replace(/max/g, String(range.max));
+  }
   return out;
 }
 
@@ -333,5 +348,6 @@ module.exports = {
   shuffleSkills,
   parseLetterTriggerTwiceSkill,
   getForceContainLetter,
-  formatItemDesc
+  formatItemDesc,
+  getChaosRange
 };

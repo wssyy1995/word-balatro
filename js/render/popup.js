@@ -1,5 +1,5 @@
 const { Easing } = require('../animation');
-const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS, formatItemDesc } = require('../witch_skills');
+const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS, formatItemDesc, getChaosRange } = require('../witch_skills');
 const { SHOP_POOL, getWitchUpgradeStep, getWitchUpgradeRateStep } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
 const { DailyAchievements } = require('../daily_achievements');
@@ -763,10 +763,11 @@ module.exports = function extendPopup(Renderer) {
         ctx.textAlign = 'center';
         ctx.fillText(`Lv.${curLv}`, toCX, toCY + toH / 2 + 18 * s);
 
-        // 升级后效果（自动换行，框内居中；升级项加粗紫色——value 方向高亮数值，rate 方向高亮新概率）
+        // 升级后效果（自动换行，框内居中；升级项加粗紫色——value 方向高亮数值，rate 方向高亮新概率，混沌法球高亮区间上限）
         const desc = formatItemDesc({ ...joker, real_value: curVal });
         const isRateUpgrade = getWitchUpgradeStep(joker) === undefined && getWitchUpgradeRateStep(joker) !== undefined;
-        const successHl = isRateUpgrade ? String(joker.rate) : String(curVal);
+        const successHl = isRateUpgrade ? String(joker.rate)
+          : (joker.trigger === 'chaos_orb' ? String(getChaosRange(joker).max) : String(curVal));
         const boxW = 245 * s;
         const boxH = 88 * s;
         const boxY = toCY + toH / 2 + 36 * s;
@@ -787,11 +788,14 @@ module.exports = function extendPopup(Renderer) {
         const step = getWitchUpgradeStep(joker);
         const rateStep = getWitchUpgradeRateStep(joker);
         // 升级预览：value 方向（默认加 real_value）或 rate 方向（概率类卡牌加 rate，如以小博大 40%→45%）
+        // level 同步 +1：混沌法球的随机区间按等级计算，预览才能显示上移后的新区间
         const nextPreview = step !== undefined
-          ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10 }
+          ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10, level: curLv + 1 }
           : { ...joker, rate: (joker.rate || 0) + rateStep };
-        // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率
-        const nextHl = step !== undefined ? String(nextPreview.real_value) : String(nextPreview.rate);
+        // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率，混沌法球高亮新区间上限
+        const nextHl = step !== undefined
+          ? (joker.trigger === 'chaos_orb' ? String(getChaosRange(nextPreview).max) : String(nextPreview.real_value))
+          : String(nextPreview.rate);
         const cost = (curLv + 1) * joker.cost;
 
         // ===== 等级对比预览：当前 → 下一级 =====
