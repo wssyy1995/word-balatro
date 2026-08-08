@@ -1,7 +1,7 @@
 const { Easing } = require('../animation');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
 const { SHOP_POOL } = require('../shop');
-const { formatMeaning } = require('../game');
+const { formatMeaning, getJokerValue } = require('../game');
 
 module.exports = function extendPlaying(Renderer) {
     Renderer.prototype.drawPlaying = function(game) {
@@ -597,11 +597,12 @@ module.exports = function extendPlaying(Renderer) {
                   const triggered = pc.jokerTriggers?.[i] || [];
                   triggered.forEach(jIdx => {
                     const joker = allJokers[jIdx];
-                    if (joker && joker.value) {
+                    const jv = getJokerValue(joker);
+                    if (joker && jv) {
                       if (joker.operation === 'add') {
-                        score += joker.value;
+                        score += jv;
                       } else {
-                        score *= joker.value;
+                        score *= jv;
                       }
                     }
                   });
@@ -629,10 +630,11 @@ module.exports = function extendPlaying(Renderer) {
                 }
                 if (st.jokerIdx !== null) {
                   const jk = allJokers[st.jokerIdx];
-                  if (jk && jk.value) {
+                  const jkv = getJokerValue(jk);
+                  if (jk && jkv) {
                     const after = jk.operation === 'add'
-                      ? runningScores[ci] + jk.value
-                      : runningScores[ci] * jk.value;
+                      ? runningScores[ci] + jkv
+                      : runningScores[ci] * jkv;
                     delta += after - runningScores[ci];
                     runningScores[ci] = after;
                   }
@@ -677,8 +679,9 @@ module.exports = function extendPlaying(Renderer) {
               pc._perCardMultText = null;
               if (!isAllJumped && cardIdx >= 0 && stepInfo && stepInfo.jokerIdx !== null) {
                 const activeJoker = jokers[stepInfo.jokerIdx];
-                if (activeJoker && activeJoker.value) {
-                  const displayValue = formatLabelValue(activeJoker.value);
+                const ajv = getJokerValue(activeJoker);
+                if (activeJoker && ajv) {
+                  const displayValue = formatLabelValue(ajv);
                   if (activeJoker.operation === 'add') {
                     pc._perCardMultText = `+${displayValue}`;
                   } else {
@@ -1197,9 +1200,9 @@ module.exports = function extendPlaying(Renderer) {
           if (item.isPenalty) {
             curMult += joker.penalty;
           } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.trigger === 'chaos_orb' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-            curMult += joker.value;
+            curMult += getJokerValue(joker);
           } else {
-            curMult = Math.ceil(curMult * joker.value);
+            curMult = Math.ceil(curMult * getJokerValue(joker));
           }
         }
         displayValue = curMult;
@@ -1216,9 +1219,9 @@ module.exports = function extendPlaying(Renderer) {
             if (item.isPenalty) {
               labelText = `${formatLabelValue(joker.penalty)}`;
             } else if (joker.trigger === 'illegal_boost' || joker.trigger === 'last_chance' || joker.trigger === 'chaos_orb' || joker.operation === 'multi_adds_value' || joker.operation === 'multi_accumulation') {
-              labelText = `+${formatLabelValue(joker.value)}`;
+              labelText = `+${formatLabelValue(getJokerValue(joker))}`;
             } else {
-              labelText = `x${formatLabelValue(joker.value)}`;
+              labelText = `x${formatLabelValue(getJokerValue(joker))}`;
             }
           }
         }
