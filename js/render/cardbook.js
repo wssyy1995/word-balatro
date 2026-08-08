@@ -96,22 +96,21 @@ module.exports = function extendCardbook(Renderer) {
       const alpha = game._closingCardBookDetail ? (1 - closeProgress) : enterEase;
       if (alpha <= 0) return;
   
-      // ===== 大图模式：覆盖图鉴内容区，显示词牌大图 + 底部关闭按钮 =====
+      // ===== 大图模式：无背景，直接显示词牌大图 + 底部关闭按钮 =====
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // 覆盖区域从标题/Tab 下方开始（保留顶部标题与右上角 X 可用）
-      const coverX = panelRect.x + 6 * s;
+      // 内容区域从标题/Tab 下方开始（保留顶部标题与右上角 X 可用）
+      const coverX = panelRect.x + 12 * s;
       const coverY = panelRect.y + 48 * s;
-      const coverW = panelRect.w - 12 * s;
+      const coverW = panelRect.w - 24 * s;
       const coverH = panelRect.y + panelRect.h - 6 * s - coverY;
-      this.roundRect(coverX, coverY, coverW, coverH, 12 * s, '#faf6ee', '#c4a35a', 1.5 * s);
       this.cardBookDetailPanelRect = { x: coverX, y: coverY, w: coverW, h: coverH };
 
       // 大图（保持原图比例，高度优先；入场随 easeOutBack 上移）
       const bigBtnH = 40 * s;
-      const imgMaxH = coverH - 30 * s - bigBtnH - 20 * s;
-      const imgMaxW = coverW - 48 * s;
+      const imgMaxH = coverH - 16 * s - bigBtnH - 12 * s;
+      const imgMaxW = coverW - 8 * s;
       const cardName = `witch_card_${level}`;
       const cardData = this.witchCardImages[cardName];
       const enterShift = (1 - enterEase) * 15 * s;
@@ -124,7 +123,7 @@ module.exports = function extendCardbook(Renderer) {
           dh = dw / imgAspect;
         }
         const dx = coverX + (coverW - dw) / 2;
-        const dy = coverY + 16 * s + (imgMaxH - dh) / 2 + enterShift;
+        const dy = coverY + 6 * s + (imgMaxH - dh) / 2 + enterShift;
         ctx.save();
         const imgR = 8 * s;
         ctx.beginPath();
