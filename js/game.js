@@ -2720,12 +2720,14 @@ class Game {
 
     const result = calcWordScore(playedInOrder, this.jokers, this.pendingCheck, equippedCardSkills, this._lastPlayedLetters);
 
-    // === 以小博大（出牌<=3个字母，40%概率倍率+8） ===
+    // === 以小博大（出牌<=3个字母，rate% 概率倍率+value；数值从商店配置/升级后 real_value 读取） ===
     const lastPrayer = (this.jokers || []).find(j => j && j.type === 'witch' && j.scope === 'whole_word' && j.trigger === 'last_chance' && !j._disabled);
     let lastPrayerResult = null;
     if (lastPrayer && playedInOrder.length < 4) {
-      const success = Math.random() < 0.4;
-      const boostValue = 8;
+      // 旧存档没有 rate 字段时兜底 40
+      const rate = (lastPrayer.rate !== undefined && lastPrayer.rate !== null) ? lastPrayer.rate : 40;
+      const success = Math.random() * 100 < rate;
+      const boostValue = getJokerValue(lastPrayer);
       if (success) {
         result.mult += boostValue;
         result.score = Math.ceil(result.base * result.mult);

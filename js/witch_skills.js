@@ -309,13 +309,15 @@ function parseLetterTriggerTwiceSkill(skillName) {
   return match ? match[1].toUpperCase() : null;
 }
 
-// 渲染用描述文本：将 desc 中的 'value' 占位符替换为实际生效值（real_value 优先，未升级时为 value）
+// 渲染用描述文本：将 desc 中的 'value'/'rate' 占位符替换为实际生效值（value 取 real_value 优先，未升级时为 value）
 // 例：{ value: 3, desc: '元音字母分×value' } → '元音字母分×3'
 function formatItemDesc(item) {
   if (!item || !item.desc) return '';
+  let out = item.desc;
   const v = (item.real_value !== undefined && item.real_value !== null) ? item.real_value : item.value;
-  if (v === undefined || v === null) return item.desc;
-  return item.desc.replace(/value/g, String(v));
+  if (v !== undefined && v !== null) out = out.replace(/value/g, String(v));
+  if (item.rate !== undefined && item.rate !== null) out = out.replace(/rate/g, String(item.rate));
+  return out;
 }
 
 module.exports = {
