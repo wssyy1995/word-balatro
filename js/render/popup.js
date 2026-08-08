@@ -3197,6 +3197,7 @@ module.exports = function extendPopup(Renderer) {
       this.settingsDailyChallengeRect = null;
       this.settingsFeedbackRect = null;
       this.settingsRestartRoundRect = null;
+      this.settingsVersionRect = null;
       this.restartRoundConfirmYesRect = null;
       this.restartRoundConfirmNoRect = null;
       this.battleModeFriendRect = null;
@@ -3316,6 +3317,8 @@ module.exports = function extendPopup(Renderer) {
         drawMainPage.call(this, fromX);
       } else if (fromPage === 'feedback') {
         drawFeedbackPage.call(this, fromX);
+      } else if (fromPage === 'version') {
+        drawVersionPage.call(this, fromX);
       }
 
       if (toPage) {
@@ -3323,6 +3326,8 @@ module.exports = function extendPopup(Renderer) {
           drawMainPage.call(this, toX);
         } else if (toPage === 'feedback') {
           drawFeedbackPage.call(this, toX);
+        } else if (toPage === 'version') {
+          drawVersionPage.call(this, toX);
         }
       }
 
@@ -3356,6 +3361,13 @@ module.exports = function extendPopup(Renderer) {
       }
     }
 
+    // 版本号（设置主页/版本信息页共用）：正式版读线上真实版本号，开发版/体验版该字段为空则兜底硬编码常量
+    let versionText = GAME_VERSION;
+    try {
+      const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
+      if (onlineVersion) versionText = onlineVersion;
+    } catch (e) { /* 读取失败时使用硬编码版本 */ }
+
     // === 内部函数:绘制设置主页 ===
     function drawMainPage(offsetX) {
         ctx.save();
@@ -3382,13 +3394,6 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
 
         // === 设置项列表 ===
-        // 版本号：正式版读线上真实版本号，开发版/体验版该字段为空则兜底硬编码常量
-        let versionText = GAME_VERSION;
-        try {
-          const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
-          if (onlineVersion) versionText = onlineVersion;
-        } catch (e) { /* 读取失败时使用硬编码版本 */ }
-
         const items = [
           {
             key: 'sound',
@@ -3417,7 +3422,7 @@ module.exports = function extendPopup(Renderer) {
             iconKey: 'version',
             title: '版本信息',
             subtitle: `当前版本: ${versionText}`,
-            type: 'none'
+            type: 'arrow'
           }
         ];
 
@@ -3538,6 +3543,7 @@ module.exports = function extendPopup(Renderer) {
             const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
             if (item.key === 'feedback') this.settingsFeedbackRect = rect;
             if (item.key === 'restartRound') this.settingsRestartRoundRect = rect;
+            if (item.key === 'version') this.settingsVersionRect = rect;
           }
 
           // 分隔线(非最后一项)
@@ -3688,6 +3694,82 @@ module.exports = function extendPopup(Renderer) {
 
         // 记录提交按钮点击区域
         this.feedbackSubmitRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+        ctx.restore();
+      }
+
+      // === 内部函数:绘制版本信息页 ===
+      function drawVersionPage(offsetX) {
+        ctx.save();
+        ctx.translate(offsetX, 0);
+
+        // 返回按钮(与问题反馈页一致，复用 feedbackBackRect 输入处理)
+        const backY = py + 26 * s;
+        const backIconSize = 16 * s;
+        const backIconX = px + 14 * s;
+        const backW = backIconSize;
+        const rightIcon = this.settingIcons && this.settingIcons.right;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        if (rightIcon && rightIcon.loaded && rightIcon.img) {
+          ctx.translate(backIconX + backIconSize / 2, backY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(rightIcon.img, -backIconSize / 2, -backIconSize / 2, backIconSize, backIconSize);
+        } else {
+          ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+          ctx.fillStyle = '#8b6914';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('‹', backIconX, backY);
+        }
+        ctx.restore();
+
+        // 记录返回点击区域(加大)
+        this.feedbackBackRect = { x: px + 14 * s - 14 * s, y: backY - 18 * s, w: backW + 28 * s, h: 36 * s };
+
+        // 标题:版本信息
+        const titleY = py + 32 * s;
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('版本信息', W / 2, titleY);
+        ctx.restore();
+
+        // 当前版本号
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `bold ${Math.floor(15 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        ctx.textAlign = 'center';
+        ctx.fillText(`当前版本: ${versionText}`, W / 2, titleY + 36 * s);
+        ctx.restore();
+
+        // 版本内容（云数据库 version_info 按 game_version 查询，fetchVersionInfo 拉取）
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        const infoX = px + 24 * s;
+        const infoY = titleY + 62 * s;
+        const infoMaxW = pw - 48 * s;
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        if (game._versionInfoLoading) {
+          ctx.fillStyle = '#9a8a7a';
+          ctx.fillText('加载中…', infoX, infoY);
+        } else if (game._versionInfo) {
+          ctx.fillStyle = '#4a4a4a';
+          const lines = this._wrapText(ctx, game._versionInfo, infoMaxW, 13 * s);
+          lines.forEach((line, i) => {
+            ctx.fillText(line, infoX, infoY + i * 20 * s);
+          });
+        } else {
+          ctx.fillStyle = '#9a8a7a';
+          ctx.fillText(game._versionInfoError ? '获取失败，请稍后重试' : '暂无版本信息', infoX, infoY);
+        }
+        ctx.restore();
 
         ctx.restore();
       }

@@ -725,6 +725,30 @@ async function submitFeedback(text) {
   }
 }
 
+// 拉取当前版本的版本信息（云数据库 version_info 集合，按 game_version 查询）
+async function fetchVersionInfo() {
+  if (!game) return;
+  game._versionInfoLoading = true;
+  game._versionInfoError = null;
+  try {
+    // 与设置弹窗版本号展示口径一致：正式版优先读线上真实版本号，否则用硬编码常量
+    let versionText = GAME_VERSION;
+    try {
+      const onlineVersion = wx.getAccountInfoSync && wx.getAccountInfoSync().miniProgram.version;
+      if (onlineVersion) versionText = onlineVersion;
+    } catch (e) { /* 读取失败时使用硬编码版本 */ }
+    const db = wx.cloud.database();
+    const res = await db.collection('version_info').where({ game_version: versionText }).get();
+    game._versionInfo = (res.data && res.data.length > 0 && res.data[0].info) ? res.data[0].info : null;
+  } catch (e) {
+    console.error('版本信息获取失败:', e);
+    game._versionInfo = null;
+    game._versionInfoError = 'fail';
+  } finally {
+    game._versionInfoLoading = false;
+  }
+}
+
 // 设置画布尺寸（适配 Retina 高分屏）
 const WIDTH = info.windowWidth;
 const HEIGHT = info.windowHeight;
@@ -2285,6 +2309,7 @@ wx.onTouchStart((e) => {
     const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
     const restartRoundHit = renderer.settingsRestartRoundRect && renderer.hitTest(x, y, [renderer.settingsRestartRoundRect]);
     const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
+    const versionHit = renderer.settingsVersionRect && renderer.hitTest(x, y, [renderer.settingsVersionRect]);
 
     // 反馈页按钮
     const feedbackBackHit = renderer.feedbackBackRect && renderer.hitTest(x, y, [renderer.feedbackBackRect]);
@@ -2301,6 +2326,10 @@ wx.onTouchStart((e) => {
     }
     if (feedbackHit) {
       game._settingsFeedbackPressed = true;
+      return;
+    }
+    if (versionHit) {
+      game._settingsVersionPressed = true;
       return;
     }
     if (feedbackBackHit) {
@@ -2328,7 +2357,8 @@ wx.onTouchStart((e) => {
     const panelHit = renderer.settingsPanelRect && renderer.hitTest(x, y, [renderer.settingsPanelRect]);
     if (settingsCloseHit && !panelHit) {
       wx.hideKeyboard();
-      if (game._feedbackPage === 'feedback') {
+      if (game._feedbackPage && game._feedbackPage !== 'main') {
+        // 二级页（问题反馈/版本信息）先返回主页面
         game._feedbackPage = 'main';
         game._feedbackText = '';
       } else {
@@ -3332,6 +3362,13 @@ wx.onTouchEnd(() => {
       game._settingsFeedbackPressed = false;
       game._feedbackPage = 'feedback';
       if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    if (game._settingsVersionPressed) {
+      game._settingsVersionPressed = false;
+      game._feedbackPage = 'version';
+      if (game.audioManager) game.audioManager.play('tap');
+      fetchVersionInfo();
     }
 
     if (game._settingsRestartRoundPressed) {
