@@ -311,13 +311,13 @@ module.exports = function extendPopup(Renderer) {
           bx += btnW + btnGap;
         }
 
-        // 升级按钮（紫色，占位，功能后续开放；仅可升级的女巫牌显示）
+        // 升级按钮（金色，仅可升级的女巫牌显示）
         if (canUpgrade) {
           ctx.save();
           ctx.shadowColor = 'rgba(0,0,0,0.25)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
-          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#9b59b6');
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#c4a35a');
           ctx.restore();
           // 顶部高光条
           ctx.save();
@@ -338,13 +338,10 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 金色向上箭头（三角头 + 矩形杆）
+          // 白色向上箭头（三角头 + 矩形杆，与文字同色）
           const acx = upGroupX + arrowW / 2;
           const atop = midY - arrowH / 2;
-          const arrowGrad = ctx.createLinearGradient(0, atop, 0, atop + arrowH);
-          arrowGrad.addColorStop(0, '#ffe066');
-          arrowGrad.addColorStop(1, '#f0b90b');
-          ctx.fillStyle = arrowGrad;
+          ctx.fillStyle = '#fff';
           ctx.beginPath();
           const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
