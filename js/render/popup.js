@@ -338,11 +338,11 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 白色向上箭头（三角头 + 矩形杆，与文字同色），带上下轻微浮动
+          // 深棕色向上箭头（三角头 + 矩形杆），带上下轻微浮动
           const acx = upGroupX + arrowW / 2;
           const arrowFloatY = Math.sin(Date.now() / 280) * 1.2 * s;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = '#fff';
+          ctx.fillStyle = '#5a4a2a';
           ctx.beginPath();
           const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
