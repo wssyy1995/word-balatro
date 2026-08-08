@@ -1,7 +1,7 @@
 const { Easing } = require('../animation');
 
 module.exports = function extendEffects(Renderer) {
-    Renderer.prototype._drawPropCard = function(ctx, prop, x, y, w, h, s, showDisabled = true, showPredicted = true) {
+    Renderer.prototype._drawPropCard = function(ctx, prop, x, y, w, h, s, showDisabled = true, showPredicted = true, options = {}) {
       const iconName = prop.trigger || prop.effect;
       const iconData = this.shopCardImages[iconName];
       let offsetY = prop._jumpOffsetY || 0;
@@ -104,11 +104,12 @@ module.exports = function extendEffects(Renderer) {
       }
       ctx.restore();
   
-      // 底部蒙层 + 名字
+      // 底部蒙层 + 名字（options.maskInset 可额外收窄蒙层宽度，默认全宽）
       const maskH = Math.max(h * 0.35 - 8 * s, 0);
       const maskY = finalY + h - maskH;
       const maskR = Math.min(r, maskH / 2);
-      this.roundRect(x + 3, maskY, w - 6, maskH, maskR, 'rgba(0,0,0,0.55)');
+      const maskInset = options.maskInset || 0;
+      this.roundRect(x + 3 + maskInset, maskY, w - 6 - maskInset * 2, maskH, maskR, 'rgba(0,0,0,0.55)');
 
       // 名字（自适应字号；女巫牌升级后带 Lv.x 标识）
       const propLv = prop.type === 'witch' ? (prop.level || 1) : 1;

@@ -754,10 +754,10 @@ module.exports = function extendPopup(Renderer) {
         const leftCX = px + pw / 2 - 64 * s;
         const rightCX = px + pw / 2 + 64 * s;
         const centerY = cardY + cardH / 2;
-        this._drawPropCard(ctx, joker, leftCX - cardW / 2, cardY, cardW, cardH, s, true, false);
+        this._drawPropCard(ctx, joker, leftCX - cardW / 2, cardY, cardW, cardH, s, true, false, { maskInset: 4 * s });
         const nextCardX = rightCX - nextCardW / 2;
         const nextCardY = centerY - nextCardH / 2;
-        this._drawPropCard(ctx, joker, nextCardX, nextCardY, nextCardW, nextCardH, s, true, false);
+        this._drawPropCard(ctx, joker, nextCardX, nextCardY, nextCardW, nextCardH, s, true, false, { maskInset: 4 * s });
         // 升级后卡牌：紫色斜光扫过（参考主页大按钮）
         this._drawRectSweep(ctx, nextCardX, nextCardY, nextCardW, nextCardH, s, 'purple', 0);
         // 中间箭头
