@@ -856,7 +856,19 @@ module.exports = function extendPopup(Renderer) {
 
         // ===== 升级消耗 + 确认升级 =====
         const canAfford = game.gold >= cost;
-        const costY = py + ph - 96 * s;
+        const costY = py + ph - 96 * s + 2 * s; // 整体下移 2px
+
+        // 升级消耗上方分割线（弹窗宽度 90%，浅棕色）
+        const costLineW = pw * 0.9;
+        ctx.save();
+        ctx.strokeStyle = '#d4c9a8';
+        ctx.lineWidth = 1 * s;
+        ctx.beginPath();
+        ctx.moveTo(px + (pw - costLineW) / 2, costY - 16 * s);
+        ctx.lineTo(px + (pw + costLineW) / 2, costY - 16 * s);
+        ctx.stroke();
+        ctx.restore();
+
         ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
         const costLabel = '升级消耗';
         const costNum = String(cost);
@@ -866,14 +878,14 @@ module.exports = function extendPopup(Renderer) {
         const costTotalW = costLabelW + 6 * s + costCoinSize + 3 * s + costNumW;
         let costX = px + pw / 2 - costTotalW / 2;
         ctx.textAlign = 'left';
-        ctx.fillStyle = '#5a4a2a';
+        ctx.fillStyle = '#8a7a5a';
         ctx.fillText(costLabel, costX, costY);
         costX += costLabelW + 6 * s;
         if (this.coinIcon && this.coinIconLoaded) {
           ctx.drawImage(this.coinIcon, costX, costY - costCoinSize / 2, costCoinSize, costCoinSize);
         }
         costX += costCoinSize + 3 * s;
-        ctx.fillStyle = canAfford ? '#c9a84c' : '#c0392b';
+        ctx.fillStyle = canAfford ? '#8b6914' : '#c0392b';
         ctx.fillText(costNum, costX, costY);
         ctx.textAlign = 'center';
 
