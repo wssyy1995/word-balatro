@@ -96,61 +96,52 @@ module.exports = function extendCardbook(Renderer) {
       const alpha = game._closingCardBookDetail ? (1 - closeProgress) : enterEase;
       if (alpha <= 0) return;
   
-      // ===== 大图模式：无背景，直接显示词牌大图 + 底部关闭按钮 =====
+      // ===== 大图模式：词牌大图显示在图鉴面板下方（无背景、无关闭按钮） =====
       ctx.save();
       ctx.globalAlpha = alpha;
 
-      // 内容区域从标题/Tab 下方开始（保留顶部标题与右上角 X 可用）
-      const coverX = panelRect.x + 12 * s;
-      const coverY = panelRect.y + 48 * s;
-      const coverW = panelRect.w - 24 * s;
-      const coverH = panelRect.y + panelRect.h - 6 * s - coverY;
-      this.cardBookDetailPanelRect = { x: coverX, y: coverY, w: coverW, h: coverH };
-
-      // 大图（保持原图比例，高度优先；入场随 easeOutBack 上移）
-      const bigBtnH = 40 * s;
-      const imgMaxH = coverH - 16 * s - bigBtnH - 12 * s;
-      const imgMaxW = coverW - 8 * s;
       const cardName = `witch_card_${level}`;
       const cardData = this.witchCardImages[cardName];
+      const panelBottom = panelRect.y + panelRect.h;
       const enterShift = (1 - enterEase) * 15 * s;
+
+      const maxCardH = 200 * s;
+      const bottomMargin = 10 * s;
+      let dh = Math.min(H - panelBottom - 6 * s - bottomMargin, maxCardH);
+      let dy = panelBottom + 6 * s;
+      if (dh < 130 * s) {
+        // 下方空间不足（如 iPhone 8）：向上与面板底部轻微重叠，保证卡牌至少 130*s 高
+        dh = Math.min(130 * s, maxCardH);
+        dy = H - bottomMargin - dh;
+      }
+
       if (cardData && cardData.loaded && cardData.img) {
         const imgAspect = cardData.width / cardData.height;
-        let dw = imgMaxH * imgAspect;
-        let dh = imgMaxH;
-        if (dw > imgMaxW) {
-          dw = imgMaxW;
-          dh = dw / imgAspect;
-        }
-        const dx = coverX + (coverW - dw) / 2;
-        const dy = coverY + 6 * s + (imgMaxH - dh) / 2 + enterShift;
+        const dw = dh * imgAspect;
+        const dx = (W - dw) / 2;
+        const drawY = dy + enterShift;
         ctx.save();
         const imgR = 8 * s;
         ctx.beginPath();
-        ctx.moveTo(dx + imgR, dy);
-        ctx.lineTo(dx + dw - imgR, dy);
-        ctx.quadraticCurveTo(dx + dw, dy, dx + dw, dy + imgR);
-        ctx.lineTo(dx + dw, dy + dh - imgR);
-        ctx.quadraticCurveTo(dx + dw, dy + dh, dx + dw - imgR, dy + dh);
-        ctx.lineTo(dx + imgR, dy + dh);
-        ctx.quadraticCurveTo(dx, dy + dh, dx, dy + dh - imgR);
-        ctx.lineTo(dx, dy + imgR);
-        ctx.quadraticCurveTo(dx, dy, dx + imgR, dy);
+        ctx.moveTo(dx + imgR, drawY);
+        ctx.lineTo(dx + dw - imgR, drawY);
+        ctx.quadraticCurveTo(dx + dw, drawY, dx + dw, drawY + imgR);
+        ctx.lineTo(dx + dw, drawY + dh - imgR);
+        ctx.quadraticCurveTo(dx + dw, drawY + dh, dx + dw - imgR, drawY + dh);
+        ctx.lineTo(dx + imgR, drawY + dh);
+        ctx.quadraticCurveTo(dx, drawY + dh, dx, drawY + dh - imgR);
+        ctx.lineTo(dx, drawY + imgR);
+        ctx.quadraticCurveTo(dx, drawY, dx + imgR, drawY);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(cardData.img, dx, dy, dw, dh);
+        ctx.drawImage(cardData.img, dx, drawY, dw, dh);
         ctx.restore();
+        this.cardBookDetailPanelRect = { x: dx, y: dy, w: dw, h: dh };
+      } else {
+        this.cardBookDetailPanelRect = null;
       }
-  
-      // 底部关闭按钮（复用领取按钮金色样式），点击回到图鉴
-      const btnW = 120 * s;
-      const btnH = 40 * s;
-      const btnX = coverX + (coverW - btnW) / 2;
-      const btnY = coverY + coverH - btnH - 16 * s;
-      this._drawScaledButton(ctx, '关闭', btnX, btnY, btnW, btnH, s, false, { color: '#c4a35a', radius: 8 });
-      this.cardBookBigCloseRect = { x: btnX, y: btnY, w: btnW, h: btnH };
-      this.cardBookEquipBtnRect = null;
-  
+      this.cardBookBigCloseRect = null;
+
       ctx.restore();
     }
 

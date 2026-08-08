@@ -4221,18 +4221,6 @@ function handleInput(x, inputY, rawY) {
 
     // 2. 如果详情弹窗打开，处理详情弹窗交互
     if (game._cardBookDetailLevel && !game._closingCardBookDetail) {
-      // 大图模式：检测「关闭」按钮（装备功能已隐藏，装备按钮不再渲染）
-      if (renderer.cardBookBigCloseRect) {
-        const bigCloseHit = renderer.hitTest(x, inputY, [renderer.cardBookBigCloseRect]);
-        if (bigCloseHit) {
-          vibrate();
-          if (game.audioManager) game.audioManager.play('tap');
-          game._closingCardBookDetail = true;
-          game._closeCardBookDetailStartTime = Date.now();
-          game._cardBookCellPressed = null;
-          return;
-        }
-      }
       // 检测装备/卸下按钮
       if (renderer.cardBookEquipBtnRect) {
         const equipHit = renderer.hitTest(x, inputY, [renderer.cardBookEquipBtnRect]);
