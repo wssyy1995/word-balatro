@@ -1,4 +1,5 @@
 const { Easing } = require('../animation');
+const { formatItemDesc } = require('../witch_skills');
 
 module.exports = function extendGuide(Renderer) {
 
@@ -455,7 +456,7 @@ module.exports = function extendGuide(Renderer) {
       // 卡牌名称 + 介绍（从已发放的 jokers 中读取，背后金色半透明蒙层）
       const giftCard = (game.jokers || []).find(j => j && j.trigger === 'has_vowel');
       const cardName = giftCard && giftCard.name ? giftCard.name : '元音强化';
-      const cardDesc = giftCard && giftCard.desc ? giftCard.desc : '元音字母分×3';
+      const cardDesc = giftCard && giftCard.desc ? formatItemDesc(giftCard) : '元音字母分×3';
 
       const nameY = cardY + cardH + 25 * s;
       const descY = nameY + 24 * s;

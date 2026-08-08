@@ -30,7 +30,7 @@ const SHOP_POOL = {
   witch: [
     {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, upgrate_value:0.5,cost:8, min_level:1, desc:'元音字母分×value'},
     {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:100,upgrate_value:30, cost:6, min_level:1, desc:'单词首字母为元音时，该首字母分+value'},
-    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:30,upgrate_value:10,  cost:8, min_level:1, desc:'单词首尾字母各+30分'},
+    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:30,upgrate_value:10,  cost:8, min_level:1, desc:'单词首尾字母各+value分'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, min_level:1, desc:'单词字母>=4时，倍率×1.5'},
     {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', operation:'multi_adds_value', value:2,upgrate_value:0.3,  cost:10, min_level:5, desc:'单词字母>=5时，单词倍率+value'},
     {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', operation:'multi_adds_value', value:4,upgrate_value:0.4, cost:12, min_level:15, desc:'单词字母>=6时，单词倍率+value'},
@@ -2365,7 +2365,7 @@ class ConfirmBuyRenderer {
     ctx.fillStyle = '#555';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(item.desc, W / 2, imgBottom + 45 * s + contentYShift);
+    ctx.fillText(formatItemDesc(item), W / 2, imgBottom + 45 * s + contentYShift);
     ctx.restore();
 
     // 检查是否达到上限
