@@ -889,11 +889,26 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillText(costNum, costX, costY);
         ctx.textAlign = 'center';
 
-        // 确认升级按钮（金币不足置灰）：复用购买成功/结算「领取」按钮样式
+        // 确认升级按钮（金币不足置灰）：复用购买成功/结算「领取」按钮样式 + 水波纹
         const cfmW = 200 * s;
         const cfmH = 44 * s;
         const cfmX = px + (pw - cfmW) / 2;
         const cfmY = py + ph - cfmH - 20 * s;
+        if (canAfford) {
+          // 水波纹（参考女巫奖励/获得女巫牌「领取」按钮，金币不足置灰时不显示）
+          this._drawButtonRipple(ctx, cfmX, cfmY, cfmW, cfmH, s, {
+            stateKey: 'witch_upgrade_confirm',
+            radius: 8,
+            interval: 900,
+            duration: 1800,
+            alphaScale: 0.55,
+            lineWidthScale: 0.8,
+            fillAlpha: 0.22,
+            strokeAlpha: 0.45,
+            color: { r: 255, g: 195, b: 70 },
+            strokeColor: { r: 188, g: 140, b: 40 }
+          });
+        }
         this._drawScaledButton(ctx, '确认升级', cfmX, cfmY, cfmW, cfmH, s, !!popup._confirmPressed,
           { color: canAfford ? '#c4a35a' : '#b8b0a0', radius: 8 });
         this._witchUpgradeConfirmRect = { x: cfmX, y: cfmY, w: cfmW, h: cfmH, enabled: canAfford };
