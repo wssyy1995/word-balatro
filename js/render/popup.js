@@ -332,8 +332,8 @@ module.exports = function extendPopup(Renderer) {
           ctx.save();
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
           const upTextW = ctx.measureText('升级').width;
-          const arrowW = 12 * s;
-          const arrowH = 12 * s; // 高度减小 2px
+          const arrowW = 13 * s;
+          const arrowH = 13 * s;
           const upGap = 3 * s;
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
@@ -342,7 +342,7 @@ module.exports = function extendPopup(Renderer) {
           const acx = upGroupX + arrowW / 2;
           const arrowFloatY = Math.sin(Date.now() / 280) * 1.2 * s;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = '#b8860b';
+          ctx.fillStyle = '#9a7209';
           ctx.beginPath();
           const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
