@@ -333,14 +333,15 @@ module.exports = function extendPopup(Renderer) {
           ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
           const upTextW = ctx.measureText('升级').width;
           const arrowW = 12 * s;
-          const arrowH = 14 * s;
+          const arrowH = 12 * s; // 高度减小 2px
           const upGap = 3 * s;
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 白色向上箭头（三角头 + 矩形杆，与文字同色）
+          // 白色向上箭头（三角头 + 矩形杆，与文字同色），带上下轻微浮动
           const acx = upGroupX + arrowW / 2;
-          const atop = midY - arrowH / 2;
+          const arrowFloatY = Math.sin(Date.now() / 350) * 1.5 * s;
+          const atop = midY - arrowH / 2 + arrowFloatY;
           ctx.fillStyle = '#fff';
           ctx.beginPath();
           const headH = arrowH * 0.55;
