@@ -607,7 +607,7 @@ module.exports = function extendPopup(Renderer) {
 
       const elapsed = Date.now() - popup.startTime;
       const panel = this._drawModalPanel(ctx, W, H, s, {
-        width: 340, height: 560, elapsed,
+        width: 340, height: 550, elapsed,
         isClosing: popup.closing,
         closeStartTime: popup.closeStartTime,
         onCloseComplete: () => { game._witchUpgradePopup = null; }
