@@ -1005,7 +1005,7 @@ module.exports = function extendEffects(Renderer) {
 
     // 通用闪烁星星组（可控制数量）
     // stars: 调用方维护的状态数组，方法会在长度不符时重新生成并返回
-    Renderer.prototype._drawSparkleStars = function(ctx, cx, cy, width, height, s, elapsed, count, stars, closeAlpha = 1, scale = 1) {
+    Renderer.prototype._drawSparkleStars = function(ctx, cx, cy, width, height, s, elapsed, count, stars, closeAlpha = 1, scale = 1, theme = 'gold') {
       if (!stars || stars.length !== count) {
         stars = Array.from({ length: count }, () => ({
           x: (Math.random() * 2 - 1) * 0.9,
@@ -1016,6 +1016,19 @@ module.exports = function extendEffects(Renderer) {
           alpha: 0.3 + Math.random() * 0.7
         }));
       }
+
+      // 配色主题：金色（默认）/ 深紫
+      const themeColors = theme === 'purple' ? {
+        shadow: 'rgba(150, 60, 210, 0.55)',
+        body: [133, 60, 170],
+        ray: [216, 180, 245],
+        core: '245, 235, 255'
+      } : {
+        shadow: 'rgba(255, 190, 45, 0.55)',
+        body: [255, 204, 67],
+        ray: [255, 243, 177],
+        core: '255, 255, 240'
+      };
 
       ctx.save();
       ctx.globalCompositeOperation = 'lighter';
@@ -1030,11 +1043,11 @@ module.exports = function extendEffects(Renderer) {
         ctx.save();
         ctx.translate(sx, sy);
         // 不做旋转：四角星旋转到小角度时，小尺寸+阴影模糊下会被看成正方形
-        ctx.shadowColor = 'rgba(255, 190, 45, 0.55)';
+        ctx.shadowColor = themeColors.shadow;
         ctx.shadowBlur = r * 0.9;
 
         // 十字星主体（细腰长臂，保持星形锐利）
-        ctx.fillStyle = `rgba(255, 204, 67, ${alpha})`;
+        ctx.fillStyle = `rgba(${themeColors.body[0]}, ${themeColors.body[1]}, ${themeColors.body[2]}, ${alpha})`;
         ctx.beginPath();
         ctx.moveTo(0, -r * 2.0);
         ctx.quadraticCurveTo(r * 0.12, -r * 0.12, r * 2.0, 0);
@@ -1046,7 +1059,7 @@ module.exports = function extendEffects(Renderer) {
 
         // 十字光线（短而细，仅作点缀，避免糊成方块轮廓）
         ctx.shadowBlur = 0;
-        ctx.strokeStyle = `rgba(255, 243, 177, ${alpha * 0.55})`;
+        ctx.strokeStyle = `rgba(${themeColors.ray[0]}, ${themeColors.ray[1]}, ${themeColors.ray[2]}, ${alpha * 0.55})`;
         ctx.lineWidth = Math.max(0.6 * s, r * 0.1);
         ctx.beginPath();
         ctx.moveTo(-r * 1.5, 0);
@@ -1056,7 +1069,7 @@ module.exports = function extendEffects(Renderer) {
         ctx.stroke();
 
         // 中心亮点：小尺寸下仍能读出"星"的核心
-        ctx.fillStyle = `rgba(255, 255, 240, ${Math.min(1, alpha * 1.2)})`;
+        ctx.fillStyle = `rgba(${themeColors.core}, ${Math.min(1, alpha * 1.2)})`;
         ctx.beginPath();
         ctx.arc(0, 0, r * 0.45, 0, Math.PI * 2);
         ctx.fill();

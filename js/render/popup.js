@@ -342,7 +342,7 @@ module.exports = function extendPopup(Renderer) {
           const acx = upGroupX + arrowW / 2;
           const arrowFloatY = Math.sin(Date.now() / 280) * 1.2 * s;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = '#8b6914';
+          ctx.fillStyle = '#b8860b';
           ctx.beginPath();
           const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
@@ -737,7 +737,7 @@ module.exports = function extendPopup(Renderer) {
         // 背后紫色光芒 + 闪烁星星（参考恭喜猜中弹窗上方特效）
         this._drawLightRays(ctx, toCX, toCY, toW * 1.5, s, animElapsed, closeAlpha, 'purple');
         this._witchUpgradeStars = this._drawSparkleStars(
-          ctx, toCX, toCY, toW * 2.0, toH * 1.5, s, animElapsed, 12, this._witchUpgradeStars, closeAlpha
+          ctx, toCX, toCY, toW * 2.0, toH * 1.5, s, animElapsed, 18, this._witchUpgradeStars, closeAlpha, 1, 'purple'
         );
 
         // 移动到位后：缩放弹跳（1 → 1.15 → 1）
