@@ -856,7 +856,7 @@ module.exports = function extendPopup(Renderer) {
 
         // ===== 升级消耗 + 确认升级 =====
         const canAfford = game.gold >= cost;
-        const costY = py + ph - 96 * s + 2 * s; // 整体下移 2px
+        const costY = py + ph - 96 * s + 5 * s; // 整体下移 5px
 
         // 升级消耗上方分割线（弹窗宽度 90%，浅棕色）
         const costLineW = pw * 0.9;
