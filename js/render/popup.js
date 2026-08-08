@@ -750,7 +750,7 @@ module.exports = function extendPopup(Renderer) {
         const popH = curH * popScale;
 
         // 卡牌：移动 + 放大 + 到位弹跳，保留紫色斜光（名字蒙层收窄、字号放大 1.3 倍）
-        this._drawPropCard(ctx, joker, curCX - popW / 2, curCY - popH / 2, popW, popH, s, true, false, { maskInset: 9 * s, maskHShrink: 4 * s, nameFontScale: 1.3 });
+        this._drawPropCard(ctx, joker, curCX - popW / 2, curCY - popH / 2, popW, popH, s, true, false, { maskInset: 11 * s, maskHShrink: 6 * s, nameFontScale: 1.3 });
         this._drawRectSweep(ctx, curCX - popW / 2, curCY - popH / 2, popW, popH, s, 'purple', 0);
 
         // 卡牌就位后，Lv / 效果 / 确认按钮淡入
