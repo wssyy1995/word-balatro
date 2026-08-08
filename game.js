@@ -1151,6 +1151,35 @@ function getInputY(x, y) {
   return (!hasModal && game && (game.state === 'playing' || game.state === 'shop' || game.state === 'life_extended' || game.state === 'daily_gold')) ? y - 10 : y;
 }
 
+// 执行重新闯关：清档、新建 Game、关闭设置弹窗并回主页（由重新闯关确认弹窗触发）
+function executeRestartRound() {
+  if (!game) return;
+  if (game.storageManager) {
+    game.storageManager.clearProgress();
+  }
+  // 关闭设置弹窗
+  game._closingSettings = true;
+  game._closeSettingsStartTime = Date.now();
+  // 创建新游戏实例并切换
+  const newGame = new Game();
+  newGame.cloudStorage = cloudStorage;
+  newGame.renderer = renderer;
+  newGame.initAudio();
+  if (newGame.audioManager) {
+    newGame.audioManager.loadFromCloud(cloudStorage);
+    newGame.audioManager.tryStartBGM();
+  }
+  // 重新闯关后主页大按钮恢复为"开始闯关"
+  newGame._roundEntered = false;
+  // 重新加载每日成就（进度与领取状态保留）
+  new DailyAchievements(newGame, true);
+  wx.game = newGame;
+  game = newGame;
+  // 触发主页显示
+  game._returnToHomepage = true;
+  console.log('[RestartConfirm] 已重置闯关进度并返回主页');
+}
+
   // ===== 好友对战相关函数 =====
   function enterBattlePage() {
     const targetState = 'battle';
@@ -2137,20 +2166,36 @@ wx.onTouchStart((e) => {
     return;
   }
 
-  // 重新闯关二次确认弹窗交互（优先于设置弹窗）
+  // 重新闯关二次确认弹窗交互（优先于设置弹窗；按下即执行，不再依赖 touchEnd）
   if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
+    const popup = game._restartRoundConfirmPopup;
     const yesHit = renderer.restartRoundConfirmYesRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmYesRect]);
     const noHit = renderer.restartRoundConfirmNoRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmNoRect]);
+    console.log('[RestartConfirm] touchStart yesRect=', !!renderer.restartRoundConfirmYesRect, 'yesHit=', !!yesHit, 'noHit=', !!noHit);
     if (yesHit) {
-      game._restartRoundConfirmPopup.yesPressed = true;
+      vibrate();
+      if (game.audioManager) game.audioManager.play('tap');
+      popup.yesPressed = true;
+      // 先播按钮按下反馈，150ms 后执行重置并关闭弹窗
+      setTimeout(() => {
+        popup.yesPressed = false;
+        popup.closing = true;
+        popup.closeStartTime = Date.now();
+        executeRestartRound();
+      }, 150);
       return;
     }
     if (noHit) {
-      game._restartRoundConfirmPopup.noPressed = true;
+      vibrate();
+      if (game.audioManager) game.audioManager.play('tap');
+      popup.noPressed = true;
+      popup.closing = true;
+      popup.closeStartTime = Date.now();
       return;
     }
     // 点击弹窗外区域直接取消
-    game._restartRoundConfirmPopup.noPressed = true;
+    popup.closing = true;
+    popup.closeStartTime = Date.now();
     return;
   }
 
@@ -3332,44 +3377,10 @@ wx.onTouchEnd(() => {
     }
   }
 
-  // 重新闯关二次确认弹窗松开处理
-  if (game._restartRoundConfirmPopup && !game._restartRoundConfirmPopup.closing) {
-    const popup = game._restartRoundConfirmPopup;
-    if (popup.yesPressed) {
-      popup.yesPressed = false;
-      popup.closing = true;
-      popup.closeStartTime = Date.now();
-      // 执行重置
-      if (game.storageManager) {
-        game.storageManager.clearProgress();
-      }
-      // 关闭设置弹窗
-      game._closingSettings = true;
-      game._closeSettingsStartTime = Date.now();
-      // 创建新游戏实例并切换
-      const newGame = new Game();
-      newGame.cloudStorage = cloudStorage;
-      newGame.renderer = renderer;
-      newGame.initAudio();
-      if (newGame.audioManager) {
-        newGame.audioManager.loadFromCloud(cloudStorage);
-        newGame.audioManager.tryStartBGM();
-      }
-      // 重新闯关后主页大按钮恢复为"开始闯关"
-      newGame._roundEntered = false;
-      // 重新加载每日成就（进度与领取状态保留）
-      new DailyAchievements(newGame, true);
-      wx.game = newGame;
-      game = newGame;
-      if (game.audioManager) game.audioManager.play('tap');
-      // 触发主页显示
-      game._returnToHomepage = true;
-    } else if (popup.noPressed) {
-      popup.noPressed = false;
-      popup.closing = true;
-      popup.closeStartTime = Date.now();
-      if (game.audioManager) game.audioManager.play('tap');
-    }
+  // 重新闯关二次确认弹窗松开处理（操作已在 touchStart 直接执行，这里仅兜底清理按下态）
+  if (game && game._restartRoundConfirmPopup) {
+    game._restartRoundConfirmPopup.yesPressed = false;
+    game._restartRoundConfirmPopup.noPressed = false;
   }
 
   // 对战模式选择弹窗交互（优先）
