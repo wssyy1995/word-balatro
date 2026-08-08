@@ -340,7 +340,7 @@ module.exports = function extendPopup(Renderer) {
           const midY = btnY + btnH / 2;
           // 白色向上箭头（三角头 + 矩形杆，与文字同色），带上下轻微浮动
           const acx = upGroupX + arrowW / 2;
-          const arrowFloatY = Math.sin(Date.now() / 350) * 1.5 * s;
+          const arrowFloatY = Math.sin(Date.now() / 280) * 1.2 * s;
           const atop = midY - arrowH / 2 + arrowFloatY;
           ctx.fillStyle = '#fff';
           ctx.beginPath();
