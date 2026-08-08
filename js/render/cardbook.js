@@ -110,8 +110,8 @@ module.exports = function extendCardbook(Renderer) {
 
       if (cardData && cardData.loaded && cardData.img) {
         const imgAspect = cardData.width / cardData.height;
-        const maxCardH = H * 0.55;
-        const maxCardW = W * 0.8;
+        const maxCardH = H * 0.42;
+        const maxCardW = W * 0.68;
         let dh = maxCardH;
         let dw = dh * imgAspect;
         if (dw > maxCardW) {
@@ -137,10 +137,15 @@ module.exports = function extendCardbook(Renderer) {
         ctx.clip();
         ctx.drawImage(cardData.img, dx, dy, dw, dh);
         ctx.restore();
-        // 金色光晕 + 四角闪烁星星（与获得新词牌弹窗一致）
+
+        // 图片下方灰色小字提示
         ctx.save();
         ctx.globalAlpha = alpha;
-        this._drawCardGlow(ctx, dx, dy, dw, dh, s);
+        ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = 'rgba(200, 200, 200, 0.75)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('点击空白处返回', W / 2, dy + dh + 20 * s);
         ctx.restore();
       }
       this.cardBookDetailPanelRect = null;
