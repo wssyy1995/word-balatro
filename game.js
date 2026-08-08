@@ -5249,7 +5249,7 @@ function handleInput(x, inputY, rawY) {
                 joker.rate = (joker.rate || 0) + rateStep;
               }
               if (game.storageManager) game.storageManager.saveProgress();
-              if (game.audioManager) game.audioManager.play('buy_success');
+              if (game.audioManager) game.audioManager.play('magic_twinkle');
               // 切换到升级成功视图（卡牌移动放大动画起点）
               up.upgraded = true;
               up.upgradeAnimStart = Date.now();

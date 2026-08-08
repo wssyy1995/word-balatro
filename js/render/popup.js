@@ -758,7 +758,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.save();
         ctx.globalAlpha = closeAlpha * contentA;
 
-        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.font = `bold ${Math.floor(17 * s)}px sans-serif`;
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'center';
         ctx.fillText(`Lv.${curLv}`, toCX, toCY + toH / 2 + 18 * s);
@@ -772,7 +772,7 @@ module.exports = function extendPopup(Renderer) {
         const boxH = 88 * s;
         const boxY = toCY + toH / 2 + 36 * s;
         this.roundRect(toCX - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
-        drawStyledDesc(desc, successHl, toCX, boxY, boxH, boxW - 16 * s, 14, 17 * s);
+        drawStyledDesc(desc, successHl, toCX, boxY, boxH, boxW - 16 * s, 15, 18 * s);
 
         // 确认按钮（关闭弹窗）：复用购买成功/结算「领取」按钮样式
         const cfmW = 200 * s;
