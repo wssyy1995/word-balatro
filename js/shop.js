@@ -45,7 +45,7 @@ const SHOP_POOL = {
     {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:3, cost:8, min_level:1, desc:'每次出牌若与上一手首字母相同，倍率累计+value；中断后重置'},
     {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4,upgrate_value:0.4, cost:12, min_level:5, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+value'},
     {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3,upgrate_value:0.4, cost:14, min_level:10, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+value'},
-    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
+    {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, upgrate_value:0.3,penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+value，有则-1'},
     {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, upgrate_value:50,cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +value'},
     {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.2]'},
     {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'},
@@ -2723,4 +2723,12 @@ function getWitchUpgradeStep(joker) {
   return poolItem ? poolItem.upgrate_value : undefined;
 }
 
-module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects, getWitchUpgradeStep };
+// 取女巫牌的 rate 升级步进值（upgrate_rate）：概率类卡牌升级提升概率而非数值（如以小博大 40%→45%）
+function getWitchUpgradeRateStep(joker) {
+  if (!joker) return undefined;
+  if (joker.upgrate_rate !== undefined && joker.upgrate_rate !== null) return joker.upgrate_rate;
+  const poolItem = (SHOP_POOL.witch || []).find(w => w.name === joker.name);
+  return poolItem ? poolItem.upgrate_rate : undefined;
+}
+
+module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects, getWitchUpgradeStep, getWitchUpgradeRateStep };

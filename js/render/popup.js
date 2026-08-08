@@ -1,6 +1,6 @@
 const { Easing } = require('../animation');
 const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS, formatItemDesc } = require('../witch_skills');
-const { SHOP_POOL, getWitchUpgradeStep } = require('../shop');
+const { SHOP_POOL, getWitchUpgradeStep, getWitchUpgradeRateStep } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
 const { DailyAchievements } = require('../daily_achievements');
 const { GAME_VERSION, getJokerValue } = require('../game');
@@ -263,8 +263,8 @@ module.exports = function extendPopup(Renderer) {
         const btnH = 26 * s;
         const btnGap = 10 * s;
         const btnY = popupY + popupH - btnH - pad + 2 * s;
-        // 无 upgrate_value 的女巫牌不可升级：只显示售出按钮
-        const canUpgrade = getWitchUpgradeStep(joker) !== undefined;
+        // 无 upgrate_value / upgrate_rate 的女巫牌不可升级：只显示售出按钮
+        const canUpgrade = getWitchUpgradeStep(joker) !== undefined || getWitchUpgradeRateStep(joker) !== undefined;
         const btnCount = canUpgrade ? 2 : 1;
         // 按钮固定宽度，整体居中（不随弹窗宽度变化）
         const btnW = 84 * s;
@@ -617,8 +617,8 @@ module.exports = function extendPopup(Renderer) {
       const { px, py, pw, ph, closeAlpha } = panel;
 
       const jokers = game.jokers || [];
-      // 可升级判定：带 upgrate_value 的女巫牌（实例没有则回退 SHOP_POOL 按名称查找，兼容旧存档）
-      const upgradeable = (j) => getWitchUpgradeStep(j) !== undefined;
+      // 可升级判定：带 upgrate_value / upgrate_rate 的女巫牌（实例没有则回退 SHOP_POOL 按名称查找，兼容旧存档）
+      const upgradeable = (j) => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
       // 选中卡牌（无效时回退到第一张可升级牌）
       let selIndex = popup.jokerIndex;
       if (!upgradeable(jokers[selIndex])) {
@@ -763,13 +763,15 @@ module.exports = function extendPopup(Renderer) {
         ctx.textAlign = 'center';
         ctx.fillText(`Lv.${curLv}`, toCX, toCY + toH / 2 + 18 * s);
 
-        // 升级后效果（自动换行，框内居中；value 加粗紫色）
+        // 升级后效果（自动换行，框内居中；升级项加粗紫色——value 方向高亮数值，rate 方向高亮新概率）
         const desc = formatItemDesc({ ...joker, real_value: curVal });
+        const isRateUpgrade = getWitchUpgradeStep(joker) === undefined && getWitchUpgradeRateStep(joker) !== undefined;
+        const successHl = isRateUpgrade ? String(joker.rate) : String(curVal);
         const boxW = 245 * s;
         const boxH = 88 * s;
         const boxY = toCY + toH / 2 + 36 * s;
         this.roundRect(toCX - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
-        drawStyledDesc(desc, String(curVal), toCX, boxY, boxH, boxW - 16 * s, 14, 17 * s);
+        drawStyledDesc(desc, successHl, toCX, boxY, boxH, boxW - 16 * s, 14, 17 * s);
 
         // 确认按钮（关闭弹窗）：复用购买成功/结算「领取」按钮样式
         const cfmW = 200 * s;
@@ -782,7 +784,14 @@ module.exports = function extendPopup(Renderer) {
       } else if (joker) {
         const curLv = joker.level || 1;
         const curVal = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
-        const nextVal = Math.round((curVal + getWitchUpgradeStep(joker)) * 10) / 10;
+        const step = getWitchUpgradeStep(joker);
+        const rateStep = getWitchUpgradeRateStep(joker);
+        // 升级预览：value 方向（默认加 real_value）或 rate 方向（概率类卡牌加 rate，如以小博大 40%→45%）
+        const nextPreview = step !== undefined
+          ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10 }
+          : { ...joker, rate: (joker.rate || 0) + rateStep };
+        // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率
+        const nextHl = step !== undefined ? String(nextPreview.real_value) : String(nextPreview.rate);
         const cost = (curLv + 1) * joker.cost;
 
         // ===== 等级对比预览：当前 → 下一级 =====
@@ -819,8 +828,8 @@ module.exports = function extendPopup(Renderer) {
         const boxH = 64 * s;
         const boxY = cardY + cardH + 26 * s;
         const curDesc = formatItemDesc({ ...joker, real_value: curVal });
-        const nextDesc = formatItemDesc({ ...joker, real_value: nextVal });
-        [[leftCX, curDesc, null], [rightCX, nextDesc, String(nextVal)]].forEach(([bcx, desc, hlVal]) => {
+        const nextDesc = formatItemDesc(nextPreview);
+        [[leftCX, curDesc, null], [rightCX, nextDesc, nextHl]].forEach(([bcx, desc, hlVal]) => {
           this.roundRect(bcx - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
           if (hlVal) {
             drawStyledDesc(desc, hlVal, bcx, boxY, boxH, boxW - 14 * s, 12, 14 * s);

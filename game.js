@@ -36,7 +36,7 @@
 const { Game, requestGlobalProfile, fetchGlobalRank, GAME_VERSION } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeLetter, refreshModule, generateShopItems, getWitchUpgradeStep } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems, getWitchUpgradeStep, getWitchUpgradeRateStep } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
@@ -5212,7 +5212,8 @@ function handleInput(x, inputY, rawY) {
         if (up._confirmPressed) return; // 动画进行中防重复点击
         const joker = (game.jokers || [])[up.jokerIndex];
         const step = getWitchUpgradeStep(joker);
-        if (joker && step !== undefined) {
+        const rateStep = getWitchUpgradeRateStep(joker);
+        if (joker && (step !== undefined || rateStep !== undefined)) {
           const lv = joker.level || 1;
           const cost = (lv + 1) * joker.cost;
           if (game.gold >= cost) {
@@ -5222,8 +5223,13 @@ function handleInput(x, inputY, rawY) {
               up._confirmPressed = false;
               game.gold -= cost;
               joker.level = lv + 1;
-              const base = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
-              joker.real_value = Math.round((base + step) * 10) / 10;
+              if (step !== undefined) {
+                const base = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
+                joker.real_value = Math.round((base + step) * 10) / 10;
+              } else {
+                // rate 方向升级（概率类卡牌，如以小博大）：提升 rate 而非 real_value
+                joker.rate = (joker.rate || 0) + rateStep;
+              }
               if (game.storageManager) game.storageManager.saveProgress();
               if (game.audioManager) game.audioManager.play('buy_success');
               // 切换到升级成功视图（卡牌移动放大动画起点）
@@ -5342,7 +5348,7 @@ function handleInput(x, inputY, rawY) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         const jokers = game.jokers || [];
-        const canUp = j => getWitchUpgradeStep(j) !== undefined;
+        const canUp = j => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
         let sel = game._witchDetailPopup.jokerIndex;
         if (!canUp(jokers[sel])) sel = jokers.findIndex(canUp);
         game._witchDetailPopup = null;
