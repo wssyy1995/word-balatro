@@ -665,6 +665,52 @@ module.exports = function extendPopup(Renderer) {
         return lines;
       };
 
+      // 带 value 高亮的效果文字绘制：value 部分加粗紫色，其余保持原样；逐字换行、整行居中
+      const drawStyledDesc = (text, valueStr, cx, bY, bH, maxW, fontSize, lineH) => {
+        const normalFont = `${Math.floor(fontSize * s)}px sans-serif`;
+        const boldFont = `bold ${Math.floor(fontSize * s)}px sans-serif`;
+        // value 字符区间（formatItemDesc 已将 desc 中 value 占位符替换为实际值）
+        const valStart = valueStr ? String(text).indexOf(valueStr) : -1;
+        const valEnd = valStart >= 0 ? valStart + String(valueStr).length : -1;
+        ctx.font = normalFont;
+        const lines = [];
+        let segs = [];
+        let lineW = 0;
+        for (let i = 0; i < String(text).length; i++) {
+          const ch = String(text)[i];
+          const w = ctx.measureText(ch).width;
+          if (segs.length && lineW + w > maxW) {
+            lines.push(segs);
+            segs = [];
+            lineW = 0;
+          }
+          const hl = i >= valStart && i < valEnd;
+          const last = segs[segs.length - 1];
+          if (last && last.hl === hl) last.text += ch; else segs.push({ text: ch, hl });
+          lineW += w;
+        }
+        if (segs.length) lines.push(segs);
+        const firstY = bY + bH / 2 - ((lines.length - 1) * lineH) / 2;
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        lines.forEach((lineSegs, li) => {
+          let totalW = 0;
+          lineSegs.forEach(seg => {
+            ctx.font = seg.hl ? boldFont : normalFont;
+            totalW += ctx.measureText(seg.text).width;
+          });
+          let sx = cx - totalW / 2;
+          lineSegs.forEach(seg => {
+            ctx.font = seg.hl ? boldFont : normalFont;
+            ctx.fillStyle = seg.hl ? '#9b59b6' : '#5a4a2a';
+            ctx.fillText(seg.text, sx, firstY + li * lineH);
+            sx += ctx.measureText(seg.text).width;
+          });
+        });
+        ctx.restore();
+      };
+
       if (joker && popup.upgraded) {
         // ===== 升级成功视图：卡牌从右侧对比位移动到中间并放大，背后紫色光芒+闪烁星星 =====
         const curLv = joker.level || 1;
@@ -716,19 +762,13 @@ module.exports = function extendPopup(Renderer) {
         ctx.textAlign = 'center';
         ctx.fillText(`Lv.${curLv}`, toCX, toCY + toH / 2 + 18 * s);
 
-        // 升级后效果（自动换行，框内居中）
+        // 升级后效果（自动换行，框内居中；value 加粗紫色）
         const desc = formatItemDesc({ ...joker, real_value: curVal });
         const boxW = 230 * s;
         const boxH = 80 * s;
         const boxY = toCY + toH / 2 + 36 * s;
         this.roundRect(toCX - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
-        const lines = wrapDesc(desc, boxW - 16 * s, 13);
-        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
-        ctx.fillStyle = '#5a4a2a';
-        const firstY = boxY + boxH / 2 - ((lines.length - 1) * 16 * s) / 2;
-        lines.forEach((ln, li) => {
-          ctx.fillText(ln, toCX, firstY + li * 16 * s);
-        });
+        drawStyledDesc(desc, String(curVal), toCX, boxY, boxH, boxW - 16 * s, 13, 16 * s);
 
         // 确认按钮（关闭弹窗）：复用购买成功/结算「领取」按钮样式
         const cfmW = 200 * s;
@@ -773,14 +813,18 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.fillText(`Lv.${curLv + 1}`, rightCX, lvLabelY);
 
-        // 效果对比框（两个框之间留间距；内容文字自动换行不超出框）
+        // 效果对比框（两个框之间留间距；内容文字自动换行不超出框；升级后框内 value 加粗紫色）
         const boxW = 112 * s;
         const boxH = 64 * s;
         const boxY = cardY + cardH + 26 * s;
         const curDesc = formatItemDesc({ ...joker, real_value: curVal });
         const nextDesc = formatItemDesc({ ...joker, real_value: nextVal });
-        [[leftCX, curDesc], [rightCX, nextDesc]].forEach(([bcx, desc]) => {
+        [[leftCX, curDesc, null], [rightCX, nextDesc, String(nextVal)]].forEach(([bcx, desc, hlVal]) => {
           this.roundRect(bcx - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
+          if (hlVal) {
+            drawStyledDesc(desc, hlVal, bcx, boxY, boxH, boxW - 14 * s, 12, 14 * s);
+            return;
+          }
           const lines = wrapDesc(desc, boxW - 14 * s);
           ctx.font = `${Math.floor(12 * s)}px sans-serif`;
           ctx.fillStyle = '#5a4a2a';
