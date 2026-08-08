@@ -765,11 +765,11 @@ module.exports = function extendPopup(Renderer) {
 
         // 升级后效果（自动换行，框内居中；value 加粗紫色）
         const desc = formatItemDesc({ ...joker, real_value: curVal });
-        const boxW = 230 * s;
-        const boxH = 80 * s;
+        const boxW = 245 * s;
+        const boxH = 88 * s;
         const boxY = toCY + toH / 2 + 36 * s;
         this.roundRect(toCX - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
-        drawStyledDesc(desc, String(curVal), toCX, boxY, boxH, boxW - 16 * s, 13, 16 * s);
+        drawStyledDesc(desc, String(curVal), toCX, boxY, boxH, boxW - 16 * s, 14, 17 * s);
 
         // 确认按钮（关闭弹窗）：复用购买成功/结算「领取」按钮样式
         const cfmW = 200 * s;
