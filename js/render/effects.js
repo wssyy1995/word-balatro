@@ -111,11 +111,12 @@ module.exports = function extendEffects(Renderer) {
       const maskInset = options.maskInset || 0;
       this.roundRect(x + 3 + maskInset, maskY, w - 6 - maskInset * 2, maskH, maskR, 'rgba(0,0,0,0.55)');
 
-      // 名字（自适应字号；女巫牌升级后带 Lv.x 标识）
+      // 名字（自适应字号；女巫牌升级后带 Lv.x 标识；options.nameFontScale 可放大字号）
       const propLv = prop.type === 'witch' ? (prop.level || 1) : 1;
       const nameText = propLv > 1 ? `${prop.name}.${propLv}` : prop.name;
       ctx.save();
       let fontSize = Math.min(Math.floor(10 * s), Math.floor(w / 6));
+      if (options.nameFontScale) fontSize = Math.floor(fontSize * options.nameFontScale);
       ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
       // 带等级标识时文字可能超宽，按可用宽度缩字号
       const maxNameW = w - 10;
@@ -1068,22 +1069,32 @@ module.exports = function extendEffects(Renderer) {
 
     // 通用胜利光芒射线 + 中心光晕（对战胜利标题、结算翻倍敲章等复用）
     // 从 battle/renderer.js _drawVictoryEffect 提炼，alpha 由调用方控制（含 closeAlpha/淡入）
-    Renderer.prototype._drawLightRays = function(ctx, cx, cy, maxLen, s, elapsed, alpha = 1) {
+    Renderer.prototype._drawLightRays = function(ctx, cx, cy, maxLen, s, elapsed, alpha = 1, theme = 'gold') {
       const rayCount = 14;
       const time = elapsed;
 
-      // 渐变对象按位置缓存（弹窗显示期间位置不变），避免每帧创建 15 个渐变对象
-      const cacheKey = `${cx}|${cy}|${maxLen}`;
+      // 渐变对象按位置+主题缓存（弹窗显示期间位置不变），避免每帧创建 15 个渐变对象
+      const cacheKey = `${cx}|${cy}|${maxLen}|${theme}`;
       if (!this._lightRaysGradCache || this._lightRaysGradCache.key !== cacheKey) {
-        const rayGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
-        rayGrad.addColorStop(0, 'rgba(255, 200, 80, 0.12)');
-        rayGrad.addColorStop(0.4, 'rgba(255, 170, 50, 0.05)');
-        rayGrad.addColorStop(1, 'rgba(255, 150, 0, 0)');
-        const haloGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
-        haloGrad.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
-        haloGrad.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
-        haloGrad.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
-        haloGrad.addColorStop(1, 'rgba(255, 130, 20, 0)');
+        let rayGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
+        let haloGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
+        if (theme === 'purple') {
+          rayGrad.addColorStop(0, 'rgba(190, 120, 235, 0.14)');
+          rayGrad.addColorStop(0.4, 'rgba(165, 90, 215, 0.06)');
+          rayGrad.addColorStop(1, 'rgba(150, 60, 200, 0)');
+          haloGrad.addColorStop(0, 'rgba(215, 160, 250, 0.5)');
+          haloGrad.addColorStop(0.25, 'rgba(185, 105, 230, 0.2)');
+          haloGrad.addColorStop(0.7, 'rgba(155, 89, 182, 0.06)');
+          haloGrad.addColorStop(1, 'rgba(155, 89, 182, 0)');
+        } else {
+          rayGrad.addColorStop(0, 'rgba(255, 200, 80, 0.12)');
+          rayGrad.addColorStop(0.4, 'rgba(255, 170, 50, 0.05)');
+          rayGrad.addColorStop(1, 'rgba(255, 150, 0, 0)');
+          haloGrad.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
+          haloGrad.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
+          haloGrad.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
+          haloGrad.addColorStop(1, 'rgba(255, 130, 20, 0)');
+        }
         this._lightRaysGradCache = { key: cacheKey, rayGrad, haloGrad };
       }
       const { rayGrad, haloGrad } = this._lightRaysGradCache;

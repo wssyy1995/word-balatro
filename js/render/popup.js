@@ -734,7 +734,7 @@ module.exports = function extendPopup(Renderer) {
         const curH = fromH + (toH - fromH) * ease;
 
         // 背后紫色光芒 + 闪烁星星（参考恭喜猜中弹窗上方特效）
-        this._drawLightRays(ctx, toCX, toCY, toW * 1.5, s, animElapsed, closeAlpha);
+        this._drawLightRays(ctx, toCX, toCY, toW * 1.5, s, animElapsed, closeAlpha, 'purple');
         this._witchUpgradeStars = this._drawSparkleStars(
           ctx, toCX, toCY, toW * 2.0, toH * 1.5, s, animElapsed, 12, this._witchUpgradeStars, closeAlpha
         );
@@ -748,8 +748,8 @@ module.exports = function extendPopup(Renderer) {
         const popW = curW * popScale;
         const popH = curH * popScale;
 
-        // 卡牌：移动 + 放大 + 到位弹跳，保留紫色斜光
-        this._drawPropCard(ctx, joker, curCX - popW / 2, curCY - popH / 2, popW, popH, s, true, false);
+        // 卡牌：移动 + 放大 + 到位弹跳，保留紫色斜光（名字蒙层收窄、字号放大 1.3 倍）
+        this._drawPropCard(ctx, joker, curCX - popW / 2, curCY - popH / 2, popW, popH, s, true, false, { maskInset: 6 * s, nameFontScale: 1.3 });
         this._drawRectSweep(ctx, curCX - popW / 2, curCY - popH / 2, popW, popH, s, 'purple', 0);
 
         // 卡牌就位后，Lv / 效果 / 确认按钮淡入
