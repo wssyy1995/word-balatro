@@ -5370,19 +5370,18 @@ function handleInput(x, inputY, rawY) {
         const canUp = j => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
         const sel = game._witchDetailPopup.jokerIndex;
         const selJoker = jokers[sel];
+        // toast 显示在「升级」按钮上方（toast 高度 32*s + 6*s 间距）
+        const s = renderer.scale || 1;
+        const upBtnRect = renderer._witchDetailUpgradeBtnRect;
+        const toastY = upBtnRect ? upBtnRect.y - 32 * s - 6 * s : undefined;
         if (!canUp(selJoker)) {
-          // toast 显示在「女巫的词牌」标题下方（标题 22px 居中于 safeTop+8s 附近）
-          const s = renderer.scale || 1;
-          const customY = (renderer.safeTop || 0) + 26 * s + (renderer.hasDynamicIsland ? 13 * s : 0);
-          game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now(), customY };
+          game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now(), customY: toastY };
           return;
         }
         // 等级上限（max_level）：满级置灰，点击弹 toast
         const maxLv = getWitchMaxLevel(selJoker);
         if (maxLv !== undefined && (selJoker.level || 1) >= maxLv) {
-          const s = renderer.scale || 1;
-          const customY = (renderer.safeTop || 0) + 26 * s + (renderer.hasDynamicIsland ? 13 * s : 0);
-          game.hintToast = { text: `该女巫牌最高等级Lv.${maxLv}`, expireAt: Date.now() + 2000, startTime: Date.now(), customY };
+          game.hintToast = { text: `该女巫牌最高等级Lv.${maxLv}`, expireAt: Date.now() + 2000, startTime: Date.now(), customY: toastY };
           return;
         }
         game._witchDetailPopup = null;
