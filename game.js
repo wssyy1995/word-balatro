@@ -4166,7 +4166,16 @@ function handleInput(x, inputY, rawY) {
   
   // 卡牌图鉴弹窗打开时，只有点击面板外部才关闭；面板内部（含翻页按钮）不关闭
   if (game.cardBookOpen && !game._closingCardBook) {
-    // 0. 检测 tab 切换按钮
+    // 0. 大图模式（黑色蒙层）：点击任意位置关闭大图，回到图鉴网格
+    if (game._cardBookDetailLevel && !game._closingCardBookDetail) {
+      vibrate();
+      if (game.audioManager) game.audioManager.play('tap');
+      game._closingCardBookDetail = true;
+      game._closeCardBookDetailStartTime = Date.now();
+      game._cardBookCellPressed = null;
+      return;
+    }
+    // 1. 检测 tab 切换按钮
     if (renderer.cardBookTabRects) {
       const tabHit = renderer.hitTest(x, inputY, renderer.cardBookTabRects);
       if (tabHit) {

@@ -96,53 +96,55 @@ module.exports = function extendCardbook(Renderer) {
       const alpha = game._closingCardBookDetail ? (1 - closeProgress) : enterEase;
       if (alpha <= 0) return;
   
-      // ===== 大图模式：词牌大图显示在图鉴面板下方（无背景、无关闭按钮） =====
-      ctx.save();
-      ctx.globalAlpha = alpha;
-
+      // ===== 大图模式：黑色蒙层 + 屏幕居中大图（点击任意处关闭） =====
       const cardName = `witch_card_${level}`;
       const cardData = this.witchCardImages[cardName];
-      const panelBottom = panelRect.y + panelRect.h;
       const enterShift = (1 - enterEase) * 15 * s;
 
-      const maxCardH = 200 * s;
-      const bottomMargin = 10 * s;
-      let dh = Math.min(H - panelBottom - 6 * s - bottomMargin, maxCardH);
-      let dy = panelBottom + 6 * s;
-      if (dh < 130 * s) {
-        // 下方空间不足（如 iPhone 8）：向上与面板底部轻微重叠，保证卡牌至少 130*s 高
-        dh = Math.min(130 * s, maxCardH);
-        dy = H - bottomMargin - dh;
-      }
+      // 黑色蒙层（随入场/关闭同步淡入淡出）
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.65;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
 
       if (cardData && cardData.loaded && cardData.img) {
         const imgAspect = cardData.width / cardData.height;
-        const dw = dh * imgAspect;
+        const maxCardH = H * 0.55;
+        const maxCardW = W * 0.8;
+        let dh = maxCardH;
+        let dw = dh * imgAspect;
+        if (dw > maxCardW) {
+          dw = maxCardW;
+          dh = dw / imgAspect;
+        }
         const dx = (W - dw) / 2;
-        const drawY = dy + enterShift;
+        const dy = (H - dh) / 2 + enterShift;
         ctx.save();
+        ctx.globalAlpha = alpha;
         const imgR = 8 * s;
         ctx.beginPath();
-        ctx.moveTo(dx + imgR, drawY);
-        ctx.lineTo(dx + dw - imgR, drawY);
-        ctx.quadraticCurveTo(dx + dw, drawY, dx + dw, drawY + imgR);
-        ctx.lineTo(dx + dw, drawY + dh - imgR);
-        ctx.quadraticCurveTo(dx + dw, drawY + dh, dx + dw - imgR, drawY + dh);
-        ctx.lineTo(dx + imgR, drawY + dh);
-        ctx.quadraticCurveTo(dx, drawY + dh, dx, drawY + dh - imgR);
-        ctx.lineTo(dx, drawY + imgR);
-        ctx.quadraticCurveTo(dx, drawY, dx + imgR, drawY);
+        ctx.moveTo(dx + imgR, dy);
+        ctx.lineTo(dx + dw - imgR, dy);
+        ctx.quadraticCurveTo(dx + dw, dy, dx + dw, dy + imgR);
+        ctx.lineTo(dx + dw, dy + dh - imgR);
+        ctx.quadraticCurveTo(dx + dw, dy + dh, dx + dw - imgR, dy + dh);
+        ctx.lineTo(dx + imgR, dy + dh);
+        ctx.quadraticCurveTo(dx, dy + dh, dx, dy + dh - imgR);
+        ctx.lineTo(dx, dy + imgR);
+        ctx.quadraticCurveTo(dx, dy, dx + imgR, dy);
         ctx.closePath();
         ctx.clip();
-        ctx.drawImage(cardData.img, dx, drawY, dw, dh);
+        ctx.drawImage(cardData.img, dx, dy, dw, dh);
         ctx.restore();
-        this.cardBookDetailPanelRect = { x: dx, y: dy, w: dw, h: dh };
-      } else {
-        this.cardBookDetailPanelRect = null;
+        // 金色光晕 + 四角闪烁星星（与获得新词牌弹窗一致）
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        this._drawCardGlow(ctx, dx, dy, dw, dh, s);
+        ctx.restore();
       }
+      this.cardBookDetailPanelRect = null;
       this.cardBookBigCloseRect = null;
-
-      ctx.restore();
     }
 
     Renderer.prototype._wrapText = function(ctx, text, maxWidth, fontSize) {
