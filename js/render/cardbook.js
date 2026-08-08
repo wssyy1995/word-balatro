@@ -119,7 +119,7 @@ module.exports = function extendCardbook(Renderer) {
           dh = dw / imgAspect;
         }
         const dx = (W - dw) / 2;
-        const dy = (H - dh) / 2 + enterShift;
+        const dy = (H - dh) / 2 + 10 * s + enterShift;
         ctx.save();
         ctx.globalAlpha = alpha;
         const imgR = 8 * s;
@@ -137,6 +137,8 @@ module.exports = function extendCardbook(Renderer) {
         ctx.clip();
         ctx.drawImage(cardData.img, dx, dy, dw, dh);
         ctx.restore();
+        // 四角闪烁星星（无光晕，随灯箱淡入淡出）
+        this._drawCardGlow(ctx, dx, dy, dw, dh, s, alpha, { halo: false });
 
         // 图片下方灰色小字提示
         ctx.save();
