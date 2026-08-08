@@ -5368,6 +5368,8 @@ function handleInput(x, inputY, rawY) {
         if (!canUp(jokers[sel])) sel = jokers.findIndex(canUp);
         game._witchDetailPopup = null;
         game._witchUpgradePopup = { jokerIndex: sel, startTime: Date.now() };
+        // 重置已购买道具栏的选中态，避免升级弹窗关闭后该女巫牌仍处于上浮选中位置
+        if (renderer.shopRenderer) renderer.shopRenderer.shopSelectedOwned = null;
         return;
       }
     }
