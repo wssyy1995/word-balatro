@@ -28,7 +28,7 @@ module.exports = function extendPopup(Renderer) {
       const hasLetters = letters && letters.length > 0;
       let lettersTotalW = 0;
       if (hasLetters) {
-        const circleR = 12 * s;
+        const circleR = 10 * s;
         const circleGap = 8 * s;
         lettersTotalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
       }
@@ -224,7 +224,7 @@ module.exports = function extendPopup(Renderer) {
 
         cy += lineH + 4 * s;
 
-        const circleR = 12 * s;
+        const circleR = 10 * s;
         const circleGap = 8 * s;
         const totalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
         let lx = popupX + (popupW - totalW) / 2 + circleR;
@@ -235,7 +235,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.arc(lx, cy, circleR, 0, Math.PI * 2);
           ctx.fillStyle = '#9b59b6';
           ctx.fill();
-          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
           ctx.fillStyle = '#fff';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
