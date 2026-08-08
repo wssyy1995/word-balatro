@@ -620,6 +620,16 @@ module.exports = function extendGolden(Renderer) {
     if (!panel) return;
     const { px, py, pw, ph, closeAlpha } = panel;
 
+    // 弹窗上方光芒 + 闪烁星星动画（参考双人对战挑战成功弹窗，绘制在文字内容之下）
+    if (popup.won) {
+      const effectCX = px + pw / 2;
+      const effectCY = py;
+      this._drawLightRays(ctx, effectCX, effectCY, pw * 0.9, s, elapsed, closeAlpha);
+      this._goldenWinStars = this._drawSparkleStars(
+        ctx, effectCX, effectCY, pw * 1.1, 90 * s, s, elapsed, 12, this._goldenWinStars, closeAlpha
+      );
+    }
+
     ctx.save();
     ctx.globalAlpha = closeAlpha;
     ctx.textAlign = 'center';
@@ -656,7 +666,7 @@ module.exports = function extendGolden(Renderer) {
 
       ctx.font = `${Math.floor(13 * s)}px sans-serif`;
       ctx.fillStyle = '#8a7a5a';
-      ctx.fillText(`用了 ${gw.guesses.length} 次猜中 · 本月日历已点亮`, px + pw / 2, py + 180 * s);
+      ctx.fillText(`用了 ${gw.winTries || gw.guesses.length} 次猜中 · 本月日历已点亮`, px + pw / 2, py + 180 * s);
     } else {
       // 标题（参考单词本：Georgia 加粗 + 标题下分割装饰线）
       const failTitleY = py + 32 * s;

@@ -110,14 +110,22 @@ module.exports = function extendEffects(Renderer) {
       const maskR = Math.min(r, maskH / 2);
       this.roundRect(x + 3, maskY, w - 6, maskH, maskR, 'rgba(0,0,0,0.55)');
 
-      // 名字（自适应字号）
+      // 名字（自适应字号；女巫牌升级后带 Lv.x 标识）
+      const propLv = prop.type === 'witch' ? (prop.level || 1) : 1;
+      const nameText = propLv > 1 ? `${prop.name}.${propLv}` : prop.name;
       ctx.save();
-      const fontSize = Math.min(Math.floor(10 * s), Math.floor(w / 6));
+      let fontSize = Math.min(Math.floor(10 * s), Math.floor(w / 6));
       ctx.font = `bold ${Math.max(7, fontSize)}px sans-serif`;
+      // 带等级标识时文字可能超宽，按可用宽度缩字号
+      const maxNameW = w - 10;
+      while (ctx.measureText(nameText).width > maxNameW && fontSize > 7) {
+        fontSize -= 1;
+        ctx.font = `bold ${fontSize}px sans-serif`;
+      }
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(prop.name, x + w / 2, maskY + maskH / 2);
+      ctx.fillText(nameText, x + w / 2, maskY + maskH / 2);
       ctx.restore();
   
       // 剩余次数标签（limit 型女巫牌，右上角）
@@ -1063,37 +1071,44 @@ module.exports = function extendEffects(Renderer) {
       const rayCount = 14;
       const time = elapsed;
 
+      // 渐变对象按位置缓存（弹窗显示期间位置不变），避免每帧创建 15 个渐变对象
+      const cacheKey = `${cx}|${cy}|${maxLen}`;
+      if (!this._lightRaysGradCache || this._lightRaysGradCache.key !== cacheKey) {
+        const rayGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
+        rayGrad.addColorStop(0, 'rgba(255, 200, 80, 0.12)');
+        rayGrad.addColorStop(0.4, 'rgba(255, 170, 50, 0.05)');
+        rayGrad.addColorStop(1, 'rgba(255, 150, 0, 0)');
+        const haloGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
+        haloGrad.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
+        haloGrad.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
+        haloGrad.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
+        haloGrad.addColorStop(1, 'rgba(255, 130, 20, 0)');
+        this._lightRaysGradCache = { key: cacheKey, rayGrad, haloGrad };
+      }
+      const { rayGrad, haloGrad } = this._lightRaysGradCache;
+
       ctx.save();
-      ctx.globalAlpha = alpha;
       ctx.globalCompositeOperation = 'lighter';
 
-      // 光芒射线
+      // 光芒射线（透明度脉动改用 globalAlpha 调制，等效原先逐射线创建渐变）
       for (let i = 0; i < rayCount; i++) {
         const angle = -Math.PI * 0.95 + (Math.PI * 1.9 / rayCount) * i;
         const width = 0.08 + 0.04 * Math.sin(time * 0.004 + i);
         const pulse = 0.35 + 0.25 * Math.sin(time * 0.006 + i * 0.9);
 
+        ctx.globalAlpha = alpha * pulse;
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.lineTo(cx + Math.cos(angle - width) * maxLen, cy + Math.sin(angle - width) * maxLen);
         ctx.lineTo(cx + Math.cos(angle + width) * maxLen, cy + Math.sin(angle + width) * maxLen);
         ctx.closePath();
-
-        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen);
-        grad.addColorStop(0, `rgba(255, 200, 80, ${0.12 * pulse})`);
-        grad.addColorStop(0.4, `rgba(255, 170, 50, ${0.05 * pulse})`);
-        grad.addColorStop(1, 'rgba(255, 150, 0, 0)');
-        ctx.fillStyle = grad;
+        ctx.fillStyle = rayGrad;
         ctx.fill();
       }
 
       // 中心光晕
-      const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxLen * 0.55);
-      halo.addColorStop(0, 'rgba(255, 220, 100, 0.45)');
-      halo.addColorStop(0.25, 'rgba(255, 170, 60, 0.18)');
-      halo.addColorStop(0.7, 'rgba(255, 130, 20, 0.05)');
-      halo.addColorStop(1, 'rgba(255, 130, 20, 0)');
-      ctx.fillStyle = halo;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = haloGrad;
       ctx.beginPath();
       ctx.arc(cx, cy, maxLen * 0.55, 0, Math.PI * 2);
       ctx.fill();

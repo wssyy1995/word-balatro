@@ -4,7 +4,7 @@
 // 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
 // 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
 // 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
-const GAME_VERSION = '8.4.17';
+const GAME_VERSION = '8.6.18';
 
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
@@ -855,6 +855,12 @@ function _matchWordTrigger(cards, trigger) {
   }
 }
 
+// 女巫牌生效数值：升级后为 real_value，未升级时默认为 value
+function getJokerValue(joker) {
+  if (!joker) return 0;
+  return (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
+}
+
 function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = [], lastPlayedLetters = null) {
   if (!cards || cards.length === 0) return { valid: false, score: 0 };
 
@@ -888,9 +894,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         cards.forEach((c, i) => {
           if (_matchCardTrigger(c, j.trigger, i, j, cards.length)) {
             if (j.operation === 'add') {
-              cardAddScores[i] += j.value;
+              cardAddScores[i] += getJokerValue(j);
             } else {
-              cardMults[i] *= j.value;
+              cardMults[i] *= getJokerValue(j);
             }
           }
         });
@@ -898,7 +904,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
       case 'whole_word': {
         let wwMatched;
         if (j.trigger === 'illegal_boost' || j.operation === 'multi_accumulation') {
-          wwMatched = j.value > 0;
+          wwMatched = getJokerValue(j) > 0;
         } else if (j.trigger === 'end_ed') {
           wwMatched = pendingCheck?.endEdValid || false;
         } else if (j.trigger === 'end_s') {
@@ -928,9 +934,9 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
         }
         if (wwMatched) {
           if (j.trigger === 'illegal_boost' || j.trigger === 'chaos_orb' || j.operation === 'multi_adds_value' || j.operation === 'multi_accumulation') {
-            mult += j.value;
+            mult += getJokerValue(j);
           } else {
-            mult = Math.ceil(mult * j.value);
+            mult = Math.ceil(mult * getJokerValue(j));
           }
         } else if (j.penalty !== undefined) {
           // 未触发时执行惩罚（no_duplicate 第一手不惩罚）
@@ -987,7 +993,7 @@ function calcWordScore(cards, jokers, pendingCheck = null, equippedCardSkills = 
 
   for (const j of activeJokers) {
     if (j.type === 'witch' && j.scope === 'flat_bonus') {
-      baseScore += j.value;
+      baseScore += getJokerValue(j);
     }
   }
 
@@ -1807,13 +1813,15 @@ class Game {
     this._witchCardValueHalfActive = !!(currentSkill && currentSkill.skill === 'witch_card_value_half');
     (this.jokers || []).forEach(j => {
       if (!j || j.type !== 'witch') return;
+      // real_value 归一化（未升级时等于 value），试炼减半/累计都基于 real_value
+      if (j.real_value === undefined) j.real_value = j.value;
       // 确保有原始值记录
-      if (j._originalValue === undefined) j._originalValue = j.value;
+      if (j._originalValue === undefined) j._originalValue = j.real_value;
       if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
       // witch_card_value_half 只对 scope 为 whole_word 的女巫牌生效
       if (j.scope === 'whole_word') {
         if (j._originalValue !== undefined) {
-          j.value = this._witchCardValueHalfActive
+          j.real_value = this._witchCardValueHalfActive
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
         }
@@ -1824,7 +1832,7 @@ class Game {
         }
       } else {
         // 非 whole_word 女巫牌始终恢复原始值
-        if (j._originalValue !== undefined) j.value = j._originalValue;
+        if (j._originalValue !== undefined) j.real_value = j._originalValue;
         if (j._originalPenalty !== undefined) j.penalty = j._originalPenalty;
       }
     });
@@ -2097,13 +2105,15 @@ class Game {
     this._witchCardValueHalfActive = !!valueHalfActive;
     (this.jokers || []).forEach(j => {
       if (!j || j.type !== 'witch') return;
+      // real_value 归一化（未升级时等于 value）
+      if (j.real_value === undefined) j.real_value = j.value;
       // 保存原始 value/penalty（首次遇到时）
-      if (j._originalValue === undefined) j._originalValue = j.value;
+      if (j._originalValue === undefined) j._originalValue = j.real_value;
       if (j._originalPenalty === undefined && j.penalty !== undefined) j._originalPenalty = j.penalty;
       // witch_card_value_half 只对 scope 为 whole_word 的女巫牌生效
       if (j.scope === 'whole_word') {
         if (j._originalValue !== undefined) {
-          j.value = valueHalfActive
+          j.real_value = valueHalfActive
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
         }
@@ -2114,7 +2124,7 @@ class Game {
         }
       } else {
         // 非 whole_word 女巫牌始终恢复原始值
-        if (j._originalValue !== undefined) j.value = j._originalValue;
+        if (j._originalValue !== undefined) j.real_value = j._originalValue;
         if (j._originalPenalty !== undefined) j.penalty = j._originalPenalty;
       }
     });
@@ -2540,6 +2550,7 @@ class Game {
           j.value = this._witchCardValueHalfActive && j.scope === 'whole_word'
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
+          j.real_value = j.value;
         }
       });
 
@@ -2755,6 +2766,7 @@ class Game {
           j.value = this._witchCardValueHalfActive && j.scope === 'whole_word'
             ? Math.round(j._originalValue * 0.5 * 10) / 10
             : j._originalValue;
+          j.real_value = j.value;
         }
       });
       this._lastInitialLetter = currentInitial;
@@ -2832,7 +2844,7 @@ class Game {
       if (joker.type === 'witch' && joker.scope === 'whole_word') {
         let matched;
         if (joker.trigger === 'illegal_boost' || joker.operation === 'multi_accumulation') {
-          matched = joker.value > 0;
+          matched = getJokerValue(joker) > 0;
         } else if (joker.trigger === 'end_ed') {
           matched = this.pendingCheck.endEdValid || false;
         } else if (joker.trigger === 'end_s') {
@@ -3932,6 +3944,8 @@ class Game {
       // 猜中：全部位置揭示，结果弹窗等占位卡全部翻开后再弹出
       gw.won = true;
       gw.finished = true;
+      // 猜中次数单独持久化（分享文案/结果弹窗统一读取，不依赖 guesses 数组）
+      gw.winTries = gw.guesses.length;
       for (let i = 0; i < gw.positions.length; i++) gw.positions[i] = true;
       this._goldenFlipAnim = null;
       this._markGoldenCalendar(gw.date);
@@ -4786,4 +4800,4 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
 // 挂载到原型，避免 battle/manager.js 与 game.js 循环依赖
 Game.prototype.isValidWordOnline = isValidWordOnline;
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank, GAME_VERSION };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank, GAME_VERSION, getJokerValue };

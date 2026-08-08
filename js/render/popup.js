@@ -1,9 +1,9 @@
 const { Easing } = require('../animation');
-const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS } = require('../witch_skills');
-const { SHOP_POOL } = require('../shop');
+const { getSkillForLevel, WITCH_SKILLS, WITCH_CARDS, formatItemDesc } = require('../witch_skills');
+const { SHOP_POOL, getWitchUpgradeStep } = require('../shop');
 const { LETTER_SCORE, letterUpgrades } = require('../data');
 const { DailyAchievements } = require('../daily_achievements');
-const { GAME_VERSION } = require('../game');
+const { GAME_VERSION, getJokerValue } = require('../game');
 
 module.exports = function extendPopup(Renderer) {
     Renderer.prototype._drawWitchDetailPopup = function(ctx, game, s) {
@@ -33,9 +33,10 @@ module.exports = function extendPopup(Renderer) {
         lettersTotalW = letters.length * (circleR * 2) + (letters.length - 1) * circleGap;
       }
 
-      // 根据效果描述文字长度动态计算弹窗宽度
+      // 根据效果描述文字长度动态计算弹窗宽度（desc 中 value 占位符替换为实际值）
+      const jokerDesc = formatItemDesc(joker);
       ctx.font = `${Math.floor(12 * s)}px sans-serif`;
-      const descW = ctx.measureText(joker.desc).width;
+      const descW = ctx.measureText(jokerDesc).width;
       const minPopupW = Math.max(cardW + 20 * s, this.W * 0.6);
       let popupW = Math.max(minPopupW, descW + pad * 2);
       if (hasLetters) {
@@ -59,6 +60,7 @@ module.exports = function extendPopup(Renderer) {
       if (hasLimit) contentH += lineH + 2 * s; // 剩余次数
       if (hasPredicted && !popup.isShop) contentH += lineH + 2 * s; // 预言字母(仅限游戏页)
       if (hasLetters) contentH += lineH + 28 * s + 4 * s; // 可作用字母标签 + 圆
+      if (popup.isShop) contentH += 26 * s + pad; // 底部按钮行（售出/升级，仅商店页显示）
       const popupH = contentH;
       const popupY = cardY + cardH + 6 * s + 2 * s;
 
@@ -95,65 +97,21 @@ module.exports = function extendPopup(Renderer) {
       const r = 8 * s;
       this.roundRect(popupX, popupY, popupW, popupH, r, '#faf6ee', '#9b59b6', 2 * s);
 
-      // ===== 商店模式:右上角售出按钮 =====
+      // ===== 底部按钮点击区（在内容后绘制） =====
       this._shopWitchDetailSellBtnRect = null;
-      if (popup.isShop) {
-        const btnPadX = 14 * s;
-        const btnH = 20 * s;
-        const sellText = String(Math.round(joker.cost / 2));
-        ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-        const textW = ctx.measureText(sellText).width;
-        const coinSize = 10 * s;
-        const contentW = coinSize + 2 * s + textW;
-        const btnW = contentW + btnPadX * 2;
-
-        const btnX = popupX + popupW - pad - btnW;
-        const btnY = popupY + pad;
-
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.roundRect(btnX, btnY, btnW, btnH, 5 * s, '#c0392b');
-        ctx.restore();
-
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        const sellHighlightY = btnY + 2 * s;
-        ctx.moveTo(btnX + 3 * s, sellHighlightY);
-        ctx.lineTo(btnX + btnW - 3 * s, sellHighlightY);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.save();
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const midY = btnY + btnH / 2;
-        const startX = btnX + (btnW - contentW) / 2;
-        if (this.coinIcon && this.coinIconLoaded) {
-          ctx.drawImage(this.coinIcon, startX, midY - coinSize / 2, coinSize, coinSize);
-        }
-        ctx.fillText(sellText, startX + coinSize + 2 * s + textW / 2, midY);
-        ctx.restore();
-
-        this._shopWitchDetailSellBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH, index: popup.jokerIndex };
-      }
-      // ===== 售出按钮结束 =====
+      this._witchDetailUpgradeBtnRect = null;
 
       let cy = popupY + pad + lineH / 2;
       const cx = popupX + popupW / 2;
 
-      // 名称(带星星装饰)
+      // 名称(带星星装饰；升级后带 Lv.x 标识)
+      const jokerLvText = (joker.level || 1) > 1 ? ` Lv.${joker.level}` : '';
       ctx.save();
       ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
       ctx.fillStyle = '#1a2f4a';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`✦ ${joker.name} ✦`, cx, cy);
+      ctx.fillText(`✦ ${joker.name}${jokerLvText} ✦`, cx, cy);
       ctx.restore();
 
       cy += lineH + 4 * s;
@@ -175,7 +133,7 @@ module.exports = function extendPopup(Renderer) {
       ctx.fillStyle = '#333';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(joker.desc, popupX + pad, cy);
+      ctx.fillText(jokerDesc, popupX + pad, cy);
       ctx.restore();
 
       // 女巫试炼:witch_card_value_half 时显示当前实际倍率
@@ -192,7 +150,8 @@ module.exports = function extendPopup(Renderer) {
           constraintText = '女巫试炼:倍率加成随机 +[0.25~0.6]';
         } else {
           const isMultiplier = joker.operation !== 'add' && joker.operation !== 'multi_adds_value' && joker.trigger !== 'illegal_boost' && joker.trigger !== 'last_chance';
-          const valueText = Number.isInteger(joker.value) ? String(joker.value) : joker.value.toFixed(1);
+          const jokerVal = getJokerValue(joker);
+          const valueText = Number.isInteger(jokerVal) ? String(jokerVal) : jokerVal.toFixed(1);
           constraintText = isMultiplier ? `女巫试炼:当前倍率为 x${valueText}` : `女巫试炼:当前倍率为 +${valueText}`;
         }
         ctx.fillText(constraintText, popupX + pad, cy);
@@ -223,7 +182,7 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#9b59b6';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(`倍率累计:+${joker.value}`, popupX + pad, cy);
+        ctx.fillText(`倍率累计:+${getJokerValue(joker)}`, popupX + pad, cy);
         ctx.restore();
       }
 
@@ -285,8 +244,8 @@ module.exports = function extendPopup(Renderer) {
           lx += circleR * 2 + circleGap;
         });
 
-        // 底部装饰线(仅在有可作用字母时显示)
-        const decoY = popupY + popupH - 10 * s;
+        // 分隔装饰线(仅在有可作用字母时显示；紧跟圆形字母下方)
+        const decoY = cy + circleR + 8 * s;
         ctx.save();
         ctx.strokeStyle = 'rgba(155,89,182,0.3)';
         ctx.lineWidth = 1 * s;
@@ -299,9 +258,675 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
+      // ===== 底部按钮：售出（红色）+ 升级（紫色，占位），仅商店页显示 =====
+      if (popup.isShop) {
+        const btnH = 26 * s;
+        const btnGap = 10 * s;
+        const btnY = popupY + popupH - btnH - pad + 2 * s;
+        // 无 upgrate_value 的女巫牌不可升级：只显示售出按钮
+        const canUpgrade = getWitchUpgradeStep(joker) !== undefined;
+        const btnCount = canUpgrade ? 2 : 1;
+        // 按钮固定宽度，整体居中（不随弹窗宽度变化）
+        const btnW = 84 * s;
+        let bx = popupX + (popupW - (btnW * btnCount + btnGap * (btnCount - 1))) / 2;
+        if (popup.isShop) {
+          // 售出按钮（红色，内容：售出 + 金币图标 + 数字；售价 = 基础售出价 × 等级）
+          const sellText = '售出';
+          const priceText = String(Math.round(joker.cost / 2) * (joker.level || 1));
+          ctx.save();
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          const sellTextW = ctx.measureText(sellText).width;
+          const priceTextW = ctx.measureText(priceText).width;
+          const coinSize = 14 * s;
+          const contentW = sellTextW + 3 * s + coinSize + 2 * s + priceTextW;
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#c0392b');
+          ctx.restore();
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          const hlY = btnY + 2 * s;
+          ctx.moveTo(bx + 3 * s, hlY);
+          ctx.lineTo(bx + btnW - 3 * s, hlY);
+          ctx.stroke();
+          ctx.restore();
+          ctx.save();
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          ctx.textBaseline = 'middle';
+          const midY = btnY + btnH / 2;
+          const startX = bx + (btnW - contentW) / 2;
+          ctx.textAlign = 'left';
+          ctx.fillText(sellText, startX, midY);
+          if (this.coinIcon && this.coinIconLoaded) {
+            ctx.drawImage(this.coinIcon, startX + sellTextW + 3 * s, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillText(priceText, startX + sellTextW + 3 * s + coinSize + 2 * s, midY);
+          ctx.restore();
+          this._shopWitchDetailSellBtnRect = { x: bx, y: btnY, w: btnW, h: btnH, index: popup.jokerIndex };
+          bx += btnW + btnGap;
+        }
+
+        // 升级按钮（紫色，占位，功能后续开放；仅可升级的女巫牌显示）
+        if (canUpgrade) {
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#9b59b6');
+          ctx.restore();
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          const upHlY = btnY + 2 * s;
+          ctx.moveTo(bx + 3 * s, upHlY);
+          ctx.lineTo(bx + btnW - 3 * s, upHlY);
+          ctx.stroke();
+          ctx.restore();
+          ctx.save();
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          const upTextW = ctx.measureText('升级').width;
+          const arrowW = 12 * s;
+          const arrowH = 14 * s;
+          const upGap = 3 * s;
+          const upGroupW = arrowW + upGap + upTextW;
+          const upGroupX = bx + (btnW - upGroupW) / 2;
+          const midY = btnY + btnH / 2;
+          // 金色向上箭头（三角头 + 矩形杆）
+          const acx = upGroupX + arrowW / 2;
+          const atop = midY - arrowH / 2;
+          const arrowGrad = ctx.createLinearGradient(0, atop, 0, atop + arrowH);
+          arrowGrad.addColorStop(0, '#ffe066');
+          arrowGrad.addColorStop(1, '#f0b90b');
+          ctx.fillStyle = arrowGrad;
+          ctx.beginPath();
+          const headH = arrowH * 0.55;
+          ctx.moveTo(acx, atop);
+          ctx.lineTo(acx + arrowW / 2, atop + headH);
+          ctx.lineTo(acx + arrowW * 0.22, atop + headH);
+          ctx.lineTo(acx + arrowW * 0.22, atop + arrowH);
+          ctx.lineTo(acx - arrowW * 0.22, atop + arrowH);
+          ctx.lineTo(acx - arrowW * 0.22, atop + headH);
+          ctx.lineTo(acx - arrowW / 2, atop + headH);
+          ctx.closePath();
+          ctx.fill();
+          // 「升级」文字
+          ctx.fillStyle = '#fff';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('升级', upGroupX + arrowW + upGap, midY);
+          ctx.restore();
+          this._witchDetailUpgradeBtnRect = { x: bx, y: btnY, w: btnW, h: btnH };
+        }
+      }
+
       // 关闭弹窗整体变换
       ctx.restore();
     }
+
+    // ===== 空槽位说明弹窗（一句话介绍，锚定在槽位下方；女巫牌紫色 / 魔法药水绿色） =====
+    Renderer.prototype._drawWitchEmptyPopup = function(ctx, game, s) {
+      const popup = game._witchEmptyPopup;
+      if (!popup || !popup.rect) return;
+
+      const isPotion = popup.kind === 'potion';
+      const title = isPotion ? '✦ 魔法药水 ✦' : '✦ 女巫牌 ✦';
+      const desc = isPotion ? '通关后，可在商店购买魔法药水。' : '通关后，可在商店购买更多女巫牌。';
+      const themeColor = isPotion ? '#1e8449' : '#9b59b6';
+
+      const { x: cardX, y: cardY, w: cardW, h: cardH } = popup.rect;
+      const pad = 10 * s;
+      const lineH = 16 * s;
+
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      const descW = ctx.measureText(desc).width;
+      const popupW = Math.max(cardW + 20 * s, this.W * 0.6, descW + pad * 2);
+      let popupX = cardX + (cardW - popupW) / 2;
+      const edgePad = 5 * s;
+      popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
+      const popupH = pad * 2 + lineH * 2 + 6 * s;
+      const popupY = cardY + cardH + 6 * s + 2 * s;
+
+      // 出现动画（与女巫牌详情一致：easeOutBack 从槽位底部弹出）
+      let appearScale = 1;
+      let appearOffsetY = 0;
+      if (popup.animStartTime) {
+        const ap = Math.min((Date.now() - popup.animStartTime) / 200, 1);
+        const ease = Easing.easeOutBack(ap);
+        appearScale = 0.5 + 0.5 * ease;
+        appearOffsetY = (1 - ease) * 12 * s;
+      }
+
+      ctx.save();
+      ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
+      ctx.scale(appearScale, appearScale);
+      ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
+      ctx.translate(0, appearOffsetY);
+
+      // 小三角
+      const triW = 8 * s;
+      const triH = 6 * s;
+      const triX = cardX + cardW / 2;
+      ctx.beginPath();
+      ctx.moveTo(triX - triW, popupY);
+      ctx.lineTo(triX, popupY - triH);
+      ctx.lineTo(triX + triW, popupY);
+      ctx.closePath();
+      ctx.fillStyle = themeColor;
+      ctx.fill();
+
+      // 面板
+      this.roundRect(popupX, popupY, popupW, popupH, 8 * s, '#faf6ee', themeColor, 2 * s);
+
+      const cx = popupX + popupW / 2;
+      // 标题
+      ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(title, cx, popupY + pad + lineH / 2);
+
+      // 一句话说明
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#333';
+      ctx.fillText(desc, cx, popupY + pad + lineH + 6 * s + lineH / 2);
+
+      ctx.restore();
+    }
+
+    // ===== 魔法药水详情弹窗（效果说明 + 底部按钮：售出[商店] / 使用） =====
+    Renderer.prototype._drawPotionDetailPopup = function(ctx, game, s) {
+      const popup = game._potionDetailPopup;
+      if (!popup) return;
+      const potion = (game.potions || [])[popup.potionIndex];
+      if (!potion) return;
+      const rect = popup.rect;
+      if (!rect) return;
+
+      const { x: cardX, y: cardY, w: cardW, h: cardH } = rect;
+      const pad = 10 * s;
+      const lineH = 16 * s;
+      const themeColor = '#1e8449';
+
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      const descW = ctx.measureText(potion.desc || '').width;
+      const popupW = Math.max(cardW + 20 * s, this.W * 0.6, descW + pad * 2);
+      let popupX = cardX + (cardW - popupW) / 2;
+      const edgePad = 5 * s;
+      popupX = Math.max(edgePad, Math.min(popupX, this.W - popupW - edgePad));
+      const btnH = 26 * s;
+      const popupH = pad * 2 + lineH * 3 + 4 * s + btnH + pad - 2 * s;
+      const popupY = cardY + cardH + 6 * s + 2 * s;
+
+      // 出现动画（与女巫牌详情一致）
+      let appearScale = 1;
+      let appearOffsetY = 0;
+      if (popup.animStartTime) {
+        const ap = Math.min((Date.now() - popup.animStartTime) / 200, 1);
+        const ease = Easing.easeOutBack(ap);
+        appearScale = 0.5 + 0.5 * ease;
+        appearOffsetY = (1 - ease) * 12 * s;
+      }
+
+      ctx.save();
+      ctx.translate(popupX + popupW / 2, popupY + popupH / 2);
+      ctx.scale(appearScale, appearScale);
+      ctx.translate(-(popupX + popupW / 2), -(popupY + popupH / 2));
+      ctx.translate(0, appearOffsetY);
+
+      // 小三角
+      const triW = 8 * s;
+      const triH = 6 * s;
+      const triX = cardX + cardW / 2;
+      ctx.beginPath();
+      ctx.moveTo(triX - triW, popupY);
+      ctx.lineTo(triX, popupY - triH);
+      ctx.lineTo(triX + triW, popupY);
+      ctx.closePath();
+      ctx.fillStyle = themeColor;
+      ctx.fill();
+
+      // 面板
+      this.roundRect(popupX, popupY, popupW, popupH, 8 * s, '#faf6ee', themeColor, 2 * s);
+
+      const cx = popupX + popupW / 2;
+      let cy = popupY + pad + lineH / 2;
+
+      // 名称
+      ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#1a2f4a';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`✦ ${potion.name} ✦`, cx, cy);
+
+      // 效果标签
+      cy += lineH + 4 * s;
+      ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'left';
+      ctx.fillText('效果', popupX + pad, cy);
+
+      // 效果描述
+      cy += lineH;
+      ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+      ctx.fillStyle = '#333';
+      ctx.fillText(potion.desc || '', popupX + pad, cy);
+
+      // ===== 底部按钮：售出（仅商店，红色）+ 使用（绿色） =====
+      this._potionDetailSellBtnRect = null;
+      this._potionDetailUseBtnRect = null;
+      {
+        const btnGap = 10 * s;
+        const btnY = popupY + popupH - btnH - pad + 2 * s;
+        const btnCount = popup.isShop ? 2 : 1;
+        // 按钮固定宽度，整体居中（不随弹窗宽度变化）
+        const btnW = 84 * s;
+        let bx = popupX + (popupW - (btnW * btnCount + btnGap * (btnCount - 1))) / 2;
+
+        if (popup.isShop) {
+          // 售出按钮（红色，内容：售出 + 金币图标 + 数字）
+          const sellText = '售出';
+          const priceText = String(Math.round(potion.cost / 2));
+          ctx.save();
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          const sellTextW = ctx.measureText(sellText).width;
+          const priceTextW = ctx.measureText(priceText).width;
+          const coinSize = 14 * s;
+          const contentW = sellTextW + 3 * s + coinSize + 2 * s + priceTextW;
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#c0392b');
+          ctx.restore();
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          const hlY = btnY + 2 * s;
+          ctx.moveTo(bx + 3 * s, hlY);
+          ctx.lineTo(bx + btnW - 3 * s, hlY);
+          ctx.stroke();
+          ctx.restore();
+          ctx.save();
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+          ctx.textBaseline = 'middle';
+          const midY = btnY + btnH / 2;
+          const startX = bx + (btnW - contentW) / 2;
+          ctx.textAlign = 'left';
+          ctx.fillText(sellText, startX, midY);
+          if (this.coinIcon && this.coinIconLoaded) {
+            ctx.drawImage(this.coinIcon, startX + sellTextW + 3 * s, midY - coinSize / 2, coinSize, coinSize);
+          }
+          ctx.fillText(priceText, startX + sellTextW + 3 * s + coinSize + 2 * s, midY);
+          ctx.restore();
+          this._potionDetailSellBtnRect = { x: bx, y: btnY, w: btnW, h: btnH, index: popup.potionIndex };
+          bx += btnW + btnGap;
+        }
+
+        // 使用按钮（绿色）
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.25)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#1e8449');
+        ctx.restore();
+        // 顶部高光条
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.2 * s;
+        ctx.beginPath();
+        const useHlY = btnY + 2 * s;
+        ctx.moveTo(bx + 3 * s, useHlY);
+        ctx.lineTo(bx + btnW - 3 * s, useHlY);
+        ctx.stroke();
+        ctx.restore();
+        ctx.save();
+        ctx.fillStyle = '#fff';
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('使用', bx + btnW / 2, btnY + btnH / 2);
+        ctx.restore();
+        this._potionDetailUseBtnRect = { x: bx, y: btnY, w: btnW, h: btnH, index: popup.potionIndex };
+      }
+
+      ctx.restore();
+    }
+
+    // ===== 女巫牌升级弹窗（卡牌升级：等级对比 + 选择已有卡牌 + 确认升级） =====
+    Renderer.prototype._drawWitchUpgradePopup = function(ctx, game, s) {
+      const popup = game._witchUpgradePopup;
+      if (!popup) return;
+      const W = this.W;
+      const H = this.H;
+
+      const elapsed = Date.now() - popup.startTime;
+      const panel = this._drawModalPanel(ctx, W, H, s, {
+        width: 340, height: 560, elapsed,
+        isClosing: popup.closing,
+        closeStartTime: popup.closeStartTime,
+        onCloseComplete: () => { game._witchUpgradePopup = null; }
+      });
+      if (!panel) return;
+      const { px, py, pw, ph, closeAlpha } = panel;
+
+      const jokers = game.jokers || [];
+      // 可升级判定：带 upgrate_value 的女巫牌（实例没有则回退 SHOP_POOL 按名称查找，兼容旧存档）
+      const upgradeable = (j) => getWitchUpgradeStep(j) !== undefined;
+      // 选中卡牌（无效时回退到第一张可升级牌）
+      let selIndex = popup.jokerIndex;
+      if (!upgradeable(jokers[selIndex])) {
+        selIndex = jokers.findIndex(upgradeable);
+      }
+      const joker = selIndex >= 0 ? jokers[selIndex] : null;
+
+      // 重置点击区域
+      this._witchUpgradeCardRects = [];
+      this._witchUpgradeConfirmRect = null;
+      this._witchUpgradeCloseRect = null;
+
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // 标题（参考单词本：Georgia 加粗 + 分割线）
+      const titleY = py + 32 * s;
+      ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
+      ctx.fillStyle = '#5a4a2a';
+      ctx.fillText('卡牌升级', px + pw / 2, titleY);
+      const decoLineY = titleY + 18 * s;
+      const decoLineW = pw * 0.45;
+      this._drawTitleDivider(ctx, px + (pw - decoLineW) / 2, decoLineY, decoLineW, s, { diamondColor: '#c4a35a' });
+
+      ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+      ctx.fillStyle = '#a09070';
+      ctx.fillText('选择要升级的卡牌', px + pw / 2, decoLineY + 16 * s);
+
+      // 效果文字自动换行工具（对比视图/结果视图共用；fontSize 单位 px，乘 s 缩放）
+      const wrapDesc = (text, maxW, fontSize = 12) => {
+        ctx.font = `${Math.floor(fontSize * s)}px sans-serif`;
+        const lines = [];
+        let line = '';
+        for (const ch of String(text)) {
+          if (line && ctx.measureText(line + ch).width > maxW) {
+            lines.push(line);
+            line = ch;
+          } else {
+            line += ch;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      };
+
+      if (joker && popup.upgraded) {
+        // ===== 升级成功视图：卡牌从右侧对比位移动到中间并放大，背后紫色光芒+闪烁星星 =====
+        const curLv = joker.level || 1;
+        const curVal = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
+
+        // 动画：起点 = 对比视图右侧卡位，终点 = 中间大卡
+        const animElapsed = popup.upgradeAnimStart ? Date.now() - popup.upgradeAnimStart : 10000;
+        const animP = Math.min(animElapsed / 450, 1);
+        const ease = Easing.easeOutCubic(animP);
+        const fromCX = px + pw / 2 + 64 * s;
+        const fromCY = py + 86 * s + 42 * s;
+        const fromW = 80 * s;
+        const fromH = 96 * s;
+        const toW = 124 * s;
+        const toH = 148 * s;
+        const toCX = px + pw / 2;
+        const toCY = py + 110 * s + toH / 2;
+        const curCX = fromCX + (toCX - fromCX) * ease;
+        const curCY = fromCY + (toCY - fromCY) * ease;
+        const curW = fromW + (toW - fromW) * ease;
+        const curH = fromH + (toH - fromH) * ease;
+
+        // 背后紫色光芒 + 闪烁星星（参考恭喜猜中弹窗上方特效）
+        this._drawLightRays(ctx, toCX, toCY, toW * 1.5, s, animElapsed, closeAlpha);
+        this._witchUpgradeStars = this._drawSparkleStars(
+          ctx, toCX, toCY, toW * 2.0, toH * 1.5, s, animElapsed, 12, this._witchUpgradeStars, closeAlpha
+        );
+
+        // 移动到位后：缩放弹跳（1 → 1.15 → 1）
+        let popScale = 1;
+        if (animP >= 1) {
+          const popT = Math.min((animElapsed - 450) / 350, 1);
+          popScale = 1 + 0.15 * Math.sin(popT * Math.PI);
+        }
+        const popW = curW * popScale;
+        const popH = curH * popScale;
+
+        // 卡牌：移动 + 放大 + 到位弹跳，保留紫色斜光
+        this._drawPropCard(ctx, joker, curCX - popW / 2, curCY - popH / 2, popW, popH, s, true, false);
+        this._drawRectSweep(ctx, curCX - popW / 2, curCY - popH / 2, popW, popH, s, 'purple', 0);
+
+        // 卡牌就位后，Lv / 效果 / 确认按钮淡入
+        const contentA = Math.min(Math.max((animP - 0.65) / 0.35, 0), 1);
+        ctx.save();
+        ctx.globalAlpha = closeAlpha * contentA;
+
+        ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#9b59b6';
+        ctx.textAlign = 'center';
+        ctx.fillText(`Lv.${curLv}`, toCX, toCY + toH / 2 + 18 * s);
+
+        // 升级后效果（自动换行，框内居中）
+        const desc = formatItemDesc({ ...joker, real_value: curVal });
+        const boxW = 230 * s;
+        const boxH = 80 * s;
+        const boxY = toCY + toH / 2 + 36 * s;
+        this.roundRect(toCX - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
+        const lines = wrapDesc(desc, boxW - 16 * s, 13);
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#5a4a2a';
+        const firstY = boxY + boxH / 2 - ((lines.length - 1) * 16 * s) / 2;
+        lines.forEach((ln, li) => {
+          ctx.fillText(ln, toCX, firstY + li * 16 * s);
+        });
+
+        // 确认按钮（关闭弹窗）：复用购买成功/结算「领取」按钮样式
+        const cfmW = 200 * s;
+        const cfmH = 44 * s;
+        const cfmX = px + (pw - cfmW) / 2;
+        const cfmY = py + ph - cfmH - 20 * s;
+        this._drawScaledButton(ctx, '确认', cfmX, cfmY, cfmW, cfmH, s, !!popup._confirmPressed, { color: '#c4a35a', radius: 8 });
+        ctx.restore();
+        this._witchUpgradeConfirmRect = { x: cfmX, y: cfmY, w: cfmW, h: cfmH, enabled: true };
+      } else if (joker) {
+        const curLv = joker.level || 1;
+        const curVal = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
+        const nextVal = Math.round((curVal + getWitchUpgradeStep(joker)) * 10) / 10;
+        const cost = (curLv + 1) * joker.cost;
+
+        // ===== 等级对比预览：当前 → 下一级 =====
+        const cardW = 70 * s;
+        const cardH = 84 * s;
+        const cardY = py + 86 * s;
+        // 升级后的卡牌更大（右侧）
+        const nextCardW = 80 * s;
+        const nextCardH = 96 * s;
+        const leftCX = px + pw / 2 - 64 * s;
+        const rightCX = px + pw / 2 + 64 * s;
+        const centerY = cardY + cardH / 2;
+        this._drawPropCard(ctx, joker, leftCX - cardW / 2, cardY, cardW, cardH, s, true, false);
+        const nextCardX = rightCX - nextCardW / 2;
+        const nextCardY = centerY - nextCardH / 2;
+        this._drawPropCard(ctx, joker, nextCardX, nextCardY, nextCardW, nextCardH, s, true, false);
+        // 升级后卡牌：紫色斜光扫过（参考主页大按钮）
+        this._drawRectSweep(ctx, nextCardX, nextCardY, nextCardW, nextCardH, s, 'purple', 0);
+        // 中间箭头
+        ctx.font = `bold ${Math.floor(22 * s)}px sans-serif`;
+        ctx.fillStyle = '#c9a84c';
+        ctx.fillText('》', px + pw / 2, centerY);
+
+        // 等级标签（加粗；两卡高度不同但标签水平对齐，统一按左卡底部取齐）
+        const lvLabelY = cardY + cardH + 14 * s;
+        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.fillStyle = '#8a7a5a';
+        ctx.fillText(`Lv.${curLv}`, leftCX, lvLabelY);
+        ctx.fillStyle = '#9b59b6';
+        ctx.fillText(`Lv.${curLv + 1}`, rightCX, lvLabelY);
+
+        // 效果对比框（两个框之间留间距；内容文字自动换行不超出框）
+        const boxW = 112 * s;
+        const boxH = 64 * s;
+        const boxY = cardY + cardH + 26 * s;
+        const curDesc = formatItemDesc({ ...joker, real_value: curVal });
+        const nextDesc = formatItemDesc({ ...joker, real_value: nextVal });
+        [[leftCX, curDesc], [rightCX, nextDesc]].forEach(([bcx, desc]) => {
+          this.roundRect(bcx - boxW / 2, boxY, boxW, boxH, 6 * s, '#f0e8d8', '#e0d4b8', 1 * s);
+          const lines = wrapDesc(desc, boxW - 14 * s);
+          ctx.font = `${Math.floor(12 * s)}px sans-serif`;
+          ctx.fillStyle = '#5a4a2a';
+          ctx.textAlign = 'center';
+          // 内容在框内垂直居中
+          const firstY = boxY + boxH / 2 - ((lines.length - 1) * 14 * s) / 2;
+          lines.forEach((ln, li) => {
+            ctx.fillText(ln, bcx, firstY + li * 14 * s);
+          });
+        });
+
+        // ===== 选择已有卡牌（仅列出可升级的女巫牌） =====
+        const pickY = boxY + boxH + 26 * s;
+        ctx.font = `${Math.floor(14 * s)}px sans-serif`;
+        ctx.fillStyle = '#8b6914';
+        const pickText = '选择已有卡牌';
+        ctx.fillText(pickText, px + pw / 2, pickY);
+        // 文字左右装饰线（score_line.png，右侧水平镜像，参考计分方块两侧装饰）
+        if (this.scoreLineImg && this.scoreLineLoaded) {
+          const pickTextW = ctx.measureText(pickText).width;
+          const lineAspect = (this.scoreLineImg.width || 20) / (this.scoreLineImg.height || 80);
+          const lineH = 15 * s;
+          const lineW = lineH * lineAspect;
+          const lineGap = 8 * s;
+          const lineY = pickY - lineH / 2;
+          ctx.drawImage(this.scoreLineImg, px + pw / 2 - pickTextW / 2 - lineGap - lineW, lineY, lineW, lineH);
+          ctx.save();
+          ctx.translate(px + pw / 2 + pickTextW / 2 + lineGap + lineW, lineY);
+          ctx.scale(-1, 1);
+          ctx.drawImage(this.scoreLineImg, 0, 0, lineW, lineH);
+          ctx.restore();
+        }
+
+        const upList = jokers.map((j, i) => ({ j, i })).filter(e => upgradeable(e.j));
+        const n = upList.length;
+        const gap2 = 8 * s;
+        const cw = Math.min(56 * s, (pw - 40 * s - (n - 1) * gap2) / Math.max(n, 1));
+        const ch = cw * 1.2;
+        const rowY = pickY + 20 * s;
+        const totalW = n * cw + (n - 1) * gap2;
+        let rowX = px + (pw - totalW) / 2;
+        upList.forEach(({ j, i }) => {
+          this._drawPropCard(ctx, j, rowX, rowY, cw, ch, s, true, false);
+          // 选中：金色描边 + 右上角勾选
+          if (i === selIndex) {
+            this.roundRect(rowX - 2 * s, rowY - 2 * s, cw + 4 * s, ch + 4 * s, 6 * s, null, '#c9a84c', 2 * s);
+            const ckR = 8 * s;
+            const ckX = rowX + cw - 2 * s;
+            const ckY = rowY + 2 * s;
+            ctx.save();
+            ctx.fillStyle = '#c9a84c';
+            ctx.beginPath();
+            ctx.arc(ckX, ckY, ckR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = `bold ${Math.floor(10 * s)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('✓', ckX, ckY);
+            ctx.restore();
+          }
+          // 等级标签
+          ctx.save();
+          ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+          ctx.fillStyle = '#5a4a2a';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`Lv.${(j && j.level) || 1}`, rowX + cw / 2, rowY + ch + 11 * s);
+          ctx.restore();
+          this._witchUpgradeCardRects.push({ x: rowX, y: rowY, w: cw, h: ch, index: i });
+          rowX += cw + gap2;
+        });
+
+        // ===== 升级消耗 + 确认升级 =====
+        const canAfford = game.gold >= cost;
+        const costY = py + ph - 96 * s;
+        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+        const costLabel = '升级消耗';
+        const costNum = String(cost);
+        const costLabelW = ctx.measureText(costLabel).width;
+        const costNumW = ctx.measureText(costNum).width;
+        const costCoinSize = 16 * s;
+        const costTotalW = costLabelW + 6 * s + costCoinSize + 3 * s + costNumW;
+        let costX = px + pw / 2 - costTotalW / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#5a4a2a';
+        ctx.fillText(costLabel, costX, costY);
+        costX += costLabelW + 6 * s;
+        if (this.coinIcon && this.coinIconLoaded) {
+          ctx.drawImage(this.coinIcon, costX, costY - costCoinSize / 2, costCoinSize, costCoinSize);
+        }
+        costX += costCoinSize + 3 * s;
+        ctx.fillStyle = canAfford ? '#c9a84c' : '#c0392b';
+        ctx.fillText(costNum, costX, costY);
+        ctx.textAlign = 'center';
+
+        // 确认升级按钮（金币不足置灰）：复用购买成功/结算「领取」按钮样式
+        const cfmW = 200 * s;
+        const cfmH = 44 * s;
+        const cfmX = px + (pw - cfmW) / 2;
+        const cfmY = py + ph - cfmH - 20 * s;
+        this._drawScaledButton(ctx, '确认升级', cfmX, cfmY, cfmW, cfmH, s, !!popup._confirmPressed,
+          { color: canAfford ? '#c4a35a' : '#b8b0a0', radius: 8 });
+        this._witchUpgradeConfirmRect = { x: cfmX, y: cfmY, w: cfmW, h: cfmH, enabled: canAfford };
+      } else {
+        // 无可升级女巫牌
+        ctx.font = `${Math.floor(13 * s)}px sans-serif`;
+        ctx.fillStyle = '#a09070';
+        ctx.fillText('暂无可升级的女巫牌', px + pw / 2, py + ph / 2);
+      }
+
+      ctx.restore();
+
+      // 关闭按钮（复用单词本样式）
+      const closeSize = 32 * s;
+      const closeX = px + pw - closeSize - 10 * s + 3;
+      const closeY = py + 10 * s - 3;
+      const closePressOffset = popup._closePressed ? 2 * s : 0;
+      ctx.save();
+      ctx.globalAlpha = closeAlpha;
+      if (this.popCloseLoaded && this.popCloseImage) {
+        ctx.drawImage(this.popCloseImage, closeX, closeY + closePressOffset, closeSize, closeSize);
+      } else {
+        ctx.fillStyle = 'rgba(48, 35, 22, 0.7)';
+        ctx.beginPath();
+        ctx.arc(closeX + closeSize / 2, closeY + closePressOffset + closeSize / 2, closeSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(245, 240, 230, 0.9)';
+        ctx.lineWidth = 1.5 * s;
+        ctx.lineCap = 'round';
+        const xPad = 8 * s;
+        ctx.beginPath();
+        ctx.moveTo(closeX + xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + closeSize - xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.moveTo(closeX + closeSize - xPad, closeY + closePressOffset + xPad);
+        ctx.lineTo(closeX + xPad, closeY + closePressOffset + closeSize - xPad);
+        ctx.stroke();
+      }
+      ctx.restore();
+      this._witchUpgradeCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
+      this._witchUpgradePanelRect = { x: px, y: py, w: pw, h: ph };
+    }
+
 
     Renderer.prototype.drawChangeLetterPopup = function(game) {
       const ctx = this.ctx;

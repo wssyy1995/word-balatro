@@ -36,7 +36,7 @@
 const { Game, requestGlobalProfile, fetchGlobalRank, GAME_VERSION } = require('./js/game');
 const { Renderer } = require('./js/renderer');
 const { InputHandler } = require('./js/input');
-const { buyItem, upgradeLetter, refreshModule, generateShopItems } = require('./js/shop');
+const { buyItem, upgradeLetter, refreshModule, generateShopItems, getWitchUpgradeStep } = require('./js/shop');
 const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
@@ -145,6 +145,10 @@ wx.onHide(() => {
 const info = wx.getSystemInfoSync();
 const canvas = wx.createCanvas();
 const ctx = canvas.getContext('2d');
+
+// 每日金词分享配图（MP 后台自定义转发图片，已过审）
+const GOLDEN_SHARE_IMAGE_URL = 'https://mmocgame.qpic.cn/wechatgame/cRzt0Nn4komGLIJSQia9MIqfnyZMDNVeTNY0gKOmYWqz9BEGJ1kjY2NJk6eUSFRux/0';
+const GOLDEN_SHARE_IMAGE_ID = '+F+yMuPhQSO60Jy7bv7L3w==';
 
 // 平台判断：开发者工具不震动
 const isDevTools = info.platform === 'devtools';
@@ -1137,6 +1141,7 @@ function getInputY(x, y) {
     game._tipHelpPopup ||
     game.cardBookOpen ||
     game._changeLetterPopup ||
+    game._witchUpgradePopup ||
     (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) ||
     game._newWitchCardPopup ||
     (game._lifeExtensionAnim && Date.now() - game._lifeExtensionAnim.startTime >= 1000) ||
@@ -1830,16 +1835,16 @@ wx.onTouchStart((e) => {
       const gwSave = game.storageManager ? game.storageManager.getGoldenWord() : null;
       if (gwSave && gwSave.date === bjToday && gwSave.finished) {
         if (game.audioManager) game.audioManager.play('tap');
-        const tries = (gwSave.guesses || []).length;
+        const tries = gwSave.winTries || (gwSave.guesses || []).length;
         const shareTitle = gwSave.won
           ? `今日神秘金词我用了 ${tries} 次猜中！你能几次猜中？`
           : '今日的神秘金词我实在猜不出来了，你试试看！';
-        try {
-          const tempFilePath = canvas.toTempFilePathSync();
-          wx.shareAppMessage({ title: shareTitle, imageUrl: tempFilePath, query: 'from=golden_word' });
-        } catch (e) {
-          wx.shareAppMessage({ title: shareTitle, query: 'from=golden_word' });
-        }
+        wx.shareAppMessage({
+          title: shareTitle,
+          imageUrl: GOLDEN_SHARE_IMAGE_URL,
+          imageUrlId: GOLDEN_SHARE_IMAGE_ID,
+          query: 'from=golden_word'
+        });
         return;
       }
       if (game.audioManager) game.audioManager.play('homepage_round_tap');
@@ -3199,24 +3204,16 @@ wx.onTouchEnd(() => {
           "userid": game.userid || '',
           "round": game.round
         });
-        // 延迟 80ms 让按钮恢复后再拉起分享
+        // 延迟 80ms 让按钮恢复后再拉起分享（配图为 MP 后台过审的自定义转发图片）
         game._delay(() => {
           game._tipHelpShareDelaying = false;
-          try {
-            const tempFilePath = canvas.toTempFilePathSync();
-            wx.shareAppMessage({
-              title: `🎯 我在女巫的词牌里遇到困难了，快来帮我想想！`,
-              imageUrl: tempFilePath,
-              query: `from=tip_help&round=${game.round}`
-            });
-            shareTipHelpState = { startTime: Date.now(), resolving: true };
-          } catch (e) {
-            wx.shareAppMessage({
-              title: `🎯 我在女巫的词牌里遇到困难了，快来帮我想想！`,
-              query: `from=tip_help&round=${game.round}`
-            });
-            shareTipHelpState = { startTime: Date.now(), resolving: true };
-          }
+          wx.shareAppMessage({
+            title: `🎯 我在女巫的词牌里遇到困难了，快来帮我想想！`,
+            imageUrl: 'https://mmocgame.qpic.cn/wechatgame/QGtiasOFjAqtZG81lsaJYgmQWp2XwsTlWsQ5rn7OejoJgUfEA7kC6QNBvgvJibKRwN/0',
+            imageUrlId: 'l0LnuKJhQpKbDY0j26N5Gw==',
+            query: `from=tip_help&round=${game.round}`
+          });
+          shareTipHelpState = { startTime: Date.now(), resolving: true };
         }, 80);
       }
     }
@@ -3702,6 +3699,8 @@ wx.onTouchEnd(() => {
       // 打开弹窗 + 保持选中上移效果
       const propRects = renderer.shopRenderer.shopOwnedPropRects || [];
       const rect = propRects.find(r => r.array === 'jokers' && r.index === index);
+      game._potionDetailPopup = null;
+      game._witchEmptyPopup = null;
       game._witchDetailPopup = { jokerIndex: index, animStartTime: Date.now(), isShop: true, rect };
       renderer.shopRenderer.shopSelectedOwned = { type: 'jokers', index };
     }
@@ -3820,6 +3819,48 @@ function addScratchPoint(md, rect, x, y) {
     vibrate();
     if (game.audioManager) game.audioManager.play('tap');
   }
+}
+
+// 游戏进行页使用魔法药水（道具栏点击 → 详情弹窗「使用」触发）
+function usePotionInGame(potionIndex) {
+  const potion = game.potions[potionIndex];
+  if (!potion) return;
+  // 本回合被禁用的药水牌无法使用
+  if (potion._disabled) {
+    game.hintToast = { text: '女巫约束：本回合禁用魔法药水牌', expireAt: Date.now() + 2000, startTime: Date.now() };
+    return;
+  }
+  // 字母置换药水：游戏中直接使用，弹出选择弹窗
+  if (potion.effect === 'change_letter') {
+    const selectedCards = game.getSelectedCards();
+    if (selectedCards.length !== 1) {
+      game._changeLetterHint = { potionIndex, startTime: Date.now() };
+      return;
+    }
+    game._changeLetterPopup = {
+      potionIndex,
+      cardId: selectedCards[0].id,
+      originalLetter: selectedCards[0].letter,
+      targetLetter: null,
+      startTime: Date.now(),
+    };
+    return;
+  }
+  // 吸星大法：进入专属选择页，挑选目标手牌后点击确定
+  if (potion.effect === 'absorb_stars') {
+    game.potionMode = { ...potion, _potionIndex: potionIndex };
+    game._prePotionState = 'playing';
+    game._absorbStarsSelectedCardId = game.selected && game.selected[0] ? game.selected[0] : null;
+    game.state = 'potion';
+    if (game.storageManager) game.storageManager.saveProgress();
+    return;
+  }
+  // 其他药水：从道具栏移除后进入 potion 状态（记下原槽位，返回时放回原位）
+  game.potions.splice(potionIndex, 1);
+  game.potionMode = { ...potion, _potionIndex: potionIndex };
+  game._prePotionState = 'playing';
+  game.state = 'potion';
+  if (game.storageManager) game.storageManager.saveProgress();
 }
 
 function handleInput(x, inputY, rawY) {
@@ -4385,17 +4426,17 @@ function handleInput(x, inputY, rawY) {
       if (renderer.goldenShareBtnRect && renderer.hitTest(x, rawY, [renderer.goldenShareBtnRect])) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        const tries = gw ? gw.guesses.length : 0;
+        const tries = gw ? (gw.winTries || gw.guesses.length) : 0;
         // 分享文案不揭秘金词：猜中/失败两种场景
         const shareTitle = popup.won
           ? `今日神秘金词我用了 ${tries} 次猜中！你能几次猜中？`
           : '今日的神秘金词我实在猜不出来了，你试试看！';
-        try {
-          const tempFilePath = canvas.toTempFilePathSync();
-          wx.shareAppMessage({ title: shareTitle, imageUrl: tempFilePath, query: 'from=golden_word' });
-        } catch (e) {
-          wx.shareAppMessage({ title: shareTitle, query: 'from=golden_word' });
-        }
+        wx.shareAppMessage({
+          title: shareTitle,
+          imageUrl: GOLDEN_SHARE_IMAGE_URL,
+          imageUrlId: GOLDEN_SHARE_IMAGE_ID,
+          query: 'from=golden_word'
+        });
         if (gw && !gw.shared) {
           gw.shared = true;
           if (game.storageManager) game.storageManager.saveGoldenWord(gw);
@@ -4549,6 +4590,23 @@ function handleInput(x, inputY, rawY) {
       return;
     }
 
+    // 药水详情弹窗：「使用」按钮或点击外部关闭
+    if (game._potionDetailPopup) {
+      if (renderer._potionDetailUseBtnRect && renderer.hitTest(x, inputY, [renderer._potionDetailUseBtnRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const useIdx = game._potionDetailPopup.potionIndex;
+        game._potionDetailPopup = null;
+        usePotionInGame(useIdx);
+        return;
+      }
+      // 点到女巫牌/药水牌（含空槽位）：关闭本弹窗并继续响应道具点击
+      const hitProp = (renderer.witchPropRects && renderer.hitTest(x, inputY, renderer.witchPropRects)) ||
+        (renderer.potionPropRects && renderer.hitTest(x, inputY, renderer.potionPropRects));
+      game._potionDetailPopup = null;
+      if (!hitProp) return;
+    }
+
     // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
     if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
       const cardHit = renderer.hitTest(x, inputY, renderer.cardRects);
@@ -4642,6 +4700,18 @@ function handleInput(x, inputY, rawY) {
     if (renderer.witchPropRects) {
       const witchHit = renderer.hitTest(x, inputY, renderer.witchPropRects);
       if (witchHit) {
+        // 空槽位：弹出「女巫牌」一句话说明弹窗
+        if (witchHit.empty) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          if (game._witchEmptyPopup) {
+            game._witchEmptyPopup = null;
+          } else {
+            game._witchDetailPopup = null;
+            game._witchEmptyPopup = { rect: witchHit, kind: 'witch', animStartTime: Date.now() };
+          }
+          return;
+        }
         const joker = game.jokers[witchHit.jokerIndex];
         if (joker && joker._disabled) return;
         vibrate();
@@ -4649,16 +4719,35 @@ function handleInput(x, inputY, rawY) {
         if (game._witchDetailPopup && game._witchDetailPopup.jokerIndex === witchHit.jokerIndex) {
           game._witchDetailPopup = null;
         } else {
+          game._witchEmptyPopup = null;
           game._witchDetailPopup = { jokerIndex: witchHit.jokerIndex, animStartTime: Date.now() };
         }
         return;
       }
     }
 
-    // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗
+    // 女巫牌升级按钮（占位，暂不响应；点击不关闭弹窗）
+    if (game._witchDetailPopup && renderer._witchDetailUpgradeBtnRect) {
+      const upHit = renderer.hitTest(x, inputY, [renderer._witchDetailUpgradeBtnRect]);
+      if (upHit) {
+        vibrate();
+        return;
+      }
+    }
+
+    // 点击弹窗外部关闭女巫详情弹窗 / HUD 女巫弹窗 / 空槽位说明弹窗
+    // （点到女巫牌/药水牌时只关弹窗不吞点击，让道具点击继续响应）
     if (game._witchDetailPopup) {
+      const hitProp = (renderer.witchPropRects && renderer.hitTest(x, inputY, renderer.witchPropRects)) ||
+        (renderer.potionPropRects && renderer.hitTest(x, inputY, renderer.potionPropRects));
       game._witchDetailPopup = null;
-      return;
+      if (!hitProp) return;
+    }
+    if (game._witchEmptyPopup) {
+      const hitProp = (renderer.witchPropRects && renderer.hitTest(x, inputY, renderer.witchPropRects)) ||
+        (renderer.potionPropRects && renderer.hitTest(x, inputY, renderer.potionPropRects));
+      game._witchEmptyPopup = null;
+      if (!hitProp) return;
     }
 
     // 检测卡牌图鉴图标点击
@@ -4690,6 +4779,18 @@ function handleInput(x, inputY, rawY) {
     if (renderer.potionPropRects) {
       const potionHit = renderer.hitTest(x, inputY, renderer.potionPropRects);
       if (potionHit) {
+        // 空槽位：弹出「魔法药水」一句话说明弹窗（绿色边框）
+        if (potionHit.empty) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          if (game._witchEmptyPopup) {
+            game._witchEmptyPopup = null;
+          } else {
+            game._witchDetailPopup = null;
+            game._witchEmptyPopup = { rect: potionHit, kind: 'potion', animStartTime: Date.now() };
+          }
+          return;
+        }
         const potion = game.potions[potionHit.potionIndex];
         if (!potion) return;
         // 本回合被禁用的药水牌无法使用
@@ -4699,37 +4800,10 @@ function handleInput(x, inputY, rawY) {
         }
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        // 字母置换药水：游戏中直接使用，弹出选择弹窗
-        if (potion.effect === 'change_letter') {
-          const selectedCards = game.getSelectedCards();
-          if (selectedCards.length !== 1) {
-            game._changeLetterHint = { potionIndex: potionHit.potionIndex, startTime: Date.now() };
-            return;
-          }
-          game._changeLetterPopup = {
-            potionIndex: potionHit.potionIndex,
-            cardId: selectedCards[0].id,
-            originalLetter: selectedCards[0].letter,
-            targetLetter: null,
-            startTime: Date.now(),
-          };
-          return;
-        }
-        // 吸星大法：进入专属选择页，挑选目标手牌后点击确定
-        if (potion.effect === 'absorb_stars') {
-          game.potionMode = { ...potion, _potionIndex: potionHit.potionIndex };
-          game._prePotionState = 'playing';
-          game._absorbStarsSelectedCardId = game.selected && game.selected[0] ? game.selected[0] : null;
-          game.state = 'potion';
-          if (game.storageManager) game.storageManager.saveProgress();
-          return;
-        }
-        // 其他药水：从道具栏移除后进入 potion 状态（记下原槽位，返回时放回原位）
-        game.potions.splice(potionHit.potionIndex, 1);
-        game.potionMode = {...potion, _potionIndex: potionHit.potionIndex};
-        game._prePotionState = 'playing';
-        game.state = 'potion';
-        if (game.storageManager) game.storageManager.saveProgress();
+        // 弹出药水详情弹窗（效果说明 + 使用按钮）
+        game._witchDetailPopup = null;
+        game._witchEmptyPopup = null;
+        game._potionDetailPopup = { potionIndex: potionHit.potionIndex, rect: potionHit, animStartTime: Date.now() };
         return;
       }
     }
@@ -5022,7 +5096,12 @@ function handleInput(x, inputY, rawY) {
               if (item.limit !== undefined && item.usesLeft === undefined) {
                 item.usesLeft = item.limit;
               }
+              // 升级系统：默认 Lv.1，real_value 初始等于 value
+              if (item.level === undefined) item.level = 1;
+              if (item.real_value === undefined) item.real_value = item.value;
               game.jokers.push(item);
+              // 新购入卡牌缩放弹入动画
+              game._newOwnedProp = { type: 'jokers', index: game.jokers.length - 1, startTime: Date.now() };
               // 装备第 2 张女巫牌时：2张女巫牌一起轻微抖动 + toast 提示排序（每个用户仅一次）
               if (game.jokers.length === 2) {
                 const hasShownSortHint = game.storageManager && game.storageManager.loadJokerSortHintShown();
@@ -5045,6 +5124,8 @@ function handleInput(x, inputY, rawY) {
             // 药水牌且点击"暂存"
             if (btnHit.action === 'stashPotion' && game._confirmBuyItemData) {
               game.potions.push({...game._confirmBuyItemData});
+              // 新购入卡牌缩放弹入动画
+              game._newOwnedProp = { type: 'potions', index: game.potions.length - 1, startTime: Date.now() };
               if (game.storageManager) game.storageManager.saveProgress();
             }
             // 药水牌且点击"立即使用"
@@ -5102,10 +5183,93 @@ function handleInput(x, inputY, rawY) {
       return;
     }
 
+    // 女巫牌升级弹窗（商店页）
+    if (game._witchUpgradePopup) {
+      const up = game._witchUpgradePopup;
+      if (up.closing) return;
+      // 关闭按钮
+      if (renderer._witchUpgradeCloseRect && renderer.hitTest(x, inputY, [renderer._witchUpgradeCloseRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        up.closing = true;
+        up.closeStartTime = Date.now();
+        return;
+      }
+      // 确认升级
+      if (renderer._witchUpgradeConfirmRect && renderer.hitTest(x, inputY, [renderer._witchUpgradeConfirmRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        // 升级成功视图：确认按钮 = 关闭弹窗
+        if (up.upgraded) {
+          up.closing = true;
+          up.closeStartTime = Date.now();
+          return;
+        }
+        if (!renderer._witchUpgradeConfirmRect.enabled) {
+          game.hintToast = { text: '金币不足，无法升级', expireAt: Date.now() + 2000, startTime: Date.now() };
+          return;
+        }
+        if (up._confirmPressed) return; // 动画进行中防重复点击
+        const joker = (game.jokers || [])[up.jokerIndex];
+        const step = getWitchUpgradeStep(joker);
+        if (joker && step !== undefined) {
+          const lv = joker.level || 1;
+          const cost = (lv + 1) * joker.cost;
+          if (game.gold >= cost) {
+            // 先播按钮按下偏移动画，150ms 后执行升级并切换弹窗内容
+            up._confirmPressed = true;
+            setTimeout(() => {
+              up._confirmPressed = false;
+              game.gold -= cost;
+              joker.level = lv + 1;
+              const base = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
+              joker.real_value = Math.round((base + step) * 10) / 10;
+              if (game.storageManager) game.storageManager.saveProgress();
+              if (game.audioManager) game.audioManager.play('buy_success');
+              // 切换到升级成功视图（卡牌移动放大动画起点）
+              up.upgraded = true;
+              up.upgradeAnimStart = Date.now();
+            }, 150);
+          }
+        }
+        return;
+      }
+      // 选择已有卡牌
+      if (renderer._witchUpgradeCardRects && renderer._witchUpgradeCardRects.length > 0) {
+        const cardHit = renderer.hitTest(x, inputY, renderer._witchUpgradeCardRects);
+        if (cardHit) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          up.jokerIndex = cardHit.index;
+          return;
+        }
+      }
+      // 点击面板外关闭
+      if (renderer._witchUpgradePanelRect && !renderer.hitTest(x, inputY, [renderer._witchUpgradePanelRect])) {
+        up.closing = true;
+        up.closeStartTime = Date.now();
+      }
+      return;
+    }
+
     // 检测已购买道具栏点击（选中/取消选中）
     if (renderer.shopRenderer && renderer.shopRenderer.shopOwnedPropRects) {
       const propHit = renderer.hitTest(x, inputY, renderer.shopRenderer.shopOwnedPropRects);
       if (propHit) {
+        // 空槽位：弹出说明弹窗（女巫牌紫色 / 魔法药水绿色）
+        if (propHit.empty) {
+          vibrate();
+          if (game.audioManager) game.audioManager.play('tap');
+          if (game._witchEmptyPopup) {
+            game._witchEmptyPopup = null;
+          } else {
+            game._witchDetailPopup = null;
+            game._potionDetailPopup = null;
+            renderer.shopRenderer.shopSelectedOwned = null;
+            game._witchEmptyPopup = { rect: propHit, kind: propHit.kind || 'witch', animStartTime: Date.now() };
+          }
+          return;
+        }
         // 女巫牌支持长按排序（400ms），药水牌保持原有短按逻辑
         if (propHit.array === 'jokers') {
           game._pendingJokerSelect = { index: propHit.index, startTime: Date.now() };
@@ -5124,15 +5288,65 @@ function handleInput(x, inputY, rawY) {
           }, 400);
           return;
         }
-        // 药水牌：保持短按逻辑
+        // 药水牌：弹出详情弹窗（效果信息 + 售出/使用按钮）
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        const prev = renderer.shopRenderer.shopSelectedOwned;
-        if (prev && prev.type === propHit.array && prev.index === propHit.index) {
+        game._witchDetailPopup = null;
+        game._witchEmptyPopup = null;
+        game._potionDetailPopup = { potionIndex: propHit.index, rect: propHit, isShop: true, animStartTime: Date.now() };
+        return;
+      }
+    }
+
+    // 药水详情弹窗（商店页：售出/使用；点击外部关闭）
+    if (game._potionDetailPopup) {
+      if (renderer._potionDetailSellBtnRect && renderer.hitTest(x, inputY, [renderer._potionDetailSellBtnRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('card_sell');
+        const sellIdx = game._potionDetailPopup.potionIndex;
+        const item = game.potions && game.potions[sellIdx];
+        if (item) {
+          game.gold += Math.round(item.cost / 2);
+          game._sellingProp = { type: 'potions', index: sellIdx, startTime: Date.now() };
           renderer.shopRenderer.shopSelectedOwned = null;
-        } else {
-          renderer.shopRenderer.shopSelectedOwned = { type: propHit.array, index: propHit.index };
+          if (game.storageManager) game.storageManager.saveProgress();
         }
+        game._potionDetailPopup = null;
+        return;
+      }
+      if (renderer._potionDetailUseBtnRect && renderer.hitTest(x, inputY, [renderer._potionDetailUseBtnRect])) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const useIdx = game._potionDetailPopup.potionIndex;
+        const potion = game.potions && game.potions[useIdx];
+        if (potion) {
+          // 从道具栏移除并进入使用页面
+          game.potions.splice(useIdx, 1);
+          game.potionMode = { ...potion };
+          game._prePotionState = 'shop';
+          game.state = 'potion';
+          renderer.shopRenderer.shopSelectedOwned = null;
+          if (game.storageManager) game.storageManager.saveProgress();
+        }
+        game._potionDetailPopup = null;
+        return;
+      }
+      game._potionDetailPopup = null;
+      return;
+    }
+
+    // 女巫牌升级按钮（打开升级弹窗；点击不关闭详情弹窗逻辑在此拦截）
+    if (game._witchDetailPopup && renderer._witchDetailUpgradeBtnRect) {
+      const upHit = renderer.hitTest(x, inputY, [renderer._witchDetailUpgradeBtnRect]);
+      if (upHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        const jokers = game.jokers || [];
+        const canUp = j => getWitchUpgradeStep(j) !== undefined;
+        let sel = game._witchDetailPopup.jokerIndex;
+        if (!canUp(jokers[sel])) sel = jokers.findIndex(canUp);
+        game._witchDetailPopup = null;
+        game._witchUpgradePopup = { jokerIndex: sel, startTime: Date.now() };
         return;
       }
     }
@@ -5147,7 +5361,8 @@ function handleInput(x, inputY, rawY) {
         const idx = sellHit.index;
         if (arr && arr[idx]) {
           const item = arr[idx];
-          game.gold += Math.round(item.cost / 2);
+          // 售价 = 基础售出价 × 女巫牌等级
+          game.gold += Math.round(item.cost / 2) * (item.level || 1);
           game._sellingProp = {
             type: 'jokers',
             index: idx,
@@ -5205,10 +5420,14 @@ function handleInput(x, inputY, rawY) {
       }
     }
 
-    // 点击商店页面其他地方，关闭售出按钮 / 女巫详情弹窗
+    // 点击商店页面其他地方，关闭售出按钮 / 女巫详情弹窗 / 空槽位说明弹窗
     let handled = false;
     if (game._witchDetailPopup && game._witchDetailPopup.isShop) {
       game._witchDetailPopup = null;
+      handled = true;
+    }
+    if (game._witchEmptyPopup) {
+      game._witchEmptyPopup = null;
       handled = true;
     }
     if (renderer.shopRenderer && renderer.shopRenderer.shopSelectedOwned) {
@@ -5720,10 +5939,12 @@ function handleInput(x, inputY, rawY) {
         game._reviveBtnPressed = true;
         game._reviveBtnPressTime = Date.now();
 
-        // 拉起分享复活
+        // 拉起分享复活（配图为 MP 后台过审的自定义转发图片）
         shareReviveState = { startTime: Date.now(), resolving: true };
         wx.shareAppMessage({
           title: `我正在收集女巫词牌，快来帮我过这关！`,
+          imageUrl: 'https://mmocgame.qpic.cn/wechatgame/6hD7bZsarmyfjMmA0ogAzeCE0gAHxlc4fUGqHJkOUCMKnmbCjKdsVU5EnL0CuWnk/0',
+          imageUrlId: 'MQ6jGSa0RLGY1UnTVCZ3tg==',
           query: `from=revive&round=${game.round}&score=${game.totalScore}`
         });
         return;

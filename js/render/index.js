@@ -106,6 +106,10 @@ Renderer.prototype.render = function(game) {
         this._drawShopBackground(game);
         // 商店页女巫牌详情弹窗（含右上角售出按钮）
         this._drawWitchDetailPopup(ctx, game, s);
+        // 商店页空槽位说明弹窗（女巫牌/魔法药水）
+        this._drawWitchEmptyPopup(ctx, game, s);
+        // 商店页魔法药水详情弹窗（售出/使用）
+        this._drawPotionDetailPopup(ctx, game, s);
 
         // 女巫奖励延迟 600ms 进入；图鉴引导进行中（Phase 1~4）时暂停计时
         if (game._pendingWitchRewardDelay && !game._closingNewWitchCardPopup) {
@@ -206,6 +210,10 @@ Renderer.prototype.render = function(game) {
       }
       if (game.confirmBuyItem !== undefined && game.confirmBuyItem !== null) {
         this.confirmBuyRenderer.draw(ctx, game, W, H, s);
+      }
+      // 女巫牌升级弹窗（独立模态，不下移，避免遮罩顶部露白）
+      if (game._witchUpgradePopup) {
+        this._drawWitchUpgradePopup(ctx, game, s);
       }
     } else if (game.state === 'mystery_discount') {
       // 迷之优惠页面（独立全屏页面，不显示商店背景）

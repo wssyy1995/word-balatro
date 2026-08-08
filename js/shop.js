@@ -1,5 +1,5 @@
 const { LETTER_SCORE, letterUpgrades, calcBaseTarget } = require('./data');
-const { getSkillForLevel, getRewardName } = require('./witch_skills');
+const { getSkillForLevel, getRewardName, formatItemDesc } = require('./witch_skills');
 const { Easing } = require('./animation');
 const { reportEvent } = require('./report');
 
@@ -28,25 +28,25 @@ function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
 // ===== 商店页面渲染 =====
 const SHOP_POOL = {
   witch: [
-    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, cost:8, min_level:1, desc:'元音字母分×3'},
-    {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:100, cost:6, min_level:1, desc:'单词首字母为元音时，该首字母分+100'},
-    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:30, cost:8, min_level:1, desc:'单词首尾字母各+30分'},
+    {name:'元音强化', type:'witch', scope:'per_card', trigger:'has_vowel', value:3, upgrate_value:0.5,cost:8, min_level:1, desc:'元音字母分×value'},
+    {name:'元音为首', type:'witch', scope:'per_card', trigger:'initial_vowel', operation:'add', value:100,upgrate_value:30, cost:6, min_level:1, desc:'单词首字母为元音时，该首字母分+value'},
+    {name:'左右开弓', type:'witch', scope:'per_card', trigger:'left_right_open', operation:'add', value:30,upgrate_value:10,  cost:8, min_level:1, desc:'单词首尾字母各+30分'},
     // {name:'四字母连击', type:'witch', scope:'whole_word', trigger:'length_4', value:1.5, cost:4, min_level:1, desc:'单词字母>=4时，倍率×1.5'},
-    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', operation:'multi_adds_value', value:2, cost:10, min_level:5, desc:'单词字母>=5时，单词倍率+2'},
-    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', operation:'multi_adds_value', value:4, cost:12, min_level:15, desc:'单词字母>=6时，单词倍率+4'},
-    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:4, cost:12, min_level:1, desc:'单词字母含J/Q/X/Y/Z时，倍率+4'},
+    {name:'五字母连击', type:'witch', scope:'whole_word', trigger:'length_5', operation:'multi_adds_value', value:2,upgrate_value:0.3,  cost:10, min_level:5, desc:'单词字母>=5时，单词倍率+value'},
+    {name:'六字母连击', type:'witch', scope:'whole_word', trigger:'length_6', operation:'multi_adds_value', value:4,upgrate_value:0.4, cost:12, min_level:15, desc:'单词字母>=6时，单词倍率+value'},
+    {name:'珍稀之力', type:'witch', scope:'whole_word', trigger:'has_face', operation:'multi_adds_value', value:4,upgrate_value:0.5, cost:12, min_level:1, desc:'单词字母含J/Q/X/Y/Z时，倍率+value'},
     {name:'容错咒文', type:'witch', trigger:'shield_illegal', cost:8, min_level:1, desc:'打出非法单词，不扣除出牌次数'},
     {name:'字母之神', type:'witch', scope:'limit', trigger:'letter_god', limit:3, cost:8, min_level:5, desc:'计分时，本单词所有字母按最高分字母算分（限3次）'},
     {name:'生命延续', type:'witch', scope:'limit', trigger:'life_extension', limit:1, cost:8, min_level:10, desc:'挽救1次游戏结束，将目标分差值×2,加到下一回合目标分'},
-    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:0, cost:12, min_level:5, desc:'每次打出非法单词，倍率累计+1'},
+    {name:'勇敢试错', type:'witch', scope:'whole_word', trigger:'illegal_boost', value:1, cost:12, min_level:5, desc:'每次打出非法单词，倍率累计+value'},
     {name:'以小博大', type:'witch', scope:'whole_word', trigger:'last_chance', value:8, cost:10, min_level:1, desc:'出牌<=3个字母,40%概率倍率+8'},
-    {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5, cost:12, min_level:10, desc:'相邻重复字母，倍率+5'},
-    {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, cost:10, min_level:15, desc:'单词首尾字母相同，倍率+6'},
-    {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:0, cost:8, min_level:1, desc:'每次出牌若与上一手首字母相同，倍率累计+3；中断后重置'},
-    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4, cost:12, min_level:5, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+4'},
-    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3, cost:14, min_level:10, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+3'},
+    {name:'双子合影', type:'witch', scope:'whole_word', trigger:'double_same', operation:'multi_adds_value', value:5,upgrate_value:0.5, cost:12, min_level:10, desc:'相邻重复字母，倍率+value'},
+    {name:'首尾呼应', type:'witch', scope:'whole_word', trigger:'firstend_same', operation:'multi_adds_value', value:6, upgrate_value:0.5,cost:10, min_level:15, desc:'单词首尾字母相同，倍率+value'},
+    {name:'首字连击', type:'witch', scope:'whole_word', trigger:'initial_succession', operation:'multi_accumulation', value:3, cost:8, min_level:1, desc:'每次出牌若与上一手首字母相同，倍率累计+value；中断后重置'},
+    {name:'回到过去', type:'witch', scope:'whole_word', trigger:'end_ed', operation:'multi_adds_value', value:4,upgrate_value:0.4, cost:12, min_level:5, desc:'打出的单词如果末尾加上\'ed\'也是合法单词,则倍率+value'},
+    {name:'复制魔法', type:'witch', scope:'whole_word', trigger:'end_s', operation:'multi_adds_value', value:3,upgrate_value:0.4, cost:14, min_level:10, desc:'打出的单词如果末尾加上\'s\'也是合法单词,则倍率+value'},
     {name:'消元术', type:'witch', scope:'whole_word', trigger:'no_duplicate', operation:'multi_adds_value', value:2, penalty:-1, cost:10, min_level:1, desc:'与上一手无重复字母时,单词倍率+2，有则-1'},
-    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +100'},
+    {name:'预言家', type:'witch', scope:'per_card', trigger:'predicted_letter', operation:'add', value:100, upgrate_value:50,cost:9, min_level:1, desc:'回合开始时随机预言一个字母，打出该字母时,字母分 +value'},
     {name:'混沌法球', type:'witch', scope:'whole_word', trigger:'chaos_orb', value:1, cost:12, min_level:1, desc:'每次出牌，单词倍率随机+[0.5~1.2]'},
     {name:'温故知新', type:'witch', scope:'whole_word', trigger:'is_new_word', operation:'multi_adds_value', value:3, penalty:-1, cost:12, min_level:15, desc:'首次打出新单词，倍率+3；若历史打出过，倍率-1'},
     {name:'出牌小能手', type:'witch', scope:'global', trigger:'zero_hands_bonus', value:2, cost:8, min_level:3, desc:'回合结算时，若剩余出牌次数=0，则金币额外+2'}
@@ -524,8 +524,19 @@ class ShopRenderer {
               game._jokerShakeHint = null;
             }
           }
-          const drawW = slotW * scale;
-          const drawH = oSlotH * scale;
+          // 新购入卡牌：缩放弹入动画
+          let appearScale = 1;
+          if (game._newOwnedProp && game._newOwnedProp.type === 'jokers' && game._newOwnedProp.index === i) {
+            const appearElapsed = Date.now() - game._newOwnedProp.startTime;
+            const appearDuration = 350;
+            if (appearElapsed < appearDuration) {
+              appearScale = Math.max(Easing.easeOutBack(appearElapsed / appearDuration), 0.02);
+            } else {
+              game._newOwnedProp = null;
+            }
+          }
+          const drawW = slotW * scale * appearScale;
+          const drawH = oSlotH * scale * appearScale;
           const drawX = sx + slideOffsetX + sortX - (drawW - slotW) / 2 + shakeX + hintShakeX;
           const drawY = oSlotY + selectedOffsetY + sortY - (drawH - oSlotH) / 2 + shakeY + hintShakeY;
           if (glow > 0.01) {
@@ -580,6 +591,8 @@ class ShopRenderer {
         ctx.translate(-(sx + slotW / 2 + slideOffsetX), -(oSlotY + oSlotH / 2));
         this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'witch');
         ctx.restore();
+        // 空槽位登记点击区（点击弹出「女巫牌」说明弹窗）
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, empty: true, kind: 'witch' });
       }
     }
 
@@ -643,7 +656,22 @@ class ShopRenderer {
         const selectedOffsetY = isSelected ? -3 * s : 0;
         const pDrawX = sx + slideOffsetX;
         const pDrawY = oSlotY + selectedOffsetY;
-        this.parent._drawPropCard(ctx, potion, pDrawX, pDrawY, slotW, oSlotH, s, false);
+        // 新购入卡牌：缩放弹入动画
+        let pAppearScale = 1;
+        if (game._newOwnedProp && game._newOwnedProp.type === 'potions' && game._newOwnedProp.index === i) {
+          const appearElapsed = Date.now() - game._newOwnedProp.startTime;
+          const appearDuration = 350;
+          if (appearElapsed < appearDuration) {
+            pAppearScale = Math.max(Easing.easeOutBack(appearElapsed / appearDuration), 0.02);
+          } else {
+            game._newOwnedProp = null;
+          }
+        }
+        const pDrawW = slotW * pAppearScale;
+        const pDrawH = oSlotH * pAppearScale;
+        const pDrawCX = pDrawX + slotW / 2;
+        const pDrawCY = pDrawY + oSlotH / 2;
+        this.parent._drawPropCard(ctx, potion, pDrawCX - pDrawW / 2, pDrawCY - pDrawH / 2, pDrawW, pDrawH, s, false);
         // 药水牌绿色发光蒙层（圆形，覆盖在卡牌上方，中心透明边缘发光）
         ctx.save();
         const pCx = pDrawX + slotW / 2;
@@ -683,6 +711,8 @@ class ShopRenderer {
         ctx.translate(-(sx + slotW / 2 + slideOffsetX), -(oSlotY + oSlotH / 2));
         this.parent._drawEmptySlot(ctx, sx + slideOffsetX, oSlotY, slotW, oSlotH, s, 'potion');
         ctx.restore();
+        // 空槽位登记点击区（点击弹出「魔法药水」说明弹窗）
+        this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, empty: true, kind: 'potion' });
       }
 
       // 售出按钮 + 使用按钮（选中时，带回弹出现动画）
@@ -1243,7 +1273,7 @@ class ShopRenderer {
         ctx.fillStyle = descColor;
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        drawWrappedText(ctx, item.desc, textX, descY, textMaxW, 13 * s);
+        drawWrappedText(ctx, formatItemDesc(item), textX, descY, textMaxW, 13 * s);
         ctx.restore();
 
         // 价格按钮（暖米色，金币图标+价格）
@@ -2124,7 +2154,7 @@ class ConfirmBuyRenderer {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const descLineHeight = 15 * s;
-    const descH = drawWrappedText(ctx, item.desc, W / 2, descY, descMaxW, descLineHeight);
+    const descH = drawWrappedText(ctx, formatItemDesc(item), W / 2, descY, descMaxW, descLineHeight);
     ctx.restore();
 
     // === 按钮 ===
@@ -2685,4 +2715,12 @@ class MysteryDiscountRenderer {
   }
 }
 
-module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects };
+// 取女巫牌的升级步进值（upgrate_value）：实例上没有则回退 SHOP_POOL 按名称查找（兼容旧存档）
+function getWitchUpgradeStep(joker) {
+  if (!joker) return undefined;
+  if (joker.upgrate_value !== undefined && joker.upgrate_value !== null) return joker.upgrate_value;
+  const poolItem = (SHOP_POOL.witch || []).find(w => w.name === joker.name);
+  return poolItem ? poolItem.upgrate_value : undefined;
+}
+
+module.exports = { ShopRenderer, ConfirmBuyRenderer, MysteryDiscountRenderer, SHOP_POOL, generateShopItems, refreshModule, buyItem, upgradeLetter, applyCrystalEffects, getWitchUpgradeStep };

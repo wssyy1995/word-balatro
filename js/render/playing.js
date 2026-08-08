@@ -271,6 +271,8 @@ module.exports = function extendPlaying(Renderer) {
           }
         } else {
           this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'witch');
+          // 空槽位也登记点击区（点击弹出「女巫牌」说明弹窗）
+          this.witchPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, empty: true, kind: 'witch' });
         }
       }
   
@@ -337,6 +339,8 @@ module.exports = function extendPlaying(Renderer) {
           this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, potionIndex: i });
         } else {
           this._drawEmptySlot(ctx, sx, slotY, slotW, slotH, s, 'potion');
+          // 空槽位也登记点击区（点击弹出「魔法药水」说明弹窗）
+          this.potionPropRects.push({ x: sx, y: slotY, w: slotW, h: slotH, empty: true, kind: 'potion' });
         }
   
         // 字母置换提示按钮（未选中1张牌时，在对应药水卡牌下方弹出）
@@ -1525,6 +1529,10 @@ module.exports = function extendPlaying(Renderer) {
   
       // 女巫牌详情弹窗
       this._drawWitchDetailPopup(ctx, game, s);
+      // 空女巫槽位说明弹窗
+      this._drawWitchEmptyPopup(ctx, game, s);
+      // 魔法药水详情弹窗
+      this._drawPotionDetailPopup(ctx, game, s);
     }
 
   // ===== 数字向上滚动替换绘制（计分动画与出牌前预览共用）=====
