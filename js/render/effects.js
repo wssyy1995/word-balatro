@@ -104,8 +104,8 @@ module.exports = function extendEffects(Renderer) {
       }
       ctx.restore();
   
-      // 底部蒙层 + 名字（options.maskInset 可额外收窄蒙层宽度，默认全宽）
-      const maskH = Math.max(h * 0.35 - 8 * s, 0);
+      // 底部蒙层 + 名字（options.maskInset 可额外收窄蒙层宽度，options.maskHShrink 可压缩高度，默认全宽）
+      const maskH = Math.max(h * 0.35 - 8 * s - (options.maskHShrink || 0), 0);
       const maskY = finalY + h - maskH;
       const maskR = Math.min(r, maskH / 2);
       const maskInset = options.maskInset || 0;
