@@ -5356,7 +5356,7 @@ function handleInput(x, inputY, rawY) {
       return;
     }
 
-    // 女巫牌升级按钮（打开升级弹窗；点击不关闭详情弹窗逻辑在此拦截）
+    // 女巫牌升级按钮（打开升级弹窗；不可升级时弹 toast 提示）
     if (game._witchDetailPopup && renderer._witchDetailUpgradeBtnRect) {
       const upHit = renderer.hitTest(x, inputY, [renderer._witchDetailUpgradeBtnRect]);
       if (upHit) {
@@ -5364,8 +5364,11 @@ function handleInput(x, inputY, rawY) {
         if (game.audioManager) game.audioManager.play('tap');
         const jokers = game.jokers || [];
         const canUp = j => getWitchUpgradeStep(j) !== undefined || getWitchUpgradeRateStep(j) !== undefined;
-        let sel = game._witchDetailPopup.jokerIndex;
-        if (!canUp(jokers[sel])) sel = jokers.findIndex(canUp);
+        const sel = game._witchDetailPopup.jokerIndex;
+        if (!canUp(jokers[sel])) {
+          game.hintToast = { text: '该女巫牌不支持升级', expireAt: Date.now() + 2000, startTime: Date.now() };
+          return;
+        }
         game._witchDetailPopup = null;
         game._witchUpgradePopup = { jokerIndex: sel, startTime: Date.now() };
         // 重置已购买道具栏的选中态，避免升级弹窗关闭后该女巫牌仍处于上浮选中位置

@@ -260,14 +260,14 @@ module.exports = function extendPopup(Renderer) {
         ctx.restore();
       }
 
-      // ===== 底部按钮：售出（红色）+ 升级（紫色，占位），仅商店页显示 =====
+      // ===== 底部按钮：售出（红色）+ 升级（金色/置灰），仅商店页显示 =====
       if (popup.isShop) {
         const btnH = 26 * s;
         const btnGap = 10 * s;
         const btnY = popupY + popupH - btnH - pad + 2 * s;
-        // 无 upgrate_value / upgrate_rate 的女巫牌不可升级：只显示售出按钮
+        // 无 upgrate_value / upgrate_rate 的女巫牌不可升级：升级按钮置灰，点击弹 toast 提示
         const canUpgrade = getWitchUpgradeStep(joker) !== undefined || getWitchUpgradeRateStep(joker) !== undefined;
-        const btnCount = canUpgrade ? 2 : 1;
+        const btnCount = 2;
         // 按钮固定宽度，整体居中（不随弹窗宽度变化）
         const btnW = 84 * s;
         let bx = popupX + (popupW - (btnW * btnCount + btnGap * (btnCount - 1))) / 2;
@@ -313,13 +313,13 @@ module.exports = function extendPopup(Renderer) {
           bx += btnW + btnGap;
         }
 
-        // 升级按钮（金色，仅可升级的女巫牌显示）
-        if (canUpgrade) {
+        // 升级按钮（金色；不可升级时置灰，点击弹 toast）
+        {
           ctx.save();
           ctx.shadowColor = 'rgba(0,0,0,0.25)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
-          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#c4a35a');
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, canUpgrade ? '#c4a35a' : '#b8b0a0');
           ctx.restore();
           // 顶部高光条
           ctx.save();
@@ -340,11 +340,11 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 金棕色向上箭头（三角头 + 矩形杆），带上下轻微浮动
+          // 金棕色向上箭头（三角头 + 矩形杆），带上下轻微浮动；置灰时不浮动
           const acx = upGroupX + arrowW / 2;
-          const arrowFloatY = Math.sin(Date.now() / 280) * 1.2 * s;
+          const arrowFloatY = canUpgrade ? Math.sin(Date.now() / 280) * 1.2 * s : 0;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = '#9a7209';
+          ctx.fillStyle = canUpgrade ? '#9a7209' : '#8a8272';
           ctx.beginPath();
           const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
@@ -357,7 +357,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.closePath();
           ctx.fill();
           // 「升级」文字
-          ctx.fillStyle = '#fff';
+          ctx.fillStyle = canUpgrade ? '#fff' : '#e8e4dc';
           ctx.textAlign = 'left';
           ctx.textBaseline = 'middle';
           ctx.fillText('升级', upGroupX + arrowW + upGap, midY);
