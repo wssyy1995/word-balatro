@@ -668,13 +668,18 @@ module.exports = function extendPopup(Renderer) {
         return lines;
       };
 
-      // 带 value 高亮的效果文字绘制：value 部分加粗紫色，其余保持原样；逐字换行、整行居中
+      // 带 value 高亮的效果文字绘制：高亮部分加粗紫色，其余保持原样；逐字换行、整行居中
+      // valueStr 支持单个字符串或字符串数组（如混沌法球同时高亮 [min, max]）
       const drawStyledDesc = (text, valueStr, cx, bY, bH, maxW, fontSize, lineH) => {
         const normalFont = `${Math.floor(fontSize * s)}px sans-serif`;
         const boldFont = `bold ${Math.floor(fontSize * s)}px sans-serif`;
-        // value 字符区间（formatItemDesc 已将 desc 中 value 占位符替换为实际值）
-        const valStart = valueStr ? String(text).indexOf(valueStr) : -1;
-        const valEnd = valStart >= 0 ? valStart + String(valueStr).length : -1;
+        // 高亮字符区间（formatItemDesc 已将占位符替换为实际值）
+        const hlRanges = [];
+        (Array.isArray(valueStr) ? valueStr : [valueStr]).forEach(str => {
+          if (str === undefined || str === null) return;
+          const idx = String(text).indexOf(String(str));
+          if (idx >= 0) hlRanges.push([idx, idx + String(str).length]);
+        });
         ctx.font = normalFont;
         const lines = [];
         let segs = [];
@@ -687,7 +692,7 @@ module.exports = function extendPopup(Renderer) {
             segs = [];
             lineW = 0;
           }
-          const hl = i >= valStart && i < valEnd;
+          const hl = hlRanges.some(([a, b]) => i >= a && i < b);
           const last = segs[segs.length - 1];
           if (last && last.hl === hl) last.text += ch; else segs.push({ text: ch, hl });
           lineW += w;
@@ -769,7 +774,9 @@ module.exports = function extendPopup(Renderer) {
         const desc = formatItemDesc({ ...joker, real_value: curVal });
         const isRateUpgrade = getWitchUpgradeStep(joker) === undefined && getWitchUpgradeRateStep(joker) !== undefined;
         const successHl = isRateUpgrade ? String(joker.rate)
-          : (joker.trigger === 'chaos_orb' ? String(getChaosRange(joker).max) : String(curVal));
+          : (joker.trigger === 'chaos_orb'
+            ? (r => [String(r.min), String(r.max)])(getChaosRange(joker))
+            : String(curVal));
         const boxW = 245 * s;
         const boxH = 88 * s;
         const boxY = toCY + toH / 2 + 36 * s;
@@ -794,9 +801,11 @@ module.exports = function extendPopup(Renderer) {
         const nextPreview = step !== undefined
           ? { ...joker, real_value: Math.round((curVal + step) * 10) / 10, level: curLv + 1 }
           : { ...joker, rate: (joker.rate || 0) + rateStep };
-        // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率，混沌法球高亮新区间上限
+        // 升级后框内高亮字符串：value 方向高亮新数值，rate 方向高亮新概率，混沌法球高亮新区间 min/max
         const nextHl = step !== undefined
-          ? (joker.trigger === 'chaos_orb' ? String(getChaosRange(nextPreview).max) : String(nextPreview.real_value))
+          ? (joker.trigger === 'chaos_orb'
+            ? (r => [String(r.min), String(r.max)])(getChaosRange(nextPreview))
+            : String(nextPreview.real_value))
           : String(nextPreview.rate);
         const cost = (curLv + 1) * joker.cost;
 
