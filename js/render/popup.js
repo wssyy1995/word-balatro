@@ -168,7 +168,9 @@ module.exports = function extendPopup(Renderer) {
         ctx.textBaseline = 'middle';
         let lastWordText = '无';
         if (joker.trigger === 'initial_succession' || joker.trigger === 'no_duplicate') {
-          lastWordText = game._lastPlayedLetters ? Array.from(game._lastPlayedLetters).join('') : '无';
+          // 优先用单词原文（含重复字母）；旧存档没有该字段时回退到字母集合拼接
+          lastWordText = game._lastPlayedWord
+            || (game._lastPlayedLetters ? Array.from(game._lastPlayedLetters).join('') : '无');
         }
         ctx.fillText(`上一手单词:${lastWordText}`, popupX + pad, cy);
         ctx.restore();

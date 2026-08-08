@@ -4,7 +4,7 @@
 // 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
 // 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
 // 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
-const GAME_VERSION = '8.6.18';
+const GAME_VERSION = '8.8.20';
 
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
@@ -1704,6 +1704,7 @@ class Game {
     this._seedMaxLen = p._seedMaxLen;
     this._lastInitialLetter = p._lastInitialLetter || null;
     this._lastPlayedLetters = p._lastPlayedLetters ? new Set(p._lastPlayedLetters) : null;
+    this._lastPlayedWord = p._lastPlayedWord || null;
 
     // 清理卡牌上的动画残留状态（旧的 animOffset 可能导致卡牌飞到屏幕外）
     const sanitizeCard = (card) => {
@@ -2058,6 +2059,7 @@ class Game {
     this._witchDetailPopup = null;
     this._hudWitchPopup = null;
     this._lastPlayedLetters = null; // 新回合开始，清除上一手字母记录
+    this._lastPlayedWord = null;
     // 清除所有女巫牌的动画状态，防止上一回合的动画残留
     (this.jokers || []).forEach(j => {
       if (j) {
@@ -2948,9 +2950,10 @@ class Game {
       console.log('[WordBook] 记录单词:', playedWord, '总去重:', wordBookResult.totalUnique, '总次数:', wordBookResult.totalCount, '新单词:', wordBookResult.isNew);
     }
 
-    // 计分动画结束，更新上一手单词记录
+    // 计分动画结束，更新上一手单词记录（Set 用于判重逻辑，单词原文用于详情展示——Set 会丢重复字母，如 pump→pum）
     if (playedInOrder && playedInOrder.length > 0) {
       this._lastPlayedLetters = new Set(playedInOrder.map(c => c.letter.toUpperCase()));
+      this._lastPlayedWord = playedInOrder.map(c => c.letter.toUpperCase()).join('');
     }
 
     // 清除 pendingCheck，重置单词预览区
