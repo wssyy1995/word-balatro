@@ -5224,8 +5224,14 @@ function handleInput(x, inputY, rawY) {
               game.gold -= cost;
               joker.level = lv + 1;
               if (step !== undefined) {
-                const base = (joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value;
-                joker.real_value = Math.round((base + step) * 10) / 10;
+                // 基于 _originalValue 升级并同步写回：resetRound/读档归一化会用 _originalValue 重算 real_value，
+                // 不同步的话下一回合升级会被覆盖丢失；若当前处于 witch_card_value_half 试炼则按减半后生效
+                const base = (joker._originalValue !== undefined) ? joker._originalValue
+                  : ((joker.real_value !== undefined && joker.real_value !== null) ? joker.real_value : joker.value);
+                joker._originalValue = Math.round((base + step) * 10) / 10;
+                joker.real_value = (game._witchCardValueHalfActive && joker.scope === 'whole_word')
+                  ? Math.round(joker._originalValue * 0.5 * 10) / 10
+                  : joker._originalValue;
               } else {
                 // rate 方向升级（概率类卡牌，如以小博大）：提升 rate 而非 real_value
                 joker.rate = (joker.rate || 0) + rateStep;
