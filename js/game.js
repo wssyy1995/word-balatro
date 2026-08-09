@@ -4,7 +4,7 @@
 // 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
 // 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
 // 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
-const GAME_VERSION = '8.8.20';
+const GAME_VERSION = '8.8.21';
 
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
@@ -853,6 +853,20 @@ function _matchWordTrigger(cards, trigger) {
     case 'chaos_orb': return true; // 混沌法球：每次出牌必触发
     default: return false;
   }
+}
+
+// 旧存档兼容：按名称从 SHOP_POOL 回填女巫牌的新增配置字段
+// （老用户的 joker 实例是旧版保存的，缺 upgrate_value / desc 占位符等新字段，
+//   会导致升级预览文案不替换、区间不随等级变化等问题）
+function _backfillJokerFromPool(j) {
+  if (!j || !j.name) return;
+  const poolItem = (SHOP_POOL.witch || []).find(w => w.name === j.name);
+  if (!poolItem) return;
+  // desc 直接同步为最新版（含 value/rate/min/max 占位符）
+  if (poolItem.desc) j.desc = poolItem.desc;
+  ['upgrate_value', 'upgrate_rate', 'max_level', 'rate', 'min_value', 'max_value'].forEach(key => {
+    if (j[key] === undefined && poolItem[key] !== undefined) j[key] = poolItem[key];
+  });
 }
 
 // 女巫牌生效数值：升级后为 real_value，未升级时默认为 value
@@ -1814,6 +1828,7 @@ class Game {
     this._witchCardValueHalfActive = !!(currentSkill && currentSkill.skill === 'witch_card_value_half');
     (this.jokers || []).forEach(j => {
       if (!j || j.type !== 'witch') return;
+      _backfillJokerFromPool(j);
       // real_value 归一化（未升级时等于 value），试炼减半/累计都基于 real_value
       if (j.real_value === undefined) j.real_value = j.value;
       // 确保有原始值记录
@@ -2107,6 +2122,7 @@ class Game {
     this._witchCardValueHalfActive = !!valueHalfActive;
     (this.jokers || []).forEach(j => {
       if (!j || j.type !== 'witch') return;
+      _backfillJokerFromPool(j);
       // real_value 归一化（未升级时等于 value）
       if (j.real_value === undefined) j.real_value = j.value;
       // 保存原始 value/penalty（首次遇到时）
