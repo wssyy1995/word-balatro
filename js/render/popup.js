@@ -3762,9 +3762,15 @@ module.exports = function extendPopup(Renderer) {
           ctx.fillText('加载中…', infoX, infoY);
         } else if (game._versionInfo) {
           ctx.fillStyle = '#4a4a4a';
-          const lines = this._wrapText(ctx, game._versionInfo, infoMaxW, 13 * s);
-          lines.forEach((line, i) => {
-            ctx.fillText(line, infoX, infoY + i * 20 * s);
+          // 按「数字.」序号规则换行（如 1.xxx 2.xxx → 每条一行），每条内部再按宽度自动换行
+          const formatted = String(game._versionInfo).replace(/\s*(\d+\.)/g, (m, g, offset) => offset === 0 ? g : '\n' + g);
+          let drawY = infoY;
+          formatted.split('\n').forEach(seg => {
+            const lines = this._wrapText(ctx, seg, infoMaxW, 13 * s);
+            lines.forEach(line => {
+              ctx.fillText(line, infoX, drawY);
+              drawY += 20 * s;
+            });
           });
         } else {
           ctx.fillStyle = '#9a8a7a';
