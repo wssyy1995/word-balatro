@@ -4857,10 +4857,10 @@ function handleInput(x, inputY, rawY) {
         }
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
-        // 弹出药水详情弹窗（效果说明 + 使用按钮）
+        // 游戏中点击药水牌 = 直接使用，不再弹出详情弹窗
         game._witchDetailPopup = null;
         game._witchEmptyPopup = null;
-        game._potionDetailPopup = { potionIndex: potionHit.potionIndex, rect: potionHit, animStartTime: Date.now() };
+        usePotionInGame(potionHit.potionIndex);
         return;
       }
     }
