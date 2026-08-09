@@ -526,7 +526,9 @@ module.exports = function extendPopup(Renderer) {
       {
         const btnGap = 10 * s;
         const btnY = popupY + popupH - btnH - pad + 2 * s;
-        const btnCount = popup.isShop ? 2 : 1;
+        // 吸星大法 / 字母置换只能在游戏中使用：商店详情弹窗隐藏「使用」按钮
+        const isGameUseOnly = ['change_letter', 'absorb_stars'].includes(potion.effect);
+        const btnCount = popup.isShop ? (isGameUseOnly ? 1 : 2) : 1;
         // 按钮固定宽度，整体居中（不随弹窗宽度变化）
         const btnW = 84 * s;
         let bx = popupX + (popupW - (btnW * btnCount + btnGap * (btnCount - 1))) / 2;
@@ -573,31 +575,33 @@ module.exports = function extendPopup(Renderer) {
           bx += btnW + btnGap;
         }
 
-        // 使用按钮（绿色）
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.25)';
-        ctx.shadowBlur = 4 * s;
-        ctx.shadowOffsetY = 2 * s;
-        this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#1e8449');
-        ctx.restore();
-        // 顶部高光条
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.lineWidth = 1.2 * s;
-        ctx.beginPath();
-        const useHlY = btnY + 2 * s;
-        ctx.moveTo(bx + 3 * s, useHlY);
-        ctx.lineTo(bx + btnW - 3 * s, useHlY);
-        ctx.stroke();
-        ctx.restore();
-        ctx.save();
-        ctx.fillStyle = '#fff';
-        ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('使用', bx + btnW / 2, btnY + btnH / 2);
-        ctx.restore();
-        this._potionDetailUseBtnRect = { x: bx, y: btnY, w: btnW, h: btnH, index: popup.potionIndex };
+        // 使用按钮（绿色；吸星大法/字母置换在商店隐藏）
+        if (!isGameUseOnly) {
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.25)';
+          ctx.shadowBlur = 4 * s;
+          ctx.shadowOffsetY = 2 * s;
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, '#1e8449');
+          ctx.restore();
+          // 顶部高光条
+          ctx.save();
+          ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+          ctx.lineWidth = 1.2 * s;
+          ctx.beginPath();
+          const useHlY = btnY + 2 * s;
+          ctx.moveTo(bx + 3 * s, useHlY);
+          ctx.lineTo(bx + btnW - 3 * s, useHlY);
+          ctx.stroke();
+          ctx.restore();
+          ctx.save();
+          ctx.fillStyle = '#fff';
+          ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('使用', bx + btnW / 2, btnY + btnH / 2);
+          ctx.restore();
+          this._potionDetailUseBtnRect = { x: bx, y: btnY, w: btnW, h: btnH, index: popup.potionIndex };
+        }
       }
 
       ctx.restore();
