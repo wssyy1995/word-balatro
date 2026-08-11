@@ -1635,7 +1635,7 @@ letterUpgrades = Map {
 前端 → 云函数 updateBestRound → 更新好友排行榜 bestround
 前端 → 云函数 syncWordBook → 同步历史打出单词到云数据库
 前端 → 云函数 updateHonorTrophy → 同步对战荣誉杯累计数到云数据库
-前端 → 云函数 login → 上报用户设备信息
+前端 → 云函数 login → 上报用户设备信息（users 表以 _id = OPENID 保证唯一；同 _openid 重复记录会保留最早一条并自动清理）
 ```
 
 **Token 管理**
