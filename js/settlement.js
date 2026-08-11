@@ -1,4 +1,5 @@
 const { Easing } = require('./animation');
+const { formatItemDesc } = require('./witch_skills');
 
 // 金色块状向右箭头（结算翻倍揭晓用）：矩形箭杆 + 三角箭头，纯 Canvas 绘制
 function _drawBlockArrow(ctx, cx, cy, w, h, color) {
@@ -594,7 +595,7 @@ class WitchRewardRenderer {
         const cardMaxW = 120 * s;
         const cardMaxH = 150 * s;
         let cardW = cardMaxW, cardH = cardMaxH;
-        const iconName = data.rewardItem.effect;
+        const iconName = data.rewardItem.trigger || data.rewardItem.effect;
         const iconData = this.parent.shopCardImages[iconName];
         if (iconData && iconData.loaded && iconData.img && iconData.width > 0 && iconData.height > 0) {
           const containerAspect = cardMaxW / cardMaxH;
@@ -611,7 +612,6 @@ class WitchRewardRenderer {
         const cardCY = iconCY;
         const cardX = cardCX - cardW / 2;
         const cardY = cardCY - cardH / 2;
-
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         ctx.beginPath();
@@ -659,13 +659,15 @@ class WitchRewardRenderer {
         ctx.fillText(data.rewardItem.name, W / 2, nameY);
         ctx.restore();
 
+        // 女巫牌奖励的 desc 含 value 等占位符，需按配置替换
+        const rewardDesc = data.rewardItem.type === 'witch' ? formatItemDesc(data.rewardItem) : data.rewardItem.desc;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         ctx.font = `${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(data.rewardItem.desc, W / 2, descY);
+        ctx.fillText(rewardDesc, W / 2, descY);
         ctx.restore();
 
         const collectBtnH = 44 * s;
@@ -673,8 +675,31 @@ class WitchRewardRenderer {
         const btnGap = 12 * s;
         const btnY = descY + 50 * s;
 
+        const isWitchCardReward = data.rewardItem.type === 'witch';
         const isGameScope = data.rewardItem.scope === 'game';
-        if (isGameScope) {
+        if (isWitchCardReward) {
+          // 女巫牌奖励（药水槽位已满的兜底）：单个「装备」按钮，样式对齐 buff 的「领取」
+          const eqX = (W - btnW) / 2;
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
+          this.parent._drawButtonRipple(ctx, eqX, btnY, btnW, collectBtnH, s, {
+            stateKey: 'witch_reward_ok',
+            radius: 8,
+            interval: 900,
+            duration: 1800,
+            alphaScale: 0.55,
+            lineWidthScale: 0.8,
+            fillAlpha: 0.22,
+            strokeAlpha: 0.45,
+            color: { r: 255, g: 195, b: 70 },
+            strokeColor: { r: 188, g: 140, b: 40 }
+          });
+          this.parent._drawScaledButton(ctx, '装备', eqX, btnY, btnW, collectBtnH, s, this.okBtnPressed, { color: '#c4a35a', radius: 8 });
+          ctx.restore();
+          this.okBtnRect = { x: eqX, y: btnY, w: btnW, h: collectBtnH };
+          this.stashBtnRect = null;
+          this.useBtnRect = null;
+        } else if (isGameScope) {
           const stashX = (W - btnW) / 2;
           ctx.save();
           ctx.globalAlpha = contentAlpha;
@@ -682,6 +707,7 @@ class WitchRewardRenderer {
           ctx.restore();
           this.stashBtnRect = { x: stashX, y: btnY, w: btnW, h: collectBtnH };
           this.useBtnRect = null;
+          this.okBtnRect = null;
         } else {
           const totalW = btnW * 2 + btnGap;
           const startX = (W - totalW) / 2;
@@ -715,8 +741,8 @@ class WitchRewardRenderer {
 
           this.stashBtnRect = stashDisabled ? null : { x: stashX, y: btnY, w: btnW, h: collectBtnH };
           this.useBtnRect = { x: startX, y: btnY, w: btnW, h: collectBtnH };
+          this.okBtnRect = null;
         }
-        this.okBtnRect = null;
         this.skipRect = null;
       } else if (data.consolationGold) {
         if (!this.coinFlipStartTime) this.coinFlipStartTime = Date.now();

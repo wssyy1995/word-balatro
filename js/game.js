@@ -3381,7 +3381,16 @@ class Game {
     const hit = Math.random() < rate;
     this.witchRewardData.result = hit;
     if (hit) {
-      this.witchRewardData.rewardItem = createRewardItem(skill.reward);
+      let rewardItem = createRewardItem(skill.reward);
+      // 兜底：药水类奖励但道具栏已满（2 格）→ 换成一张玩家未装备的随机女巫牌（结果页按钮变为「装备」）
+      if (rewardItem && rewardItem.type === 'potion' && (this.potions || []).length >= 2) {
+        const equippedNames = new Set((this.jokers || []).map(j => j && j.name));
+        const candidates = SHOP_POOL.witch.filter(w => !equippedNames.has(w.name));
+        if (candidates.length > 0) {
+          rewardItem = { ...candidates[Math.floor(Math.random() * candidates.length)] };
+        }
+      }
+      this.witchRewardData.rewardItem = rewardItem;
     } else if (rate < 1) {
       // 鼓励奖：随机 1~5 金币
       const bonusGold = Math.floor(Math.random() * 5) + 1;
@@ -3414,6 +3423,18 @@ class Game {
             } else if (data.rewardItem.effect === 'shop_discount_5') {
               this._shopDiscountActive = true;
               this._shopDiscountRate = 0.5;
+            } else if (data.rewardItem.type === 'witch') {
+              // 药水槽位已满时的兜底奖励：装备到女巫牌栏（初始化对齐商店购买）
+              if (!this.jokers) this.jokers = [];
+              if (this.jokers.length < (this.maxJokerSlots || 4)) {
+                const item = { ...data.rewardItem };
+                if (item.limit !== undefined && item.usesLeft === undefined) item.usesLeft = item.limit;
+                if (item.level === undefined) item.level = 1;
+                if (item.real_value === undefined) item.real_value = item.value;
+                this.jokers.push(item);
+              } else {
+                this.hintToast = { text: '女巫牌栏已满，无法装备', expireAt: Date.now() + 2000, startTime: Date.now() };
+              }
             }
           }
           // 进入商店前取消所有女巫牌禁用状态，并清理女巫奖励延迟标记，避免卡在商店背景

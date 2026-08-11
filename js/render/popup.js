@@ -753,6 +753,15 @@ module.exports = function extendPopup(Renderer) {
           ctx, toCX, toCY, toW * 2.0, toH * 1.5, s, animElapsed, 18, this._witchUpgradeStars, closeAlpha, 1, 'purple'
         );
 
+        // 卡牌到位瞬间：上方爆发紫金色双点烟花（参照单词合法烟花，弹窗末尾在最顶层绘制粒子）
+        if (animP >= 1 && !popup._sparklesSpawned) {
+          popup._sparklesSpawned = true;
+          const fwPalette = ['#9b59b6', '#ffd700', '#d7aefb', '#ffec99'];
+          const fwY = toCY - toH / 2 - 8 * s;
+          this._spawnSparkles(toCX - 45 * s, fwY, 14, fwPalette);
+          this._spawnSparkles(toCX + 45 * s, fwY, 14, fwPalette);
+        }
+
         // 移动到位后：缩放弹跳（1 → 1.15 → 1）
         let popScale = 1;
         if (animP >= 1) {
@@ -1037,6 +1046,9 @@ module.exports = function extendPopup(Renderer) {
       ctx.restore();
       this._witchUpgradeCloseRect = { x: closeX - 3, y: closeY - 3, w: closeSize + 6, h: closeSize + 6 };
       this._witchUpgradePanelRect = { x: px, y: py, w: pw, h: ph };
+
+      // 在弹窗最上层绘制烟花粒子（避免被弹窗遮罩/背景遮挡，参照今日新词弹窗）
+      this._updateAndDrawSparkles(ctx, s);
     }
 
 

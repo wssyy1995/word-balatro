@@ -4907,8 +4907,8 @@ function handleInput(x, inputY, rawY) {
       if (wr.okBtnPressed || wr.stashBtnPressed || wr.useBtnPressed) return;
 
       if (data.result) {
-        if (data.rewardItem && data.rewardItem.type === 'buff') {
-          // buff 类奖励：领取按钮
+        if (data.rewardItem && (data.rewardItem.type === 'buff' || data.rewardItem.type === 'witch')) {
+          // buff 类奖励：领取按钮；女巫牌兜底奖励：装备按钮（均复用 okBtnRect）
           if (wr.okBtnRect) {
             const hit = renderer.hitTest(x, inputY, [wr.okBtnRect]);
             if (hit) {

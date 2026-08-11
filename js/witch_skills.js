@@ -1,6 +1,6 @@
 // ===== 女巫技能配置 =====
 const WITCH_SKILLS = [
-  { level: 3, name: '女巫_A', reward: 'card_change_letter',rate:1, has_reward: true, reward_desc: '有概率获得一张: 字母置换' },
+  { level: 3, name: '女巫_A', reward: 'card_change_letter_absorb_stars',rate:1, has_reward: true, reward_desc: '有概率获得一张: 字母置换/吸星大法' },
   { level: 5, name: '女巫_B', reward: 'global_letter_1',rate:0.1, has_reward: false, reward_desc: '本赛局,字母手牌+1' },
   { level: 8, name: '女巫_C',  reward: 'global_letter_1',rate:1, has_reward: true, reward_desc: '本赛局,字母手牌+1'},
   { level: 11, name: '女巫_D', reward: 'shop_discount_5',rate:1, has_reward: false, reward_desc: '本回合卡牌商店，打5折'},
@@ -237,6 +237,18 @@ function createRewardItem(rewardType) {
         cost: 6,
         desc: '游戏中,可选择一张字母牌切换字母'
       };
+    case 'card_absorb_stars':
+      return {
+        name: '吸星大法',
+        type: 'potion',
+        effect: 'absorb_stars',
+        scope: 'game',
+        cost: 8,
+        desc: '游戏中，选择一张手牌，将其他手牌分数临时加给它'
+      };
+    case 'card_change_letter_absorb_stars':
+      // 50% 字母置换 / 50% 吸星大法（均为游戏中使用的药水，结果页只有「暂存」按钮）
+      return createRewardItem(Math.random() < 0.5 ? 'card_change_letter' : 'card_absorb_stars');
     case 'global_hand_1':
       return {
         name: '额外出牌',
