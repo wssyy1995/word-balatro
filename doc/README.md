@@ -32,7 +32,7 @@ word-balatro/
 │   ├── TECHNICAL_ARCHITECTURE.md       # 技术架构文档
 │   ├── 26位女巫名字.md                  # 女巫名称参考
 │   ├── 加固流程.md                       # 代码加固流程
-│   └── daily_words_06_13_16.json       # 每日挑战示例词库
+│   └── daily_words_08_06_13.jsonl      # 每日挑战/每日金词词库（JSON Lines，2026-08-06~08-13）
 ├── images/                  # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
 ├── music/                   # 音效/BGM 资源
 │   ├── bg/                  # 背景音乐
@@ -80,6 +80,7 @@ word-balatro/
     │   ├── debug.js         # 调试菜单、云日志
     │   ├── gameover.js      # GameOverRenderer 独立类
     │   ├── homepage_entry.js # 主页入场动画与装饰星星
+    │   ├── golden.js        # 每日金词玩法画面（入口弹窗/HUD/手牌/历史/结果）
     │   └── test.js          # 渲染层自测脚本
     ├── battle/              # 对战模式（独立状态机与渲染）
     │   ├── index.js         # 对战入口
@@ -176,6 +177,7 @@ word-balatro/
 | `_starlightWashAnim` | Object | 星辉洗涤旋转/结果动画状态 |
 | `_hastePlayActive` | boolean | 争分夺秒生效中（前 20 秒出牌不耗次数） |
 | `_disableWitchAnim` | Object | 禁用女巫牌动画状态 |
+| `_witchUpgradePopup` | Object | 女巫牌升级弹窗状态（jokerIndex / upgraded / closing，见 4.5.1） |
 | `animManager` | AnimationManager | 动画管理器实例 |
 | `audioManager` | AudioManager | 音效管理器实例 |
 | `storageManager` | StorageManager | 本地存储管理器实例 |
@@ -493,23 +495,25 @@ js/render/
 ├── debug.js         # 调试菜单、云存储日志面板
 ├── gameover.js      # GameOverRenderer 独立类
 ├── homepage_entry.js # 主页入场"星轨铭文"动画与装饰星星
+├── golden.js        # 每日金词玩法（入口弹窗/月历/HUD/手牌/历史/结果弹窗）
 └── test.js          # 自测脚本（mock Canvas + game，验证加载与渲染）
 ```
 
 | 模块 | 行数 | 职责 | 导出方式 |
 |------|------|------|----------|
-| `base.js` | ~1860 | `Renderer` 类定义、构造函数、通用工具、资源占位 | `class Renderer` |
-| `effects.js` | ~1192 | 道具卡牌绘制、粒子、`_drawModalPanel`、`_drawCardGlow`、`_calcPulseScale`、按钮 | 函数扩展 |
+| `base.js` | ~1792 | `Renderer` 类定义、构造函数、通用工具、资源占位 | `class Renderer` |
+| `effects.js` | ~1275 | 道具卡牌绘制、粒子、`_drawModalPanel`、`_drawCardGlow`、`_calcPulseScale`、按钮 | 函数扩展 |
 | `animation.js` | ~1829 | 烟花/星星粒子、飞行总分、字母之神飞星、药水升级动画，以及危险复制/平分秋色/星辉洗涤/吸星大法的选择页与结果动画绘制 | 函数扩展 |
 | `hud.js` | ~688 | 顶部栏、金币胶囊、回合/目标分、女巫头像、Toast 及飞行星星 | 函数扩展 |
-| `playing.js` | ~1589 | 主玩法布局、手牌网格、预览/分数方块、出牌动画状态机、求助提示 | 函数扩展 |
-| `popup.js` | ~3620 | 女巫详情、字母置换、药水升级/随机强化、设置/反馈、单词本、今日新词 | 函数扩展 |
-| `guide.js` | ~760 | 新手引导/商店引导/图鉴引导（witch_1=主引导、witch_2=商店引导、witch_3=图鉴引导） | 函数扩展 |
-| `cardbook.js` | ~485 | 图鉴图标/NEW 角标、详情面板、全部/已装备 Tab | 函数扩展 |
+| `playing.js` | ~1716 | 主玩法布局、手牌网格、预览/分数方块、出牌动画状态机、求助提示 | 函数扩展 |
+| `popup.js` | ~4446 | 女巫详情、女巫牌升级、字母置换、药水升级/随机强化、设置/反馈/版本信息、单词本、今日新词 | 函数扩展 |
+| `guide.js` | ~1082 | 新手引导/商店引导/图鉴引导（witch_1=主引导、witch_2=商店引导、witch_3=图鉴引导） | 函数扩展 |
+| `cardbook.js` | ~290 | 图鉴图标/NEW 角标、大图灯箱（装备功能已隐藏） | 函数扩展 |
 | `debug.js` | ~176 | 云日志、调试菜单 | 函数扩展 |
 | `gameover.js` | ~242 | **独立类** `GameOverRenderer` | 独立类 |
-| `index.js` | ~1581 | 组装扩展、`render()` 状态机、设置/单词本/今日新词/排行榜覆盖层 | 组装入口 |
+| `index.js` | ~1507 | 组装扩展、`render()` 状态机、设置/单词本/今日新词/排行榜覆盖层 | 组装入口 |
 | `homepage_entry.js` | ~144 | 主页入场"星轨铭文"动画与装饰星星 | 函数扩展 |
+| `golden.js` | ~922 | 每日金词玩法：入口弹窗（月历）、HUD、手牌、历史面板、结果弹窗 | 函数扩展 |
 
 #### 3.3.2 导出规范
 
@@ -597,7 +601,8 @@ render(game)
 │   ├── potion       → drawPotion()（字母升级/随机强化不显示顶部栏）
 │   ├── life_extended → drawHUD() + drawPlaying() + 续命弹窗
 │   ├── gameover     → drawHUD() + drawPlaying() + gameOverRenderer.draw()
-│   └── battle       → battleRenderer.draw()（对战模式）
+│   ├── battle       → battleRenderer.draw()（对战模式）
+│   └── daily_gold   → drawGoldenHUD() + drawGoldenPlaying()（每日金词，golden.js）
 ├── game.animManager.update()   # 通用动画属性更新（来自 js/animation.js）
 ├── _updateAndDrawSparkles()    # 烟花粒子
 ├── _updateAndDrawFlyingScore() # 飞行总分
@@ -677,9 +682,11 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 #### 3.3.8 分数预览方块
 
-选中 ≥2 张牌时显示两个方块：
+选中 ≥1 张牌时显示两个方块（方块上方带「字母总分」「倍率」提示小字）：
 - 左方块（蓝色背景）：字母基础分累加
 - 右方块（绿色背景）：单词长度（即倍率）
+
+> 预览值为基础值，不含女巫牌加成；出牌后预览值无缝接管正式计分动画（不再从 0 逐字母重新计分）。
 
 出牌合法后，左方块上方可能显示 `xN`（per_card 女巫牌倍率提示）。
 
@@ -743,6 +750,8 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 ```
 
 > 注：`extraDiscards = this.discardsLeft`，即剩余弃牌次数直接折算为金币。当前版本 `baseGold` 固定为 2，再叠加装备卡结算加成。
+
+**一击入魂（单手通关翻倍）**：本回合只出牌 1 次（含非法单词/试炼失败，只要点了出牌即计一次）即通关时，结算金币全部翻倍。弹窗入场后延迟 500ms 在顶部敲章（「一击入魂」横幅，easeInCubic 砸下 + 落点震动衰减 + 金色粒子 + `battle_pop_success` 音效），敲章后各明细与总计以「+2 → +4」形式揭晓翻倍值（Canvas 金色块状箭头 + easeOutBack 缩放弹出），领取时按翻倍后总金币入账。
 
 #### 3.3.12 药水升级页面（potion 状态）
 
@@ -946,15 +955,39 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 
 点击已装备女巫牌 → 打开女巫详情弹窗，售出按钮位于弹窗右上角，售价 Math.round(cost/2)
   → 点击售出 → 卡牌飞出动画 → 获得金币 → 补位滑动
-点击已装备药水牌 → 选中（紫色边框）→ 弹出"售出"/"使用"按钮（easeOutBack 弹出）
-  → 点击其他地方或切换选中才关闭（不再 3 秒自动消失）
+  （详情弹窗内另有金色「升级」按钮，见 4.5.1 女巫牌升级系统）
+商店页点击已装备药水牌 → 打开药水详情弹窗（效果说明 + 底部按钮）：
+  → 普通药水：「售出」（红色）+「使用」（绿色）
+  → 吸星大法 / 字母置换：只能在游戏中使用，详情弹窗隐藏「使用」按钮，只保留「售出」
+游戏中（playing）点击道具栏药水牌 → 直接使用（usePotionInGame），不再弹出详情弹窗
+  → 本回合被 disable_potion_card 禁用的药水牌点击后仅提示 toast，无法使用
 ```
 
 ### 4.5 刷新
 
 商店标题栏右侧设有**全局重掷按钮**，消耗 3 金币可刷新全部三行商品（每行重新随机生成 2 款）。余额不足时按钮置灰。
 
+### 4.5.1 女巫牌升级系统（Witch Upgrade）
 
+已装备的女巫牌可消耗金币逐级升级，永久提升其效果数值（跨回合保留，随存档持久化）。
+
+**入口**：商店页点击已装备女巫牌打开详情弹窗，弹窗内有金色「升级」按钮（白色箭头，带上下轻微浮动动画）。
+- 不带 `upgrate_value` / `upgrate_rate` 的女巫牌不可升级：按钮置灰（箭头不浮动），点击弹 toast「该女巫牌不支持升级」。
+- 达到 `max_level` 的牌同样置灰，点击 toast「该女巫牌最高等级Lv.N」（当前仅「以小博大」设 `max_level: 5`）。
+
+**升级弹窗（`_witchUpgradePopup`）**：
+- 顶部展示所有已装备的可升级女巫牌，点击切换升级目标
+- 对比视图展示 当前等级效果 → 下一级效果（`desc` 中 `value` / `min` / `max` / `rate` 占位符按等级实时替换，关键数值加粗紫色高亮）
+- 升级消耗：`(当前等级 + 1) × 该牌原价` 金币；金币不足时确认按钮置灰（点击 toast「金币不足，无法升级」）
+- 确认后播放 `magic_twinkle` 音效并切换到成功视图：卡牌移动放大 + 紫色光芒（`_drawLightRays`）+ 闪烁星星（`_drawSparkleStars`），确认按钮变为关闭按钮
+
+**升级数值规则**：
+- **value 方向**：`_originalValue += upgrate_value`（保留 1 位小数），并重算 `real_value`；`witch_card_value_half` 试炼回合按原始值升级后重新减半，回合结束归一化不丢失升级
+- **rate 方向**（概率类卡牌，如以小博大）：`rate += upgrate_rate`（40%→45%，逐级 +5%），不改动 `real_value`
+- **混沌法球**：随机区间随等级整体上移（`upgrate_value: 0.2`/级，Lv.2 区间为 0.7~1.4）
+- 计分与出牌动画统一通过 `getJokerValue` 读取 `real_value`，保证升级后动画显示与实际计分一致
+
+**存档兼容**：旧存档中的 joker 实例缺少升级相关字段，读档/购买时按名称从 `SHOP_POOL` 回填 `desc` / `upgrate_value` / `upgrate_rate` / `max_level` / `rate` / `min_value` / `max_value`（`getWitchUpgradeStep` / `getWitchUpgradeRateStep` / `getWitchMaxLevel` 同样带实例缺失时的回退查找），修复老用户升级预览文案不替换（Lv.1/Lv.2 显示相同）的问题。
 
 ### 4.6 卡牌图鉴（Card Book）
 
@@ -963,10 +996,13 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - **收集机制**：每通关一个带女巫头像的关卡，自动收集该关卡对应的女巫卡牌（存入 `collectedWitchCards`）。已收集的卡牌显示彩色头像，未收集的显示灰色占位。
 - **新收集提示**：新收集的卡牌在收集 2 秒后显示「NEW!」角标（呼吸缩放 ±4%）+ 常驻金色星星光晕（glowMult=1.2）。调试菜单提供「图鉴闪烁」按钮可手动触发。
 - **分页浏览**：左右翻页按钮浏览全部关卡女巫牌（每页 4 张，2×2 布局），翻页时自动重置上一页的选中状态。
-- **详情与装备**：点击已收集卡牌展开详情面板，显示女巫名称、描述和技能说明；面板底部提供**装备/卸下**按钮。装备后该女巫头像会显示在商店已装备栏的最右侧。
+- **大图灯箱**：点击已收集卡牌打开大图灯箱——全屏黑色蒙层（alpha 0.65）+ 屏幕居中圆角大图（高约 0.42 屏高）+ 四角闪烁星星（无光晕），图片下方灰色小字「点击空白处返回」，点击任意处关闭。
+- **装备功能已隐藏**：图鉴 UI 已移除「已装备」Tab、装备/卸下按钮与格子已装备标签（v1.16.0）；但历史上已装备的女巫卡牌（`equippedWitchCards`）仍持久化保留并在计分中正常生效。
 - **持久化**：收集状态和装备状态均跨局永久保留（`clearProgress()` 不会清除）。
 
 **已装备女巫卡牌（WITCH_CARDS）**
+
+> ⚠️ v1.16.0 起图鉴的装备入口已在 UI 层隐藏（点击卡牌改为大图灯箱），以下装备机制仅对历史已装备的玩家继续生效。
 
 图鉴中收集到的女巫卡牌可**最多同时装备 3 张**，提供跨局被动技能，同技能效果可叠加：
 
@@ -1018,6 +1054,8 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 ## 4.5 每日挑战 / 学习模式（Daily Challenge）
 
 **每日挑战**是一个可选的单词学习目标系统。设置弹窗现仅有 音效/重新闯关/问题反馈/版本信息 四项，「今日新词」入口已移除；开关 `settings.dailyWordChallengeEnabled` 只能在今日新词弹窗内切换（默认 false），而该弹窗当前全代码库无可达打开入口，因此学习模式暂无 UI 可开启。
+
+> 「版本信息」为二级页：点击后按 `game_version` 查询云数据库 `version_info` 集合并展示版本说明（含加载/失败/空态，复用反馈页的返回按钮与页面切换机制；info 文本按「数字.」序号自动换行）。正式版读线上真实版本号，开发版/体验版兜底硬编码常量 `GAME_VERSION`。
 
 ### 4.5.1 机制
 
@@ -1942,7 +1980,11 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 | v1.14.15 | 2026-08-03 | 三套新手引导的女巫图片两侧新增紫/金五角星装饰（新增 `_drawWitchSideStars`，移植自游戏结束弹窗小女巫装饰：右 3 颗紫+金、左 2 颗紫+金，跟随女巫移动/漂浮，绘制在对话框背景之后避免被遮挡） |
 | v1.14.16 | 2026-08-03 | 引导五角星新增闪烁呼吸动画：透明度（0.35~1）与缩放（0.85~1.15）按正弦脉动（周期约 1.6s），5 颗星相位逐颗错开，呈现一闪一闪效果 |
 | v1.14.17 | 2026-08-03 | 主页「双人对战」增加解锁条件：当前回合数 ≥ 5 才开放，未解锁时按钮显示锁定图 `homepageBattleLocked`（`bg_icon/homepage_battle_locked.png`），点击不进入对战页面；同步更新 README |
+| v1.14.18 | 2026-07-31 | （补录）计分预览增强：选中 1 张牌即显示基础字母总分/倍率预览（方块上方「字母总分」「倍率」提示小字），出牌后预览值无缝接管正式计分动画；结算新增「一击入魂」：本回合只出牌 1 次即通关时金币全部翻倍（延迟敲章 + 「+2 → +4」翻倍揭晓动画）；混沌法球随机倍率量化到 0.1 步进；继续闯关恢复到进入对战/金词前的单人页面状态；设置弹窗新增版本信息行（`GAME_VERSION` 常量） |
+| v1.15.0 | 2026-08-06 | 新增每日金词推理玩法：每日 1 词（`getDailyWords` 改为每日 1 词），10 次出牌机会按位置命中揭示占位卡，含主页入口弹窗（本月点亮日历 + 词长 + 挑战/查看结果按钮）、历史面板、猜中/失败结果弹窗与文字分享；占位卡复用对战模板 `battle_me_place`/`battle_me_word_bg`；主页「每日成就」入口替换为金词入口（未完成时显示呼吸红点）；词库文件改为 `daily_words_08_06_13.jsonl`（JSON Lines）；新增 `js/render/golden.js` |
+| v1.16.0 | 2026-08-08 | 新增女巫牌升级系统：详情弹窗金色升级按钮，消耗 (等级+1)×原价 金币逐级提升 `real_value`（`upgrate_value` 步进）或 `rate`（以小博大 `upgrate_rate` +5%/级，`max_level` Lv.5）；混沌法球随机区间随等级整体上移；升级成功视图（卡牌放大 + 紫色光芒 + 闪烁星星 + `magic_twinkle`）；计分/动画统一走 `getJokerValue`；升级同步写回 `_originalValue` 防止回合重置覆盖；词牌图鉴隐藏装备功能（移除「已装备」Tab 与装备按钮，点击词牌改为大图灯箱，历史已装备卡牌仍生效）；设置弹窗版本信息改为二级页（按 `game_version` 查询云数据库 `version_info` 集合）；消元术新增 `_lastPlayedWord` 记录单词原文用于展示；同步更新 README |
+| v1.16.1 | 2026-08-09 | 游戏中点击道具栏药水牌直接使用（`usePotionInGame`），不再弹出详情弹窗；商店页药水详情弹窗中吸星大法/字母置换隐藏「使用」按钮（这两张只能在游戏中使用），只保留售出；旧存档 joker 按名称从 `SHOP_POOL` 回填 desc/升级配置字段，修复老用户升级预览效果文案不替换（Lv.1/Lv.2 显示相同）；版本信息按「数字.」序号自动换行展示；同步更新 README |
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-08-03*
+*文档基于实际代码整理，最后更新：2026-08-11*
