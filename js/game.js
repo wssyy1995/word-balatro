@@ -3991,6 +3991,8 @@ class Game {
       gw.finished = true;
       // 猜中次数单独持久化（分享文案/结果弹窗统一读取，不依赖 guesses 数组）
       gw.winTries = gw.guesses.length;
+      // 埋点：每日金词-猜中（恭喜猜中弹窗即将弹出）
+      reportEvent('golden_success', { userid: this.userid || '' });
       for (let i = 0; i < gw.positions.length; i++) gw.positions[i] = true;
       this._goldenFlipAnim = null;
       this._markGoldenCalendar(gw.date);

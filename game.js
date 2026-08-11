@@ -1901,6 +1901,10 @@ wx.onTouchStart((e) => {
         return;
       }
       if (game.audioManager) game.audioManager.play('homepage_round_tap');
+      // 埋点：每日金词-开始挑战
+      reportEvent("golden_start", {
+        "userid": game.userid || ''
+      });
       game._goldenEntryPopup = null;
       // 异步备好数据（今日词/挑战进度/手牌）后翻页进入金词页
       game._startGoldenWord().then(ok => {
