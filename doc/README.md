@@ -443,7 +443,7 @@ target = 250 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 >
 > 当前 `WITCH_SKILLS` 配置中不包含 `double_coin`（金币翻倍），该奖励类型仅在 `getRewardName` / `createRewardItem` 中保留定义，未实际投放。
 >
-> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配，每局游戏的约束组合各不相同。`SKILL_POOL` 共 16 个技能，少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。`SKILL_POOL` 包含：
+> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配（`shuffleSkillPool`），每局游戏的约束组合各不相同；打乱时保证 `force_letter_3` 固定在第 3 个位置（若洗牌后不在第 3 位，则与第 3 个交换位置），即每局第 8 关（`WITCH_SKILLS` 下标 2，循环复用时下标 18 的第 53 关同理）的约束恒为「每次出牌只能出 3 张字母牌」。`SKILL_POOL` 共 16 个技能，少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。`SKILL_POOL` 包含：
 > - `force_letter_3`：每次出牌只能出 3 张字母牌
 > - `need_letter_4`：每次出牌必须不少于 4 个字母
 > - `forbid_illegal_words`：出现非法单词即游戏结束

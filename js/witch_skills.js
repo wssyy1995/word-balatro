@@ -101,6 +101,18 @@ function shuffleSkills(arr) {
   return result;
 }
 
+// 打乱技能池，并保证 force_letter_3 固定在第 3 个位置：
+// 若洗牌后不在第 3 位，则与第 3 个交换位置
+function shuffleSkillPool() {
+  const result = shuffleSkills([...SKILL_POOL]);
+  const FORCE_INDEX = Math.min(2, result.length - 1); // 第 3 个（下标 2）
+  const forceIdx = result.findIndex(s => s.skill === 'force_letter_3');
+  if (forceIdx !== FORCE_INDEX) {
+    [result[forceIdx], result[FORCE_INDEX]] = [result[FORCE_INDEX], result[forceIdx]];
+  }
+  return result;
+}
+
 // 解析 force_contain_X 类技能，返回要求的字母（如 'A'）
 function getForceContainLetter(skillName) {
   if (!skillName) return null;
@@ -346,6 +358,7 @@ module.exports = {
   createRewardItem,
   giveReward,
   shuffleSkills,
+  shuffleSkillPool,
   parseLetterTriggerTwiceSkill,
   getForceContainLetter,
   formatItemDesc,

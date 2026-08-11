@@ -4,7 +4,7 @@
 // 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
 // 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
 // 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
-const GAME_VERSION = '8.8.21';
+const GAME_VERSION = '8.9.17';
 
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
@@ -17,7 +17,7 @@ const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter, getChaosRange } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, shuffleSkillPool, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter, getChaosRange } = require('./witch_skills');
 const { reportEvent } = require('./report');
 const { BattleManager } = require('./battle');
 const { DailyAchievements } = require('./daily_achievements');
@@ -1314,7 +1314,7 @@ class Game {
       this.totalScore = 0;
       this.gameOverReason = null;
       this.roundScores = [];
-      this._shuffledSkills = shuffleSkills([...SKILL_POOL]);
+      this._shuffledSkills = shuffleSkillPool();
       console.log('初始化SKILL_NAME=[' + this._shuffledSkills.map(s => s.skill).join(',') + ']');
       // 每日单词挑战：新游戏时加载今日词
       this._initDailyChallenge();
@@ -1654,7 +1654,7 @@ class Game {
     if (this.state !== 'battle' && this.battleManager) {
       this.battleManager._resetToSinglePlayer();
     }
-    this._shuffledSkills = p._shuffledSkills || shuffleSkills([...SKILL_POOL]);
+    this._shuffledSkills = p._shuffledSkills || shuffleSkillPool();
     this.discardsLeft = p.discardsLeft;
     this.handsLeft = p.handsLeft;
     this.hand = p.hand || [];
