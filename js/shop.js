@@ -561,6 +561,53 @@ class ShopRenderer {
           ctx.restore();
           ctx.restore();
 
+          // 升级小按钮（纯装饰）：卡牌可升级且金币足够时，在右上角显示浮动向上箭头
+          if (!game._jokerSortState) {
+            const jokerLv = joker.level || 1;
+            const upMaxLv = getWitchMaxLevel(joker);
+            const canUpCard = (getWitchUpgradeStep(joker) !== undefined || getWitchUpgradeRateStep(joker) !== undefined)
+              && (upMaxLv === undefined || jokerLv < upMaxLv);
+            const upCost = (jokerLv + 1) * joker.cost;
+            if (canUpCard && game.gold >= upCost) {
+              const br = 7.5 * s;
+              const bcx = drawX + drawW - 2 * s;
+              const bcy = drawY + 2 * s;
+              // 圆形金底 + 白色描边
+              ctx.save();
+              ctx.shadowColor = 'rgba(0,0,0,0.25)';
+              ctx.shadowBlur = 3 * s;
+              ctx.shadowOffsetY = 1 * s;
+              ctx.fillStyle = '#c4a35a';
+              ctx.beginPath();
+              ctx.arc(bcx, bcy, br, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+              ctx.save();
+              ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+              ctx.lineWidth = 1 * s;
+              ctx.beginPath();
+              ctx.arc(bcx, bcy, br - 0.5 * s, 0, Math.PI * 2);
+              ctx.stroke();
+              // 白色向上箭头（上下轻微浮动，与详情弹窗升级按钮一致）
+              const aw = 8 * s;
+              const ah = 8 * s;
+              const atop = bcy - ah / 2 + Math.sin(Date.now() / 280) * 1 * s;
+              ctx.fillStyle = '#fff';
+              ctx.beginPath();
+              const headH = ah * 0.55;
+              ctx.moveTo(bcx, atop);
+              ctx.lineTo(bcx + aw / 2, atop + headH);
+              ctx.lineTo(bcx + aw * 0.22, atop + headH);
+              ctx.lineTo(bcx + aw * 0.22, atop + ah);
+              ctx.lineTo(bcx - aw * 0.22, atop + ah);
+              ctx.lineTo(bcx - aw * 0.22, atop + headH);
+              ctx.lineTo(bcx - aw / 2, atop + headH);
+              ctx.closePath();
+              ctx.fill();
+              ctx.restore();
+            }
+          }
+
           // 排序状态下不响应点击
           if (!game._jokerSortState) {
             this.shopOwnedPropRects.push({ x: sx + slideOffsetX + sortX, y: oSlotY + selectedOffsetY + sortY, w: slotW, h: oSlotH, index: i, array: 'jokers' });
