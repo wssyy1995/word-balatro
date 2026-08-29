@@ -4,7 +4,7 @@
 // 每次发版前手动递增此值（与上传微信后台的版本号保持一致）。
 // 用途：正式版可通过 wx.getAccountInfoSync().miniProgram.version 读到线上真实版本号，
 // 但开发版/体验版该字段为空，需要此硬编码兜底（设置弹窗版本信息、反馈上报等场景）。
-const GAME_VERSION = '8.9.17';
+const GAME_VERSION = '8.29.19';
 
 const {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,

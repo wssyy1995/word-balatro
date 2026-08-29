@@ -1959,7 +1959,12 @@ wx.onTouchStart((e) => {
   }
 
   // 主页长按 battle 按钮也打开调试菜单（体验版排查好友对战问题用）
-  if (showHomepage && game && game.state !== 'battle' && isDebugVersion()) {
+  // 注意：主页弹窗（设置/排行榜/单词本/每日成就/金词/授权等）打开时不拦截，
+  // 否则会静默吞掉弹窗内与 battle 按钮重叠区域的点击（如设置弹窗确认按钮）
+  if (showHomepage && !settingsPopupOpen && game && game.state !== 'battle' && isDebugVersion()
+    && !(game._showingRankPopup) && !(game._wordBookPopup) && !(game._dailyAchievementPopup)
+    && !(game._goldenEntryPopup) && !(game._restartRoundConfirmPopup)
+    && !(game._showingProfileAuthButton && !game._profileAuthCompleted)) {
     const homepageBattleRect = renderer.homepageBtnRects && renderer.homepageBtnRects.find(r => r.key === 'battle');
     if (homepageBattleRect && renderer.hitTest(x, y, [homepageBattleRect])) {
       longPressTimer = setTimeout(() => {
@@ -2199,7 +2204,7 @@ wx.onTouchStart((e) => {
     const popup = game._restartRoundConfirmPopup;
     const yesHit = renderer.restartRoundConfirmYesRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmYesRect]);
     const noHit = renderer.restartRoundConfirmNoRect && renderer.hitTest(x, y, [renderer.restartRoundConfirmNoRect]);
-    console.log('[RestartConfirm] touchStart yesRect=', !!renderer.restartRoundConfirmYesRect, 'yesHit=', !!yesHit, 'noHit=', !!noHit);
+    console.log('[RestartConfirm] touchStart x=', Math.round(x), 'y=', Math.round(y), 'yesRect=', JSON.stringify(renderer.restartRoundConfirmYesRect), 'yesHit=', !!yesHit, 'noHit=', !!noHit);
     if (yesHit) {
       vibrate();
       if (game.audioManager) game.audioManager.play('tap');
@@ -2209,7 +2214,12 @@ wx.onTouchStart((e) => {
         popup.yesPressed = false;
         popup.closing = true;
         popup.closeStartTime = Date.now();
-        executeRestartRound();
+        try {
+          executeRestartRound();
+          console.log('[RestartConfirm] 执行重置成功');
+        } catch (err) {
+          console.error('[RestartConfirm] executeRestartRound 报错:', err);
+        }
       }, 150);
       return;
     }
@@ -2321,6 +2331,12 @@ wx.onTouchStart((e) => {
     const feedbackBackHit = renderer.feedbackBackRect && renderer.hitTest(x, y, [renderer.feedbackBackRect]);
     const feedbackInputHit = renderer.feedbackInputRect && renderer.hitTest(x, y, [renderer.feedbackInputRect]);
     const feedbackSubmitHit = renderer.feedbackSubmitRect && renderer.hitTest(x, y, [renderer.feedbackSubmitRect]);
+
+    console.log('[Settings] touch x=', Math.round(x), 'y=', Math.round(y),
+      '| hits: sound=', !!soundHit, 'music=', !!musicHit, 'clickSound=', !!clickSoundHit,
+      'restart=', !!restartRoundHit, 'feedback=', !!feedbackHit, 'version=', !!versionHit,
+      '| soundRect=', JSON.stringify(renderer.settingsSoundRect),
+      'restartRect=', JSON.stringify(renderer.settingsRestartRoundRect));
 
     if (soundHit) {
       game._settingsSoundPressed = true;

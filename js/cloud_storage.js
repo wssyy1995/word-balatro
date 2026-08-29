@@ -183,6 +183,7 @@ class CloudStorageManager {
 
     // 默认 music 云文件映射（只包含代码中有实际 play() 调用的音效）
     this.defaultMusicFileMap = {
+      'game_bg':c('/music/bg/game_bg.mp3'),
       'buy_success': c('/music/sound_effect/buy_success.mp3'),
       'card_illegal': c('/music/sound_effect/card_illegal.mp3'),
       'card_placement': c('/music/sound_effect/card_placement.mp3'),

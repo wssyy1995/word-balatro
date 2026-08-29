@@ -68,6 +68,9 @@ exports.main = async (event, context) => {
         data: {
           lastLoginTime: now,
           deviceInfo: deviceInfo,
+          // 主体变更后 unionid 可能变化（取决于新主体绑定的开放平台账号），登录时刷新保持鲜活；
+          // 仅在拿到非空值时更新，避免未绑开放平台时把旧值抹成空
+          ...(UNIONID ? { unionid: UNIONID } : {}),
           ...mergedProfile,
         }
       });

@@ -3200,7 +3200,7 @@ module.exports = function extendPopup(Renderer) {
       }
 
       const panelW = 282;
-      const panelH = 343 + Math.round(100 * expandProgress);
+      const panelH = 343; // 高度固定：展开音效子项时下方内容整体下滑，超出部分被面板裁剪
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
@@ -3467,7 +3467,7 @@ module.exports = function extendPopup(Renderer) {
         const itemStartY = titleY + 31 * s;
         const iconSize = 52 * s;
         // 音效子行高度与展开位移（展开时下方行整体下移）
-        const subH = 50 * s;
+        const subH = 42 * s;
         const expandShift = expandProgress * subH * 2;
 
         items.forEach((item, i) => {
@@ -3560,11 +3560,13 @@ module.exports = function extendPopup(Renderer) {
               ctx.restore();
             }
 
-            // 记录整行点击区域
-            const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
-            if (item.key === 'feedback') this.settingsFeedbackRect = rect;
-            if (item.key === 'restartRound') this.settingsRestartRoundRect = rect;
-            if (item.key === 'version') this.settingsVersionRect = rect;
+            // 记录整行点击区域（行中心滑出面板底部时不注册，避免隐形区域吞掉点击）
+            if (centerY < py + ph) {
+              const rect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
+              if (item.key === 'feedback') this.settingsFeedbackRect = rect;
+              if (item.key === 'restartRound') this.settingsRestartRoundRect = rect;
+              if (item.key === 'version') this.settingsVersionRect = rect;
+            }
           }
 
           // 分隔线(非最后一项)

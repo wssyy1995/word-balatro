@@ -569,15 +569,15 @@ class ShopRenderer {
               && (upMaxLv === undefined || jokerLv < upMaxLv);
             const upCost = (jokerLv + 1) * joker.cost;
             if (canUpCard && game.gold >= upCost) {
-              const br = 7.5 * s;
-              const bcx = drawX + drawW - 2 * s;
-              const bcy = drawY + 2 * s;
+              const br = 9 * s;
+              const bcx = drawX + drawW - 3 * s;
+              const bcy = drawY + 3 * s;
               // 圆形金底 + 白色描边
               ctx.save();
               ctx.shadowColor = 'rgba(0,0,0,0.25)';
               ctx.shadowBlur = 3 * s;
               ctx.shadowOffsetY = 1 * s;
-              ctx.fillStyle = '#c4a35a';
+              ctx.fillStyle = '#E6BB33';
               ctx.beginPath();
               ctx.arc(bcx, bcy, br, 0, Math.PI * 2);
               ctx.fill();
@@ -589,8 +589,8 @@ class ShopRenderer {
               ctx.arc(bcx, bcy, br - 0.5 * s, 0, Math.PI * 2);
               ctx.stroke();
               // 白色向上箭头（上下轻微浮动，与详情弹窗升级按钮一致）
-              const aw = 8 * s;
-              const ah = 8 * s;
+              const aw = 9.5 * s;
+              const ah = 9.5 * s;
               const atop = bcy - ah / 2 + Math.sin(Date.now() / 280) * 1 * s;
               ctx.fillStyle = '#fff';
               ctx.beginPath();
@@ -1554,8 +1554,13 @@ class ShopRenderer {
     ctx.stroke();
     ctx.restore();
 
-    // 容器背景
-    this.parent.roundRect(moduleX, moduleY, moduleW, moduleH, 10 * s, '#f5f0e6', '#c4a35a', 1.5 * s);
+    // 容器背景（女巫回合：边框改紫色 + 紫色「妖雾」边框动画，复用 _drawLashBorder，取模实现循环播放）
+    const isWitchRound = !!witchSkill;
+    this.parent.roundRect(moduleX, moduleY, moduleW, moduleH, 10 * s, '#f5f0e6', isWitchRound ? '#9b59b6' : '#c4a35a', 1.5 * s);
+    if (isWitchRound) {
+      const lashElapsed = (Date.now() % 1000) / 1000;
+      this.parent._drawLashBorder(ctx, moduleX, moduleY, moduleW, moduleH, 10 * s, s, lashElapsed, 1.0, 0.35);
+    }
     // 保存模块位置供商店引导聚光灯使用
     this.shopGuideSpotRect = { x: moduleX, y: moduleY, w: moduleW, h: moduleH };
 

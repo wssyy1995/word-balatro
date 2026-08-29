@@ -319,7 +319,7 @@ module.exports = function extendEffects(Renderer) {
       return alive;
     }
 
-    Renderer.prototype._drawLashBorder = function(ctx, x, y, w, h, r, s, elapsedSec, duration = 0.7) {
+    Renderer.prototype._drawLashBorder = function(ctx, x, y, w, h, r, s, elapsedSec, duration = 0.7, widthScale = 1) {
       const cycle = Math.min(elapsedSec / duration, 1);
       const breathe = 0.5 + 0.5 * Math.sin(cycle * Math.PI);
   
@@ -328,7 +328,7 @@ module.exports = function extendEffects(Renderer) {
       // 1. 外层光晕描边（缩到 0.3 比例）
       this._roundedRectPath(ctx, x, y, w, h, r);
       ctx.strokeStyle = `rgba(180,100,255,${0.25 + breathe * 0.6})`;
-      ctx.lineWidth = (4 + breathe * 3) * s;
+      ctx.lineWidth = (4 + breathe * 3) * s * widthScale;
       ctx.shadowColor = `rgba(160,75,240,${0.35 + breathe * 0.5})`;
       ctx.shadowBlur = (7 + breathe * 5) * s;
       ctx.stroke();
@@ -337,7 +337,7 @@ module.exports = function extendEffects(Renderer) {
       // 2. 内层细描边
       this._roundedRectPath(ctx, x, y, w, h, r);
       ctx.strokeStyle = `rgba(230,200,255,${0.25 + breathe * 0.35})`;
-      ctx.lineWidth = 0.8 * s;
+      ctx.lineWidth = 0.8 * s * widthScale;
       ctx.shadowColor = `rgba(200,150,255,${0.3 + breathe * 0.4})`;
       ctx.shadowBlur = (4 + breathe * 3) * s;
       ctx.stroke();
@@ -346,7 +346,7 @@ module.exports = function extendEffects(Renderer) {
       // 3. 雾层（缩到 0.3 比例）
       this._roundedRectPath(ctx, x, y, w, h, r);
       ctx.strokeStyle = `rgba(140,60,230,${0.15 + breathe * 0.2})`;
-      ctx.lineWidth = (6 + breathe * 4) * s;
+      ctx.lineWidth = (6 + breathe * 4) * s * widthScale;
       ctx.shadowColor = `rgba(120,40,210,${0.1 + breathe * 0.18})`;
       ctx.shadowBlur = 8 * s;
       ctx.stroke();
