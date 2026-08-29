@@ -321,7 +321,7 @@ module.exports = function extendPopup(Renderer) {
           ctx.shadowColor = 'rgba(0,0,0,0.25)';
           ctx.shadowBlur = 4 * s;
           ctx.shadowOffsetY = 2 * s;
-          this.roundRect(bx, btnY, btnW, btnH, 8 * s, canUpgrade ? '#c4a35a' : '#b8b0a0');
+          this.roundRect(bx, btnY, btnW, btnH, 8 * s, canUpgrade ? '#FFD700' : '#b8b0a0');
           ctx.restore();
           // 顶部高光条
           ctx.save();
@@ -342,22 +342,30 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 金棕色向上箭头（三角头 + 矩形杆），带上下轻微浮动；置灰时不浮动
-          const acx = upGroupX + arrowW / 2;
+          // 升级图标（皇冠 card_upgrade.png），带上下轻微浮动；置灰时不浮动并降低透明度
           const arrowFloatY = canUpgrade ? Math.sin(Date.now() / 280) * 1.2 * s : 0;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = canUpgrade ? '#9a7209' : '#8a8272';
-          ctx.beginPath();
-          const headH = arrowH * 0.55;
-          ctx.moveTo(acx, atop);
-          ctx.lineTo(acx + arrowW / 2, atop + headH);
-          ctx.lineTo(acx + arrowW * 0.22, atop + headH);
-          ctx.lineTo(acx + arrowW * 0.22, atop + arrowH);
-          ctx.lineTo(acx - arrowW * 0.22, atop + arrowH);
-          ctx.lineTo(acx - arrowW * 0.22, atop + headH);
-          ctx.lineTo(acx - arrowW / 2, atop + headH);
-          ctx.closePath();
-          ctx.fill();
+          if (this.cardUpgradeIcon && this.cardUpgradeIconLoaded) {
+            ctx.save();
+            if (!canUpgrade) ctx.globalAlpha = 0.55;
+            ctx.drawImage(this.cardUpgradeIcon, upGroupX, atop, arrowW, arrowH);
+            ctx.restore();
+          } else {
+            // 图标未加载时回退：金棕色向上箭头（三角头 + 矩形杆）
+            const acx = upGroupX + arrowW / 2;
+            ctx.fillStyle = canUpgrade ? '#9a7209' : '#8a8272';
+            ctx.beginPath();
+            const headH = arrowH * 0.55;
+            ctx.moveTo(acx, atop);
+            ctx.lineTo(acx + arrowW / 2, atop + headH);
+            ctx.lineTo(acx + arrowW * 0.22, atop + headH);
+            ctx.lineTo(acx + arrowW * 0.22, atop + arrowH);
+            ctx.lineTo(acx - arrowW * 0.22, atop + arrowH);
+            ctx.lineTo(acx - arrowW * 0.22, atop + headH);
+            ctx.lineTo(acx - arrowW / 2, atop + headH);
+            ctx.closePath();
+            ctx.fill();
+          }
           // 「升级」文字
           ctx.fillStyle = canUpgrade ? '#fff' : '#e8e4dc';
           ctx.textAlign = 'left';

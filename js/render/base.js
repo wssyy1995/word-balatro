@@ -369,6 +369,19 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
+    // 加载升级皇冠图标（女巫详情弹窗升级按钮，本地加载）
+    this.cardUpgradeIcon = null;
+    this.cardUpgradeIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/card_upgrade.png';
+      img.onload = () => { this.cardUpgradeIconLoaded = true; };
+      img.onerror = () => { this.cardUpgradeIconLoaded = false; };
+      this.cardUpgradeIcon = img;
+    } catch (e) {
+      this.cardUpgradeIconLoaded = false;
+    }
+
     // 加载结算翻倍敲章图（单手通关奖励，本地加载）
     this.bonusDoubleImg = null;
     this.bonusDoubleLoaded = false;
