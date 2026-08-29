@@ -10,6 +10,7 @@ class AudioManager {
     this.bgmStarted = false; // BGM 是否已启动（真机首次播放需用户交互）
     this._firstInteraction = false; // 是否有过用户交互
     this._loopDurations = {}; // 记录循环音效的时长（秒），供视觉同步使用
+    this._cloudBgmPath = null; // 云存储缓存的 BGM 路径（game_bg，由 loadFromCloud 写入）
   }
 
   // 加载音效
@@ -123,19 +124,22 @@ class AudioManager {
   }
 
   // 启动 BGM（不再强制要求用户交互，进入游戏后直接尝试播放）
-  tryStartBGM(src = 'music/bg/bg_music.mp3') {
+  // 优先使用云存储缓存的 game_bg（由 loadFromCloud 记录），回退本地默认路径
+  tryStartBGM(src = null) {
     if (this.bgmStarted || !this.musicEnabled) return;
+
+    const bgmSrc = src || this._cloudBgmPath || 'music/bg/bg_music.mp3';
 
     // 先检查 BGM 文件是否存在，避免文件缺失时抛 readFile 报错
     const fs = wx.getFileSystemManager();
     try {
-      fs.accessSync(src);
+      fs.accessSync(bgmSrc);
     } catch (e) {
       // BGM 文件不存在，静默跳过
       return;
     }
 
-    this.playBGM(src);
+    this.playBGM(bgmSrc);
   }
 
   // 停止背景音乐
@@ -165,6 +169,13 @@ class AudioManager {
     this.musicEnabled = enabled;
     if (!enabled && this.bgm) {
       this.stopBGM();
+    } else if (enabled) {
+      // 重新开启时恢复 BGM：已创建则续播，未创建则尝试启动（如云缓存 game_bg 就绪）
+      if (this.bgm) {
+        try { this.bgm.play(); } catch (e) {}
+      } else {
+        this.tryStartBGM();
+      }
     }
   }
 
@@ -192,6 +203,11 @@ class AudioManager {
   loadFromCloud(cloudStorage) {
     if (!cloudStorage || !cloudStorage.musicCache) return;
     Object.entries(cloudStorage.musicCache).forEach(([name, path]) => {
+      // game_bg 是 BGM，不进入音效表，只记录路径供 tryStartBGM 使用
+      if (name === 'game_bg') {
+        this._cloudBgmPath = path;
+        return;
+      }
       if (!this.sounds[name]) {
         this.load(name, path);
       }

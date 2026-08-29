@@ -351,7 +351,7 @@ module.exports = function extendPopup(Renderer) {
           // 三角头 + 矩形杆（一体路径）
           const headH = arrowH * 0.52;
           const shaftW = arrowW * 0.4;
-          const shaftBottom = atop + arrowH * 0.78;
+          const shaftBottom = atop + arrowH * 0.82;
           ctx.beginPath();
           ctx.moveTo(acx, atop);
           ctx.lineTo(acx + arrowW / 2, atop + headH);
@@ -362,10 +362,10 @@ module.exports = function extendPopup(Renderer) {
           ctx.lineTo(acx - arrowW / 2, atop + headH);
           ctx.closePath();
           ctx.fill();
-          // 底部横杠
-          const barW = arrowW * 0.48;
-          const barH = arrowH * 0.13;
-          ctx.fillRect(acx - barW / 2, atop + arrowH * 0.85, barW, barH);
+          // 底部横杠（与矩形杆同宽）
+          const barW = shaftW;
+          const barH = arrowH * 0.12;
+          ctx.fillRect(acx - barW / 2, atop + arrowH * 0.9, barW, barH);
           // 「升级」文字
           ctx.fillStyle = canUpgrade ? '#fff' : '#e8e4dc';
           ctx.textAlign = 'left';
@@ -3188,8 +3188,19 @@ module.exports = function extendPopup(Renderer) {
       const isClosing = game._closingSettings;
       const elapsed = isClosing ? 99999 : Date.now() - popup.startTime;
 
+      // 音效子项展开进度（0=收起 1=展开，easeInOutQuad 250ms 丝滑动画）
+      let expandProgress = popup._expandProgress || 0;
+      if (popup.expandAnim) {
+        const t = Math.min((Date.now() - popup.expandAnim.startTime) / popup.expandAnim.duration, 1);
+        expandProgress = popup.expandAnim.from + (popup.expandAnim.to - popup.expandAnim.from) * Easing.easeInOutQuad(t);
+        if (t >= 1) {
+          popup._expandProgress = popup.expandAnim.to;
+          popup.expandAnim = null;
+        }
+      }
+
       const panelW = 282;
-      const panelH = 343;
+      const panelH = 343 + Math.round(100 * expandProgress);
       const panel = this._drawModalPanel(ctx, W, H, s, {
         isClosing,
         closeStartTime: game._closeSettingsStartTime,
@@ -3218,6 +3229,8 @@ module.exports = function extendPopup(Renderer) {
 
       // 重置点击区域
       this.settingsSoundRect = null;
+      this.settingsMusicRect = null;
+      this.settingsClickSoundRect = null;
       this.settingsDailyChallengeRect = null;
       this.settingsFeedbackRect = null;
       this.settingsRestartRoundRect = null;
@@ -3424,9 +3437,8 @@ module.exports = function extendPopup(Renderer) {
             key: 'sound',
             iconKey: 'sound',
             title: '音效',
-            subtitle: '开启或关闭游戏音效',
-            type: 'switch',
-            value: game.settings && game.settings.soundEnabled !== false
+            subtitle: '背景音乐与点击音效设置',
+            type: 'expand'
           },
           {
             key: 'restartRound',
@@ -3454,9 +3466,12 @@ module.exports = function extendPopup(Renderer) {
         const itemH = 59 * s;
         const itemStartY = titleY + 31 * s;
         const iconSize = 52 * s;
+        // 音效子行高度与展开位移（展开时下方行整体下移）
+        const subH = 50 * s;
+        const expandShift = expandProgress * subH * 2;
 
         items.forEach((item, i) => {
-          const itemY = itemStartY + i * itemH;
+          const itemY = itemStartY + i * itemH + (i > 0 ? expandShift : 0);
           const centerY = itemY + itemH / 2;
 
           // 图标图片
@@ -3505,45 +3520,26 @@ module.exports = function extendPopup(Renderer) {
 
           // 右侧控件
           const ctrlRightX = px + pw - 22 * s;
-          if (item.type === 'switch') {
-            const swW = 50 * s;
-            const swH = 26 * s;
-            const swX = ctrlRightX - swW;
-            const swY = centerY - swH / 2;
-            const isOn = item.value;
-            const isPressed = game._settingsSoundPressed;
-            const pressOffset = isPressed ? 1 * s : 0;
-
-            // 开关背景
+          if (item.type === 'expand') {
+            // 展开箭头（'›' 图标，随展开进度旋转 90° 指向下方）
+            const expRightIcon = this.settingIcons && this.settingIcons.right;
+            const expIconSize = 12 * s;
             ctx.save();
-            ctx.globalAlpha = contentAlpha;
-            this.roundRect(swX, swY + pressOffset, swW, swH, swH / 2, isOn ? '#8b6914' : '#c8c0b0');
+            ctx.globalAlpha = contentAlpha * 0.8;
+            ctx.translate(ctrlRightX - 4 * s, centerY);
+            ctx.rotate(Math.PI / 2 * expandProgress);
+            if (expRightIcon && expRightIcon.loaded && expRightIcon.img) {
+              ctx.drawImage(expRightIcon.img, -expIconSize / 2, -expIconSize / 2, expIconSize, expIconSize);
+            } else {
+              ctx.font = `bold ${Math.floor(16 * s)}px sans-serif`;
+              ctx.fillStyle = '#8a7a6a';
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('›', 0, 0);
+            }
             ctx.restore();
 
-            // "开"/"关" 文字
-            ctx.save();
-            ctx.globalAlpha = contentAlpha;
-            ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
-            ctx.fillStyle = '#fff';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const labelText = isOn ? '开' : '关';
-            ctx.fillText(labelText, swX + swH / 2 + 2 * s, swY + pressOffset + swH / 2);
-            ctx.restore();
-
-            // 圆点
-            const dotR = 10 * s;
-            const dotX = isOn ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
-            const dotY = swY + pressOffset + swH / 2;
-            ctx.save();
-            ctx.globalAlpha = contentAlpha;
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, dotR, 0, Math.PI * 2);
-            ctx.fillStyle = '#fff';
-            ctx.fill();
-            ctx.restore();
-
-            // 记录点击区域（整行可点，与下方箭头行一致——用户习惯点按整行而非仅开关）
+            // 记录点击区域（整行可点，点击展开/收起子项）
             this.settingsSoundRect = { x: px + 10 * s, y: itemY, w: pw - 20 * s, h: itemH };
           } else if (item.type === 'arrow') {
             const rightIcon = this.settingIcons && this.settingIcons.right;
@@ -3573,7 +3569,7 @@ module.exports = function extendPopup(Renderer) {
 
           // 分隔线(非最后一项)
           if (i < items.length - 1) {
-            const lineY = itemY + itemH;
+            const lineY = itemY + itemH + (i === 0 ? expandShift : 0);
             const linePad = 18 * s;
             ctx.save();
             ctx.globalAlpha = contentAlpha * 0.35;
@@ -3597,6 +3593,61 @@ module.exports = function extendPopup(Renderer) {
             ctx.restore();
           }
         });
+
+        // === 音效子项（展开时显示：背景音乐 / 点击音效，两个开关相互独立）===
+        if (expandProgress > 0.01) {
+          const subRows = [
+            { key: 'music', title: '背景音乐', value: !!(game.settings && game.settings.musicEnabled !== false), pressed: !!game._settingsMusicPressed },
+            { key: 'clickSound', title: '点击音效', value: !!(game.settings && game.settings.soundEnabled !== false), pressed: !!game._settingsClickSoundPressed }
+          ];
+          const subItemH = subH * expandProgress;
+          subRows.forEach((row, ri) => {
+            const rowY = itemStartY + itemH + ri * subItemH;
+            // 裁剪到当前展开高度，内容随手风琴展开逐渐露出
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(px + 10 * s, rowY, pw - 20 * s, subItemH);
+            ctx.clip();
+            ctx.globalAlpha = contentAlpha * expandProgress;
+
+            // 内容按完全展开时的行中心定位
+            const rowCenterY = rowY + subH / 2;
+            const subTextX = px + 22 * s - 4 + iconSize + 4 * s;
+
+            // 标题
+            ctx.font = `bold ${Math.floor(13 * s)}px sans-serif`;
+            ctx.fillStyle = '#3a2e1e';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(row.title, subTextX, rowCenterY);
+
+            // 开关（样式同原音效开关）
+            const swW = 50 * s;
+            const swH = 26 * s;
+            const swX = px + pw - 22 * s - swW;
+            const pressOffset = row.pressed ? 1 * s : 0;
+            const swY = rowCenterY - swH / 2 + pressOffset;
+            this.roundRect(swX, swY, swW, swH, swH / 2, row.value ? '#8b6914' : '#c8c0b0');
+            ctx.font = `bold ${Math.floor(11 * s)}px sans-serif`;
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(row.value ? '开' : '关', swX + swH / 2 + 2 * s, swY + swH / 2);
+            const dotR = 10 * s;
+            const dotX = row.value ? swX + swW - dotR - 3 * s : swX + dotR + 3 * s;
+            ctx.beginPath();
+            ctx.arc(dotX, swY + swH / 2, dotR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // 完全展开后才注册点击区域，避免动画过程中误触
+            if (expandProgress >= 1) {
+              const rect = { x: px + 10 * s, y: rowY, w: pw - 20 * s, h: subH };
+              if (row.key === 'music') this.settingsMusicRect = rect;
+              else this.settingsClickSoundRect = rect;
+            }
+          });
+        }
 
         ctx.restore();
       }

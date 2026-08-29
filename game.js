@@ -2311,6 +2311,8 @@ wx.onTouchStart((e) => {
 
     // 主页按钮
     const soundHit = renderer.settingsSoundRect && renderer.hitTest(x, y, [renderer.settingsSoundRect]);
+    const musicHit = renderer.settingsMusicRect && renderer.hitTest(x, y, [renderer.settingsMusicRect]);
+    const clickSoundHit = renderer.settingsClickSoundRect && renderer.hitTest(x, y, [renderer.settingsClickSoundRect]);
     const restartRoundHit = renderer.settingsRestartRoundRect && renderer.hitTest(x, y, [renderer.settingsRestartRoundRect]);
     const feedbackHit = renderer.settingsFeedbackRect && renderer.hitTest(x, y, [renderer.settingsFeedbackRect]);
     const versionHit = renderer.settingsVersionRect && renderer.hitTest(x, y, [renderer.settingsVersionRect]);
@@ -2322,6 +2324,14 @@ wx.onTouchStart((e) => {
 
     if (soundHit) {
       game._settingsSoundPressed = true;
+      return;
+    }
+    if (musicHit) {
+      game._settingsMusicPressed = true;
+      return;
+    }
+    if (clickSoundHit) {
+      game._settingsClickSoundPressed = true;
       return;
     }
     if (restartRoundHit) {
@@ -3352,7 +3362,33 @@ wx.onTouchEnd(() => {
   if (game._settingsPopup && !game._closingSettings) {
     if (game._settingsSoundPressed) {
       game._settingsSoundPressed = false;
-      game.settings.soundEnabled = !game.settings.soundEnabled;
+      // 音效行：展开/收起子项（背景音乐 / 点击音效），丝滑手风琴动画
+      const popup = game._settingsPopup;
+      if (popup) {
+        const expanded = !popup.soundExpanded;
+        popup.soundExpanded = expanded;
+        popup.expandAnim = { from: popup._expandProgress || 0, to: expanded ? 1 : 0, startTime: Date.now(), duration: 250 };
+      }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    // 背景音乐开关（独立）
+    if (game._settingsMusicPressed) {
+      game._settingsMusicPressed = false;
+      game.settings.musicEnabled = !(game.settings.musicEnabled !== false);
+      if (game.audioManager) {
+        game.audioManager.setMusicEnabled(game.settings.musicEnabled);
+      }
+      if (game.storageManager) {
+        game.storageManager.saveSettings(game.settings);
+      }
+      if (game.audioManager) game.audioManager.play('tap');
+    }
+
+    // 点击音效开关（独立）
+    if (game._settingsClickSoundPressed) {
+      game._settingsClickSoundPressed = false;
+      game.settings.soundEnabled = !(game.settings.soundEnabled !== false);
       if (game.audioManager) {
         game.audioManager.setSoundEnabled(game.settings.soundEnabled);
       }
