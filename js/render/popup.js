@@ -342,29 +342,30 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 米白色向上箭头（圆角三角头 + 两条递减圆角横杠），带上下轻微浮动；置灰时不浮动
+          // 米白色向上箭头（宽三角头 + 矩形杆 + 底部横杠，参考设计图），带上下轻微浮动；置灰时不浮动
           const acx = upGroupX + arrowW / 2;
           const arrowFloatY = canUpgrade ? Math.sin(Date.now() / 280) * 1.2 * s : 0;
           const atop = midY - arrowH / 2 + arrowFloatY;
           const arrowColor = canUpgrade ? '#f5f0e6' : '#8a8272';
-          // 三角头（lineJoin round + 同色描边实现圆角）
           ctx.fillStyle = arrowColor;
-          ctx.strokeStyle = arrowColor;
-          ctx.lineJoin = 'round';
-          ctx.lineWidth = 1.5 * s;
-          const headH = arrowH * 0.5;
-          const headHalfW = arrowW * 0.42;
+          // 三角头 + 矩形杆（一体路径）
+          const headH = arrowH * 0.52;
+          const shaftW = arrowW * 0.4;
+          const shaftBottom = atop + arrowH * 0.78;
           ctx.beginPath();
           ctx.moveTo(acx, atop);
-          ctx.lineTo(acx + headHalfW, atop + headH);
-          ctx.lineTo(acx - headHalfW, atop + headH);
+          ctx.lineTo(acx + arrowW / 2, atop + headH);
+          ctx.lineTo(acx + shaftW / 2, atop + headH);
+          ctx.lineTo(acx + shaftW / 2, shaftBottom);
+          ctx.lineTo(acx - shaftW / 2, shaftBottom);
+          ctx.lineTo(acx - shaftW / 2, atop + headH);
+          ctx.lineTo(acx - arrowW / 2, atop + headH);
           ctx.closePath();
           ctx.fill();
-          ctx.stroke();
-          // 两条圆角横杠（向下递减宽度）
-          const barH = arrowH * 0.16;
-          this.roundRect(acx - arrowW * 0.3, atop + arrowH * 0.62, arrowW * 0.6, barH, barH / 2, arrowColor);
-          this.roundRect(acx - arrowW * 0.19, atop + arrowH * 0.84, arrowW * 0.38, barH, barH / 2, arrowColor);
+          // 底部横杠
+          const barW = arrowW * 0.48;
+          const barH = arrowH * 0.13;
+          ctx.fillRect(acx - barW / 2, atop + arrowH * 0.85, barW, barH);
           // 「升级」文字
           ctx.fillStyle = canUpgrade ? '#fff' : '#e8e4dc';
           ctx.textAlign = 'left';
