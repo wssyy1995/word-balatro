@@ -342,22 +342,29 @@ module.exports = function extendPopup(Renderer) {
           const upGroupW = arrowW + upGap + upTextW;
           const upGroupX = bx + (btnW - upGroupW) / 2;
           const midY = btnY + btnH / 2;
-          // 金棕色向上箭头（三角头 + 矩形杆），带上下轻微浮动；置灰时不浮动
+          // 米白色向上箭头（圆角三角头 + 两条递减圆角横杠），带上下轻微浮动；置灰时不浮动
           const acx = upGroupX + arrowW / 2;
           const arrowFloatY = canUpgrade ? Math.sin(Date.now() / 280) * 1.2 * s : 0;
           const atop = midY - arrowH / 2 + arrowFloatY;
-          ctx.fillStyle = canUpgrade ? '#9a7209' : '#8a8272';
+          const arrowColor = canUpgrade ? '#f5f0e6' : '#8a8272';
+          // 三角头（lineJoin round + 同色描边实现圆角）
+          ctx.fillStyle = arrowColor;
+          ctx.strokeStyle = arrowColor;
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = 1.5 * s;
+          const headH = arrowH * 0.5;
+          const headHalfW = arrowW * 0.42;
           ctx.beginPath();
-          const headH = arrowH * 0.55;
           ctx.moveTo(acx, atop);
-          ctx.lineTo(acx + arrowW / 2, atop + headH);
-          ctx.lineTo(acx + arrowW * 0.22, atop + headH);
-          ctx.lineTo(acx + arrowW * 0.22, atop + arrowH);
-          ctx.lineTo(acx - arrowW * 0.22, atop + arrowH);
-          ctx.lineTo(acx - arrowW * 0.22, atop + headH);
-          ctx.lineTo(acx - arrowW / 2, atop + headH);
+          ctx.lineTo(acx + headHalfW, atop + headH);
+          ctx.lineTo(acx - headHalfW, atop + headH);
           ctx.closePath();
           ctx.fill();
+          ctx.stroke();
+          // 两条圆角横杠（向下递减宽度）
+          const barH = arrowH * 0.16;
+          this.roundRect(acx - arrowW * 0.3, atop + arrowH * 0.62, arrowW * 0.6, barH, barH / 2, arrowColor);
+          this.roundRect(acx - arrowW * 0.19, atop + arrowH * 0.84, arrowW * 0.38, barH, barH / 2, arrowColor);
           // 「升级」文字
           ctx.fillStyle = canUpgrade ? '#fff' : '#e8e4dc';
           ctx.textAlign = 'left';
