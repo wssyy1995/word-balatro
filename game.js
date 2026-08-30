@@ -900,7 +900,15 @@ function getCoinVideoAd() {
           game.storageManager.saveProgress();
         }
         if (game.audioManager) game.audioManager.play('buy_success');
-        game.hintToast = { text: `+${COIN_AD_REWARD_GOLD} 金币！`, expireAt: Date.now() + 2000 };
+        // toast 定位在「卡牌商店」标题上方（标题顶部 = safeTop + 20 + 120*s，见 shop.js）
+        const s = renderer.scale;
+        const shopTitleTopY = (renderer.safeTop || 0) + 20 + 120 * s;
+        game.hintToast = {
+          text: '恭喜获得10个金币!',
+          expireAt: Date.now() + 2000,
+          startTime: Date.now(),
+          customY: shopTitleTopY - 32 * s - 6 * s,
+        };
       }
     });
   } catch (e) {
