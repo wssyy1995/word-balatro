@@ -303,6 +303,19 @@ class StorageManager {
     return data.date === today && data.used === true;
   }
 
+  // ===== 每日广告金币（商店金币胶囊 coin_ad，每日限 1 次，领取后当天不再显示）=====
+
+  saveCoinAdReward(dateStr, used = true) {
+    return this.set('coin_ad_reward', { date: dateStr, used });
+  }
+
+  isCoinAdRewardUsed() {
+    const data = this.get('coin_ad_reward', null);
+    if (!data) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return data.date === today && data.used === true;
+  }
+
   // ===== 统计数据 =====
   
   getStats() {

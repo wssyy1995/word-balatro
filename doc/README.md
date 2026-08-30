@@ -723,6 +723,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - 每行 2 款商品，左侧分类标签带 emoji 图标
 - 价格按钮：暖米色，带金币图标
 - 商店标题右侧设有"重掷"按钮（3 金币刷新全部商品）
+- 左上角金币胶囊右上角有 `coin_ad.png` 广告小图标：点击拉激励视频广告（`adunit-b79e9b5ed6b9b2f7`，看完 `isEnded` 才发放），奖励 +10 金币；每日限 1 次（`word_balatro_coin_ad_reward`），领取后当天不再显示
 - 已装备栏支持点击选中 + 售出（红色按钮，easeOutBack 弹出动画）
 - 女巫牌槽位 >4 时，卡牌自动重叠排列以适应屏幕
 
@@ -857,6 +858,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_collected_witch_cards` | 已收集的女巫卡牌列表（跨局永久保留） |
 | `word_balatro_equipped_witch_card` | 已装备的女巫卡牌（跨局永久保留） |
 | `word_balatro_daily_revive` | 每日复活次数记录（日期 + 是否已使用） |
+| `word_balatro_coin_ad_reward` | 每日广告金币领取记录（日期 + 是否已领取） |
 | `word_balatro_daily_challenge` | 每日挑战状态（日期 + 10 个目标词 + 已收集列表 + 奖励状态） |
 | `word_balatro_word_book` | 单词本（历史打出单词及次数 + 待同步增量） |
 | `word_balatro_best_round` | 历史最高到达回合 |

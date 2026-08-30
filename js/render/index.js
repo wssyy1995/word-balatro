@@ -982,8 +982,10 @@ Renderer.prototype.render = function(game) {
     // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
     this.drawTopHeader(game);
 
-    // 金币胶囊右上角：广告小图标（coin_ad.png，保持 50:46 原始比例）
-    if (this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
+    // 金币胶囊右上角：广告小图标（coin_ad.png，每日限 1 次，看完广告领取后当天不再显示）
+    this.coinAdIconRect = null;
+    const coinAdUsed = game.storageManager && game.storageManager.isCoinAdRewardUsed && game.storageManager.isCoinAdRewardUsed();
+    if (!coinAdUsed && this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
       const adW = 14 * s;
       const adH = adW * 46 / 50;
       const ax = this.coinCapsuleRect.x + this.coinCapsuleRect.w - adW / 2;
@@ -991,6 +993,9 @@ Renderer.prototype.render = function(game) {
       ctx.save();
       ctx.drawImage(this.coinAdIcon, ax, ay, adW, adH);
       ctx.restore();
+      // 点击热区比图标外扩一圈，方便点按
+      const adPad = 4 * s;
+      this.coinAdIconRect = { x: ax - adPad, y: ay - adPad, w: adW + adPad * 2, h: adH + adPad * 2 };
     }
 
     // 游戏标题

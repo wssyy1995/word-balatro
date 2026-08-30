@@ -868,6 +868,65 @@ function showReviveAd() {
   });
 }
 
+// ===== 激励视频广告（商店金币胶囊 coin_ad，每日 1 次，看完赠送 10 金币）=====
+const COIN_AD_UNIT_ID = 'adunit-b79e9b5ed6b9b2f7';
+const COIN_AD_REWARD_GOLD = 10;
+let coinVideoAd = null;
+
+function getCoinVideoAd() {
+  if (coinVideoAd) return coinVideoAd;
+  if (typeof wx === 'undefined' || !wx.createRewardedVideoAd) return null;
+  try {
+    coinVideoAd = wx.createRewardedVideoAd({ adUnitId: COIN_AD_UNIT_ID });
+    coinVideoAd.onError(err => {
+      console.error('[CoinAd] 广告错误:', err);
+    });
+    coinVideoAd.onClose(res => {
+      // 兼容旧基础库：isEnded 字段不存在时视为已看完
+      const ended = !res || res.isEnded === undefined || res.isEnded;
+      if (!ended) {
+        console.log('[CoinAd] 广告未看完，不发奖励');
+        if (game) {
+          game.hintToast = { text: '看完广告才能获得金币哦~', expireAt: Date.now() + 2000 };
+        }
+        return;
+      }
+      console.log('[CoinAd] 广告播放完成，发放金币');
+      if (game) {
+        game.gold += COIN_AD_REWARD_GOLD;
+        if (game.storageManager) {
+          const today = new Date().toISOString().slice(0, 10);
+          game.storageManager.saveCoinAdReward(today, true);
+          game.storageManager.saveProgress();
+        }
+        if (game.audioManager) game.audioManager.play('buy_success');
+        game.hintToast = { text: `+${COIN_AD_REWARD_GOLD} 金币！`, expireAt: Date.now() + 2000 };
+      }
+    });
+  } catch (e) {
+    console.error('[CoinAd] 创建激励视频广告失败:', e);
+    coinVideoAd = null;
+  }
+  return coinVideoAd;
+}
+
+function showCoinAd() {
+  const ad = getCoinVideoAd();
+  if (!ad) {
+    if (game) game.hintToast = { text: '当前环境不支持广告', expireAt: Date.now() + 2000 };
+    return;
+  }
+  ad.show().catch(() => {
+    // 失败重试：先 load 再 show
+    ad.load()
+      .then(() => ad.show())
+      .catch(err => {
+        console.error('[CoinAd] 激励视频广告显示失败:', err);
+        if (game) game.hintToast = { text: '广告加载失败，请稍后再试', expireAt: Date.now() + 2000 };
+      });
+  });
+}
+
 // 分享求助状态
 let shareTipHelpState = null; // { startTime: number, resolving: boolean }
 
@@ -5248,6 +5307,17 @@ function handleInput(x, inputY, rawY) {
       }
       // Phase 4: 退场动画中，阻塞输入
       return;
+    }
+
+    // 金币胶囊广告小图标（每日 1 次，看完激励视频赠送 10 金币）
+    if (renderer.coinAdIconRect) {
+      const coinAdHit = renderer.hitTest(x, inputY, [renderer.coinAdIconRect]);
+      if (coinAdHit) {
+        vibrate();
+        if (game.audioManager) game.audioManager.play('tap');
+        showCoinAd();
+        return;
+      }
     }
 
     // 检测卡牌图鉴图标点击
