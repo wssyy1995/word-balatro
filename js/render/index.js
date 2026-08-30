@@ -986,16 +986,20 @@ Renderer.prototype.render = function(game) {
     this.coinAdIconRect = null;
     const coinAdUsed = game.storageManager && game.storageManager.isCoinAdRewardUsed && game.storageManager.isCoinAdRewardUsed();
     if (!coinAdUsed && this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
-      const adW = 14 * s;
+      const adW = 17 * s;
       const adH = adW * 46 / 50;
-      const ax = this.coinCapsuleRect.x + this.coinCapsuleRect.w - adW / 2;
-      const ay = this.coinCapsuleRect.y - adH / 2;
+      // 呼吸缩放（0.92~1.08，周期约 1.26s）
+      const breath = 1 + 0.08 * Math.sin(Date.now() / 200);
+      const adCX = this.coinCapsuleRect.x + this.coinCapsuleRect.w - 2 * s;
+      const adCY = this.coinCapsuleRect.y + 2 * s;
       ctx.save();
-      ctx.drawImage(this.coinAdIcon, ax, ay, adW, adH);
+      ctx.translate(adCX, adCY);
+      ctx.scale(breath, breath);
+      ctx.drawImage(this.coinAdIcon, -adW / 2, -adH / 2, adW, adH);
       ctx.restore();
-      // 点击热区比图标外扩一圈，方便点按
+      // 点击热区比图标外扩一圈，方便点按（不随呼吸缩放，保持稳定）
       const adPad = 4 * s;
-      this.coinAdIconRect = { x: ax - adPad, y: ay - adPad, w: adW + adPad * 2, h: adH + adPad * 2 };
+      this.coinAdIconRect = { x: adCX - adW / 2 - adPad, y: adCY - adH / 2 - adPad, w: adW + adPad * 2, h: adH + adPad * 2 };
     }
 
     // 游戏标题
