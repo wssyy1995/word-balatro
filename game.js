@@ -141,6 +141,8 @@ wx.onHide(() => {
   if (game && game.storageManager && game.state !== 'gameover') {
     game.storageManager.saveProgressImmediate();
   }
+  // 切后台时强制上传一次存档快照到云端（saveSync 在模块后段定义，回调运行时已完成初始化）
+  saveSync.uploadSave();
 });
 
 const info = wx.getSystemInfoSync();

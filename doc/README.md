@@ -868,7 +868,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_round_entered` | 是否已首次进入过单人玩法（主页大按钮「开始闯关」↔「继续」切换依据） |
 | `word_balatro_daily_achievements_v2` | 每日成就任务进度与领取状态（日期 + 各任务记录） |
 
-**存档云端备份（syncSaveData）**：`js/save_sync.js` 每 5 分钟将上述用户数据（`word_book` 除外，其已有 `syncWordBook` 增量同步）打包为全量快照上传到 `users` 表的 `saveData` 字段（覆盖写入，last-write-wins，云端记录 `savedAt`）。仅在启动时本地无可用存档（新设备/重装/存档过期或残缺）才从云端拉取并写回本地存储（5 秒超时兜底）；本地有可用存档时一律使用本地，不访问云端。
+**存档云端备份（syncSaveData）**：`js/save_sync.js` 每 5 分钟定时 + 切后台（`wx.onHide`）时强制将上述用户数据（`word_book` 除外，其已有 `syncWordBook` 增量同步）打包为全量快照上传到 `users` 表的 `saveData` 字段（覆盖写入，last-write-wins，云端记录 `savedAt`；上传在途时收到新请求会排队，完成后用最新数据补传一次）。仅在启动时本地无可用存档（新设备/重装/存档过期或残缺）才从云端拉取并写回本地存储（5 秒超时兜底，恢复时刷新存档 timestamp 避免被 7 天过期规则清理）；本地有可用存档时一律使用本地，不访问云端。
 
 ### 3.7 cloud_storage.js — 微信云存储
 

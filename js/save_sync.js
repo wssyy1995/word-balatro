@@ -1,6 +1,6 @@
 // ===== 存档云端同步管理器 =====
 // 复用 users 表 saveData 字段做全量快照备份：
-// - 上传：游戏内每 5 分钟定时全量上传本地用户游戏数据（last-write-wins 覆盖）
+// - 上传：游戏内每 5 分钟定时上传 + 切后台（wx.onHide）时强制上传，全量覆盖（last-write-wins）
 // - 恢复：仅当游戏启动时本地无可用存档，才从云端拉取并写回本地存储
 // 注意：word_book 不上传（已有 syncWordBook 增量同步到 user_word_books 集合）
 const { StorageManager } = require('./storage');
@@ -36,6 +36,7 @@ class SaveSyncManager {
     this.storage = new StorageManager();
     this._timer = null;
     this._uploading = false;
+    this._pendingUpload = false; // 上传在途时收到新上传请求，完成后用最新数据补传一次
   }
 
   // 打包当前所有需要云端备份的用户数据
@@ -68,7 +69,12 @@ class SaveSyncManager {
 
   // 全量上传（fire-and-forget，失败仅记日志，等待下个周期重试）
   uploadSave() {
-    if (this._uploading) return;
+    if (this._uploading) {
+      // 上一次上传仍在进行：标记待补传，完成后用最新数据立即重传，
+      // 避免在途旧快照晚于新快照到达而把云端覆盖回旧数据
+      this._pendingUpload = true;
+      return;
+    }
     if (typeof wx === 'undefined' || !wx.cloud || !wx.cloud.callFunction) return;
     const game = wx.game;
     if (!game || game._destroyed) return;
@@ -94,6 +100,10 @@ class SaveSyncManager {
       console.error('[SaveSync] 上传调用失败:', err);
     }).then(() => {
       this._uploading = false;
+      if (this._pendingUpload) {
+        this._pendingUpload = false;
+        this.uploadSave();
+      }
     });
   }
 
