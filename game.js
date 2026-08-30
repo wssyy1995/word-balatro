@@ -5310,8 +5310,12 @@ function handleInput(x, inputY, rawY) {
     }
 
     // 金币胶囊广告小图标（每日 1 次，看完激励视频赠送 10 金币）
+    // 图标显示期间，点击金币胶囊本体同样触发广告
     if (renderer.coinAdIconRect) {
-      const coinAdHit = renderer.hitTest(x, inputY, [renderer.coinAdIconRect]);
+      const adHitRects = renderer.coinCapsuleRect
+        ? [renderer.coinAdIconRect, renderer.coinCapsuleRect]
+        : [renderer.coinAdIconRect];
+      const coinAdHit = renderer.hitTest(x, inputY, adHitRects);
       if (coinAdHit) {
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
