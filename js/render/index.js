@@ -988,8 +988,8 @@ Renderer.prototype.render = function(game) {
     if (!coinAdUsed && this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
       const adW = 20 * s;
       const adH = adW * 46 / 50;
-      // 呼吸缩放（0.92~1.08，周期约 1.88s）
-      const breath = 1 + 0.08 * Math.sin(Date.now() / 300);
+      // 呼吸缩放（1~1.1，只放大不缩小，周期约 1.88s）
+      const breath = 1 + 0.05 * (Math.sin(Date.now() / 300) + 1);
       const adCX = this.coinCapsuleRect.x + this.coinCapsuleRect.w - 2 * s;
       const adCY = this.coinCapsuleRect.y + 2 * s;
       ctx.save();
