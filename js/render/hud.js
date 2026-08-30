@@ -407,6 +407,8 @@ module.exports = function extendHud(Renderer) {
       const innerBorderW = 1 * s;
       // 外层：浅米色填充 + 粗深金色边框
       this.roundRect(coinCapsuleX, coinCapsuleY, capsuleW, capsuleH, capsuleH / 2, '#faf6ee', '#b8934a', outerBorderW);
+      // 记录胶囊位置（商店页用于在右上角叠加广告小图标）
+      this.coinCapsuleRect = { x: coinCapsuleX, y: coinCapsuleY, w: capsuleW, h: capsuleH };
       // 内层：只画细浅金色边框
       const innerGap = outerBorderW + 1 * s;
       this.roundRect(

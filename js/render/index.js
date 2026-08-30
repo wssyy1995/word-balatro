@@ -982,6 +982,17 @@ Renderer.prototype.render = function(game) {
     // 商店页面（显示标题+金币胶囊，不显示目标分 bar）
     this.drawTopHeader(game);
 
+    // 金币胶囊右上角：广告小图标（coin_ad.png，保持 50:46 原始比例）
+    if (this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
+      const adW = 14 * s;
+      const adH = adW * 46 / 50;
+      const ax = this.coinCapsuleRect.x + this.coinCapsuleRect.w - adW / 2;
+      const ay = this.coinCapsuleRect.y - adH / 2;
+      ctx.save();
+      ctx.drawImage(this.coinAdIcon, ax, ay, adW, adH);
+      ctx.restore();
+    }
+
     // 游戏标题
     const top = (this.safeTop || 0) + 20 * s + (this.hasDynamicIsland ? 10 * s : 0);
     const titleY = top - 12 * s + (this.hasDynamicIsland ? 3 * s : 0);

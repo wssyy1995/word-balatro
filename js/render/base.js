@@ -369,6 +369,19 @@ class Renderer {
       this.coinIconLoaded = false;
     }
 
+    // 加载广告小图标（商店页金币胶囊右上角）
+    this.coinAdIcon = null;
+    this.coinAdIconLoaded = false;
+    try {
+      const img = wx.createImage();
+      img.src = 'images/coin_ad.png';
+      img.onload = () => { this.coinAdIconLoaded = true; };
+      img.onerror = () => { this.coinAdIconLoaded = false; };
+      this.coinAdIcon = img;
+    } catch (e) {
+      this.coinAdIconLoaded = false;
+    }
+
     // 加载结算翻倍敲章图（单手通关奖励，本地加载）
     this.bonusDoubleImg = null;
     this.bonusDoubleLoaded = false;
