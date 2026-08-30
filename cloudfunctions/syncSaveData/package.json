@@ -1,0 +1,9 @@
+{
+  "name": "syncSaveData",
+  "version": "1.0.0",
+  "description": "用户游戏存档云端备份与恢复（复用 users 表 saveData 字段）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

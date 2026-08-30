@@ -59,7 +59,8 @@ word-balatro/
 │   ├── battleRequestRestart/# 发起重新挑战邀请
 │   ├── battleAcceptRestart/ # 接受重新挑战邀请
 │   ├── battleClose/         # 关闭房间（一方退出）
-│   └── getBattleOpponent/   # 获取对战对手头像/昵称/荣誉杯
+│   ├── getBattleOpponent/   # 获取对战对手头像/昵称/荣誉杯
+│   └── syncSaveData/        # 存档云端备份与恢复（复用 users 表 saveData 字段）
 ├── scripts/                 # 构建脚本（词库生成、精灵图打包等）
 └── js/
     ├── data.js              # 静态数据：字母分数/分布、人头牌、词库引用、缓存
@@ -867,6 +868,8 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 | `word_balatro_round_entered` | 是否已首次进入过单人玩法（主页大按钮「开始闯关」↔「继续」切换依据） |
 | `word_balatro_daily_achievements_v2` | 每日成就任务进度与领取状态（日期 + 各任务记录） |
 
+**存档云端备份（syncSaveData）**：`js/save_sync.js` 每 5 分钟将上述用户数据（`word_book` 除外，其已有 `syncWordBook` 增量同步）打包为全量快照上传到 `users` 表的 `saveData` 字段（覆盖写入，last-write-wins，云端记录 `savedAt`）。仅在启动时本地无可用存档（新设备/重装/存档过期或残缺）才从云端拉取并写回本地存储（5 秒超时兜底）；本地有可用存档时一律使用本地，不访问云端。
+
 ### 3.7 cloud_storage.js — 微信云存储
 
 用于管理 `shop_card`、`witch`、`bg_icon`、`guide`、`rank_avatar`、`battle`、`music` 系列资源的上传、下载与运行时注入：
@@ -1636,6 +1639,7 @@ letterUpgrades = Map {
 前端 → 云函数 syncWordBook → 同步历史打出单词到云数据库
 前端 → 云函数 updateHonorTrophy → 同步对战荣誉杯累计数到云数据库
 前端 → 云函数 login → 上报用户设备信息（users 表以 _id = OPENID 保证唯一；同 _openid 重复记录会保留最早一条并自动清理）
+前端 → 云函数 syncSaveData → 存档定时全量备份到 users 表 saveData / 本地无存档时从云端恢复
 ```
 
 **Token 管理**

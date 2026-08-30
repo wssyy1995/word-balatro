@@ -41,6 +41,7 @@ const { LETTER_SCORE, letterUpgrades } = require('./js/data');
 const { WITCH_SKILLS } = require('./js/witch_skills');
 const { StorageManager } = require('./js/storage');
 const { CloudStorageManager } = require('./js/cloud_storage');
+const { SaveSyncManager } = require('./js/save_sync');
 const { reportEvent } = require('./js/report');
 const { handleBattleInput } = require('./js/battle/input');
 const { DailyAchievements } = require('./js/daily_achievements');
@@ -820,12 +821,33 @@ let transitionAlpha = 0;
 let transitionStartTime = null;
 const TRANSITION_DURATION = 600;
 
+// 存档云端同步管理器（每 5 分钟定时上传到 users 表 saveData）
+const saveSync = new SaveSyncManager();
+
 // 启动预加载：下载云图片并显示进度条
 async function startPreload() {
   // 版本更新检查已上移至 game.js 顶部（所有 require 之前同步注册），此处不再重复注册
 
+  // 云端存档恢复：仅当本地无可用存档（新设备/重装/存档过期或残缺）时才尝试云端拉取；
+  // 本地有可用存档时一律使用本地，不访问云端
+  const preStorage = new StorageManager();
+  const localSaved = preStorage.loadProgress();
+  const localExpired = localSaved && localSaved.timestamp && (Date.now() - localSaved.timestamp > 7 * 24 * 60 * 60 * 1000);
+  const localUsable = localSaved && !localExpired && localSaved.state !== 'gameover'
+    && Array.isArray(localSaved.hand) && Array.isArray(localSaved.deck)
+    && typeof localSaved.target === 'number' && typeof localSaved.state === 'string'
+    && Array.isArray(localSaved._shuffledSkills);
+  if (!localUsable) {
+    const restored = await saveSync.tryRestoreFromCloud();
+    if (restored) {
+      cloudStorage.log('[Game] 已从云端恢复存档');
+    }
+  }
+
   // 提前初始化 game 实例，使预加载页也能显示头像昵称授权弹窗
   initGameInstance();
+  // 启动存档定时上传（每 5 分钟一次，幂等）
+  saveSync.startAutoUpload();
   // 确保 game 关联上 cloudStorage，否则预加载阶段日志无法写入
   if (game) game.cloudStorage = cloudStorage;
 
