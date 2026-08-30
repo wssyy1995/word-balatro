@@ -2247,10 +2247,11 @@ class Game {
       this.guidePhase = 5;
       this._guideExitStartTime = Date.now();
       this._guideTextStartTime = null;
-      // 引导完成时停止打字机循环音效，恢复默认 BGM
+      // 引导完成时停止打字机循环音效；若默认 BGM 尚未启动则补启动
+      // 注意：不能先重置 bgmStarted 再 tryStartBGM——playBGM 会销毁并从头重建 BGM，
+      // 会把正在播放的背景音乐切断重播（听起来就像被赠卡弹窗音效打断）
       if (this.audioManager) {
         this.audioManager.stopSound('guide_type');
-        this.audioManager.bgmStarted = false;
         this.audioManager.tryStartBGM();
       }
     }
