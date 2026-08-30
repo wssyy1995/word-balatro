@@ -78,6 +78,9 @@ class SaveSyncManager {
     if (!saveData.progress) return;
 
     this._uploading = true;
+    // 看门狗：iOS 上云函数回调可能完全丢失（README 有 battleNextRound 同款记录），
+    // 15 秒后强制复位锁，避免定时上传永久停摆
+    setTimeout(() => { this._uploading = false; }, 15000);
     wx.cloud.callFunction({
       name: 'syncSaveData',
       data: { action: 'upload', saveData },
@@ -117,6 +120,12 @@ class SaveSyncManager {
       if (!saveData || !saveData.progress) {
         console.log('[SaveSync] 云端无可用存档，按新游戏启动');
         return false;
+      }
+      // 云端存档可能备份于很久以前：刷新 timestamp，避免写回后被 initGameInstance 的
+      // 7 天过期规则立即清理（云端恢复的目的就是让回归玩家找回旧进度；
+      // 仅影响云端恢复路径，本地存档的过期判定逻辑不变）
+      if (typeof saveData.progress === 'object') {
+        saveData.progress.timestamp = Date.now();
       }
       Object.keys(KEY_MAP).forEach(field => {
         const value = saveData[field];
