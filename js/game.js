@@ -1063,6 +1063,73 @@ function isValidWord(word) {
   return false;
 }
 
+// 从百度词典 simple_means 提取释义并写入缓存（isValidWordOnline / ensureWordMeaning 共用）
+// 已有有效缓存时跳过；failed 占位缓存允许被真实释义覆盖
+function _cacheMeaningFromSimpleMeans(word, simple) {
+  if (!simple) return;
+  const existing = wordMeaningCache.get(word);
+  if (existing && !existing.failed) return;
+
+  const wordMeans = simple.word_means || [];
+  const symbols = simple.symbols?.[0];
+  const parts = symbols?.parts || [];
+  const phEn = symbols?.ph_en || '';
+  const phAm = symbols?.ph_am || '';
+
+  // 构建 entries（取前2个词性）
+  const entries = parts.slice(0, 2).map(p => ({
+    pos: p.part || p.part_name || '',
+    def: (p.means || []).slice(0, 3).join('；')
+  }));
+
+  // 汇总释义（限制单条最长20字符，超出截断）
+  const MAX_MEANING_LEN = 20;
+  let meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
+  if (meaning.length > MAX_MEANING_LEN) meaning = meaning.substring(0, MAX_MEANING_LEN) + '...';
+  const trimmedEntries = entries.length > 0 ? entries : [{ pos: '', def: meaning }];
+  trimmedEntries.forEach(e => {
+    if (e.def && e.def.length > MAX_MEANING_LEN) e.def = e.def.substring(0, MAX_MEANING_LEN) + '...';
+  });
+
+  wordMeaningCache.set(word, {
+    entries: trimmedEntries,
+    pos: entries[0]?.pos || '',
+    meaning,
+    phEn,
+    phAm
+  });
+}
+
+// 正在做释义兜底查询的单词（防重复请求）
+const _meaningFetching = new Set();
+
+// 释义兜底在线查询：本地词库没有释义时调用（如单词本展开显示）
+// 成功/失败都会写入 wordMeaningCache（失败写 { failed: true } 占位），渲染层下一帧自然刷新
+async function ensureWordMeaning(word) {
+  word = String(word || '').toLowerCase();
+  if (!word) return;
+  if (getWordMeaning(word)) return;          // 本地已有（含 failed 占位）
+  if (_meaningFetching.has(word)) return;
+  _meaningFetching.add(word);
+  try {
+    const result = await baiduDictRequest(word);
+    const dict = result && result.dict
+      ? (typeof result.dict === 'string' ? JSON.parse(result.dict) : result.dict)
+      : null;
+    const simple = dict && dict.word_result && dict.word_result.simple_means;
+    if (simple) {
+      _cacheMeaningFromSimpleMeans(word, simple);
+    }
+    if (!wordMeaningCache.has(word)) {
+      wordMeaningCache.set(word, { failed: true });
+    }
+  } catch (e) {
+    console.log(`[WordMeaning] "${word}" 在线查询失败:`, e.message || e);
+    wordMeaningCache.set(word, { failed: true });
+  }
+  _meaningFetching.delete(word);
+}
+
 async function isValidWordOnline(word) {
   word = word.toLowerCase();
   // 防御性检查（该函数也可能被单独调用）
@@ -1111,36 +1178,7 @@ async function isValidWordOnline(word) {
         wordCheckState.set(word, 'valid');
 
         // 缓存中文释义
-        if (!wordMeaningCache.has(word) && simple) {
-          const wordMeans = simple.word_means || [];
-          const symbols = simple.symbols?.[0];
-          const parts = symbols?.parts || [];
-          const phEn = symbols?.ph_en || '';
-          const phAm = symbols?.ph_am || '';
-
-          // 构建 entries（取前2个词性）
-          const entries = parts.slice(0, 2).map(p => ({
-            pos: p.part || p.part_name || '',
-            def: (p.means || []).slice(0, 3).join('；')
-          }));
-
-          // 汇总释义（限制单条最长20字符，超出截断）
-          const MAX_MEANING_LEN = 20;
-          let meaning = wordMeans.length > 0 ? wordMeans.join('；') : (entries[0]?.def || '');
-          if (meaning.length > MAX_MEANING_LEN) meaning = meaning.substring(0, MAX_MEANING_LEN) + '...';
-          const trimmedEntries = entries.length > 0 ? entries : [{ pos: '', def: meaning }];
-          trimmedEntries.forEach(e => {
-            if (e.def && e.def.length > MAX_MEANING_LEN) e.def = e.def.substring(0, MAX_MEANING_LEN) + '...';
-          });
-
-          wordMeaningCache.set(word, {
-            entries: trimmedEntries,
-            pos: entries[0]?.pos || '',
-            meaning,
-            phEn,
-            phAm
-          });
-        }
+        _cacheMeaningFromSimpleMeans(word, simple);
         checkingWords.delete(word);
         return true;
       } else {
@@ -1164,6 +1202,7 @@ function getWordMeaning(word) {
   // 1. 本地缓存
   if (wordMeaningCache.has(word)) {
     const cached = wordMeaningCache.get(word);
+    if (cached.failed) return { failed: true }; // 在线查询失败占位，避免重复请求
     if (cached.entries) return cached;
     if (cached.meaning) return { entries: [{ pos: cached.pos || '', def: cached.meaning }], pos: cached.pos || '', meaning: cached.meaning };
   }
@@ -4847,5 +4886,8 @@ function uploadScoreAndRound(currentScore, currentRound, currentWordCount = 0) {
 
 // 挂载到原型，避免 battle/manager.js 与 game.js 循环依赖
 Game.prototype.isValidWordOnline = isValidWordOnline;
+// 挂载到原型，供渲染层（单词本弹窗释义显示）通过 game 实例调用，避免循环依赖
+Game.prototype.getWordMeaning = getWordMeaning;
+Game.prototype.ensureWordMeaning = ensureWordMeaning;
 
-module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank, GAME_VERSION, getJokerValue };
+module.exports = { Game, calcWordScore, isValidWord, isValidWordOnline, getWordMeaning, ensureWordMeaning, formatMeaning, findValidWordInHand, findAllValidWordsInHand, uploadScoreAndRound, requestGlobalProfile, fetchGlobalRank, GAME_VERSION, getJokerValue };

@@ -4033,7 +4033,7 @@ module.exports = function extendPopup(Renderer) {
       const contentTop = statY + 22 * s;
       const contentBottom = py + ph - 18 * s + belowTitleOffset;
       const contentH = contentBottom - contentTop - headerH;
-      const rowH = 38 * s;
+      const rowH = 56 * s; // 单词行 + 释义行（词性+中文含义）
       const listW = pw - 32 * s;
       const listX = px + 16 * s;
       const headerY = contentTop;
@@ -4128,14 +4128,57 @@ module.exports = function extendPopup(Renderer) {
         ctx.fillStyle = '#3a2e1e';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText(word.toLowerCase(), listX + 12 * s, y + rowH / 2);
+        ctx.fillText(word.toLowerCase(), listX + 12 * s, y + 18 * s);
         ctx.restore();
+
+        // 词性 + 中文含义（本地词库优先；本地没有则后台在线查询，成功后下一帧自动显示）
+        let meaningText = '';
+        let meaningColor = '#8a7a6a';
+        const meaningInfo = game.getWordMeaning ? game.getWordMeaning(word) : null;
+        if (meaningInfo && meaningInfo.failed) {
+          meaningText = '暂无释义';
+          meaningColor = '#b5a88f';
+        } else if (meaningInfo) {
+          const pos = meaningInfo.pos || (meaningInfo.entries && meaningInfo.entries[0] && meaningInfo.entries[0].pos) || '';
+          const def = meaningInfo.meaning || (meaningInfo.entries && meaningInfo.entries[0] && meaningInfo.entries[0].def) || '';
+          meaningText = (pos ? pos + ' ' : '') + def;
+        } else {
+          if (game.ensureWordMeaning) game.ensureWordMeaning(word);
+          meaningText = '释义查询中…';
+          meaningColor = '#b5a88f';
+        }
+        ctx.save();
+        ctx.globalAlpha = contentAlpha;
+        ctx.font = `${Math.floor(11 * s)}px sans-serif`;
+        ctx.fillStyle = meaningColor;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        // 按可用宽度截断，防止溢出列表
+        const maxMeaningW = listW - 24 * s;
+        while (meaningText && ctx.measureText(meaningText).width > maxMeaningW) {
+          meaningText = meaningText.slice(0, -2);
+        }
+        ctx.fillText(meaningText, listX + 12 * s, y + 41 * s);
+        ctx.restore();
+
+        // 行间淡灰分隔线（最后一行不画）
+        if (i < wordEntries.length - 1) {
+          ctx.save();
+          ctx.globalAlpha = contentAlpha;
+          ctx.strokeStyle = 'rgba(90, 74, 42, 0.08)';
+          ctx.lineWidth = 1 * s;
+          ctx.beginPath();
+          ctx.moveTo(listX + 10 * s, y + rowH);
+          ctx.lineTo(listX + listW - 10 * s, y + rowH);
+          ctx.stroke();
+          ctx.restore();
+        }
 
         // 次数标签
         const tagH = 18 * s;
         const tagW = 44 * s;
         const tagX = listX + listW - tagW - 10 * s;
-        const tagY = y + (rowH - tagH) / 2;
+        const tagY = y + 18 * s - tagH / 2;
         ctx.save();
         ctx.globalAlpha = contentAlpha;
         this.roundRect(tagX, tagY, tagW, tagH, tagH / 2, '#8b6914');
