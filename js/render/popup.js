@@ -104,14 +104,32 @@ module.exports = function extendPopup(Renderer) {
       let cy = popupY + pad + lineH / 2;
       const cx = popupX + popupW / 2;
 
-      // 名称(带星星装饰；升级后带 Lv.x 标识)
+      // 名称(带星星装饰；升级后带 Lv.x 标识，Lv.x 用深紫色)
       const jokerLvText = (joker.level || 1) > 1 ? ` Lv.${joker.level}` : '';
       ctx.save();
       ctx.font = `bold ${Math.floor(14 * s)}px Georgia, serif`;
-      ctx.fillStyle = '#1a2f4a';
-      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`✦ ${joker.name}${jokerLvText} ✦`, cx, cy);
+      if (jokerLvText) {
+        // 分段绘制：前缀(✦ 名字)与后缀(✦)保持深色，Lv.x 深紫色，整体仍居中
+        const leftText = `✦ ${joker.name} `;
+        const midText = `Lv.${joker.level}`;
+        const rightText = ` ✦`;
+        const totalW = ctx.measureText(leftText).width + ctx.measureText(midText).width + ctx.measureText(rightText).width;
+        let tx = cx - totalW / 2;
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#1a2f4a';
+        ctx.fillText(leftText, tx, cy);
+        tx += ctx.measureText(leftText).width;
+        ctx.fillStyle = '#6a1b9a';
+        ctx.fillText(midText, tx, cy);
+        tx += ctx.measureText(midText).width;
+        ctx.fillStyle = '#1a2f4a';
+        ctx.fillText(rightText, tx, cy);
+      } else {
+        ctx.fillStyle = '#1a2f4a';
+        ctx.textAlign = 'center';
+        ctx.fillText(`✦ ${joker.name} ✦`, cx, cy);
+      }
       ctx.restore();
 
       cy += lineH + 4 * s;
