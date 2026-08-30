@@ -899,7 +899,7 @@ function getCoinVideoAd() {
           game.storageManager.saveCoinAdReward(today, true);
           game.storageManager.saveProgress();
         }
-        if (game.audioManager) game.audioManager.play('buy_success');
+        if (game.audioManager) game.audioManager.play('card_sell'); // 与「售出」按钮音效一致
         // toast 定位在「卡牌商店」标题上方（标题顶部 = safeTop + 20 + 120*s，见 shop.js）
         const s = renderer.scale;
         const shopTitleTopY = (renderer.safeTop || 0) + 20 + 120 * s;
