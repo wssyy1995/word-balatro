@@ -907,7 +907,7 @@ function getCoinVideoAd() {
           text: '恭喜获得10个金币!',
           expireAt: Date.now() + 2000,
           startTime: Date.now(),
-          customY: shopTitleTopY - 32 * s - 6 * s,
+          customY: shopTitleTopY - 32 * s - 2 * s,
         };
       }
     });
