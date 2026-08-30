@@ -88,10 +88,10 @@ function getLetterScore(letter) {
 }
 
 // 计算基础目标分（分段递增系数）
-// 第一关1关=250
+// 第一关1关=450
 function calcBaseTarget(round) {
   function getCoefficient(r) {
-    if (r <= 5) return 30;
+    if (r <= 5) return 40;
     if (r <= 10) return 35;
     if (r <= 20) return 37;
     if (r <= 30) return 40;
@@ -99,7 +99,7 @@ function calcBaseTarget(round) {
     if (r <= 50) return 50;
     return 60;
   }
-  let target = 250;
+  let target = 450;
   for (let r = 2; r <= round; r++) {
     target += getCoefficient(r) * (r - 1);
   }
