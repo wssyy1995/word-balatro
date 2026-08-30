@@ -1822,7 +1822,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 
 **限制**
 - **每日限 1 次**：通过 `word_balatro_daily_revive` 本地存储记录（日期 + used 状态）
-- 当日已使用后，复活按钮显示为 `relive_limit_button.png`（置灰/限制状态）
+- 当日已使用后，复活按钮显示为 `relive_ad.png`（限制状态，引导看广告复活）
 
 **复活效果**
 - 恢复 1 次出牌机会

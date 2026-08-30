@@ -162,7 +162,7 @@ class Renderer {
 
     // 加载游戏结束弹窗按钮图片
     this.gameOverBtnImages = {};
-    const goBtnNames = ['relive_button', 'relive_limit_button', 'restart_button', 'rank_button'];
+    const goBtnNames = ['relive_button', 'relive_ad', 'restart_button', 'rank_button'];
     goBtnNames.forEach(name => {
       try {
         const img = wx.createImage();
