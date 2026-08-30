@@ -986,10 +986,10 @@ Renderer.prototype.render = function(game) {
     this.coinAdIconRect = null;
     const coinAdUsed = game.storageManager && game.storageManager.isCoinAdRewardUsed && game.storageManager.isCoinAdRewardUsed();
     if (!coinAdUsed && this.coinAdIconLoaded && this.coinAdIcon && this.coinCapsuleRect) {
-      const adW = 17 * s;
+      const adW = 20 * s;
       const adH = adW * 46 / 50;
-      // 呼吸缩放（0.92~1.08，周期约 1.26s）
-      const breath = 1 + 0.08 * Math.sin(Date.now() / 200);
+      // 呼吸缩放（0.92~1.08，周期约 1.88s）
+      const breath = 1 + 0.08 * Math.sin(Date.now() / 300);
       const adCX = this.coinCapsuleRect.x + this.coinCapsuleRect.w - 2 * s;
       const adCY = this.coinCapsuleRect.y + 2 * s;
       ctx.save();
