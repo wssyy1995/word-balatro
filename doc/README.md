@@ -1822,7 +1822,7 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 
 **限制**
 - **每日限 1 次**：通过 `word_balatro_daily_revive` 本地存储记录（日期 + used 状态）
-- 当日已使用后，复活按钮显示为 `relive_ad.png`（限制状态，引导看广告复活）
+- 当日已使用后，复活按钮显示为 `relive_ad.png`，点击改为**激励视频广告复活**（流量主，`adUnitId: adunit-8374eefa7fbddfb4`）：`wx.createRewardedVideoAd` 懒加载单例，`show()` 失败自动 `load()` 重试；`onClose` 回调中 `isEnded === true`（旧基础库无该字段时视为已看完）才执行与分享复活相同的收尾流程（关闭动画 + `game.revive()` + toast「复活成功！」），中途退出广告提示「看完广告才能复活哦~」；广告复活不限次数，按钮保持 `relive_ad` 状态
 
 **复活效果**
 - 恢复 1 次出牌机会

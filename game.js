@@ -797,6 +797,77 @@ renderer.dpr = scaleDpr;
 // 分享复活状态
 let shareReviveState = null; // { startTime: number, resolving: boolean }
 
+// ===== 激励视频广告复活（流量主）=====
+// 当日分享复活次数用完后，复活按钮变为 relive_ad，点击拉激励视频，看完即可复活
+const REVIVE_AD_UNIT_ID = 'adunit-8374eefa7fbddfb4';
+let reviveVideoAd = null;
+
+function getReviveVideoAd() {
+  if (reviveVideoAd) return reviveVideoAd;
+  if (typeof wx === 'undefined' || !wx.createRewardedVideoAd) return null;
+  try {
+    reviveVideoAd = wx.createRewardedVideoAd({ adUnitId: REVIVE_AD_UNIT_ID });
+    reviveVideoAd.onError(err => {
+      console.error('[ReviveAd] 广告错误:', err);
+    });
+    reviveVideoAd.onClose(res => {
+      // 兼容旧基础库：isEnded 字段不存在时视为已看完
+      const ended = !res || res.isEnded === undefined || res.isEnded;
+      if (!ended) {
+        console.log('[ReviveAd] 广告未看完，不复活');
+        if (game) {
+          game._reviveBtnPressed = false;
+          game.hintToast = { text: '看完广告才能复活哦~', expireAt: Date.now() + 2000 };
+        }
+        return;
+      }
+      console.log('[ReviveAd] 广告播放完成，执行复活');
+      // 与分享复活同一套收尾流程：先播放弹窗关闭动画，再复活
+      if (game && game.state === 'gameover') {
+        game._closingGameOver = true;
+        game._closeStartTime = Date.now();
+        setTimeout(() => {
+          if (game && game.state === 'gameover') {
+            game.revive();
+            if (renderer.gameOverRenderer) {
+              renderer.gameOverRenderer.animStartTime = null;
+              renderer.gameOverRenderer.lastGameOverReason = null;
+            }
+            game.hintToast = { text: '复活成功！', expireAt: Date.now() + 2000 };
+          }
+        }, 200);
+      }
+    });
+  } catch (e) {
+    console.error('[ReviveAd] 创建激励视频广告失败:', e);
+    reviveVideoAd = null;
+  }
+  return reviveVideoAd;
+}
+
+function showReviveAd() {
+  const ad = getReviveVideoAd();
+  if (!ad) {
+    if (game) {
+      game._reviveBtnPressed = false;
+      game.hintToast = { text: '当前环境不支持广告复活', expireAt: Date.now() + 2000 };
+    }
+    return;
+  }
+  ad.show().catch(() => {
+    // 失败重试：先 load 再 show
+    ad.load()
+      .then(() => ad.show())
+      .catch(err => {
+        console.error('[ReviveAd] 激励视频广告显示失败:', err);
+        if (game) {
+          game._reviveBtnPressed = false;
+          game.hintToast = { text: '广告加载失败，请稍后再试', expireAt: Date.now() + 2000 };
+        }
+      });
+  });
+}
+
 // 分享求助状态
 let shareTipHelpState = null; // { startTime: number, resolving: boolean }
 
@@ -6099,14 +6170,16 @@ function handleInput(x, inputY, rawY) {
       const reviveHit = renderer.hitTest(x, inputY, [renderer.gameOverRenderer.reviveBtnRect]);
       if (reviveHit) {
         const dailyReviveUsed = game.storageManager && game.storageManager.isDailyReviveUsed();
-        if (dailyReviveUsed) {
-          game.hintToast = { text: '今日复活次数已用完', expireAt: Date.now() + 2000 };
-          return;
-        }
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game._reviveBtnPressed = true;
         game._reviveBtnPressTime = Date.now();
+
+        if (dailyReviveUsed) {
+          // 分享复活次数已用完（按钮为 relive_ad）→ 改为激励视频广告复活，看完即可复活
+          showReviveAd();
+          return;
+        }
 
         // 拉起分享复活（配图为 MP 后台过审的自定义转发图片）
         shareReviveState = { startTime: Date.now(), resolving: true };
