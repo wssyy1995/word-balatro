@@ -30,7 +30,6 @@ word-balatro/
 │   ├── START.md                        # 开发启动说明
 │   ├── START_SIMPLE.md                 # 简化版启动说明
 │   ├── TECHNICAL_ARCHITECTURE.md       # 技术架构文档
-│   ├── 26位女巫名字.md                  # 女巫名称参考
 │   ├── 加固流程.md                       # 代码加固流程
 │   └── daily_words_08_06_13.jsonl      # 每日挑战/每日金词词库（JSON Lines，2026-08-06~08-13）
 ├── images/                  # 图片资源（背景、卡牌模板、按钮、商店图标、女巫头像等）
@@ -97,6 +96,7 @@ word-balatro/
     ├── cloud_storage.js     # 微信云存储：shop_card / witch / bg_icon / guide / rank_avatar / battle / music
     ├── audio.js             # 音效管理器（wx.createInnerAudioContext）
     ├── storage.js           # 本地存储：进度存档、最高分、统计、设置
+    ├── save_sync.js         # 存档云端同步（5 分钟定时 + 切后台上传 users.saveData 快照，启动时无存档才从云端恢复）
     ├── witch_skills.js      # 女巫技能约束与奖励
     ├── daily_achievements.js # 每日成就系统：任务进度、奖励领取、每日过期清理
     ├── input.js             # InputHandler 类（触摸事件处理，game.js 入口引用）
@@ -649,6 +649,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 > 注：当手牌数 > 9（额外手牌效果）时，布局自动切换为 4 列自适应 + 最后一行居中。
 > 针对灵动岛机型（iOS safeTop ≥ 44）增加顶部安全区域 padding。
 > `playing` / `shop` / `life_extended` 三个状态下，页面内容整体下移 10px，底部操作按钮额外上移 5px，触摸命中已做对应反向偏移。
+> Canvas 物理像素设有上限 960×1920（2026-06 由 1280×2560 下调，见根目录 `game.js`）：实际渲染倍率 `scaleDpr = min(dpr, 960/W, 1920/H)`，高 DPR 设备（如 DPR=3 的 iPhone）实际按约 2.0 渲染，单帧缓冲减少约 45%。
 
 #### 3.3.6 卡牌渲染
 
@@ -723,7 +724,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - 每行 2 款商品，左侧分类标签带 emoji 图标
 - 价格按钮：暖米色，带金币图标
 - 商店标题右侧设有"重掷"按钮（3 金币刷新全部商品）
-- 左上角金币胶囊右上角有 `coin_ad.png` 广告小图标：点击拉激励视频广告（`adunit-b79e9b5ed6b9b2f7`，看完 `isEnded` 才发放），奖励 +10 金币；每日限 1 次（`word_balatro_coin_ad_reward`），领取后当天不再显示
+- 左上角金币胶囊右上角有 `coin_ad.png` 广告小图标：点击该图标或金币胶囊本体均可拉起激励视频广告（`adunit-b79e9b5ed6b9b2f7`，看完 `isEnded` 才发放），奖励 +10 金币，发放时播放 `card_sell` 音效并弹出 toast「恭喜获得10个金币!」（`customY` 固定在「卡牌商店」标题上方，带弹出动画）；每日限 1 次（`word_balatro_coin_ad_reward`），领取后当天不再显示
 - 已装备栏支持点击选中 + 售出（红色按钮，easeOutBack 弹出动画）
 - 女巫牌槽位 >4 时，卡牌自动重叠排列以适应屏幕
 
@@ -1070,7 +1071,7 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - **学习模式开关**：`settings.dailyWordChallengeEnabled`（默认关闭），首次开启时弹出「下回合起生效」提示 toast
 - **种子词替换**：开启后，`drawWithSafety()` 的第二组种子词不再随机生成，而是从当日 1 个未学习的词中随机选取一个，取其字母作为种子牌注入手牌（带 `_isDailyChallengeCard` 标记）
 - **已学习过滤**：每回合发牌时自动排除已收集的单词，确保目标词始终为未学习状态
-- **收集判定**：玩家打出合法单词后，若该单词在当日 10 词列表中且未被收集过，则触发收集成功
+- **收集判定**：玩家打出合法单词后，若该单词为当日目标词（每日 1 词）且未被收集过，则触发收集成功
 - **新词主动提示**：每回合发牌或补牌后，若当前手牌字母可直接拼出某个未收集的当日目标词，前 10 秒不显示提示；10 秒后若用户仍未点击出牌，单词预览区下方会淡入显示 `[新词提示] 中文释义`
 
 ### 4.5.2 收集反馈
@@ -1078,21 +1079,21 @@ cardGap = max(4 * scale, 50 * scale + extraHeight * 0.25 - 10)
 - **Toast 提示**：白色圆角提示，带 `images/toast_icon.png` 图标，显示「今日新词「xxx」收集成功！(N 个待收集)」，目标词与剩余数量文字加粗显示
 - **入场动画**：从下往上弹出，350ms easeOutBack
 - **飞行星星**：收集成功后 2 秒，从 toast 图标左侧弹出星星，停留 400ms 后沿 easeOutCubic 飞向顶部设置图标，尺寸从 1 缩小至 0.6
-- **全部集齐**：10 词全部收集后，`_showDailyChallengeReward()` 以 toast 提示「恭喜！今日10个新词全部收集完成！」并直接发放 50 金币，无弹窗
+- **全部集齐**：当日新词全部收集后（每日 1 词，即收集该词），`_showDailyChallengeReward()` 播放 `buy_success` 音效，以 toast 提示「恭喜！今日新词收集完成！」并直接发放 50 金币，无弹窗
 
 ### 4.5.3 集齐奖励
 
-10 词全部收集后不再弹出奖励弹窗（旧版集齐奖励弹窗已移除）：`_showDailyChallengeReward()` 直接发放 50 金币，并以 toast 提示「恭喜！今日10个新词全部收集完成！」。无弹窗、无分享/确定按钮。
+当日新词全部收集后不再弹出奖励弹窗（旧版集齐奖励弹窗已移除）：`_showDailyChallengeReward()` 直接发放 50 金币，播放 `buy_success` 音效，并以 toast 提示「恭喜！今日新词收集完成！」。无弹窗、无分享/确定按钮。
 
 ### 4.5.4 今日新词弹窗
 
 该弹窗（`_dailyWordsPopup`）当前无可达入口（设置弹窗已无「今日新词」按钮）：
-- **标题**：「学习模式」，开关旁文案「每日10个新词，随机添加到每回合游戏中」，底部 slogan「每日10个新词，积累从现在开始！」
+- **标题**：「学习模式」，开关旁文案「每日1个新词,随机添加到每回合游戏中」，底部 slogan「每日1个新词,积累从现在开始!」（全部收集后变为「你太棒了!今日新词学习完成,跟朋友分享下吧!」）
 - **Switch 开关**：控制学习模式开关（实时保存到 settings）
 - **单词卡片列表**：可惯性滚动，支持边界阻尼回弹（rubber band + easeOutBack）
 - **单词状态**：已收集显示绿色勾选 + 金色星星，未收集显示灰色锁定
 - **返回按钮**：左上角返回按钮回到设置弹窗；关闭按钮同时关闭两层弹窗
-- **全部完成分享**：10 词全部收集后，今日新词弹窗底部文案右侧显示分享图标，点击可截图分享至微信
+- **全部完成分享**：当日新词全部收集后，今日新词弹窗底部文案右侧显示分享图标，点击可截图分享至微信
 - **首次提示**：首次打开 switch 时，在开关上方弹出带小箭头指向 switch 的 toast
 
 ### 4.5.5 持久化
@@ -1510,6 +1511,8 @@ js/battle/
 
 ## 5.1 新手引导（witch_guide）
 
+> 现状：`game.json` 中 `enableGuide: false`，引导全局关闭——`game.js` 初始化时 `_guideEnabled = false`，存档中的 `guidePhase` 1~4 会被强制跳为 5，引导不会触发；以下流程为引导开启时的设计描述。
+
 首次进入游戏的玩家会在第 1 回合触发新手引导，共 **2 个内容 Phase + 退场 + 赠卡弹窗**：
 
 | Phase | 内容 | 动画 |
@@ -1819,15 +1822,15 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 2. 拉起 `wx.shareAppMessage({ title: '我正在收集女巫词牌，快来帮我过这关！', query: 'from=revive&round=...' })`
 3. 玩家进入分享界面
 4. `wx.onShow` 检测切回前台后的停留时间 ≥ 2500ms，判定分享成功
-5. 执行 `game.revive()`：恢复 1 次出牌机会（`handsLeft = 1`），状态切回 `playing`
+5. 执行 `game.revive()`：恢复 2 次出牌机会（`handsLeft = 2`），状态切回 `playing`，toast 提示「复活成功! 出牌+2」
 6. 若停留时间不足，提示「分享后才可以复活哦~」
 
 **限制**
 - **每日限 1 次**：通过 `word_balatro_daily_revive` 本地存储记录（日期 + used 状态）
-- 当日已使用后，复活按钮显示为 `relive_ad.png`，点击改为**激励视频广告复活**（流量主，`adUnitId: adunit-8374eefa7fbddfb4`）：`wx.createRewardedVideoAd` 懒加载单例，`show()` 失败自动 `load()` 重试；`onClose` 回调中 `isEnded === true`（旧基础库无该字段时视为已看完）才执行与分享复活相同的收尾流程（关闭动画 + `game.revive()` + toast「复活成功！」），中途退出广告提示「看完广告才能复活哦~」；广告复活不限次数，按钮保持 `relive_ad` 状态
+- 当日已使用后，复活按钮显示为 `relive_ad.png`，点击改为**激励视频广告复活**（流量主，`adUnitId: adunit-8374eefa7fbddfb4`）：`wx.createRewardedVideoAd` 懒加载单例，`show()` 失败自动 `load()` 重试；`onClose` 回调中 `isEnded === true`（旧基础库无该字段时视为已看完）才执行与分享复活相同的收尾流程（关闭动画 + `game.revive()` + toast「复活成功! 出牌+2」），中途退出广告提示「看完广告才能复活哦~」；广告复活不限次数，按钮保持 `relive_ad` 状态
 
 **复活效果**
-- 恢复 1 次出牌机会
+- 恢复 2 次出牌机会（`handsLeft = 2`）
 - 清空 gameover 相关状态（`_closingGameOver`、`_restartBtnPressed` 等）
 - 自动存档（含复活标记）
 
@@ -1871,6 +1874,8 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 - 上传shop_card
 - 上传witch
 - 上传bg_icon
+- 上传battle
+- 上传rank_avatar
 - 上传music
 - ⚔️ 对战模式（进入对战）
 - 对战-成功（直接跳转对战结束弹窗，玩家获胜）
@@ -1880,7 +1885,8 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 - 触发图鉴引导
 - 👻 结束游戏
 - 图鉴闪烁（手动触发图鉴图标收集动画）
-- 今日新词完成（强制标记当日 10 词全部学习完成）
+- 今日新词完成（强制标记当日新词全部学习完成，未发奖励时补发 50 金币）
+- 开/关日志浮层（切换云存储调试日志浮层显示）
 
 > 调试功能仅在开发阶段使用，上线前应移除或隐藏入口。
 > 其中对战模式 `top_home` 长按入口仅在非正式版本（开发版/体验版）生效，正式版（`release`）不开放。
@@ -1996,4 +2002,4 @@ waiting（房主创建） → ready（好友加入） → playing（房主开始
 
 ---
 
-*文档基于实际代码整理，最后更新：2026-08-11*
+*文档基于实际代码整理，最后更新：2026-09-08*
