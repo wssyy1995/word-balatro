@@ -92,6 +92,7 @@ class StorageManager {
       extraSafety: game.extraSafety || 0,
       extraLetters: game.extraLetters || 0,
       witchSkillPassed: game.witchSkillPassed,
+      fillBlankData: game._fillBlankData || null,
       _witchSkillProtectUsed: game._witchSkillProtectUsed || false,
       _lifeExtensionBonus: game._lifeExtensionBonus || 0,
       target: game.target,

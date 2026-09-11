@@ -74,16 +74,19 @@ module.exports = function extendHud(Renderer) {
   
       this._drawCardBookIcon(game, W / 2, titleY, hudTitleW);
   
+      const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
+      // fill_blanks（完形填空）：只保留女巫头像 + 回合列，进度条整体下移 5px
+      const isFillBlanks = !!(witchSkill && witchSkill.skill === 'fill_blanks' && game._fillBlankData);
+
       // 争分夺秒倒计时条已移至 drawPlaying 出牌按钮上方
       const barW = W - 20 * s;
       const barH = h;
       const barX = 10 * s;
-      const barY = top + 9 * s;
+      const barY = top + 9 * s + (isFillBlanks ? 5 : 0);
       const r = 10 * s;
       const gold = '#c4a35a';
       const darkBlue = '#1a2f4a';
-  
-      const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
+
       const bg = '#f0e0c8';
       const outerStroke = '#c5a059';
   
@@ -112,8 +115,17 @@ module.exports = function extendHud(Renderer) {
           barX + col1W + line1Offset + colOtherW * 2 - colShift,
         ];
   
-        // 绘制三条分隔线
-        linePositions.forEach((lx) => {
+        // 列中心（各自在分割线之间居中，后三列整体左移15px）
+        const c1 = barX + (col1W + line1Offset) * 0.5;
+        const c2 = barX + col1W + line1Offset + colOtherW * 0.5 - colShift;
+        const c3 = barX + col1W + line1Offset + colOtherW * 1.5 - colShift;
+        const c4 = barX + col1W + line1Offset + colOtherW * 2.5 - colShift;
+        // fill_blanks：回合列在右侧剩余区域居中；唯一的分割线在女巫列与回合列之间居中
+        const roundCX = isFillBlanks ? (linePositions[0] + barX + barW) / 2 : c2;
+        const drawLines = isFillBlanks ? [(c1 + roundCX) / 2] : linePositions;
+  
+        // 绘制分隔线（fill_blanks 只保留一根）
+        drawLines.forEach((lx) => {
           ctx.beginPath();
           ctx.moveTo(lx, lineTop);
           ctx.lineTo(lx, lineBot);
@@ -126,12 +138,6 @@ module.exports = function extendHud(Renderer) {
           ctx.fillRect(-2.5 * s, -2.5 * s, 5 * s, 5 * s);
           ctx.restore();
         });
-  
-        // 列中心（各自在分割线之间居中，后三列整体左移15px）
-        const c1 = barX + (col1W + line1Offset) * 0.5;
-        const c2 = barX + col1W + line1Offset + colOtherW * 0.5 - colShift;
-        const c3 = barX + col1W + line1Offset + colOtherW * 1.5 - colShift;
-        const c4 = barX + col1W + line1Offset + colOtherW * 2.5 - colShift;
   
         // === 列1：女巫头像（大图直接显示，不裁剪 + 呼吸摇摆） ===
         const avatarH = barH + 22*s;
@@ -179,7 +185,8 @@ module.exports = function extendHud(Renderer) {
         // === 女巫技能描述标签（头像右侧，标题下方）===
         const tagH = 24 * s;
         const tagPaddingX = 11 * s;
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        const tagFontSize = Math.floor(12 * s);
+        ctx.font = `bold ${tagFontSize}px sans-serif`;
         let tagText = witchSkill.desc;
         if (game._witchAngryTip) {
           if (Date.now() < game._witchAngryTip.expireAt) {
@@ -267,7 +274,7 @@ module.exports = function extendHud(Renderer) {
   
         // 标签文字（白色）
         ctx.save();
-        ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
+        ctx.font = `bold ${tagFontSize}px sans-serif`;
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -281,12 +288,14 @@ module.exports = function extendHud(Renderer) {
         ctx.fillStyle = '#5a4a2a';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('回合', c2, barY + barH * 0.32 + 4 * s);
+        ctx.fillText('回合', roundCX, barY + barH * 0.32 + 4 * s);
   
         ctx.font = `bold ${Math.floor(22 * s)}px Georgia, serif`;
         ctx.fillStyle = darkBlue;
-        ctx.fillText(String(game.round), c2, barY + barH * 0.68 - 2 * s + 4 * s);
+        ctx.fillText(String(game.round), roundCX, barY + barH * 0.68 - 2 * s + 4 * s);
   
+        // === 列3+列4：目标分 / 当前分（fill_blanks 时不展示）===
+        if (!isFillBlanks) {
         // === 列3：目标分 ===
         ctx.font = `bold ${Math.floor(12 * s)}px sans-serif`;
         ctx.fillStyle = '#5a4a2a';
@@ -320,7 +329,8 @@ module.exports = function extendHud(Renderer) {
         ctx.textBaseline = 'middle';
         ctx.fillText(String(game.score), 0, 0);
         ctx.restore();
-  
+        }
+
       } else {
         // === 无女巫技能：保持原有3列布局 ===
         const line1X = barX + barW / 3;

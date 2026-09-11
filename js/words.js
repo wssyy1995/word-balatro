@@ -357,7 +357,7 @@ const WORD_DATA = new Map([
   ['bore', {meaning:'令人讨厌的人',pos:'n.'}],
   ['bound', {meaning:'跃',pos:'n.'}],
   ['bow', {meaning:'弓',pos:'n.'}],
-  ['bra', {meaning:'奶罩\n左矢',pos:'n.'}],
+  ['bra', {meaning:'文胸/胸罩',pos:'n.'}],
   ['brand', {meaning:'商标',pos:'n.'}],
   ['breed', {meaning:'种类',pos:'n.'}],
   ['brief', {meaning:'摘要',pos:'n.'}],

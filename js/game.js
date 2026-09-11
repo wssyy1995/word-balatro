@@ -11,7 +11,7 @@ const {
   WORD_DATA, EXPAND_WORD_DATA,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords,
-  calcBaseTarget
+  calcBaseTarget, getRandomFillBlankFallback
 } = require('./data');
 const { AnimationManager, Easing } = require('./animation');
 const { AudioManager } = require('./audio');
@@ -228,7 +228,7 @@ function countVowelFreq(word) {
   return freq;
 }
 
-function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = [], dailyWord = null, requiredLetter = null) {
+function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMaxLen = 6, excludeLetters = [], dailyWord = null, requiredLetter = null, fillBlankWord = null) {
   // 固定生成一个长度3的种子词（不从牌堆抽取，直接创建）
   let candidates3 = getCandidatesByLen(3, 3, excludeLetters);
   let candidates4 = getCandidatesByLen(4, 4, excludeLetters);
@@ -251,7 +251,20 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
   let seedLetters5 = [];
   let seedWord5 = null;
 
-  if (dailyWord) {
+  if (fillBlankWord) {
+    // fill_blanks 完形填空：目标词全部字母保底进手牌（替代第二个种子词）
+    const fbLetters = fillBlankWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
+    if (seedLetters3.length + fbLetters.length <= count) {
+      // 手牌容量足够：保留 3 字母种子词 + 目标词
+      seedLetters4 = fbLetters;
+    } else {
+      // 目标词过长（如 7 字母）：独占种子位，确保全部字母进手牌
+      seedLetters3 = [];
+      seedWord3 = null;
+      seedLetters4 = fbLetters;
+    }
+    console.log('种子词：', (seedWord3 || '(无)') + '(正常) + ' + fillBlankWord + '(完形填空)');
+  } else if (dailyWord) {
     // 学习模式：用每日新词替代第二个种子词（保留完整字母含重复）
     let dailyLetters = dailyWord.toUpperCase().split('').filter(l => !excludeLetters.includes(l));
     // 限制每日新词字母数，确保不超过手牌容量
@@ -407,7 +420,10 @@ function drawWithSafety(deck, count, round, safetyRounds, seedMinLen = 3, seedMa
         return { letter, baseScore, score, isFace: FACE_CARDS.has(letter),
           id: Math.random().toString(36).substr(2, 9), selected: false, upgraded, upgradeMult, upgradeAdd, _isSeedCard: true, _isDailyChallengeCard: true, _seedWord: dailyWord };
       })
-    : makeSeedCards(seedLetters4, seedWord4);
+    : fillBlankWord
+      // fill_blanks：目标词字母保底牌（不带 _seedWord，避免"种子词提示"直接泄露答案）
+      ? makeSeedCards(seedLetters4, null).map(c => { c._isFillBlank = true; return c; })
+      : makeSeedCards(seedLetters4, seedWord4);
   const seedCards5 = makeSeedCards(seedLetters5, seedWord5);
   const allSeedCards = [...seedCards3, ...seedCards4, ...seedCards5];
 
@@ -518,6 +534,51 @@ function ensureRequiredLetter(cards, deck, requiredLetter) {
     cards.push(makeSeedCard(requiredLetter, null));
   }
   return cards;
+}
+
+// fill_blanks（完形填空）：确保 cards（新补的牌）与 hand（保留手牌）合起来能拼出目标词
+// 缺哪个字母就用"超出目标词需求"的多余牌替换成该字母的种子牌（被替换的牌放回牌堆）
+function ensureFillBlankLetters(cards, deck, hand, fillBlankWord) {
+  if (!fillBlankWord) return cards;
+  const need = {};
+  for (const ch of fillBlankWord.toUpperCase()) need[ch] = (need[ch] || 0) + 1;
+  const have = {};
+  for (const c of hand) { if (c && c.letter) have[c.letter] = (have[c.letter] || 0) + 1; }
+  for (const c of cards) { if (c && c.letter) have[c.letter] = (have[c.letter] || 0) + 1; }
+
+  const missing = [];
+  for (const ch of Object.keys(need)) {
+    const deficit = need[ch] - (have[ch] || 0);
+    for (let i = 0; i < deficit; i++) missing.push(ch);
+  }
+  if (missing.length === 0) return cards;
+
+  const result = [...cards];
+  for (const ch of missing) {
+    // 找一张多余牌替换：该字母在 hand+result 中的数量超过目标词所需
+    let replaceIdx = -1;
+    for (let i = result.length - 1; i >= 0; i--) {
+      const c = result[i];
+      if (!c || !c.letter || c.letter === ch) continue;
+      if ((have[c.letter] || 0) > (need[c.letter] || 0)) { replaceIdx = i; break; }
+    }
+    if (replaceIdx < 0) {
+      // 极端兜底：全是必需字母仍缺，替换最后一张非本字母牌
+      for (let i = result.length - 1; i >= 0; i--) {
+        if (result[i] && result[i].letter && result[i].letter !== ch) { replaceIdx = i; break; }
+      }
+    }
+    if (replaceIdx < 0) continue;
+    const replaced = result[replaceIdx];
+    have[replaced.letter]--;
+    if (deck) deck.push(replaced);
+    const nc = makeSeedCard(ch, null);
+    nc._isFillBlank = true;
+    result[replaceIdx] = nc;
+    have[ch] = (have[ch] || 0) + 1;
+    console.log('[FillBlank] 补牌强制补入字母:', ch, '替换:', replaced.letter);
+  }
+  return result;
 }
 
 function drawWithVowelRules(deck, hand, need, maxAttempts = 10, requiredLetter = null) {
@@ -1373,6 +1434,9 @@ class Game {
     this._seedWordHint = null;
     // 恢复存档时保留 _restoreFromProgress 读回的结算数据，新游戏则为 null
     this.settlementData = this.settlementData || null;
+    // fill_blanks 完形填空题目数据（恢复存档时保留 _restoreFromProgress 读回的值，新游戏为 null）
+    this._fillBlankData = this._fillBlankData || null;
+    this._fillBlankFetchRound = this._fillBlankFetchRound || 0;
     this.witchRewardData = null;
     this._lifeExtensionAnim = null;
     this._playHandAnimCompleted = false;
@@ -1705,6 +1769,7 @@ class Game {
     this.extraSafety = p.extraSafety || 0;
     this.extraLetters = p.extraLetters || 0;
     this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
+    this._fillBlankData = p.fillBlankData || null;
     this._witchSkillProtectUsed = p._witchSkillProtectUsed !== undefined ? p._witchSkillProtectUsed : false;
     this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
     this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
@@ -1900,6 +1965,18 @@ class Game {
 
     // 每日单词挑战：恢复时也初始化
     this._initDailyChallenge();
+
+    // fill_blanks（完形填空）：存档缺失题目数据时用兜底重建，并补齐手牌中缺失的目标词字母
+    const fillBlankSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (fillBlankSkill && fillBlankSkill.skill === 'fill_blanks') {
+      if (!this._fillBlankData || !this._fillBlankData.word) {
+        this._fillBlankData = getRandomFillBlankFallback();
+        console.log('[FillBlank] 存档无数据，使用兜底重建:', this._fillBlankData.word);
+      }
+      if (this.state === 'playing' && this.hand && this.hand.length > 0) {
+        this.hand = ensureFillBlankLetters(this.hand, this.deck, [], this._fillBlankData.word);
+      }
+    }
   }
 
   _syncHandCardScores() {
@@ -2024,6 +2101,45 @@ class Game {
     }
   }
 
+  // fill_blanks（完形填空）：当前回合为目标技能且数据就绪时返回目标词，否则返回 null
+  _getFillBlankWord() {
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    if (witchSkill && witchSkill.skill === 'fill_blanks' && this._fillBlankData && this._fillBlankData.word) {
+      return this._fillBlankData.word;
+    }
+    return null;
+  }
+
+  // fill_blanks（完形填空）：提前为 targetRound 拉取题目（进商店/进下一关时调用）
+  // 结果只在该回合尚未开始（this.round < targetRound）时生效；3 秒超时视为失败，resetRound 会用兜底数据
+  _prefetchFillBlank(targetRound) {
+    const skill = getSkillForLevel(targetRound, this._shuffledSkills);
+    if (!skill || skill.skill !== 'fill_blanks') return;
+    if (this._fillBlankFetchRound === targetRound) return; // 该回合已请求过（含进行中）
+    this._fillBlankFetchRound = targetRound;
+
+    let settled = false;
+    this._delay(() => { settled = true; }, 3000); // 超时：迟到的结果直接丢弃
+    try {
+      wx.cloud.callFunction({
+        name: 'getFillBlank',
+        data: {}
+      }).then(res => {
+        const data = res && res.result && res.result.code === 0 && res.result.data;
+        if (!data || !data.word || !data.example) return;
+        if (settled) return; // 已超时
+        if (this.round >= targetRound || this._fillBlankData) return; // 回合已开始或已有数据，不替换
+        this._fillBlankData = { word: data.word, example: data.example, example_zh: data.example_zh || '' };
+        console.log('[FillBlank] 预取成功:', data.word, res.result.fallback ? '(云函数兜底)' : '');
+        if (this.storageManager) this.storageManager.saveProgress();
+      }).catch(err => {
+        console.error('[FillBlank] 预取失败:', err);
+      });
+    } catch (e) {
+      console.error('[FillBlank] 调用异常:', e);
+    }
+  }
+
   resetRound() {
     // 上报：回合开始
     reportEvent("round_start", {
@@ -2037,10 +2153,7 @@ class Game {
 
     // 根据女巫技能设置保底词长度
     const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
-    if (witchSkill && witchSkill.skill === 'force_letter_3') {
-      this._seedMinLen = 3;
-      this._seedMaxLen = 3;
-    } else if (witchSkill && witchSkill.skill === 'force_letter_4') {
+    if (witchSkill && witchSkill.skill === 'force_letter_4') {
       this._seedMinLen = 4;
       this._seedMaxLen = 4;
     } else {
@@ -2051,6 +2164,19 @@ class Game {
     // force_contain_X：提取本回合要求必须包含的字母
     const requiredLetter = witchSkill ? getForceContainLetter(witchSkill.skill) : null;
     this._requiredLetter = requiredLetter;
+
+    // fill_blanks（完形填空）：消费预取数据；未返回则用内置兜底立即发牌（网络结果到了也不替换）
+    // 非 fill_blanks 回合清掉残留数据，避免误触发渲染/判定分支
+    if (witchSkill && witchSkill.skill === 'fill_blanks') {
+      if (!this._fillBlankData || !this._fillBlankData.word) {
+        this._fillBlankData = getRandomFillBlankFallback();
+        console.log('[FillBlank] 预取未就绪，使用兜底数据:', this._fillBlankData.word);
+      } else {
+        console.log('[FillBlank] 使用预取数据:', this._fillBlankData.word);
+      }
+    } else {
+      this._fillBlankData = null;
+    }
 
     this.deck = createDeck();
     // no_letter_a：牌堆中排除指定字母
@@ -2082,7 +2208,9 @@ class Game {
       }
     }
 
-    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord, requiredLetter);
+    // fill_blanks：目标词字母保底发进手牌
+    const fillBlankWord = this._getFillBlankWord();
+    this.hand = drawWithSafety(this.deck, handSize, this.round, this.safetyRounds + this.extraSafety, this._seedMinLen, this._seedMaxLen, excludeLetters, dailyWord, requiredLetter, fillBlankWord);
     this._updateDailyNewWordHint();
 
     this.selected = [];
@@ -2412,7 +2540,10 @@ class Game {
       card.selected = false;
       if (this.animManager) this.animManager.cardDeselect(card);
     } else {
-      const maxSelect = this._maxHandSize || this.baseHandSize || 9;
+      let maxSelect = this._maxHandSize || this.baseHandSize || 9;
+      // fill_blanks（完形填空）：选中字母数不允许超过目标词长度
+      const fbWord = this._getFillBlankWord();
+      if (fbWord) maxSelect = Math.min(maxSelect, fbWord.length);
       if (this.selected.length >= maxSelect) return;
       this.selected.push(cardId);
       card.selected = true;
@@ -2510,6 +2641,69 @@ class Game {
     }
 
     console.log('[SeedHint] 提示种子词:', targetWord, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
+  }
+
+  // fill_blanks（完形填空）：金币提示——扣 1 金币自动选中目标词首字母牌
+  hintFillBlankFirstLetter() {
+    const word = this._getFillBlankWord();
+    if (!word) return false;
+    const firstLetter = word[0].toUpperCase();
+
+    // 首字母已单独选中（选中区只有它）：不重复扣金币
+    const selectedCards = this.getSelectedCards();
+    if (selectedCards.length === 1 && selectedCards[0] && selectedCards[0].letter === firstLetter) {
+      this.hintToast = { text: '首字母已选中', expireAt: Date.now() + 2000, startTime: Date.now() };
+      return false;
+    }
+    if ((this.gold || 0) < 1) {
+      this.hintToast = { text: '金币不足', expireAt: Date.now() + 2000, startTime: Date.now() };
+      return false;
+    }
+    // 已有选中牌时先清空，再选中首字母牌
+    if (this.selected.length > 0) this.clearSelection();
+    // 找 letter 等于目标词首字母的牌，优先 _isFillBlank 保底牌
+    const candidates = this.hand.filter(c => c && c.letter === firstLetter);
+    if (candidates.length === 0) {
+      this.hintToast = { text: '暂时没有可选的首字母牌', expireAt: Date.now() + 2000, startTime: Date.now() };
+      return false;
+    }
+    candidates.sort((a, b) => (b._isFillBlank ? 1 : 0) - (a._isFillBlank ? 1 : 0));
+    this.gold -= 1;
+    this.toggleSelect(candidates[0].id);
+    if (this.storageManager) this.storageManager.saveProgress();
+    console.log('[FillBlank] 金币提示首字母:', firstLetter, '剩余金币:', this.gold);
+    return true;
+  }
+
+  // fill_blanks（完形填空）：广告奖励——高亮目标词的全部字母牌（复用种子词提示的 _hintHighlight 机制）
+  showFillBlankWordHint() {
+    const word = this._getFillBlankWord();
+    if (!word) return false;
+    const used = new Set();
+    const wordCards = [];
+    for (const ch of word.toUpperCase()) {
+      let found = false;
+      for (let i = 0; i < this.hand.length; i++) {
+        const card = this.hand[i];
+        if (!card || used.has(i)) continue;
+        if (card.letter === ch) {
+          used.add(i);
+          wordCards.push(card);
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        console.warn('[FillBlank] 手牌缺少目标词字母:', ch, 'word:', word);
+        return false;
+      }
+    }
+    for (const card of wordCards) {
+      card._hintHighlight = { startTime: Date.now(), word };
+    }
+    if (this.audioManager) this.audioManager.play('card_placement');
+    console.log('[FillBlank] 广告提示单词:', word, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
+    return true;
   }
 
   showTipHelpPopup() {
@@ -3016,7 +3210,18 @@ class Game {
     this.pendingCheck = null;
 
     // 结算判断
-    if (this.score >= this.target) {
+    const fbWord = this._getFillBlankWord();
+    if (fbWord) {
+      // fill_blanks（完形填空）：只有拼出目标词才通关（不看分数）；答错即使分数达标也不结算
+      if (playedWord && playedWord.toLowerCase() === fbWord.toLowerCase()) {
+        // 答对目标词：恢复女巫奖励资格（之前答错会置 false），结算奖励链路自动沿用
+        this.witchSkillPassed = true;
+        this._showSettlement();
+        this._playHandCompleting = false;
+        return;
+      }
+    }
+    if (this.score >= this.target && !fbWord) {
       this._showSettlement();
     } else if (this.handsLeft <= 0) {
       const triggered = this._checkLifeExtension();
@@ -3128,7 +3333,9 @@ class Game {
       // 3. 从牌堆顶部补牌
       const need = finalPlayedCards.length;
       const validHand = this.hand.filter(Boolean);
-      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '出牌', requiredLetter: this._requiredLetter });
+      let newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '出牌', requiredLetter: this._requiredLetter });
+      // fill_blanks：补牌后手牌必须仍能拼出目标词，缺字母强制补入
+      newCards = ensureFillBlankLetters(newCards, this.deck, validHand, this._getFillBlankWord());
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -3348,6 +3555,8 @@ class Game {
 
   claimSettlement() {
     if (!this.settlementData) return;
+    // fill_blanks：若下一关是完形填空试炼，进商店期间预取题目
+    this._prefetchFillBlank(this.round + 1);
     // 只出牌一次触发翻倍时，按翻倍后的总金币入账
     this.gold += this.settlementData.bonusDouble
       ? this.settlementData.totalGold * 2
@@ -3580,7 +3789,9 @@ class Game {
       const need = discardedCards.length;
       const validHand = this.hand.filter(Boolean);
       const seedWordLength = discardedCards.length === 1 ? 3 : 4;
-      const newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '弃牌', seedWordLength, requiredLetter: this._requiredLetter });
+      let newCards = drawWithSeedSafety(this.deck, validHand, need, { action: '弃牌', seedWordLength, requiredLetter: this._requiredLetter });
+      // fill_blanks：补牌后手牌必须仍能拼出目标词，缺字母强制补入
+      newCards = ensureFillBlankLetters(newCards, this.deck, validHand, this._getFillBlankWord());
 
       let newIdx = 0;
       this.hand = this.hand.map(c => {
@@ -4240,9 +4451,9 @@ class Game {
     this._showSettlement();
   }
 
-  // 原地复活：gameover 时恢复 1 次出牌机会
+  // 原地复活：gameover 时恢复 2 次出牌机会
   revive() {
-    this.handsLeft = 1;
+    this.handsLeft = 2;
     this.state = 'playing';
     this.gameOverReason = null;
     this._closingGameOver = false;
@@ -4295,9 +4506,11 @@ class Game {
 
   nextRound() {
     if (this.audioManager) this.audioManager.play('levelup');
-    
+
     this.roundScores.push({ round: this.round, score: this.score });
     this.round++;
+    // fill_blanks：兜底预取（正常流程 claimSettlement 已预取，_fillBlankFetchRound 去重）
+    this._prefetchFillBlank(this.round);
     this.shopItems = null;
     this._shopDiscountActive = false; // 折扣只持续一回合商店
     this._shopDiscountRate = 0.6;

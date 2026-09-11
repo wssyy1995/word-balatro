@@ -17,6 +17,14 @@
       {
         "type": "folder",
         "value": "cloudfunctions"
+      },
+      {
+        "type": "folder",
+        "value": "doc"
+      },
+      {
+        "type": "suffix",
+        "value": ".DS_Store"
       }
     ],
     "include": []

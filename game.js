@@ -94,7 +94,7 @@ wx.onShow((res) => {
             renderer.gameOverRenderer.animStartTime = null;
             renderer.gameOverRenderer.lastGameOverReason = null;
           }
-          game.hintToast = { text: '复活成功！', expireAt: Date.now() + 2000 };
+          game.hintToast = { text: '复活成功! 出牌+2', expireAt: Date.now() + 2000 };
         }
       }, 200);
     } else {
@@ -833,7 +833,7 @@ function getReviveVideoAd() {
               renderer.gameOverRenderer.animStartTime = null;
               renderer.gameOverRenderer.lastGameOverReason = null;
             }
-            game.hintToast = { text: '复活成功！', expireAt: Date.now() + 2000 };
+            game.hintToast = { text: '复活成功! 出牌+2', expireAt: Date.now() + 2000 };
           }
         }, 200);
       }
@@ -931,6 +931,56 @@ function showCoinAd() {
       .catch(err => {
         console.error('[CoinAd] 激励视频广告显示失败:', err);
         if (game) game.hintToast = { text: '广告加载失败，请稍后再试', expireAt: Date.now() + 2000 };
+      });
+  });
+}
+
+// ===== 激励视频广告（fill_blanks 完形填空「提示单词」，看完后高亮目标词全部字母牌）=====
+// 独立实例，不复用复活/金币广告，避免状态串扰
+const FILL_BLANK_AD_UNIT_ID = 'adunit-85da2236ba67e472';
+let fillBlankVideoAd = null;
+
+function getFillBlankVideoAd() {
+  if (fillBlankVideoAd) return fillBlankVideoAd;
+  if (typeof wx === 'undefined' || !wx.createRewardedVideoAd) return null;
+  try {
+    fillBlankVideoAd = wx.createRewardedVideoAd({ adUnitId: FILL_BLANK_AD_UNIT_ID });
+    fillBlankVideoAd.onError(err => {
+      console.error('[FillBlankAd] 广告错误:', err);
+    });
+    fillBlankVideoAd.onClose(res => {
+      // 兼容旧基础库：isEnded 字段不存在时视为已看完
+      const ended = !res || res.isEnded === undefined || res.isEnded;
+      if (!ended) {
+        console.log('[FillBlankAd] 广告未看完，不给提示');
+        if (game) game.hintToast = { text: '看完广告才能获得提示', expireAt: Date.now() + 2000, startTime: Date.now() };
+        return;
+      }
+      console.log('[FillBlankAd] 广告播放完成，高亮目标词字母牌');
+      if (game && game.showFillBlankWordHint) {
+        game.showFillBlankWordHint();
+      }
+    });
+  } catch (e) {
+    console.error('[FillBlankAd] 创建激励视频广告失败:', e);
+    fillBlankVideoAd = null;
+  }
+  return fillBlankVideoAd;
+}
+
+function showFillBlankAd() {
+  const ad = getFillBlankVideoAd();
+  if (!ad) {
+    if (game) game.hintToast = { text: '当前环境不支持广告', expireAt: Date.now() + 2000, startTime: Date.now() };
+    return;
+  }
+  ad.show().catch(() => {
+    // 失败重试：先 load 再 show
+    ad.load()
+      .then(() => ad.show())
+      .catch(err => {
+        console.error('[FillBlankAd] 激励视频广告显示失败:', err);
+        if (game) game.hintToast = { text: '广告加载失败，请稍后再试', expireAt: Date.now() + 2000, startTime: Date.now() };
       });
   });
 }
@@ -3036,6 +3086,8 @@ wx.onTouchMove((e) => {
 wx.onTouchEnd(() => {
   renderer.cloudLogDragging = false;
   renderer.pressedBtn = null;
+  renderer._fbHintLetterPressed = false;
+  renderer._fbHintWordPressed = false;
   if (game) {
     game._cardBookIconPressed = false;
     game._cardBookEquipBtnPressed = false;
@@ -4942,6 +4994,34 @@ function handleInput(x, inputY, rawY) {
       if (hintHit) {
         vibrate();
         game.showTipHelpPopup();
+        return;
+      }
+    }
+
+    // fill_blanks：例句框内「首字母提示」按钮（金币×1；pendingCheck 进行中不响应）
+    if (renderer.fillBlankHintLetterRect) {
+      const fbHit = renderer.hitTest(x, inputY, [renderer.fillBlankHintLetterRect]);
+      if (fbHit) {
+        if (!game.pendingCheck) {
+          vibrate();
+          renderer._fbHintLetterPressed = true;
+          if (game.audioManager) game.audioManager.play('tap');
+          game.hintFillBlankFirstLetter();
+        }
+        return;
+      }
+    }
+
+    // fill_blanks：例句框内「提示单词」按钮（激励视频广告；pendingCheck 进行中不响应）
+    if (renderer.fillBlankHintWordRect) {
+      const fbHit = renderer.hitTest(x, inputY, [renderer.fillBlankHintWordRect]);
+      if (fbHit) {
+        if (!game.pendingCheck) {
+          vibrate();
+          renderer._fbHintWordPressed = true;
+          if (game.audioManager) game.audioManager.play('tap');
+          showFillBlankAd();
+        }
         return;
       }
     }

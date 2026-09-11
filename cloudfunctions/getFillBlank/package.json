@@ -1,0 +1,9 @@
+{
+  "name": "getFillBlank",
+  "version": "1.0.0",
+  "description": "随机获取一条完形填空题目（fill_blank 集合）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "latest"
+  }
+}

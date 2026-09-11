@@ -106,10 +106,31 @@ function calcBaseTarget(round) {
   return target;
 }
 
+// ===== fill_blanks（完形填空）女巫试炼兜底数据 =====
+// 云函数失败/超时或存档缺失时使用；数据规范：word 长度 3~7、纯小写、example 中必须出现 word 或其常见变形
+const FILL_BLANK_FALLBACK = [
+  { word: 'abuse', example: 'The report showed the abuse of power by officials.', example_zh: '这份报告揭示了官员滥用权力的问题。' },
+  { word: 'adapt', example: 'It took him a long time to adapt to the new environment.', example_zh: '他花了很长时间适应新环境。' },
+  { word: 'await', example: 'A warm welcome awaits you at the airport.', example_zh: '机场有人热烈欢迎你的到来。' },
+  { word: 'award', example: 'She received an award for her excellent work.', example_zh: '她因出色的工作获得了奖项。' },
+  { word: 'amend', example: 'The law was amended last year.', example_zh: '这项法律去年被修订了。' },
+  { word: 'cease', example: 'The rain ceased at midnight.', example_zh: '雨在午夜停了。' },
+  { word: 'boost', example: 'The new policy helped boost the economy.', example_zh: '新政策有助于促进经济发展。' },
+  { word: 'curb', example: 'The government took steps to curb inflation.', example_zh: '政府采取措施抑制通货膨胀。' },
+  { word: 'deem', example: 'The plan was deemed too risky.', example_zh: '这个计划被认为风险太大。' },
+  { word: 'comply', example: 'All citizens must comply with the law.', example_zh: '所有公民都必须遵守法律。' }
+];
+
+function getRandomFillBlankFallback() {
+  const item = FILL_BLANK_FALLBACK[Math.floor(Math.random() * FILL_BLANK_FALLBACK.length)];
+  return { word: item.word, example: item.example, example_zh: item.example_zh };
+}
+
 module.exports = {
   LETTER_SCORE, LETTER_DISTRIBUTION, FACE_CARDS,
   WORD_DATA, EXPAND_WORD_DATA,
   onlineWordCache, wordCheckState,
   wordMeaningCache, letterUpgrades, checkingWords,
-  getLetterScore, calcBaseTarget
+  getLetterScore, calcBaseTarget,
+  FILL_BLANK_FALLBACK, getRandomFillBlankFallback
 };

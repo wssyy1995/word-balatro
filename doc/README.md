@@ -202,7 +202,7 @@ word-balatro/
 4. 本地不存在 → 在线 API 校验（百度翻译词典版）
 5. 非法 → pendingCheck.state = 'invalid'，handsLeft--（或被 shield_illegal / haste_play 抵消），可能触发 gameover
 6. 勇敢试错：非法单词且未触发容错咒文时，illegal_boost 倍率 +1
-7. 女巫技能约束检查（如 need_letter_4 / force_letter_3）→ 不满足则 witch_failed
+7. 女巫技能约束检查（如 need_letter_4 / force_letter_4）→ 不满足则 witch_failed
 8. 字母之神（letter_god）预处理：若触发，先将所有出牌字母分数改为最高分
 9. 以小博大（last_chance）：若出牌 ≤3 个字母，40% 概率 mult +8
 10. letter_X_mult_half 惩罚检测（含 A/E/S/I）→ 满足条件则倍率减半
@@ -444,8 +444,8 @@ target = 450 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 >
 > 当前 `WITCH_SKILLS` 配置中不包含 `double_coin`（金币翻倍），该奖励类型仅在 `getRewardName` / `createRewardItem` 中保留定义，未实际投放。
 >
-> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配（`shuffleSkillPool`），每局游戏的约束组合各不相同；打乱时保证 `force_letter_3` 固定在第 3 个位置（若洗牌后不在第 3 位，则与第 3 个交换位置），即每局第 8 关（`WITCH_SKILLS` 下标 2，循环复用时下标 18 的第 53 关同理）的约束恒为「每次出牌只能出 3 张字母牌」。`SKILL_POOL` 共 16 个技能，少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。`SKILL_POOL` 包含：
-> - `force_letter_3`：每次出牌只能出 3 张字母牌
+> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配（`shuffleSkillPool`），每局游戏的约束组合各不相同。`SKILL_POOL` 少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。`SKILL_POOL` 包含：
+> - `fill_blanks`：完形填空，拼出目标单词让句子变完整
 > - `need_letter_4`：每次出牌必须不少于 4 个字母
 > - `forbid_illegal_words`：出现非法单词即游戏结束
 > - `force_letter_4`：每次出牌只能出 4 张字母牌

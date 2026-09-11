@@ -31,40 +31,19 @@ const WITCH_SKILLS = [
 
 //技能池（skill + desc + angry_tip 绑定，游戏开始时打乱顺序分配）
 const SKILL_POOL = [
-  { skill: 'force_letter_3', desc: '每次出牌,只能出3张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
   { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  { skill: 'forbid_illegal_words', desc: '出现非法单词，游戏结束', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'force_letter_4', desc: '每次出牌,只能出4张字母牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  { skill: 'no_letter_a', desc: '本回合不会出现字母牌\'A\'', angry_tip: 'A去哪儿了' },
   { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  { skill: 'force_contain_A', desc: '打出的单词必须包含\'A\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  { skill: 'force_contain_B', desc: '打出的单词必须包含\'B\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  { skill: 'force_contain_O', desc: '打出的单词必须包含\'O\'', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
   { skill: 'witch_card_value_half', desc: '所有女巫牌的倍率效果都减半', angry_tip: '太依赖道具，也不行哦。'}
 ];
-// const SKILL_POOL = [
-//   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' }
-// ];
-// ===== 女巫卡牌配置 =====
-// const WITCH_CARDS = [
-//   { card_id: 'witch_card_3', witch_name: '爱莉亚', witch_desc:'金之女巫，黄金时代的最后守望者',card_skill_name: 'each_round_coin_plus1',card_skill_desc:'每回合结算，基础金币+1'},
-//   { card_id: 'witch_card_5', witch_name: '柏丽桑忒', witch_desc:'荆棘花园的看守者，玫瑰马车拉开天幕',card_skill_name: 'each_round_hand_plus1',card_skill_desc:'每回合出牌次数+1,但基础金币-2'},
-//   { card_id: 'witch_card_8', witch_name: '喀薇娅', witch_desc:'虚空中编织咒文之人',card_skill_name: 'illegal_words_one',card_skill_desc:'每回合,首次非法单词不扣除出牌次数'},
-//   { card_id: 'witch_card_11', witch_name: '德莱薇尔', witch_desc:'以亡魂之丝纺命运的织者',card_skill_name: 'last_letter_double',card_skill_desc:'单词最后一个字母，触发结算2次'},
-//   { card_id: 'witch_card_14', witch_name: '艾莉瑟瑞丝', witch_desc:'挣脱枷锁者，禁咒破译者',card_skill_name: 'witch_skill_protect',card_skill_desc:'有女巫的回合,首次出牌不会触发试炼规则'},
-//   { card_id: 'witch_card_16', witch_name: '菲兰瑟娅', witch_desc:'牵动命运之线的人',card_skill_name: 'shop_discount',card_skill_desc:'每回合分数超过目标分30%，则该回合的卡牌商店打6折'},
-//   { card_id: 'witch_card_18', witch_name: '格莱薇妮娅', witch_desc:'持重者，不动如山的审判官',card_skill_name: 'score_overflow',card_skill_desc:'每回合溢出分数（超过目标分部分）的10%计入下回合初始分'},
-//   { card_id: 'witch_card_21', witch_name: '赫丝佩瑞丝', witch_desc:'异界来客，裂隙彼岸之人',card_skill_name: 'out_card_different',card_skill_desc:'每次弃牌后补入的字母,一定会排除原弃牌字母'},
-//   { card_id: 'witch_card_24', witch_name: '伊洛薇尔', witch_desc:'暮光行者，昼夜的守门人',card_skill_name: 'witch_skill_extra_hands',card_skill_desc:'若本回合有女巫，出牌和弃牌次数均+1'},
-//   { card_id: 'witch_card_27', witch_name: '薇尔莉特', witch_desc:'星语者，以字母编织命运之人',card_skill_name: 'letter_trigger_twice_A',card_skill_desc:'打出单词包含字母A，该字母触发2次计分'}
 
-// ];
 //将WITCH_CARDS 统一改成字母触发2次
 const WITCH_CARDS = [
   { card_id: 'witch_card_3',  card_letter: 'A', witch_name: '爱莉亚',     witch_desc: '爱之女巫，喜悦和希望的守望者',          card_skill_name: 'letter_trigger_twice_A', card_skill_desc: '打出单词包含字母A，该字母触发2次计分' },
@@ -101,16 +80,9 @@ function shuffleSkills(arr) {
   return result;
 }
 
-// 打乱技能池，并保证 force_letter_3 固定在第 3 个位置：
-// 若洗牌后不在第 3 位，则与第 3 个交换位置
+// 打乱技能池
 function shuffleSkillPool() {
-  const result = shuffleSkills([...SKILL_POOL]);
-  const FORCE_INDEX = Math.min(2, result.length - 1); // 第 3 个（下标 2）
-  const forceIdx = result.findIndex(s => s.skill === 'force_letter_3');
-  if (forceIdx !== FORCE_INDEX) {
-    [result[forceIdx], result[FORCE_INDEX]] = [result[FORCE_INDEX], result[forceIdx]];
-  }
-  return result;
+  return shuffleSkills([...SKILL_POOL]);
 }
 
 // 解析 force_contain_X 类技能，返回要求的字母（如 'A'）
@@ -146,8 +118,6 @@ function checkSkill(skillName, game, playedCards) {
   switch (skillName) {
     case 'need_letter_4':
       return playedCards.length >= 4;
-    case 'force_letter_3':
-      return playedCards.length === 3;
     case 'force_letter_4':
       return playedCards.length === 4;
     case 'disable_potion_card':
@@ -155,6 +125,12 @@ function checkSkill(skillName, game, playedCards) {
     case 'disable_two_witch_card':
       // 禁用类试炼：限制在道具/女巫牌点击层处理，出牌本身不受限制
       return true;
+    case 'fill_blanks': {
+      // 完形填空：只有拼出目标词（原形）才算通过；数据缺失时降级为不限制
+      const targetWord = (game && game._fillBlankData && game._fillBlankData.word) || '';
+      if (!targetWord) return true;
+      return playedCards.map(c => c.letter).join('').toLowerCase() === targetWord.toLowerCase();
+    }
     case 'witch_card_value_half':
       // 倍率效果减半：不影响出牌本身是否合法
       return true;
@@ -174,12 +150,12 @@ function getSkillFailText(skillName) {
   switch (skillName) {
     case 'need_letter_4':
       return '女巫试炼：每次出牌必须不少于4个字母';
-    case 'force_letter_3':
-      return '女巫试炼：每次出牌只能出3张字母牌';
     case 'force_letter_4':
       return '女巫试炼：每次出牌只能出4张字母牌';
     case 'disable_potion_card':
       return '女巫试炼：本回合禁用魔法药水牌';
+    case 'fill_blanks':
+      return '女巫试炼：拼出正确的单词，让句子变完整';
     case 'disable_one_witch_card':
       return '女巫试炼：本回合随机禁用1张女巫牌';
     case 'disable_two_witch_card':
