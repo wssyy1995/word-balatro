@@ -1,100 +1,371 @@
-{"word":"abuse","example":"The report showed the abuse of power by officials.","example_zh":"这份报告揭示了官员滥用权力的问题。"}
-{"word":"adapt","example":"It took him a long time to adapt to the new environment.","example_zh":"他花了很长时间适应新环境。"}
-{"word":"adopt","example":"The school decided to adopt a new teaching method.","example_zh":"学校决定采用一种新的教学方法。"}
-{"word":"alter","example":"Nothing can alter the fact that he was late.","example_zh":"什么也不能改变他迟到的事实。"}
-{"word":"amend","example":"The law was amended last year.","example_zh":"这项法律去年被修订了。"}
-{"word":"arise","example":"Problems may arise from a lack of communication.","example_zh":"问题可能因缺乏沟通而产生。"}
-{"word":"await","example":"A warm welcome awaits you at the airport.","example_zh":"机场有人热烈欢迎你的到来。"}
-{"word":"award","example":"She received an award for her excellent work.","example_zh":"她因出色的工作获得了奖项。"}
-{"word":"barren","example":"The land was too barren to grow crops.","example_zh":"这片土地太贫瘠，无法种庄稼。"}
-{"word":"baffle","example":"The question baffled many students.","example_zh":"这个问题难住了许多学生。"}
-{"word":"barely","example":"He barely had enough money to buy food.","example_zh":"他几乎没有足够的钱买食物。"}
-{"word":"betray","example":"He felt his friend had betrayed him.","example_zh":"他觉得朋友背叛了他。"}
-{"word":"bias","example":"The report showed a clear bias against women.","example_zh":"这份报告明显对女性有偏见。"}
-{"word":"boost","example":"The new policy helped boost the economy.","example_zh":"新政策有助于促进经济发展。"}
-{"word":"breach","example":"The company was punished for a breach of contract.","example_zh":"这家公司因违约受到处罚。"}
-{"word":"bulk","example":"The bulk of the work has already been done.","example_zh":"大部分工作已经完成。"}
-{"word":"cease","example":"The rain ceased at midnight.","example_zh":"雨在午夜停了。"}
-{"word":"cling","example":"The child clung to his mother's hand.","example_zh":"孩子紧紧抓住妈妈的手。"}
-{"word":"coerce","example":"He was coerced into signing the agreement.","example_zh":"他被迫签署了协议。"}
-{"word":"coincide","example":"His holiday coincided with mine.","example_zh":"他的假期正好和我的重合。"}
-{"word":"compel","example":"The law compels drivers to wear seat belts.","example_zh":"法律强制司机系安全带。"}
-{"word":"comply","example":"All citizens must comply with the law.","example_zh":"所有公民都必须遵守法律。"}
+{"word":"aboard","example":"All passengers went aboard the plane.","example_zh":"所有乘客都登上了飞机。"}
+{"word":"absent","example":"He was absent from school yesterday.","example_zh":"他昨天没来上学。"}
+{"word":"absurd","example":"The idea sounds absurd.","example_zh":"这个想法听起来很荒谬。"}
+{"word":"accent","example":"She speaks with a British accent.","example_zh":"她说话带有英国口音。"}
+{"word":"accept","example":"He accepted the gift politely.","example_zh":"他礼貌地收下了礼物。"}
+{"word":"accord","example":"The two sides reached an accord.","example_zh":"双方达成了一致。"}
+{"word":"accuse","example":"She accused him of lying.","example_zh":"她指责他撒谎。"}
+{"word":"across","example":"The bridge is across the river.","example_zh":"桥横跨在河上。"}
+{"word":"active","example":"He is very active in class.","example_zh":"他在课堂上很活跃。"}
+{"word":"actual","example":"The actual cost was higher than expected.","example_zh":"实际成本比预期高。"}
+{"word":"admire","example":"We admire her dedication.","example_zh":"我们钦佩她的奉献精神。"}
+{"word":"advise","example":"I advise you to take a break.","example_zh":"我建议你休息一下。"}
+{"word":"afford","example":"We can't afford to waste time.","example_zh":"我们浪费不起时间。"}
+{"word":"agency","example":"The agency provides useful services.","example_zh":"这家机构提供有用的服务。"}
+{"word":"agenda","example":"The agenda includes three main topics.","example_zh":"议程包括三个主要议题。"}
+{"word":"almost","example":"It is almost time to leave.","example_zh":"快到离开的时间了。"}
+{"word":"always","example":"She always arrives early.","example_zh":"她总是早到。"}
+{"word":"amount","example":"A large amount of water was wasted.","example_zh":"大量的水被浪费了。"}
+{"word":"annual","example":"The annual report was published.","example_zh":"年度报告发布了。"}
+{"word":"answer","example":"Please answer the question.","example_zh":"请回答这个问题。"}
+{"word":"appeal","example":"The movie appeals to young people.","example_zh":"这部电影吸引年轻人。"}
+{"word":"appear","example":"He appeared calm and confident.","example_zh":"他显得冷静而自信。"}
+{"word":"apply","example":"She applied for a scholarship.","example_zh":"她申请了奖学金。"}
+{"word":"argue","example":"They argue about money often.","example_zh":"他们经常为钱争吵。"}
+{"word":"arise","example":"Problems arise from poor communication.","example_zh":"问题源于沟通不畅。"}
+{"word":"around","example":"The earth moves around the sun.","example_zh":"地球绕着太阳转。"}
+{"word":"arrive","example":"The train arrived on time.","example_zh":"火车准时到达。"}
+{"word":"aspect","example":"Cost is an important aspect.","example_zh":"成本是一个重要方面。"}
+{"word":"assert","example":"He asserted his innocence.","example_zh":"他坚称自己无罪。"}
+{"word":"assess","example":"We need to assess the damage.","example_zh":"我们需要评估损失。"}
+{"word":"assign","example":"The teacher assigned homework.","example_zh":"老师布置了作业。"}
+{"word":"assume","example":"I assume you are busy.","example_zh":"我猜你很忙。"}
+{"word":"assure","example":"I assure you it is safe.","example_zh":"我向你保证这是安全的。"}
+{"word":"attach","example":"Please attach the document.","example_zh":"请附上文件。"}
+{"word":"attack","example":"The army launched an attack.","example_zh":"军队发动了进攻。"}
+{"word":"attain","example":"She attained her goal.","example_zh":"她实现了目标。"}
+{"word":"attend","example":"He attends meetings regularly.","example_zh":"他定期参加会议。"}
+{"word":"attract","example":"The festival attracts many visitors.","example_zh":"这个节日吸引了许多游客。"}
+{"word":"author","example":"The author wrote a bestseller.","example_zh":"这位作者写了本畅销书。"}
+{"word":"barely","example":"He barely passed the exam.","example_zh":"他勉强通过了考试。"}
+{"word":"battle","example":"The battle lasted three days.","example_zh":"战斗持续了三天。"}
+{"word":"become","example":"She became a doctor.","example_zh":"她成了一名医生。"}
+{"word":"before","example":"Wash your hands before eating.","example_zh":"吃饭前洗手。"}
+{"word":"behind","example":"The boy hid behind the door.","example_zh":"男孩躲在门后。"}
+{"word":"belong","example":"This book belongs to me.","example_zh":"这本书是我的。"}
+{"word":"beside","example":"She sat beside me.","example_zh":"她坐在我旁边。"}
+{"word":"better","example":"I feel better today.","example_zh":"我今天感觉好多了。"}
+{"word":"beyond","example":"The village is beyond the mountain.","example_zh":"村庄在山的那边。"}
+{"word":"borrow","example":"Can I borrow your notes?","example_zh":"我能借你的笔记吗？"}
+{"word":"bother","example":"Don't bother me now.","example_zh":"现在别打扰我。"}
+{"word":"bottom","example":"The key is at the bottom of the bag.","example_zh":"钥匙在包底部。"}
+{"word":"branch","example":"The bank has a new branch.","example_zh":"银行开了一家新分行。"}
+{"word":"breach","example":"The action was a breach of trust.","example_zh":"这种行为违背了信任。"}
+{"word":"breath","example":"He took a deep breath.","example_zh":"他深吸了一口气。"}
+{"word":"brief","example":"Please give a brief answer.","example_zh":"请给出简短的回答。"}
+{"word":"bright","example":"The future looks bright.","example_zh":"前途看起来一片光明。"}
+{"word":"broad","example":"He has broad interests.","example_zh":"他兴趣广泛。"}
+{"word":"broken","example":"The window is broken.","example_zh":"窗户破了。"}
+{"word":"burden","example":"The debt is a heavy burden.","example_zh":"债务是沉重的负担。"}
+{"word":"bureau","example":"The weather bureau issued a warning.","example_zh":"气象局发布了警报。"}
+{"word":"career","example":"She built a successful career.","example_zh":"她建立了成功的事业。"}
+{"word":"caring","example":"She is a caring nurse.","example_zh":"她是一位有爱心的护士。"}
+{"word":"castle","example":"The castle is very old.","example_zh":"这座城堡很古老。"}
+{"word":"casual","example":"He wore casual clothes.","example_zh":"他穿着休闲装。"}
+{"word":"cattle","example":"The cattle are grazing.","example_zh":"牛在吃草。"}
+{"word":"center","example":"The table is in the center.","example_zh":"桌子在中心。"}
+{"word":"chance","example":"Give me one more chance.","example_zh":"再给我一次机会。"}
+{"word":"change","example":"The weather changed quickly.","example_zh":"天气变化很快。"}
+{"word":"charge","example":"They charge extra for delivery.","example_zh":"他们额外收取配送费。"}
+{"word":"choice","example":"You have made a good choice.","example_zh":"你做了正确的选择。"}
+{"word":"choose","example":"Choose the best answer.","example_zh":"选择最佳答案。"}
+{"word":"clause","example":"Read the contract clause carefully.","example_zh":"仔细阅读合同条款。"}
+{"word":"clinic","example":"The clinic opens at nine.","example_zh":"诊所九点开门。"}
+{"word":"closed","example":"The shop is closed today.","example_zh":"商店今天关门。"}
+{"word":"closet","example":"The clothes are in the closet.","example_zh":"衣服在衣柜里。"}
+{"word":"coffee","example":"I drink coffee every morning.","example_zh":"我每天早上喝咖啡。"}
+{"word":"column","example":"The column supports the roof.","example_zh":"柱子支撑着屋顶。"}
+{"word":"combat","example":"They are fighting to combat disease.","example_zh":"他们正在与疾病作斗争。"}
+{"word":"comedy","example":"The comedy made everyone laugh.","example_zh":"这部喜剧让大家都笑了。"}
+{"word":"commit","example":"He committed a serious error.","example_zh":"他犯了一个严重错误。"}
+{"word":"common","example":"This is a common problem.","example_zh":"这是一个常见问题。"}
+{"word":"compel","example":"The law compels us to pay taxes.","example_zh":"法律强制我们纳税。"}
+{"word":"comply","example":"We must comply with the rules.","example_zh":"我们必须遵守规则。"}
 {"word":"concur","example":"I concur with your opinion.","example_zh":"我同意你的看法。"}
-{"word":"condone","example":"We cannot condone such rude behavior.","example_zh":"我们不能容忍这种粗鲁行为。"}
-{"word":"confer","example":"The doctors conferred about the patient's condition.","example_zh":"医生们商讨了病人的病情。"}
-{"word":"conform","example":"Students are expected to conform to school rules.","example_zh":"学生应遵守校规。"}
+{"word":"confine","example":"Please confine your remarks to the topic.","example_zh":"请把发言限制在主题内。"}
+{"word":"conform","example":"Students should conform to school rules.","example_zh":"学生应遵守校规。"}
 {"word":"consent","example":"He gave his consent to the plan.","example_zh":"他同意了这项计划。"}
-{"word":"curb","example":"The government took steps to curb inflation.","example_zh":"政府采取措施抑制通货膨胀。"}
-{"word":"deem","example":"The plan was deemed too risky.","example_zh":"这个计划被认为风险太大。"}
-{"word":"defer","example":"The meeting was deferred until Friday.","example_zh":"会议被推迟到星期五。"}
-{"word":"defy","example":"The child defied his parents' wishes.","example_zh":"这个孩子公然违背父母的意愿。"}
-{"word":"denote","example":"A red light usually denotes danger.","example_zh":"红灯通常表示危险。"}
-{"word":"deprive","example":"The war deprived many children of education.","example_zh":"战争使许多孩子失去了受教育的机会。"}
-{"word":"derive","example":"She derives great pleasure from reading.","example_zh":"她从阅读中获得很大乐趣。"}
-{"word":"descend","example":"The plane began to descend.","example_zh":"飞机开始下降。"}
-{"word":"detach","example":"He detached the key from the ring.","example_zh":"他把钥匙从钥匙圈上取下来。"}
-{"word":"devise","example":"They devised a new plan to save money.","example_zh":"他们设计了一个省钱的新方案。"}
-{"word":"dodge","example":"He dodged the question cleverly.","example_zh":"他巧妙地回避了这个问题。"}
-{"word":"elicit","example":"The teacher tried to elicit answers from the students.","example_zh":"老师试图引导学生给出答案。"}
-{"word":"embed","example":"The idea was deeply embedded in his mind.","example_zh":"这个想法深深印在他的脑海里。"}
-{"word":"emit","example":"The factory emits harmful gases.","example_zh":"这家工厂排放有害气体。"}
-{"word":"enact","example":"The government enacted a new law.","example_zh":"政府颁布了一项新法律。"}
-{"word":"endure","example":"She could not endure the pain any longer.","example_zh":"她再也忍受不了这种痛苦。"}
-{"word":"evoke","example":"The song evoked memories of my childhood.","example_zh":"这首歌唤起了我的童年回忆。"}
-{"word":"exert","example":"He exerted great influence on his students.","example_zh":"他对学生施加了很大影响。"}
-{"word":"expel","example":"The student was expelled from school.","example_zh":"那名学生被学校开除了。"}
-{"word":"flaw","example":"There is a serious flaw in your argument.","example_zh":"你的论点中有一个严重缺陷。"}
-{"word":"fling","example":"She flung the door open and rushed out.","example_zh":"她猛地推开门冲了出去。"}
-{"word":"foster","example":"The program aims to foster creativity.","example_zh":"这个项目旨在培养创造力。"}
-{"word":"frown","example":"He frowned when he heard the news.","example_zh":"听到这个消息时他皱起了眉头。"}
-{"word":"gauge","example":"It is difficult to gauge his true feelings.","example_zh":"很难判断他的真实感受。"}
-{"word":"gloom","example":"A sense of gloom filled the room.","example_zh":"房间里弥漫着一种忧郁的气氛。"}
-{"word":"grasp","example":"She has a good grasp of English grammar.","example_zh":"她很好地掌握了英语语法。"}
-{"word":"grieve","example":"She grieved over the loss of her dog.","example_zh":"她为失去狗而悲伤。"}
-{"word":"hail","example":"The new policy was hailed as a success.","example_zh":"这项新政策被誉为成功之举。"}
-{"word":"hamper","example":"Bad weather hampered the rescue work.","example_zh":"恶劣天气阻碍了救援工作。"}
-{"word":"hinder","example":"Lack of money hindered the project.","example_zh":"资金不足阻碍了项目进展。"}
-{"word":"hurl","example":"He hurled a stone into the river.","example_zh":"他把一块石头扔进河里。"}
-{"word":"impair","example":"Loud noise can impair hearing.","example_zh":"巨大的噪音会损害听力。"}
-{"word":"impede","example":"The snow impeded traffic.","example_zh":"大雪阻碍了交通。"}
-{"word":"imply","example":"His words imply that he is unhappy.","example_zh":"他的话暗示他不开心。"}
-{"word":"incur","example":"The company incurred heavy losses.","example_zh":"公司蒙受了巨大损失。"}
-{"word":"induce","example":"The medicine may induce sleep.","example_zh":"这种药可能会引起睡意。"}
-{"word":"infer","example":"What can we infer from this passage?","example_zh":"我们能从这篇文章中推断出什么？"}
-{"word":"invert","example":"The order of the words was inverted.","example_zh":"单词顺序被颠倒了。"}
-{"word":"jeer","example":"The crowd jeered at the losing team.","example_zh":"人群嘲笑那支失败的队伍。"}
-{"word":"lament","example":"She lamented the loss of her youth.","example_zh":"她为逝去的青春感到惋惜。"}
-{"word":"levy","example":"The government levied a tax on tobacco.","example_zh":"政府对烟草征税。"}
-{"word":"linger","example":"The smell of smoke lingered in the room.","example_zh":"烟味在房间里久久不散。"}
-{"word":"lure","example":"Advertisements lure people into buying things.","example_zh":"广告引诱人们购买商品。"}
-{"word":"merge","example":"The two companies merged last year.","example_zh":"这两家公司去年合并了。"}
-{"word":"mock","example":"The students mocked his accent.","example_zh":"学生们嘲笑他的口音。"}
-{"word":"mourn","example":"The whole nation mourned the victims.","example_zh":"全国哀悼遇难者。"}
-{"word":"negate","example":"This fact negates his earlier statement.","example_zh":"这个事实否定了他先前的说法。"}
-{"word":"nurture","example":"Parents should nurture their children's talents.","example_zh":"父母应培养孩子的才能。"}
-{"word":"obey","example":"Soldiers must obey orders.","example_zh":"士兵必须服从命令。"}
-{"word":"oblige","example":"The law obliges parents to send children to school.","example_zh":"法律要求父母送孩子上学。"}
-{"word":"obscure","example":"The meaning of the sentence is obscure.","example_zh":"这个句子的意思很晦涩。"}
-{"word":"omit","example":"He omitted an important detail.","example_zh":"他漏掉了一个重要细节。"}
-{"word":"oust","example":"The president was ousted from power.","example_zh":"总统被赶下台。"}
-{"word":"peril","example":"The explorers were in great peril.","example_zh":"探险者们处于极大危险中。"}
-{"word":"plead","example":"He pleaded for another chance.","example_zh":"他恳求再给一次机会。"}
-{"word":"plunge","example":"The country plunged into war.","example_zh":"这个国家陷入了战争。"}
-{"word":"preach","example":"He often preaches the value of hard work.","example_zh":"他经常宣扬努力工作的价值。"}
-{"word":"probe","example":"The police probed into the cause of the fire.","example_zh":"警方调查了火灾原因。"}
-{"word":"rebuke","example":"The teacher rebuked him for being late.","example_zh":"老师因他迟到而责备他。"}
-{"word":"recur","example":"The same problem recurred several times.","example_zh":"同样的问题反复出现了几次。"}
-{"word":"refute","example":"He refuted the accusation.","example_zh":"他驳斥了这项指控。"}
-{"word":"repeal","example":"The old law was repealed.","example_zh":"旧法律被废除了。"}
-{"word":"revoke","example":"His driver's license was revoked.","example_zh":"他的驾照被吊销了。"}
-{"word":"scorn","example":"She scorned his offer of help.","example_zh":"她轻蔑地拒绝了他的帮助。"}
-{"word":"seize","example":"The police seized the stolen goods.","example_zh":"警方查获了赃物。"}
-{"word":"smite","example":"The city was smitten by an earthquake.","example_zh":"这座城市遭受了地震袭击。"}
-{"word":"spur","example":"The prize spurred him to work harder.","example_zh":"这个奖项激励他更加努力。"}
-{"word":"stern","example":"The teacher gave him a stern warning.","example_zh":"老师给了他严厉警告。"}
-{"word":"thrive","example":"Plants thrive in warm weather.","example_zh":"植物在温暖天气中生长旺盛。"}
-{"word":"thwart","example":"The plan was thwarted by bad weather.","example_zh":"计划因恶劣天气而受挫。"}
-{"word":"uphold","example":"The court upheld the original decision.","example_zh":"法院维持了原判。"}
-{"word":"vie","example":"The two teams vied for first place.","example_zh":"两队争夺第一名。"}
-{"word":"vow","example":"He vowed never to give up.","example_zh":"他发誓永不放弃。"}
+{"word":"consist","example":"The team consists of ten members.","example_zh":"这个团队由十名成员组成。"}
+{"word":"convey","example":"Words cannot convey my feelings.","example_zh":"言语无法表达我的感受。"}
+{"word":"credit","example":"She got credit for the discovery.","example_zh":"她因这项发现而获得荣誉。"}
+{"word":"custom","example":"It is an old custom.","example_zh":"这是一个古老的习俗。"}
+{"word":"damage","example":"The storm caused great damage.","example_zh":"暴风雨造成了巨大破坏。"}
+{"word":"debate","example":"They had a heated debate.","example_zh":"他们进行了激烈的辩论。"}
+{"word":"decade","example":"Prices rose over the decade.","example_zh":"十年间物价上涨了。"}
+{"word":"decide","example":"She decided to study abroad.","example_zh":"她决定出国留学。"}
+{"word":"demand","example":"The job demands patience.","example_zh":"这份工作需要耐心。"}
+{"word":"deny","example":"He denied the accusation.","example_zh":"他否认了指控。"}
+{"word":"depend","example":"Success depends on hard work.","example_zh":"成功取决于努力。"}
+{"word":"desire","example":"She has a strong desire to learn.","example_zh":"她有强烈的学习愿望。"}
+{"word":"detail","example":"Describe the event in detail.","example_zh":"详细描述这件事。"}
+{"word":"device","example":"This device saves time.","example_zh":"这个设备节省时间。"}
+{"word":"differ","example":"The two opinions differ greatly.","example_zh":"这两种观点差别很大。"}
+{"word":"double","example":"The price has doubled.","example_zh":"价格翻了一倍。"}
+{"word":"dozens","example":"Dozens of people were injured.","example_zh":"几十个人受伤了。"}
+{"word":"effort","example":"Success requires effort.","example_zh":"成功需要努力。"}
+{"word":"enable","example":"The tool enables faster learning.","example_zh":"这个工具使学习更快。"}
+{"word":"energy","example":"She is full of energy.","example_zh":"她精力充沛。"}
+{"word":"engage","example":"He is engaged in research.","example_zh":"他从事研究工作。"}
+{"word":"ensure","example":"Please ensure the door is locked.","example_zh":"请确保门锁好了。"}
+{"word":"escape","example":"The prisoner escaped.","example_zh":"囚犯逃跑了。"}
+{"word":"estate","example":"He owns a large estate.","example_zh":"他拥有大片地产。"}
+{"word":"expert","example":"She is an expert in linguistics.","example_zh":"她是语言学专家。"}
+{"word":"export","example":"The country exports tea.","example_zh":"这个国家出口茶叶。"}
+{"word":"extent","example":"I agree to some extent.","example_zh":"我在某种程度上同意。"}
+{"word":"factor","example":"Cost is a major factor.","example_zh":"成本是一个主要因素。"}
+{"word":"fairly","example":"The exam was fairly easy.","example_zh":"考试相当简单。"}
+{"word":"famous","example":"The city is famous for its food.","example_zh":"这座城市以美食闻名。"}
+{"word":"figure","example":"I can't figure it out.","example_zh":"我想不明白。"}
+{"word":"former","example":"My former teacher lives here.","example_zh":"我以前的老师住在这里。"}
+{"word":"future","example":"The future is uncertain.","example_zh":"未来是不确定的。"}
+{"word":"gather","example":"People gathered in the hall.","example_zh":"人们聚集在大厅里。"}
+{"word":"global","example":"Pollution is a global issue.","example_zh":"污染是全球性问题。"}
+{"word":"handle","example":"She can handle the pressure.","example_zh":"她能应对压力。"}
+{"word":"hardly","example":"I can hardly believe it.","example_zh":"我几乎不敢相信。"}
+{"word":"health","example":"Health is important.","example_zh":"健康很重要。"}
+{"word":"honest","example":"Please be honest.","example_zh":"请诚实一点。"}
+{"word":"impact","example":"The policy had a great impact.","example_zh":"这项政策影响很大。"}
+{"word":"import","example":"The country imports oil.","example_zh":"这个国家进口石油。"}
+{"word":"indeed","example":"It is indeed true.","example_zh":"这确实是真的。"}
+{"word":"injure","example":"He was injured in the accident.","example_zh":"他在事故中受伤了。"}
+{"word":"insist","example":"She insisted on paying.","example_zh":"她坚持要付钱。"}
+{"word":"intend","example":"I intend to leave early.","example_zh":"我打算早点离开。"}
+{"word":"invest","example":"He invested in stocks.","example_zh":"他投资了股票。"}
+{"word":"invite","example":"They invited us to dinner.","example_zh":"他们邀请我们吃晚饭。"}
+{"word":"issue","example":"We discussed the issue.","example_zh":"我们讨论了这个问题。"}
+{"word":"latter","example":"I prefer the latter option.","example_zh":"我更喜欢后一个选项。"}
+{"word":"likely","example":"It is likely to rain.","example_zh":"可能会下雨。"}
+{"word":"manage","example":"She manages the team well.","example_zh":"她把团队管理得很好。"}
+{"word":"manner","example":"He spoke in a polite manner.","example_zh":"他说话很有礼貌。"}
+{"word":"medium","example":"TV is a powerful medium.","example_zh":"电视是一种强大的媒介。"}
+{"word":"mental","example":"Exercise is good for mental health.","example_zh":"锻炼有益于心理健康。"}
+{"word":"merely","example":"It is merely a suggestion.","example_zh":"这只是一个建议。"}
+{"word":"method","example":"This method works well.","example_zh":"这个方法很有效。"}
+{"word":"mostly","example":"The audience was mostly young.","example_zh":"观众大多是年轻人。"}
+{"word":"narrow","example":"The road is narrow.","example_zh":"这条路很窄。"}
+{"word":"nearly","example":"It is nearly midnight.","example_zh":"快半夜了。"}
+{"word":"notice","example":"I noticed a change.","example_zh":"我注意到了变化。"}
+{"word":"object","example":"He objected to the plan.","example_zh":"他反对这个计划。"}
+{"word":"obtain","example":"She obtained useful information.","example_zh":"她获得了有用的信息。"}
+{"word":"occupy","example":"The building occupies a large area.","example_zh":"这座建筑占地很大。"}
+{"word":"occur","example":"The accident occurred last night.","example_zh":"事故发生在昨晚。"}
+{"word":"oppose","example":"Many people oppose the law.","example_zh":"许多人反对这项法律。"}
+{"word":"option","example":"You have another option.","example_zh":"你还有另一个选择。"}
+{"word":"origin","example":"The custom has its origin in ancient times.","example_zh":"这个习俗起源于古代。"}
+{"word":"partly","example":"The failure was partly his fault.","example_zh":"失败部分是他的错。"}
+{"word":"patient","example":"The doctor is patient.","example_zh":"医生很有耐心。"}
+{"word":"period","example":"The project lasted a long period.","example_zh":"这个项目持续了很长时间。"}
+{"word":"permit","example":"The law permits smoking here.","example_zh":"法律允许在这里吸烟。"}
+{"word":"plenty","example":"There is plenty of time.","example_zh":"时间很充裕。"}
+{"word":"policy","example":"The company changed its policy.","example_zh":"公司改变了政策。"}
+{"word":"prefer","example":"I prefer tea to coffee.","example_zh":"比起咖啡，我更喜欢茶。"}
+{"word":"pretty","example":"The garden is pretty.","example_zh":"花园很漂亮。"}
+{"word":"profit","example":"The company made a profit.","example_zh":"公司盈利了。"}
+{"word":"proper","example":"Use the proper tool.","example_zh":"使用合适的工具。"}
+{"word":"rather","example":"I would rather stay home.","example_zh":"我宁愿待在家里。"}
+{"word":"reason","example":"There is no reason to worry.","example_zh":"没有理由担心。"}
+{"word":"recall","example":"I can't recall his name.","example_zh":"我想不起他的名字。"}
+{"word":"reduce","example":"We must reduce costs.","example_zh":"我们必须降低成本。"}
+{"word":"refuse","example":"He refused to answer.","example_zh":"他拒绝回答。"}
+{"word":"regard","example":"She is highly regarded.","example_zh":"她备受尊敬。"}
+{"word":"relate","example":"The two events are related.","example_zh":"这两件事有关。"}
+{"word":"relief","example":"The news brought relief.","example_zh":"消息带来了安慰。"}
+{"word":"remain","example":"Only a few questions remain.","example_zh":"只剩下几个问题。"}
+{"word":"remind","example":"Please remind me.","example_zh":"请提醒我。"}
+{"word":"remove","example":"He removed his shoes.","example_zh":"他脱掉了鞋。"}
+{"word":"repair","example":"They repaired the bridge.","example_zh":"他们修复了桥。"}
+{"word":"repeat","example":"Please repeat the sentence.","example_zh":"请重复这个句子。"}
+{"word":"resist","example":"She couldn't resist.","example_zh":"她无法抗拒。"}
+{"word":"result","example":"The accident resulted in deaths.","example_zh":"事故导致死亡。"}
+{"word":"retire","example":"He retired at 60.","example_zh":"他60岁退休。"}
+{"word":"reveal","example":"The report revealed the truth.","example_zh":"报告揭示了真相。"}
+{"word":"review","example":"I need to review my notes.","example_zh":"我需要复习笔记。"}
+{"word":"search","example":"They searched for the child.","example_zh":"他们寻找那个孩子。"}
+{"word":"seldom","example":"He seldom goes out.","example_zh":"他很少出门。"}
+{"word":"severe","example":"He suffered a severe injury.","example_zh":"他受了重伤。"}
+{"word":"simple","example":"The answer is simple.","example_zh":"答案很简单。"}
+{"word":"smooth","example":"The road is smooth.","example_zh":"路很平坦。"}
+{"word":"source","example":"The river is the source.","example_zh":"这条河是源头。"}
+{"word":"spread","example":"The news spread quickly.","example_zh":"消息迅速传开。"}
+{"word":"steady","example":"She made steady progress.","example_zh":"她取得了稳定的进步。"}
+{"word":"stress","example":"Too much stress is harmful.","example_zh":"压力太大有害。"}
+{"word":"supply","example":"They supplied food.","example_zh":"他们提供了食物。"}
+{"word":"survey","example":"We conducted a survey.","example_zh":"我们做了调查。"}
+{"word":"switch","example":"He switched off the light.","example_zh":"他关掉了灯。"}
+{"word":"target","example":"The target is hard to reach.","example_zh":"目标很难实现。"}
+{"word":"tend","example":"People tend to believe it.","example_zh":"人们倾向于相信它。"}
+{"word":"thanks","example":"Thanks for your help.","example_zh":"谢谢你的帮助。"}
+{"word":"threat","example":"Pollution is a threat.","example_zh":"污染是一种威胁。"}
+{"word":"toward","example":"She walked toward the station.","example_zh":"她朝车站走去。"}
+{"word":"travel","example":"He loves to travel.","example_zh":"他喜欢旅行。"}
+{"word":"unless","example":"I won't go unless you go.","example_zh":"除非你走，否则我不走。"}
+{"word":"useful","example":"This book is useful.","example_zh":"这本书很有用。"}
+{"word":"varied","example":"The menu is varied.","example_zh":"菜单很丰富。"}
+{"word":"various","example":"There are various reasons.","example_zh":"有各种各样的原因。"}
+{"word":"victim","example":"He was a victim.","example_zh":"他是受害者。"}
+{"word":"vision","example":"She has poor vision.","example_zh":"她视力不好。"}
+{"word":"volume","example":"The volume is increasing.","example_zh":"音量在增加。"}
+{"word":"wealth","example":"Health is better than wealth.","example_zh":"健康胜于财富。"}
+{"word":"wonder","example":"I wonder why.","example_zh":"我想知道为什么。"}
+{"word":"worth","example":"It is worth reading.","example_zh":"它值得一读。"}
+{"word":"yellow","example":"The leaves turned yellow.","example_zh":"树叶变黄了。"}
+{"word":"abroad","example":"She went abroad to study English.","example_zh":"她出国学习英语。"}
+{"word":"absorb","example":"Plants absorb water from the soil.","example_zh":"植物从土壤中吸收水分。"}
+{"word":"accept","example":"He accepted the invitation with pleasure.","example_zh":"他愉快地接受了邀请。"}
+{"word":"access","example":"Students have access to the library.","example_zh":"学生可以使用图书馆。"}
+{"word":"accuse","example":"He was accused of stealing money.","example_zh":"他被指控偷钱。"}
+{"word":"admire","example":"I admire her for her courage.","example_zh":"我钦佩她的勇气。"}
+{"word":"advise","example":"I advise you to study harder.","example_zh":"我建议你更加努力学习。"}
+{"word":"afford","example":"I can't afford a new car.","example_zh":"我买不起新车。"}
+{"word":"agenda","example":"The meeting has a full agenda.","example_zh":"这次会议议程很满。"}
+{"word":"almost","example":"It is almost ten o'clock.","example_zh":"快十点了。"}
+{"word":"amount","example":"A large amount of money was spent.","example_zh":"花了大量的钱。"}
+{"word":"annual","example":"The company holds an annual meeting.","example_zh":"这家公司每年举行年会。"}
+{"word":"appeal","example":"The idea appeals to young people.","example_zh":"这个想法对年轻人有吸引力。"}
+{"word":"appear","example":"She appeared calm before the exam.","example_zh":"考试前她显得很平静。"}
+{"word":"apply","example":"He applied for the job online.","example_zh":"他在网上申请了这份工作。"}
+{"word":"argue","example":"They argued about the best solution.","example_zh":"他们争论最佳方案。"}
+{"word":"arrive","example":"The train arrived on time.","example_zh":"火车准时到达。"}
+{"word":"assist","example":"The nurse assisted the doctor.","example_zh":"护士协助医生。"}
+{"word":"assume","example":"I assume he is busy today.","example_zh":"我猜他今天很忙。"}
+{"word":"attach","example":"Please attach the file to your email.","example_zh":"请把文件附在邮件里。"}
+{"word":"attend","example":"She attends classes every day.","example_zh":"她每天上课。"}
+{"word":"author","example":"The author wrote many novels.","example_zh":"这位作者写了许多小说。"}
+{"word":"belong","example":"This book belongs to me.","example_zh":"这本书是我的。"}
+{"word":"better","example":"Exercise makes you feel better.","example_zh":"锻炼会让你感觉更好。"}
+{"word":"borrow","example":"Can I borrow your pen?","example_zh":"我可以借你的笔吗？"}
+{"word":"bother","example":"Don't bother me while I'm working.","example_zh":"我工作时别打扰我。"}
+{"word":"branch","example":"The bank has a branch nearby.","example_zh":"这家银行附近有一个分行。"}
+{"word":"breath","example":"He took a deep breath.","example_zh":"他深吸了一口气。"}
+{"word":"burden","example":"The debt became a heavy burden.","example_zh":"债务成了沉重的负担。"}
+{"word":"career","example":"She chose teaching as her career.","example_zh":"她选择教书作为职业。"}
+{"word":"cattle","example":"The farmer raises cattle.","example_zh":"这位农民养牛。"}
+{"word":"chance","example":"He got a second chance.","example_zh":"他得到了第二次机会。"}
+{"word":"change","example":"The weather changed suddenly.","example_zh":"天气突然变了。"}
+{"word":"charge","example":"They charge ten dollars for delivery.","example_zh":"他们收十美元配送费。"}
+{"word":"choice","example":"You have no other choice.","example_zh":"你没有别的选择。"}
+{"word":"choose","example":"Please choose one from the list.","example_zh":"请从列表中选一个。"}
+{"word":"common","example":"This is a common mistake.","example_zh":"这是一个常见错误。"}
+{"word":"cope","example":"She learned to cope with stress.","example_zh":"她学会了应对压力。"}
+{"word":"custom","example":"It is a local custom.","example_zh":"这是当地的风俗。"}
+{"word":"damage","example":"The storm caused serious damage.","example_zh":"暴风雨造成了严重破坏。"}
+{"word":"debate","example":"They had a heated debate.","example_zh":"他们进行了激烈的辩论。"}
+{"word":"decade","example":"Prices have risen over the past decade.","example_zh":"过去十年物价上涨了。"}
+{"word":"decide","example":"She decided to stay home.","example_zh":"她决定待在家里。"}
+{"word":"demand","example":"The job demands patience.","example_zh":"这份工作需要耐心。"}
+{"word":"deny","example":"He denied breaking the window.","example_zh":"他否认打破了窗户。"}
+{"word":"depend","example":"Children depend on their parents.","example_zh":"孩子依赖父母。"}
+{"word":"desire","example":"She has a strong desire to succeed.","example_zh":"她有强烈的成功欲望。"}
+{"word":"detail","example":"Please describe the event in detail.","example_zh":"请详细描述这件事。"}
+{"word":"device","example":"This device saves time.","example_zh":"这个设备节省时间。"}
+{"word":"differ","example":"The two plans differ greatly.","example_zh":"这两个计划差别很大。"}
+{"word":"double","example":"The price has doubled.","example_zh":"价格翻了一倍。"}
+{"word":"dozens","example":"Dozens of people were injured.","example_zh":"几十个人受伤了。"}
+{"word":"effort","example":"Success requires effort.","example_zh":"成功需要努力。"}
+{"word":"enable","example":"The app enables users to learn faster.","example_zh":"这个应用帮助用户更快学习。"}
+{"word":"energy","example":"Children are full of energy.","example_zh":"孩子们精力充沛。"}
+{"word":"engage","example":"He is engaged in research.","example_zh":"他从事研究工作。"}
+{"word":"ensure","example":"Please ensure that the door is locked.","example_zh":"请确保门锁好了。"}
+{"word":"escape","example":"The prisoner escaped from jail.","example_zh":"囚犯越狱了。"}
+{"word":"estate","example":"He owns a large estate.","example_zh":"他拥有一大片地产。"}
+{"word":"expert","example":"She is an expert in education.","example_zh":"她是教育专家。"}
+{"word":"export","example":"The country exports rice.","example_zh":"这个国家出口大米。"}
+{"word":"extent","example":"I agree with you to some extent.","example_zh":"我在某种程度上同意你。"}
+{"word":"factor","example":"Cost is an important factor.","example_zh":"成本是一个重要因素。"}
+{"word":"fairly","example":"The exam was fairly easy.","example_zh":"这次考试相当简单。"}
+{"word":"famous","example":"The city is famous for its food.","example_zh":"这座城市以美食闻名。"}
+{"word":"figure","example":"I can't figure out the answer.","example_zh":"我想不出答案。"}
+{"word":"former","example":"My former teacher lives here.","example_zh":"我以前的老师住在这里。"}
+{"word":"future","example":"No one knows the future.","example_zh":"没人知道未来。"}
+{"word":"gather","example":"People gathered in the square.","example_zh":"人们聚集在广场上。"}
+{"word":"global","example":"Climate change is a global issue.","example_zh":"气候变化是全球性问题。"}
+{"word":"handle","example":"She can handle the problem.","example_zh":"她能处理这个问题。"}
+{"word":"hardly","example":"I can hardly hear you.","example_zh":"我几乎听不见你说话。"}
+{"word":"health","example":"Health is more important than wealth.","example_zh":"健康比财富更重要。"}
+{"word":"honest","example":"Please be honest with me.","example_zh":"请对我诚实。"}
+{"word":"impact","example":"The policy had a great impact.","example_zh":"这项政策影响很大。"}
+{"word":"import","example":"The country imports oil.","example_zh":"这个国家进口石油。"}
+{"word":"indeed","example":"It is indeed a good idea.","example_zh":"这确实是个好主意。"}
+{"word":"injure","example":"He was injured in the accident.","example_zh":"他在事故中受伤了。"}
+{"word":"insist","example":"She insisted on paying the bill.","example_zh":"她坚持要付账。"}
+{"word":"intend","example":"I intend to study abroad.","example_zh":"我打算出国留学。"}
+{"word":"invest","example":"He invested all his money in stocks.","example_zh":"他把所有钱都投进了股票。"}
+{"word":"invite","example":"They invited us to dinner.","example_zh":"他们邀请我们吃晚饭。"}
+{"word":"issue","example":"We discussed several important issues.","example_zh":"我们讨论了几个重要问题。"}
+{"word":"latter","example":"Of the two choices, I prefer the latter.","example_zh":"两个选择中，我更喜欢后者。"}
+{"word":"likely","example":"It is likely to rain tonight.","example_zh":"今晚可能会下雨。"}
+{"word":"manage","example":"She manages the team well.","example_zh":"她把团队管理得很好。"}
+{"word":"manner","example":"He spoke in a polite manner.","example_zh":"他说话很有礼貌。"}
+{"word":"medium","example":"Television is a powerful medium.","example_zh":"电视是一种强大的媒介。"}
+{"word":"mental","example":"Exercise is good for mental health.","example_zh":"锻炼有益于心理健康。"}
+{"word":"merely","example":"It is merely a suggestion.","example_zh":"这只是一个建议。"}
+{"word":"method","example":"This method works well.","example_zh":"这个方法很有效。"}
+{"word":"mostly","example":"The audience was mostly students.","example_zh":"观众大多是学生。"}
+{"word":"narrow","example":"The road is too narrow.","example_zh":"这条路太窄了。"}
+{"word":"nearly","example":"It is nearly midnight.","example_zh":"快半夜了。"}
+{"word":"notice","example":"I noticed a strange man outside.","example_zh":"我注意到外面有个陌生人。"}
+{"word":"object","example":"He objected to the plan.","example_zh":"他反对这个计划。"}
+{"word":"obtain","example":"She obtained useful information.","example_zh":"她获得了有用的信息。"}
+{"word":"occupy","example":"The building occupies a large area.","example_zh":"这座建筑占地很大。"}
+{"word":"occur","example":"The accident occurred last night.","example_zh":"事故发生在昨晚。"}
+{"word":"oppose","example":"Many people oppose the new law.","example_zh":"许多人反对这项新法律。"}
+{"word":"option","example":"You have another option.","example_zh":"你还有另一个选择。"}
+{"word":"origin","example":"The custom has its origin in ancient times.","example_zh":"这个习俗起源于古代。"}
+{"word":"partly","example":"The failure was partly his fault.","example_zh":"失败部分是他的错。"}
+{"word":"patient","example":"The doctor is very patient.","example_zh":"这位医生很有耐心。"}
+{"word":"period","example":"The project lasted a long period.","example_zh":"这个项目持续了很长时间。"}
+{"word":"permit","example":"The law permits smoking here.","example_zh":"法律允许在这里吸烟。"}
+{"word":"plenty","example":"There is plenty of time.","example_zh":"时间很充裕。"}
+{"word":"policy","example":"The company changed its policy.","example_zh":"公司改变了政策。"}
+{"word":"prefer","example":"I prefer tea to coffee.","example_zh":"比起咖啡，我更喜欢茶。"}
+{"word":"pretty","example":"The garden is pretty.","example_zh":"这个花园很漂亮。"}
+{"word":"profit","example":"The company made a large profit.","example_zh":"公司获得了巨额利润。"}
+{"word":"proper","example":"Please use the proper tool.","example_zh":"请使用合适的工具。"}
+{"word":"rather","example":"I would rather stay home.","example_zh":"我宁愿待在家里。"}
+{"word":"reason","example":"There is no reason to worry.","example_zh":"没有理由担心。"}
+{"word":"recall","example":"I can't recall his name.","example_zh":"我想不起他的名字了。"}
+{"word":"reduce","example":"We must reduce costs.","example_zh":"我们必须降低成本。"}
+{"word":"refuse","example":"He refused to answer the question.","example_zh":"他拒绝回答这个问题。"}
+{"word":"regard","example":"She is highly regarded by her students.","example_zh":"她深受学生尊敬。"}
+{"word":"relate","example":"The two events are closely related.","example_zh":"这两件事密切相关。"}
+{"word":"relief","example":"The news brought great relief.","example_zh":"这个消息带来了极大的安慰。"}
+{"word":"remain","example":"Only a few questions remain.","example_zh":"只剩下几个问题。"}
+{"word":"remind","example":"Please remind me to call her.","example_zh":"请提醒我给她打电话。"}
+{"word":"remove","example":"He removed his shoes.","example_zh":"他脱掉了鞋。"}
+{"word":"repair","example":"They repaired the old bridge.","example_zh":"他们修复了旧桥。"}
+{"word":"repeat","example":"Please repeat the sentence.","example_zh":"请重复这个句子。"}
+{"word":"resist","example":"She couldn't resist the temptation.","example_zh":"她无法抵挡诱惑。"}
+{"word":"result","example":"The accident resulted in three deaths.","example_zh":"事故导致三人死亡。"}
+{"word":"retire","example":"He retired at the age of 60.","example_zh":"他60岁退休。"}
+{"word":"reveal","example":"The report revealed the truth.","example_zh":"报告揭示了真相。"}
+{"word":"review","example":"I need to review my notes.","example_zh":"我需要复习笔记。"}
+{"word":"search","example":"They searched for the missing child.","example_zh":"他们寻找失踪的孩子。"}
+{"word":"seldom","example":"He seldom goes out at night.","example_zh":"他晚上很少出门。"}
+{"word":"severe","example":"He suffered a severe injury.","example_zh":"他受了重伤。"}
+{"word":"should","example":"You should see a doctor.","example_zh":"你应该去看医生。"}
+{"word":"simple","example":"The answer is simple.","example_zh":"答案很简单。"}
+{"word":"smooth","example":"The road is smooth now.","example_zh":"路现在很平坦。"}
+{"word":"source","example":"The river is the source of water.","example_zh":"这条河是水源。"}
+{"word":"spread","example":"The news spread quickly.","example_zh":"消息迅速传开。"}
+{"word":"steady","example":"She made steady progress.","example_zh":"她取得了稳定的进步。"}
+{"word":"stress","example":"Too much stress is bad for health.","example_zh":"压力太大对健康有害。"}
+{"word":"supply","example":"They supplied food to the victims.","example_zh":"他们向灾民提供食物。"}
+{"word":"survey","example":"We conducted a survey last week.","example_zh":"我们上周做了一项调查。"}
+{"word":"switch","example":"He switched off the light.","example_zh":"他关掉了灯。"}
+{"word":"target","example":"The target is hard to reach.","example_zh":"这个目标很难实现。"}
+{"word":"tend","example":"People tend to believe what they see.","example_zh":"人们倾向于相信自己看到的东西。"}
+{"word":"thanks","example":"Thanks for your help.","example_zh":"谢谢你的帮助。"}
+{"word":"threat","example":"Pollution is a threat to health.","example_zh":"污染对健康构成威胁。"}
+{"word":"toward","example":"She walked toward the station.","example_zh":"她朝车站走去。"}
+{"word":"travel","example":"He loves to travel.","example_zh":"他喜欢旅行。"}
+{"word":"unless","example":"I won’t go unless you go with me.","example_zh":"除非你和我一起去，否则我不去。"}
+{"word":"useful","example":"This book is very useful.","example_zh":"这本书很有用。"}
+{"word":"varied","example":"The menu is varied.","example_zh":"菜单很丰富。"}
+{"word":"various","example":"There are various reasons.","example_zh":"有各种各样的原因。"}
+{"word":"victim","example":"He was a victim of the fire.","example_zh":"他是火灾的受害者。"}
+{"word":"vision","example":"She has poor vision.","example_zh":"她视力不好。"}
+{"word":"volume","example":"The volume of traffic is increasing.","example_zh":"交通流量正在增加。"}
+{"word":"wealth","example":"Health is better than wealth.","example_zh":"健康胜于财富。"}
+{"word":"wonder","example":"I wonder why he left early.","example_zh":"我想知道他为什么早走。"}
+{"word":"worth","example":"The book is worth reading.","example_zh":"这本书值得一读。"}
+{"word":"yellow","example":"The leaves turned yellow.","example_zh":"树叶变黄了。"}

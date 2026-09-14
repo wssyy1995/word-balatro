@@ -93,6 +93,7 @@ class StorageManager {
       extraLetters: game.extraLetters || 0,
       witchSkillPassed: game.witchSkillPassed,
       fillBlankData: game._fillBlankData || null,
+      fillBlankHintCount: game._fillBlankHintCount || 0,
       _witchSkillProtectUsed: game._witchSkillProtectUsed || false,
       _lifeExtensionBonus: game._lifeExtensionBonus || 0,
       target: game.target,
@@ -299,6 +300,19 @@ class StorageManager {
 
   isDailyReviveUsed() {
     const data = this.loadDailyRevive();
+    if (!data) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return data.date === today && data.used === true;
+  }
+
+  // ===== 每日广告复活次数（与分享复活独立，各限 1 次）=====
+
+  saveDailyAdRevive(dateStr, used = true) {
+    return this.set('daily_ad_revive', { date: dateStr, used });
+  }
+
+  isDailyAdReviveUsed() {
+    const data = this.get('daily_ad_revive', null);
     if (!data) return false;
     const today = new Date().toISOString().slice(0, 10);
     return data.date === today && data.used === true;

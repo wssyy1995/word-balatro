@@ -215,18 +215,24 @@ class GameOverRenderer {
       ctx.restore();
     };
 
-    // 复活按钮（左）
-    const reviveX = btnStartX;
-    const canRevive = !game.storageManager || !game.storageManager.isDailyReviveUsed();
-    const reviveBtnName = canRevive ? 'relive_button' : 'relive_ad';
-    drawImgBtn(reviveBtnName, reviveX, btnY, btnW, btnH, game._reviveBtnPressed);
-
-    // 重新开始按钮（中）
-    const restartX = btnStartX + btnW + btnGap;
+    // 复活按钮（左）：分享复活与广告复活各自每日限 1 次，都用完则不展示复活按钮
+    const canShareRevive = !game.storageManager || !game.storageManager.isDailyReviveUsed();
+    const canAdRevive = !game.storageManager || !game.storageManager.isDailyAdReviveUsed();
+    const canRevive = canShareRevive || canAdRevive;
+    let reviveX = btnStartX;
+    let restartX, rankX;
+    if (canRevive) {
+      const reviveBtnName = canShareRevive ? 'relive_button' : 'relive_ad';
+      drawImgBtn(reviveBtnName, reviveX, btnY, btnW, btnH, game._reviveBtnPressed);
+      restartX = btnStartX + btnW + btnGap;
+      rankX = btnStartX + (btnW + btnGap) * 2;
+    } else {
+      // 只保留 重新开始 | 排行榜，两个按钮居中
+      const twoBtnW = btnW * 2 + btnGap;
+      restartX = px + (pw - twoBtnW) / 2;
+      rankX = restartX + btnW + btnGap;
+    }
     drawImgBtn('restart_button', restartX, btnY, btnW, btnH, game._restartBtnPressed);
-
-    // 排行榜按钮（右）
-    const rankX = btnStartX + (btnW + btnGap) * 2;
     drawImgBtn('rank_button', rankX, btnY, btnW, btnH, game._rankBtnPressed);
 
     ctx.restore();
@@ -234,7 +240,7 @@ class GameOverRenderer {
     // 存储点击区域（动画完成后固定位置）
     this.restartBtnRect = { x: restartX, y: btnBaseY, w: btnW, h: btnH };
     this.rankBtnRect = { x: rankX, y: btnBaseY, w: btnW, h: btnH };
-    this.reviveBtnRect = { x: reviveX, y: btnBaseY, w: btnW, h: btnH };
+    this.reviveBtnRect = canRevive ? { x: reviveX, y: btnBaseY, w: btnW, h: btnH } : null;
   }
 
 }

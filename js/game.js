@@ -14,6 +14,7 @@ const {
   calcBaseTarget, getRandomFillBlankFallback
 } = require('./data');
 const { AnimationManager, Easing } = require('./animation');
+const { pickFillBlankHintCards } = require('./fill_blank');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
@@ -1437,6 +1438,7 @@ class Game {
     // fill_blanks 完形填空题目数据（恢复存档时保留 _restoreFromProgress 读回的值，新游戏为 null）
     this._fillBlankData = this._fillBlankData || null;
     this._fillBlankFetchRound = this._fillBlankFetchRound || 0;
+    this._fillBlankHintCount = this._fillBlankHintCount || 0;
     this.witchRewardData = null;
     this._lifeExtensionAnim = null;
     this._playHandAnimCompleted = false;
@@ -1770,6 +1772,7 @@ class Game {
     this.extraLetters = p.extraLetters || 0;
     this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
     this._fillBlankData = p.fillBlankData || null;
+    this._fillBlankHintCount = p.fillBlankHintCount || 0;
     this._witchSkillProtectUsed = p._witchSkillProtectUsed !== undefined ? p._witchSkillProtectUsed : false;
     this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
     this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
@@ -1971,6 +1974,7 @@ class Game {
     if (fillBlankSkill && fillBlankSkill.skill === 'fill_blanks') {
       if (!this._fillBlankData || !this._fillBlankData.word) {
         this._fillBlankData = getRandomFillBlankFallback();
+        this._fillBlankHintCount = 0; // 题目重建，提示进度作废
         console.log('[FillBlank] 存档无数据，使用兜底重建:', this._fillBlankData.word);
       }
       if (this.state === 'playing' && this.hand && this.hand.length > 0) {
@@ -2125,6 +2129,7 @@ class Game {
         name: 'getFillBlank',
         data: {}
       }).then(res => {
+        console.log('[FillBlank] 云端返回原始数据:', JSON.stringify(res && res.result));
         const data = res && res.result && res.result.code === 0 && res.result.data;
         if (!data || !data.word || !data.example) return;
         if (settled) return; // 已超时
@@ -2174,8 +2179,10 @@ class Game {
       } else {
         console.log('[FillBlank] 使用预取数据:', this._fillBlankData.word);
       }
+      this._fillBlankHintCount = 0; // 新题目，提示进度归零
     } else {
       this._fillBlankData = null;
+      this._fillBlankHintCount = 0;
     }
 
     this.deck = createDeck();
@@ -2643,35 +2650,33 @@ class Game {
     console.log('[SeedHint] 提示种子词:', targetWord, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
   }
 
-  // fill_blanks（完形填空）：金币提示——扣 1 金币自动选中目标词首字母牌
-  hintFillBlankFirstLetter() {
+  // fill_blanks（完形填空）：金币提示——扣 1 金币，依次提示目标词的下一个字母（第 1 个、第 2 个……）
+  // 每次点击把前 hintCount+1 个字母对应的牌按序自动选中（清空原有选择）；每回合最多提示 3 个字母
+  hintFillBlankNextLetter() {
     const word = this._getFillBlankWord();
     if (!word) return false;
-    const firstLetter = word[0].toUpperCase();
+    const hintCount = this._fillBlankHintCount || 0;
 
-    // 首字母已单独选中（选中区只有它）：不重复扣金币
-    const selectedCards = this.getSelectedCards();
-    if (selectedCards.length === 1 && selectedCards[0] && selectedCards[0].letter === firstLetter) {
-      this.hintToast = { text: '首字母已选中', expireAt: Date.now() + 2000, startTime: Date.now() };
+    if (hintCount >= Math.min(3, word.length)) {
+      this.hintToast = { text: '每回合最多提示3个字母', expireAt: Date.now() + 2000, startTime: Date.now() };
       return false;
     }
     if ((this.gold || 0) < 1) {
       this.hintToast = { text: '金币不足', expireAt: Date.now() + 2000, startTime: Date.now() };
       return false;
     }
-    // 已有选中牌时先清空，再选中首字母牌
-    if (this.selected.length > 0) this.clearSelection();
-    // 找 letter 等于目标词首字母的牌，优先 _isFillBlank 保底牌
-    const candidates = this.hand.filter(c => c && c.letter === firstLetter);
-    if (candidates.length === 0) {
-      this.hintToast = { text: '暂时没有可选的首字母牌', expireAt: Date.now() + 2000, startTime: Date.now() };
+    // 按目标词前缀挑牌（重复字母去重、优先保底牌）；缺牌时不扣金币
+    const cards = pickFillBlankHintCards(this.hand, word, hintCount);
+    if (!cards) {
+      this.hintToast = { text: '暂时没有可选的字母牌', expireAt: Date.now() + 2000, startTime: Date.now() };
       return false;
     }
-    candidates.sort((a, b) => (b._isFillBlank ? 1 : 0) - (a._isFillBlank ? 1 : 0));
+    if (this.selected.length > 0) this.clearSelection();
     this.gold -= 1;
-    this.toggleSelect(candidates[0].id);
+    for (const card of cards) this.toggleSelect(card.id);
+    this._fillBlankHintCount = hintCount + 1;
     if (this.storageManager) this.storageManager.saveProgress();
-    console.log('[FillBlank] 金币提示首字母:', firstLetter, '剩余金币:', this.gold);
+    console.log('[FillBlank] 金币提示字母:', word[hintCount].toUpperCase(), '进度:', this._fillBlankHintCount + '/' + word.length, '剩余金币:', this.gold);
     return true;
   }
 
@@ -2737,6 +2742,10 @@ class Game {
 
     if (this.selected.length < 2 || this.pendingCheck) return { valid: false };
 
+    // fill_blanks：选满目标词长度才允许出牌（按钮层已置灰拦截，这里兜底）
+    const fillTargetWord = this._getFillBlankWord();
+    if (fillTargetWord && this.selected.length < fillTargetWord.length) return { valid: false };
+
     // 本回合出牌次数累计（点出牌即算一次，含非法单词/试炼失败；结算翻倍判定用）
     this._roundPlayCount = (this._roundPlayCount || 0) + 1;
 
@@ -2764,6 +2773,51 @@ class Game {
       meaning: null,
       resolveTime: null,
     };
+
+    // fill_blanks（完形填空）：答案已知，跳过词典校验，直接与目标词比对
+    const fillTarget = this._getFillBlankWord();
+    if (fillTarget) {
+      if (word === fillTarget.toLowerCase()) {
+        // 答对：走 valid 渲染（烟花 + 句子高亮），completePlayHand 进结算
+        this.pendingCheck.state = 'valid';
+        this.pendingCheck.resolveTime = Date.now();
+        // fill_blanks 不计分，占位 result 供 _applyScore 使用
+        this.pendingCheck.result = { base: 0, mult: word.length, score: 0 };
+        if (this.audioManager) this.audioManager.play('card_valid');
+        return { valid: true, word };
+      }
+      // 答错：红色「单词不匹配」，扣 1 次出牌
+      this.witchSkillPassed = false;
+      this.pendingCheck.state = 'invalid';
+      this.pendingCheck.invalidText = '单词不匹配';
+      this.pendingCheck.resolveTime = Date.now();
+      if (this.audioManager) this.audioManager.play('card_illegal');
+      if (!this._hastePlayActive) {
+        this.handsLeft--;
+      }
+      if (this.handsLeft <= 0) {
+        const triggered = this._checkLifeExtension();
+        if (!triggered) {
+          // 延迟 1.5 秒进入 gameover，让玩家先看到提示
+          this._delay(() => {
+            this.state = 'gameover';
+            this.gameOverReason = 'out_of_hands';
+            if (this._dailyAchievements) {
+              this._dailyAchievements.currentConsecutiveRounds = 0;
+              new DailyAchievements(this).save();
+            }
+            if (this.audioManager) this.audioManager.play('game_over');
+            if (this.storageManager) {
+              this._uploadRankData();
+              this.storageManager.updateStats(this);
+              this.storageManager.clearProgress();
+            }
+          }, 1500);
+        }
+      }
+      if (this.storageManager) this.storageManager.saveProgress();
+      return { valid: false, word };
+    }
 
     let valid = isValidWord(word);
     if (!valid) valid = await isValidWordOnline(word);
@@ -4452,7 +4506,8 @@ class Game {
   }
 
   // 原地复活：gameover 时恢复 2 次出牌机会
-  revive() {
+  // type: 'share'（分享复活）| 'ad'（广告复活），各自每日限 1 次
+  revive(type = 'share') {
     this.handsLeft = 2;
     this.state = 'playing';
     this.gameOverReason = null;
@@ -4465,7 +4520,11 @@ class Game {
     this._showingRankList = false;
     if (this.storageManager) {
       const today = new Date().toISOString().slice(0, 10);
-      this.storageManager.saveDailyRevive(today, true);
+      if (type === 'ad') {
+        this.storageManager.saveDailyAdRevive(today, true);
+      } else {
+        this.storageManager.saveDailyRevive(today, true);
+      }
       this.storageManager.saveProgress();
     }
   }

@@ -506,6 +506,9 @@ module.exports = function extendHud(Renderer) {
       let toastY;
       if (game.hintToast.customY !== undefined && game.hintToast.customY !== null) {
         toastY = game.hintToast.customY;
+      } else if (game.hintToast.customPosition === 'fillBlankBottom' && this._fillBlankMaskRect) {
+        // fill_blanks：例句框正下方
+        toastY = this._fillBlankMaskRect.y + this._fillBlankMaskRect.h + 8 * s;
       } else if (game.hintToast.customPosition === 'propBarBottom' && this.shopPropBarBottomY && game.state === 'shop') {
         toastY = this.shopPropBarBottomY + 12 * s;
       } else {

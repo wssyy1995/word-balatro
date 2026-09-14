@@ -1,5 +1,6 @@
 // require('./js/render/test');
 // 微信小游戏入口
+console.log('[HomepageDebug] game.js 已加载，版本时间戳 2026-09-11-fix1');
 
 // ===== 版本更新检查（必须在所有 require 之前同步注册）=====
 // 微信在冷启动瞬间就检查并后台下载新版本；本游戏代码包小（图片/音频在云存储），
@@ -89,7 +90,7 @@ wx.onShow((res) => {
       game._closeStartTime = Date.now();
       setTimeout(() => {
         if (game && game.state === 'gameover') {
-          game.revive();
+          game.revive('share');
           if (renderer.gameOverRenderer) {
             renderer.gameOverRenderer.animStartTime = null;
             renderer.gameOverRenderer.lastGameOverReason = null;
@@ -828,7 +829,7 @@ function getReviveVideoAd() {
         game._closeStartTime = Date.now();
         setTimeout(() => {
           if (game && game.state === 'gameover') {
-            game.revive();
+            game.revive('ad');
             if (renderer.gameOverRenderer) {
               renderer.gameOverRenderer.animStartTime = null;
               renderer.gameOverRenderer.lastGameOverReason = null;
@@ -2036,10 +2037,12 @@ function executeRestartRound() {
 
 
 // 触摸事件处理
+console.log('[HomepageDebug] onTouchStart 注册');
 wx.onTouchStart((e) => {
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
+  console.log('[HomepageDebug] touchStart', x, y, 'state=', game && game.state);
 
   // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮；入场动画播放时不响应）
   // 排行榜/单词本弹窗打开时，homepage 不拦截触摸，让后续弹窗输入处理生效
@@ -2050,6 +2053,7 @@ wx.onTouchStart((e) => {
   // 头像昵称授权弹窗打开时也不拦截，避免误触主页按钮
   if (showHomepage && !(game && game.state === 'battle') && renderer.homepageBtnRects && !settingsPopupOpen && !entryAnimPlaying && !(game && game._showingRankPopup) && !(game && game._wordBookPopup) && !(game && game._dailyAchievementPopup) && !(game && game._goldenEntryPopup) && !(game && game._showingProfileAuthButton && !game._profileAuthCompleted)) {
     const hit = renderer.hitTest(x, y, renderer.homepageBtnRects);
+    console.log('[HomepageDebug] hitTest 结果:', hit ? hit.key : 'null', 'rects=', JSON.stringify(renderer.homepageBtnRects.map(r => r.key + ':' + Math.round(r.x) + ',' + Math.round(r.y) + ',' + Math.round(r.w) + ',' + Math.round(r.h))));
     if (hit) {
       console.log('[Homepage] pressed:', hit.key);
       renderer._homepagePressedBtn = hit.key;
@@ -4182,6 +4186,7 @@ function usePotionInGame(potionIndex) {
 }
 
 function handleInput(x, inputY, rawY) {
+  console.log('[HomepageDebug] handleInput 进入', Math.round(x), Math.round(inputY), 'state=', game && game.state);
   // 设置弹窗打开时，屏蔽底层游戏交互（设置弹窗的点击已在 touchStart 中处理）
   if (game._settingsPopup && !game._closingSettings) return;
 
@@ -4952,7 +4957,10 @@ function handleInput(x, inputY, rawY) {
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
-        if (selected.length >= 2 && !game.pendingCheck) {
+        // fill_blanks：选满目标词长度才允许出牌
+        const fbWord = game._getFillBlankWord ? game._getFillBlankWord() : null;
+        const minLen = fbWord ? fbWord.length : 2;
+        if (selected.length >= minLen && !game.pendingCheck) {
           game.playHand().then(() => {
             // result 消费完毕，不保存到全局变量
           }).catch(err => {
@@ -4998,15 +5006,31 @@ function handleInput(x, inputY, rawY) {
       }
     }
 
-    // fill_blanks：例句框内「首字母提示」按钮（金币×1；pendingCheck 进行中不响应）
+    // fill_blanks：例句框内「提示字母」按钮（金币×1，每次依次提示下一个字母；pendingCheck 进行中不响应）
     if (renderer.fillBlankHintLetterRect) {
       const fbHit = renderer.hitTest(x, inputY, [renderer.fillBlankHintLetterRect]);
       if (fbHit) {
         if (!game.pendingCheck) {
           vibrate();
           renderer._fbHintLetterPressed = true;
-          if (game.audioManager) game.audioManager.play('tap');
-          game.hintFillBlankFirstLetter();
+          // 预检查是否可购买（词存在 / 金币足够 / 未达每回合 3 个字母的提示上限）
+          const fbWord = game._getFillBlankWord ? game._getFillBlankWord() : null;
+          const fbHintCount = game._fillBlankHintCount || 0;
+          const canBuy = !!fbWord && (game.gold || 0) >= 1 && fbHintCount < Math.min(3, fbWord.length);
+          if (canBuy) {
+            // 立即播放 card_sell 并弹出 toast（例句框下方），音效结束后再执行字母选中流程
+            game.hintToast = { text: '购买提示成功!', expireAt: Date.now() + 2000, startTime: Date.now(), customPosition: 'fillBlankBottom' };
+            if (game.audioManager && game.audioManager.playThen) {
+              game.audioManager.playThen('card_sell', () => {
+                game.hintFillBlankNextLetter();
+              });
+            } else {
+              game.hintFillBlankNextLetter();
+            }
+          } else {
+            // 不可购买：直接走原流程弹失败提示（金币不足/每回合最多提示3个字母）
+            game.hintFillBlankNextLetter();
+          }
         }
         return;
       }
@@ -6332,6 +6356,9 @@ function handleInput(x, inputY, rawY) {
       const reviveHit = renderer.hitTest(x, inputY, [renderer.gameOverRenderer.reviveBtnRect]);
       if (reviveHit) {
         const dailyReviveUsed = game.storageManager && game.storageManager.isDailyReviveUsed();
+        const dailyAdReviveUsed = game.storageManager && game.storageManager.isDailyAdReviveUsed && game.storageManager.isDailyAdReviveUsed();
+        // 两种复活都用完（按钮应已隐藏，防御性拦截）
+        if (dailyReviveUsed && dailyAdReviveUsed) return;
         vibrate();
         if (game.audioManager) game.audioManager.play('tap');
         game._reviveBtnPressed = true;

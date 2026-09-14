@@ -61,6 +61,26 @@ class AudioManager {
     }
   }
 
+  // 播放音效并在播放完成后执行回调（onEnded 失效时 1500ms 超时兜底）
+  playThen(name, onEnd) {
+    const audio = this.sounds[name];
+    this.play(name);
+    if (typeof onEnd !== 'function') return;
+    if (!this.enabled || !this.soundEnabled || !audio) {
+      setTimeout(onEnd, 0);
+      return;
+    }
+    let called = false;
+    const done = () => {
+      if (called) return;
+      called = true;
+      try { audio.onEnded = null; } catch (e) {}
+      onEnd();
+    };
+    try { audio.onEnded = done; } catch (e) {}
+    setTimeout(done, 1500);
+  }
+
   // 循环播放音效（用于引导对话框打字机等需要持续循环的场景）
   playLoop(name) {
     if (!this.enabled || !this.soundEnabled) return;

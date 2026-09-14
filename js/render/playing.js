@@ -50,6 +50,11 @@ module.exports = function extendPlaying(Renderer) {
       // fill_blanks 提示按钮点击区域（非 fill 模式为 null，由 _drawFillBlankArea 注册）
       this.fillBlankHintLetterRect = null;
       this.fillBlankHintWordRect = null;
+      // fill_blanks 字母冒泡动画状态（非 fill 模式清空）
+      if (!isFillBlanks) {
+        this._fbLetterAnimStart = {};
+        this._fbFilledPrev = [];
+      }
   
       const actualWitchSlots = game.maxJokerSlots || 4;
       // ===== 道具卡牌栏（支持动态女巫槽位，单卡宽度不变，通过调整 gap 实现重叠）=====
@@ -397,6 +402,10 @@ module.exports = function extendPlaying(Renderer) {
         maskX = (W - maskW) / 2;
         // 进度条正下方：hudBottom 基于 h=70*s 计算，fill 模式进度条实际底部还需补 2*s 高度差 + 5px 下移
         maskY = hudBottom + 40 * s;
+        // 记录例句框矩形（toast 定位用，如「购买提示成功!」显示在例句框下方）
+        this._fillBlankMaskRect = { x: maskX, y: maskY, w: maskW, h: maskH };
+      } else {
+        this._fillBlankMaskRect = null;
       }
       // 单词预览区：渐变背景增强立体感
       const maskGrad = ctx.createLinearGradient(0, maskY, 0, maskY + maskH);
@@ -527,7 +536,7 @@ module.exports = function extendPlaying(Renderer) {
           // fill_blanks：检测中/合法/非法/试炼失败都渲染挖空例句，下划线处显示本次尝试的字母
           const fbStatus = (pc.state === 'checking' || pc.state === 'valid' || pc.state === 'invalid' || pc.state === 'witch_failed')
             ? pc.state : 'idle';
-          this._drawFillBlankArea(game, maskX, maskY, maskW, maskH, s, word.split(''), fbStatus, pc.witchFailText || null);
+          this._drawFillBlankArea(game, maskX, maskY, maskW, maskH, s, word.split(''), fbStatus, pc.witchFailText || pc.invalidText || null);
           if (pc.state === 'valid') {
             // 简化成功演出：烟花 + 完整句子高亮，1.5s 后直接进入结算
             if (!pc._sparklesSpawned) {
@@ -1478,7 +1487,10 @@ module.exports = function extendPlaying(Renderer) {
       const playTx = playX + btnW / 2;
       const selectedCount = game.getSelectedCards ? game.getSelectedCards().length : 0;
       const isInvalid = game.pendingCheck && (game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed');
-      if (isInvalid || selectedCount < 2) {
+      // fill_blanks：选满目标词长度才可出牌，否则置灰
+      const fbNeedLen = isFillBlanks && game._fillBlankData && game._fillBlankData.word ? game._fillBlankData.word.length : 0;
+      const notEnough = fbNeedLen > 0 ? selectedCount < fbNeedLen : selectedCount < 2;
+      if (isInvalid || notEnough) {
         // 非法状态或牌数不足：暖灰色文字 + 深色描边
         ctx.lineWidth = 2 * s;
         ctx.strokeStyle = '#3a2e1d';
@@ -1598,6 +1610,19 @@ module.exports = function extendPlaying(Renderer) {
     if (!data || !data.word || !data.example) return;
 
     const wordLen = data.word.length;
+
+    // 跟踪每个槽位字母的出现时间（字母变化/新出现时重置动画，消失时清除）
+    if (!this._fbLetterAnimStart) this._fbLetterAnimStart = {};
+    if (!this._fbFilledPrev) this._fbFilledPrev = [];
+    for (let i = 0; i < wordLen; i++) {
+      const ch = filledLetters[i];
+      if (ch && ch !== this._fbFilledPrev[i]) {
+        this._fbLetterAnimStart[i] = Date.now();
+      } else if (!ch) {
+        delete this._fbLetterAnimStart[i];
+      }
+    }
+    this._fbFilledPrev = filledLetters.slice(0, wordLen);
     const parts = getFillBlankParts(data);
     const maxW = maskW - 16 * s;
     const isValid = status === 'valid';
@@ -1617,12 +1642,22 @@ module.exports = function extendPlaying(Renderer) {
       fontSize = fs;
       ctx.font = `bold ${Math.floor(fs * s)}px Georgia, 'Times New Roman', serif`;
       slotW = Math.max(ctx.measureText('_').width, ctx.measureText('M').width) + 2 * s;
-      blankW = slotW * wordLen;
-      const blankDisplayW = isValid ? ctx.measureText(parts.surface || data.word).width : blankW;
+      // 变形尾巴（如 deemed 的 ed）跟在下划线后展示，挖空宽度需包含它
+      const tailW = parts.suffix ? ctx.measureText(parts.suffix).width : 0;
+      blankW = slotW * wordLen + tailW;
+      // 答对时单词按加大后的字号（fs+2）占位折行，保证前后空格不被大字挤压
+      let blankDisplayW = blankW;
+      if (isValid) {
+        ctx.font = `bold ${Math.floor((fs + 2) * s)}px Georgia, 'Times New Roman', serif`;
+        blankDisplayW = ctx.measureText(parts.surface || data.word).width;
+        ctx.font = `bold ${Math.floor(fs * s)}px Georgia, 'Times New Roman', serif`;
+      }
       lines = this._wrapFillBlankLines(ctx, parts.segments, maxW, blankDisplayW);
       if (lines.length <= 2 || fs === 16) break;
     }
     const enFont = `bold ${Math.floor(fontSize * s)}px Georgia, 'Times New Roman', serif`;
+    // 下划线上填入的字母比例句正文大 2px，更醒目
+    const blankLetterFont = `bold ${Math.floor((fontSize + 2) * s)}px Georgia, 'Times New Roman', serif`;
     const enLineH = Math.floor(fontSize * s * 1.4);
 
     // 底部行内容：空态/答对显示中文翻译，其余显示状态文案
@@ -1633,7 +1668,8 @@ module.exports = function extendPlaying(Renderer) {
       bottomText = '.'.repeat(dotCount);
       bottomColor = '#c4a35a';
     } else if (status === 'invalid') {
-      bottomText = '单词不存在';
+      // fill_blanks 传入自定义文案（如「单词不匹配」），普通模式默认「单词不存在」
+      bottomText = statusText || '单词不存在';
       bottomColor = '#c0392b';
     } else if (status === 'witch_failed') {
       bottomText = statusText || '女巫试炼未满足';
@@ -1665,11 +1701,16 @@ module.exports = function extendPlaying(Renderer) {
       for (const item of line.items) {
         if (item.isBlank) {
           if (isValid) {
-            // 答对：显示例句中的完整词形（含变形），绿色高亮
+            // 答对：显示例句中的完整词形（含变形），绿色高亮；字号与下划线填入字母一致（比正文大 2px）
             const surface = parts.surface || data.word;
-            this.roundRect(curX - 3 * s, curY - enLineH * 0.4, item.width + 6 * s, enLineH * 0.8, 4 * s, 'rgba(45,125,50,0.16)');
+            ctx.save();
+            ctx.font = blankLetterFont;
+            const sw = ctx.measureText(surface).width;
+            const sx = curX + (item.width - sw) / 2; // 在原挖空宽度内居中，防止加宽后溢出
+            this.roundRect(sx - 3 * s, curY - enLineH * 0.4, sw + 6 * s, enLineH * 0.8, 4 * s, 'rgba(45,125,50,0.16)');
             ctx.fillStyle = '#2d7d32';
-            ctx.fillText(surface, curX, curY);
+            ctx.fillText(surface, sx, curY);
+            ctx.restore();
           } else {
             // 挖空：逐格下划线，已选字母逐格填入
             for (let i = 0; i < wordLen; i++) {
@@ -1678,10 +1719,34 @@ module.exports = function extendPlaying(Renderer) {
               ctx.fillRect(curX + slotW * i + 1 * s, curY + enLineH * 0.32, slotW - 2 * s, Math.max(1.5 * s, 1));
               const ch = filledLetters[i];
               if (ch) {
+                ctx.save();
+                ctx.font = blankLetterFont;
                 ctx.fillStyle = fillColor;
                 const lw = ctx.measureText(ch).width;
-                ctx.fillText(ch, slotCX - lw / 2, curY);
+                // 字母从下划线处冒出来的动画：250ms easeOutBack 上移 + 淡入
+                let riseOffsetY = 0;
+                let riseAlpha = 1;
+                const animStart = this._fbLetterAnimStart[i];
+                if (animStart) {
+                  const elapsed = Date.now() - animStart;
+                  const dur = 250;
+                  if (elapsed < dur) {
+                    const t = elapsed / dur;
+                    riseOffsetY = (1 - Easing.easeOutCubic(t)) * 10 * s;
+                    riseAlpha = Math.min(elapsed / 120, 1);
+                  } else {
+                    delete this._fbLetterAnimStart[i];
+                  }
+                }
+                if (riseAlpha < 1) ctx.globalAlpha = riseAlpha;
+                ctx.fillText(ch, slotCX - lw / 2, curY + riseOffsetY);
+                ctx.restore();
               }
+            }
+            // 变形尾巴（如 deemed 的 ed）：普通文本颜色，跟在下划线后面
+            if (parts.suffix) {
+              ctx.fillStyle = '#5a4a2a';
+              ctx.fillText(parts.suffix, curX + slotW * wordLen, curY);
             }
           }
           curX += item.width + spaceW;
@@ -1712,7 +1777,19 @@ module.exports = function extendPlaying(Renderer) {
       }
       if (display !== bottomText) display += '…';
       ctx.fillStyle = bottomColor;
-      ctx.fillText(display, maskX + maskW / 2, curY + enZhGap + bottomH / 2);
+      const bottomMidY = curY + enZhGap + bottomH / 2;
+      if (status === 'invalid' && this.errorIcon && this.errorIconLoaded) {
+        // 错误提示带 error 图标：图标 + 文字整体居中
+        const errIconSize = 16 * s;
+        const errGap = 4 * s;
+        const textW = ctx.measureText(display).width;
+        const groupX = maskX + maskW / 2 - (errIconSize + errGap + textW) / 2;
+        ctx.drawImage(this.errorIcon, groupX, bottomMidY - errIconSize / 2, errIconSize, errIconSize);
+        ctx.textAlign = 'left';
+        ctx.fillText(display, groupX + errIconSize + errGap, bottomMidY);
+      } else {
+        ctx.fillText(display, maskX + maskW / 2, bottomMidY);
+      }
       ctx.restore();
     }
 
@@ -1726,9 +1803,10 @@ module.exports = function extendPlaying(Renderer) {
     // 按钮行额外下移（curY 偏移 +2 之外的增量；累计净下移 8px）
     const btnY = (bottomText ? curY + enZhGap + bottomH : curY - enLineH / 2) + btnGapY + 6;
 
-    const drawFbBtn = (bx, label, iconData, emoji, suffix, pressed, iconAnim) => {
-      const dy = pressed ? 2 * s : 0;
+    const drawFbBtn = (bx, label, iconData, emoji, suffix, pressed, iconAnim, disabled) => {
+      const dy = pressed && !disabled ? 2 * s : 0;
       ctx.save();
+      if (disabled) ctx.globalAlpha = 0.55;
       this._drawOrnateBtnFrame(bx, btnY + dy, btnW, btnH, s, pressed);
 
       const midY = btnY + dy + btnH / 2;
@@ -1736,14 +1814,16 @@ module.exports = function extendPlaying(Renderer) {
       const iconSize = (iconAnim === 'breath' ? 21 : 18) * s;
       const gap = 4 * s;
       ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
-      const hasIcon = iconData && iconData.img && iconData.loaded;
+      const hasIcon = !disabled && iconData && iconData.img && iconData.loaded;
+      const emojiCh = !disabled && !hasIcon ? emoji : null;
+      const suffixTxt = disabled ? null : suffix;
       const labelW = ctx.measureText(label).width;
-      const emojiW = !hasIcon && emoji ? ctx.measureText(emoji).width : 0;
-      const suffixW = suffix ? ctx.measureText(suffix).width : 0;
-      const contentW = labelW + gap + (hasIcon ? iconSize : emojiW) + (suffix ? gap + suffixW : 0);
+      const emojiW = emojiCh ? ctx.measureText(emojiCh).width : 0;
+      const suffixW = suffixTxt ? ctx.measureText(suffixTxt).width : 0;
+      const contentW = labelW + (hasIcon || emojiCh || suffixTxt ? gap + (hasIcon ? iconSize : emojiW) : 0) + (suffixTxt ? gap + suffixW : 0);
       let cx = bx + (btnW - contentW) / 2;
 
-      ctx.fillStyle = '#5a4a2a';
+      ctx.fillStyle = disabled ? '#9a9186' : '#5a4a2a';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
       ctx.fillText(label, cx, midY);
@@ -1753,8 +1833,8 @@ module.exports = function extendPlaying(Renderer) {
         ctx.save();
         ctx.translate(iconCX, midY);
         if (iconAnim === 'flip') {
-          // 正反面翻转：每 2 秒一周（水平方向 scaleX 周期变化）
-          const t = (Date.now() % 2000) / 2000;
+          // 正反面翻转：每 3 秒一周（水平方向 scaleX 周期变化）
+          const t = (Date.now() % 3000) / 3000;
           ctx.scale(Math.cos(t * Math.PI * 2), 1);
         } else if (iconAnim === 'breath') {
           // 缓慢呼吸缩放（约 3 秒一周期）
@@ -1764,15 +1844,21 @@ module.exports = function extendPlaying(Renderer) {
         ctx.drawImage(iconData.img, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
         ctx.restore();
         cx += iconSize;
-      } else if (emoji) {
-        ctx.fillText(emoji, cx, midY);
+      } else if (emojiCh) {
+        ctx.fillText(emojiCh, cx, midY);
         cx += emojiW;
       }
-      if (suffix) ctx.fillText(suffix, cx + gap, midY);
+      if (suffixTxt) ctx.fillText(suffixTxt, cx + gap, midY);
       ctx.restore();
     };
+    // 每回合最多提示 3 个字母，达上限后按钮置灰、文案改为「提示达上限」（点击仍可弹 toast）
+    const fbHintDone = (game._fillBlankHintCount || 0) >= Math.min(3, wordLen);
     // 图标未加载完成时回退到 emoji
-    drawFbBtn(btn1X, '首字母', { img: this.coinIcon, loaded: this.coinIconLoaded }, '💰', '1', !!this._fbHintLetterPressed, 'flip');
+    if (fbHintDone) {
+      drawFbBtn(btn1X, '提示达上限', null, null, null, false, null, true);
+    } else {
+      drawFbBtn(btn1X, '提示字母', { img: this.coinIcon, loaded: this.coinIconLoaded }, '💰', '1', !!this._fbHintLetterPressed, 'flip');
+    }
     drawFbBtn(btn2X, '提示单词', { img: this.coinAdIcon, loaded: this.coinAdIconLoaded }, '📺', null, !!this._fbHintWordPressed, 'breath');
 
     // 注册点击区域（非 fill 模式在 drawPlaying 开头已置 null）
