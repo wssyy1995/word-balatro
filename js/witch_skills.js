@@ -33,15 +33,16 @@ const WITCH_SKILLS = [
 const SKILL_POOL = [
   { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
   { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' }
-  // { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
-  // { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
-  // { skill: 'witch_card_value_half', desc: '所有女巫牌的倍率效果都减半', angry_tip: '太依赖道具，也不行哦。'}
+  { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
+  { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
+  { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
+  { skill: 'witch_card_value_half', desc: '所有女巫牌的倍率效果都减半', angry_tip: '太依赖道具，也不行哦。'}
 ];
 
 //将WITCH_CARDS 统一改成字母触发2次
