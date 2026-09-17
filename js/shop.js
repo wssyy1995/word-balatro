@@ -406,6 +406,10 @@ class ShopRenderer {
     // lerp 工具函数
     const lerp = (a, b, t) => a + (b - a) * t;
 
+    // 升级小 icon 待绘制列表：收集后在卡牌循环结束后统一绘制，
+    // 避免槽位 >4 卡牌重叠时后绘制的卡牌遮住前一张卡牌右上角的 icon
+    const upgradeIconJobs = [];
+
     for (let i = 0; i < actualWitchSlots; i++) {
       const sx = oLeftStartX + i * (slotW + actualGap);
       const joker = oJokers[i];
@@ -562,6 +566,7 @@ class ShopRenderer {
           ctx.restore();
 
           // 升级小按钮（纯装饰）：卡牌可升级且金币足够时，在右上角显示浮动向上箭头
+          // 此处只收集任务，统一在卡牌循环结束后绘制，防止被后绘制的卡牌/占位图遮住
           if (!game._jokerSortState) {
             const jokerLv = joker.level || 1;
             const upMaxLv = getWitchMaxLevel(joker);
@@ -569,42 +574,7 @@ class ShopRenderer {
               && (upMaxLv === undefined || jokerLv < upMaxLv);
             const upCost = (jokerLv + 1) * joker.cost;
             if (canUpCard && game.gold >= upCost) {
-              const br = 9 * s;
-              const bcx = drawX + drawW - 3 * s;
-              const bcy = drawY + 3 * s;
-              // 圆形金底 + 白色描边
-              ctx.save();
-              ctx.shadowColor = 'rgba(0,0,0,0.25)';
-              ctx.shadowBlur = 3 * s;
-              ctx.shadowOffsetY = 1 * s;
-              ctx.fillStyle = '#E6BB33';
-              ctx.beginPath();
-              ctx.arc(bcx, bcy, br, 0, Math.PI * 2);
-              ctx.fill();
-              ctx.restore();
-              ctx.save();
-              ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-              ctx.lineWidth = 1 * s;
-              ctx.beginPath();
-              ctx.arc(bcx, bcy, br - 0.5 * s, 0, Math.PI * 2);
-              ctx.stroke();
-              // 白色向上箭头（上下轻微浮动，与详情弹窗升级按钮一致）
-              const aw = 9.5 * s;
-              const ah = 9.5 * s;
-              const atop = bcy - ah / 2 + Math.sin(Date.now() / 280) * 1 * s;
-              ctx.fillStyle = '#fff';
-              ctx.beginPath();
-              const headH = ah * 0.55;
-              ctx.moveTo(bcx, atop);
-              ctx.lineTo(bcx + aw / 2, atop + headH);
-              ctx.lineTo(bcx + aw * 0.22, atop + headH);
-              ctx.lineTo(bcx + aw * 0.22, atop + ah);
-              ctx.lineTo(bcx - aw * 0.22, atop + ah);
-              ctx.lineTo(bcx - aw * 0.22, atop + headH);
-              ctx.lineTo(bcx - aw / 2, atop + headH);
-              ctx.closePath();
-              ctx.fill();
-              ctx.restore();
+              upgradeIconJobs.push({ drawX, drawY, drawW, drawH });
             }
           }
 
@@ -641,6 +611,47 @@ class ShopRenderer {
         // 空槽位登记点击区（点击弹出「女巫牌」说明弹窗）
         this.shopOwnedPropRects.push({ x: sx + slideOffsetX, y: oSlotY, w: slotW, h: oSlotH, empty: true, kind: 'witch' });
       }
+    }
+
+    // 统一绘制升级小 icon：在所有女巫卡牌（含重叠排列、空位占位）之上，避免被遮住
+    for (const job of upgradeIconJobs) {
+      const { drawX, drawY, drawW, drawH } = job;
+      const br = 9 * s;
+      const bcx = drawX + drawW - 3 * s;
+      const bcy = drawY + 3 * s;
+      // 圆形金底 + 白色描边
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur = 3 * s;
+      ctx.shadowOffsetY = 1 * s;
+      ctx.fillStyle = '#E6BB33';
+      ctx.beginPath();
+      ctx.arc(bcx, bcy, br, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 1 * s;
+      ctx.beginPath();
+      ctx.arc(bcx, bcy, br - 0.5 * s, 0, Math.PI * 2);
+      ctx.stroke();
+      // 白色向上箭头（上下轻微浮动，与详情弹窗升级按钮一致）
+      const aw = 9.5 * s;
+      const ah = 9.5 * s;
+      const atop = bcy - ah / 2 + Math.sin(Date.now() / 280) * 1 * s;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      const headH = ah * 0.55;
+      ctx.moveTo(bcx, atop);
+      ctx.lineTo(bcx + aw / 2, atop + headH);
+      ctx.lineTo(bcx + aw * 0.22, atop + headH);
+      ctx.lineTo(bcx + aw * 0.22, atop + ah);
+      ctx.lineTo(bcx - aw * 0.22, atop + ah);
+      ctx.lineTo(bcx - aw * 0.22, atop + headH);
+      ctx.lineTo(bcx - aw / 2, atop + headH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
     }
 
     // 右区2格：药水牌
