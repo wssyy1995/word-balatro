@@ -75,8 +75,9 @@ module.exports = function extendHud(Renderer) {
       this._drawCardBookIcon(game, W / 2, titleY, hudTitleW);
   
       const witchSkill = getSkillForLevel(game.round, game._shuffledSkills);
-      // fill_blanks（完形填空）：只保留女巫头像 + 回合列，进度条整体下移 5px
-      const isFillBlanks = !!(witchSkill && witchSkill.skill === 'fill_blanks' && game._fillBlankData);
+      // fill_blanks（完形填空）/ 词缀拼词试炼：只保留女巫头像 + 回合列，进度条整体下移 5px
+      const isFillBlanks = !!(witchSkill && witchSkill.skill === 'fill_blanks' && game._fillBlankData)
+        || !!(game._getAffixTrial && game._getAffixTrial());
 
       // 争分夺秒倒计时条已移至 drawPlaying 出牌按钮上方
       const barW = W - 20 * s;

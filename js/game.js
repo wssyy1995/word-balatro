@@ -15,6 +15,10 @@ const {
 } = require('./data');
 const { AnimationManager, Easing } = require('./animation');
 const { pickFillBlankHintCards } = require('./fill_blank');
+const {
+  AFFIX_TRIAL_NEED, AFFIX_TRIAL_HANDS, AFFIX_TYPED_MAX, AFFIX_HINT_MAX,
+  parseAffixSkill, buildAffixWord, getTypedPart, pickAffixHintWord, getHintTypedLetters
+} = require('./affix_trial');
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
@@ -1439,6 +1443,9 @@ class Game {
     this._fillBlankData = this._fillBlankData || null;
     this._fillBlankFetchRound = this._fillBlankFetchRound || 0;
     this._fillBlankHintCount = this._fillBlankHintCount || 0;
+    // 词缀拼词试炼状态（恢复存档时保留 _restoreFromProgress 读回的值，新游戏为 null）
+    // 结构：{ kind: 'prefix'|'postfix', affix: 'in', left: 3, played: [], hintCount: 0, targetWord: 'indeed', typed: [] }
+    this._affixTrial = this._affixTrial || null;
     this.witchRewardData = null;
     this._lifeExtensionAnim = null;
     this._playHandAnimCompleted = false;
@@ -1773,6 +1780,7 @@ class Game {
     this.witchSkillPassed = p.witchSkillPassed !== undefined ? p.witchSkillPassed : true;
     this._fillBlankData = p.fillBlankData || null;
     this._fillBlankHintCount = p.fillBlankHintCount || 0;
+    this._affixTrial = p.affixTrial || null;
     this._witchSkillProtectUsed = p._witchSkillProtectUsed !== undefined ? p._witchSkillProtectUsed : false;
     this._lifeExtensionBonus = p._lifeExtensionBonus || 0;
     this.safetyRounds = p.safetyRounds !== undefined ? p.safetyRounds : 3;
@@ -1981,6 +1989,17 @@ class Game {
         this.hand = ensureFillBlankLetters(this.hand, this.deck, [], this._fillBlankData.word);
       }
     }
+
+    // 词缀拼词试炼：存档缺失/技能不符时重建（进度作废）；非词缀回合清掉残留
+    const affixInfo = fillBlankSkill ? parseAffixSkill(fillBlankSkill.skill) : null;
+    if (affixInfo) {
+      if (!this._affixTrial || this._affixTrial.kind !== affixInfo.kind || this._affixTrial.affix !== affixInfo.affix) {
+        this._affixTrial = this._makeAffixTrial(affixInfo);
+        console.log('[AffixTrial] 存档无状态，重建试炼:', affixInfo.kind, affixInfo.affix);
+      }
+    } else {
+      this._affixTrial = null;
+    }
   }
 
   _syncHandCardScores() {
@@ -2114,6 +2133,31 @@ class Game {
     return null;
   }
 
+  // 词缀拼词试炼（prefix_* / postfix_*）：当前回合为词缀技能且状态就绪时返回试炼状态，否则返回 null
+  _getAffixTrial() {
+    const witchSkill = getSkillForLevel(this.round, this._shuffledSkills);
+    const affix = witchSkill ? parseAffixSkill(witchSkill.skill) : null;
+    if (affix && this._affixTrial && this._affixTrial.kind === affix.kind && this._affixTrial.affix === affix.affix) {
+      return this._affixTrial;
+    }
+    return null;
+  }
+
+  // 词缀拼词试炼：创建试炼状态（从词库挑选一个提示目标词，仅用于提示系统；玩家可拼任意带词缀的合法单词）
+  _makeAffixTrial(affixInfo, played = []) {
+    const words = Object.keys(WORD_DATA).concat(Object.keys(EXPAND_WORD_DATA));
+    const targetWord = pickAffixHintWord(words, affixInfo.kind, affixInfo.affix, played);
+    return {
+      kind: affixInfo.kind,
+      affix: affixInfo.affix,
+      left: AFFIX_TRIAL_NEED,
+      played: [...played],
+      hintCount: 0,
+      targetWord,
+      typed: []
+    };
+  }
+
   // fill_blanks（完形填空）：提前为 targetRound 拉取题目（进商店/进下一关时调用）
   // 结果只在该回合尚未开始（this.round < targetRound）时生效；3 秒超时视为失败，resetRound 会用兜底数据
   _prefetchFillBlank(targetRound) {
@@ -2185,6 +2229,15 @@ class Game {
       this._fillBlankHintCount = 0;
     }
 
+    // 词缀拼词试炼（prefix_* / postfix_*）：新回合重建试炼状态；非词缀回合清掉残留
+    const affixInfo = witchSkill ? parseAffixSkill(witchSkill.skill) : null;
+    if (affixInfo) {
+      this._affixTrial = this._makeAffixTrial(affixInfo);
+      console.log('[AffixTrial] 新试炼:', affixInfo.kind, affixInfo.affix, '提示目标词:', this._affixTrial.targetWord);
+    } else {
+      this._affixTrial = null;
+    }
+
     this.deck = createDeck();
     // no_letter_a：牌堆中排除指定字母
     const excludeLetters = witchSkill && witchSkill.skill === 'no_letter_a' ? ['A'] : [];
@@ -2232,7 +2285,7 @@ class Game {
       }, 500);
       console.log('[EquippedSkill] score_overflow will apply after 500ms, bonus:', bonus);
     }
-    this.handsLeft = 4 + this.extraHands;
+    this.handsLeft = (this._affixTrial ? AFFIX_TRIAL_HANDS : 4) + this.extraHands;
     this.discardsLeft = 3 + this.extraDiscards;
     // 本回合出牌次数清零（结算"只出牌一次"翻倍判定用）
     this._roundPlayCount = 0;
@@ -2708,6 +2761,190 @@ class Game {
     }
     if (this.audioManager) this.audioManager.play('card_placement');
     console.log('[FillBlank] 广告提示单词:', word, '高亮卡牌:', wordCards.map(c => c.letter).join(''));
+    return true;
+  }
+
+  // ===== 词缀拼词试炼（prefix_* / postfix_*）=====
+
+  // 键盘输入一个字母（ pendingCheck 为非法/失败提示时先清除，其余状态输入无效）
+  typeAffixLetter(letter) {
+    const trial = this._getAffixTrial();
+    if (!trial) return false;
+    if (this.pendingCheck && this.pendingCheck.state !== 'invalid' && this.pendingCheck.state !== 'witch_failed') return false;
+    if (this.pendingCheck) this.pendingCheck = null;
+    if (trial.typed.length >= AFFIX_TYPED_MAX) return false;
+    trial.typed.push(String(letter).toUpperCase());
+    if (this.audioManager) this.audioManager.play('card_placement');
+    return true;
+  }
+
+  // 清空已输入字母（清空按钮在词缀试炼模式下路由到这里）
+  clearAffixTyped() {
+    const trial = this._getAffixTrial();
+    if (!trial) return;
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
+      this.pendingCheck = null;
+    }
+    if (this.pendingCheck) return; // checking/valid 演出中不允许清空
+    trial.typed = [];
+  }
+
+  // 词缀试炼出牌：拼接完整单词 → 三层词库校验 → 合法计数 / 非法扣出牌次数
+  async playAffixWord() {
+    const trial = this._getAffixTrial();
+    if (!trial || this.pendingCheck) return { valid: false };
+    if (!trial.typed || trial.typed.length < 1) return { valid: false };
+
+    // 本回合出牌次数累计（点出牌即算一次；结算翻倍判定用）
+    this._roundPlayCount = (this._roundPlayCount || 0) + 1;
+
+    const word = buildAffixWord(trial.kind, trial.affix, trial.typed);
+    this._playHandAnimCompleted = false;
+    this._playHandCompleting = false;
+    this.pendingCheck = {
+      word,
+      affixTrial: true,
+      typed: [...trial.typed],
+      state: 'checking',
+      startTime: Date.now(),
+      result: null,
+      meaning: null,
+      resolveTime: null,
+    };
+
+    // 非法/重复统一处理：红色提示 + 扣 1 次出牌 + 归零检查
+    const markInvalid = (text) => {
+      this.witchSkillPassed = false;
+      this.pendingCheck.state = 'invalid';
+      this.pendingCheck.invalidText = text;
+      this.pendingCheck.resolveTime = Date.now();
+      if (this.audioManager) this.audioManager.play('card_illegal');
+      this.handsLeft--;
+      if (this.handsLeft <= 0) {
+        const triggered = this._checkLifeExtension();
+        if (!triggered) {
+          // 延迟 1.5 秒进入 gameover，让玩家先看到提示
+          this._delay(() => {
+            this.state = 'gameover';
+            this.gameOverReason = 'out_of_hands';
+            if (this._dailyAchievements) {
+              this._dailyAchievements.currentConsecutiveRounds = 0;
+              new DailyAchievements(this).save();
+            }
+            if (this.audioManager) this.audioManager.play('game_over');
+            if (this.storageManager) {
+              this._uploadRankData();
+              this.storageManager.updateStats(this);
+              this.storageManager.clearProgress();
+            }
+          }, 1500);
+        }
+      }
+      if (this.storageManager) this.storageManager.saveProgress();
+      return { valid: false, word };
+    };
+
+    // 已拼过的单词：判无效（防止同一个词刷次数），不查词典
+    if ((trial.played || []).includes(word)) {
+      return markInvalid('单词已拼过');
+    }
+
+    let valid = isValidWord(word);
+    if (!valid) valid = await isValidWordOnline(word);
+
+    // 实例已销毁（如 restart），立即停止后续逻辑
+    if (this._destroyed) return { valid: false };
+    // 校验期间状态被其他路径改写（如清空），直接丢弃结果
+    if (!this.pendingCheck || this.pendingCheck.word !== word) return { valid: false };
+
+    if (!valid) {
+      return markInvalid('单词不存在');
+    }
+
+    // 合法：走 valid 渲染（烟花 + 绿色单词），由渲染层延迟调 completeAffixPlay 计数
+    this.pendingCheck.state = 'valid';
+    this.pendingCheck.resolveTime = Date.now();
+    // 词缀试炼不计分，占位 result 保持与 fill_blanks 一致
+    this.pendingCheck.result = { base: 0, mult: word.length, score: 0 };
+    if (this.audioManager) this.audioManager.play('card_valid');
+    if (this.storageManager) this.storageManager.saveProgress();
+    console.log('[AffixTrial] 合法单词:', word, '剩余需拼:', (trial.left || 0) - 1);
+    return { valid: true, word };
+  }
+
+  // 词缀试炼：合法单词演出完成后由渲染层调用——计数、换目标词、拼满 3 个通关
+  completeAffixPlay() {
+    if (!this.pendingCheck || this.pendingCheck.state !== 'valid') return;
+    const trial = this._getAffixTrial();
+    const word = this.pendingCheck.word;
+    this.pendingCheck = null;
+    if (!trial || !word) return;
+
+    trial.played = (trial.played || []).concat(word);
+    trial.left = Math.max(0, (trial.left || 0) - 1);
+    trial.typed = [];
+
+    // 提示目标词已被拼出（或缺失）时，换一个未拼过的新目标词
+    if (!trial.targetWord || trial.played.includes(trial.targetWord)) {
+      const words = Object.keys(WORD_DATA).concat(Object.keys(EXPAND_WORD_DATA));
+      trial.targetWord = pickAffixHintWord(words, trial.kind, trial.affix, trial.played);
+      console.log('[AffixTrial] 更换提示目标词:', trial.targetWord);
+    }
+
+    // 记录到本地单词本 + 每日挑战收集（与普通合法出牌一致）
+    if (this.storageManager) this.storageManager.addPlayedWord(word);
+    if (this._checkDailyWordCollect) this._checkDailyWordCollect(word);
+    this._lastPlayedWord = word.toUpperCase();
+
+    if (trial.left <= 0) {
+      // 拼满 3 个：恢复女巫奖励资格，进结算（不看分数）
+      this.witchSkillPassed = true;
+      this._affixTrial = null;
+      this._showSettlement();
+      return;
+    }
+    if (this.storageManager) this.storageManager.saveProgress();
+  }
+
+  // 词缀试炼：金币提示——扣 1 金币，自动输入目标词"输入部分"的前 hintCount+1 个字母；每回合最多 3 个
+  hintAffixNextLetter() {
+    const trial = this._getAffixTrial();
+    if (!trial || !trial.targetWord) return false;
+    const part = getTypedPart(trial.targetWord, trial.kind, trial.affix);
+    const hintCount = trial.hintCount || 0;
+
+    if (hintCount >= Math.min(AFFIX_HINT_MAX, part.length)) {
+      this.hintToast = { text: '每回合最多提示3个字母', expireAt: Date.now() + 2000, startTime: Date.now() };
+      return false;
+    }
+    if ((this.gold || 0) < 1) {
+      this.hintToast = { text: '金币不足', expireAt: Date.now() + 2000, startTime: Date.now() };
+      return false;
+    }
+    if (this.pendingCheck && (this.pendingCheck.state === 'invalid' || this.pendingCheck.state === 'witch_failed')) {
+      this.pendingCheck = null;
+    }
+    if (this.pendingCheck) return false; // 校验演出中不响应
+    this.gold -= 1;
+    trial.hintCount = hintCount + 1;
+    trial.typed = getHintTypedLetters(trial.targetWord, trial.kind, trial.affix, trial.hintCount);
+    if (this.storageManager) this.storageManager.saveProgress();
+    console.log('[AffixTrial] 金币提示字母:', trial.typed.join(''), '进度:', trial.hintCount, '剩余金币:', this.gold);
+    return true;
+  }
+
+  // 词缀试炼：广告奖励——自动输入完整提示目标词
+  showAffixWordHint() {
+    const trial = this._getAffixTrial();
+    if (!trial || !trial.targetWord) return false;
+    if (this.pendingCheck) return false;
+    const part = getTypedPart(trial.targetWord, trial.kind, trial.affix);
+    trial.typed = part.toUpperCase().split('');
+    // 单词已完整揭示，后续金币提示字母禁用
+    trial.hintCount = Math.max(trial.hintCount || 0, part.length);
+    if (this.audioManager) this.audioManager.play('card_placement');
+    if (this.storageManager) this.storageManager.saveProgress();
+    console.log('[AffixTrial] 广告提示单词:', trial.targetWord);
     return true;
   }
 

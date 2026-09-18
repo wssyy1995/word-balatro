@@ -986,6 +986,55 @@ function showFillBlankAd() {
   });
 }
 
+// ===== 激励视频广告（词缀拼词试炼「提示单词」，看完后自动输入完整提示目标词）=====
+// 与 fill_blanks 共用一个广告位（新增广告位需在微信后台配置），独立实例避免状态串扰
+let affixVideoAd = null;
+
+function getAffixVideoAd() {
+  if (affixVideoAd) return affixVideoAd;
+  if (typeof wx === 'undefined' || !wx.createRewardedVideoAd) return null;
+  try {
+    affixVideoAd = wx.createRewardedVideoAd({ adUnitId: FILL_BLANK_AD_UNIT_ID });
+    affixVideoAd.onError(err => {
+      console.error('[AffixAd] 广告错误:', err);
+    });
+    affixVideoAd.onClose(res => {
+      // 兼容旧基础库：isEnded 字段不存在时视为已看完
+      const ended = !res || res.isEnded === undefined || res.isEnded;
+      if (!ended) {
+        console.log('[AffixAd] 广告未看完，不给提示');
+        if (game) game.hintToast = { text: '看完广告才能获得提示', expireAt: Date.now() + 2000, startTime: Date.now() };
+        return;
+      }
+      console.log('[AffixAd] 广告播放完成，自动输入提示目标词');
+      if (game && game.showAffixWordHint) {
+        game.showAffixWordHint();
+      }
+    });
+  } catch (e) {
+    console.error('[AffixAd] 创建激励视频广告失败:', e);
+    affixVideoAd = null;
+  }
+  return affixVideoAd;
+}
+
+function showAffixAd() {
+  const ad = getAffixVideoAd();
+  if (!ad) {
+    if (game) game.hintToast = { text: '当前环境不支持广告', expireAt: Date.now() + 2000, startTime: Date.now() };
+    return;
+  }
+  ad.show().catch(() => {
+    // 失败重试：先 load 再 show
+    ad.load()
+      .then(() => ad.show())
+      .catch(err => {
+        console.error('[AffixAd] 激励视频广告显示失败:', err);
+        if (game) game.hintToast = { text: '广告加载失败，请稍后再试', expireAt: Date.now() + 2000, startTime: Date.now() };
+      });
+  });
+}
+
 // 分享求助状态
 let shareTipHelpState = null; // { startTime: number, resolving: boolean }
 
@@ -3092,6 +3141,8 @@ wx.onTouchEnd(() => {
   renderer.pressedBtn = null;
   renderer._fbHintLetterPressed = false;
   renderer._fbHintWordPressed = false;
+  renderer._afHintLetterPressed = false;
+  renderer._afHintWordPressed = false;
   if (game) {
     game._cardBookIconPressed = false;
     game._cardBookEquipBtnPressed = false;
@@ -4939,6 +4990,17 @@ function handleInput(x, inputY, rawY) {
       if (!hitProp) return;
     }
 
+    // 词缀试炼：26 键键盘点击（非法/失败提示期间允许点击以清除提示；checking/valid 中 typeAffixLetter 内部拒绝）
+    if (renderer.affixKeyRects && (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed')) {
+      const keyHit = renderer.hitTest(x, inputY, renderer.affixKeyRects);
+      if (keyHit) {
+        vibrate();
+        renderer._affixPressedKey = { letter: keyHit.letter, time: Date.now() };
+        game.typeAffixLetter(keyHit.letter);
+        return;
+      }
+    }
+
     // 检测卡牌点击（动画播放期间禁用，但非法/约束失败提示期间允许点击以清除提示）
     if (!game.pendingCheck || game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed') {
       const cardHit = renderer.hitTest(x, inputY, renderer.cardRects);
@@ -4957,6 +5019,16 @@ function handleInput(x, inputY, rawY) {
         renderer.pressedBtn = 'play';
         if (game.animManager) game.animManager.buttonPress(renderer.playBtnRect);
         const selected = game.getSelectedCards();
+        // 词缀试炼：至少输入 1 个字母才允许出牌，走词缀校验路径
+        const affixTrial = game._getAffixTrial ? game._getAffixTrial() : null;
+        if (affixTrial) {
+          if ((affixTrial.typed || []).length >= 1 && !game.pendingCheck) {
+            game.playAffixWord().catch(err => {
+              console.error('playAffixWord error:', err);
+            });
+          }
+          return;
+        }
         // fill_blanks：选满目标词长度才允许出牌
         const fbWord = game._getFillBlankWord ? game._getFillBlankWord() : null;
         const minLen = fbWord ? fbWord.length : 2;
@@ -4991,7 +5063,12 @@ function handleInput(x, inputY, rawY) {
         renderer.pressedBtn = 'reset';
         if (game.animManager) game.animManager.buttonPress(renderer.resetBtnRect);
         if (game.audioManager) game.audioManager.play('card_placement');
-        game.clearSelection();
+        // 词缀试炼：清空已输入字母；普通模式清空选中卡牌
+        if (game._getAffixTrial && game._getAffixTrial()) {
+          game.clearAffixTyped();
+        } else {
+          game.clearSelection();
+        }
         return;
       }
     }
@@ -5045,6 +5122,50 @@ function handleInput(x, inputY, rawY) {
           renderer._fbHintWordPressed = true;
           if (game.audioManager) game.audioManager.play('tap');
           showFillBlankAd();
+        }
+        return;
+      }
+    }
+
+    // 词缀试炼：试炼框内「提示字母」按钮（金币×1，自动输入目标词下一个字母；pendingCheck 进行中不响应）
+    if (renderer.affixHintLetterRect) {
+      const afHit = renderer.hitTest(x, inputY, [renderer.affixHintLetterRect]);
+      if (afHit) {
+        if (!game.pendingCheck) {
+          vibrate();
+          renderer._afHintLetterPressed = true;
+          // 预检查是否可购买（试炼存在 / 金币足够 / 未达每回合 3 个字母的提示上限）
+          const trial = game._getAffixTrial ? game._getAffixTrial() : null;
+          const partLen = trial && trial.targetWord ? Math.max(1, String(trial.targetWord).length - String(trial.affix).length) : 0;
+          const canBuy = !!trial && !!trial.targetWord && (game.gold || 0) >= 1 && (trial.hintCount || 0) < Math.min(3, partLen);
+          if (canBuy) {
+            // 立即播放 card_sell 并弹出 toast（试炼框下方），音效结束后再执行字母输入流程
+            game.hintToast = { text: '购买提示成功!', expireAt: Date.now() + 2000, startTime: Date.now(), customPosition: 'fillBlankBottom' };
+            if (game.audioManager && game.audioManager.playThen) {
+              game.audioManager.playThen('card_sell', () => {
+                game.hintAffixNextLetter();
+              });
+            } else {
+              game.hintAffixNextLetter();
+            }
+          } else {
+            // 不可购买：直接走原流程弹失败提示（金币不足/每回合最多提示3个字母）
+            game.hintAffixNextLetter();
+          }
+        }
+        return;
+      }
+    }
+
+    // 词缀试炼：试炼框内「提示单词」按钮（激励视频广告；pendingCheck 进行中不响应）
+    if (renderer.affixHintWordRect) {
+      const afHit = renderer.hitTest(x, inputY, [renderer.affixHintWordRect]);
+      if (afHit) {
+        if (!game.pendingCheck) {
+          vibrate();
+          renderer._afHintWordPressed = true;
+          if (game.audioManager) game.audioManager.play('tap');
+          showAffixAd();
         }
         return;
       }

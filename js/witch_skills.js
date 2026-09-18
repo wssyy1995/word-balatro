@@ -1,4 +1,5 @@
 // ===== 女巫技能配置 =====
+const { parseAffixSkill } = require('./affix_trial');
 const WITCH_SKILLS = [
   { level: 3, name: '女巫_A', reward: 'card_change_letter_absorb_stars',rate:1, has_reward: true, reward_desc: '有概率获得一张: 字母置换/吸星大法' },
   { level: 5, name: '女巫_B', reward: 'global_letter_1',rate:0.1, has_reward: false, reward_desc: '本赛局,字母手牌+1' },
@@ -33,14 +34,18 @@ const WITCH_SKILLS = [
 const SKILL_POOL = [
   { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
   { skill: 'need_letter_4', desc: '每次出牌,不能少于4个字母', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'prefix_in', desc: '用 \'in\' 开头，拼出3个合法单词', angry_tip: '我的咒语前缀，可不是随便接的。' },
   { skill: 'letter_a_mult_half', desc: '出牌如果包含字母 \'A\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_e_mult_half', desc: '出牌如果包含字母 \'E\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
+  { skill: 'postfix_able', desc: '用 \'able\' 结尾，拼出3个合法单词', angry_tip: '接不上后缀的词，魔力会散掉的。' },
   { skill: 'letter_s_mult_half', desc: '出牌如果包含字母 \'S\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'letter_i_mult_half', desc: '出牌如果包含字母 \'I\', 单词倍率减半', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
   { skill: 'disable_one_witch_card', desc: '随机禁用1张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'prefix_un', desc: '用 \'un\' 开头，拼出3个合法单词', angry_tip: '我的咒语前缀，可不是随便接的。' },
   { skill: 'fill_blanks', desc: '拼出单词，让句子变完整', angry_tip: '句子不完整，魔力可是会泄漏的。' },
   { skill: 'disable_two_witch_card', desc: '随机禁用2张女巫牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。' },
+  { skill: 'postfix_es', desc: '用 \'es\' 结尾，拼出3个合法单词', angry_tip: '接不上后缀的词，魔力会散掉的。' },
   { skill: 'disable_potion_card', desc: '本回合，禁用魔法药水牌', angry_tip: '要遵守规矩哦，我生气的后果很严重。'},
   { skill: 'witch_card_value_half', desc: '所有女巫牌的倍率效果都减半', angry_tip: '太依赖道具，也不行哦。'}
 ];
@@ -116,6 +121,9 @@ function checkSkill(skillName, game, playedCards) {
     return word.includes(requiredLetter);
   }
 
+  // prefix_* / postfix_*：词缀拼词试炼走独立出牌路径（键盘输入 + 词库校验），此处防御性放行
+  if (parseAffixSkill(skillName)) return true;
+
   switch (skillName) {
     case 'need_letter_4':
       return playedCards.length >= 4;
@@ -146,6 +154,13 @@ function getSkillFailText(skillName) {
   const requiredLetter = getForceContainLetter(skillName);
   if (requiredLetter) {
     return `女巫试炼：本回合打出的单词必须包含字母 '${requiredLetter}'`;
+  }
+
+  // prefix_* / postfix_*
+  const affix = parseAffixSkill(skillName);
+  if (affix) {
+    const pos = affix.kind === 'prefix' ? '开头' : '结尾';
+    return `女巫试炼：用 '${affix.affix}' ${pos}，拼出3个合法单词`;
   }
 
   switch (skillName) {
@@ -350,6 +365,7 @@ module.exports = {
   shuffleSkillPool,
   parseLetterTriggerTwiceSkill,
   getForceContainLetter,
+  parseAffixSkill,
   formatItemDesc,
   getChaosRange
 };

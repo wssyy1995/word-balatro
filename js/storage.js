@@ -94,6 +94,7 @@ class StorageManager {
       witchSkillPassed: game.witchSkillPassed,
       fillBlankData: game._fillBlankData || null,
       fillBlankHintCount: game._fillBlankHintCount || 0,
+      affixTrial: game._affixTrial || null,
       _witchSkillProtectUsed: game._witchSkillProtectUsed || false,
       _lifeExtensionBonus: game._lifeExtensionBonus || 0,
       target: game.target,

@@ -14,6 +14,11 @@ module.exports = function extendPlaying(Renderer) {
       // fill_blanks（完形填空）模式：隐藏计分方块/药水栏，预览区显示挖空例句
       const witchSkillNow = getSkillForLevel(game.round, game._shuffledSkills);
       const isFillBlanks = !!(witchSkillNow && witchSkillNow.skill === 'fill_blanks' && game._fillBlankData);
+      // 词缀拼词试炼（prefix_* / postfix_*）模式：隐藏计分方块/道具栏/手牌，预览区显示词缀+下划线，手牌区显示 26 键键盘
+      const affixTrial = game._getAffixTrial ? game._getAffixTrial() : null;
+      const isAffixTrial = !!affixTrial;
+      // 单词试炼（fill_blanks 或词缀拼词）统一隐藏项
+      const isWordTrial = isFillBlanks || isAffixTrial;
   
       // 计算手牌布局（≤9张用3列，≥10张用4列）
       const cols = game.hand.length <= 9 ? 3 : 4;
@@ -50,10 +55,19 @@ module.exports = function extendPlaying(Renderer) {
       // fill_blanks 提示按钮点击区域（非 fill 模式为 null，由 _drawFillBlankArea 注册）
       this.fillBlankHintLetterRect = null;
       this.fillBlankHintWordRect = null;
+      // 词缀试炼提示按钮与键盘点击区域（非词缀模式为 null，由 _drawAffixTrialArea / _drawAffixKeyboard 注册）
+      this.affixHintLetterRect = null;
+      this.affixHintWordRect = null;
+      this.affixKeyRects = null;
       // fill_blanks 字母冒泡动画状态（非 fill 模式清空）
       if (!isFillBlanks) {
         this._fbLetterAnimStart = {};
         this._fbFilledPrev = [];
+      }
+      // 词缀试炼字母冒泡动画状态（非词缀模式清空）
+      if (!isAffixTrial) {
+        this._afLetterAnimStart = {};
+        this._afFilledPrev = [];
       }
   
       const actualWitchSlots = game.maxJokerSlots || 4;
@@ -102,8 +116,8 @@ module.exports = function extendPlaying(Renderer) {
       this.witchPropRects = [];
       this.changeLetterHintRect = null;
 
-      // fill_blanks（完形填空）模式：隐藏整个道具卡牌栏（背景图、女巫牌、占位槽、药水）
-      if (!isFillBlanks) {
+      // fill_blanks（完形填空）/ 词缀试炼模式：隐藏整个道具卡牌栏（背景图、女巫牌、占位槽、药水）
+      if (!isWordTrial) {
       // 道具栏阴影（右下偏移，营造立体感）
       this.roundRect(propX + 2 * s, propY + 2 * s, propW, propBarH, 10 * s, 'rgba(0,0,0,0.10)', null);
       // 道具栏背景（优先使用 card_bar.png，按宽度等比例缩放 + 放大 5%，未加载时 fallback 米白色）
@@ -139,8 +153,8 @@ module.exports = function extendPlaying(Renderer) {
         this.roundRect(propX, propY, propW, propBarH, 10 * s, '#faf6ee', '#c4a35a');
       }
   
-      // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）；fill_blanks 隐藏药水区时不画分割线
-      if (!isFillBlanks) {
+      // 竖分割线（金色实线 + 菱形，参考 HUD 分隔线）；单词试炼隐藏道具区时不画分割线
+      if (!isWordTrial) {
       ctx.beginPath();
       ctx.moveTo(dividerX, slotY + 2 * s);
       ctx.lineTo(dividerX, slotY + slotH - 2 * s);
@@ -294,10 +308,10 @@ module.exports = function extendPlaying(Renderer) {
         }
       }
   
-      } // end if (!isFillBlanks)：道具卡牌栏整体隐藏
+      } // end if (!isWordTrial)：道具卡牌栏整体隐藏
 
-      // 右区2格：药水牌（fill_blanks 模式下整个道具栏已隐藏，循环不执行）
-      for (let i = 0; !isFillBlanks && i < 2; i++) {
+      // 右区2格：药水牌（单词试炼模式下整个道具栏已隐藏，循环不执行）
+      for (let i = 0; !isWordTrial && i < 2; i++) {
         const sx = rightStartX + i * (slotW + actualGap);
         const potion = potions[i];
         if (potion) {
@@ -391,18 +405,18 @@ module.exports = function extendPlaying(Renderer) {
         }
       }
   
-      // 单词预览区白色蒙层（常驻，固定6个字母宽度；fill_blanks 时加宽加高放例句+提示按钮，水平居中，整体上移到进度条下方）
+      // 单词预览区白色蒙层（常驻，固定6个字母宽度；fill_blanks/词缀试炼时加宽加高放内容+提示按钮，水平居中，整体上移到进度条下方）
       let maskW = 180 * s;
       let maskH = 40 * s;
       let maskX = W / 2 - maskW / 2;
       let maskY = wordAreaY - maskH / 2;
-      if (isFillBlanks) {
+      if (isWordTrial) {
         maskH = 166 * s;
         maskW = W - 40 * s;
         maskX = (W - maskW) / 2;
         // 进度条正下方：hudBottom 基于 h=70*s 计算，fill 模式进度条实际底部还需补 2*s 高度差 + 5px 下移
         maskY = hudBottom + 40 * s;
-        // 记录例句框矩形（toast 定位用，如「购买提示成功!」显示在例句框下方）
+        // 记录试炼框矩形（toast 定位用，如「购买提示成功!」显示在试炼框下方）
         this._fillBlankMaskRect = { x: maskX, y: maskY, w: maskW, h: maskH };
       } else {
         this._fillBlankMaskRect = null;
@@ -413,8 +427,8 @@ module.exports = function extendPlaying(Renderer) {
       maskGrad.addColorStop(1, 'rgba(240,235,224,0.35)');
       this.roundRect(maskX, maskY, maskW, maskH, 10 * s, maskGrad, 'rgba(196,163,90,0.5)', 1 * s);
 
-      // 提示按钮（预览区左侧）在游玩过程中始终显示，无种子牌时点击会回退到普通提示；fill_blanks 模式下不显示
-      if (game.state === 'playing' && !isFillBlanks) {
+      // 提示按钮（预览区左侧）在游玩过程中始终显示，无种子牌时点击会回退到普通提示；单词试炼模式下不显示
+      if (game.state === 'playing' && !isWordTrial) {
         // === help 按钮空闲上下跳跃动画（25秒未出牌触发，持续2秒） ===
         let helpJumpY = 0;
         if (game._lastPlayTime && Date.now() - game._lastPlayTime > 25000) {
@@ -548,6 +562,24 @@ module.exports = function extendPlaying(Renderer) {
             if (Date.now() >= pc._fillBlankDoneAt && !game._playHandAnimCompleted) {
               game._playHandAnimCompleted = true;
               if (game.completePlayHand) game.completePlayHand();
+            }
+          }
+        } else if (isAffixTrial) {
+          // 词缀试炼：检测中/合法/非法都渲染词缀+下划线区域，下划线处显示本次尝试的字母
+          const afStatus = (pc.state === 'checking' || pc.state === 'valid' || pc.state === 'invalid' || pc.state === 'witch_failed')
+            ? pc.state : 'idle';
+          this._drawAffixTrialArea(game, maskX, maskY, maskW, maskH, s, pc.typed || pc.word.split(''), afStatus, pc.invalidText || pc.witchFailText || null);
+          if (pc.state === 'valid') {
+            // 简化成功演出：烟花 + 绿色单词，1.5s 后计数（拼满 3 个进结算）
+            if (!pc._sparklesSpawned) {
+              pc._sparklesSpawned = true;
+              this._spawnSparkles(maskX + maskW * 0.25, maskY + maskH / 2, 12);
+              this._spawnSparkles(maskX + maskW * 0.75, maskY + maskH / 2, 12);
+            }
+            if (!pc._affixDoneAt) pc._affixDoneAt = Date.now() + 1500;
+            if (Date.now() >= pc._affixDoneAt && !game._playHandAnimCompleted) {
+              game._playHandAnimCompleted = true;
+              if (game.completeAffixPlay) game.completeAffixPlay();
             }
           }
         } else if (pc.state === 'checking') {
@@ -1022,6 +1054,9 @@ module.exports = function extendPlaying(Renderer) {
       } else if (isFillBlanks) {
         // fill_blanks：常驻显示挖空例句 + 中文翻译，选中字母时逐格填入下划线
         this._drawFillBlankArea(game, maskX, maskY, maskW, maskH, s, selected.map(c => c.letter.toLowerCase()), 'idle', null);
+      } else if (isAffixTrial) {
+        // 词缀试炼：常驻显示 词缀+下划线 + 剩余单词数提示，键盘输入的字母逐格填入
+        this._drawAffixTrialArea(game, maskX, maskY, maskW, maskH, s, affixTrial.typed || [], 'idle', null);
       } else if (selected.length >= 1) {
         // 普通预览：只显示单词（橙色），不检测
         const word = selected.map(c => c.letter.toLowerCase()).join('');
@@ -1044,7 +1079,7 @@ module.exports = function extendPlaying(Renderer) {
       }
 
       // 单词求助提示：在单次预览下方显示中文释义
-      if (!isFillBlanks && !game.pendingCheck && game.state === 'playing' && game._seedWordHint) {
+      if (!isWordTrial && !game.pendingCheck && game.state === 'playing' && game._seedWordHint) {
         if (game._seedWordHint.meaning) {
           const mText = `[提示] ${formatMeaning(game._seedWordHint.meaning)}`;
           ctx.save();
@@ -1059,7 +1094,7 @@ module.exports = function extendPlaying(Renderer) {
 
       // 学习模式：若手牌可直接拼出某个未收集的每日新词，主动在预览区下方显示释义
       // 前 10 秒不显示，10 秒后若仍未出牌再淡入出现
-      if (!isFillBlanks && !game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint && !game._seedWordHint) {
+      if (!isWordTrial && !game.pendingCheck && game.state === 'playing' && game._dailyNewWordHint && !game._seedWordHint) {
         const elapsed = Date.now() - game._dailyNewWordHint.showTime;
         const showDelay = 10000;
         if (elapsed < showDelay) {
@@ -1082,7 +1117,7 @@ module.exports = function extendPlaying(Renderer) {
         }
       }
   
-      if (!isFillBlanks) {
+      if (!isWordTrial) {
         // 分数预览（两个方块）—— 始终显示背景图
         // 新的出牌校验开始时仅清动画状态：保留预览的 lastBoxScore / lastMultValue
         // 作为正式计分的起点（预览值无缝接管，不再从 0 重新滚动）
@@ -1390,7 +1425,8 @@ module.exports = function extendPlaying(Renderer) {
         }
       }
 
-      // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）
+      // 绘制卡牌（跳过 null 占位符，其他牌位置完全不动）；词缀试炼模式改为 26 键键盘
+      if (!isAffixTrial) {
       game.hand.forEach((card, i) => {
         if (!card) return;
         const col = i % cols;
@@ -1430,14 +1466,18 @@ module.exports = function extendPlaying(Renderer) {
           this.drawCard(card, fx, fy);
         }
       }
+      } else {
+        // 词缀试炼：手牌区替换为 26 键字母键盘（QWERTY 三行）
+        this._drawAffixKeyboard(game, cardAreaY, cardGridH, s);
+      }
   
       // 底部图片按钮区域（出牌/弃牌/清空选择整体上移 5px）
       const btnY = H - 90 * s - 5;
       const btnW = 90 * s;
       const btnH = 56 * s;
-      const btnGap = isFillBlanks ? 30 * s : 20 * s; // fill_blanks 两按钮间距更大
-      // fill_blanks 模式：隐藏弃牌按钮，出牌/清空选择两个按钮左右并排居中
-      const totalBtnW = isFillBlanks ? btnW * 2 + btnGap : btnW * 3 + btnGap * 2;
+      const btnGap = isWordTrial ? 30 * s : 20 * s; // 单词试炼两按钮间距更大
+      // 单词试炼模式：隐藏弃牌按钮，出牌/清空选择两个按钮左右并排居中
+      const totalBtnW = isWordTrial ? btnW * 2 + btnGap : btnW * 3 + btnGap * 2;
       const btnStartX = (W - totalBtnW) / 2;
   
       // === 争分夺秒倒计时条（在出牌按钮上方）===
@@ -1487,9 +1527,10 @@ module.exports = function extendPlaying(Renderer) {
       const playTx = playX + btnW / 2;
       const selectedCount = game.getSelectedCards ? game.getSelectedCards().length : 0;
       const isInvalid = game.pendingCheck && (game.pendingCheck.state === 'invalid' || game.pendingCheck.state === 'witch_failed');
-      // fill_blanks：选满目标词长度才可出牌，否则置灰
+      // fill_blanks：选满目标词长度才可出牌，否则置灰；词缀试炼：至少输入 1 个字母
       const fbNeedLen = isFillBlanks && game._fillBlankData && game._fillBlankData.word ? game._fillBlankData.word.length : 0;
-      const notEnough = fbNeedLen > 0 ? selectedCount < fbNeedLen : selectedCount < 2;
+      const notEnough = fbNeedLen > 0 ? selectedCount < fbNeedLen
+        : (isAffixTrial ? (affixTrial.typed || []).length < 1 : selectedCount < 2);
       if (isInvalid || notEnough) {
         // 非法状态或牌数不足：暖灰色文字 + 深色描边
         ctx.lineWidth = 2 * s;
@@ -1513,8 +1554,8 @@ module.exports = function extendPlaying(Renderer) {
       ctx.restore();
       this.playBtnRect = { x: playX, y: btnY, w: btnW, h: btnH, action: 'play' };
   
-      // 弃牌按钮（图片 + 阴影 + 按下偏移）；fill_blanks 模式下隐藏并禁用
-      if (!isFillBlanks) {
+      // 弃牌按钮（图片 + 阴影 + 按下偏移）；单词试炼模式下隐藏并禁用
+      if (!isWordTrial) {
       const discardX = btnStartX + btnW + btnGap;
       const discardY = btnY + (this.pressedBtn === 'discard' ? 2 * s : 0);
       ctx.save();
@@ -1555,7 +1596,7 @@ module.exports = function extendPlaying(Renderer) {
       }
   
       // 清空选择按钮（图片 + 阴影 + 按下偏移）
-      const resetX = isFillBlanks ? btnStartX + btnW + btnGap : btnStartX + (btnW + btnGap) * 2;
+      const resetX = isWordTrial ? btnStartX + btnW + btnGap : btnStartX + (btnW + btnGap) * 2;
       const resetY = btnY + (this.pressedBtn === 'reset' ? 2 * s : 0);
       ctx.save();
       ctx.shadowColor = 'rgba(0,0,0,0.35)';
@@ -1864,6 +1905,282 @@ module.exports = function extendPlaying(Renderer) {
     // 注册点击区域（非 fill 模式在 drawPlaying 开头已置 null）
     this.fillBlankHintLetterRect = { x: btn1X, y: btnY, w: btnW, h: btnH };
     this.fillBlankHintWordRect = { x: btn2X, y: btnY, w: btnW, h: btnH };
+  }
+
+  // ===== 词缀拼词试炼（prefix_* / postfix_*）试炼框渲染 =====
+  // typedLetters: 已输入字母（大写数组）；status: 'idle' | 'checking' | 'valid' | 'invalid' | 'witch_failed'
+  Renderer.prototype._drawAffixTrialArea = function(game, maskX, maskY, maskW, maskH, s, typedLetters, status, statusText) {
+    const ctx = this.ctx;
+    const trial = game._getAffixTrial ? game._getAffixTrial() : null;
+    if (!trial) return;
+    const { kind, affix } = trial;
+    const typed = (typedLetters || []).map(ch => String(ch).toLowerCase());
+    const isValid = status === 'valid';
+    const fullWord = (kind === 'prefix' ? affix + typed.join('') : typed.join('') + affix);
+
+    // 跟踪每个槽位字母的出现时间（字母变化/新出现时重置冒泡动画）
+    if (!this._afLetterAnimStart) this._afLetterAnimStart = {};
+    if (!this._afFilledPrev) this._afFilledPrev = [];
+    for (let i = 0; i < typed.length; i++) {
+      if (typed[i] && typed[i] !== this._afFilledPrev[i]) {
+        this._afLetterAnimStart[i] = Date.now();
+      }
+    }
+    this._afFilledPrev = typed.slice();
+
+    const blankColors = {
+      idle: '#c4a35a', checking: '#c4a35a', valid: '#2d7d32',
+      invalid: '#c0392b', witch_failed: '#9b59b6'
+    };
+    const fillColor = blankColors[status] || '#c4a35a';
+
+    const maxW = maskW - 24 * s;
+    // 槽位数：空闲时多留 1 个空格位引导输入，最少 3 格
+    const slotCount = Math.max(typed.length + (status === 'idle' ? 1 : 0), 3);
+    // 字号自适应：26 → 22 → 18，保证 词缀+槽位 不超宽
+    let fontSize = 26;
+    let slotW = 0;
+    let affixW = 0;
+    for (const fs of [26, 22, 18]) {
+      fontSize = fs;
+      ctx.font = `bold ${Math.floor(fs * s)}px Georgia, 'Times New Roman', serif`;
+      slotW = Math.max(ctx.measureText('_').width, ctx.measureText('M').width) + 3 * s;
+      affixW = ctx.measureText(affix).width;
+      const totalWordW = isValid ? ctx.measureText(fullWord).width : affixW + 6 * s + slotW * slotCount;
+      if (totalWordW <= maxW || fs === 18) break;
+    }
+    const enFont = `bold ${Math.floor(fontSize * s)}px Georgia, 'Times New Roman', serif`;
+    const slotLetterFont = `bold ${Math.floor((fontSize + 2) * s)}px Georgia, 'Times New Roman', serif`;
+    const wordLineH = Math.floor(fontSize * s * 1.5);
+
+    // 提示行内容
+    let hintText = null;
+    let hintColor = '#8a7a5a';
+    if (status === 'checking') {
+      hintText = '.'.repeat((Math.floor(Date.now() / 400) % 4) + 1);
+      hintColor = '#c4a35a';
+    } else if (status === 'invalid') {
+      hintText = statusText || '单词不存在';
+      hintColor = '#c0392b';
+    } else if (status === 'witch_failed') {
+      hintText = statusText || '女巫试炼未满足';
+      hintColor = '#9b59b6';
+    } else if (isValid) {
+      hintText = '拼写正确！';
+      hintColor = '#2d7d32';
+    } else {
+      hintText = `还需要拼出 ${trial.left} 个单词`;
+    }
+
+    // 高度账本：单词行 + 提示行 + 按钮行
+    const hintH = 22 * s;
+    const wordHintGap = 4 * s;
+    const btnRowH = 34 * s;
+    const btnGapY = 10 * s;
+    const totalH = wordLineH + wordHintGap + hintH + btnGapY + btnRowH;
+    let curY = maskY + (maskH - totalH) / 2 + wordLineH / 2;
+
+    // === 单词行：词缀 + 下划线槽位（答对时整体绿色高亮）===
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    if (isValid) {
+      ctx.font = slotLetterFont;
+      const fw = ctx.measureText(fullWord).width;
+      const fx = maskX + (maskW - fw) / 2;
+      this.roundRect(fx - 6 * s, curY - wordLineH * 0.42, fw + 12 * s, wordLineH * 0.84, 5 * s, 'rgba(45,125,50,0.16)');
+      ctx.fillStyle = '#2d7d32';
+      ctx.fillText(fullWord, fx, curY);
+    } else {
+      ctx.font = enFont;
+      const rowW = affixW + 6 * s + slotW * slotCount;
+      let curX = maskX + (maskW - rowW) / 2;
+      // 词缀文本（prefix 在左，postfix 在右）
+      const drawAffix = () => {
+        ctx.font = enFont;
+        ctx.fillStyle = '#5a4a2a';
+        ctx.fillText(affix, curX, curY);
+        curX += affixW + 6 * s;
+      };
+      if (kind === 'prefix') drawAffix();
+      // 下划线槽位 + 已输入字母
+      for (let i = 0; i < slotCount; i++) {
+        const slotX = curX + slotW * i;
+        ctx.fillStyle = 'rgba(196,163,90,0.6)';
+        ctx.fillRect(slotX + 1 * s, curY + wordLineH * 0.32, slotW - 2 * s, Math.max(1.5 * s, 1));
+        const ch = typed[i];
+        if (ch) {
+          ctx.save();
+          ctx.font = slotLetterFont;
+          ctx.fillStyle = fillColor;
+          const lw = ctx.measureText(ch).width;
+          // 字母从下划线处冒出来的动画：250ms easeOutCubic 上移 + 淡入
+          let riseOffsetY = 0;
+          let riseAlpha = 1;
+          const animStart = this._afLetterAnimStart[i];
+          if (animStart) {
+            const elapsed = Date.now() - animStart;
+            const dur = 250;
+            if (elapsed < dur) {
+              const t = elapsed / dur;
+              riseOffsetY = (1 - Easing.easeOutCubic(t)) * 10 * s;
+              riseAlpha = Math.min(elapsed / 120, 1);
+            } else {
+              delete this._afLetterAnimStart[i];
+            }
+          }
+          if (riseAlpha < 1) ctx.globalAlpha = riseAlpha;
+          ctx.fillText(ch, slotX + slotW / 2 - lw / 2, curY + riseOffsetY);
+          ctx.restore();
+        }
+      }
+      curX += slotW * slotCount;
+      if (kind === 'postfix') drawAffix();
+    }
+    ctx.restore();
+    curY += wordLineH / 2 + wordHintGap + hintH / 2;
+
+    // === 提示行（剩余单词数 / 状态文案），非法时带 error 图标 ===
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let bs = 14;
+    ctx.font = `${Math.floor(bs * s)}px sans-serif`;
+    while (ctx.measureText(hintText).width > maxW && bs > 11) {
+      bs--;
+      ctx.font = `${Math.floor(bs * s)}px sans-serif`;
+    }
+    ctx.fillStyle = hintColor;
+    if (status === 'invalid' && this.errorIcon && this.errorIconLoaded) {
+      const errIconSize = 15 * s;
+      const errGap = 4 * s;
+      const textW = ctx.measureText(hintText).width;
+      const groupX = maskX + maskW / 2 - (errIconSize + errGap + textW) / 2;
+      ctx.drawImage(this.errorIcon, groupX, curY - errIconSize / 2, errIconSize, errIconSize);
+      ctx.textAlign = 'left';
+      ctx.fillText(hintText, groupX + errIconSize + errGap, curY);
+    } else {
+      ctx.fillText(hintText, maskX + maskW / 2, curY);
+    }
+    ctx.restore();
+    curY += hintH / 2 + btnGapY;
+
+    // === 两个并排提示按钮（样式与 fill_blanks 完全一致）===
+    const btnW = 124 * s;
+    const btnH = btnRowH;
+    const btnGap = 18 * s;
+    const btnRowW = btnW * 2 + btnGap;
+    const btn1X = maskX + (maskW - btnRowW) / 2;
+    const btn2X = btn1X + btnW + btnGap;
+    const btnY = curY;
+
+    const drawAfBtn = (bx, label, iconData, emoji, suffix, pressed, iconAnim, disabled) => {
+      const dy = pressed && !disabled ? 2 * s : 0;
+      ctx.save();
+      if (disabled) ctx.globalAlpha = 0.55;
+      this._drawOrnateBtnFrame(bx, btnY + dy, btnW, btnH, s, pressed);
+
+      const midY = btnY + dy + btnH / 2;
+      const iconSize = (iconAnim === 'breath' ? 21 : 18) * s;
+      const gap = 4 * s;
+      ctx.font = `bold ${Math.floor(14 * s)}px sans-serif`;
+      const hasIcon = !disabled && iconData && iconData.img && iconData.loaded;
+      const emojiCh = !disabled && !hasIcon ? emoji : null;
+      const suffixTxt = disabled ? null : suffix;
+      const labelW = ctx.measureText(label).width;
+      const emojiW = emojiCh ? ctx.measureText(emojiCh).width : 0;
+      const suffixW = suffixTxt ? ctx.measureText(suffixTxt).width : 0;
+      const contentW = labelW + (hasIcon || emojiCh || suffixTxt ? gap + (hasIcon ? iconSize : emojiW) : 0) + (suffixTxt ? gap + suffixW : 0);
+      let cx = bx + (btnW - contentW) / 2;
+
+      ctx.fillStyle = disabled ? '#9a9186' : '#5a4a2a';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, midY);
+      cx += labelW + gap;
+      if (hasIcon) {
+        const iconCX = cx + iconSize / 2;
+        ctx.save();
+        ctx.translate(iconCX, midY);
+        if (iconAnim === 'flip') {
+          const t = (Date.now() % 3000) / 3000;
+          ctx.scale(Math.cos(t * Math.PI * 2), 1);
+        } else if (iconAnim === 'breath') {
+          const b = 1 + 0.08 * Math.sin(Date.now() / 500);
+          ctx.scale(b, b);
+        }
+        ctx.drawImage(iconData.img, -iconSize / 2, -iconSize / 2, iconSize, iconSize);
+        ctx.restore();
+        cx += iconSize;
+      } else if (emojiCh) {
+        ctx.fillText(emojiCh, cx, midY);
+        cx += emojiW;
+      }
+      if (suffixTxt) ctx.fillText(suffixTxt, cx + gap, midY);
+      ctx.restore();
+    };
+    // 每回合最多提示 3 个字母，达上限后按钮置灰、文案改为「提示达上限」（点击仍可弹 toast）
+    // 目标词"输入部分"长度 = 目标词长 - 词缀长（提示上限用）
+    const typedPartLen = trial.targetWord ? Math.max(1, String(trial.targetWord).length - affix.length) : 3;
+    const afHintDone = !trial.targetWord || (trial.hintCount || 0) >= Math.min(3, typedPartLen);
+    if (afHintDone) {
+      drawAfBtn(btn1X, '提示达上限', null, null, null, false, null, true);
+    } else {
+      drawAfBtn(btn1X, '提示字母', { img: this.coinIcon, loaded: this.coinIconLoaded }, '💰', '1', !!this._afHintLetterPressed, 'flip');
+    }
+    drawAfBtn(btn2X, '提示单词', { img: this.coinAdIcon, loaded: this.coinAdIconLoaded }, '📺', null, !!this._afHintWordPressed, 'breath');
+
+    // 注册点击区域（非词缀模式在 drawPlaying 开头已置 null）
+    this.affixHintLetterRect = { x: btn1X, y: btnY, w: btnW, h: btnH };
+    this.affixHintWordRect = { x: btn2X, y: btnY, w: btnW, h: btnH };
+  }
+
+  // ===== 词缀拼词试炼：26 键字母键盘（QWERTY 三行）=====
+  Renderer.prototype._drawAffixKeyboard = function(game, topY, areaH, s) {
+    const ctx = this.ctx;
+    const W = this.W;
+    const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+    const keyGap = 6 * s;
+    const keyW = Math.min(32 * s, (W - 40 * s - 9 * keyGap) / 10);
+    const keyH = Math.min(56 * s, (areaH - 2 * keyGap) / 3);
+    const kbH = 3 * keyH + 2 * keyGap;
+    const startY = topY + (areaH - kbH) / 2;
+    // 仅校验中/合法演出期间置灰；非法/失败提示期间可继续输入（输入会清除提示）
+    const disabled = !!(game.pendingCheck && game.pendingCheck.state !== 'invalid' && game.pendingCheck.state !== 'witch_failed');
+
+    this.affixKeyRects = [];
+    // 按下反馈：输入路由写入 { letter, time }，150ms 内下沉+变深
+    const pressed = this._affixPressedKey;
+    const pressedLetter = pressed && (Date.now() - pressed.time < 150) ? pressed.letter : null;
+
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r];
+      const rowW = row.length * keyW + (row.length - 1) * keyGap;
+      const startX = (W - rowW) / 2;
+      const y = startY + r * (keyH + keyGap);
+      for (let i = 0; i < row.length; i++) {
+        const letter = row[i];
+        const x = startX + i * (keyW + keyGap);
+        const isPressed = letter === pressedLetter;
+        const dy = isPressed ? 2 * s : 0;
+        ctx.save();
+        if (disabled) ctx.globalAlpha = 0.55;
+        ctx.shadowColor = 'rgba(0,0,0,0.22)';
+        ctx.shadowBlur = 4 * s;
+        ctx.shadowOffsetY = 2 * s;
+        this.roundRect(x, y + dy, keyW, keyH, 6 * s, isPressed ? '#e8dcc0' : '#faf6ee', '#c4a35a', 1 * s);
+        ctx.restore();
+        ctx.save();
+        if (disabled) ctx.globalAlpha = 0.55;
+        ctx.font = `bold ${Math.floor(18 * s)}px Georgia, 'Times New Roman', serif`;
+        ctx.fillStyle = '#1a2f4a';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(letter, x + keyW / 2, y + dy + keyH / 2 + 1 * s);
+        ctx.restore();
+        this.affixKeyRects.push({ x, y, w: keyW, h: keyH, letter });
+      }
+    }
   }
 
   // ===== fill_blanks 提示按钮：椭圆形画框式边框 =====
