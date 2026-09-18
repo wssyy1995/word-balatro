@@ -616,7 +616,7 @@ class ShopRenderer {
     // 统一绘制升级小 icon：在所有女巫卡牌（含重叠排列、空位占位）之上，避免被遮住
     for (const job of upgradeIconJobs) {
       const { drawX, drawY, drawW, drawH } = job;
-      const br = 9 * s;
+      const br = 7.5 * s;
       const bcx = drawX + drawW - 3 * s;
       const bcy = drawY + 3 * s;
       // 圆形金底 + 白色描边
