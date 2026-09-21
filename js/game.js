@@ -22,7 +22,7 @@ const {
 const { AudioManager } = require('./audio');
 const { StorageManager } = require('./storage');
 const { generateShopItems, applyCrystalEffects, upgradeLetter, SHOP_POOL } = require('./shop');
-const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, shuffleSkillPool, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter, getChaosRange } = require('./witch_skills');
+const { getSkillForLevel, checkSkill, getSkillFailText, giveReward, createRewardItem, SKILL_POOL, shuffleSkills, shuffleSkillPool, sanitizeShuffledSkills, WITCH_CARDS, WITCH_SKILLS, parseLetterTriggerTwiceSkill, getForceContainLetter, getChaosRange } = require('./witch_skills');
 const { reportEvent } = require('./report');
 const { BattleManager } = require('./battle');
 const { DailyAchievements } = require('./daily_achievements');
@@ -1766,7 +1766,12 @@ class Game {
     if (this.state !== 'battle' && this.battleManager) {
       this.battleManager._resetToSinglePlayer();
     }
-    this._shuffledSkills = p._shuffledSkills || shuffleSkillPool();
+    // 存档中的技能池若含已从 SKILL_POOL 移除的技能（如旧版本的 force_contain_B）或长度不符，重新打乱分配
+    const sanitizedSkills = sanitizeShuffledSkills(p._shuffledSkills);
+    this._shuffledSkills = sanitizedSkills || shuffleSkillPool();
+    if (p._shuffledSkills && !sanitizedSkills) {
+      console.log('[SkillPool] 存档技能池已过期（含已移除技能），重新打乱分配');
+    }
     this.discardsLeft = p.discardsLeft;
     this.handsLeft = p.handsLeft;
     this.hand = p.hand || [];

@@ -444,23 +444,21 @@ target = 450 + Σ(第 r 关系数 × (r - 1))  (r 从 2 到当前回合)
 >
 > 当前 `WITCH_SKILLS` 配置中不包含 `double_coin`（金币翻倍），该奖励类型仅在 `getRewardName` / `createRewardItem` 中保留定义，未实际投放。
 >
-> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配（`shuffleSkillPool`），每局游戏的约束组合各不相同。`SKILL_POOL` 少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。`SKILL_POOL` 包含：
-> - `fill_blanks`：完形填空，拼出目标单词让句子变完整
+> *动态分配：所有关卡的约束均从 `SKILL_POOL` 中按游戏开始时打乱的顺序分配（`shuffleSkillPool`），每局游戏的约束组合各不相同。`SKILL_POOL` 少于 `WITCH_SKILLS` 的 25 关，超出时按 `idx % shuffledSkills.length` 循环复用分配。存档恢复时会用 `sanitizeShuffledSkills` 校验池子合法性——含已从池子移除的技能或长度不符时整池重新打乱，防止旧存档继续分配已下架技能。当前 `SKILL_POOL`（16 条）包含：
+> - `fill_blanks` ×3：完形填空，拼出目标单词让句子变完整
 > - `need_letter_4`：每次出牌必须不少于 4 个字母
-> - `forbid_illegal_words`：出现非法单词即游戏结束
-> - `force_letter_4`：每次出牌只能出 4 张字母牌
+> - `prefix_in` / `prefix_un`：用 in/un 开头拼出 3 个合法单词（26 键键盘输入，见词缀拼词试炼）
+> - `postfix_able` / `postfix_es`：用 able/es 结尾拼出 3 个合法单词（同上）
 > - `letter_a_mult_half`：出牌含字母 A，则单词倍率减半
 > - `letter_e_mult_half`：出牌含字母 E，则单词倍率减半
 > - `letter_s_mult_half`：出牌含字母 S，则单词倍率减半
 > - `letter_i_mult_half`：出牌含字母 I，则单词倍率减半
-> - `no_letter_a`：本回合牌堆中不会出现字母 A
 > - `disable_one_witch_card`：回合开始时随机禁用 1 张女巫牌
 > - `disable_two_witch_card`：回合开始时随机禁用 2 张女巫牌
 > - `disable_potion_card`：本回合禁用所有魔法药水牌
-> - `force_contain_A`：打出的单词必须包含字母 A
-> - `force_contain_B`：打出的单词必须包含字母 B
-> - `force_contain_O`：打出的单词必须包含字母 O
 > - `witch_card_value_half`：本回合所有女巫牌倍率效果减半
+>
+> 已下架但仍保留判定代码的历史技能（兼容旧逻辑，不再投放）：`forbid_illegal_words`、`force_letter_4`、`no_letter_a`、`force_contain_A/B/O`。
 
 过关且满足约束后，`has_reward` 为 `true` 的关卡进入 **女巫奖励阶段（`witch_reward`）**：3 选 1 礼盒抽奖，按该技能 `rate` 概率获得奖励。`has_reward` 为 `false` 的关卡则不进入奖励阶段，其奖励当前不会发放（`giveReward` 已导出但无调用方）。
 

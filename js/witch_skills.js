@@ -91,6 +91,17 @@ function shuffleSkillPool() {
   return shuffleSkills([...SKILL_POOL]);
 }
 
+// 校验存档中的打乱技能池：长度不符或含已从 SKILL_POOL 移除的技能时返回 null（调用方应重新打乱）
+// 防止旧版本存档（池子里还有 force_contain_B 等已下架技能）恢复后继续分配已删除的试炼
+function sanitizeShuffledSkills(saved) {
+  if (!Array.isArray(saved) || saved.length !== SKILL_POOL.length) return null;
+  const valid = new Set(SKILL_POOL.map(s => s.skill));
+  for (const entry of saved) {
+    if (!entry || !valid.has(entry.skill)) return null;
+  }
+  return saved;
+}
+
 // 解析 force_contain_X 类技能，返回要求的字母（如 'A'）
 function getForceContainLetter(skillName) {
   if (!skillName) return null;
@@ -366,6 +377,7 @@ module.exports = {
   parseLetterTriggerTwiceSkill,
   getForceContainLetter,
   parseAffixSkill,
+  sanitizeShuffledSkills,
   formatItemDesc,
   getChaosRange
 };
