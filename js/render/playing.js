@@ -1935,18 +1935,24 @@ module.exports = function extendPlaying(Renderer) {
     const fillColor = blankColors[status] || '#c4a35a';
 
     const maxW = maskW - 24 * s;
-    // 槽位数：空闲时多留 1 个空格位引导输入，最少 3 格
-    const slotCount = Math.max(typed.length + (status === 'idle' ? 1 : 0), 3);
-    // 字号自适应：26 → 22 → 18，保证 词缀+槽位 不超宽
+    // 字号自适应：26 → 22 → 18，保证 词缀+下划线 不超宽
+    // 下划线为一条整体：基础宽度约 3 个字母，随输入字母个数增长
     let fontSize = 26;
-    let slotW = 0;
     let affixW = 0;
+    let typedW = 0;
+    let lineW = 0;
     for (const fs of [26, 22, 18]) {
       fontSize = fs;
       ctx.font = `bold ${Math.floor(fs * s)}px Georgia, 'Times New Roman', serif`;
-      slotW = Math.max(ctx.measureText('_').width, ctx.measureText('M').width) + 3 * s;
       affixW = ctx.measureText(affix).width;
-      const totalWordW = isValid ? ctx.measureText(fullWord).width : affixW + 6 * s + slotW * slotCount;
+      // 输入字母按大 2px 的字号测量
+      ctx.font = `bold ${Math.floor((fs + 2) * s)}px Georgia, 'Times New Roman', serif`;
+      typedW = typed.reduce((sum, ch) => sum + ctx.measureText(ch).width, 0);
+      const fullWordW = ctx.measureText(fullWord).width;
+      ctx.font = `bold ${Math.floor(fs * s)}px Georgia, 'Times New Roman', serif`;
+      const minLineW = ctx.measureText('MMM').width;
+      lineW = Math.max(minLineW, typedW + 6 * s);
+      const totalWordW = isValid ? fullWordW : affixW + 6 * s + lineW;
       if (totalWordW <= maxW || fs === 18) break;
     }
     const enFont = `bold ${Math.floor(fontSize * s)}px Georgia, 'Times New Roman', serif`;
@@ -1966,7 +1972,10 @@ module.exports = function extendPlaying(Renderer) {
       hintText = statusText || '女巫试炼未满足';
       hintColor = '#9b59b6';
     } else if (isValid) {
-      hintText = '拼写正确！';
+      // 拼写正确：展示单词释义（本地词库/缓存取不到时兜底「拼写正确！」）
+      const meaningObj = game.pendingCheck && game.pendingCheck.meaning;
+      const meaningText = meaningObj ? formatMeaning(meaningObj) : '';
+      hintText = meaningText || '拼写正确！';
       hintColor = '#2d7d32';
     } else {
       hintText = `还需要拼出 ${trial.left} 个单词`;
@@ -1980,7 +1989,7 @@ module.exports = function extendPlaying(Renderer) {
     const totalH = wordLineH + wordHintGap + hintH + btnGapY + btnRowH;
     let curY = maskY + (maskH - totalH) / 2 + wordLineH / 2;
 
-    // === 单词行：词缀 + 下划线槽位（答对时整体绿色高亮）===
+    // === 单词行：词缀 + 整体下划线（答对时整体绿色高亮）===
     ctx.save();
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
@@ -1993,7 +2002,7 @@ module.exports = function extendPlaying(Renderer) {
       ctx.fillText(fullWord, fx, curY);
     } else {
       ctx.font = enFont;
-      const rowW = affixW + 6 * s + slotW * slotCount;
+      const rowW = affixW + 6 * s + lineW;
       let curX = maskX + (maskW - rowW) / 2;
       // 词缀文本（prefix 在左，postfix 在右）
       const drawAffix = () => {
@@ -2003,38 +2012,38 @@ module.exports = function extendPlaying(Renderer) {
         curX += affixW + 6 * s;
       };
       if (kind === 'prefix') drawAffix();
-      // 下划线槽位 + 已输入字母
-      for (let i = 0; i < slotCount; i++) {
-        const slotX = curX + slotW * i;
-        ctx.fillStyle = 'rgba(196,163,90,0.6)';
-        ctx.fillRect(slotX + 1 * s, curY + wordLineH * 0.32, slotW - 2 * s, Math.max(1.5 * s, 1));
+      // 一条整体下划线（宽度随输入字母增长），输入字母在线内水平居中、带冒泡动画
+      const lineX = curX;
+      ctx.fillStyle = 'rgba(196,163,90,0.6)';
+      ctx.fillRect(lineX, curY + wordLineH * 0.32, lineW, Math.max(1.5 * s, 1));
+      let lx = lineX + (lineW - typedW) / 2;
+      for (let i = 0; i < typed.length; i++) {
         const ch = typed[i];
-        if (ch) {
-          ctx.save();
-          ctx.font = slotLetterFont;
-          ctx.fillStyle = fillColor;
-          const lw = ctx.measureText(ch).width;
-          // 字母从下划线处冒出来的动画：250ms easeOutCubic 上移 + 淡入
-          let riseOffsetY = 0;
-          let riseAlpha = 1;
-          const animStart = this._afLetterAnimStart[i];
-          if (animStart) {
-            const elapsed = Date.now() - animStart;
-            const dur = 250;
-            if (elapsed < dur) {
-              const t = elapsed / dur;
-              riseOffsetY = (1 - Easing.easeOutCubic(t)) * 10 * s;
-              riseAlpha = Math.min(elapsed / 120, 1);
-            } else {
-              delete this._afLetterAnimStart[i];
-            }
+        ctx.save();
+        ctx.font = slotLetterFont;
+        ctx.fillStyle = fillColor;
+        const lw = ctx.measureText(ch).width;
+        // 字母从下划线处冒出来的动画：250ms easeOutCubic 上移 + 淡入
+        let riseOffsetY = 0;
+        let riseAlpha = 1;
+        const animStart = this._afLetterAnimStart[i];
+        if (animStart) {
+          const elapsed = Date.now() - animStart;
+          const dur = 250;
+          if (elapsed < dur) {
+            const t = elapsed / dur;
+            riseOffsetY = (1 - Easing.easeOutCubic(t)) * 10 * s;
+            riseAlpha = Math.min(elapsed / 120, 1);
+          } else {
+            delete this._afLetterAnimStart[i];
           }
-          if (riseAlpha < 1) ctx.globalAlpha = riseAlpha;
-          ctx.fillText(ch, slotX + slotW / 2 - lw / 2, curY + riseOffsetY);
-          ctx.restore();
         }
+        if (riseAlpha < 1) ctx.globalAlpha = riseAlpha;
+        ctx.fillText(ch, lx, curY + riseOffsetY);
+        ctx.restore();
+        lx += lw;
       }
-      curX += slotW * slotCount;
+      curX += lineW;
       if (kind === 'postfix') drawAffix();
     }
     ctx.restore();
@@ -2059,6 +2068,29 @@ module.exports = function extendPlaying(Renderer) {
       ctx.drawImage(this.errorIcon, groupX, curY - errIconSize / 2, errIconSize, errIconSize);
       ctx.textAlign = 'left';
       ctx.fillText(hintText, groupX + errIconSize + errGap, curY);
+    } else if (status === 'idle') {
+      // 剩余单词数：数字加粗 + 绿色高亮（如「还需要拼出 3 个单词」）
+      const prefix = '还需要拼出 ';
+      const num = String(trial.left);
+      const suffix = ' 个单词';
+      ctx.font = `${Math.floor(bs * s)}px sans-serif`;
+      const w1 = ctx.measureText(prefix).width;
+      const w3 = ctx.measureText(suffix).width;
+      ctx.font = `bold ${Math.floor(bs * s)}px sans-serif`;
+      const w2 = ctx.measureText(num).width;
+      let tx = maskX + (maskW - w1 - w2 - w3) / 2;
+      ctx.textAlign = 'left';
+      ctx.font = `${Math.floor(bs * s)}px sans-serif`;
+      ctx.fillStyle = hintColor;
+      ctx.fillText(prefix, tx, curY);
+      tx += w1;
+      ctx.font = `bold ${Math.floor(bs * s)}px sans-serif`;
+      ctx.fillStyle = '#2d7d32';
+      ctx.fillText(num, tx, curY);
+      tx += w2;
+      ctx.font = `${Math.floor(bs * s)}px sans-serif`;
+      ctx.fillStyle = hintColor;
+      ctx.fillText(suffix, tx, curY);
     } else {
       ctx.fillText(hintText, maskX + maskW / 2, curY);
     }
@@ -2140,10 +2172,11 @@ module.exports = function extendPlaying(Renderer) {
     const ctx = this.ctx;
     const W = this.W;
     const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
-    const keyGap = 6 * s;
-    const keyW = Math.min(32 * s, (W - 40 * s - 9 * keyGap) / 10);
-    const keyH = Math.min(56 * s, (areaH - 2 * keyGap) / 3);
-    const kbH = 3 * keyH + 2 * keyGap;
+    const keyGap = 5 * s;
+    const keyGapY = 11 * s; // 上下间隔比左右稍大
+    const keyW = Math.min(36 * s, (W - 24 * s - 9 * keyGap) / 10);
+    const keyH = Math.min(56 * s, (areaH - 2 * keyGapY) / 3);
+    const kbH = 3 * keyH + 2 * keyGapY;
     const startY = topY + (areaH - kbH) / 2;
     // 仅校验中/合法演出期间置灰；非法/失败提示期间可继续输入（输入会清除提示）
     const disabled = !!(game.pendingCheck && game.pendingCheck.state !== 'invalid' && game.pendingCheck.state !== 'witch_failed');
@@ -2157,7 +2190,7 @@ module.exports = function extendPlaying(Renderer) {
       const row = rows[r];
       const rowW = row.length * keyW + (row.length - 1) * keyGap;
       const startX = (W - rowW) / 2;
-      const y = startY + r * (keyH + keyGap);
+      const y = startY + r * (keyH + keyGapY);
       for (let i = 0; i < row.length; i++) {
         const letter = row[i];
         const x = startX + i * (keyW + keyGap);

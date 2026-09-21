@@ -2091,7 +2091,6 @@ wx.onTouchStart((e) => {
   const touch = e.touches[0];
   const x = touch.clientX;
   const y = touch.clientY;
-  console.log('[HomepageDebug] touchStart', x, y, 'state=', game && game.state);
 
   // homepage 触摸处理（预加载完成后展示；设置弹窗打开时不响应主页按钮；入场动画播放时不响应）
   // 排行榜/单词本弹窗打开时，homepage 不拦截触摸，让后续弹窗输入处理生效

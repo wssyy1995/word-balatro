@@ -2866,11 +2866,12 @@ class Game {
       return markInvalid('单词不存在');
     }
 
-    // 合法：走 valid 渲染（烟花 + 绿色单词），由渲染层延迟调 completeAffixPlay 计数
+    // 合法：走 valid 渲染（烟花 + 绿色单词 + 释义），由渲染层延迟调 completeAffixPlay 计数
     this.pendingCheck.state = 'valid';
     this.pendingCheck.resolveTime = Date.now();
     // 词缀试炼不计分，占位 result 保持与 fill_blanks 一致
     this.pendingCheck.result = { base: 0, mult: word.length, score: 0 };
+    this.pendingCheck.meaning = getWordMeaning(word);
     if (this.audioManager) this.audioManager.play('card_valid');
     if (this.storageManager) this.storageManager.saveProgress();
     console.log('[AffixTrial] 合法单词:', word, '剩余需拼:', (trial.left || 0) - 1);
@@ -2888,6 +2889,7 @@ class Game {
     trial.played = (trial.played || []).concat(word);
     trial.left = Math.max(0, (trial.left || 0) - 1);
     trial.typed = [];
+    this.handsLeft--; // 合法出牌同样消耗 1 次出牌次数
 
     // 提示目标词已被拼出（或缺失）时，换一个未拼过的新目标词
     if (!trial.targetWord || trial.played.includes(trial.targetWord)) {
@@ -2907,6 +2909,25 @@ class Game {
       this._affixTrial = null;
       this._showSettlement();
       return;
+    }
+    // 出牌次数用完但还没拼满：生命延续检查，否则 gameover
+    if (this.handsLeft <= 0) {
+      const triggered = this._checkLifeExtension();
+      if (!triggered) {
+        this.state = 'gameover';
+        this.gameOverReason = 'out_of_hands';
+        if (this._dailyAchievements) {
+          this._dailyAchievements.currentConsecutiveRounds = 0;
+          new DailyAchievements(this).save();
+        }
+        if (this.audioManager) this.audioManager.play('game_over');
+        if (this.storageManager) {
+          this._uploadRankData();
+          this.storageManager.updateStats(this);
+          this.storageManager.clearProgress();
+        }
+        return;
+      }
     }
     if (this.storageManager) this.storageManager.saveProgress();
   }
